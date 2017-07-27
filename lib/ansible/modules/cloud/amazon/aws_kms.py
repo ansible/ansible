@@ -204,7 +204,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
         if len(changes_needed) and not dry_run:
             policy_json_string = json.dumps(policy)
     except Exception as e:
-            raise Exception("{}: // {}".format(e, policy_json_string))
+            raise Exception("{0}: // {1}".format(e, repr(policy)))
     kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
 
     # returns nothing, so we have to just assume it didn't throw
