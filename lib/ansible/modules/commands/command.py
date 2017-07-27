@@ -108,7 +108,7 @@ def check_command(module, commandline):
                   'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'dnf': 'dnf', 'zypper': 'zypper' }
-    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun' ]
+    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'sesu' ]
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
         module.warn("Consider using file module with %s rather than running %s" % (arguments[command], command))

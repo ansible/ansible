@@ -123,9 +123,9 @@ options:
       default: null
     become_method:
       description:
-        - Become method to Use for privledge escalation.
+        - Become method to Use for privilege escalation.
       required: False
-      choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
+      choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun", "sesu"]
       default: "None"
     become_username:
       description:
