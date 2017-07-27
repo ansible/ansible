@@ -2271,10 +2271,12 @@ class AnsibleModule(object):
 
         shutil.copy2(src, dest)
 
+        # Set the context
         if self.selinux_enabled():
             context = self.selinux_context(src)
             self.set_context_if_different(dest, context, False)
 
+        # Set the stats
         try:
             dest_stat = os.stat(src)
             tmp_stat = os.stat(dest)
@@ -2283,6 +2285,10 @@ class AnsibleModule(object):
         except OSError as e:
             if e.errno != errno.EPERM:
                 raise
+
+        # Set the attributes
+        attribs = self.get_file_attributes(src)
+        self.set_attributes_if_different(dest, attribs, True)
 
     def atomic_move(self, src, dest, unsafe_writes=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success
