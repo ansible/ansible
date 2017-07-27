@@ -69,6 +69,7 @@ options:
   job:
     description:
       - The command to execute or, if env is set, the value of environment variable.
+        The command should not contain line breaks.
         Required if state=present.
     required: false
     aliases: ['value']
@@ -718,6 +719,11 @@ def main():
                 changed = True
     else:
         if do_install:
+            for char in ['\r', '\n']:
+                if char in job.strip('\r\n'):
+                    warnings.append('Job should not contain line breaks')
+                    break
+
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
             old_job = crontab.find_job(name, job)
 
