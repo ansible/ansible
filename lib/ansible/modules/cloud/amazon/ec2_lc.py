@@ -138,7 +138,7 @@ extends_documentation_fragment:
     - ec2
 
 requirements:
-    - boto >= 3.0.0
+    - boto3 >= 1.4.4
 
 '''
 
