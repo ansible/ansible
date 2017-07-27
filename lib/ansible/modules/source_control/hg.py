@@ -231,13 +231,16 @@ class Hg(object):
         There is no point in pulling from a potentially down/slow remote site
         if the desired changeset is already the current changeset.
         """
-        if self.revision is None or len(self.revision) < 7:
-            # Assume it's a rev number, tag, or branch
+        if self.revision is None:
             return False
+        # transform whatever was passed as revision into changeset ID
+        (rc, currentRevisionOut, err) = self._command(['--debug', 'id', '-i', '-r', self.revision, '-R', self.dest])
+        if rc != 0:
+            self.module.fail_json(msg=err)
         (rc, out, err) = self._command(['--debug', 'id', '-i', '-R', self.dest])
         if rc != 0:
             self.module.fail_json(msg=err)
-        if out.startswith(self.revision):
+        if out.startswith(currentRevisionOut):
             return True
         return False
 
