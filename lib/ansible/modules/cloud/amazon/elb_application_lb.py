@@ -732,7 +732,9 @@ def create_or_update_elb_listeners(connection, module, elb):
     # Modify listeners
     for listener_to_modify in listeners_to_modify:
         try:
+            add_rules = listener_to_modify.pop('Rules')
             connection.modify_listener(**listener_to_modify)
+            listener_to_modify['Rules'] = add_rules
             listener_changed = True
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
