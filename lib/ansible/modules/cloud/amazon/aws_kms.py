@@ -176,7 +176,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
 
                 if granttype in granttypes:
                     invalid_entries = list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
-                    if clean_invalid_entries and len(invalid_entries):
+                    if clean_invalid_entries and invalid_entries:
                         # we have bad/invalid entries. These are roles that were deleted.
                         # prune the list.
                         valid_entries = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
@@ -203,9 +203,9 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
     try:
         if len(changes_needed) and not dry_run:
             policy_json_string = json.dumps(policy)
-            kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
     except Exception as e:
-        raise Exception("{}: // {}".format(e, policy_json_string))
+            raise Exception("{}: // {}".format(e, policy_json_string))
+    kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
 
     # returns nothing, so we have to just assume it didn't throw
     ret['changed'] = changes_needed and not had_invalid_entries
