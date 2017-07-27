@@ -306,7 +306,7 @@ def create_launch_config(connection, module):
     if classic_link_vpc_security_groups is not None:
         launch_config['ClassicLinkVPCSecurityGroups'] = classic_link_vpc_security_groups
 
-    if block_device_mapping is not None:
+    if not block_device_mapping:
         launch_config['BlockDeviceMappings'] = [block_device_mapping]
 
     if instance_profile_name is not None:
