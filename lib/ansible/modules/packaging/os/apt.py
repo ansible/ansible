@@ -92,9 +92,8 @@ options:
     version_added: "2.1"
   upgrade:
     description:
-      - 'If yes or safe, performs an aptitude safe-upgrade.'
-      - 'If full, performs an aptitude full-upgrade.'
-      - 'If dist, performs an apt-get dist-upgrade.'
+      - 'If yes or safe, performs an apt-get upgrade --with-new-pkgs --autoremove.'
+      - 'If dist or full, performs an apt-get dist-upgrade.'
       - 'Note: This does not upgrade a specific package, use state=latest for that.'
     version_added: "1.1"
     required: false
@@ -136,11 +135,7 @@ options:
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
-   - aptitude
 author: "Matthew Williams (@mgwilliams)"
-notes:
-   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) require C(aptitude), otherwise
-     C(apt-get) suffices.
 '''
 
 EXAMPLES = '''
@@ -267,7 +262,7 @@ from ansible.module_utils.urls import fetch_url
 APT_ENV_VARS = dict(
     DEBIAN_FRONTEND='noninteractive',
     DEBIAN_PRIORITY='critical',
-    # We screenscrape apt-get and aptitude output for information so we need
+    # We screenscrape apt-get output for information so we need
     # to make sure we use the C locale when running commands
     LANG='C',
     LC_ALL='C',
@@ -277,7 +272,6 @@ APT_ENV_VARS = dict(
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
 APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
-APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
@@ -455,17 +449,13 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 def parse_diff(output):
     diff = to_native(output).splitlines()
     try:
-        # check for start marker from aptitude
-        diff_start = diff.index('Resolving dependencies...')
+        # check for start marker from apt-get
+        diff_start = diff.index('Reading state information...')
     except ValueError:
-        try:
-            # check for start marker from apt-get
-            diff_start = diff.index('Reading state information...')
-        except ValueError:
-            # show everything
-            diff_start = -1
+        # show everything
+        diff_start = -1
     try:
-        # check for end marker line from both apt-get and aptitude
+        # check for end marker line from apt-get
         diff_end = next(i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item))
     except StopIteration:
         diff_end = len(diff)
@@ -724,31 +714,21 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         check_arg = ''
 
-    apt_cmd = None
     prompt_regex = None
-    if mode == "dist":
+    if mode == "dist" or mode == "full":
         # apt-get dist-upgrade
-        apt_cmd = APT_GET_CMD
         upgrade_command = "dist-upgrade"
-    elif mode == "full":
-        # aptitude full-upgrade
-        apt_cmd = APTITUDE_CMD
-        upgrade_command = "full-upgrade"
     else:
-        # aptitude safe-upgrade # mode=yes # default
-        apt_cmd = APTITUDE_CMD
-        upgrade_command = "safe-upgrade"
+        # apt-get upgrade --with-new-pkgs --autoremove # mode=yes # default
+        upgrade_command = "upgrade --with-new-pkgs --autoremove"
         prompt_regex = r"(^Do you want to ignore this warning and proceed anyway\?|^\*\*\*.*\[default=.*\])"
 
     if force:
-        if apt_cmd == APT_GET_CMD:
-            force_yes = '--force-yes'
-        else:
-            force_yes = '--assume-yes --allow-untrusted'
+        force_yes = '--force-yes'
     else:
         force_yes = ''
 
-    apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
+    apt_cmd_path = m.get_bin_path(APT_GET_CMD, required=True)
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
                                  force_yes, check_arg, upgrade_command)
@@ -762,8 +742,8 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         diff = {}
     if rc:
-        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out, rc=rc)
-    if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
+        m.fail_json(msg="'%s %s' failed: %s" % (APT_GET_CMD, upgrade_command, err), stdout=out, rc=rc)
+    if APT_GET_ZERO in out:
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
 
@@ -891,8 +871,6 @@ def main():
             module.fail_json(msg="Could not import python modules: apt, apt_pkg. "
                                  "Please install %s package." % PYTHON_APT)
 
-    global APTITUDE_CMD
-    APTITUDE_CMD = module.get_bin_path("aptitude", False)
     global APT_GET_CMD
     APT_GET_CMD = module.get_bin_path("apt-get")
 
@@ -900,9 +878,6 @@ def main():
 
     if p['upgrade'] == 'no':
         p['upgrade'] = None
-
-    if not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
-        module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
 
     updated_cache = False
     updated_cache_time = 0
