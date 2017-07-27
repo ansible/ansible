@@ -54,5 +54,3 @@
   user:
     name: "{{ t_groupname }}"
     state: absent
-
-
