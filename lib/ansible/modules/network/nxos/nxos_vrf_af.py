@@ -80,9 +80,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["vrf context ntc", "address-family ipv4 unicast",
-            "afi ipv4", "route-target both auto evpn", "vrf ntc",
-            "safi unicast"]
+    sample: ["vrf context ntc", "address-family ipv4 unicast"]
 '''
 
 import re
@@ -95,9 +93,6 @@ from ansible.module_utils.netcfg import CustomNetworkConfig
 
 BOOL_PARAMS = ['route_target_both_auto_evpn']
 PARAM_TO_COMMAND_KEYMAP = {
-    'vrf': 'vrf',
-    'safi': 'safi',
-    'afi': 'afi',
     'route_target_both_auto_evpn': 'route-target both auto evpn'
 }
 PARAM_TO_DEFAULT_KEYMAP = {}
@@ -179,11 +174,10 @@ def state_present(module, existing, proposed, candidate):
             command = '{0} {1}'.format(key, value.lower())
             commands.append(command)
 
-    if commands:
-        parents = ['vrf context {0}'.format(module.params['vrf'])]
-        parents.append('address-family {0} {1}'.format(module.params['afi'],
-                                                       module.params['safi']))
-        candidate.add(commands, parents=parents)
+    parents = ['vrf context {0}'.format(module.params['vrf'])]
+    parents.append('address-family {0} {1}'.format(module.params['afi'],
+                                                   module.params['safi']))
+    candidate.add(commands, parents=parents)
 
 
 def state_absent(module, existing, proposed, candidate):
