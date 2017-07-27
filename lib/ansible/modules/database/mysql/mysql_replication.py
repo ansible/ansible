@@ -99,10 +99,18 @@ options:
             - same as mysql variable
     master_auto_position:
         description:
-            - does the host uses GTID based replication or not
+            - does the host uses GTID based replication or not (MySQL/Percona)
         required: false
         default: null
         version_added: "2.0"
+    master_use_gtid
+        description:
+            - which position to use use with GTID based replication (MariaDB)
+        required: false
+        default: null
+        choices: [ "slave_pos", "current_pos" ]
+        version_added: "2.3"
+
 
 extends_documentation_fragment: mysql
 '''
@@ -209,6 +217,7 @@ def main():
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave", "resetslave", "resetslaveall"]),
             master_auto_position=dict(default=False, type='bool'),
+            master_use_gtid=dict(default=False, choices=["slave_pos", "current_pos"),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None, no_log=True),
@@ -339,6 +348,9 @@ def main():
             chm_params['master_ssl_cipher'] = master_ssl_cipher
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION = 1")
+        if master_use_gtid:
+            chm.append("MASTER_USE_GTID=%(master_use_gtid)s")
+            chm_params['master_use_gtid'] = master_use_gtid
         try:
             changemaster(cursor, chm, chm_params)
         except MySQLdb.Warning:
