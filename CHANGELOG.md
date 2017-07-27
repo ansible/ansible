@@ -336,6 +336,7 @@ Ansible Changes By Release
 #### New: lookups
 
 - keyring: allows getting password from the 'controller' system's keyrings
+- chef_databag: allows querying Chef Databags via pychef library
 
 #### New: cache
 
