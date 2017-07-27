@@ -86,7 +86,7 @@ options:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
   instance_monitoring:
     description:
-      - Whether instances in group are launched with detailed monitoring.
+      - Whether instances in group are launched with detailed monitoring. Can be used in place of advanced_instance_monitoring.
     default: false
   assign_public_ip:
     description:
@@ -124,7 +124,7 @@ options:
     version_added: "2.4"
   advanced_instance_monitoring:
     description:
-      - A boolean representing whether advanced instance monitoring is to be used or not. Must be used in conjunction with instance_monitoring.
+      - A bool representing whether advanced instance monitoring is to be used or not. Can be used in place of with instance_monitoring.
     default: false
     version_added: "2.4"
   placement_tenancy:
@@ -300,8 +300,8 @@ def create_launch_config(connection, module):
     if classic_link_vpc_id is not None:
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
 
-    if instance_monitoring:
-        launch_config['InstanceMonitoring'] = {'Enabled': advanced_instance_monitoring}
+    if instance_monitoring or advanced_instance_monitoring:
+        launch_config['InstanceMonitoring'] = {'Enabled': advanced_instance_monitoring | instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
         launch_config['ClassicLinkVPCSecurityGroups'] = classic_link_vpc_security_groups
