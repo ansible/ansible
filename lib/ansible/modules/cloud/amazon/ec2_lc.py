@@ -262,7 +262,7 @@ def create_launch_config(connection, module):
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     security_groups = module.params.get('security_groups')
 
-    bdm = {}
+    block_device_mapping = {}
 
     convert_list = ['image_id', 'instance_type', 'instance_type', 'instance_id', 'placement_tenancy', 'key_name', 'kernel_id', 'ramdisk_id',
                     'instance_profile_name', 'spot_price']
@@ -282,7 +282,7 @@ def create_launch_config(connection, module):
                 module.fail_json(msg='Device name must be set for volume')
             # Minimum volume size is 1GB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
             if 'volume_size' not in volume or int(volume['volume_size']) > 0:
-                bdm.update(create_block_device_meta(module, volume))
+                block_device_mapping.update(create_block_device_meta(module, volume))
 
     try:
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
@@ -306,8 +306,8 @@ def create_launch_config(connection, module):
     if classic_link_vpc_security_groups is not None:
         launch_config['ClassicLinkVPCSecurityGroups'] = (classic_link_vpc_security_groups)
 
-    if bdm is not None:
-        launch_config['BlockDeviceMappings'] = [bdm]
+    if block_device_mapping is not None:
+        launch_config['BlockDeviceMappings'] = [block_device_mapping]
 
     if instance_profile_name is not None:
         launch_config['IamInstanceProfile'] = instance_profile_name
@@ -343,10 +343,11 @@ def create_launch_config(connection, module):
 
     result['BlockDeviceMappings'] = []
 
-    for bdm in launch_config.get('BlockDeviceMappings', []):
-        result['BlockDeviceMappings'].append(dict(device_name=bdm.get('DeviceName'), virtual_name=bdm.get('VirtualName')))
-        if bdm.get('Ebs') is not None:
-            result['BlockDeviceMappings'][-1]['ebs'] = dict(snapshot_id=bdm.get('Ebs').get('SnapshotId'), volume_size=bdm.get('Ebs').get('VolumeSize'))
+    for block_device_mapping in launch_config.get('BlockDeviceMappings', []):
+        result['BlockDeviceMappings'].append(dict(device_name=block_device_mapping.get('DeviceName'), virtual_name=block_device_mapping.get('VirtualName')))
+        if block_device_mapping.get('Ebs') is not None:
+            result['BlockDeviceMappings'][-1]['ebs'] = dict(
+                snapshot_id=block_device_mapping.get('Ebs').get('SnapshotId'), volume_size=block_device_mapping.get('Ebs').get('VolumeSize'))
 
     if user_data_path:
         result['UserData'] = "hidden"  # Otherwise, we dump binary to the user's terminal
