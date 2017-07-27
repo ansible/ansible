@@ -961,6 +961,10 @@ def interfaceLevel2Config(
         # debugOutput("shutdown")
         command = interfaceL2Arg1
 
+    elif (interfaceL2Arg1 == "no shutdown"):
+        # debugOutput("no shutdown")
+        command = interfaceL2Arg1
+
     elif (interfaceL2Arg1 == "snmp"):
         # debugOutput("snmp")
         command = interfaceL2Arg1 + "  trap link-status "
