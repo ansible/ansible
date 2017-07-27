@@ -83,12 +83,20 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def checkpoint(filename, module):
-    commands = ['terminal dont-ask', 'checkpoint file %s' % filename]
+    commands = [{
+        'command': 'terminal dont-ask',
+        'output': 'text', }, {
+        'command': 'checkpoint file %s' % filename,
+        'output': 'text',
+    }]
     run_commands(module, commands)
 
 
 def rollback(filename, module):
-    commands = ['rollback running-config file %s' % filename]
+    commands = [{
+        'command': 'rollback running-config file %s' % filename,
+        'output': 'text',
+    }]
     run_commands(module, commands)
 
 

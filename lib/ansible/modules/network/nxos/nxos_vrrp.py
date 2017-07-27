@@ -137,21 +137,22 @@ changed:
     type: boolean
     sample: true
 '''
-import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
+def execute_show_command(command, module):
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    body = run_commands(module, cmds)
     return body
 
 
@@ -166,7 +167,6 @@ def apply_key_map(key_map, table):
             else:
                 new_dict[new_key] = value
     return new_dict
-
 
 def get_interface_type(interface):
     if interface.upper().startswith('ET'):
@@ -223,7 +223,7 @@ def get_interface_mode(interface, intf_type, module):
 
 def get_vrr_status(group, module, interface):
     command = 'show run all | section interface.{0}$'.format(interface)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+    body = execute_show_command(command, module)[0]
     vrf_index = None
     admin_state = 'shutdown'
 
@@ -373,7 +373,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-
     state = module.params['state']
     interface = module.params['interface'].lower()
     group = module.params['group']
@@ -451,4 +450,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
