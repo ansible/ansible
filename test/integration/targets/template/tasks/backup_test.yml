@@ -1,11 +1,11 @@
 # https://github.com/ansible/ansible/issues/24408
 
 - name: get a random username
-  shell: 'cat /etc/passwd | cut -d\: -f1 | fgrep -v root | sort -R | head -n1'
+  script: getname.py /etc/passwd
   register: t_username
 
 - name: get a random username
-  shell: 'cat /etc/group | cut -d\: -f1 | fgrep -v root | sort -R | head -n1'
+  script: getname.py /etc/group
   register: t_groupname
 
 - name: set the dest file
