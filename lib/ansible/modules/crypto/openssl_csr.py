@@ -332,26 +332,15 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             return True
 
         def _check_keyUsage_(extensions, extName, expected, long):
-            usages_ext = next((ext.__str__() for ext in extensions if ext.get_short_name() == extName), '')
-            usages = [usage.strip() for usage in usages_ext.split(',')]
-
-            for usage in expected:
-                if usage in usages:
-                    usages.remove(usage)
-                    continue
-                try:
-                    if long[usage] in usages:
-                        usages.remove(long[usage])
-                        continue
-                except KeyError:
-                    pass
-
+            usages_ext = [str(ext) for ext in extensions if ext.get_short_name() == extName]
+            if (not usages_ext and expected) or (usages_ext and not expected):
                 return False
-
-            if len(usages) > 0:
-                return False
-
-            return True
+            elif not usages_ext and not expected:
+                return True
+            else:
+                current = [usage.strip() for usage in usages_ext[0].split(',')]
+                expected = [long[usage] if usage in long else usage for usage in expected]
+                return current == expected
 
         def _check_keyUsage(extensions):
             return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, crypto_utils.keyUsageLong)
