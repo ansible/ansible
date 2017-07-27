@@ -217,7 +217,7 @@ def main():
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave", "resetslave", "resetslaveall"]),
             master_auto_position=dict(default=False, type='bool'),
-            master_use_gtid=dict(default=False, choices=["slave_pos", "current_pos"),
+            master_use_gtid=dict(default=False, choices=["slave_pos", "current_pos"]),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None, no_log=True),
