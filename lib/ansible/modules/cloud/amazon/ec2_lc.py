@@ -385,7 +385,7 @@ def main():
             image_id=dict(),
             instance_id=dict(),
             key_name=dict(),
-            security_groups=dict(type='list'),
+            security_groups=dict(default=[], type='list'),
             user_data=dict(),
             user_data_path=dict(type='path'),
             kernel_id=dict(),
