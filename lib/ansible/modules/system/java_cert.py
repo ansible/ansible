@@ -141,7 +141,7 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     fetch_cmd = ("%s -printcert -rfc -sslserver %s:%d")%(executable, url, port)
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -alias '%s'")%(executable, keystore_path,
-                                                  keystore_pass, alias, trusted_ca)
+                                                  keystore_pass, alias)
     if trusted_ca:
         import_cmd = " ".join([import_cmd, "-trustcacerts"])
 
