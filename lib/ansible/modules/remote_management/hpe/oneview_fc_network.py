@@ -76,8 +76,7 @@ RETURN = '''
 fc_network:
     description: Has the facts about the managed OneView FC Network.
     returned: On state 'present'. Can be null.
-    type: complex
-    contains: FC Network data
+    type: dict
 '''
 
 from ansible.module_utils.basic import AnsibleModule

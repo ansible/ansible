@@ -1,42 +1,45 @@
-# -*- coding: utf-8 -*-
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
 # Copyright (2016-2017) Hewlett Packard Enterprise Development LP
+# All rights reserved.
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import (absolute_import,
                         division,
-                        print_function,
-                        unicode_literals)
+                        print_function)
 
-try:
-    from future import standard_library
-    HAS_FUTURE = True
-except:
-    HAS_FUTURE = False
-    pass
+import collections
 import json
 import logging
 import os
-import collections
-from ansible.module_utils.basic import AnsibleModule
+import traceback
 from copy import deepcopy
 
-if HAS_FUTURE:
-    standard_library.install_aliases()
-
-logger = logging.getLogger(__name__)
+from ansible.module_utils import six
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 try:
     from hpOneView.oneview_client import OneViewClient
@@ -48,6 +51,28 @@ try:
     HAS_HPE_ONEVIEW = True
 except ImportError:
     HAS_HPE_ONEVIEW = False
+
+
+def transform_list_to_dict(list_):
+    """
+    Transforms a list into a dictionary, putting values as keys.
+
+    :arg list list_: List of values
+    :return: dict: dictionary built
+"""
+
+    ret = {}
+
+    if not list_:
+        return ret
+
+    for value in list_:
+        if isinstance(value, dict):
+            ret.update(value)
+        else:
+            ret[to_native(value, errors='surrogate_or_strict')] = True
+
+    return ret
 
 
 class OneViewModuleBase(object):
@@ -76,17 +101,15 @@ class OneViewModuleBase(object):
         """
         OneViewModuleBase constructor.
 
-        Args:
-            additional_arg_spec (dict): Additional argument spec definition.
-            validate_etag_support (bool): Enables support to eTag validation.
-        """
-
-        argument_spec = self.__build_argument_spec(additional_arg_spec, validate_etag_support)
+        :arg dict additional_arg_spec: Additional argument spec definition.
+        :arg bool validate_etag_support: Enables support to eTag validation.
+"""
+        argument_spec = self._build_argument_spec(additional_arg_spec, validate_etag_support)
 
         self.module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
-        self.__check_hpe_oneview_sdk()
-        self.__create_oneview_client()
+        self._check_hpe_oneview_sdk()
+        self._create_oneview_client()
 
         self.state = self.module.params.get('state')
         self.data = self.module.params.get('data')
@@ -95,11 +118,11 @@ class OneViewModuleBase(object):
         self.facts_params = self.module.params.get('params') or {}
 
         # Preload options as dict - used by facts
-        self.options = self.transform_list_to_dict(self.module.params.get('options'))
+        self.options = transform_list_to_dict(self.module.params.get('options'))
 
         self.validate_etag_support = validate_etag_support
 
-    def __build_argument_spec(self, additional_arg_spec, validate_etag_support):
+    def _build_argument_spec(self, additional_arg_spec, validate_etag_support):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(self.ONEVIEW_COMMON_ARGS)
@@ -112,13 +135,11 @@ class OneViewModuleBase(object):
 
         return merged_arg_spec
 
-    def __check_hpe_oneview_sdk(self):
+    def _check_hpe_oneview_sdk(self):
         if not HAS_HPE_ONEVIEW:
             self.module.fail_json(msg=self.HPE_ONEVIEW_SDK_REQUIRED)
-        if not HAS_FUTURE:
-            self.module.fail_json(msg=self.FUTURE_PACKAGE_REQUIRED)
 
-    def __create_oneview_client(self):
+    def _create_oneview_client(self):
         if not self.module.params['config']:
             self.oneview_client = OneViewClient.from_environment_variables()
         else:
@@ -130,19 +151,20 @@ class OneViewModuleBase(object):
 
         This method is called from the run method. It should contains the module logic
 
-        Returns:
-            dict:
-                 It must return a dictionary with the attributes for the module result,
-                 such as ansible_facts, msg and changed.
-        """
+        :return: dict: It must return a dictionary with the attributes for the module result,
+            such as ansible_facts, msg and changed.
+"""
         raise HPOneViewException("execute_module not implemented")
 
     def run(self):
         """
         Common implementation of the OneView run modules.
+
         It calls the inheritor 'execute_module' function and sends the return to the Ansible.
+
         It handles any HPOneViewException in order to signal a failure to Ansible, with a descriptive error message.
-        """
+
+"""
         try:
             if self.validate_etag_support:
                 if not self.module.params.get('validate_etag'):
@@ -156,21 +178,20 @@ class OneViewModuleBase(object):
             self.module.exit_json(**result)
 
         except HPOneViewException as exception:
-            self.module.fail_json(msg='; '.join(str(e) for e in exception.args))
+            error_msg = '; '.join(to_native(e) for e in exception.args)
+            self.module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
     def resource_absent(self, resource, method='delete'):
         """
         Generic implementation of the absent state for the OneView resources.
+
         It checks if the resource needs to be removed.
-        Args:
-            resource (dict): Resource to delete.
-            method (str):
-                Function of the OneView client that will be called for resource deletion. Usually delete or remove.
 
-        Returns:
-            A dictionary with the expected arguments for the AnsibleModule.exit_json
-
-        """
+        :arg dict resource: Resource to delete.
+        :arg str method: Function of the OneView client that will be called for resource deletion.
+            Usually delete or remove.
+        :return: A dictionary with the expected arguments for the AnsibleModule.exit_json
+"""
         if resource:
             getattr(self.resource_client, method)(resource)
 
@@ -181,31 +202,26 @@ class OneViewModuleBase(object):
     def get_by_name(self, name):
         """
         Generic get by name implementation.
-        Args:
-            name: Resource name to search for.
 
-        Returns:
-            The resource found or None.
-        """
+        :arg str name: Resource name to search for.
+
+        :return: The resource found or None.
+"""
         result = self.resource_client.get_by('name', name)
         return result[0] if result else None
 
     def resource_present(self, resource, fact_name, create_method='create'):
         """
         Generic implementation of the present state for the OneView resources.
+
         It checks if the resource needs to be created or updated.
 
-        Args:
-            resource (dict):
-                Resource to create or update.
-            fact_name (str):
-                Name of the fact returned to the Ansible.
-            create_method (str):
-                Function of the OneView client that will be called for resource creation. Usually create or add.
-
-        Returns:
-            A dictionary with the expected arguments for the AnsibleModule.exit_json
-        """
+        :arg dict resource: Resource to create or update.
+        :arg str fact_name: Name of the fact returned to the Ansible.
+        :arg str create_method: Function of the OneView client that will be called for resource creation.
+            Usually create or add.
+        :return: A dictionary with the expected arguments for the AnsibleModule.exit_json
+"""
 
         changed = False
         if "newName" in self.data:
@@ -233,54 +249,6 @@ class OneViewModuleBase(object):
             ansible_facts={fact_name: resource}
         )
 
-    @staticmethod
-    def transform_list_to_dict(list_):
-        """
-        Transforms a list into a dictionary, putting values as keys.
-
-        Args:
-            list_: List of values
-
-        Returns:
-            dict: dictionary built
-        """
-
-        ret = {}
-
-        if not list_:
-            return ret
-
-        for value in list_:
-            if isinstance(value, dict):
-                ret.update(value)
-            else:
-                ret[str(value)] = True
-
-        return ret
-
-    @staticmethod
-    def get_logger(mod_name):
-        """
-        To activate logs, setup the environment var LOGFILE
-        e.g.: export LOGFILE=/tmp/ansible-oneview.log
-
-        Args:
-            mod_name: module name
-
-        Returns: Logger instance
-        """
-
-        logger = logging.getLogger(os.path.basename(mod_name))
-        global LOGFILE
-        LOGFILE = os.environ.get('LOGFILE')
-        if not LOGFILE:
-            logger.addHandler(logging.NullHandler())
-        else:
-            logging.basicConfig(level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S',
-                                format='%(asctime)s %(levelname)s %(name)s %(message)s',
-                                filename=LOGFILE, filemode='a')
-        return logger
-
 
 class ResourceComparator():
     MSG_DIFF_AT_KEY = 'Difference found at key \'{0}\'. '
@@ -294,21 +262,18 @@ class ResourceComparator():
             - These values are considered equal: None, empty, False
             - Lists are compared value by value after a sort, if they have same size.
             - Each element is converted to str before the comparison.
-        Args:
-            first_resource: first dictionary
-            second_resource: second dictionary
-
-        Returns:
-            bool: True when equal, False when different.
-        """
+        :arg dict first_resource: first dictionary
+        :arg dict second_resource: second dictionary
+        :return: bool: True when equal, False when different.
+"""
         resource1 = deepcopy(first_resource)
         resource2 = deepcopy(second_resource)
 
-        debug_resources = "resource1 = {0}, resource2 = {1}".format(resource1, resource2)
+        # debug_resources = "resource1 = {0}, resource2 = {1}".format(resource1, resource2)
 
         # The first resource is True / Not Null and the second resource is False / Null
         if resource1 and not resource2:
-            logger.debug("resource1 and not resource2. " + debug_resources)
+            # self.log("resource1 and not resource2. " + debug_resources)
             return False
 
         # Checks all keys in first dict against the second dict
@@ -316,7 +281,7 @@ class ResourceComparator():
             if key not in resource2:
                 if resource1[key] is not None:
                     # Inexistent key is equivalent to exist with value None
-                    logger.debug(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
+                    # self.log(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
                     return False
             # If both values are null, empty or False it will be considered equal.
             elif not resource1[key] and not resource2[key]:
@@ -324,16 +289,16 @@ class ResourceComparator():
             elif isinstance(resource1[key], dict):
                 # recursive call
                 if not ResourceComparator.compare(resource1[key], resource2[key]):
-                    logger.debug(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
+                    # self.log(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
                     return False
             elif isinstance(resource1[key], list):
                 # change comparison function to compare_list
                 if not ResourceComparator.compare_list(resource1[key], resource2[key]):
-                    logger.debug(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
+                    # self.log(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
                     return False
             elif ResourceComparator._standardize_value(resource1[key]) != ResourceComparator._standardize_value(
                     resource2[key]):
-                logger.debug(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
+                # self.log(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
                 return False
 
         # Checks all keys in the second dict, looking for missing elements
@@ -341,7 +306,7 @@ class ResourceComparator():
             if key not in resource1:
                 if resource2[key] is not None:
                     # Inexistent key is equivalent to exist with value None
-                    logger.debug(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
+                    # self.log(ResourceComparator.MSG_DIFF_AT_KEY.format(key) + debug_resources)
                     return False
 
         return True
@@ -352,27 +317,23 @@ class ResourceComparator():
         Recursively compares lists contents equivalence, ignoring types and element orders.
         Lists with same size are compared value by value after a sort,
         each element is converted to str before the comparison.
-        Args:
-            first_resource: first list
-            second_resource: second list
-
-        Returns:
-            True when equal;
-            False when different.
-        """
+        :arg list first_resource: first list
+        :arg list second_resource: second list
+        :return: True when equal; False when different.
+"""
 
         resource1 = deepcopy(first_resource)
         resource2 = deepcopy(second_resource)
 
-        debug_resources = "resource1 = {0}, resource2 = {1}".format(resource1, resource2)
+        # debug_resources = "resource1 = {0}, resource2 = {1}".format(resource1, resource2)
 
         # The second list is null / empty  / False
         if not resource2:
-            logger.debug("resource 2 is null. " + debug_resources)
+            # self.log("resource 2 is null. " + debug_resources)
             return False
 
         if len(resource1) != len(resource2):
-            logger.debug("resources have different length. " + debug_resources)
+            # self.log("resources have different length. " + debug_resources)
             return False
 
         resource1 = sorted(resource1, key=ResourceComparator._str_sorted)
@@ -382,15 +343,15 @@ class ResourceComparator():
             if isinstance(val, dict):
                 # change comparison function to compare dictionaries
                 if not ResourceComparator.compare(val, resource2[i]):
-                    logger.debug("resources are different. " + debug_resources)
+                    # self.log("resources are different. " + debug_resources)
                     return False
             elif isinstance(val, list):
                 # recursive call
                 if not ResourceComparator.compare_list(val, resource2[i]):
-                    logger.debug("lists are different. " + debug_resources)
+                    # self.log("lists are different. " + debug_resources)
                     return False
             elif ResourceComparator._standardize_value(val) != ResourceComparator._standardize_value(resource2[i]):
-                logger.debug("values are different. " + debug_resources)
+                # self.log("values are different. " + debug_resources)
                 return False
 
         # no differences found
@@ -408,12 +369,10 @@ class ResourceComparator():
         """
         Convert value to string to enhance the comparison.
 
-        Args:
-            value: Any object type.
+        :arg value: Any object type.
 
-        Returns:
-            str: Converted value.
-        """
+        :return: str: Converted value.
+"""
         if isinstance(value, float) and value.is_integer():
             # Workaround to avoid erroneous comparison between int and float
             # Removes zero from integer floats
@@ -427,19 +386,20 @@ class ResourceMerger():
     def merge_list_by_key(original_list, updated_list, key, ignore_when_null=[]):
         """
         Merge two lists by the key. It basically:
+
         1. Adds the items that are present on updated_list and are absent on original_list.
+
         2. Removes items that are absent on updated_list and are present on original_list.
+
         3. For all items that are in both lists, overwrites the values from the original item by the updated item.
 
-        Args:
-            original_list: original list.
-            updated_list: list with changes.
-            key: unique identifier.
-            ignore_when_null: list with the keys from the updated items that should be ignored in the merge, if its
-            values are null.
-        Returns:
-            list: Lists merged.
-        """
+        :arg list original_list: original list.
+        :arg list updated_list: list with changes.
+        :arg str key: unique identifier.
+        :arg list ignore_when_null: list with the keys from the updated items that should be ignored in the merge,
+            if its values are null.
+        :return: list: Lists merged.
+"""
         if not original_list:
             return updated_list
 
@@ -699,17 +659,17 @@ class ServerProfileReplaceNamesByUris(object):
 
     def replace(self, oneview_client, data):
         self.oneview_client = oneview_client
-        self.__replace_os_deployment_name_by_uri(data)
-        self.__replace_enclosure_group_name_by_uri(data)
-        self.__replace_networks_name_by_uri(data)
-        self.__replace_server_hardware_type_name_by_uri(data)
-        self.__replace_volume_attachment_names_by_uri(data)
-        self.__replace_enclosure_name_by_uri(data)
-        self.__replace_interconnect_name_by_uri(data)
-        self.__replace_firmware_baseline_name_by_uri(data)
-        self.__replace_sas_logical_jbod_name_by_uri(data)
+        self._replace_os_deployment_name_by_uri(data)
+        self._replace_enclosure_group_name_by_uri(data)
+        self._replace_networks_name_by_uri(data)
+        self._replace_server_hardware_type_name_by_uri(data)
+        self._replace_volume_attachment_names_by_uri(data)
+        self._replace_enclosure_name_by_uri(data)
+        self._replace_interconnect_name_by_uri(data)
+        self._replace_firmware_baseline_name_by_uri(data)
+        self._replace_sas_logical_jbod_name_by_uri(data)
 
-    def __replace_name_by_uri(self, data, attr_name, message, resource_client):
+    def _replace_name_by_uri(self, data, attr_name, message, resource_client):
         attr_uri = attr_name.replace("Name", "Uri")
         if attr_name in data:
             name = data.pop(attr_name)
@@ -718,60 +678,60 @@ class ServerProfileReplaceNamesByUris(object):
                 raise HPOneViewResourceNotFound(message + name)
             data[attr_uri] = resource_by_name[0]['uri']
 
-    def __replace_os_deployment_name_by_uri(self, data):
+    def _replace_os_deployment_name_by_uri(self, data):
         if SPKeys.OS_DEPLOYMENT in data and data[SPKeys.OS_DEPLOYMENT]:
-            self.__replace_name_by_uri(data[SPKeys.OS_DEPLOYMENT], 'osDeploymentPlanName',
-                                       self.SERVER_PROFILE_OS_DEPLOYMENT_NOT_FOUND,
-                                       self.oneview_client.os_deployment_plans)
+            self._replace_name_by_uri(data[SPKeys.OS_DEPLOYMENT], 'osDeploymentPlanName',
+                                      self.SERVER_PROFILE_OS_DEPLOYMENT_NOT_FOUND,
+                                      self.oneview_client.os_deployment_plans)
 
-    def __replace_enclosure_group_name_by_uri(self, data):
-        self.__replace_name_by_uri(data, 'enclosureGroupName', self.SERVER_PROFILE_ENCLOSURE_GROUP_NOT_FOUND,
-                                   self.oneview_client.enclosure_groups)
+    def _replace_enclosure_group_name_by_uri(self, data):
+        self._replace_name_by_uri(data, 'enclosureGroupName', self.SERVER_PROFILE_ENCLOSURE_GROUP_NOT_FOUND,
+                                  self.oneview_client.enclosure_groups)
 
-    def __replace_networks_name_by_uri(self, data):
+    def _replace_networks_name_by_uri(self, data):
         if SPKeys.CONNECTIONS in data and data[SPKeys.CONNECTIONS]:
             for connection in data[SPKeys.CONNECTIONS]:
                 if 'networkName' in connection:
                     name = connection.pop('networkName', None)
-                    connection['networkUri'] = self.__get_network_by_name(name)['uri']
+                    connection['networkUri'] = self._get_network_by_name(name)['uri']
 
-    def __replace_server_hardware_type_name_by_uri(self, data):
-        self.__replace_name_by_uri(data, 'serverHardwareTypeName', self.SERVER_HARDWARE_TYPE_NOT_FOUND,
-                                   self.oneview_client.server_hardware_types)
+    def _replace_server_hardware_type_name_by_uri(self, data):
+        self._replace_name_by_uri(data, 'serverHardwareTypeName', self.SERVER_HARDWARE_TYPE_NOT_FOUND,
+                                  self.oneview_client.server_hardware_types)
 
-    def __replace_volume_attachment_names_by_uri(self, data):
+    def _replace_volume_attachment_names_by_uri(self, data):
         volume_attachments = (data.get('sanStorage') or {}).get('volumeAttachments') or []
         if len(volume_attachments) > 0:
             for volume in volume_attachments:
-                self.__replace_name_by_uri(volume, 'volumeName', self.VOLUME_NOT_FOUND, self.oneview_client.volumes)
-                self.__replace_name_by_uri(volume, 'volumeStoragePoolName', self.STORAGE_POOL_NOT_FOUND,
-                                           self.oneview_client.storage_pools)
-                self.__replace_name_by_uri(volume, 'volumeStorageSystemName', self.STORAGE_SYSTEM_NOT_FOUND,
-                                           self.oneview_client.storage_systems)
+                self._replace_name_by_uri(volume, 'volumeName', self.VOLUME_NOT_FOUND, self.oneview_client.volumes)
+                self._replace_name_by_uri(volume, 'volumeStoragePoolName', self.STORAGE_POOL_NOT_FOUND,
+                                          self.oneview_client.storage_pools)
+                self._replace_name_by_uri(volume, 'volumeStorageSystemName', self.STORAGE_SYSTEM_NOT_FOUND,
+                                          self.oneview_client.storage_systems)
 
-    def __replace_enclosure_name_by_uri(self, data):
-        self.__replace_name_by_uri(data, 'enclosureName', self.ENCLOSURE_NOT_FOUND, self.oneview_client.enclosures)
+    def _replace_enclosure_name_by_uri(self, data):
+        self._replace_name_by_uri(data, 'enclosureName', self.ENCLOSURE_NOT_FOUND, self.oneview_client.enclosures)
 
-    def __replace_interconnect_name_by_uri(self, data):
+    def _replace_interconnect_name_by_uri(self, data):
         connections = data.get('connections') or []
         if len(connections) > 0:
             for connection in connections:
-                self.__replace_name_by_uri(connection, 'interconnectName', self.INTERCONNECT_NOT_FOUND,
-                                           self.oneview_client.interconnects)
+                self._replace_name_by_uri(connection, 'interconnectName', self.INTERCONNECT_NOT_FOUND,
+                                          self.oneview_client.interconnects)
 
-    def __replace_firmware_baseline_name_by_uri(self, data):
+    def _replace_firmware_baseline_name_by_uri(self, data):
         firmware = data.get('firmware') or {}
-        self.__replace_name_by_uri(firmware, 'firmwareBaselineName', self.FIRMWARE_DRIVER_NOT_FOUND,
-                                   self.oneview_client.firmware_drivers)
+        self._replace_name_by_uri(firmware, 'firmwareBaselineName', self.FIRMWARE_DRIVER_NOT_FOUND,
+                                  self.oneview_client.firmware_drivers)
 
-    def __replace_sas_logical_jbod_name_by_uri(self, data):
+    def _replace_sas_logical_jbod_name_by_uri(self, data):
         sas_logical_jbods = (data.get('localStorage') or {}).get('sasLogicalJBODs') or []
         if len(sas_logical_jbods) > 0:
             for jbod in sas_logical_jbods:
-                self.__replace_name_by_uri(jbod, 'sasLogicalJBODName', self.SAS_LOGICAL_JBOD_NOT_FOUND,
-                                           self.oneview_client.sas_logical_jbods)
+                self._replace_name_by_uri(jbod, 'sasLogicalJBODName', self.SAS_LOGICAL_JBOD_NOT_FOUND,
+                                          self.oneview_client.sas_logical_jbods)
 
-    def __get_network_by_name(self, name):
+    def _get_network_by_name(self, name):
         fc_networks = self.oneview_client.fc_networks.get_by('name', name)
         if fc_networks:
             return fc_networks[0]
