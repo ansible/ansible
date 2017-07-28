@@ -206,11 +206,19 @@
 
     - block:
       - include_role:
+          name: nxos_portchannel
+        when: "limit_to in ['*', 'nxos_portchannel']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_portchannel' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
         - set_fact: test_failed=true
-
 
 ###########
     - debug: var=failed_modules
