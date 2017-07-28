@@ -227,7 +227,7 @@ result:
     description: The resultant object describing the launch config returned from boto3.
     returned: Always.
     type: dict
-securiry_groups:
+security_groups:
     description: A list of security groups associated with the launch configuration.
     returned: Always.
     type: list
