@@ -654,7 +654,7 @@ def command_integration_script(args, target):
     env = integration_environment(args, target, cmd)
     cwd = target.path
 
-    intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+    intercept_command_if_needed(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_integration_role(args, target, start_at_task):
@@ -724,7 +724,7 @@ def command_integration_role(args, target, start_at_task):
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
 
-        intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+        intercept_command_if_needed(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_units(args):
@@ -779,7 +779,7 @@ def command_units(args):
         display.info('Unit test with Python %s' % version)
 
         try:
-            intercept_command(args, command, target_name='units', env=env, python_version=version)
+            intercept_command_if_needed(args, command, target_name='units', env=env, python_version=version)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:
@@ -892,6 +892,21 @@ def compile_version(args, python_version, include, exclude):
         return TestFailure(command, test, messages=results, python_version=python_version)
 
     return TestSuccess(command, test, python_version=python_version)
+
+
+def intercept_command_if_needed(args, cmd, target_name, **kwargs):
+    """Call intercept_command() if needed, run_command() if not.
+
+    intercept_command() is only needed for test coverage stats and it's useless to do it if we're
+    not neeeding these stats. Moreover, it make some testing scenarios more difficult to execute
+    (see comment in injector.py).
+    """
+    if args.coverage:
+        return intercept_command(args, cmd, target_name, **kwargs)
+    else:
+        kwargs.pop('python_version', None)
+        kwargs.pop('path', None)
+        return run_command(args, cmd, **kwargs)
 
 
 def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
