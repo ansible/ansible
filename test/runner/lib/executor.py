@@ -841,7 +841,7 @@ def compile_version(args, python_version, include, exclude):
     :type args: CompileConfig
     :type python_version: str
     :type include: tuple[CompletionTarget]
-    :param exclude: tuple[CompletionTarget]
+    :type exclude: tuple[CompletionTarget]
     :rtype: TestResult
     """
     command = 'compile'
