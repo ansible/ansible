@@ -19,6 +19,8 @@ __metaclass__ = type
 
 import random
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.plugins.lookup import LookupBase
 
 # useful for introducing chaos ... or just somewhat reasonably fair selection
@@ -30,7 +32,6 @@ from ansible.plugins.lookup import LookupBase
 #             - one
 #             - two
 #             - three
-
 
 class LookupModule(LookupBase):
 
