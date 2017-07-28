@@ -43,9 +43,12 @@
       with_fileglob: "testing_policies/*"
       register: iam_managed_policies
 
+    - debug:
+        msg: "{{ iam_managed_policies | json_query('results[].policy.policy_name') }}"
+
     - name: Ensure IAM group exists and attach managed policies
       iam_group:
         name: "{{ iam_group }}"
         state: present
-        managed_policy: "{{ iam_managed_policies | json_query('results[].policy.PolicyName') }}"
+        managed_policy: "{{ iam_managed_policies | json_query('results[].policy.policy_name') }}"
         profile: "{{ profile|default(omit) }}"
