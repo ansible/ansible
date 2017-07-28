@@ -102,7 +102,8 @@ class LookupModule(LookupBase):
                 paramvals['section'] = 'java_properties'
 
             # Open file using encoding
-            contents, show_data = self._loader._get_file_contents(path, encoding=paramvals['encoding'])
+            contents, show_data = self._loader._get_file_contents(path)
+            contents = to_text(contents, errors='surrogate_or_strict', encoding=paramvals['encoding'])
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
