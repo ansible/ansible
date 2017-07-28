@@ -253,7 +253,6 @@ type         ini            Type of the file. Can be ini or properties (for java
 file         ansible.ini    Name of the file to load
 section      global         Default section where to lookup for key.
 re           False          The key is a regexp.
-encoding     utf-8          Text encoding to use.
 default      empty string   return value if the key is not in the ini file
 ==========   ============   =========================================================================================
 
