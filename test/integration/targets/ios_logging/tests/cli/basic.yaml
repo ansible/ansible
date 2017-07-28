@@ -1,4 +1,30 @@
 ---
+# ensure logging configs are empty
+- name: Remove host logging
+  ios_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: Remove console
+  ios_logging:
+    dest: console
+    level: warnings
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: Remove buffer
+  ios_logging:
+    dest: buffered
+    size: 8000
+    authorize: yes
+    state: absent
+    provider: "{{ cli }}"
+
+# start tests
 - name: Set up host logging
   ios_logging:
     dest: host
