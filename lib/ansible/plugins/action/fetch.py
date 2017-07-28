@@ -120,6 +120,11 @@ class ActionModule(ActionBase):
 
         dest = os.path.expanduser(dest)
         if flat:
+            if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')) and not dest.endswith(os.sep):
+                result['msg'] = "dest is an existing directory, use a trailing slash if you want to fetch src into that directory"
+                result['file'] = dest
+                result['failed'] = True
+                return result
             if dest.endswith(os.sep):
                 # if the path ends with "/", we'll use the source filename as the
                 # destination filename
