@@ -64,12 +64,12 @@ EXAMPLES = r"""
 # finds two named groups, "address" and "hostnames"
 - blockfromfile:
     src: /etc/hosts
-    regexp: '^[ \t\f\v]*(?P<address>[\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
+    regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
 
 # finds one unnamed group
 - blockfromfile:
     src: /etc/sudoers
-    regexp: '^(\S+)(?:[ \t\f\v]*\s+)*NOPASSWD:ALL'
+    regexp: '^[ \t\f\v]*(\S+)(?:[ \t\f\v]+\S*)+NOPASSWD:ALL'
 """
 
 RETURN = """
