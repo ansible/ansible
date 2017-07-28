@@ -1,22 +1,12 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -96,13 +86,13 @@ msg:
     sample: "Password Updated Successfully"
 '''
 import json
+import traceback
 
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import open_url
 
 
 HEADERS = {
@@ -119,9 +109,8 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
+    except HTTPError as e:
+        r = e.fp
 
     try:
         raw_data = r.read()
@@ -173,10 +162,9 @@ def get_pwd_status(module, ssid, api_url, user, pwd):
     try:
         rc, data = request(url, headers=HEADERS, url_username=user, url_password=pwd)
         return data['readOnlyPasswordSet'], data['adminPasswordSet']
-    except HTTPError:
-        error = get_exception()
+    except HTTPError as e:
         module.fail_json(msg="There was an issue with connecting, please check that your "
-                             "endpoint is properly defined and your credentials are correct: %s" % str(error))
+                             "endpoint is properly defined and your credentials are correct: %s" % to_native(e))
 
 
 def update_storage_system_pwd(module, ssid, pwd, api_url, api_usr, api_pwd):
@@ -186,9 +174,8 @@ def update_storage_system_pwd(module, ssid, pwd, api_url, api_usr, api_pwd):
     try:
         rc, data = request(url, data=post_body, method='POST', headers=HEADERS, url_username=api_usr,
                            url_password=api_pwd)
-    except:
-        err = get_exception()
-        module.fail_json(msg="Failed to update system password. Id [%s].  Error [%s]" % (ssid, str(err)))
+    except Exception as e:
+        module.fail_json(msg="Failed to update system password. Id [%s].  Error [%s]" % (ssid, to_native(e)))
     return data
 
 
@@ -205,15 +192,14 @@ def set_password(module, ssid, api_url, user, pwd, current_password=None, new_pa
     try:
         rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd,
                            ignore_errors=True)
-    except:
-        err = get_exception()
-        module.fail_json(msg="Failed to set system password. Id [%s].  Error [%s]" % (ssid, str(err)))
+    except Exception as e:
+        module.fail_json(msg="Failed to set system password. Id [%s].  Error [%s]" % (ssid, to_native(e)), exception=traceback.format_exc())
 
     if rc == 422:
         post_body = json.dumps(dict(currentAdminPassword='', adminPassword=set_admin, newPassword=new_password))
         try:
             rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd)
-        except Exception:
+        except:
             module.fail_json(msg="Wrong or no admin password supplied. Please update your playbook and try again")
 
     update_data = update_storage_system_pwd(module, ssid, new_password, api_url, user, pwd)
