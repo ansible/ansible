@@ -50,6 +50,7 @@ options:
     default: no
     required: no
     choices: [ 'yes', 'no' ]
+    version_added: '2.4'
   keystore_path:
     description:
       - Path to keystore.
