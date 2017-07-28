@@ -2,5 +2,8 @@
 docker-pipelining    ansible_ssh_pipelining=true
 docker-no-pipelining ansible_ssh_pipelining=false
 [docker:vars]
+# For this test to work, you need a running "ubuntu-latest" container, which you can create with:
+# $ docker run --name ubuntu-latest -d ansible/ansible:ubuntu1604
+
 ansible_host=ubuntu-latest
 ansible_connection=docker
