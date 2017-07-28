@@ -48,6 +48,15 @@ ARGS_DEFAULT_VALUE = {
 }
 
 
+def sanitize(resp):
+    # Takes config from device and strips whitespace from all lines
+    # Aireos adds in extra preceding whitespace which netcfg parses as children/parents, which Aireos does not do
+    cleaned = []
+    for line in resp.splitlines():
+        cleaned.append(line.strip())
+    return '\n'.join(cleaned).strip()
+
+
 def get_argspec():
     return aireos_argument_spec
 
@@ -82,7 +91,7 @@ def get_config(module, flags=[]):
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
             module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_then_replace'))
-        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        cfg = sanitize(to_text(out, errors='surrogate_then_replace').strip())
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
