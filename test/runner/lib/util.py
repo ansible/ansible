@@ -97,7 +97,7 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
-    :type str_errors: str
+    :type str_errors: 'strict' | 'replace'
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
@@ -117,7 +117,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
-    :type str_errors: str
+    :type str_errors: 'strict' | 'replace'
     :rtype: str | None, str | None
     """
     if not cwd:
