@@ -179,7 +179,7 @@ class DataLoader:
             except AttributeError:
                 pass  # older versions of yaml don't have dispose function, ignore
 
-    def _get_file_contents(self, file_name, encoding='utf-8'):
+    def _get_file_contents(self, file_name):
         '''
         Reads the file contents from the given file name, and will decrypt them
         if they are found to be vault-encrypted.
@@ -194,7 +194,7 @@ class DataLoader:
         show_content = True
         try:
             with open(b_file_name, 'rb') as f:
-                data = to_text(f.read(), encoding=encoding)
+                data = f.read()
                 if is_encrypted(data):
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False

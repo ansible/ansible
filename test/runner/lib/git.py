@@ -24,7 +24,7 @@ class Git(object):
         :rtype: list[str]
         """
         cmd = ['diff'] + args
-        return self.run_git_split(cmd, '\n', str_errors='replace')
+        return self.run_git_split(cmd, '\n')
 
     def get_diff_names(self, args):
         """
@@ -76,24 +76,22 @@ class Git(object):
         except SubprocessError:
             return False
 
-    def run_git_split(self, cmd, separator=None, str_errors='strict'):
+    def run_git_split(self, cmd, separator=None):
         """
         :type cmd: list[str]
         :param separator: str | None
-        :type str_errors: 'strict' | 'replace'
         :rtype: list[str]
         """
-        output = self.run_git(cmd, str_errors=str_errors).strip(separator)
+        output = self.run_git(cmd).strip(separator)
 
         if not output:
             return []
 
         return output.split(separator)
 
-    def run_git(self, cmd, str_errors='strict'):
+    def run_git(self, cmd):
         """
         :type cmd: list[str]
-        :type str_errors: 'strict' | 'replace'
         :rtype: str
         """
-        return run_command(self.args, [self.git] + cmd, capture=True, always=True, str_errors=str_errors)[0]
+        return run_command(self.args, [self.git] + cmd, capture=True, always=True)[0]
