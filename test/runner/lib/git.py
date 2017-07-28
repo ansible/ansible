@@ -79,8 +79,8 @@ class Git(object):
     def run_git_split(self, cmd, separator=None, str_errors='strict'):
         """
         :type cmd: list[str]
-        :param separator: str | None
-        :type str_errors: 'strict' | 'replace'
+        :type separator: str | None
+        :type str_errors: str
         :rtype: list[str]
         """
         output = self.run_git(cmd, str_errors=str_errors).strip(separator)
@@ -93,7 +93,7 @@ class Git(object):
     def run_git(self, cmd, str_errors='strict'):
         """
         :type cmd: list[str]
-        :type str_errors: 'strict' | 'replace'
+        :type str_errors: str
         :rtype: str
         """
         return run_command(self.args, [self.git] + cmd, capture=True, always=True, str_errors=str_errors)[0]

@@ -312,7 +312,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
 
 def analyze_integration_target_dependencies(integration_targets):
     """
-    :type: list[IntegrationTarget]
+    :type integration_targets: list[IntegrationTarget]
     :rtype: dict[str,set[str]]
     """
     hidden_role_target_names = set(t.name for t in integration_targets if t.type == 'role' and 'hidden/' in t.aliases)
