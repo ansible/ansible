@@ -2,19 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hugh Ma <Hugh.Ma@flextronics.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -110,12 +102,10 @@ stdout_lines:
 
 import json
 import os
-import re
-import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils.urls import fetch_url, ConnectionError
+from ansible.module_utils.urls import fetch_url
 
 
 class StackiHost(object):
@@ -194,10 +184,10 @@ class StackiHost(object):
 
     def stack_sync(self):
 
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps({ "cmd": "sync config"}),
+        self.do_request(self.module, self.endpoint, payload=json.dumps({ "cmd": "sync config"}),
                               headers=self.header, method="POST")
 
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync host config"}),
+        self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync host config"}),
                               headers=self.header, method="POST")
 
 
@@ -208,7 +198,7 @@ class StackiHost(object):
 
         data['cmd'] = "set host boot {0} action=install" \
             .format(self.hostname)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
         changed = True
 
@@ -224,7 +214,7 @@ class StackiHost(object):
 
         data['cmd'] = "add host {0} rack={1} rank={2} appliance={3}"\
             .format(self.hostname, self.rack, self.rank, self.appliance)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
 
         self.stack_sync()
@@ -239,7 +229,7 @@ class StackiHost(object):
 
         data['cmd'] = "remove host {0}"\
             .format(self.hostname)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
 
         self.stack_sync()

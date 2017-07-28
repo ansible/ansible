@@ -2,31 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-BINS = dict(
-    ipv4='iptables',
-    ipv6='ip6tables',
-)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ICMP_TYPE_OPTIONS = dict(
-    ipv4='--icmp-type',
-    ipv6='--icmpv6-type',
-)
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -355,8 +335,19 @@ EXAMPLES = '''
 
 import re
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
+
+
+BINS = dict(
+    ipv4='iptables',
+    ipv6='ip6tables',
+)
+
+ICMP_TYPE_OPTIONS = dict(
+    ipv4='--icmp-type',
+    ipv6='--icmpv6-type',
+)
+
 
 def append_param(rule, param, flag, is_list):
     if is_list:
