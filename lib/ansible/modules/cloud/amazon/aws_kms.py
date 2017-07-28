@@ -165,12 +165,18 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             # do we want this grant type? Are we on its statement?
             # and does the role have this grant type?
 
+            # Ensure statement looks as expected
+            if not statement.get('Principal'):
+                statement['Principal'] = {'AWS': []}
+            if not isinstance(statement['Principal']['AWS'], list):
+                statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+
             if mode == 'grant' and statement['Sid'] == statement_label[granttype]:
                 # we're granting and we recognize this statement ID.
 
                 if granttype in granttypes:
                     invalid_entries = list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
-                    if clean_invalid_entries and len(list(invalid_entries)):
+                    if clean_invalid_entries and invalid_entries:
                         # we have bad/invalid entries. These are roles that were deleted.
                         # prune the list.
                         valid_entries = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
@@ -197,12 +203,12 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
     try:
         if len(changes_needed) and not dry_run:
             policy_json_string = json.dumps(policy)
-            kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
-    except:
-        raise Exception("{}: // {}".format("e", policy_json_string))
+    except Exception as e:
+            raise Exception("{0}: // {1}".format(e, repr(policy)))
+    kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
 
-        # returns nothing, so we have to just assume it didn't throw
-        ret['changed'] = True
+    # returns nothing, so we have to just assume it didn't throw
+    ret['changed'] = changes_needed and not had_invalid_entries
 
     ret['changes_needed'] = changes_needed
     ret['had_invalid_entries'] = had_invalid_entries
