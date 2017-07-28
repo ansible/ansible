@@ -812,6 +812,7 @@ class AnsibleModule(object):
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
                               '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
                               '_ansible_socket']
+        self._options_context = list()
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1625,9 +1626,11 @@ class AnsibleModule(object):
                 del self.params[k]
 
         if unsupported_parameters:
-            self.fail_json(msg="Unsupported parameters for (%s) module: %s. Supported parameters include: %s" % (self._name,
-                                                                                                                 ','.join(sorted(list(unsupported_parameters))),
-                                                                                                                 ','.join(sorted(spec.keys()))))
+            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ','.join(sorted(list(unsupported_parameters))))
+            if self._options_context:
+                msg += " found in %s." % " -> ".join(self._options_context)
+            msg += " Supported parameters include: %s" % (','.join(sorted(spec.keys())))
+            self.fail_json(msg=msg)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
@@ -1646,7 +1649,10 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count > 1:
-                self.fail_json(msg="parameters are mutually exclusive: %s" % (check,))
+                msg = "parameters are mutually exclusive: %s" % (check,)
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.fail_json(msg=msg)
 
     def _check_required_one_of(self, spec, param=None):
         if spec is None:
@@ -1654,7 +1660,10 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count == 0:
-                self.fail_json(msg="one of the following is required: %s" % ','.join(check))
+                msg="one of the following is required: %s" % ','.join(check)
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.fail_json(msg=msg)
 
     def _check_required_together(self, spec, param=None):
         if spec is None:
@@ -1664,7 +1673,10 @@ class AnsibleModule(object):
             non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    self.fail_json(msg="parameters are required together: %s" % (check,))
+                    msg = "parameters are required together: %s" % (check,)
+                    if self._options_context:
+                        msg += " found in %s" % " -> ".join(self._options_context)
+                    self.fail_json(msg=msg)
 
     def _check_required_arguments(self, spec=None, param=None):
         ''' ensure all required arguments are present '''
@@ -1678,7 +1690,10 @@ class AnsibleModule(object):
             if required and k not in param:
                 missing.append(k)
         if len(missing) > 0:
-            self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
+            msg = "missing required arguments: %s" % ",".join(missing)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_required_if(self, spec, param=None):
         ''' ensure that parameters which conditionally required are present '''
@@ -1706,7 +1721,10 @@ class AnsibleModule(object):
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
-                self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
+                msg = "%s is %s but the following are missing: %s" % (key, val, ','.join(missing))
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.fail_json(msg=msg)
 
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
@@ -1741,9 +1759,14 @@ class AnsibleModule(object):
                         if param[k] not in choices:
                             choices_str = ",".join([to_native(c) for c in choices])
                             msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
+                            if self._options_context:
+                                msg += " found in %s" % " -> ".join(self._options_context)
                             self.fail_json(msg=msg)
             else:
-                self.fail_json(msg="internal error: choices for argument %s are not iterable: %s" % (k, choices))
+                msg="internal error: choices for argument %s are not iterable: %s" % (k, choices)
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.fail_json(msg=msg)
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
 
@@ -1907,6 +1930,8 @@ class AnsibleModule(object):
                 if spec is None or not params[k]:
                     continue
 
+                self._options_context.append(k)
+
                 if isinstance(params[k], dict):
                     elements = [params[k]]
                 else:
@@ -1943,6 +1968,7 @@ class AnsibleModule(object):
 
                     # handle multi level options (sub argspec)
                     self._handle_options(spec, param)
+                self._options_context.pop()
 
     def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
