@@ -285,7 +285,7 @@ def main():
 
     state = module.params['state']
 
-    args = PARAM_TO_DEFAULT_KEYMAP.keys()
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
 
     existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
