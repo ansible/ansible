@@ -1132,6 +1132,8 @@ class Nmcli(object):
                 return self.execute_command(cmd)
         elif self.type=='bridge':
             cmd=self.create_connection_bridge()
+        elif self.type=='bridge-slave':
+            cmd=self.create_connection_bridge_slave()
         elif self.type=='vlan':
             cmd=self.create_connection_vlan()
         return self.execute_command(cmd)
@@ -1158,6 +1160,8 @@ class Nmcli(object):
             cmd=self.modify_connection_ethernet()
         elif self.type=='bridge':
             cmd=self.modify_connection_bridge()
+        elif self.type=='bridge-slave':
+            cmd=self.modify_connection_bridge_slave()
         elif self.type=='vlan':
             cmd=self.modify_connection_vlan()
         return self.execute_command(cmd)
