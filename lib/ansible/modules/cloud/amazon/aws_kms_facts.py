@@ -120,12 +120,18 @@ keys:
         - aws/acm
         - aws/ebs
     tags:
-      description: dictionary of tags applied to the key
+      description: dictionary of tags applied to the key. Empty when access is denied even if there are tags.
       type: dict
       returned: always
       sample:
         Name: myKey
         Purpose: protecting_stuff
+    policies:
+      description: list of policy documents for the keys. Empty when access is denied even if there are policies.
+      type: list
+      returned: always
+      sample:
+        "{\n  \"Version\" : \"2012-10-17\",\n  \"Id\" : \"auto-ebs-2\",\n  \"Statement\" : [ {\n    \"Sid\" : \"Allow access through EBS for all principals in the account that are authorized to use EBS\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"*\"\n    },\n    \"Action\" : [ \"kms:Encrypt\", \"kms:Decrypt\", \"kms:ReEncrypt*\", \"kms:GenerateDataKey*\", \"kms:CreateGrant\", \"kms:DescribeKey\" ],\n    \"Resource\" : \"*\",\n    \"Condition\" : {\n      \"StringEquals\" : {\n        \"kms:CallerAccount\" : \"111111111111\",\n        \"kms:ViaService\" : \"ec2.ap-southeast-2.amazonaws.com\"\n      }\n    }\n  }, {\n    \"Sid\" : \"Allow direct access to key metadata to the account\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"arn:aws:iam::111111111111:root\"\n    },\n    \"Action\" : [ \"kms:Describe*\", \"kms:Get*\", \"kms:List*\", \"kms:RevokeGrant\" ],\n    \"Resource\" : \"*\"\n  } ]\n}"
     grants:
       description: list of grants associated with a key
       type: complex
@@ -244,6 +250,17 @@ def get_kms_metadata_with_backoff(connection, key_id):
     return connection.describe_key(KeyId=key_id)
 
 
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_key_policies_with_backoff(connection, key_id):
+    paginator = connection.get_paginator('list_key_policies')
+    return paginator.paginate(KeyId=key_id).build_full_result()
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def get_key_policy_with_backoff(connection, key_id, policy_name):
+    return connection.get_key_policy(KeyId=key_id, PolicyName=policy_name)
+
+
 def get_kms_tags(connection, module, key_id):
     # Handle pagination here as list_resource_tags does not have
     # a paginator
@@ -266,6 +283,20 @@ def get_kms_tags(connection, module, key_id):
         else:
             more = False
     return tags
+
+
+def get_kms_policies(connection, module, key_id):
+    try:
+        policies = list_key_policies_with_backoff(connection, key_id)['PolicyNames']
+        return [get_key_policy_with_backoff(connection, key_id, policy)['Policy'] for
+                policy in policies]
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != 'AccessDeniedException':
+            module.fail_json(msg="Failed to obtain key policies",
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+        else:
+            return []
 
 
 def key_matches_filter(key, filtr):
@@ -305,7 +336,7 @@ def get_key_details(connection, module, key_id, tokens=[]):
                          **camel_dict_to_snake_dict(e.response))
     result['aliases'] = aliases.get(result['KeyId'], [])
 
-    if not module.params.get('pending_deletion'):
+    if module.params.get('pending_deletion'):
         return camel_dict_to_snake_dict(result)
 
     try:
@@ -318,6 +349,7 @@ def get_key_details(connection, module, key_id, tokens=[]):
 
     result = camel_dict_to_snake_dict(result)
     result['tags'] = boto3_tag_list_to_ansible_dict(tags, 'TagKey', 'TagValue')
+    result['policies'] = get_kms_policies(connection, module, key_id)
     return result
 
 
