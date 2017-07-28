@@ -96,11 +96,12 @@ options:
         This handles how to properly understand the output and apply the
         conditionals path to the result set. For I(rpcs) argument default
         display is C(xml) and for I(commands) argument default display
-        is C(text).
+        is C(text). Value C(set) is applicable only for fetching configuration
+        from device.
     required: false
     default: depends on input argument I(rpcs) or I(commands)
     aliases: ['format', 'output']
-    choices: ['text', 'json', 'xml']
+    choices: ['text', 'json', 'xml', 'set']
     version_added: "2.3"
 requirements:
   - jxmlease
@@ -142,8 +143,12 @@ EXAMPLES = """
 
 - name: run rpc on the remote device
   junos_command:
-    rpcs: get-software-information
+    commands: show configuration
+    display: set
 
+- name: run rpc on the remote device
+  junos_command:
+    rpcs: get-software-information
 """
 
 RETURN = """
@@ -173,7 +178,7 @@ import re
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import junos_argument_spec, check_args, get_configuration
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types, iteritems
@@ -208,6 +213,7 @@ def rpc(module, items):
     for item in items:
         name = item['name']
         xattrs = item['xattrs']
+        fetch_config = False
 
         args = item.get('args')
         text = item.get('text')
@@ -216,6 +222,9 @@ def rpc(module, items):
 
         if all((module.check_mode, not name.startswith('get'))):
             module.fail_json(msg='invalid rpc for running in check_mode')
+
+        if name == 'command' and text.startswith('show configuration') or name == 'get-configuration':
+            fetch_config = True
 
         element = Element(name, xattrs)
 
@@ -235,14 +244,30 @@ def rpc(module, items):
                     if value is not True:
                         child.text = value
 
-        reply = send_request(module, element)
+        if fetch_config:
+            reply = get_configuration(module, format=xattrs['format'])
+        else:
+            reply = send_request(module, element, ignore_warning=False)
 
         if xattrs['format'] == 'text':
-            data = reply.find('.//output')
+            if fetch_config:
+                data = reply.find('.//configuration-text')
+            else:
+                data = reply.find('.//output')
+
+            if data is None:
+                module.fail_json(msg=tostring(reply))
+
             responses.append(data.text.strip())
 
         elif xattrs['format'] == 'json':
             responses.append(module.from_json(reply.text.strip()))
+
+        elif xattrs['format'] == 'set':
+            data = reply.find('.//configuration-set')
+            if data is None:
+                module.fail_json(msg="Display format 'set' is not supported by remote device.")
+            responses.append(data.text.strip())
 
         else:
             responses.append(tostring(reply))
@@ -277,8 +302,11 @@ def parse_rpcs(module):
                 args[key] = str(value)
 
         display = module.params['display'] or 'xml'
-        xattrs = {'format': display}
 
+        if display == 'set' and rpc != 'get-configuration':
+            module.fail_json(msg="Invalid display option '%s' given for rpc '%s'" % ('set', name))
+
+        xattrs = {'format': display}
         items.append({'name': name, 'args': args, 'xattrs': xattrs})
 
     return items
@@ -298,14 +326,20 @@ def parse_commands(module, warnings):
         text = parts[0]
 
         display = module.params['display'] or 'text'
-        xattrs = {'format': display}
 
         if '| display json' in command:
-            xattrs['format'] = 'json'
+            display = 'json'
 
         elif '| display xml' in command:
-            xattrs['format'] = 'xml'
+            display = 'xml'
 
+        if display == 'set' or '| display set' in command:
+            if command.startswith('show configuration'):
+                display = 'set'
+            else:
+                module.fail_json(msg="Invalid display option '%s' given for command '%s'" % ('set', command))
+
+        xattrs = {'format': display}
         items.append({'name': 'command', 'xattrs': xattrs, 'text': text})
 
     return items
@@ -318,7 +352,7 @@ def main():
         commands=dict(type='list'),
         rpcs=dict(type='list'),
 
-        display=dict(choices=['text', 'json', 'xml'], aliases=['format', 'output']),
+        display=dict(choices=['text', 'json', 'xml', 'set'], aliases=['format', 'output']),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
@@ -351,7 +385,6 @@ def main():
 
     while retries > 0:
         responses = rpc(module, items)
-
         transformed = list()
         output = list()
         for item, resp in zip(items, responses):
