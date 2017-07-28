@@ -43,7 +43,7 @@ def check_client(module):
 
 class ManageIQ(object):
     """
-        class encapsulating ManageIQ API client
+        class encapsulating ManageIQ API client.
     """
 
     def __init__(self, module):
@@ -71,12 +71,39 @@ class ManageIQ(object):
         verify_ssl = params['verify_ssl']
         ca_bundle_path = params['ca_bundle_path']
 
-        self.module = module
-        self.api_url = url + '/api'
-        self.client = ManageIQClient(self.api_url, (username, password), verify_ssl=verify_ssl, ca_bundle_path=ca_bundle_path)
+        self._module = module
+        self._api_url = url + '/api'
+        self._client = ManageIQClient(self._api_url, (username, password), verify_ssl=verify_ssl, ca_bundle_path=ca_bundle_path)
+
+    @property
+    def module(self):
+        """ Ansible module module
+
+        Returns:
+            the ansible module
+        """
+        return self._module
+
+    @property
+    def api_url(self):
+        """ Base ManageIQ API
+
+        Returns:
+            the base ManageIQ API
+        """
+        return self._api_url
+
+    @property
+    def client(self):
+        """ ManageIQ client
+
+        Returns:
+            the ManageIQ client
+        """
+        return self._client
 
     def find_collection_resource_by(self, collection_name, **params):
-        """ Searches the collection resource by the collection name and the param passed
+        """ Searches the collection resource by the collection name and the param passed.
 
         Returns:
             the resource as an object if it exists in manageiq, None otherwise.
