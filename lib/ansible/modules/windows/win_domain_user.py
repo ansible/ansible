@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: win_domain_user
-version_added: 2.4
+version_added: '2.4'
 short_description: Manages Windows Active Directory user accounts
 description:
      - Manages Windows Active Directory user accounts.
@@ -105,18 +105,21 @@ options:
         C(no) will clear the expired password flag. This is mutually exclusive
         with I(password_never_expires).
     choices: [ 'yes', 'no' ]
+    type: bool
 
   password_never_expires:
     description:
       - C(yes) will set the password to never expire.  C(no) will allow the
         password to expire. This is mutually exclusive with I(password_expired)
     choices: [ 'yes', 'no' ]
+    type: bool
 
   user_cannot_change_password:
     description:
       - C(yes) will prevent the user from changing their password.  C(no) will
         allow the user to change their password.
     choices: [ 'yes', 'no' ]
+    type: bool
 
   firstname:
     description:
