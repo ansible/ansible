@@ -629,6 +629,12 @@ def integration_environment(args, target, cmd):
     if args.debug_strategy:
         env.update(dict(ANSIBLE_STRATEGY='debug'))
 
+    if 'non_local/' in target.aliases:
+        if args.coverage:
+            display.warning('Skipping coverage reporting for non-local test: %s' % target.name)
+
+        env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
+
     env.update(integration)
 
     cloud_environment = get_cloud_environment(args, target)
