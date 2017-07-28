@@ -226,8 +226,9 @@ class PullCLI(CLI):
 
         # Build playbook command
         cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
-        if self.options.vault_password_file:
-            cmd += " --vault-password-file=%s" % self.options.vault_password_file
+        if self.options.vault_password_files:
+            for vault_password_file in self.options.vault_password_files:
+                cmd += " --vault-password-file=%s" % vault_password_file
         if inv_opts:
             cmd += ' %s' % inv_opts
         for ev in self.options.extra_vars:

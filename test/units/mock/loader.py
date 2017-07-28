@@ -35,6 +35,7 @@ class DictDataLoader(DataLoader):
 
         self._file_mapping = file_mapping
         self._build_known_directories()
+        self._vault_secrets = None
 
     def load_from_file(self, path, unsafe=False):
         if path in self._file_mapping:
@@ -98,3 +99,6 @@ class DictDataLoader(DataLoader):
 
     def get_basedir(self):
         return os.getcwd()
+
+    def set_vault_secrets(self, vault_secrets):
+        self._vault_secrets = vault_secrets

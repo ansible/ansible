@@ -34,7 +34,7 @@ from abc import ABCMeta, abstractmethod
 
 import ansible
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleOptionsError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
@@ -43,6 +43,7 @@ from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 from ansible.utils.vars import load_extra_vars, load_options_vars
 from ansible.vars.manager import VariableManager
+from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 
 try:
     from __main__ import display
@@ -168,37 +169,89 @@ class CLI(with_metaclass(ABCMeta, object)):
             display.v(u"No config file found; using defaults")
 
     @staticmethod
-    def ask_vault_passwords():
-        ''' prompt for vault password and/or password change '''
+    def split_vault_id(vault_id):
+        # return (before_@, after_@)
+        # if no @, return whole string as after_
+        if '@' not in vault_id:
+            return (None, vault_id)
 
-        vault_pass = None
-        try:
-            vault_pass = getpass.getpass(prompt="Vault password: ")
-
-        except EOFError:
-            pass
-
-        # enforce no newline chars at the end of passwords
-        if vault_pass:
-            vault_pass = to_bytes(vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
-
-        return vault_pass
+        parts = vault_id.split('@', 1)
+        ret = tuple(parts)
+        return ret
 
     @staticmethod
-    def ask_new_vault_passwords():
-        new_vault_pass = None
-        try:
-            new_vault_pass = getpass.getpass(prompt="New Vault password: ")
-            new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
-            if new_vault_pass != new_vault_pass2:
-                raise AnsibleError("Passwords do not match")
-        except EOFError:
-            pass
+    def build_vault_ids(vault_ids, vault_password_files=None, ask_vault_pass=None):
+        vault_password_files = vault_password_files or []
+        vault_ids = vault_ids or []
 
-        if new_vault_pass:
-            new_vault_pass = to_bytes(new_vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
+        # convert vault_password_files into vault_ids slugs
+        for password_file in vault_password_files:
+            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, password_file)
 
-        return new_vault_pass
+            # note this makes --vault-id higher precendence than --vault-password-file
+            # if we want to intertwingle them in order probably need a cli callback to populate vault_ids
+            # used by --vault-id and --vault-password-file
+            vault_ids.append(id_slug)
+
+        if ask_vault_pass:
+            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt')
+            vault_ids.append(id_slug)
+
+        return vault_ids
+
+    # TODO: remove the now unused args
+    @staticmethod
+    def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
+                            ask_vault_pass=None, create_new_password=False):
+        # list of tuples
+        vault_secrets = []
+
+        if create_new_password:
+            prompt_formats = ['New vault password (%s): ',
+                              'Confirm vew vault password (%s): ']
+        else:
+            prompt_formats = ['Vault password (%s): ']
+
+        vault_ids = CLI.build_vault_ids(vault_ids,
+                                        vault_password_files,
+                                        ask_vault_pass)
+
+        for index, vault_id_slug in enumerate(vault_ids):
+            vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
+            if vault_id_value == 'prompt':
+                # TODO: we could assume --vault-id=prompt implies --ask-vault-pass
+                #       if not, we need to 'if ask_vault_pass' here
+                if vault_id_name:
+                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats, vault_id=vault_id_name)
+                    prompted_vault_secret.load()
+                    vault_secrets.append((vault_id_name, prompted_vault_secret))
+                else:
+                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats,
+                                                              vault_id=C.DEFAULT_VAULT_IDENTITY)
+                    prompted_vault_secret.load()
+                    vault_secrets.append((C.DEFAULT_VAULT_IDENTITY, prompted_vault_secret))
+
+                # update loader with new secrets incrementally, so we can load a vault password
+                # that is encrypted with a vault secret provided earlier
+                loader.set_vault_secrets(vault_secrets)
+                continue
+
+            # assuming anything else is a password file
+            display.vvvvv('Reading vault password file: %s' % vault_id_value)
+            # read vault_pass from a file
+            file_vault_secret = get_file_vault_secret(filename=vault_id_value,
+                                                      vault_id_name=vault_id_name,
+                                                      loader=loader)
+            file_vault_secret.load()
+            if vault_id_name:
+                vault_secrets.append((vault_id_name, file_vault_secret))
+            else:
+                vault_secrets.append((C.DEFAULT_VAULT_IDENTITY, file_vault_secret))
+
+            # update loader with as-yet-known vault secrets
+            loader.set_vault_secrets(vault_secrets)
+
+        return vault_secrets
 
     def ask_passwords(self):
         ''' prompt for connection and become passwords if needed '''
@@ -260,7 +313,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if vault_opts:
             # Check for vault related conflicts
-            if (op.ask_vault_pass and op.vault_password_file):
+            if (op.ask_vault_pass and op.vault_password_files):
                 self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
         if runas_opts:
@@ -278,12 +331,14 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def unfrack_paths(option, opt, value, parser):
+        paths = getattr(parser.values, option.dest)
         if isinstance(value, string_types):
-            setattr(parser.values, option.dest, [unfrackpath(x) for x in value.split(os.pathsep)])
+            paths.extend([unfrackpath(x) for x in value.split(os.pathsep)])
         elif isinstance(value, list):
-            setattr(parser.values, option.dest, [unfrackpath(x) for x in value])
+            paths.extend([unfrackpath(x) for x in value])
         else:
             pass  # FIXME: should we raise options error?
+        setattr(parser.values, option.dest, paths)
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
@@ -324,13 +379,17 @@ class CLI(with_metaclass(ABCMeta, object)):
         if vault_opts:
             parser.add_option('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                               help='ask for vault password')
-            parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE, dest='vault_password_file',
-                              help="vault password file", action="callback", callback=CLI.unfrack_path, type='string')
-            parser.add_option('--new-vault-password-file', dest='new_vault_password_file',
-                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_path, type='string')
+            parser.add_option('--vault-password-file', default=[], dest='vault_password_files',
+                              help="vault password file", action="callback", callback=CLI.unfrack_paths, type='string')
+            parser.add_option('--new-vault-password-file', default=[], dest='new_vault_password_files',
+                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_paths, type='string')
             parser.add_option('--output', default=None, dest='output_file',
                               help='output file name for encrypt or decrypt; use - for stdout',
-                              action="callback", callback=CLI.unfrack_path, type='string')
+                              action="callback", callback=CLI.unfrack_path, type='string'),
+            parser.add_option('--vault-id', default=[], dest='vault_ids', action='append', type='string',
+                              help='the vault identity to use')
+            parser.add_option('--new-vault-id', default=None, dest='new_vault_id', type='string',
+                              help='the new vault identity to use for rekey')
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default=[], action='append',
@@ -650,53 +709,16 @@ class CLI(with_metaclass(ABCMeta, object)):
         return t
 
     @staticmethod
-    def read_vault_password_file(vault_password_file, loader):
-        """
-        Read a vault password from a file or if executable, execute the script and
-        retrieve password from STDOUT
-        """
-
-        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
-        if not os.path.exists(this_path):
-            raise AnsibleError("The vault password file %s was not found" % this_path)
-
-        if loader.is_executable(this_path):
-            try:
-                # STDERR not captured to make it easier for users to prompt for input in their scripts
-                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
-            except OSError as e:
-                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, "
-                                   "remove the executable bit from the file." % (' '.join(this_path), e))
-            stdout, stderr = p.communicate()
-            if p.returncode != 0:
-                raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (this_path, p.returncode, p.stderr))
-            vault_pass = stdout.strip(b'\r\n')
-        else:
-            try:
-                f = open(this_path, "rb")
-                vault_pass = f.read().strip()
-                f.close()
-            except (OSError, IOError) as e:
-                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
-
-        return vault_pass
-
-    @staticmethod
     def _play_prereqs(options):
 
         # all needs loader
         loader = DataLoader()
 
-        # vault
-        b_vault_pass = None
-        if options.vault_password_file:
-            # read vault_pass from a file
-            b_vault_pass = CLI.read_vault_password_file(options.vault_password_file, loader=loader)
-        elif options.ask_vault_pass:
-            b_vault_pass = CLI.ask_vault_passwords()
-
-        if b_vault_pass is not None:
-            loader.set_vault_password(b_vault_pass)
+        vault_secrets = CLI.setup_vault_secrets(loader,
+                                                vault_ids=options.vault_ids,
+                                                vault_password_files=options.vault_password_files,
+                                                ask_vault_pass=options.ask_vault_pass)
+        loader.set_vault_secrets(vault_secrets)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = InventoryManager(loader=loader, sources=options.inventory)
