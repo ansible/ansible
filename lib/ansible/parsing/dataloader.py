@@ -185,7 +185,7 @@ class DataLoader:
             except AttributeError:
                 pass  # older versions of yaml don't have dispose function, ignore
 
-    def _get_file_contents(self, file_name):
+    def _get_file_contents(self, file_name, encoding='utf-8'):
         '''
         Reads the file contents from the given file name
 
@@ -210,7 +210,7 @@ class DataLoader:
         show_content = True
         try:
             with open(b_file_name, 'rb') as f:
-                data = f.read()
+                data = to_text(f.read(), encoding=encoding)
                 if is_encrypted(data):
                     # FIXME: plugin vault selector
                     b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(data)
