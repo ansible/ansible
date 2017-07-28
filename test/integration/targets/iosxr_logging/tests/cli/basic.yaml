@@ -1,11 +1,29 @@
 ---
-- name: Remove host logging (if it exists)
+# Remove old logging entries so that they don't conflict with tests
+- name: Remove host logging
   iosxr_logging:
     dest: hostnameprefix
     name: 172.16.0.1
     state: absent
     provider: "{{ cli }}"
 
+- name: Remove console logging
+  iosxr_logging:
+    dest: console
+    level: warning
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- name: Remove buffer
+  iosxr_logging:
+    dest: buffered
+    size: 4800000
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+# Start tests
 - name: Set up host logging
   iosxr_logging:
     dest: hostnameprefix
