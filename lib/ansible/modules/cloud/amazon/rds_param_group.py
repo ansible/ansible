@@ -85,6 +85,10 @@ options:
     description:
       - Dictionary of tags to attach to the parameter group
     version_added: "2.4"
+  purge_tags:
+    description:
+      - Whether or not to remove tags that do not appear in the I(tags) list. Defaults to false.
+    version_added: "2.4"
 author:
     - "Scott Anderson (@tastychutney)"
     - "Will Thames (@willthames)"
@@ -262,7 +266,8 @@ def update_parameters(module, connection):
 def update_tags(module, connection, group, tags):
     changed = False
     existing_tags = connection.list_tags_for_resource(ResourceName=group['DBParameterGroupArn'])['TagList']
-    to_update, to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(existing_tags), tags)
+    to_update, to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(existing_tags),
+                                            tags, module.params['purge_tags'])
     if to_update:
         try:
             connection.add_tags_to_resource(ResourceName=group['DBParameterGroupArn'],
@@ -373,7 +378,8 @@ def main():
             description=dict(),
             params=dict(aliases=['parameters'], type='dict'),
             immediate=dict(type='bool', aliases=['apply_immediately']),
-            tags=dict(type='dict', default={})
+            tags=dict(type='dict', default={}),
+            purge_tags=dict(type='bool', default=False)
         )
     )
     module = AnsibleModule(argument_spec=argument_spec,
