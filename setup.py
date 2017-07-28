@@ -172,7 +172,7 @@ setup(
     packages=find_packages('lib'),
     package_data={
         '': [
-            'module_utils/*.ps1',
+            'module_utils/*/*.psm1',
             'modules/windows/*.ps1',
             'modules/windows/*.ps1',
             'galaxy/data/*/*.*',
