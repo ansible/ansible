@@ -7,29 +7,11 @@
 # (c) 2015, Evan Kaufman <evan@digitalflophouse.com>
 # (c) 2015, Luca Berruti <nadirio@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Cron Plugin: The goal of this plugin is to provide an idempotent method for
-# setting up cron jobs on a host. The script will play well with other manually
-# entered crons. Each cron job entered will be preceded with a comment
-# describing the job so that it can be found later, which is required to be
-# present in order for this plugin to find/modify the job.
-#
-# This module is based on python-crontab by Martin Owens.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -235,16 +217,22 @@ EXAMPLES = '''
 '''
 
 import os
-import pwd
-import re
-import tempfile
 import platform
 import pipes
+import pwd
+import re
+import sys
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule, get_platform
+
 
 CRONCMD = "/usr/bin/crontab"
 
+
 class CronTabError(Exception):
     pass
+
 
 class CronTab(object):
     """
@@ -785,8 +773,6 @@ def main():
     # --- should never get here
     module.exit_json(msg="Unable to execute cron task.")
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Jasper Lievisse Adriaanse <j@jasper.la>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -346,15 +335,12 @@ state:
   sample: 'running'
 '''
 
+import json
 import os
 import re
 import tempfile
 import traceback
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -464,9 +450,8 @@ def new_vm(module, uuid, vm_state):
     except Exception as e:
         # Since the payload may contain sensitive information, fail hard
         # if we cannot remove the file so the operator knows about it.
-        module.fail_json(
-            msg='Could not remove temporary JSON payload file {0}'.format(payload_file),
-            exception=traceback.format_exc())
+        module.fail_json(msg='Could not remove temporary JSON payload file {0}: {1}'.format(payload_file, to_native(e)),
+                         exception=traceback.format_exc())
 
     return changed, vm_uuid
 
@@ -544,8 +529,7 @@ def create_payload(module, uuid):
         fh.write(vmdef_json)
         fh.close()
     except Exception as e:
-        module.fail_json(
-            msg='Could not save JSON payload', exception=traceback.format_exc())
+        module.fail_json(msg='Could not save JSON payload: %s' % to_native(e), exception=traceback.format_exc())
 
     return fname
 

@@ -1,22 +1,12 @@
 #!/usr/bin/python
 
 # (c) 2017, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -84,10 +74,12 @@ EXAMPLES = """
 RETURN = """
 
 """
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -153,13 +145,13 @@ class NetAppCDOTUserRole(object):
         try:
             result = self.server.invoke_successfully(
                 security_login_role_get_iter, enable_tunneling=False)
-        except netapp_utils.zapi.NaApiError:
-            e = get_exception()
+        except netapp_utils.zapi.NaApiError as e:
             # Error 16031 denotes a role not being found.
-            if str(e.code) == "16031":
+            if to_native(e.code) == "16031":
                 return False
             else:
-                self.module.fail_json(msg='Error getting role %s' % self.name, exception=str(e))
+                self.module.fail_json(msg='Error getting role %s: %s' % (self.name, to_native(e)),
+                                      exception=traceback.format_exc())
 
         if (result.get_child_by_name('num-records') and
                 int(result.get_child_content('num-records')) >= 1):
@@ -179,9 +171,9 @@ class NetAppCDOTUserRole(object):
         try:
             self.server.invoke_successfully(role_create,
                                             enable_tunneling=False)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error creating role %s' % self.name, exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error creating role %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def delete_role(self):
         role_delete = netapp_utils.zapi.NaElement.create_node_with_children(
@@ -193,9 +185,9 @@ class NetAppCDOTUserRole(object):
         try:
             self.server.invoke_successfully(role_delete,
                                             enable_tunneling=False)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error removing role %s' % self.name, exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error removing role %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def apply(self):
         changed = False

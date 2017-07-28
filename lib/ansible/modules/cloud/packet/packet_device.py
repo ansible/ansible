@@ -3,20 +3,11 @@
 # (c) 2016, Matt Baldwin <baldwin@stackpointcloud.com>
 # (c) 2016, Thibaud Morel l'Horset <teebes@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -212,18 +203,17 @@ devices:
 
 
 import os
+import re
 import time
 import uuid
-import re
-
-from ansible.module_utils.basic import AnsibleModule
 
 HAS_PACKET_SDK = True
-
 try:
     import packet
 except ImportError:
     HAS_PACKET_SDK = False
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]','[a-zA-Z0-9\-]')
@@ -565,7 +555,6 @@ def main():
         module.exit_json(**act_on_devices(state, module, packet_conn))
     except Exception as e:
         module.fail_json(msg='failed to set machine state %s, error: %s' % (state,str(e)))
-
 
 
 if __name__ == '__main__':

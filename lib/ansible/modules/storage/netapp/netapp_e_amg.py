@@ -1,21 +1,11 @@
 #!/usr/bin/python
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -122,14 +112,18 @@ msg:
 """  # NOQA
 
 import json
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.netapp import request, eseries_host_argument_spec
+
 
 HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
+
 
 def has_match(module, ssid, api_url, api_pwd, api_usr, body):
     compare_keys = ['syncIntervalMinutes', 'syncWarnThresholdMinutes',
@@ -145,9 +139,8 @@ def has_match(module, ssid, api_url, api_pwd, api_usr, body):
     url = api_url + endpoint
     try:
         rc, data = request(url, url_username=api_usr, url_password=api_pwd, headers=HEADERS)
-    except Exception:
-        error = get_exception()
-        module.exit_json(exception="Error finding a match. Message: %s" % str(error))
+    except Exception as e:
+        module.exit_json(msg="Error finding a match. Message: %s" % to_native(e), exception=traceback.format_exc())
 
     for async_group in data:
         if async_group['label'] == desired_name:
@@ -174,9 +167,9 @@ def create_async(module, ssid, api_url, api_pwd, api_usr, body):
     try:
         rc, data = request(url, data=post_data, method='POST', url_username=api_usr, url_password=api_pwd,
                            headers=HEADERS)
-    except Exception:
-        error = get_exception()
-        module.exit_json(exception="Exception while creating aysnc mirror group. Message: %s" % str(error))
+    except Exception as e:
+        module.exit_json(msg="Exception while creating aysnc mirror group. Message: %s" %  to_native(e),
+                         exception=traceback.format_exc())
     return data
 
 
@@ -195,9 +188,9 @@ def update_async(module, ssid, api_url, pwd, user, body, new_name, async_id):
     try:
         rc, data = request(url, data=post_data, method='POST', headers=HEADERS,
                            url_username=user, url_password=pwd)
-    except Exception:
-        error = get_exception()
-        module.exit_json(exception="Exception while updating async mirror group. Message: %s" % str(error))
+    except Exception as e:
+        module.exit_json(msg="Exception while updating async mirror group. Message: %s" % to_native(e),
+                         exception=traceback.format_exc())
 
     return data
 
@@ -208,9 +201,9 @@ def remove_amg(module, ssid, api_url, pwd, user, async_id):
     try:
         rc, data = request(url, method='DELETE', url_username=user, url_password=pwd,
                            headers=HEADERS)
-    except Exception:
-        error = get_exception()
-        module.exit_json(exception="Exception while removing async mirror group. Message: %s" % str(error))
+    except Exception as e:
+        module.exit_json(msg="Exception while removing async mirror group. Message: %s" % to_native(e),
+                         exception=traceback.format_exc())
 
     return
 

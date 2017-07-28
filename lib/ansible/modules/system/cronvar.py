@@ -3,18 +3,8 @@
 #
 # This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 #
 # Cronvar Plugin: The goal of this plugin is to provide an idempotent
 # method for set cron variable values.  It should play well with the
@@ -25,6 +15,10 @@
 #
 # This module is based on the crontab module.
 #
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -113,18 +107,23 @@ EXAMPLES = '''
 '''
 
 import os
-import re
-import tempfile
-import platform
 import pipes
+import platform
+import pwd
+import re
 import shlex
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+import sys
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 CRONCMD = "/usr/bin/crontab"
 
+
 class CronVarError(Exception):
     pass
+
 
 class CronVar(object):
     """
@@ -160,7 +159,6 @@ class CronVar(object):
                 self.lines = f.read().splitlines()
                 f.close()
             except IOError:
-                e = get_exception()
                 # cron file does not exist
                 return
             except:
@@ -217,7 +215,6 @@ class CronVar(object):
             os.unlink(self.cron_file)
             return True
         except OSError:
-            e = get_exception()
             # cron file does not exist
             return False
         except:
@@ -234,7 +231,6 @@ class CronVar(object):
         raise CronVarError("Not a variable.")
 
     def find_variable(self, name):
-        comment = None
         for l in self.lines:
             try:
                 (varname, value) = self.parse_for_var(l)
@@ -435,9 +431,6 @@ def main():
         res_args['cron_file'] = cron_file
 
     module.exit_json(**res_args)
-
-    # --- should never get here
-    module.exit_json(msg="Unable to execute cronvar task.")
 
 
 if __name__ == '__main__':

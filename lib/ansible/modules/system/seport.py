@@ -1,21 +1,11 @@
 #!/usr/bin/python
 
 # (c) 2014, Dan Keder <dan.keder@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -87,6 +77,8 @@ EXAMPLES = '''
     state: present
 '''
 
+import traceback
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -99,8 +91,8 @@ try:
 except ImportError:
     HAVE_SEOBJECT=False
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
+from ansible.module_utils._text import to_native
 
 
 def semanage_port_get_ports(seport, setype, proto):
@@ -191,21 +183,8 @@ def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', ses
                 elif port_type is not None and not module.check_mode:
                     seport.modify(port, proto, serange, setype)
 
-    except ValueError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except IOError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except KeyError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except OSError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except RuntimeError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
+    except (ValueError, IOError, KeyError, OSError, RuntimeError) as e:
+        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)), exception=traceback.format_exc())
 
     return change
 
@@ -245,21 +224,8 @@ def semanage_port_del(module, ports, proto, setype, do_reload, sestore=''):
                 if not module.check_mode:
                     seport.delete(port, proto)
 
-    except ValueError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except IOError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except KeyError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except OSError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except RuntimeError:
-        e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
+    except (ValueError, IOError, KeyError, OSError, RuntimeError) as e:
+        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)), exception=traceback.format_exc())
 
     return change
 

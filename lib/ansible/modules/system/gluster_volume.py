@@ -2,21 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Taneli Leppä <taneli@crasman.fi>
-#
-# This file is part of Ansible (sort of)
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -182,13 +171,17 @@ EXAMPLES = """
   run_once: true
 """
 
-import shutil
-import time
+import re
 import socket
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import *
+import time
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 glusterbin = ''
+
 
 def run_gluster(gargs, **kwargs):
     global glusterbin
@@ -198,10 +191,11 @@ def run_gluster(gargs, **kwargs):
     try:
         rc, out, err = module.run_command(args, **kwargs)
         if rc != 0:
-            module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out or err))
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg='error running gluster (%s) command: %s' % (' '.join(args), str(e)))
+            module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' %
+                             (' '.join(args), rc, out or err), exception=traceback.format_exc())
+    except Exception as e:
+        module.fail_json(msg='error running gluster (%s) command: %s' % (' '.join(args),
+                         to_native(e)), exception=traceback.format_exc())
     return out
 
 def run_gluster_nofail(gargs, **kwargs):
@@ -226,7 +220,6 @@ def run_gluster_yes(gargs):
 
 def get_peers():
     out = run_gluster([ 'peer', 'status'])
-    i = 0
     peers = {}
     hostname = None
     uuid = None
@@ -319,7 +312,6 @@ def probe(host, myhostname):
     out = run_gluster([ 'peer', 'probe', host ])
     if out.find('localhost') == -1 and not wait_for_peer(host):
         module.fail_json(msg='failed to probe peer %s on %s' % (host, myhostname))
-    changed = True
 
 def probe_all_peers(hosts, peers, myhostname):
     for host in hosts:
@@ -542,6 +534,7 @@ def main():
     facts['glusterfs'] = { 'peers': peers, 'volumes': volumes, 'quotas': quotas }
 
     module.exit_json(changed=changed, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()

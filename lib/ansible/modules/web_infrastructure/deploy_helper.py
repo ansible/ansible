@@ -4,20 +4,11 @@
 # (c) 2014, Jasper N. Brouwer <jasper@nerdsweide.nl>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -282,10 +273,13 @@ EXAMPLES = '''
 - debug:
     var: deploy_helper
 '''
+import os
+import shutil
+import time
+import traceback
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class DeployHelper(object):
@@ -344,9 +338,8 @@ class DeployHelper(object):
         if not self.module.check_mode:
             try:
                 shutil.rmtree(path, ignore_errors=False)
-            except Exception:
-                e = get_exception()
-                self.module.fail_json(msg="rmtree failed: %s" % str(e))
+            except Exception as e:
+                self.module.fail_json(msg="rmtree failed: %s" % to_native(e), exception=traceback.format_exc())
 
         return True
 

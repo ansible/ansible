@@ -25,7 +25,9 @@ Compat module for Python2.7's unittest module
 
 import sys
 
-# Python 2.6
+# Allow wildcard import because we really do want to import all of
+# unittests's symbols into this compat shim
+# pylint: disable=wildcard-import
 if sys.version_info < (2, 7):
     try:
         # Need unittest2 on python2.6

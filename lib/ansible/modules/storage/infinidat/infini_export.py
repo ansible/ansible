@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -59,6 +49,8 @@ options:
     required: true
 extends_documentation_fragment:
     - infinibox
+requirements:
+    - munch
 '''
 
 EXAMPLES = '''
@@ -91,15 +83,14 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
-
-HAS_INFINISDK = True
 try:
-    from infinisdk import InfiniBox, core
+    from munch import unmunchify
+    HAS_MUNCH = True
 except ImportError:
-    HAS_INFINISDK = False
+    HAS_MUNCH = False
 
-from ansible.module_utils.infinibox import *
-from munch import unmunchify
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_system, infinibox_argument_spec
 
 
 def transform(d):
@@ -178,6 +169,8 @@ def main():
 
     if not HAS_INFINISDK:
         module.fail_json(msg='infinisdk is required for this module')
+    if not HAS_MUNCH:
+        module.fail_json(msg='the python munch library is required for this module')
 
     state      = module.params['state']
     system     = get_system(module)
@@ -195,7 +188,5 @@ def main():
         module.exit_json(changed=False)
 
 
-# Import Ansible Utilities
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
