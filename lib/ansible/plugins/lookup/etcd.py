@@ -88,16 +88,16 @@ from ansible.module_utils.urls import open_url
 #
 # Example Output:
 #
-#TASK [debug] *******************************************************************
-#ok: [localhost] => {
-#    "msg": {
-#        "Backend": {
-#            "Type": "vxlan"
-#        },
-#        "Network": "172.30.0.0/16",
-#        "SubnetLen": 24
-#    }
-#}
+# TASK [debug] *******************************************************************
+# ok: [localhost] => {
+#     "msg": {
+#         "Backend": {
+#             "Type": "vxlan"
+#         },
+#         "Network": "172.30.0.0/16",
+#         "SubnetLen": 24
+#     }
+# }
 #
 #
 #
@@ -175,7 +175,7 @@ class LookupModule(LookupBase):
         url = kwargs.get('url', '')
         version = kwargs.get('version', '')
 
-        etcd = Etcd(url=url,version=version,validate_certs=validate_certs)
+        etcd = Etcd(url=url, version=version, validate_certs=validate_certs)
 
         ret = []
         for term in terms:

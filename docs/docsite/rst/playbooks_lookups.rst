@@ -508,7 +508,7 @@ Sample output:
     debug ------------------------------------------------------------------- 0.07s
     mdiez@batman:~/ansible$
 
-.. _credstash_lookup:
+.. _etcd_lookup:
 
 The etcd Lookup
 ````````````````````
