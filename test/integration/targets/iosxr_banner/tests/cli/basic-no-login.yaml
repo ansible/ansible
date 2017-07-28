@@ -21,7 +21,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'no banner login' in result.commands"
+      - "'no banner login' in result.commands[0]"
 
 - name: remove login (idempotent)
   iosxr_banner:
