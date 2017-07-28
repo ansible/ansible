@@ -40,6 +40,8 @@ options:
    image:
      description:
         - The name or id of the base image to boot.
+          As of 2.4 can be a string containing a name or id or a dict
+          representation of a flavor.
      required: true
    image_exclude:
      description:
@@ -50,9 +52,10 @@ options:
    flavor:
      description:
         - The name or id of the flavor in which the new instance has to be
-          created. Mutually exclusive with flavor_ram
+          created. Mutually exclusive with flavor_ram.
+          As of 2.4 can be a string containing a name or id or a dict
+          representation of a flavor.
      required: false
-     default: 1
    flavor_ram:
      description:
         - The minimum amount of ram in MB that the flavor in which the new
@@ -104,11 +107,12 @@ options:
         - list of valid floating IPs that pre-exist to assign to this node
      required: false
      default: None
-   floating_ip_pools:
+   floating_network:
      description:
-        - Name of floating IP pool from which to choose a floating IP
+        - Name of the network from which to choose a floating IP
      required: false
      default: None
+     aliases: ['floating_ip_pools']
    meta:
      description:
         - 'A list of key value pairs that should be provided as a metadata to
@@ -437,38 +441,6 @@ def _parse_nics(nics):
         else:
             yield net
 
-def _network_args(module, cloud):
-    args = []
-    nics = module.params['nics']
-
-    if not isinstance(nics, list):
-        module.fail_json(msg='The \'nics\' parameter must be a list.')
-
-    for net in _parse_nics(nics):
-        if not isinstance(net, dict):
-            module.fail_json(
-                msg='Each entry in the \'nics\' parameter must be a dict.')
-
-        if net.get('net-id'):
-            args.append(net)
-        elif net.get('net-name'):
-            by_name = cloud.get_network(net['net-name'])
-            if not by_name:
-                module.fail_json(
-                    msg='Could not find network by net-name: %s' %
-                    net['net-name'])
-            args.append({'net-id': by_name['id']})
-        elif net.get('port-id'):
-            args.append(net)
-        elif net.get('port-name'):
-            by_name = cloud.get_port(net['port-name'])
-            if not by_name:
-                module.fail_json(
-                    msg='Could not find port by port-name: %s' %
-                    net['port-name'])
-            args.append({'port-id': by_name['id']})
-    return args
-
 
 def _parse_meta(meta):
     if isinstance(meta, str):
@@ -494,58 +466,61 @@ def _delete_server(module, cloud):
 
 
 def _create_server(module, cloud):
+    image = module.params['image']
+    image_exclude = module.params['image_exclude']
     flavor = module.params['flavor']
     flavor_ram = module.params['flavor_ram']
     flavor_include = module.params['flavor_include']
 
-    image_id = None
-    if not module.params['boot_volume']:
-        image_id = cloud.get_image_id(
-            module.params['image'], module.params['image_exclude'])
-        if not image_id:
-            module.fail_json(msg="Could not find image %s" %
-                             module.params['image'])
+    if not isinstance(image, dict):
+        image_dict = cloud.get_image_exclude(image, image_exclude)
+        if image_dict:
+            image = image_dict
+        else:
+            msg = "Could not find image {image}".format(image=image)
+            if image_exclude:
+                msg += " excluding images containing {image_exclude}".format(
+                    image_exclude=image_exclude)
+            module.fail_json(msg=msg)
 
-    if flavor:
-        flavor_dict = cloud.get_flavor(flavor)
-        if not flavor_dict:
-            module.fail_json(msg="Could not find flavor %s" % flavor)
-    else:
-        flavor_dict = cloud.get_flavor_by_ram(flavor_ram, flavor_include)
-        if not flavor_dict:
-            module.fail_json(msg="Could not find any matching flavor")
-
-    nics = _network_args(module, cloud)
-
-    module.params['meta'] = _parse_meta(module.params['meta'])
+    if flavor_ram:
+        flavor = cloud.get_flavor_by_ram(
+            flavor_ram, flavor_include, get_extra=False)
+        if not flavor:
+            msg = ("Could not find any flavor with at least {flavor_ram}"
+                   " GB of RAM".format(flavor_ram=flavor_ram))
+            if flavor_include:
+                msg += " and containing the string {flavor_include}".format(
+                    flavor_include=flavor_include)
+            module.fail_json(msg=msg)
 
     bootkwargs = dict(
         name=module.params['name'],
-        image=image_id,
-        flavor=flavor_dict['id'],
-        nics=nics,
-        meta=module.params['meta'],
-        security_groups=module.params['security_groups'],
-        userdata=module.params['userdata'],
-        config_drive=module.params['config_drive'],
+        image=image,
+        flavor=flavor,
+        ip_pool=module.params['floating_network'],
+        ips=module.params['floating_ips'],
+        auto_ip=module.params['auto_ip'],
+        reuse_ips=module.params['reuse_ips'],
+        wait=module.params['wait'],
+        timeout=module.params['timeout'],
     )
+    meta = _parse_meta(module.params['meta'])
+    if meta:
+        bootkwargs['meta'] = meta
+    nics = list(_parse_nics(module.params['nics']))
+    if nics:
+        bootkwargs['nics'] = nics
+
     for optional_param in (
             'key_name', 'availability_zone', 'network',
-            'scheduler_hints', 'volume_size', 'volumes'):
+            'scheduler_hints', 'volume_size', 'volumes',
+            'boot_volume', 'terminate_volume', 'boot_from_volume',
+            'security_groups', 'userdata', 'config_drive'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
 
-    server = cloud.create_server(
-        ip_pool=module.params['floating_ip_pools'],
-        ips=module.params['floating_ips'],
-        auto_ip=module.params['auto_ip'],
-        boot_volume=module.params['boot_volume'],
-        boot_from_volume=module.params['boot_from_volume'],
-        terminate_volume=module.params['terminate_volume'],
-        reuse_ips=module.params['reuse_ips'],
-        wait=module.params['wait'], timeout=module.params['timeout'],
-        **bootkwargs
-    )
+    server = cloud.create_server(**bootkwargs)
 
     _exit_hostvars(module, cloud, server)
 
@@ -582,9 +557,9 @@ def _check_ips(module, cloud, server):
 
     auto_ip = module.params['auto_ip']
     floating_ips = module.params['floating_ips']
-    floating_ip_pools = module.params['floating_ip_pools']
+    floating_network = module.params['floating_network']
 
-    if floating_ip_pools or floating_ips:
+    if floating_network or floating_ips:
         ips = openstack_find_nova_addresses(server.addresses, 'floating')
         if not ips:
             # If we're configured to have a floating but we don't have one,
@@ -593,7 +568,7 @@ def _check_ips(module, cloud, server):
                 server,
                 auto_ip=auto_ip,
                 ips=floating_ips,
-                ip_pool=floating_ip_pools,
+                ip_pool=floating_network,
                 wait=module.params['wait'],
                 timeout=module.params['timeout'],
             )
@@ -627,7 +602,7 @@ def _check_ips(module, cloud, server):
                 server,
                 auto_ip=auto_ip,
                 ips=floating_ips,
-                ip_pool=floating_ip_pools,
+                ip_pool=floating_network,
                 wait=module.params['wait'],
                 timeout=module.params['timeout'],
             )
@@ -690,9 +665,9 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name                            = dict(required=True),
-        image                           = dict(default=None),
+        image                           = dict(default=None, type='raw'),
         image_exclude                   = dict(default='(deprecated)'),
-        flavor                          = dict(default=None),
+        flavor                          = dict(default=None, type='raw'),
         flavor_ram                      = dict(default=None, type='int'),
         flavor_include                  = dict(default=None),
         key_name                        = dict(default=None),
@@ -704,7 +679,7 @@ def main():
         config_drive                    = dict(default=False, type='bool'),
         auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips                    = dict(default=None, type='list'),
-        floating_ip_pools               = dict(default=None, type='list'),
+        floating_network                = dict(default=None, type='list', aliaess=['floating_ip_pools']),
         volume_size                     = dict(default=False, type='int'),
         boot_from_volume                = dict(default=False, type='bool'),
         boot_volume                     = dict(default=None, aliases=['root_volume']),
@@ -718,8 +693,8 @@ def main():
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
             ['auto_ip', 'floating_ips'],
-            ['auto_ip', 'floating_ip_pools'],
-            ['floating_ips', 'floating_ip_pools'],
+            ['auto_ip', 'floating_network'],
+            ['floating_ips', 'floating_network'],
             ['flavor', 'flavor_ram'],
             ['image', 'boot_volume'],
             ['boot_from_volume', 'boot_volume'],
