@@ -577,7 +577,7 @@ files:
   $modules/source_control/subversion.py: dsummersl
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
-  $modules/storage/purestorage/purefa_host.py: sdodsley
+  $modules/storage/purestorage/: sdodsley
   $modules/storage/zfs/zfs.py: johanwiren
   $modules/storage/zfs/zfs_facts.py: xen0l
   $modules/storage/zfs/zpool_facts.py: xen0l
@@ -830,35 +830,36 @@ files:
     - core inventory
     - inventory
     - inventory parsing
-  lib/ansible/module_utils/a10.py: ericchou1 mischapeters
-  lib/ansible/module_utils/aireos.py: jmighion
-  lib/ansible/module_utils/eos.py: $team_networking
-  lib/ansible/module_utils/aruba.py: jmighion
-  lib/ansible/module_utils/asa.py: ogenstad
-  lib/ansible/module_utils/avi.py: $team_avi
-  lib/ansible/module_utils/bigswitch_utils.py: jayakody tedelhourani vuile
-  lib/ansible/module_utils/cloudengine.py: QijunPan
-  lib/ansible/module_utils/cnos_devicerules.py: dkasberg
-  lib/ansible/module_utils/cnos_errorcodes.py: dkasberg
-  lib/ansible/module_utils/cnos.py: dkasberg
-  lib/ansible/module_utils/dellos: skg-net
-  lib/ansible/module_utils/eos.py: $team_networking
-  lib/ansible/module_utils/f5_utils.py: caphrim007
-  lib/ansible/module_utils/fortios.py: bjolivot
-  lib/ansible/module_utils/ios.py: $team_networking
-  lib/ansible/module_utils/iosxr.py: $team_networking
-  lib/ansible/module_utils/junos.py: $team_networking
-  lib/ansible/module_utils/netcfg.py: $team_networking
-  lib/ansible/module_utils/netconf.py: $team_networking
-  lib/ansible/module_utils/netcli.py: $team_networking
-  lib/ansible/module_utils/netscaler.py: $team_networking
-  lib/ansible/module_utils/network_common.py: $team_networking
-  lib/ansible/module_utils/network.py: $team_networking
-  lib/ansible/module_utils/nxos.py: $team_networking
-  lib/ansible/module_utils/openswitch.py:
-  lib/ansible/module_utils/ordnance.py: alexanderturner djh00t
-  lib/ansible/module_utils/sros.py: $team_networking
-  lib/ansible/module_utils/vyos: $team_networking
+  $module_utils/a10.py: ericchou1 mischapeters
+  $module_utils/aireos.py: jmighion
+  $module_utils/eos.py: $team_networking
+  $module_utils/aruba.py: jmighion
+  $module_utils/asa.py: ogenstad
+  $module_utils/avi.py: $team_avi
+  $module_utils/bigswitch_utils.py: jayakody tedelhourani vuile
+  $module_utils/cisco_usc.py:   ragupta-git
+  $module_utils/cloudengine.py: QijunPan
+  $module_utils/cnos_devicerules.py: dkasberg
+  $module_utils/cnos_errorcodes.py: dkasberg
+  $module_utils/cnos.py: dkasberg
+  $module_utils/dellos: skg-net
+  $module_utils/eos.py: $team_networking
+  $module_utils/f5_utils.py: caphrim007
+  $module_utils/fortios.py: bjolivot
+  $module_utils/ios.py: $team_networking
+  $module_utils/iosxr.py: $team_networking
+  $module_utils/junos.py: $team_networking
+  $module_utils/netcfg.py: $team_networking
+  $module_utils/netconf.py: $team_networking
+  $module_utils/netcli.py: $team_networking
+  $module_utils/netscaler.py: $team_networking
+  $module_utils/network_common.py: $team_networking
+  $module_utils/network.py: $team_networking
+  $module_utils/nxos.py: $team_networking
+  $module_utils/openswitch.py:
+  $module_utils/ordnance.py: alexanderturner djh00t
+  $module_utils/sros.py: $team_networking
+  $module_utils/vyos: $team_networking
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -879,6 +880,8 @@ files:
     - role dep
     - role dependency
   lib/ansible/plugins/action/asa: ogenstad
+  lib/ansible/plugins/action/aireos: jmighion
+  lib/ansible/plugins/action/aruba: jmighion
   lib/ansible/plugins/action/dellos: skg-net
   lib/ansible/plugins/action/eos: $team_networking
   lib/ansible/plugins/action/ios: $team_networking
@@ -912,6 +915,7 @@ files:
     keywords:
     - validate-modules
 macros: 
+  module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
