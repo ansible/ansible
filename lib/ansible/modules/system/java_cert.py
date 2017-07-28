@@ -44,6 +44,12 @@ options:
   cert_alias:
     description:
       - Imported certificate alias.
+  trusted_ca:
+    description:
+      - Set to yes if you want the cert to be a trusted CA.
+    default: no
+    required: no
+    choices: [ 'yes', 'no' ]
   keystore_path:
     description:
       - Path to keystore.
@@ -130,12 +136,14 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias):
         return True
     return False
 
-def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
+def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, trusted_ca):
     ''' Import certificate from URL into keystore located at keystore_path '''
     fetch_cmd = ("%s -printcert -rfc -sslserver %s:%d")%(executable, url, port)
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -alias '%s'")%(executable, keystore_path,
-                                                  keystore_pass, alias)
+                                                  keystore_pass, alias, trusted_ca)
+    if trusted_ca:
+        import_cmd = " ".join([import_cmd, "-trustcacerts"])
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -156,7 +164,7 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
         return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd,
                                 error=import_err)
 
-def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias):
+def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias, trusted_ca):
     ''' Import certificate from path into keystore located on
         keystore_path as alias '''
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
@@ -164,6 +172,8 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
                                                              keystore_path,
                                                              keystore_pass,
                                                              path, alias)
+    if trusted_ca:
+        import_cmd = " ".join([import_cmd, "-trustcacerts"])
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -220,6 +230,7 @@ def main():
         cert_path=dict(type='str'),
         cert_alias=dict(type='str'),
         cert_port=dict(default='443', type='int'),
+        trusted_ca=dict(default=False, type='bool'),
         keystore_path=dict(type='str'),
         keystore_pass=dict(required=True, type='str', no_log=True),
         keystore_create=dict(default=False, type='bool'),
@@ -242,6 +253,7 @@ def main():
     path = module.params.get('cert_path')
     port = module.params.get('cert_port')
     cert_alias = module.params.get('cert_alias') or url
+    trusted_ca = module.params.get('trusted_ca')
 
     keystore_path = module.params.get('keystore_path')
     keystore_pass = module.params.get('keystore_pass')
@@ -270,11 +282,11 @@ def main():
         if not cert_present:
             if path:
                 import_cert_path(module, executable, path, keystore_path,
-                                 keystore_pass, cert_alias)
+                                 keystore_pass, cert_alias, trusted_ca)
 
             if url:
                 import_cert_url(module, executable, url, port, keystore_path,
-                                keystore_pass, cert_alias)
+                                keystore_pass, cert_alias, trusted_ca)
 
     module.exit_json(changed=False)
 
