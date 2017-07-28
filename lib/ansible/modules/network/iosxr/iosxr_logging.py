@@ -104,6 +104,9 @@ commands:
     - logging hostnameprefix 172.16.0.1
 """
 
+import q
+
+
 import re
 
 from ansible.module_utils.basic import AnsibleModule
@@ -122,7 +125,8 @@ def validate_size(value, module):
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
-
+    q(want)
+    q(have)
     for w in want:
         dest = w['dest']
         name = w['name']
@@ -131,6 +135,10 @@ def map_obj_to_commands(updates, module):
         level = w['level']
         state = w['state']
         del w['state']
+
+        q(w)
+        q(w in have)
+
 
         if state == 'absent' and w in have:
             if dest == 'hostnameprefix':
@@ -142,6 +150,7 @@ def map_obj_to_commands(updates, module):
 
             if facility:
                 commands.append('no logging facility {}'.format(facility))
+            q(commands)
 
         if state == 'present' and w not in have:
             if facility:
@@ -162,7 +171,8 @@ def map_obj_to_commands(updates, module):
                     dest_cmd += ' {}'.format(level)
 
                 commands.append(dest_cmd)
-
+            q(commands)
+    q(commands)
     return commands
 
 
@@ -208,7 +218,7 @@ def parse_name(line, dest):
 
 
 def parse_level(line, dest):
-    level_group = ('emergencies', 'alerts', 'critical', 'errors', 'warnings',
+    level_group = ('emergencies', 'alerts', 'critical', 'errors', 'warning',
                    'notifications', 'informational', 'debugging')
 
     if dest == 'hostnameprefix':
@@ -228,25 +238,32 @@ def parse_level(line, dest):
 
 
 def map_config_to_obj(module):
+
     obj = []
     dest_group = ('console', 'hostnameprefix', 'monitor', 'buffered', 'on')
 
     data = get_config(module, flags=['logging'])
+    lines = data.split("\n")
 
-    for line in data.split('\n'):
+    q(lines)
 
+
+    for line in lines:
         match = re.search(r'logging (\S+)', line, re.M)
+        if match:
+            q(match.group(1))
+            q(line)
+            if match.group(1) in dest_group:
+                dest = match.group(1)
+                q(dest)
 
-        if match.group(1) in dest_group:
-            dest = match.group(1)
-        else:
-            pass
-
-        obj.append({'dest': dest,
+                obj.append({
+                    'dest': dest,
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
                     'facility': parse_facility(line),
-                    'level': parse_level(line, dest)})
+                    'level': parse_level(line, dest)
+                })
 
     return obj
 
@@ -316,6 +333,7 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
+    q("-------------------------------------------------------------------------------------------------------------------")
     argument_spec = dict(
         dest=dict(type='str', choices=['on', 'hostnameprefix', 'console', 'monitor', 'buffered']),
         name=dict(type='str'),
