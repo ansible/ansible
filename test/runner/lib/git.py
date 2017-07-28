@@ -71,7 +71,7 @@ class Git(object):
         """
         cmd = ['show', ref]
         try:
-            self.run_git(cmd)
+            self.run_git(cmd, str_errors='replace')
             return True
         except SubprocessError:
             return False
