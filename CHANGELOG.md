@@ -110,6 +110,7 @@ Ansible Changes By Release
 
 #### New Callbacks:
 - profile_roles
+- stderr
 
 #### New Inventory Plugins:
 - advanced_host_list
