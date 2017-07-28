@@ -1,4 +1,29 @@
 ---
+# Remove old logging entries so that they don't conflict with tests
+- name: Remove host logging
+  iosxr_logging:
+    dest: hostnameprefix
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Remove console logging
+  iosxr_logging:
+    dest: console
+    level: warning
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- name: Remove buffer
+  iosxr_logging:
+    dest: buffered
+    size: 4800000
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+# Start tests
 - name: Set up host logging
   iosxr_logging:
     dest: hostnameprefix
@@ -9,7 +34,7 @@
 
 - assert:
     that:
-      - 'result.chaned == true'
+      - 'result.changed == true'
       - '"logging hostnameprefix 172.16.0.1" in result.commands'
       - '"logging facility local7" in result.commands'
 
@@ -50,10 +75,10 @@
     that:
       - 'result.changed == false'
 
-- name: Console logging with level warnings
+- name: Console logging with level warning
   iosxr_logging:
     dest: console
-    level: warnings
+    level: warning
     state: present
     provider: "{{ cli }}"
   register: result
@@ -61,7 +86,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging console warnings" in result.commands'
+      - '"logging console warning" in result.commands'
 
 - name: Configure Buffer size
   iosxr_logging:
@@ -78,7 +103,7 @@
 - name: remove logging as collection tearDown
   iosxr_logging:
     aggregate:
-      - { dest: console, level: warnings, state: absent }
+      - { dest: console, level: warning, state: absent }
       - { dest: buffered, size: 4800000, state: absent }
     provider: "{{ cli }}"
   register: result
