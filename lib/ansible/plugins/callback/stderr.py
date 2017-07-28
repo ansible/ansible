@@ -57,7 +57,7 @@ class CallbackModule(CallbackModule_default):
             if delegated_vars:
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
                                                                             self._dump_results(result._result)), color=C.COLOR_ERROR,
-                                                                            stderr=True)
+                                      stderr=True)
             else:
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)),
                                       color=C.COLOR_ERROR, stderr=True)
@@ -78,4 +78,3 @@ class CallbackModule(CallbackModule_default):
                 del result['exception']
 
             self._display.display(msg, color=C.COLOR_ERROR, stderr=errors_to_stderr)
-
