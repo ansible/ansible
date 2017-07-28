@@ -88,6 +88,19 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 
 
+def find_from_content(regexp, content):
+    result = []
+    found = re.finditer(regexp, content, re.MULTILINE)
+
+    for match in found:
+        result.append({
+            'groups': match.groups(),
+            'named_groups': match.groupdict(),
+        })
+
+    return result
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -120,14 +133,7 @@ def main():
             e = get_exception()
             module.fail_json(rc=254, msg='Source %s could not be read: %s' % (src, e.strerror))
 
-    result = []
-    found = re.finditer(params['regexp'], contents, re.MULTILINE)
-
-    for match in found:
-        result.append({
-            'groups': match.groups(),
-            'named_groups': match.groupdict(),
-        })
+    result = find_from_content(params['regexp'], contents)
 
     if result:
         module.exit_json(matches=result, changed=True, msg='Found %d matches in %s' % (len(result), src))
