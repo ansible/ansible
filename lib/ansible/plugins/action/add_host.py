@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         # Parse out any hostname:port patterns
-        new_name = self._task.args.get('name', self._task.args.get('hostname', None))
+        new_name = self._task.args.get('name', self._task.args.get('hostname', self._task.args.get('host', None)))
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
         try:
