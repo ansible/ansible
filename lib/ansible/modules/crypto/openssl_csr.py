@@ -29,9 +29,10 @@ version_added: "2.4"
 short_description: Generate OpenSSL Certificate Signing Request (CSR)
 description:
     - "This module allows one to (re)generates OpenSSL certificate signing requests.
-       It uses the pyOpenSSL python library to interact with openssl. This module support
-       the subjectAltName extension. Note: At least one of commonName or subjectAltName must
-       be specified. This module uses file common arguments to specify generated file permissions."
+       It uses the pyOpenSSL python library to interact with openssl. This module supports
+       the subjectAltName as well as the keyUsage and extendedKeyUsage extensions.
+       Note: At least one of commonName or subjectAltName must be specified.
+       This module uses file common arguments to specify generated file permissions."
 requirements:
     - "python-pyOpenSSL"
 options:
@@ -182,7 +183,12 @@ EXAMPLES = '''
 
 
 RETURN = '''
-csr:
+privatekey:
+    description: Path to the TLS/SSL private key the CSR was generated for
+    returned: changed or success
+    type: string
+    sample: /etc/ssl/private/ansible.com.pem
+filename:
     description: Path to the generated Certificate Signing Request
     returned: changed or success
     type: string
@@ -398,7 +404,7 @@ def main():
             organizationalUnitName=dict(aliases=['OU'], type='str'),
             commonName=dict(aliases=['CN'], type='str'),
             emailAddress=dict(aliases=['E'], type='str'),
-            subjectAltName=dict(aliases=['subjectAltName'], type='list'),
+            subjectAltName=dict(type='list'),
             keyUsage=dict(type='list'),
             extendedKeyUsage=dict(aliases=['extKeyUsage'], type='list'),
         ),
