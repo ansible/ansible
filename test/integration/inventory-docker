@@ -1,0 +1,6 @@
+# REQUIRES MANUAL SETUP
+#
+# docker run --name ansible-test-host -d ansible/ansible:ubuntu1604
+
+testhost ansible_host=ansible-test-host ansible_connection=docker
+

@@ -1,0 +1,8 @@
+# REQUIRES MANUAL SETUP
+#
+# lxc launch images:debian/stretch ansible-test-host
+#
+# You will need to apt install: python, sudo, rsync
+
+testhost ansible_host=ansible-test-host ansible_connection=lxd
+
