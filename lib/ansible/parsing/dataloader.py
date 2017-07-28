@@ -179,22 +179,32 @@ class DataLoader:
             except AttributeError:
                 pass  # older versions of yaml don't have dispose function, ignore
 
-    def _get_file_contents(self, file_name, encoding='utf-8'):
+    def _get_file_contents(self, file_name):
         '''
-        Reads the file contents from the given file name, and will decrypt them
-        if they are found to be vault-encrypted.
+        Reads the file contents from the given file name
+
+        If the contents are vault-encrypted, it will decrypt them and return
+        the decrypted data
+
+        :arg file_name: The name of the file to read.  If this is a relative
+            path, it will be expanded relative to the basedir
+        :raises AnsibleFileNotFOund: if the file_name does not refer to a file
+        :raises AnsibleParserError: if we were unable to read the file
+        :return: Returns a byte string of the file contents
         '''
         if not file_name or not isinstance(file_name, (binary_type, text_type)):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
-        b_file_name = to_bytes(file_name)
+        b_file_name = to_bytes(self.path_dwim(file_name))
+        # This is what we really want but have to fix unittests to make it pass
+        # if not os.path.exists(b_file_name) or not os.path.isfile(b_file_name):
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
         show_content = True
         try:
             with open(b_file_name, 'rb') as f:
-                data = to_text(f.read(), encoding=encoding)
+                data = f.read()
                 if is_encrypted(data):
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
@@ -415,9 +425,6 @@ class DataLoader:
         b_file_path = to_bytes(file_path, errors='surrogate_or_strict')
         if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
             raise AnsibleFileNotFound(file_name=file_path)
-
-        if not self._vault:
-            self._vault = VaultLib(b_password="")
 
         real_path = self.path_dwim(file_path)
 
