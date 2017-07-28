@@ -684,7 +684,11 @@ def command_integration_role(args, target, start_at_task):
         if hosts == 'net':
             hosts = 'all'
     else:
-        inventory = 'inventory'
+        inventory = {
+            'local': 'inventory',
+            'docker': 'inventory-docker',
+            'lxd': 'inventory-lxd',
+        }[args.connection]
         hosts = 'testhost'
         gather_facts = True
 
@@ -730,7 +734,10 @@ def command_integration_role(args, target, start_at_task):
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
 
-        intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+        if args.connection == 'local':
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+        else:
+            run_command(args, cmd, env=env, cwd=cwd)
 
 
 def command_units(args):
@@ -1156,7 +1163,7 @@ def get_integration_local_filter(args, targets):
     """
     exclude = []
 
-    if os.getuid() != 0:
+    if args.connection == 'local' and os.getuid() != 0:
         skip = 'needs/root/'
         skipped = [target.name for target in targets if skip in target.aliases]
         if skipped:

@@ -230,6 +230,11 @@ def parse_args():
                              default='all',
                              help='target to run when all tests are needed')
 
+    integration.add_argument('--connection',
+                             default='local',
+                             choices=('local', 'docker', 'lxd'),
+                             help='Connection under which tests should be run')
+
     integration.add_argument('--list-targets',
                              action='store_true',
                              help='list matching targets instead of running tests')
