@@ -236,9 +236,6 @@ class PublicKey(crypto_utils.OpenSSLObject):
 
         return _check_privatekey()
 
-
-
-
     def dump(self):
         """Serialize the object into a dictionary."""
 
