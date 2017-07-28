@@ -1072,6 +1072,22 @@ DEFAULT_VAR_COMPRESSION_LEVEL:
   value_type: integer
   vars: []
   yaml: {key: defaults.var_compression_level}
+DEFAULT_VAULT_ID_MATCH:
+  default: False
+  desc: 'If true, decrypting vaults with a vault id will only try the password from the matching vault-id'
+  env: [{name: ANSIBLE_VAULT_ID_MATCH}]
+  ini:
+  - {key: vault_id_match, section: defaults}
+  vars: []
+  yaml: {key: defaults.vault_id_match}
+DEFAULT_VAULT_IDENTITY:
+  default: default
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_VAULT_IDENTITY}]
+  ini:
+  - {key: vault_identity, section: defaults}
+  vars: []
+  yaml: {key: defaults.vault_identity}
 DEFAULT_VAULT_PASSWORD_FILE:
   default: ~
   desc: 'TODO: write it'
