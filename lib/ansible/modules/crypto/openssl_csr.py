@@ -352,9 +352,9 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             extensions = csr.get_extensions()
             return _check_subjectAltName(extensions) and _check_keyUsage(extensions) and _check_extenededKeyUsage(extensions)
 
-        def _check_signature(csr, privatekey):
+        def _check_signature(csr):
             try:
-                return csr.verify(privatekey)
+                return csr.verify(self.privatekey)
             except crypto.Error:
                 return False
 
@@ -363,7 +363,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
         csr = crypto_utils.load_certificate_request(self.path)
 
-        return _check_subject(csr) and _check_extensions(csr) and _check_signature(csr, self.privatekey)
+        return _check_subject(csr) and _check_extensions(csr) and _check_signature(csr)
 
     def dump(self):
         '''Serialize the object into a dictionary.'''
