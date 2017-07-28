@@ -4,7 +4,7 @@ Windows Ansible Module Development Walkthrough
 In this section, we will walk through developing, testing, and debugging an
 Ansible Windows module.
 
-Because Windows modules are written in Powershell and needs to be run on a
+Because Windows modules are written in Powershell and need to be run on a
 Windows host, this guide differs from the usual development walkthrough guide.
 
 What's covered in this section:
@@ -21,21 +21,21 @@ TODO: Add in more information on how to use Vagrant to setup a Windows host.
 Windows new module development
 ==============================
 
-When creating a new module there are a few things to keep in mind
+When creating a new module there are a few things to keep in mind:
 
-- Module code are in Powershell (.ps1) files while the documentation are in Python (.py) files of the same name
+- Module code are in Powershell (.ps1) files while the documentation is contained in Python (.py) files of the same name
 - Avoid using ``Write-Host/Debug/Verbose/Error`` in the module and add what needs to be returned to the ``$result`` variable
 - When trying an exception use ``Fail-Json -obj $result -message "exception message here"`` instead
 - Most new modules require check mode and integration tests before they are merged into the main Ansible codebase
-- Avoid using try/catch statements over a bit code block, rather use then for individual calls so the error message can be more descriptive
+- Avoid using try/catch statements over a large code block, rather use then for individual calls so the error message can be more descriptive
 - Avoid using PSCustomObjects unless necessary
-- Look for common functions at ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work, these can be imported by adding the line ``#Requires -Module *`` below ``#POWERSHELL_COMMON`` where * is the filename to import
-- Ensure the code is complient with Powershell v3 and above, if it isn't then document the requirements
-- Ansible uses strictmode version 2.0, be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
+- Look for common functions in ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work. These can be imported by adding the line ``#Requires -Module *`` below ``#POWERSHELL_COMMON`` where * is the filename to import
+- Ensure the code is compliant with Powershell v3 and above, if it isn't then document the requirements
+- Ansible uses strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
 - Favour native Powershell cmdlets instead of executable calls if possible
-- If adding a object to ``$result`` ensure any trailing slashes are removed or exited out as ``ConvertTo-Json`` will fail to convert it
+- If adding an object to ``$result``, ensure any trailing slashes are removed or exited out as ``ConvertTo-Json`` will fail to convert it
 
-A very basic powershell module template can be found found below
+A very basic powershell module template can be found found below:
 
 .. code-block:: powershell
 
@@ -81,11 +81,11 @@ A very basic powershell module template can be found found below
     Exit-Json -obj $result
 
 
-When in doubt look at some of the core modules and see how things have been
+When in doubt, look at some of the core modules and see how things have been
 implemented there.
 
-Sometimes there are multiple ways that Windows offers to complete a task, this
-is the order to favour when writing modules
+Sometimes there are multiple ways that Windows offers to complete a task; this
+is the order to favour when writing modules:
 
 - Native Powershell cmdlets like ``Remove-Item -Path C:\temp -Recurse``
 - .NET classes like ``[System.IO.Path]::GetRandomFileName()``
@@ -115,7 +115,7 @@ To test a module you can do so with an Ansible playbook.
 - Run the playbook ``$ ansible-playbook -i hosts testmodule.yml``
 
 This can be pretty high level and is useful for seeing how Ansible runs with
-the new module end to end but there are better ways to test out the module as
+the new module end to end: but there are better ways to test out the module as
 shown below.
 
 
@@ -153,7 +153,7 @@ You can add more args to ``$complex_args`` as required by the module. The
 module can now be run on the remote server either directly through Powershell
 or through an IDE.
 
-There are multiple IDE's that can be used to debug a Powershell script, two of
+There are multiple IDEs that can be used to debug a Powershell script, two of
 the most popular are
 
 - `Powershell ISE`_

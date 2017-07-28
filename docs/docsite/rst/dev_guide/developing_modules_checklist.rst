@@ -137,7 +137,7 @@ The complete module metadata specification is here: `Ansible metadata block <htt
 Windows modules checklist
 =========================
 
-For a checklist and details on how to write Windows modules have a look at :doc:`developing_modules_general_windows`
+For a checklist and details on how to write Windows modules please see :doc:`developing_modules_general_windows`
 
 
 Deprecating and making module aliases
