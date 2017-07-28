@@ -1660,7 +1660,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count == 0:
-                msg="one of the following is required: %s" % ','.join(check)
+                msg = "one of the following is required: %s" % ','.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1763,7 +1763,7 @@ class AnsibleModule(object):
                                 msg += " found in %s" % " -> ".join(self._options_context)
                             self.fail_json(msg=msg)
             else:
-                msg="internal error: choices for argument %s are not iterable: %s" % (k, choices)
+                msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
