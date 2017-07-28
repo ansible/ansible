@@ -124,7 +124,7 @@ options:
     version_added: "2.4"
   advanced_instance_monitoring:
     description:
-      - A bool representing whether advanced instance monitoring is to be used or not. Can be used in place of with instance_monitoring.
+      - A bool representing whether advanced instance monitoring is to be used or not. Can be used in place of instance_monitoring.
     default: false
     version_added: "2.4"
   placement_tenancy:
@@ -227,8 +227,7 @@ def create_block_device_meta(module, volume):
         return_object['Ebs']['VolumeType'] = volume.get('volume_type')
 
     if 'delete_on_termination' in volume:
-        return_object['Ebs']['DeleteOnTermination'] = volume.get(
-            'delete_on_termination', False)
+        return_object['Ebs']['DeleteOnTermination'] = volume.get('delete_on_termination', False)
 
     if 'iops' in volume:
         return_object['Ebs']['Iops'] = volume.get('iops')
@@ -300,7 +299,7 @@ def create_launch_config(connection, module):
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
 
     if instance_monitoring or advanced_instance_monitoring:
-        launch_config['InstanceMonitoring'] = {'Enabled': advanced_instance_monitoring | instance_monitoring}
+        launch_config['InstanceMonitoring'] = {'Enabled': advanced_instance_monitoring or instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
         launch_config['ClassicLinkVPCSecurityGroups'] = classic_link_vpc_security_groups
