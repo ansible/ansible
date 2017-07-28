@@ -74,7 +74,7 @@ options:
         the set of commands against the current device config.  If
         match is set to I(line), commands are matched line by line.
         If match is set to I(none), the module will not attempt to
-        compare the source configuration with the running 
+        compare the source configuration with the running
         configuration on the remote device.
     required: false
     default: line
