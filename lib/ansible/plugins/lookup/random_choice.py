@@ -33,6 +33,7 @@ from ansible.plugins.lookup import LookupBase
 #             - two
 #             - three
 
+
 class LookupModule(LookupBase):
 
     def run(self, terms, inject=None, **kwargs):
@@ -45,4 +46,3 @@ class LookupModule(LookupBase):
                 raise AnsibleError("Unable to choose random term: %s" % to_native(e))
 
         return ret
-
