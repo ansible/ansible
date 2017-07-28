@@ -30,7 +30,8 @@ $result = @{
     password_updated = $false
 }
 
-$params = Parse-Args $args
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 # Module control parameters
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","query"
@@ -86,20 +87,23 @@ If ($state -eq 'present') {
         # If the account does not exist, create it
         If (-not $user_obj) {
             If ($path -ne $null){
-                New-ADUser -Name $username -Path $path
+                New-ADUser -Name $username -Path $path -WhatIf:$check_mode
             }
             Else {
-                New-ADUser -Name $username
+                New-ADUser -Name $username -WhatIf:$check_mode
             }
-            $user_obj = Get-ADUser -Identity $username -Properties *
             $new_user = $true
             $result.changed = $true
+            If ($check_mode) {
+                Exit-Json $result
+            }
+            $user_obj = Get-ADUser -Identity $username -Properties *
         }
 
         # Set the password if required
         If ($password -and (($new_user -and $update_password -eq "on_create") -or $update_password -eq "always")) {
             $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
-            Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password
+            Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.password_updated = $true
             $result.changed = $true
@@ -107,39 +111,39 @@ If ($state -eq 'present') {
 
         # Configure password policies
         If (($password_never_expires -ne $null) -and ($password_never_expires -ne $user_obj.PasswordNeverExpires)) {
-            Set-ADUser -Identity $username -PasswordNeverExpires $password_never_expires
+            Set-ADUser -Identity $username -PasswordNeverExpires $password_never_expires -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.changed = $true
         }
         If (($password_expired -ne $null) -and ($password_expired -ne $user_obj.PasswordExpired)) {
-            Set-ADUser -Identity $username -ChangePasswordAtLogon $password_expired
+            Set-ADUser -Identity $username -ChangePasswordAtLogon $password_expired -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.changed = $true
         }
         If (($user_cannot_change_password -ne $null) -and ($user_cannot_change_password -ne $user_obj.CannotChangePassword)) {
-            Set-ADUser -Identity $username -CannotChangePassword $user_cannot_change_password
+            Set-ADUser -Identity $username -CannotChangePassword $user_cannot_change_password -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.changed = $true
         }
 
         # Assign other account settings
         If (($upn -ne $null) -and ($upn -ne $user_obj.UserPrincipalName)) {
-            Set-ADUser -Identity $username -UserPrincipalName $upn
+            Set-ADUser -Identity $username -UserPrincipalName $upn -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.changed = $true
         }
         If (($description -ne $null) -and ($description -ne $user_obj.Description)) {
-            Set-ADUser -Identity $username -description $description
+            Set-ADUser -Identity $username -description $description -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.changed = $true
         }
         If ($enabled -ne $user_obj.Enabled) {
-            Set-ADUser -Identity $username -Enabled $enabled
+            Set-ADUser -Identity $username -Enabled $enabled -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.changed = $true
         }
         If ((-not $account_locked) -and ($user_obj.LockedOut -eq $true)) {
-            Unlock-ADAccount -Identity $username
+            Unlock-ADAccount -Identity $username -WhatIf:$check_mode
             $user_obj = Get-ADUser -Identity $username -Properties *
             $result.changed = $true
         }
@@ -152,7 +156,9 @@ If ($state -eq 'present') {
             $value = $user_info[$key]
             If ($value -ne $user_obj.$key) {
                 $expression = "Set-ADUser -Identity $username -$key '$value'"
-                Invoke-Expression $expression
+                If (-not $check_mode) {
+                    Invoke-Expression $expression
+                }
                 $result.changed = $true
                 $user_obj = Get-ADUser -Identity $username -Properties *
             }
@@ -176,7 +182,7 @@ If ($state -eq 'present') {
                 "add" {
                     Foreach ($group in $groups) {
                         If (-not ($assigned_groups -Contains $group)) {
-                            Add-ADGroupMember -Identity $group -Members $username
+                            Add-ADGroupMember -Identity $group -Members $username -WhatIf:$check_mode
                             $user_obj = Get-ADUser -Identity $username -Properties *
                             $result.changed = $true
                         }
@@ -185,7 +191,7 @@ If ($state -eq 'present') {
                 "remove" {
                     Foreach ($group in $groups) {
                         If ($assigned_groups -Contains $group) {
-                            Remove-ADGroupMember -Identity $group -Members $username -Confirm:$false
+                            Remove-ADGroupMember -Identity $group -Members $username -Confirm:$false -WhatIf:$check_mode
                             $user_obj = Get-ADUser -Identity $username -Properties *
                             $result.changed = $true
                         }
@@ -194,14 +200,14 @@ If ($state -eq 'present') {
                 "replace" {
                     Foreach ($group in $assigned_groups) {
                         If (($group -ne $user_obj.PrimaryGroup) -and -not ($groups -Contains $group)) {
-                            Remove-ADGroupMember -Identity $group -Members $username -Confirm:$false
+                            Remove-ADGroupMember -Identity $group -Members $username -Confirm:$false -WhatIf:$check_mode
                             $user_obj = Get-ADUser -Identity $username -Properties *
                             $result.changed = $true
                         }
                     }
                     Foreach ($group in $groups) {
                         If (-not ($assigned_groups -Contains $group)) {
-                            Add-ADGroupMember -Identity $group -Members $username
+                            Add-ADGroupMember -Identity $group -Members $username -WhatIf:$check_mode
                             $user_obj = Get-ADUser -Identity $username -Properties *
                             $result.changed = $true
                         }
@@ -218,8 +224,11 @@ If ($state -eq 'present') {
     # Ensure user does not exist
     try {
         If ($user_obj) {
-            Remove-ADUser $user_obj -Confirm:$false
+            Remove-ADUser $user_obj -Confirm:$false -WhatIf:$check_mode
             $result.changed = $true
+            If ($check_mode) {
+                Exit-Json $result
+            }
             $user_obj = $null
         }
     }
