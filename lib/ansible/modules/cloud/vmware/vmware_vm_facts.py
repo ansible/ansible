@@ -26,11 +26,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: vmware_vm_facts
-short_description: Return basic facts pertaining to vSphere virtual machines.
+short_description: Return basic facts pertaining to vSphere virtual machines
 description:
     - Return basic facts pertaining to vSphere virtual machines.
 version_added: "2.0"
-author: Joseph Callen (@jcpowermac)
+author:
+    - Joseph Callen (@jcpowermac)
 notes:
     - Tested on vSphere 5.5
     - Tested on vSphere 6.5
@@ -57,8 +58,8 @@ virtual_machines:
     sample: None
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import connect_to_api, get_all_objs, vmware_argument_spec
+from ansible.module_utils.basic import *
+from ansible.module_utils.vmware import *
 
 try:
     from pyVmomi import vim, vmodl
