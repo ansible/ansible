@@ -1,26 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
+# (c) 2013, Balazs Pocze <banyek@gawker.com>
+# Certain parts are taken from Mark Theunissen's mysqldb module
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Ansible module to manage mysql variables
-(c) 2013, Balazs Pocze <banyek@gawker.com>
-Certain parts are taken from Mark Theunissen's mysqldb module
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -58,7 +46,7 @@ EXAMPLES = '''
     value: 1
 '''
 
-
+import os
 import warnings
 from re import match
 
@@ -68,6 +56,11 @@ except ImportError:
     mysqldb_found = False
 else:
     mysqldb_found = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import SQLParseError, mysql_quote_identifier
+from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils._text import to_native
 
 
 def typedvalue(value):
@@ -118,9 +111,8 @@ def setvariable(cursor, mysqlvar, value):
         cursor.execute(query + "%s", (value,))
         cursor.fetchall()
         result = True
-    except Exception:
-        e = get_exception()
-        result = str(e)
+    except Exception as e:
+        result = to_native(e)
     return result
 
 
@@ -164,13 +156,12 @@ def main():
     try:
         cursor = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
                                connect_timeout=connect_timeout)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                                 "Exception message: %s" % (config_file, e))
+                                 "Exception message: %s" % (config_file, to_native(e)))
         else:
-            module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
+            module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
     mysqlvar_val = getvariable(cursor, mysqlvar)
     if mysqlvar_val is None:
@@ -185,17 +176,14 @@ def main():
             module.exit_json(msg="Variable already set to requested value", changed=False)
         try:
             result = setvariable(cursor, mysqlvar, value_wanted)
-        except SQLParseError:
-            e = get_exception()
-            result = str(e)
+        except SQLParseError as e:
+            result = to_native(e)
+
         if result is True:
             module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
         else:
             module.fail_json(msg=result, changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
-from ansible.module_utils.mysql import *
+
 if __name__ == '__main__':
     main()

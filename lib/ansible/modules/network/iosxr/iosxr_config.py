@@ -1,20 +1,11 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -187,10 +178,11 @@ backup_path:
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.iosxr import load_config,get_config
 from ansible.module_utils.iosxr import iosxr_argument_spec
 from ansible.module_utils.iosxr import check_args as iosxr_check_args
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
@@ -205,11 +197,13 @@ def check_args(module, warnings):
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
+
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
     return NetworkConfig(indent=1, contents=contents)
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)

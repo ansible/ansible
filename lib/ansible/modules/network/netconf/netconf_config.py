@@ -1,21 +1,11 @@
 #!/usr/bin/python
 
 # (c) 2016, Leandro Lisboa Penz <lpenz at lpenz.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -157,15 +147,17 @@ server_capabilities:
 
 '''
 
+import traceback
 import xml.dom.minidom
+
 try:
     import ncclient.manager
     HAS_NCCLIENT = True
 except ImportError:
     HAS_NCCLIENT = False
 
-
-import logging
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def netconf_edit_config(m, xml, commit, retkwargs, datastore):
@@ -225,11 +217,8 @@ def main():
     try:
         xml.dom.minidom.parseString(config_xml)
 
-    except:
-        e = get_exception()
-        module.fail_json(
-            msg='error parsing XML: ' + str(e)
-        )
+    except Exception as e:
+        module.fail_json(msg='error parsing XML: %s' % to_native(e), exception=traceback.format_exc())
 
     nckwargs = dict(
         host=module.params['host'],
@@ -247,11 +236,8 @@ def main():
         module.fail_json(
             msg='authentication failed while connecting to device'
         )
-    except:
-        e = get_exception()
-        module.fail_json(
-            msg='error connecting to the device: ' + str(e)
-        )
+    except Exception as e:
+        module.fail_json(msg='error connecting to the device: %s' % to_native(e), exception=traceback.format_exc())
 
     retkwargs = dict()
     retkwargs['server_capabilities'] = list(m.server_capabilities)
@@ -304,18 +290,13 @@ def main():
         )
         if changed and module.params['save']:
             m.copy_config(source="running", target="startup")
-    except:
-        e = get_exception()
-        module.fail_json(
-            msg='error editing configuration: ' + str(e)
-        )
+    except Exception as e:
+        module.fail_json(msg='error editing configuration: %s' % to_native(e), exception=traceback.format_exc())
     finally:
         m.close_session()
 
     module.exit_json(changed=changed, **retkwargs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

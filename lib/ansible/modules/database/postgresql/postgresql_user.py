@@ -1,20 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -209,12 +200,9 @@ EXAMPLES = '''
 
 import itertools
 import re
+import traceback
 from distutils.version import StrictVersion
 from hashlib import md5
-
-from ansible.module_utils.basic import get_exception, AnsibleModule
-from ansible.module_utils.database import pg_quote_identifier, SQLParseError
-
 
 try:
     import psycopg2
@@ -224,8 +212,11 @@ except ImportError:
 else:
     postgresqldb_found = True
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import pg_quote_identifier, SQLParseError
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
+
 
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
@@ -378,13 +369,12 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         try:
             cursor.execute(' '.join(alter), query_password_data)
             changed = True
-        except psycopg2.InternalError:
-            e = get_exception()
+        except psycopg2.InternalError as e:
             if e.pgcode == '25006':
                 # Handle errors due to read-only transactions indicated by pgcode 25006
                 # ERROR:  cannot execute ALTER ROLE in a read-only transaction
                 changed = False
-                module.fail_json(msg=e.pgerror)
+                module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
                 return changed
             else:
                 raise psycopg2.InternalError(e)
@@ -420,13 +410,12 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
         try:
             cursor.execute(' '.join(alter))
-        except psycopg2.InternalError:
-            e = get_exception()
+        except psycopg2.InternalError as e:
             if e.pgcode == '25006':
                 # Handle errors due to read-only transactions indicated by pgcode 25006
                 # ERROR:  cannot execute ALTER ROLE in a read-only transaction
                 changed = False
-                module.fail_json(msg=e.pgerror)
+                module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
                 return changed
             else:
                 raise psycopg2.InternalError(e)
@@ -794,22 +783,19 @@ def main():
         cursor = db_connection.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
 
-    except TypeError:
-        e = get_exception()
+    except TypeError as e:
         if 'sslrootcert' in e.args[0]:
             module.fail_json(
                 msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % e)
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         role_attr_flags = parse_role_attrs(cursor, module.params["role_attr_flags"])
-    except InvalidFlagsError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except InvalidFlagsError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     kw = dict(user=user)
     changed = False
@@ -820,21 +806,18 @@ def main():
             try:
                 changed = user_alter(db_connection, module, user, password,
                                      role_attr_flags, encrypted, expires, no_password_changes)
-            except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         else:
             try:
                 changed = user_add(cursor, user, password,
                                    role_attr_flags, encrypted, expires)
-            except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         try:
             changed = grant_privileges(cursor, user, privs) or changed
-        except SQLParseError:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except SQLParseError as e:
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     else:
         if user_exists(cursor, user):
             if module.check_mode:
@@ -844,9 +827,8 @@ def main():
                 try:
                     changed = revoke_privileges(cursor, user, privs)
                     user_removed = user_delete(cursor, user)
-                except SQLParseError:
-                    e = get_exception()
-                    module.fail_json(msg=str(e))
+                except SQLParseError as e:
+                    module.fail_json(msg=to_native(e), exception=traceback.format_exc())
                 changed = changed or user_removed
                 if fail_on_user and not user_removed:
                     msg = "unable to remove user"

@@ -2,25 +2,12 @@
 #coding: utf-8 -*-
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
-#
 # Portions copyright @ 2015 VMware, Inc.
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# pylint: disable=C0111
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -114,7 +101,7 @@ EXAMPLES = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.pycompat24 import get_exception
+
 
 def _fail_mode_to_str(text):
     if not text:
@@ -246,10 +233,10 @@ def map_params_to_obj(module):
 
     return obj
 
-# pylint: disable=E0602
+
 def main():
     """ Entry point. """
-    argument_spec={
+    argument_spec = {
         'bridge': {'required': True},
         'parent': {'default': None},
         'vlan': {'default': None, 'type': 'int'},

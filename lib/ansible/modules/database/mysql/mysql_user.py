@@ -2,21 +2,11 @@
 
 # (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
 # Sponsored by Four Kitchens http://fourkitchens.com.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -214,16 +204,23 @@ EXAMPLES = """
 # password=n<_665{vS43y
 """
 
-
 import re
 import string
+import traceback
+
 try:
     import MySQLdb
 except ImportError:
     mysqldb_found = False
 else:
     mysqldb_found = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import SQLParseError
+from ansible.module_utils.mysql import mysql_connect, mysqldb_found
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
+
 
 VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'LOCK TABLES', 'REFERENCES', 'EVENT', 'ALTER',
@@ -608,10 +605,9 @@ def main():
         if not cursor:
             cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,
                                    connect_timeout=connect_timeout)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                             "Exception message: %s" % (config_file, e))
+                             "Exception message: %s" % (config_file, to_native(e)))
 
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")
@@ -619,14 +615,12 @@ def main():
     if priv is not None:
         try:
             mode = get_mode(cursor)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg=str(e))
+        except Exception as e:
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         try:
             priv = privileges_unpack(priv, mode)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="invalid privileges string: %s" % str(e))
+        except Exception as e:
+            module.fail_json(msg="invalid privileges string: %s" % to_native(e))
 
     if state == "present":
         if user_exists(cursor, user, host, host_all):
@@ -636,17 +630,15 @@ def main():
                 else:
                     changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
 
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error):
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except (SQLParseError, InvalidPrivsError, MySQLdb.Error) as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         else:
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
                 changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error):
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except (SQLParseError, InvalidPrivsError, MySQLdb.Error) as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):
             changed = user_delete(cursor, user, host, host_all, module.check_mode)
@@ -654,10 +646,6 @@ def main():
             changed = False
     module.exit_json(changed=changed, user=user)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
-from ansible.module_utils.mysql import *
 
 if __name__ == '__main__':
     main()

@@ -20,45 +20,86 @@ future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
 # Eventually we want metaclass3 and future3 to get down to 0
 metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/packaging/os -prune \
-        -o -path ./lib/ansible/modules/network -prune \
-        -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
-        -o -path ./lib/ansible/modules/database -prune \
+        -o -path ./lib/ansible/modules/database/proxysql -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
+        -o -path ./lib/ansible/modules/monitoring -prune \
+        -o -path ./lib/ansible/modules/network/aos -prune \
+        -o -path ./lib/ansible/modules/network/avi -prune \
+        -o -path ./lib/ansible/modules/network/cloudengine -prune \
+        -o -path ./lib/ansible/modules/network/eos -prune \
+        -o -path ./lib/ansible/modules/network/f5 -prune \
+        -o -path ./lib/ansible/modules/network/ios -prune \
+        -o -path ./lib/ansible/modules/network/junos -prune \
+        -o -path ./lib/ansible/modules/network/lenovo -prune \
+        -o -path ./lib/ansible/modules/network/netvisor -prune \
+        -o -path ./lib/ansible/modules/network/nxos -prune \
+        -o -path ./lib/ansible/modules/network/panos -prune \
+        -o -path ./lib/ansible/modules/network/vyos -prune \
         -o -name '*.py' -type f -size +0c -exec grep -HL '__metaclass__ = type' '{}' '+')
 
 future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/packaging/os -prune \
-        -o -path ./lib/ansible/modules/network -prune \
-        -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
-        -o -path ./lib/ansible/modules/database -prune \
+        -o -path ./lib/ansible/modules/database/proxysql -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
+        -o -path ./lib/ansible/modules/monitoring -prune \
+        -o -path ./lib/ansible/modules/network/aos -prune \
+        -o -path ./lib/ansible/modules/network/avi -prune \
+        -o -path ./lib/ansible/modules/network/cloudengine -prune \
+        -o -path ./lib/ansible/modules/network/eos -prune \
+        -o -path ./lib/ansible/modules/network/f5 -prune \
+        -o -path ./lib/ansible/modules/network/ios -prune \
+        -o -path ./lib/ansible/modules/network/junos -prune \
+        -o -path ./lib/ansible/modules/network/lenovo -prune \
+        -o -path ./lib/ansible/modules/network/netvisor -prune \
+        -o -path ./lib/ansible/modules/network/nxos -prune \
+        -o -path ./lib/ansible/modules/network/panos -prune \
+        -o -path ./lib/ansible/modules/network/vyos -prune \
         -o -name '*.py' -type f -size +0c -exec egrep -HL 'from __future__ import (?absolute_import, division, print_function)?' '{}' '+')
 
 # Ordered by approximate work, lowest to highest
-# identity !
-# files !
-# database ;; break up *!
-# monitoring *!
-# packaging/os *i
-# cloud/cloudstack *
-# cloud/openstack *
+# Key:
+#     [*]: import * fixes
+#     [!]: many get_exception fixes
+#     [i]: a few get_exception fixes
+# (everything below needs boilerplate added)
+# Priorities: import*, get_exception, then boilerplate-only
+#
+# database/proxysql [!]
+# network/ios
+# network/eos [i]
+# network/netvisor
+# network/aos [!]
+# network/vyos [i]
+# identity [!]
+# network/lenovo
+# network/panos [!]
+# network/junos [i]
+# files [!]
+# network/avi
+# network/f5 [*][i]
+# monitoring [*][!]
+# packaging/os [*][i]
+# cloud/cloudstack [*]
+# cloud/openstack [*]
 # cloud/ovirt
-# cloud/amazon *
-# network ;; break up *!
-# ( * == import* fixes, ! == many get_exception fixes, i == a few get_exception fixes)
+# network/cloudengine [i]
+# network/nxos [*][i]
+# cloud/amazon [*]
+
 ### TODO:
-### - module_utils
-### - contrib/
+### - module_utils  <=== these are important but not well organized so we'd
+###                      have to construct the teset file by file
+### - contrib/  <=== Not a priority as these will move to inventory plugins over time
 
 
 if test -n "$metaclass1" -o -n "$metaclass2" -o -n "$metaclass3" ; then
