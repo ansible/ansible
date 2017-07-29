@@ -22,7 +22,7 @@ description:
 options:
   name:
     description:
-      - When I(state) is set to `C(present)`, `I(name)` is best used as `http(s)` url format.
+      - When I(state) is set to C(present), I(name) is best used as `http(s)` url format.
         When set to C(absent) the same `http(s)` will try to remove it using the
         name of the flatpakref. However, there is no naming standard between
         names of flatpakrefs and what the reverse DNS name of the installed flatpak
@@ -45,8 +45,6 @@ options:
     default: present
 '''
 EXAMPLES = '''
-
-
  - name: Install the spotify flatpak
    flatpak:
     name:  https://s3.amazonaws.com/alexlarsson/spotify-repo/spotify.flatpakref
@@ -98,6 +96,7 @@ def install_flat(binary, flat):
     output = flatpak_command(command)
     if 'error' in output and 'already installed' not in output:
         return 1, output
+
     return 0, output
 
 
@@ -117,6 +116,7 @@ def uninstall_flat(binary, flat):
     output = flatpak_command(command)
     if 'error' in output and 'not installed' not in output:
         return 1, output
+
     return 0, output
 
 
@@ -124,6 +124,7 @@ def parse_remote(remote):
     name = remote.split('/')[-1]
     if '.' not in name:
         return name
+
     return name.split('.')[0]
 
 
@@ -144,6 +145,7 @@ def add_remote(binary, remote):
     output = flatpak_command(command)
     if 'error' in output:
         return 1, output
+
     return 0, output
 
 
@@ -153,6 +155,7 @@ def remove_remote(binary, remote):
     output = flatpak_command(command)
     if 'error' in output and 'not found' not in output:
         return 1, output
+
     return 0, output
 
 
@@ -162,6 +165,7 @@ def is_present_remote(binary, remote):
     output = flatpak_command(command)
     if remote_name in output.lower():
         return True
+
     return False
 
 
@@ -171,6 +175,7 @@ def is_present_flat(binary, name):
     output = flatpak_command(command)
     if flat in output.lower():
         return True
+
     return False
 
 
@@ -178,6 +183,7 @@ def flatpak_command(command):
     process = subprocess.Popen(
         command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = process.communicate()[0]
+
     return output
 
 
