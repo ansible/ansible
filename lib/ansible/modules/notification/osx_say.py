@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Michael DeHaan <michael@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -53,11 +43,17 @@ EXAMPLES = '''
     voice: Zarvox
   delegate_to: localhost
 '''
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 DEFAULT_VOICE='Alex'
 
+
 def say(module, msg, voice):
     module.run_command(["/usr/bin/say", msg, "--voice=%s" % (voice)], check_rc=True)
+
 
 def main():
 
@@ -79,8 +75,6 @@ def main():
 
     module.exit_json(msg=msg, changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

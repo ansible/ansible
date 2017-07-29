@@ -6,20 +6,11 @@
 # (c) 2015, Stefan Berggren <nsg@nsg.cc>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -180,6 +171,10 @@ EXAMPLES = """
     msg: This message has &lt;brackets&gt; &amp; ampersands in plain text.
 """
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
+
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
@@ -190,9 +185,11 @@ escape_table = {
     "'": "\'",
 }
 
+
 def escape_quotes(text):
     '''Backslash any quotes within text.'''
     return "".join(escape_table.get(c,c) for c in text)
+
 
 def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
     payload = {}
@@ -296,9 +293,6 @@ def main():
 
     module.exit_json(msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

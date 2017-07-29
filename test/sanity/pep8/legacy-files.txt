@@ -106,7 +106,6 @@ lib/ansible/modules/cloud/google/gce_net.py
 lib/ansible/modules/cloud/google/gce_pd.py
 lib/ansible/modules/cloud/google/gce_tag.py
 lib/ansible/modules/cloud/google/gcpubsub.py
-lib/ansible/modules/cloud/google/gcpubsub_facts.py
 lib/ansible/modules/cloud/google/gcspanner.py
 lib/ansible/modules/cloud/linode/linode.py
 lib/ansible/modules/cloud/lxc/lxc_container.py
@@ -171,8 +170,6 @@ lib/ansible/modules/cloud/rackspace/rax_mon_check.py
 lib/ansible/modules/cloud/rackspace/rax_mon_entity.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification_plan.py
-lib/ansible/modules/cloud/rackspace/rax_network.py
-lib/ansible/modules/cloud/rackspace/rax_queue.py
 lib/ansible/modules/cloud/smartos/vmadm.py
 lib/ansible/modules/cloud/softlayer/sl_vm.py
 lib/ansible/modules/cloud/univention/udm_dns_record.py
@@ -187,7 +184,6 @@ lib/ansible/modules/cloud/vmware/vmware_cluster.py
 lib/ansible/modules/cloud/vmware/vmware_dvswitch.py
 lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py
 lib/ansible/modules/cloud/vmware/vmware_migrate_vmk.py
-lib/ansible/modules/cloud/vmware/vmware_target_canonical_facts.py
 lib/ansible/modules/cloud/vmware/vmware_vmotion.py
 lib/ansible/modules/cloud/vmware/vsphere_copy.py
 lib/ansible/modules/cloud/vmware/vsphere_guest.py
@@ -445,9 +441,6 @@ lib/ansible/modules/remote_management/hpilo/hpilo_facts.py
 lib/ansible/modules/remote_management/hpilo/hponcfg.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
 lib/ansible/modules/source_control/bzr.py
-lib/ansible/modules/source_control/gitlab_group.py
-lib/ansible/modules/source_control/gitlab_project.py
-lib/ansible/modules/source_control/gitlab_user.py
 lib/ansible/modules/source_control/hg.py
 lib/ansible/modules/source_control/subversion.py
 lib/ansible/modules/storage/infinidat/infini_export.py

@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Matt Makai <matthew.makai@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -140,13 +130,19 @@ EXAMPLES = '''
 # =======================================
 # sendgrid module support methods
 #
-from ansible.module_utils.six.moves.urllib.parse import urlencode
+import os
 
 try:
     import sendgrid
     HAS_SENDGRID = True
 except ImportError:
     HAS_SENDGRID = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils._text import to_bytes
+from ansible.module_utils.urls import fetch_url
+
 
 def post_sendgrid_api(module, username, password, from_address, to_addresses,
         subject, body, api_key=None, cc=None, bcc=None, attachments=None,
@@ -160,8 +156,7 @@ def post_sendgrid_api(module, username, password, from_address, to_addresses,
         encoded_data = urlencode(data)
         to_addresses_api = ''
         for recipient in to_addresses:
-            if isinstance(recipient, unicode):
-                recipient = recipient.encode('utf-8')
+            recipient = to_bytes(recipient, errors='surrogate_or_strict')
             to_addresses_api += '&to[]=%s' % recipient
         encoded_data += to_addresses_api
 
@@ -270,8 +265,6 @@ def main():
 
     module.exit_json(msg=subject, changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

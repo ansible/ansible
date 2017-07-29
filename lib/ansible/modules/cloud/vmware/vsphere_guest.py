@@ -1,22 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# TODO:
-# Ability to set CPU/Memory reservations
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -307,7 +296,6 @@ EXAMPLES = '''
     force: yes
 '''
 
-import json
 import os
 import re
 import ssl
@@ -318,7 +306,7 @@ try:
     from pysphere import VIServer, VIProperty, MORTypes
     from pysphere.resources import VimService_services as VI
     from pysphere.vi_task import VITask
-    from pysphere import VIException, VIApiException, FaultTypes
+    from pysphere import VIApiException
     HAS_PYSPHERE = True
 except ImportError:
     pass
@@ -327,6 +315,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
+
+# TODO:
+# Ability to set CPU/Memory reservations
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
     # add a scsi controller
@@ -801,7 +792,7 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
                     found = True
                     continue
         if not found:
-            it = VI.ReconfigVM_TaskRequestMsg()
+            VI.ReconfigVM_TaskRequestMsg()
             _this = request.new__this(vm._mor)
             _this.set_attribute_type(vm._mor.get_attribute_type())
             request.set_element__this(_this)
@@ -1811,7 +1802,7 @@ def main():
     except ssl.SSLError as sslerr:
         if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror:
             if not validate_certs:
-                default_context = ssl._create_default_https_context
+                ssl._create_default_https_context
                 ssl._create_default_https_context = ssl._create_unverified_context
                 viserver.connect(vcenter_hostname, username, password)
             else:
