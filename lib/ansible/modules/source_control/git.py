@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -277,7 +267,6 @@ import tempfile
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
@@ -962,12 +951,11 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
                 shutil.move(new_archive, archive)
                 shutil.remove(tempdir)
                 result.update(changed=True)
-            except OSError:
-                exception = get_exception()
+            except OSError as e:
                 module.fail_json(msg="Failed to move %s to %s" %
                                      (new_archive, archive),
                                  details="Error occured while moving : %s"
-                                         % exception)
+                                         % to_native(e))
     else:
         # Perform archive from local directory
         git_archive(git_path, module, dest, archive, archive_fmt, version)

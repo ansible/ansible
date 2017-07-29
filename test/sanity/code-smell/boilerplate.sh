@@ -19,55 +19,37 @@ future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
 
 # Eventually we want metaclass3 and future3 to get down to 0
 metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
-        -o -path ./lib/ansible/modules/source_control -prune \
-        -o -path ./lib/ansible/modules/packaging -prune \
-        -o -path ./lib/ansible/modules/notification -prune \
+        -o -path ./lib/ansible/modules/packaging/os -prune \
         -o -path ./lib/ansible/modules/network -prune \
         -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
         -o -path ./lib/ansible/modules/database -prune \
-        -o -path ./lib/ansible/modules/cloud/vmware -prune \
-        -o -path ./lib/ansible/modules/cloud/rackspace -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
-        -o -path ./lib/ansible/modules/cloud/google -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
-        -o -path ./lib/ansible/modules/cloud/centurylink -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -name '*.py' -type f -size +0c -exec grep -HL '__metaclass__ = type' '{}' '+')
 
 future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
-        -o -path ./lib/ansible/modules/source_control -prune \
-        -o -path ./lib/ansible/modules/packaging -prune \
-        -o -path ./lib/ansible/modules/notification -prune \
+        -o -path ./lib/ansible/modules/packaging/os -prune \
         -o -path ./lib/ansible/modules/network -prune \
         -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
         -o -path ./lib/ansible/modules/database -prune \
-        -o -path ./lib/ansible/modules/cloud/vmware -prune \
-        -o -path ./lib/ansible/modules/cloud/rackspace -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
-        -o -path ./lib/ansible/modules/cloud/google -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
-        -o -path ./lib/ansible/modules/cloud/centurylink -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -name '*.py' -type f -size +0c -exec egrep -HL 'from __future__ import (?absolute_import, division, print_function)?' '{}' '+')
 
 # Ordered by approximate work, lowest to highest
 # identity !
-# cloud/centurylink *
-# source_control *i
 # files !
-# cloud/google *
-# notification *!
 # database ;; break up *!
-# packaging ;; breakup *!
-# cloud/rackspace *
-# cloud/vmware *i
 # monitoring *!
+# packaging/os *i
 # cloud/cloudstack *
 # cloud/openstack *
 # cloud/ovirt

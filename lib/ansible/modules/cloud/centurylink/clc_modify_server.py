@@ -1,23 +1,11 @@
 #!/usr/bin/python
-
 #
 # Copyright (c) 2015 CenturyLink
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -330,6 +318,8 @@ servers:
 
 __version__ = '${version}'
 
+import json
+import os
 from distutils.version import LooseVersion
 
 try:
@@ -352,6 +342,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcModifyServer:
@@ -977,6 +969,6 @@ def main():
     clc_modify_server = ClcModifyServer(module)
     clc_modify_server.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()
