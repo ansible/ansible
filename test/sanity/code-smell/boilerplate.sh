@@ -23,7 +23,6 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
         -o -path ./lib/ansible/modules/packaging -prune \
         -o -path ./lib/ansible/modules/notification -prune \
         -o -path ./lib/ansible/modules/network -prune \
-        -o -path ./lib/ansible/modules/net_tools -prune \
         -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
@@ -32,7 +31,6 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
         -o -path ./lib/ansible/modules/cloud/rackspace -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
-        -o -path ./lib/ansible/modules/cloud/misc -prune \
         -o -path ./lib/ansible/modules/cloud/google -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/centurylink -prune \
@@ -44,7 +42,6 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
         -o -path ./lib/ansible/modules/packaging -prune \
         -o -path ./lib/ansible/modules/notification -prune \
         -o -path ./lib/ansible/modules/network -prune \
-        -o -path ./lib/ansible/modules/net_tools -prune \
         -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
@@ -53,7 +50,6 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
         -o -path ./lib/ansible/modules/cloud/rackspace -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
-        -o -path ./lib/ansible/modules/cloud/misc -prune \
         -o -path ./lib/ansible/modules/cloud/google -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/centurylink -prune \
@@ -61,24 +57,23 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
         -o -name '*.py' -type f -size +0c -exec egrep -HL 'from __future__ import (?absolute_import, division, print_function)?' '{}' '+')
 
 # Ordered by approximate work, lowest to highest
-# cloud/misc
-# cloud/google
-# identity
-# cloud/source_control
-# cloud/centurylink
-# database ;; break up
-# net-tools
-# cloud/rackspace
-# cloud/vmware
-# files
-# cloud/openstack
-# monitoring
-# cloud/notification
-# cloud/cloudstack
+# cloud/google *
+# identity !
+# source_control *i
+# cloud/centurylink *
+# database ;; break up *!
+# cloud/rackspace *
+# cloud/vmware *i
+# files !
+# cloud/openstack *
+# monitoring *!
+# notification *!
+# cloud/cloudstack *
 # cloud/ovirt
-# cloud/packaging ;; breakup
-# cloud/amazon
-# network ;; break up
+# packaging ;; breakup *!
+# cloud/amazon *i
+# network ;; break up *!
+# ( * == import* fixes, ! == many get_exception fixes, i == a few get_exception fixes)
 ### TODO:
 ### - module_utils
 ### - contrib/

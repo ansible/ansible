@@ -2,23 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Romeo Theriault <romeot () hawaii.edu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# see examples/playbooks/uri.yml
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -239,19 +227,16 @@ EXAMPLES = '''
 
 import cgi
 import datetime
+import json
 import os
 import shutil
 import tempfile
+import traceback
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.six as six
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 
@@ -261,10 +246,10 @@ def write_file(module, url, dest, content):
     f = open(tmpsrc, 'wb')
     try:
         f.write(content)
-    except Exception:
-        err = get_exception()
+    except Exception as e:
         os.remove(tmpsrc)
-        module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
+                         exception=traceback.format_exc())
     f.close()
 
     checksum_src   = None
@@ -297,10 +282,10 @@ def write_file(module, url, dest, content):
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
+                             exception=traceback.format_exc())
 
     os.remove(tmpsrc)
 

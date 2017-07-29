@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 # see examples/playbooks/get_url.yml
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -299,9 +288,11 @@ import os
 import re
 import shutil
 import tempfile
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 # ==============================================================
@@ -355,10 +346,10 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     f = os.fdopen(fd, 'wb')
     try:
         shutil.copyfileobj(rsp, f)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % e)
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
+                         exception=traceback.format_exc())
     f.close()
     rsp.close()
     return tempname, info
@@ -536,10 +527,10 @@ def main():
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
             shutil.copyfile(tmpsrc, dest)
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, e))
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
+                             exception=traceback.format_exc())
         changed = True
     else:
         changed = False
