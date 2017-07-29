@@ -285,9 +285,18 @@ class ModuleValidator(Validator):
         return False
 
     def _just_docs(self):
+        """Module can contain just docs and from __future__ boilerplate
+        """
         try:
             for child in self.ast.body:
                 if not isinstance(child, ast.Assign):
+                    # allowed from __future__ imports
+                    if isinstance(child, ast.ImportFrom) and child.module == '__future__':
+                        for future_import in child.names:
+                            if future_import.name not in self.WHITELIST_FUTURE_IMPORTS:
+                                break
+                        else:
+                            continue
                     return False
             return True
         except AttributeError:
