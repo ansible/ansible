@@ -25,23 +25,15 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
         -o -path ./lib/ansible/modules/network -prune \
         -o -path ./lib/ansible/modules/net_tools -prune \
         -o -path ./lib/ansible/modules/monitoring -prune \
-        -o -path ./lib/ansible/modules/messaging -prune \
-        -o -path ./lib/ansible/modules/inventory -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
         -o -path ./lib/ansible/modules/database -prune \
-        -o -path ./lib/ansible/modules/crypto -prune \
-        -o -path ./lib/ansible/modules/commands -prune \
-        -o -path ./lib/ansible/modules/clustering -prune \
-        -o -path ./lib/ansible/modules/cloud/webfaction -prune \
         -o -path ./lib/ansible/modules/cloud/vmware -prune \
         -o -path ./lib/ansible/modules/cloud/rackspace -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/misc -prune \
         -o -path ./lib/ansible/modules/cloud/google -prune \
-        -o -path ./lib/ansible/modules/cloud/docker -prune \
-        -o -path ./lib/ansible/modules/cloud/digital_ocean -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/centurylink -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
@@ -54,31 +46,42 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
         -o -path ./lib/ansible/modules/network -prune \
         -o -path ./lib/ansible/modules/net_tools -prune \
         -o -path ./lib/ansible/modules/monitoring -prune \
-        -o -path ./lib/ansible/modules/messaging -prune \
-        -o -path ./lib/ansible/modules/inventory -prune \
         -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
         -o -path ./lib/ansible/modules/database -prune \
-        -o -path ./lib/ansible/modules/crypto -prune \
-        -o -path ./lib/ansible/modules/commands -prune \
-        -o -path ./lib/ansible/modules/clustering -prune \
-        -o -path ./lib/ansible/modules/cloud/webfaction -prune \
         -o -path ./lib/ansible/modules/cloud/vmware -prune \
         -o -path ./lib/ansible/modules/cloud/rackspace -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/misc -prune \
         -o -path ./lib/ansible/modules/cloud/google -prune \
-        -o -path ./lib/ansible/modules/cloud/docker -prune \
-        -o -path ./lib/ansible/modules/cloud/digital_ocean -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/centurylink -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -name '*.py' -type f -size +0c -exec egrep -HL 'from __future__ import (?absolute_import, division, print_function)?' '{}' '+')
 
+# Ordered by approximate work, lowest to highest
+# cloud/misc
+# cloud/google
+# identity
+# cloud/source_control
+# cloud/centurylink
+# database ;; break up
+# net-tools
+# cloud/rackspace
+# cloud/vmware
+# files
+# cloud/openstack
+# monitoring
+# cloud/notification
+# cloud/cloudstack
+# cloud/ovirt
+# cloud/packaging ;; breakup
+# cloud/amazon
+# network ;; break up
 ### TODO:
-### - contrib/
 ### - module_utils
+### - contrib/
 
 
 if test -n "$metaclass1" -o -n "$metaclass2" -o -n "$metaclass3" ; then

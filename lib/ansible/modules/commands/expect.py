@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Matt Martz <matt@sivel.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -99,6 +89,7 @@ EXAMPLES = r'''
 
 import datetime
 import os
+import traceback
 
 try:
     import pexpect
@@ -106,9 +97,8 @@ try:
 except ImportError:
     HAS_PEXPECT = False
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native, to_text
 
 
 def response_closure(module, question, responses):
@@ -202,18 +192,16 @@ def main():
             # Use pexpect.runu in pexpect>=3.3,<4
             out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
                                    events=events, cwd=chdir, echo=echo)
-    except (TypeError, AttributeError):
-        e = get_exception()
+    except (TypeError, AttributeError) as e:
         # This should catch all insufficient versions of pexpect
         # We deem them insufficient for their lack of ability to specify
         # to not echo responses via the run/runu functions, which would
         # potentially leak sensentive information
         module.fail_json(msg='Insufficient version of pexpect installed '
                              '(%s), this module requires pexpect>=3.3. '
-                             'Error was %s' % (pexpect.__version__, e))
-    except pexpect.ExceptionPexpect:
-        e = get_exception()
-        module.fail_json(msg='%s' % e)
+                             'Error was %s' % (pexpect.__version__, to_native(e)))
+    except pexpect.ExceptionPexpect as e:
+        module.fail_json(msg='%s' % to_native(e), exception=traceback.format_exc())
 
     endd = datetime.datetime.now()
     delta = endd - startd

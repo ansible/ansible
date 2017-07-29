@@ -194,7 +194,6 @@ lib/ansible/modules/cloud/vmware/vsphere_guest.py
 lib/ansible/modules/cloud/webfaction/webfaction_app.py
 lib/ansible/modules/cloud/webfaction/webfaction_db.py
 lib/ansible/modules/cloud/webfaction/webfaction_domain.py
-lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py
 lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/clustering/consul_acl.py
 lib/ansible/modules/clustering/consul_kv.py
@@ -233,10 +232,8 @@ lib/ansible/modules/messaging/rabbitmq_binding.py
 lib/ansible/modules/messaging/rabbitmq_exchange.py
 lib/ansible/modules/messaging/rabbitmq_parameter.py
 lib/ansible/modules/messaging/rabbitmq_plugin.py
-lib/ansible/modules/messaging/rabbitmq_policy.py
 lib/ansible/modules/messaging/rabbitmq_queue.py
 lib/ansible/modules/messaging/rabbitmq_user.py
-lib/ansible/modules/messaging/rabbitmq_vhost.py
 lib/ansible/modules/monitoring/airbrake_deployment.py
 lib/ansible/modules/monitoring/bigpanda.py
 lib/ansible/modules/monitoring/boundary_meter.py

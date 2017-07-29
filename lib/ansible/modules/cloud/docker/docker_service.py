@@ -1,21 +1,11 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -449,38 +439,37 @@ actions:
                           type: string
 '''
 
-HAS_YAML = True
-HAS_YAML_EXC = None
-HAS_COMPOSE = True
-HAS_COMPOSE_EXC = None
-MINIMUM_COMPOSE_VERSION = '1.7.0'
-
-import sys
+import os
 import re
+import sys
+import tempfile
+from contextlib import contextmanager
+from distutils.version import LooseVersion
 
 try:
     import yaml
+    HAS_YAML = True
+    HAS_YAML_EXC = None
 except ImportError as exc:
     HAS_YAML = False
     HAS_YAML_EXC = str(exc)
 
-from distutils.version import LooseVersion
-from ansible.module_utils.basic import *
-
 try:
     from compose import __version__ as compose_version
-    from compose.project import ProjectError
     from compose.cli.command import project_from_options
-    from compose.service import ConvergenceStrategy, NoSuchImageError
+    from compose.service import NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
     from compose.const import DEFAULT_TIMEOUT
+    HAS_COMPOSE = True
+    HAS_COMPOSE_EXC = None
+    MINIMUM_COMPOSE_VERSION = '1.7.0'
+
 except ImportError as exc:
     HAS_COMPOSE = False
     HAS_COMPOSE_EXC = str(exc)
     DEFAULT_TIMEOUT = 10
 
-from ansible.module_utils.docker_common import *
-from contextlib import contextmanager
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 
 
 AUTH_PARAM_MAPPING = {
