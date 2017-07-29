@@ -6,7 +6,7 @@
 #  - EC2_REGION -> AWS_REGION
 #
 
-# - include: ../../setup_ec2/tasks/common.yml module_name=ec2_group
+# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
 
 - block:
 
@@ -25,7 +25,7 @@
     # ============================================================
     - name: test failure with only name
       ec2_group:
-        name='{{ec2_group_name}}'
+        name: '{{ec2_group_name}}'
       register: result
       ignore_errors: true
 
@@ -38,7 +38,7 @@
     # ============================================================
     - name: test failure with only description
       ec2_group:
-        description='{{ec2_group_description}}'
+        description: '{{ec2_group_description}}'
       register: result
       ignore_errors: true
 
@@ -51,9 +51,9 @@
     # ============================================================
     - name: test failure with empty description (AWS API requires non-empty string desc)
       ec2_group:
-        name='{{ec2_group_name}}'
-        description=''
-        region='{{ec2_region}}'
+        name: '{{ec2_group_name}}'
+        description: ''
+        region: '{{ec2_region}}'
       register: result
       ignore_errors: true
 
@@ -66,9 +66,9 @@
     # ============================================================
     - name: test valid region parameter
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
-        region='{{ec2_region}}'
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        region: '{{ec2_region}}'
       register: result
       ignore_errors: true
 
@@ -81,8 +81,8 @@
     # ============================================================
     - name: test environment variable EC2_REGION
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
       environment:
         EC2_REGION: '{{ec2_region}}'
       register: result
@@ -97,8 +97,8 @@
     # ============================================================
     - name: test invalid ec2_url parameter
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
       environment:
         EC2_URL: bogus.example.com
       register: result
@@ -113,8 +113,8 @@
     # ============================================================
     - name: test valid ec2_url parameter
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
       environment:
         EC2_URL: '{{ec2_url}}'
       register: result
@@ -129,8 +129,8 @@
     # ============================================================
     - name: test credentials from environment
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
       environment:
         EC2_REGION: '{{ec2_region}}'
         EC2_ACCESS_KEY: bogus_access_key
@@ -147,11 +147,11 @@
     # ============================================================
     - name: test credential parameters
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='bogus_access_key'
-        ec2_secret_key='bogus_secret_key'
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: 'bogus_access_key'
+        ec2_secret_key: 'bogus_secret_key'
       register: result
       ignore_errors: true
 
@@ -164,25 +164,25 @@
     # ============================================================
     - name: test state=absent
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=absent
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: absent
       register: result
 
     # ============================================================
     - name: test state=present (expected changed=true)
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=present
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
       register: result
 
     - name: assert state=present (expected changed=true)
@@ -194,13 +194,13 @@
     # ============================================================
     - name: test state=present different description raises error
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}CHANGED'
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=present
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}CHANGED'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
       ignore_errors: true
       register: result
 
@@ -213,13 +213,13 @@
     # ============================================================
     - name: test state=present (expected changed=false)
       ec2_group:
-        name='{{ec2_group_name}}'
-        description='{{ec2_group_description}}'
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=present
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
       register: result
 
     - name: assert state=present (expected changed=false)
@@ -337,7 +337,7 @@
         purge_rules: no
         rules:
         - proto: "tcp"
-          group_name: Another security group
+          group_name: "{{ resource_prefix }} - Another security group"
           group_desc: Another security group
           ports: 7171
       register: result
@@ -353,8 +353,8 @@
     # ============================================================
     - name: test state=absent (expected changed=true)
       ec2_group:
-        name='{{ec2_group_name}}'
-        state=absent
+        name: '{{ec2_group_name}}'
+        state: absent
       environment:
         EC2_REGION: '{{ec2_region}}'
         EC2_ACCESS_KEY: '{{ec2_access_key}}'
@@ -408,8 +408,8 @@
 
     - name: test state=absent (expected changed=true)
       ec2_group:
-        name='{{ec2_group_name}}'
-        state=absent
+        name: '{{ec2_group_name}}'
+        state: absent
       environment:
         EC2_REGION: '{{ec2_region}}'
         EC2_ACCESS_KEY: '{{ec2_access_key}}'
@@ -428,13 +428,22 @@
     # ============================================================
     - name: tidy up security group
       ec2_group:
-        name='{{ec2_group_name}}'
-        state=absent
+        name: '{{ec2_group_name}}'
+        state: absent
       environment:
         EC2_REGION: '{{ec2_region}}'
         EC2_ACCESS_KEY: '{{ec2_access_key}}'
         EC2_SECRET_KEY: '{{ec2_secret_key}}'
         EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+
+    - name: tidy up automatically created SG
+      ec2_group:
+        name: "{{ resource_prefix }} - Another security group"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
 
     - name: tidy up VPC
       ec2_vpc_net:
