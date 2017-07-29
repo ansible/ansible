@@ -318,6 +318,35 @@ address. For example, to get the IP address itself from a CIDR, you can use::
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :doc:`playbooks_filters_ipaddr`.
 
+.. _network_filter:
+
+Network filters
+```````````````
+
+.. versionadded:: 2.4
+
+To generate a list of command diffs for a network configuration:
+
+  {{ myvar | diff_network_config(current_config, indent=1 }}
+
+To return the entire configuration block:
+
+  {{ myvar | diff_network_config(current_config, indent=1, replace='block' }}
+
+To match the block exactly:
+
+  {{ myvar | diff_network_config(current_config, indent=1, match='exact' }}
+
+To apply a TextFSM filter to the output of a CLI command:
+
+  {{ myvar | parse_cli(('cisco_show_version') }}
+
+Templates can also be downloaded from URLs:
+
+  {{ myvar | parse_cli('http://myserver/cisco_show_version') }}
+
+The CLI parsing filter depends on the TextFSM library being installed on
+the local system
 
 .. _hash_filters:
 
