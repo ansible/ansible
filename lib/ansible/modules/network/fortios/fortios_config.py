@@ -2,22 +2,11 @@
 #
 # Ansible module to manage configuration on fortios devices
 # (c) 2016, Benjamin Jolivot <bjolivot@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -83,14 +72,9 @@ change_string:
   type: string
 """
 
-
-
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
 from ansible.module_utils.fortios import backup
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-
 
 #check for pyFG lib
 try:
@@ -101,10 +85,12 @@ try:
 except:
     HAS_PYFG=False
 
+
 # some blocks don't support update, so remove them
 NOT_UPDATABLE_CONFIG_OBJECTS=[
     "vpn certificate local",
 ]
+
 
 def main():
     argument_spec = dict(
@@ -183,17 +169,15 @@ def main():
         if module.check_mode is False and change_string != "":
             try:
                 f.commit(change_string)
-            except CommandExecutionException:
-                e = get_exception()
+            except CommandExecutionException as e:
                 module.fail_json(msg="Unable to execute command, check your args, the error was {0}".format(e.message))
-            except FailedCommit:
-                e = get_exception()
+            except FailedCommit as e:
                 module.fail_json(msg="Unable to commit, check your args, the error was {0}".format(e.message))
-            except ForcedCommit:
-                e = get_exception()
+            except ForcedCommit as e:
                 module.fail_json(msg="Failed to force commit, check your args, the error was {0}".format(e.message))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

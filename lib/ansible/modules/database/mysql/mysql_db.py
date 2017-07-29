@@ -3,21 +3,11 @@
 
 # (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
 # Sponsored by Four Kitchens http://fourkitchens.com.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -114,8 +104,8 @@ EXAMPLES = '''
 
 import os
 import pipes
-import stat
 import subprocess
+import traceback
 
 try:
     import MySQLdb
@@ -123,6 +113,12 @@ except ImportError:
     mysqldb_found = False
 else:
     mysqldb_found = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import mysql_quote_identifier
+from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils._text import to_native
+
 
 # ===========================================
 # MySQL module specific support methods.
@@ -316,13 +312,12 @@ def main():
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
                                connect_timeout=connect_timeout)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                                 "Exception message: %s" % (config_file, e))
+                                 "Exception message: %s" % (config_file, to_native(e)))
         else:
-            module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
+            module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
     changed = False
     if not os.path.exists(config_file):
@@ -334,9 +329,8 @@ def main():
             else:
                 try:
                     changed = db_delete(cursor, db)
-                except Exception:
-                    e = get_exception()
-                    module.fail_json(msg="error deleting database: " + str(e))
+                except Exception as e:
+                    module.fail_json(msg="error deleting database: %s" % to_native(e))
                 module.exit_json(changed=changed, db=db)
 
         elif state == "dump":
@@ -378,9 +372,9 @@ def main():
             else:
                 try:
                     changed = db_create(cursor, db, encoding, collation)
-                except Exception:
-                    e = get_exception()
-                    module.fail_json(msg="error creating database: " + str(e))
+                except Exception as e:
+                    module.fail_json(msg="error creating database: %s" % to_native(e),
+                                     exception=traceback.format_exc())
             module.exit_json(changed=changed, db=db)
 
         elif state == "import":
@@ -397,9 +391,9 @@ def main():
                             module.fail_json(msg="%s" % stderr)
                         else:
                             module.exit_json(changed=True, db=db, msg=stdout)
-                except Exception:
-                    e = get_exception()
-                    module.fail_json(msg="error creating database: " + str(e))
+                except Exception as e:
+                    module.fail_json(msg="error creating database: %s" % to_native(e),
+                                     exception=traceback.format_exc())
 
         elif state == "absent":
             if module.check_mode:
@@ -411,9 +405,6 @@ def main():
                 module.exit_json(changed=False, db=db)
             module.fail_json(msg="Cannot dump database %s - not found" % (db))
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
-from ansible.module_utils.mysql import *
+
 if __name__ == '__main__':
     main()

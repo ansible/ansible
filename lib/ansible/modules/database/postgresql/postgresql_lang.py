@@ -2,21 +2,12 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2014, Jens Depuydt <http://www.jensd.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -151,6 +142,7 @@ EXAMPLES = '''
     state: absent
     fail_on_drop: no
 '''
+import traceback
 
 try:
     import psycopg2
@@ -158,6 +150,10 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 def lang_exists(cursor, lang):
     """Checks if language exists for db"""
@@ -220,7 +216,6 @@ def main():
     )
 
     db = module.params["db"]
-    port = module.params["port"]
     lang = module.params["lang"]
     state = module.params["state"]
     trust = module.params["trust"]
@@ -243,12 +238,10 @@ def main():
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
     changed = False
-    lang_dropped = False
-    kw = dict(db=db,lang=lang,trust=trust)
+    kw = {'db': db, 'lang': lang, 'trust': trust}
 
     if state == "present":
         if lang_exists(cursor, lang):
@@ -287,9 +280,6 @@ def main():
     kw['changed'] = changed
     module.exit_json(**kw)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

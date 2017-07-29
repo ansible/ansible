@@ -1,26 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to manage A10 Networks slb server objects
-(c) 2014, Mischa Peters <mpeters@a10networks.com>,
-2016, Eric Chou <ericc@a10networks.com>
+# (c) 2014, Mischa Peters <mpeters@a10networks.com>,
+# (c) 2016, Eric Chou <ericc@a10networks.com>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -114,12 +102,14 @@ content:
 '''
 import json
 
+from ansible.module_utils.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
+                                      axapi_get_port_protocol, axapi_enabled_disabled, AXAPI_PORT_PROTOCOLS)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure
-from ansible.module_utils.a10 import axapi_get_port_protocol, axapi_enabled_disabled, AXAPI_PORT_PROTOCOLS
+
 
 VALID_PORT_FIELDS = ['port_num', 'protocol', 'status']
+
 
 def validate_ports(module, ports):
     for item in ports:
@@ -209,7 +199,7 @@ def main():
     if slb_server_status:
         json_post['server']['status'] = axapi_enabled_disabled(slb_server_status)
 
-    slb_server_partition = axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': partition}))
+    axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': partition}))
 
     slb_server_data = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': slb_server}))
     slb_server_exists = not axapi_failure(slb_server_data)
@@ -295,6 +285,7 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
+
 
 if __name__ == '__main__':
     main()
