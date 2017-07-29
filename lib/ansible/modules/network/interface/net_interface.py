@@ -54,9 +54,11 @@ options:
     description: List of Interfaces definitions.
   purge:
     description:
-      - Purge Interfaces not defined in the aggregates parameter.
+      - Purge Interfaces not defined in the aggregate parameter.
         This applies only for logical interface.
     default: no
+  state:
+    description:
       - State of the Interface configuration, C(up) means present and
         operationally up and C(down) means present and operationally C(down)
     default: present

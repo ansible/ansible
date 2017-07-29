@@ -1,8 +1,8 @@
 ---
-- debug: msg="START ios_interface netconf/basic.yaml"
+- debug: msg="START net_interface ios/basic.yaml"
 
 - name: Confgure interface
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     description: test-interface-initial
     state: present
@@ -17,7 +17,7 @@
       - '"description test-interface-initial" in result.commands'
 
 - name: Confgure interface (idempotent)
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     description: test-interface-initial
     state: present
@@ -30,7 +30,7 @@
       - 'result.changed == false'
 
 - name: Confgure interface parameters
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     description: test-interface
     speed: 100
@@ -51,7 +51,7 @@
       - '"mtu 512" in result.commands'
 
 - name: Change interface parameters
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     description: test-interface-1
     speed: 10
@@ -72,7 +72,7 @@
       - '"mtu 256" in result.commands'
 
 - name: Delete interface parameters
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     state: present
     authorize: yes
@@ -89,7 +89,7 @@
       - '"no mtu 256" in result.commands'
 
 - name: Delete interface parameters (idempotent)
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     state: present
     authorize: yes
@@ -101,7 +101,7 @@
       - 'result.changed == false'
 
 - name: Disable interface
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     state: down
     authorize: yes
@@ -115,7 +115,7 @@
       - '"shutdown" in result.commands'
 
 - name: Enable interface
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/2
     state: up
     authorize: yes
@@ -129,7 +129,7 @@
       - '"no shutdown" in result.commands'
 
 - name: Confgure second interface (setup)
-  ios_interface:
+  net_interface:
     name: GigabitEthernet0/1
     description: test-interface-initial
     state: present
@@ -144,7 +144,7 @@
       - '"description test-interface-initial" in result.commands'
 
 - name: Add interface aggregate
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: GigabitEthernet0/1, speed: 10, duplex: half, mtu: 256, description: test-interface-1 }
     - { name: GigabitEthernet0/2, speed: 100, duplex: full, mtu: 516, description: test-interface-2 }
@@ -168,7 +168,7 @@
       - '"mtu 516" in result.commands'
 
 - name: Add interface aggregate (idempotent)
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: GigabitEthernet0/1, speed: 10, duplex: half, mtu: 256, description: test-interface-1 }
     - { name: GigabitEthernet0/2, speed: 100, duplex: full, mtu: 516, description: test-interface-2 }
@@ -183,7 +183,7 @@
 
 
 - name: Change interface parameters in aggregate
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: GigabitEthernet0/1 }
     - { name: GigabitEthernet0/2 }
@@ -207,7 +207,7 @@
       - '"no mtu 516" in result.commands'
 
 - name: Disable interface aggregate
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: GigabitEthernet0/1, state: down }
     - { name: GigabitEthernet0/2, state: down }
@@ -225,7 +225,7 @@
       - '"shutdown" in result.commands'
 
 - name: Enable interface aggregate
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: GigabitEthernet0/1, state: up }
     - { name: GigabitEthernet0/2, state: up }
@@ -243,7 +243,7 @@
       - '"no shutdown" in result.commands'
 
 - name: Create loopback interface aggregate
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: Loopback9 }
     - { name: Loopback10 }
@@ -261,7 +261,7 @@
       - '"description configured by ios_interface" in result.commands'
 
 - name: Delete loopback interface aggregate
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: Loopback9, state: absent }
     - { name: Loopback10, state: absent }
@@ -277,7 +277,7 @@
       - '"no interface Loopback10" in result.commands'
 
 - name: Delete loopback interface aggregate (idempotent)
-  ios_interface:
+  net_interface:
     aggregate:
     - { name: Loopback9, state: absent }
     - { name: Loopback10, state: absent }
@@ -290,4 +290,4 @@
     that:
       - 'result.changed == false'
 
-- debug: msg="END junos_interface netconf/basic.yaml"
+- debug: msg="END net_interface ios/basic.yaml"
