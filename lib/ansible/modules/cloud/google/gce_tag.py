@@ -1,18 +1,11 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -130,6 +123,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect
 
+
 def _union_items(baselist, comparelist):
     """Combine two lists, removing duplicates."""
     return list(set(baselist) | set(comparelist))
@@ -145,7 +139,6 @@ def _get_changed_items(baselist, comparelist):
 def modify_tags(gce, module, node, tags, state='present'):
     """Modify tags on an instance."""
 
-    zone = node.extra['zone'].name
     existing_tags = node.extra['tags']
     tags = [x.lower() for x in tags]
     tags_changed = []
@@ -235,6 +228,7 @@ def main():
         module.exit_json(changed=changed, instance_pattern=instance_pattern, tags=tags_changed, zone=zone, instances_updated=instance_pattern_matches)
     else:
         module.exit_json(changed=changed, instance_name=instance_name, tags=tags_changed, zone=zone)
+
 
 if __name__ == '__main__':
     main()
