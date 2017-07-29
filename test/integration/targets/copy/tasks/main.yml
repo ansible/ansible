@@ -5,6 +5,9 @@
 # GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
 #
 
+- set_fact:
+    output_dir_expanded: '{{ output_dir | expanduser }}'
+
 - name: record the output directory
   set_fact: output_file={{output_dir}}/foo.txt
 
@@ -651,6 +654,83 @@
       - 'not copy_result.changed'
 
 #
+# Recursive copy with absolute paths (#27439)
+#
+- name: Test that output_dir is appropriate for this test (absolute path)
+  assert:
+    that:
+      - '{{ output_dir_expanded[0] == "/" }}'
+
+- name: create a directory to copy
+  file:
+    path: '{{ output_dir_expanded }}/source_recursive'
+    state: directory
+
+- name: create a file inside of the directory
+  copy:
+    content: "testing"
+    dest: '{{ output_dir_expanded }}/source_recursive/file'
+
+- name: Create a directory to place the test output in
+  file:
+    path: '{{ output_dir_expanded }}/destination'
+    state: directory
+
+- name: Copy the directory and files within (no trailing slash)
+  copy:
+    src: '{{ output_dir_expanded }}/source_recursive'
+    dest: '{{ output_dir_expanded }}/destination'
+
+- name: stat the recursively copied directory
+  stat: path={{output_dir}}/destination/{{item}}
+  register: copied_stat
+  with_items:
+    - "source_recursive"
+    - "source_recursive/file"
+    - "file"
+
+#- debug: var=copied_stat
+- name: assert with no trailing slash, directory and file is copied
+  assert:
+    that:
+      - "copied_stat.results[0].stat.exists"
+      - "copied_stat.results[1].stat.exists"
+      - "not copied_stat.results[2].stat.exists"
+
+- name: Cleanup
+  file:
+    path: '{{ output_dir_expanded }}/destination'
+    state: absent
+
+# Try again with no trailing slash
+
+- name: Create a directory to place the test output in
+  file:
+    path: '{{ output_dir_expanded }}/destination'
+    state: directory
+
+- name: Copy just the files inside of the directory
+  copy:
+    src: '{{ output_dir_expanded }}/source_recursive/'
+    dest: '{{ output_dir_expanded }}/destination'
+
+- name: stat the recursively copied directory
+  stat: path={{output_dir_expanded}}/destination/{{item}}
+  register: copied_stat
+  with_items:
+    - "source_recursive"
+    - "source_recursive/file"
+    - "file"
+
+#- debug: var=copied_stat
+- name: assert with trailing slash, only the file is copied
+  assert:
+    that:
+      - "not copied_stat.results[0].stat.exists"
+      - "not copied_stat.results[1].stat.exists"
+      - "copied_stat.results[2].stat.exists"
+
+#
 # issue 8394
 #
 
@@ -671,7 +751,7 @@
   assert:
     that:
       - "copy_result6.changed"
-      - "copy_result6.dest == '{{output_dir|expanduser}}/multiline.txt'"
+      - "copy_result6.dest == '{{output_dir_expanded}}/multiline.txt'"
       - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 # test overwriting a file as an unprivileged user (pull request #8624)

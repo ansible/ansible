@@ -442,14 +442,26 @@ class ActionModule(ActionBase):
         elif remote_src:
             result.update(self._execute_module(task_vars=task_vars))
             return result
-        else:  # find in expected paths
+        else:
+            # find_needle returns a path that may not have a trailing slash on
+            # a directory so we need to determine that now (we use it just
+            # like rsync does to figure out whether to include the directory
+            # or only the files inside the directory
+            trailing_slash = source.endswith(os.path.sep)
             try:
+                # find in expected paths
                 source = self._find_needle('files', source)
             except AnsibleError as e:
                 result['failed'] = True
                 result['msg'] = to_text(e)
                 result['exception'] = traceback.format_exc()
                 return result
+
+            if trailing_slash != source.endswith(os.path.sep):
+                if source[-1] == os.path.sep:
+                    source = source[:-1]
+                else:
+                    source = source + os.path.sep
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = {'files': [], 'directories': [], 'symlinks': []}
