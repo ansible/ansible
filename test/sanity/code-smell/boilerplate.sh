@@ -57,21 +57,21 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
         -o -name '*.py' -type f -size +0c -exec egrep -HL 'from __future__ import (?absolute_import, division, print_function)?' '{}' '+')
 
 # Ordered by approximate work, lowest to highest
-# cloud/google *
 # identity !
-# source_control *i
 # cloud/centurylink *
+# source_control *i
+# files !
+# cloud/google *
+# notification *!
 # database ;; break up *!
+# packaging ;; breakup *!
 # cloud/rackspace *
 # cloud/vmware *i
-# files !
-# cloud/openstack *
 # monitoring *!
-# notification *!
 # cloud/cloudstack *
+# cloud/openstack *
 # cloud/ovirt
-# packaging ;; breakup *!
-# cloud/amazon *i
+# cloud/amazon *
 # network ;; break up *!
 # ( * == import* fixes, ! == many get_exception fixes, i == a few get_exception fixes)
 ### TODO:
