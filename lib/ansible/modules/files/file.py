@@ -428,7 +428,7 @@ def main():
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
         else:
-            module.fail_json(dest=path, src=src, msg='unexpected position reached1')
+            module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
         if changed and not module.check_mode:
             if prev_state != 'absent':
@@ -508,7 +508,7 @@ def main():
 
         module.exit_json(dest=path, changed=True, diff=diff)
 
-    module.fail_json(path=path, msg='unexpected position reached2')
+    module.fail_json(path=path, msg='unexpected position reached')
 
 if __name__ == '__main__':
     main()
