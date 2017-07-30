@@ -27,13 +27,16 @@ When creating a new module there are a few things to keep in mind:
 - Avoid using ``Write-Host/Debug/Verbose/Error`` in the module and add what needs to be returned to the ``$result`` variable
 - When trying an exception use ``Fail-Json -obj $result -message "exception message here"`` instead
 - Most new modules require check mode and integration tests before they are merged into the main Ansible codebase
-- Avoid using try/catch statements over a large code block, rather use then for individual calls so the error message can be more descriptive
+- Avoid using try/catch statements over a large code block, rather use them for individual calls so the error message can be more descriptive
+- Try and catch specific exceptions when using try/catch statements
 - Avoid using PSCustomObjects unless necessary
 - Look for common functions in ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work. These can be imported by adding the line ``#Requires -Module *`` below ``#POWERSHELL_COMMON`` where * is the filename to import
 - Ensure the code is compliant with Powershell v3 and above, if it isn't then document the requirements
 - Ansible uses strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
 - Favour native Powershell cmdlets instead of executable calls if possible
 - If adding an object to ``$result``, ensure any trailing slashes are removed or exited out as ``ConvertTo-Json`` will fail to convert it
+- Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
+- Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
 A very basic powershell module template can be found found below:
 
@@ -112,7 +115,7 @@ To test a module you can do so with an Ansible playbook.
         win_module:
           name: test name
 
-- Run the playbook ``$ ansible-playbook -i hosts testmodule.yml``
+- Run the playbook ``ansible-playbook -i hosts testmodule.yml``
 
 This can be pretty high level and is useful for seeing how Ansible runs with
 the new module end to end: but there are better ways to test out the module as
