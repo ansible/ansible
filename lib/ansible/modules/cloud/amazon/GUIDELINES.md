@@ -1,18 +1,21 @@
 # Guidelines for AWS modules
 
-The Ansible AWS modules and these guidelines are maintained by the
-Ansible AWS Working Group.  For further information see
-[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
+The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
+further information see 
+[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).  
 If you are planning to contribute AWS modules to Ansible then getting in touch with the the working
 group will be a good way to start, especially because a similar module may already be under
 development.
 
-## Getting Started
+## Choose Boto3 not Boto
 
-Since Ansible 2.0, it is required that all new AWS modules are written to use boto3.  Please do not
-add new dependencies to the old boto library.
+Starting from Ansible 2.0, it has been required that all new AWS modules are written to use boto3.
+Please do not add new dependencies to the old boto library.
 
-Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to boto3 has begun.   From Ansible 2.4 it is permissible for modules which previously required boto to start to require boto3 in order to deliver the functionality previously supported with boto.
+Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to
+boto3 has begun.  From Ansible 2.4 it is permissible for modules which previously required boto to
+start to require boto3 in order to deliver the functionality previously supported with boto and the
+boto dependency can be deleted.
 
 ## Bug fixing
 
@@ -136,8 +139,9 @@ else:
 
 #### boto3
 
-An example of connecting to ec2 is shown below.  Note that there is no 'NoAuthHandlerFound' exception handling like in boto.
-Instead, an AuthFailure exception will be thrown when you use 'connection'. See exception handling.
+An example of connecting to ec2 is shown below.  Note that there is no 'NoAuthHandlerFound'
+exception handling like in boto.  Instead, an AuthFailure exception will be thrown when you use
+'connection'. See exception handling.
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -185,7 +189,8 @@ are a number of possibilities for handling it.
 * use fail_json() to report the failure without using `ansible.module_utils.aws.core`
 * do something custom in the case where you know how to handle the exception
 
-For more information on botocore exception handling see [http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling]
+For more information on botocore exception handling see
+[http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling]
 
 #### using fail_json_aws()
 
@@ -231,7 +236,8 @@ except ClientError, e:
 
 #### using fail_json() and avoiding ansible.module_utils.aws.core
 
-Boto3 provides lots of useful info when an exception is thrown so pass this to the user along with the message.
+Boto3 provides lots of useful info when an exception is thrown so pass this to the user along with
+the message.
 
 ```python
 # Import ClientError from botocore
@@ -291,7 +297,8 @@ module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
 ### Dealing with IAM JSON policy
 
-If your module accepts IAM JSON policies then set the type to 'json' in the module spec. For example"
+If your module accepts IAM JSON policies then set the type to 'json' in the module spec. For
+example as follows:
 
 ```python
 argument_spec.update(
@@ -301,8 +308,8 @@ argument_spec.update(
 )
 ```
 
-Note that AWS is unlikely to return the policy in the same order that is was submitted. Therefore, a helper
-function has been created to order policies before comparison.
+Note that AWS is unlikely to return the policy in the same order that is was submitted. Therefore,
+a helper function has been created to order policies before comparison.
 
 ```python
 # Get the policy from AWS
@@ -322,60 +329,66 @@ else:
 AWS has a concept of resource tags. Usually the boto3 API has separate calls for tagging and
 untagging a resource.  For example, the ec2 API has a create_tags and delete_tags call.
 
-It is common practice in Ansible AWS modules to have a 'purge_tags' parameter that defaults to true.
+It is common practice in Ansible AWS modules to have a 'purge_tags' parameter that defaults to
+true.
 
-The purge_tags parameter means that existing tags will be deleted if they are not specified in
-by the Ansible playbook.
+The purge_tags parameter means that existing tags will be deleted if they are not specified in by
+the Ansible playbook.
 
-There is a helper function 'compare_aws_tags' to ease dealing with tags. It can compare two dicts and
-return the tags to set and the tags to delete.  See the Helper function section below for more detail.
+There is a helper function 'compare_aws_tags' to ease dealing with tags. It can compare two dicts
+and return the tags to set and the tags to delete.  See the Helper function section below for more
+detail.
 
 ### Helper functions
 
-Along with the connection functions in Ansible ec2.py module_utils, there are some other useful functions detailed below.
+Along with the connection functions in Ansible ec2.py module_utils, there are some other useful
+functions detailed below.
 
 #### camel_dict_to_snake_dict
 
-boto3 returns results in a dict.  The keys of the dict are in CamelCase format. In keeping
-with Ansible format, this function will convert the keys to snake_case.
+boto3 returns results in a dict.  The keys of the dict are in CamelCase format. In keeping with
+Ansible format, this function will convert the keys to snake_case.
 
 #### ansible_dict_to_boto3_filter_list
 
-Converts a an Ansible list of filters to a boto3 friendly list of dicts.  This is useful for
-any boto3 _facts modules.
+Converts a an Ansible list of filters to a boto3 friendly list of dicts.  This is useful for any
+boto3 _facts modules.
 
 #### boto3_tag_list_to_ansible_dict
 
-Converts a boto3 tag list to an Ansible dict. Boto3 returns tags as a list of dicts containing keys called
-'Key' and 'Value' by default.  This key names can be overridden when calling the function.  For example, if you have already
-camel_cased your list of tags you may want to pass lowercase key names instead i.e. 'key' and 'value'.
+Converts a boto3 tag list to an Ansible dict. Boto3 returns tags as a list of dicts containing keys
+called 'Key' and 'Value' by default.  This key names can be overridden when calling the function.
+For example, if you have already camel_cased your list of tags you may want to pass lowercase key
+names instead i.e. 'key' and 'value'.
 
-This function converts the list in to a single dict where the dict key is the tag key and the dict value is the tag value.
+This function converts the list in to a single dict where the dict key is the tag key and the dict
+value is the tag value.
 
 #### ansible_dict_to_boto3_tag_list
 
-Opposite of above. Converts an Ansible dict to a boto3 tag list of dicts. You can again override the key names used if 'Key'
-and 'Value' is not suitable.
+Opposite of above. Converts an Ansible dict to a boto3 tag list of dicts. You can again override
+the key names used if 'Key' and 'Value' is not suitable.
 
 #### get_ec2_security_group_ids_from_names
 
-Pass this function a list of security group names or combination of security group names and IDs and this function will
-return a list of IDs.  You should also pass the VPC ID if known because security group names are not necessarily unique
-across VPCs.
+Pass this function a list of security group names or combination of security group names and IDs
+and this function will return a list of IDs.  You should also pass the VPC ID if known because
+security group names are not necessarily unique across VPCs.
 
 #### sort_json_policy_dict
 
-Pass any JSON policy dict to this function in order to sort any list contained therein. This is useful
-because AWS rarely return lists in the same order that they were submitted so without this function, comparison
-of identical policies returns false.
+Pass any JSON policy dict to this function in order to sort any list contained therein. This is
+useful because AWS rarely return lists in the same order that they were submitted so without this
+function, comparison of identical policies returns false.
 
 ### compare_aws_tags
 
-Pass two dicts of tags and an optional purge parameter and this function will return a dict containing key pairs you need
-to modify and a list of tag key names that you need to remove.  Purge is True by default.  If purge is False then any
-existing tags will not be modified.
+Pass two dicts of tags and an optional purge parameter and this function will return a dict
+containing key pairs you need to modify and a list of tag key names that you need to remove.  Purge
+is True by default.  If purge is False then any existing tags will not be modified.
 
-This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the other helper function
-'boto3_tag_list_to_ansible_dict' to get an appropriate tag dict before calling this function. Since the AWS APIs are not
-uniform (e.g. EC2 versus Lambda) this will work without modification for some (Lambda) and others may need modification
-before using these values (such as EC2, with requires the tags to unset to be in the form [{'Key': key1}, {'Key': key2}]).
+This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the
+other helper function 'boto3_tag_list_to_ansible_dict' to get an appropriate tag dict before
+calling this function. Since the AWS APIs are not uniform (e.g. EC2 versus Lambda) this will work
+without modification for some (Lambda) and others may need modification before using these values
+(such as EC2, with requires the tags to unset to be in the form [{'Key': key1}, {'Key': key2}]).
