@@ -124,6 +124,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
             # FIXME: mv is_systemd_managed
             if self.is_systemd_managed(module=module):
                 service_mgr_name = 'systemd'
+            elif module.get_bin_path('telinit') and os.path.exists("/etc/init.d/smgl_init"):
+                service_mgr_name = 'simpleinit'
             elif module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 service_mgr_name = 'upstart'
             elif os.path.exists('/sbin/openrc'):
