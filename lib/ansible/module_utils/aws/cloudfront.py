@@ -52,8 +52,7 @@ def snake_dict_to_pascal_dict(snake_dict):
         return new_type
 
     def pascal(words):
-        return (words.capitalize().split('_')[0] + ''.join(x.capitalize() or
-                '_' for x in words.split('_')[1:]))
+        return (words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:]))
     return pascalize(snake_dict)
 
 
@@ -112,8 +111,7 @@ def python_list_to_aws_list(list_items=None, include_quantity=True):
         list_items = []
     if not isinstance(list_items, list):
         self.module.fail_json(
-            msg='expected a python list, got a python {0} with value {1}'.format(
-                type(list_items).__name__, str(list_items)))
+            msg='expected a python list, got a python {0} with value {1}'.format(type(list_items).__name__, str(list_items)))
     result = {}
     if include_quantity:
         result['quantity'] = len(list_items)
