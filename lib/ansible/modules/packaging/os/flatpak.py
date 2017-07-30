@@ -28,8 +28,7 @@ options:
         names of flatpakrefs and what the reverse DNS name of the installed flatpak
         will be. Given that, it is best to use the http(s) url for I(state=present)
         and the reverse DNS I(state=absent). Alternatively reverse dns format can optimally
-        be used with I(state=absent)
-        ex: I(name=org.gnome.gedit).
+        be used with I(state=absent), ex. I(name=org.gnome.gedit).
     required: false
     default: ''
   remote:
