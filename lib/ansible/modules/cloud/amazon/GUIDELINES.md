@@ -352,7 +352,7 @@ Ansible format, this function will convert the keys to snake_case.
 #### ansible_dict_to_boto3_filter_list
 
 Converts a an Ansible list of filters to a boto3 friendly list of dicts.  This is useful for any
-boto3 _facts modules.
+boto3 `_facts` modules.
 
 #### boto3_tag_list_to_ansible_dict
 
