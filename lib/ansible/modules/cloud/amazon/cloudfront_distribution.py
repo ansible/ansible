@@ -536,8 +536,8 @@ from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.basic import AnsibleModule
-from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
-import ansible.module_utils.cloudfront as helpers
+from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
+import ansible.module_utils.aws.cloudfront as helpers
 from botocore.signers import CloudFrontSigner
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
