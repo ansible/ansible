@@ -282,17 +282,16 @@ def main():
     summary = module.params.get('summary')
 
     aliases = []
-    result = { 'cloudfront': {} }
+    result = {'cloudfront': {}}
     facts = {}
 
-    require_distribution_id = (distribution or distribution_config or invalidation or streaming_distribution or
-        streaming_distribution_config or list_invalidations)
+    require_distribution_id = (distribution or distribution_config or invalidation or streaming_distribution or streaming_distribution_config or
+                               list_invalidations)
 
     # set default to summary if no option specified
-    summary = summary or not (distribution or distribution_config or origin_access_identity or
-        origin_access_identity_config or invalidation or streaming_distribution or streaming_distribution_config or
-        list_origin_access_identities or list_distributions_by_web_acl_id or list_invalidations or
-        list_streaming_distributions or list_distributions)
+    summary = summary or not (distribution or distribution_config or origin_access_identity or origin_access_identity_config or invalidation or
+                              streaming_distribution or streaming_distribution_config or list_origin_access_identities or
+                              list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions or list_distributions)
 
     # validations
     if require_distribution_id and distribution_id is None and domain_name_alias is None:
@@ -312,21 +311,21 @@ def main():
 
     # set appropriate cloudfront id
     if distribution_id and not list_invalidations:
-        facts = { distribution_id: {} }
+        facts = {distribution_id: {}}
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
-            facts.update( { alias: {} } )
+            facts.update({alias: {}})
         if invalidation_id:
-            facts.update( { invalidation_id: {} } )
+            facts.update({invalidation_id: {}})
     elif distribution_id and list_invalidations:
-        facts = { distribution_id: {} }
+        facts = {distribution_id: {}}
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
-            facts.update( { alias: {} } )
+            facts.update({alias: {}})
     elif origin_access_identity_id:
-        facts = { origin_access_identity_id: {} }
+        facts = {origin_access_identity_id: {}}
     elif web_acl_id:
-        facts = { web_acl_id: {} }
+        facts = {web_acl_id: {}}
 
     # get details based on options
     if distribution:
@@ -345,7 +344,7 @@ def main():
     if streaming_distribution_config:
         facts_to_set = service_mgr.get_streaming_distribution_config(distribution_id)
     if list_invalidations:
-        facts_to_set = {'invalidations': service_mgr.list_invalidations(distribution_id) }
+        facts_to_set = {'invalidations': service_mgr.list_invalidations(distribution_id)}
     if 'facts_to_set' in vars():
         facts = set_facts_for_distribution_id_and_alias(facts_to_set, facts, distribution_id, aliases)
 
@@ -368,6 +367,7 @@ def main():
     result['changed'] = False
     result['cloudfront'].update(facts)
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
+
 
 if __name__ == '__main__':
     main()
