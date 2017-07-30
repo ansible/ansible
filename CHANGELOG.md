@@ -141,6 +141,8 @@ Ansible Changes By Release
 
 ### New Modules
 
+- aci
+  * aci_rest
 - aix_lvol
 - amazon
   * ec2_metadata_facts
