@@ -139,8 +139,8 @@ else:
 
 #### boto3
 
-An example of connecting to ec2 is shown below.  Note that there is no 'NoAuthHandlerFound'
-exception handling like in boto.  Instead, an AuthFailure exception will be thrown when you use
+An example of connecting to ec2 is shown below.  Note that there is no `NoAuthHandlerFound`
+exception handling like in boto.  Instead, an `AuthFailure` exception will be thrown when you use
 'connection'. See exception handling.
 
 ```python
@@ -236,8 +236,8 @@ except ClientError, e:
 
 #### using fail_json() and avoiding ansible.module_utils.aws.core
 
-Boto3 provides lots of useful info when an exception is thrown so pass this to the user along with
-the message.
+Boto3 provides lots of useful information when an exception is thrown so pass this to the user
+along with the message.
 
 ```python
 # Import ClientError from botocore
@@ -275,17 +275,15 @@ except ClientError as e:
 ### Returning Values
 
 When you make a call using boto3, you will probably get back some useful information that you
-should return in the module.
-
-As well as information related to the call itself, you will also have some response metadata.  It
-is OK to return this to the user as well as they may find it useful.
+should return in the module.  As well as information related to the call itself, you will also have
+some response metadata.  It is OK to return this to the user as well as they may find it useful.
 
 Boto3 returns all values CamelCased.  Ansible follows Python standards for variable names and uses
 snake_case. There is a helper function in module_utils/ec2.py called `camel_dict_to_snake_dict`
 that allows you to easily convert the boto3 response to snake_case.
 
 You should use this helper function and avoid changing the names of values returned by Boto3.
-E.g. if boto3 returns a value called 'SecretAccessKey' do not change it to 'AccessKey'.
+E.g. if boto3 returns a value called 'SecretAccessKey' do not change it to 'AccessKey'.  
 
 ```python
 # Make a call to AWS
@@ -329,13 +327,13 @@ else:
 AWS has a concept of resource tags. Usually the boto3 API has separate calls for tagging and
 untagging a resource.  For example, the ec2 API has a create_tags and delete_tags call.
 
-It is common practice in Ansible AWS modules to have a 'purge_tags' parameter that defaults to
+It is common practice in Ansible AWS modules to have a `purge_tags` parameter that defaults to
 true.
 
-The purge_tags parameter means that existing tags will be deleted if they are not specified in by
+The `purge_tags` parameter means that existing tags will be deleted if they are not specified in by
 the Ansible playbook.
 
-There is a helper function 'compare_aws_tags' to ease dealing with tags. It can compare two dicts
+There is a helper function `compare_aws_tags` to ease dealing with tags. It can compare two dicts
 and return the tags to set and the tags to delete.  See the Helper function section below for more
 detail.
 
@@ -388,7 +386,7 @@ containing key pairs you need to modify and a list of tag key names that you nee
 is True by default.  If purge is False then any existing tags will not be modified.
 
 This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the
-other helper function 'boto3_tag_list_to_ansible_dict' to get an appropriate tag dict before
+other helper function `boto3_tag_list_to_ansible_dict` to get an appropriate tag dict before
 calling this function. Since the AWS APIs are not uniform (e.g. EC2 versus Lambda) this will work
 without modification for some (Lambda) and others may need modification before using these values
-(such as EC2, with requires the tags to unset to be in the form [{'Key': key1}, {'Key': key2}]).
+(such as EC2, with requires the tags to unset to be in the form `[{'Key': key1}, {'Key': key2}]`).
