@@ -294,11 +294,6 @@ def main():
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
         state_change = True
-    #if state == 'absent_secure':
-    #    if os.path.isfile(fileName):
-    #        os.system("shred -u" + fileName)
-    #    else:
-    #        list_files_in_directory(add_delimiter_to_path(b_path))
     if state == 'absent':
         if state_change:
             if not module.check_mode:
