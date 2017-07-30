@@ -1,5 +1,11 @@
 ---
 
+# network-integration test are ran with gather_facts: no
+# We need to explicitly call setup so ansible_distribution is set
+
+- name: Gather facts
+  setup:
+
 - name: Install openvswitch-switch package if we are on Ubuntu
   apt:
     name: openvswitch-switch
