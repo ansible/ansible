@@ -60,7 +60,7 @@ class CloudFrontFactsServiceManager:
 
     def get_distribution(self, distribution_id):
         try:
-            func = partial(self.client.get_distribution,Id=distribution_id)
+            func = partial(self.client.get_distribution, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution - " + str(e),
@@ -69,7 +69,7 @@ class CloudFrontFactsServiceManager:
 
     def get_distribution_config(self, distribution_id):
         try:
-            func = partial(self.client.get_distribution_config,Id=distribution_id)
+            func = partial(self.client.get_distribution_config, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
@@ -78,7 +78,7 @@ class CloudFrontFactsServiceManager:
 
     def get_origin_access_identity(self, origin_access_identity_id):
         try:
-            func = partial(self.client.get_cloud_front_origin_access_identity,Id=origin_access_identity_id)
+            func = partial(self.client.get_cloud_front_origin_access_identity, Id=origin_access_identity_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing origin access identity - " + str(e),
@@ -87,7 +87,7 @@ class CloudFrontFactsServiceManager:
 
     def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
-            func = partial(self.client.get_cloud_front_origin_access_identity_config,Id=origin_access_identity_id)
+            func = partial(self.client.get_cloud_front_origin_access_identity_config, Id=origin_access_identity_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e),
@@ -96,7 +96,7 @@ class CloudFrontFactsServiceManager:
 
     def get_invalidation(self, distribution_id, invalidation_id):
         try:
-            func = partial(self.client.get_invalidation,DistributionId=distribution_id,Id=invalidation_id)
+            func = partial(self.client.get_invalidation, DistributionId=distribution_id, Id=invalidation_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing invalidation - " + str(e),
@@ -105,7 +105,7 @@ class CloudFrontFactsServiceManager:
 
     def get_streaming_distribution(self, distribution_id):
         try:
-            func = partial(self.client.get_streaming_distribution,Id=distribution_id)
+            func = partial(self.client.get_streaming_distribution, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
@@ -114,7 +114,7 @@ class CloudFrontFactsServiceManager:
 
     def get_streaming_distribution_config(self, distribution_id):
         try:
-            func = partial(self.client.get_streaming_distribution_config,Id=distribution_id)
+            func = partial(self.client.get_streaming_distribution_config, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
@@ -200,13 +200,13 @@ class CloudFrontFactsServiceManager:
 
     def summary_get_origin_access_identity_list(self):
         try:
-            origin_access_identity_list = { 'origin_access_identities': [] }
+            origin_access_identity_list = {'origin_access_identities': []}
             origin_access_identities = self.list_origin_access_identities()
             for origin_access_identity in origin_access_identities:
                 oai_id = origin_access_identity['Id']
                 oai_full_response = self.get_origin_access_identity(oai_id)
-                oai_summary = { 'Id': oai_id, 'ETag': oai_full_response['ETag'] }
-                origin_access_identity_list['origin_access_identities'].append( oai_summary )
+                oai_summary = {'Id': oai_id, 'ETag': oai_full_response['ETag']}
+                origin_access_identity_list['origin_access_identities'].append(oai_summary)
             return origin_access_identity_list
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e),
@@ -216,8 +216,8 @@ class CloudFrontFactsServiceManager:
     def summary_get_distribution_list(self, streaming=False):
         try:
             list_name = 'streaming_distributions' if streaming else 'distributions'
-            key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled' ]
-            distribution_list = { list_name: [] }
+            key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled']
+            distribution_list = {list_name: []}
             distributions = self.list_streaming_distributions(False) if streaming else self.list_distributions(False)
             for dist in distributions:
                 temp_distribution = {}
@@ -321,9 +321,10 @@ class CloudFrontFactsServiceManager:
             if 'Items' in item['Aliases']:
                 aliases = item['Aliases']['Items']
                 for alias in aliases:
-                    keyed_list.update( { alias: item } )
-            keyed_list.update( { distribution_id: item } )
+                    keyed_list.update({alias: item})
+            keyed_list.update({distribution_id: item})
         return keyed_list
+
 
 def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
     facts[distribution_id].update(details)
