@@ -846,7 +846,7 @@ class CloudFrontValidationManager(object):
 
     def add_key_else_validate(self, dict_object, key_name, attribute_name, value_to_set, valid_values, to_aws_list=False):
         if key_name in dict_object:
-            self.validate_attribute_with_allowed_values(attribute, attribute_name, valid_values)
+            self.validate_attribute_with_allowed_values(value_to_set, attribute_name, valid_values)
         else:
             if to_aws_list:
                 dict_object[key_name] = helpers.python_list_to_aws_list(value_to_set)
@@ -875,7 +875,7 @@ class CloudFrontValidationManager(object):
 
     def validate_is_list(self, list_to_validate, list_name):
         if not isinstance(list_to_validate, list):
-            self.module.fail_json(msg='{0} must be a list'.format(list_name))
+            self.module.fail_json(msg='{0} is of type {1}. Must be a list.'.format(list_name, type(list_to_validate).__name__))
 
     def validate_required_key(self, key_name, full_key_name, dict_object):
         if key_name not in dict_object:
@@ -1091,9 +1091,8 @@ class CloudFrontValidationManager(object):
             self.validate_required_key('geo_restriction', 'restrictions.geo_restriction', restrictions)
             geo_restriction = restrictions.get('geo_restriction')
             self.validate_required_key('restriction_type', 'restrictions.geo_restriction.restriction_type', geo_restriction)
-            restriction_type = geo_restriction.get('restriction_type')
             valid_restrictions = python_list_to_aws_list(geo_restriction.get('items'))
-            valid_restrictions['restriction_type'] = restriction_type
+            valid_restrictions['restriction_type'] = geo_restriction.get('restriction_type')
             return valid_restrictions
         except Exception as e:
             self.module.fail_json(msg="Error validating restrictions - " + str(e) + "\n" + traceback.format_exc())
@@ -1211,8 +1210,7 @@ class CloudFrontValidationManager(object):
 
     def validate_attribute_list_with_allowed_list(self, attribute_list, attribute_list_name, allowed_list):
         try:
-            if not isinstance(attribute_list, list):
-                self.module.fail_json(msg="Expected a list. Got a " + type(attribute_list).__name__) + "."
+            self.validate_is_list(attribute_list, attribute_list_name)
             matched_one = False
             for allowed_sub_list in allowed_list:
                 matched_one |= set(attribute_list) == set(allowed_sub_list)
