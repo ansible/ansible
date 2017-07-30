@@ -193,7 +193,7 @@ def main():
             name=dict(required=False, default=''),
             remote=dict(required=False, default=''),
             state=dict(
-              required=False, default="present", choices=['present', 'absent'])
+                required=False, default="present", choices=['present', 'absent'])
         ),
         supports_check_mode=True
     )
