@@ -42,7 +42,7 @@ ACTIONS
 {% for action in actions %}
 {{ action }}
 
-{{ (actions[action]|default(' '))|wordwrap}}
+{{ (actions[action]['desc']|default(' '))|wordwrap}}
 
 {% endfor %}
 {% endif %}

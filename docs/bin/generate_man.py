@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import sys
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -38,20 +37,27 @@ def opt_doc_list(cli):
 
 def opts_docs(cli, name):
     ''' generate doc structure from options '''
-
-    # cli name
-    if '-' in name:
-        name = name.split('-')[1]
+    if name == 'adhoc':
+        cli_name = 'ansible'
     else:
-        name = 'adhoc'
+        cli_name = 'ansible-%s' % name
 
     # cli info
     docs = {
         'cli': name,
+        'cli_name': cli_name,
         'usage': cli.parser.usage,
         'short_desc': cli.parser.description,
         'long_desc': cli.__doc__,
+        'actions': {'foo': 1232},
     }
+
+    # shared opts set
+    common_opts = opt_doc_list(cli)
+
+    shared_opt_names = []
+    for opt in common_opts:
+        shared_opt_names.extend(opt.get('options', []))
 
     # force populate parser with per action options
     if cli.VALID_ACTIONS:
@@ -61,11 +67,33 @@ def opts_docs(cli, name):
         for action in cli.VALID_ACTIONS:
             cli.args.append(action)
             cli.set_action()
-            docs['actions'][action] = getattr(cli, 'execute_%s' % action).__doc__
+            docs['actions'][action] = {}
+            docs['actions'][action]['name'] = action
+            docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__
+            action_doc_list = opt_doc_list(cli)
+
+            uncommon_options = []
+            for action_doc in action_doc_list:
+                for option in action_doc.get('options', []):
+                    if option in shared_opt_names:
+                        continue
+                    if 'option_names' not in docs['actions'][action]:
+                        docs['actions'][action]['option_names'] = []
+                    docs['actions'][action]['option_names'].append(option)
+                    uncommon_options.append(action_doc)
+
+            if 'options' not in docs['actions'][action]:
+                docs['actions'][action]['options'] = action_doc_list
+            if 'uncommon_options' not in docs['actions'][action]:
+                docs['actions'][action]['uncommon_options'] = []
+            for uncommon_option in uncommon_options:
+                if uncommon_option not in docs['actions'][action]['uncommon_options']:
+                    docs['actions'][action]['uncommon_options'].append(uncommon_option)
 
     docs['options'] = opt_doc_list(cli)
 
     return docs
+
 
 if __name__ == '__main__':
 
@@ -103,6 +131,7 @@ if __name__ == '__main__':
             # no options passed, we expect errors
             pass
 
+        print('libname1: %s' % libname)
         allvars[libname] = opts_docs(cli_object, libname)
 
         for extras in ('ARGUMENTS'):
@@ -110,21 +139,34 @@ if __name__ == '__main__':
                 allvars[libname][extras.lower()] = getattr(cli_object, extras)
 
     cli_list = allvars.keys()
+
+    templates = ['man.j2', 'cli_rst.j2']
+    templates = {'man.j2': {'out_dir': '../man/man1/%s',
+                            'out_file_format': '%s1.asciidoc.1.in'},
+                 'cli_rst.j2': {'out_dir': '../cli_rst/%s',
+                                'out_file_format': '%s.rst'}}
+
     for libname in cli_list:
+        print('libname2: %s' % libname)
 
         # template it!
         env = Environment(loader=FileSystemLoader('../templates'))
-        template = env.get_template('man.j2')
+        for template_file in templates:
+            print('template_file: %s' % template_file)
+            template = env.get_template(template_file)
 
-        # add rest to vars
-        tvars = allvars[libname]
-        tvars['cli_list'] = cli_list
-        tvars['cli'] = libname
-        if '-i' in tvars['options']:
-            print('uses inventory')
+            # add rest to vars
+            # pprint.pprint(allvars)
+            tvars = allvars[libname]
+            tvars['cli_list'] = cli_list
+            tvars['cli'] = libname
+            if '-i' in tvars['options']:
+                print('uses inventory')
 
-        manpage = template.render(tvars)
-        filename = '../man/man1/%s' % output[libname]
-        with open(filename, 'wb') as f:
-            f.write(to_bytes(manpage))
-            print("Wrote man docs to %s" % filename)
+            manpage = template.render(tvars)
+            filename = templates[template_file]['out_dir'] % templates[template_file]['out_file_format'] % tvars['cli_name']
+            # output[libname]
+            print('filename: %s %s' % (filename, os.path.realpath(filename)))
+            with open(filename, 'wb') as f:
+                f.write(to_bytes(manpage))
+                print("Wrote docs to %s" % filename)
