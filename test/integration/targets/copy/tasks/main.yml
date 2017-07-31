@@ -769,28 +769,30 @@
 
 # test overwriting a file as an unprivileged user (pull request #8624)
 # this can't be relative to {{output_dir}} as ~root usually has mode 700
+- block:
+  - name: create world writable directory
+    file: dest=/tmp/worldwritable state=directory mode=0777
 
-- name: create world writable directory
-  file: dest=/tmp/worldwritable state=directory mode=0777
+  - name: create world writable file
+    copy: dest=/tmp/worldwritable/file.txt content="bar" mode=0666
 
-- name: create world writable file
-  copy: dest=/tmp/worldwritable/file.txt content="bar" mode=0666
+  - name: overwrite the file as user nobody
+    copy: dest=/tmp/worldwritable/file.txt content="baz"
+    become: yes
+    become_user: nobody
+    register: copy_result7
 
-- name: overwrite the file as user nobody
-  copy: dest=/tmp/worldwritable/file.txt content="baz"
-  become: yes
-  become_user: nobody
-  register: copy_result7
+  - name: assert the file was overwritten
+    assert:
+      that:
+        - "copy_result7.changed"
+        - "copy_result7.dest == '/tmp/worldwritable/file.txt'"
+        - "copy_result7.checksum == 'bbe960a25ea311d21d40669e93df2003ba9b90a2'"
 
-- name: assert the file was overwritten
-  assert:
-    that:
-      - "copy_result7.changed"
-      - "copy_result7.dest == '/tmp/worldwritable/file.txt'"
-      - "copy_result7.checksum == 'bbe960a25ea311d21d40669e93df2003ba9b90a2'"
+  - name: clean up
+    file: dest=/tmp/worldwritable state=absent
 
-- name: clean up
-  file: dest=/tmp/worldwritable state=absent
+  remote_user: root
 
 # test overwriting a link using "follow=yes" so that the link
 # is preserved and the link target is updated
