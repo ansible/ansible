@@ -172,9 +172,10 @@ setup(
     packages=find_packages('lib'),
     package_data={
         '': [
-            'module_utils/*.ps1',
+            'module_utils/powershell/*.psm1',
+            'module_utils/powershell/*/*.psm1',
             'modules/windows/*.ps1',
-            'modules/windows/*.ps1',
+            'modules/windows/*/*.ps1',
             'galaxy/data/*/*.*',
             'galaxy/data/*/*/.*',
             'galaxy/data/*/*/*.*',
