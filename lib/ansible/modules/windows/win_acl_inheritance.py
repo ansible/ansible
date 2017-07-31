@@ -21,11 +21,12 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_acl_inheritance
 version_added: "2.1"
@@ -47,8 +48,10 @@ options:
     default: absent
   reorganize:
     description:
-      - For P(state) = I(absent), indicates if the inherited ACE's should be copied from the parent directory. This is necessary (in combination with removal) for a simple ACL instead of using multiple ACE deny entries.
-      - For P(state) = I(present), indicates if the inherited ACE's should be deduplicated compared to the parent directory. This removes complexity of the ACL structure.
+      - For P(state) = I(absent), indicates if the inherited ACE's should be copied from the parent directory. This is necessary
+        (in combination with removal) for a simple ACL instead of using multiple ACE deny entries.
+      - For P(state) = I(present), indicates if the inherited ACE's should be deduplicated compared to the parent directory. This removes complexity
+        of the ACL structure.
     required: false
     choices:
       - no
@@ -57,27 +60,25 @@ options:
 author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 
-EXAMPLES = '''
-# Playbook example
----
+EXAMPLES = r'''
 - name: Disable inherited ACE's
   win_acl_inheritance:
-    path: 'C:\\apache\\'
+    path: C:\apache
     state: absent
 
 - name: Disable and copy inherited ACE's
   win_acl_inheritance:
-    path: 'C:\\apache\\'
+    path: C:\apache
     state: absent
-    reorganize: yes
+    reorganize: True
 
 - name: Enable and remove dedicated ACE's
   win_acl_inheritance:
-    path: 'C:\\apache\\'
+    path: C:\apache
     state: present
-    reorganize: yes
+    reorganize: True
 '''
 
-RETURN = '''
+RETURN = r'''
 
 '''

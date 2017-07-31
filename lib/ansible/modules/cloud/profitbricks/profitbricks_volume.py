@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -87,11 +80,11 @@ options:
     required: false
   subscription_user:
     description:
-      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environement variable.
+      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environment variable.
     required: false
   subscription_password:
     description:
-      - THe ProfitBricks password. Overrides the PB_PASSWORD environement variable.
+      - THe ProfitBricks password. Overrides the PB_PASSWORD environment variable.
     required: false
   wait:
     description:
@@ -140,16 +133,17 @@ EXAMPLES = '''
 
 import re
 import time
+import traceback
 
 HAS_PB_SDK = True
-
 try:
     from profitbricks.client import ProfitBricksService, Volume
 except ImportError:
     HAS_PB_SDK = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_native
 
 
 uuid_match = re.compile(
@@ -157,7 +151,8 @@ uuid_match = re.compile(
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         time.sleep(5)
@@ -260,12 +255,11 @@ def create_volume(module, profitbricks):
 
         try:
             name % 0
-        except TypeError:
-            e = get_exception()
+        except TypeError as e:
             if e.message.startswith('not all'):
                 name = '%s%%d' % name
             else:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg=e.message, exception=traceback.format_exc())
 
         number_range = xrange(count_offset, count_offset + count + len(numbers))
         available_numbers = list(set(number_range).difference(numbers))
@@ -324,7 +318,7 @@ def delete_volume(module, profitbricks):
 
     for n in instance_ids:
         if(uuid_match.match(n)):
-            _delete_volume(module, profitbricks, datacenter, volume)
+            _delete_volume(module, profitbricks, datacenter, n)
             changed = True
         else:
             volumes = profitbricks.list_volumes(datacenter)
@@ -362,9 +356,8 @@ def _attach_volume(module, profitbricks, datacenter, volume):
 
         try:
             return profitbricks.attach_volume(datacenter, server, volume)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to attach volume: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to attach volume: %s' % to_native(e), exception=traceback.format_exc())
 
 
 def main():
@@ -376,7 +369,7 @@ def main():
             size=dict(type='int', default=10),
             bus=dict(choices=['VIRTIO', 'IDE'], default='VIRTIO'),
             image=dict(),
-            image_password=dict(default=None),
+            image_password=dict(default=None, no_log=True),
             ssh_keys=dict(type='list', default=[]),
             disk_type=dict(choices=['HDD', 'SSD'], default='HDD'),
             licence_type=dict(default='UNKNOWN'),
@@ -384,7 +377,7 @@ def main():
             auto_increment=dict(type='bool', default=True),
             instance_ids=dict(type='list', default=[]),
             subscription_user=dict(),
-            subscription_password=dict(),
+            subscription_password=dict(no_log=True),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             state=dict(default='present'),
@@ -412,9 +405,8 @@ def main():
         try:
             (changed) = delete_volume(module, profitbricks)
             module.exit_json(changed=changed)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set volume state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set volume state: %s' % to_native(e), exception=traceback.format_exc())
 
     elif state == 'present':
         if not module.params.get('datacenter'):
@@ -425,9 +417,8 @@ def main():
         try:
             (volume_dict_array) = create_volume(module, profitbricks)
             module.exit_json(**volume_dict_array)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set volume state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set volume state: %s' % to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

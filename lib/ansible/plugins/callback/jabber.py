@@ -39,8 +39,8 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__(display=display)
 
         if not HAS_XMPP:
-            self._display.warning("The required python xmpp library (xmpppy) is not installed."
-                " pip install git+https://github.com/ArchipelProject/xmpppy")
+            self._display.warning("The required python xmpp library (xmpppy) is not installed. "
+                                  "pip install git+https://github.com/ArchipelProject/xmpppy")
             self.disabled = True
 
         self.serv = os.getenv('JABBER_SERV')
@@ -48,15 +48,15 @@ class CallbackModule(CallbackBase):
         self.j_pass = os.getenv('JABBER_PASS')
         self.j_to = os.getenv('JABBER_TO')
 
-        if (self.j_user or self.j_pass or self.serv ) is None:
+        if (self.j_user or self.j_pass or self.serv) is None:
             self.disabled = True
-            self._display.warning ('Jabber CallBack want JABBER_USER and JABBER_PASS env variables')
+            self._display.warning('Jabber CallBack want JABBER_USER and JABBER_PASS env variables')
 
     def send_msg(self, msg):
         """Send message"""
         jid = xmpp.JID(self.j_user)
-        client = xmpp.Client(self.serv,debug=[])
-        client.connect(server=(self.serv,5222))
+        client = xmpp.Client(self.serv, debug=[])
+        client.connect(server=(self.serv, 5222))
         client.auth(jid.getNode(), self.j_pass, resource=jid.getResource())
         message = xmpp.Message(self.j_to, msg)
         message.setAttr('type', 'chat')
@@ -66,7 +66,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result):
         self._clean_results(result._result, result._task.action)
         self.debug = self._dump_results(result._result)
-        
+
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.task = task
 
@@ -93,5 +93,4 @@ class CallbackModule(CallbackBase):
             self.send_msg("%s: Failures detected \n%s \nHost: %s\n Failed at:\n%s" % (name, self.task, h, out))
         else:
             out = self.debug
-            self.send_msg("Great! \n Playbook %s completed:\n%s \n Last task debug:\n %s" % (name,s, out))
-
+            self.send_msg("Great! \n Playbook %s completed:\n%s \n Last task debug:\n %s" % (name, s, out))

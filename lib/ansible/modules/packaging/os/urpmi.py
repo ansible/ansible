@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Philippe Makowski
-# Written by Philippe Makowski <philippem@mageia.org> 
+# Written by Philippe Makowski <philippem@mageia.org>
 # Based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -19,9 +19,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -76,16 +77,16 @@ EXAMPLES = '''
     pkg: foo
     state: absent
 
-# description: remove packages foo and bar 
+# description: remove packages foo and bar
 - urpmi:
     pkg: foo,bar
     state: absent
 
-# description: update the package database (urpmi.update -a -q) and install bar (bar will be the updated if a newer version exists) 
+# description: update the package database (urpmi.update -a -q) and install bar (bar will be the updated if a newer version exists)
 - urpmi:
     name: bar
     state: present
-    update_cache: yes     
+    update_cache: yes
 '''
 
 
@@ -119,12 +120,12 @@ def update_package_db(module):
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
-         
+
 
 def remove_packages(module, packages):
-    
+
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, package):
@@ -135,7 +136,7 @@ def remove_packages(module, packages):
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -183,13 +184,13 @@ def install_packages(module, pkgspec, force=True, no_recommends=True):
 
 def main():
     module = AnsibleModule(
-            argument_spec     = dict(
-                state         = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
-                update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
-                force         = dict(default=True, type='bool'),
-                no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
-                package       = dict(aliases=['pkg', 'name'], required=True)))
-                
+        argument_spec     = dict(
+            state         = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
+            update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
+            force         = dict(default=True, type='bool'),
+            no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
+            package       = dict(aliases=['pkg', 'name'], required=True)))
+
 
     if not os.path.exists(URPMI_PATH):
         module.fail_json(msg="cannot find urpmi, looking for %s" % (URPMI_PATH))
@@ -212,6 +213,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-    
+
 if __name__ == '__main__':
     main()

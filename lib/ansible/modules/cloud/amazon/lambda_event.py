@@ -14,19 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import boto3
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -118,6 +109,16 @@ lambda_stream_events:
     returned: success
     type: list
 '''
+
+import sys
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 
 # ---------------------------------------------------------------------------------------------------
 #
@@ -228,8 +229,11 @@ def validate_params(module, aws):
         module.fail_json(
             msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(function_name)
         )
-    if len(function_name) > 64:
+    if len(function_name) > 64 and not function_name.startswith('arn:aws:lambda:'):
         module.fail_json(msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
+
+    elif len(function_name) > 140 and function_name.startswith('arn:aws:lambda:'):
+        module.fail_json(msg='ARN "{0}" exceeds 140 character limit'.format(function_name))
 
     # check if 'function_name' needs to be expanded in full ARN format
     if not module.params['lambda_function_arn'].startswith('arn:aws:lambda:'):
@@ -412,7 +416,7 @@ def main():
 
     validate_params(module, aws)
 
-    this_module_function = getattr(this_module, 'lambda_event_{}'.format(module.params['event_source'].lower()))
+    this_module_function = getattr(this_module, 'lambda_event_{0}'.format(module.params['event_source'].lower()))
 
     results = this_module_function(module, aws)
 

@@ -2,29 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Matt Wright <matt@nobien.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import tempfile
-import os.path
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -82,7 +69,7 @@ options:
     choices: [present, latest]
     default: present
 notes:
-    - Please note that the M(easy_install) module can only install Python
+    - Please note that the C(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
       generally recommended to use the M(pip) module which you can first install
       using M(easy_install).
@@ -104,10 +91,19 @@ EXAMPLES = '''
     virtualenv: /webapps/myapp/venv
 '''
 
+import os
+import os.path
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 def _is_package_installed(module, name, easy_install, executable_arguments):
     executable_arguments = executable_arguments + ['--dry-run']
     cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
     rc, status_stdout, status_stderr = module.run_command(cmd)
+    if rc:
+        module.fail_json(msg=status_stderr)
     return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
 
 
@@ -205,8 +201,6 @@ def main():
     module.exit_json(changed=changed, binary=easy_install,
                      name=name, virtualenv=env)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

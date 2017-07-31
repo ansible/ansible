@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -117,6 +118,10 @@ try:
 except ImportError:
     HAS_F5SDK = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.f5_utils import F5ModuleError, f5_argument_spec
+
 
 class BigIpGtmDatacenter(object):
     def __init__(self, *args, **kwargs):
@@ -193,7 +198,7 @@ class BigIpGtmDatacenter(object):
         )
 
         if hasattr(r, 'servers'):
-            # Deliberately using sets to supress duplicates
+            # Deliberately using sets to suppress duplicates
             p['servers'] = set([str(x) for x in r.servers])
         if hasattr(r, 'contact'):
             p['contact'] = str(r.contact)
@@ -319,7 +324,7 @@ class BigIpGtmDatacenter(object):
         enabled = self.params['enabled']
 
         if state is None and enabled is None:
-            module.fail_json(msg="Neither 'state' nor 'enabled' set")
+            raise F5ModuleError("Neither 'state' nor 'enabled' set")
 
         try:
             if state == "present":
@@ -345,7 +350,7 @@ def main():
     meta_args = dict(
         contact=dict(required=False, default=None),
         description=dict(required=False, default=None),
-        enabled=dict(required=False, type='bool', default=None, choices=BOOLEANS),
+        enabled=dict(required=False, type='bool', default=None),
         location=dict(required=False, default=None),
         name=dict(required=True)
     )
@@ -364,9 +369,6 @@ def main():
     except F5ModuleError as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5 import *
 
 if __name__ == '__main__':
     main()

@@ -24,45 +24,47 @@ import json
 
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils._text import to_bytes, to_text
 
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    terminal_stdout_re = [
+        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
-    terminal_errors_re = [
-        re.compile(r"% ?Error"),
-        re.compile(r"^% \w+", re.M),
-        re.compile(r"% User not present"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-        re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
+    terminal_stderr_re = [
+        re.compile(br"% ?Error"),
+        # re.compile(br"^% \w+", re.M),
+        re.compile(br"% User not present"),
+        re.compile(br"% ?Bad secret"),
+        re.compile(br"invalid input", re.I),
+        re.compile(br"(?:incomplete|ambiguous) command", re.I),
+        re.compile(br"connection timed out", re.I),
+        re.compile(br"[^\r\n]+ not found", re.I),
+        re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"[^\r\n]\/bin\/(?:ba)?sh")
     ]
 
     def on_open_shell(self):
         try:
-            self._exec_cli_command('terminal length 0')
+            for cmd in (b'terminal length 0', b'terminal width 512'):
+                self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
     def on_authorize(self, passwd=None):
-        if self._get_prompt().endswith('#'):
+        if self._get_prompt().endswith(b'#'):
             return
 
-        cmd = {'command': 'enable'}
+        cmd = {u'command': u'enable'}
         if passwd:
-            cmd['prompt'] = r"[\r\n]?password: $"
-            cmd['answer'] = passwd
+            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            cmd[u'answer'] = passwd
 
         try:
-            self._exec_cli_command(json.dumps(cmd))
+            self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
 
@@ -72,16 +74,9 @@ class TerminalModule(TerminalBase):
             # if prompt is None most likely the terminal is hung up at a prompt
             return
 
-        if '(config' in prompt:
-            self._exec_cli_command('end')
-            self._exec_cli_command('disable')
+        if b'(config' in prompt:
+            self._exec_cli_command(b'end')
+            self._exec_cli_command(b'disable')
 
-        elif prompt.endswith('#'):
-            self._exec_cli_command('disable')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Arista' in stdout.read():
-            return 'eos'
-
+        elif prompt.endswith(b'#'):
+            self._exec_cli_command(b'disable')

@@ -14,16 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -45,11 +39,21 @@ options:
         - Group description
      required: false
      default: None
+   domain_id:
+     description:
+        - Domain id to create the group in if the cloud supports domains.
+     required: false
+     default: None
+     version_added: "2.3"
    state:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -62,6 +66,7 @@ EXAMPLES = '''
     state: present
     name: demo
     description: "Demo Group"
+    domain_id: demoid
 
 # Update the description on existing "demo" group
 - os_group:
@@ -69,6 +74,7 @@ EXAMPLES = '''
     state: present
     name: demo
     description: "Something else"
+    domain_id: demoid
 
 # Delete group named "demo"
 - os_group:
@@ -81,7 +87,7 @@ RETURN = '''
 group:
     description: Dictionary describing the group.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique group ID
@@ -101,6 +107,12 @@ group:
             sample: "default"
 '''
 
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 
 def _system_state_change(state, description, group):
     if state == 'present' and not group:
@@ -116,6 +128,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
         description=dict(required=False, default=None),
+        domain_id=dict(required=False, default=None),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
@@ -129,11 +142,15 @@ def main():
 
     name = module.params.pop('name')
     description = module.params.pop('description')
+    domain_id = module.params.pop('domain_id')
     state = module.params.pop('state')
 
     try:
         cloud = shade.operator_cloud(**module.params)
-        group = cloud.get_group(name)
+        if domain_id:
+            group = cloud.get_group(name, filters={'domain_id': domain_id})
+        else:
+            group = cloud.get_group(name)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(state, description, group))
@@ -141,7 +158,7 @@ def main():
         if state == 'present':
             if group is None:
                 group = cloud.create_group(
-                    name=name, description=description)
+                    name=name, description=description, domain=domain_id)
                 changed = True
             else:
                 if description is not None and group.description != description:

@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import pytest
 
 try:
     import builtins
@@ -33,6 +34,7 @@ from ansible.module_utils import known_hosts
 
 from units.mock.procenv import ModuleTestCase
 from units.mock.generator import add_method
+
 
 class TestSetModeIfDifferentBase(ModuleTestCase):
 
@@ -48,7 +50,7 @@ class TestSetModeIfDifferentBase(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         self.am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
     def tearDown(self):
@@ -59,7 +61,9 @@ class TestSetModeIfDifferentBase(ModuleTestCase):
 
 def _check_no_mode_given_returns_previous_changes(self, previous_changes=True):
     with patch('os.lstat', side_effect=[self.mock_stat1]):
+
         self.assertEqual(self.am.set_mode_if_different('/path/to/file', None, previous_changes), previous_changes)
+
 
 def _check_mode_changed_to_0660(self, mode):
     # Note: This is for checking that all the different ways of specifying
@@ -70,6 +74,7 @@ def _check_mode_changed_to_0660(self, mode):
             self.assertEqual(self.am.set_mode_if_different('/path/to/file', mode, False), True)
             m_lchmod.assert_called_with(b'/path/to/file', 0o660)
 
+
 def _check_mode_unchanged_when_already_0660(self, mode):
     # Note: This is for checking that all the different ways of specifying
     # 0660 mode work.  It cannot be used to check that setting a mode that is
@@ -79,30 +84,26 @@ def _check_mode_unchanged_when_already_0660(self, mode):
 
 
 SYNONYMS_0660 = (
-        [[0o660]],
-        [['0o660']],
-        [['660']],
-        )
+    [[0o660]],
+    [['0o660']],
+    [['660']],
+)
 
-@add_method(_check_no_mode_given_returns_previous_changes,
-        [dict(previous_changes=True)],
-        [dict(previous_changes=False)],
-        )
-@add_method(_check_mode_changed_to_0660,
-        *SYNONYMS_0660
-        )
-@add_method(_check_mode_unchanged_when_already_0660,
-        *SYNONYMS_0660
-        )
+
+@add_method(_check_no_mode_given_returns_previous_changes, [dict(previous_changes=True)], [dict(previous_changes=False)], )
+@add_method(_check_mode_changed_to_0660, *SYNONYMS_0660)
+@add_method(_check_mode_unchanged_when_already_0660, *SYNONYMS_0660)
 class TestSetModeIfDifferent(TestSetModeIfDifferentBase):
     def test_module_utils_basic_ansible_module_set_mode_if_different(self):
         with patch('os.lstat') as m:
             with patch('os.lchmod', return_value=None, create=True) as m_os:
                 m.side_effect = [self.mock_stat1, self.mock_stat2, self.mock_stat2]
                 self.am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
-                self.assertRaises(SystemExit, self.am.set_mode_if_different, '/path/to/file', 'o+w,g+w,a-r', False)
+                with pytest.raises(SystemExit):
+                    self.am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False)
 
         original_hasattr = hasattr
+
         def _hasattr(obj, name):
             if obj == os and name == 'lchmod':
                 return False
@@ -129,16 +130,10 @@ def _check_knows_to_change_to_0660_in_check_mode(self, mode):
     with patch('os.lstat', side_effect=[self.mock_stat1, self.mock_stat2, self.mock_stat2]) as m_lstat:
         self.assertEqual(self.am.set_mode_if_different('/path/to/file', mode, False), True)
 
-@add_method(_check_no_mode_given_returns_previous_changes,
-        [dict(previous_changes=True)],
-        [dict(previous_changes=False)],
-        )
-@add_method(_check_knows_to_change_to_0660_in_check_mode,
-        *SYNONYMS_0660
-        )
-@add_method(_check_mode_unchanged_when_already_0660,
-        *SYNONYMS_0660
-        )
+
+@add_method(_check_no_mode_given_returns_previous_changes, [dict(previous_changes=True)], [dict(previous_changes=False)],)
+@add_method(_check_knows_to_change_to_0660_in_check_mode, *SYNONYMS_0660)
+@add_method(_check_mode_unchanged_when_already_0660, *SYNONYMS_0660)
 class TestSetModeIfDifferentWithCheckMode(TestSetModeIfDifferentBase):
     def setUp(self):
         super(TestSetModeIfDifferentWithCheckMode, self).setUp()

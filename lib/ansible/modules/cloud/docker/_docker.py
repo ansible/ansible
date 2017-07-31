@@ -4,26 +4,16 @@
 # (c) 2014, Joshua Conner <joshua.conner@gmail.com>
 # (c) 2014, Pavel Antonov <antonov@adwz.ru>
 #
-# This file is part of Ansible,
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-######################################################################
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,7 +24,7 @@ deprecated: In 2.2 use M(docker_container) and M(docker_image) instead.
 description:
   - This is the original Ansible module for managing the Docker container life cycle.
   - "NOTE: Additional and newer modules are available. For the latest on orchestrating containers with Ansible
-    visit our Getting Started with Docker Guide at https://github.com/ansible/ansible/blob/devel/docsite/rst/guide_docker.rst."
+    visit our Getting Started with Docker Guide at U(https://github.com/ansible/ansible/blob/devel/docs/docsite/rst/guide_docker.rst)."
 options:
   count:
     description:
@@ -523,11 +513,6 @@ EXAMPLES = '''
       syslog-tag: myservice
 '''
 
-HAS_DOCKER_PY = True
-DEFAULT_DOCKER_API_VERSION = None
-DEFAULT_TIMEOUT_SECONDS = 60
-
-import sys
 import json
 import os
 import shlex
@@ -542,9 +527,12 @@ try:
     import docker.utils
     import docker.errors
     from requests.exceptions import RequestException
+    HAS_DOCKER_PY = True
 except ImportError:
     HAS_DOCKER_PY = False
 
+DEFAULT_DOCKER_API_VERSION = None
+DEFAULT_TIMEOUT_SECONDS = 60
 if HAS_DOCKER_PY:
     try:
         from docker.errors import APIError as DockerAPIError
@@ -559,6 +547,8 @@ if HAS_DOCKER_PY:
         # docker-py less than 1.2
         DEFAULT_DOCKER_API_VERSION = docker.client.DEFAULT_DOCKER_API_VERSION
         DEFAULT_TIMEOUT_SECONDS = docker.client.DEFAULT_TIMEOUT_SECONDS
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _human_to_bytes(number):
@@ -623,7 +613,7 @@ def normalize_image(image):
 def is_running(container):
     '''Return True if an inspected container is in a state we consider "running."'''
 
-    return container['State']['Running'] == True and not container['State'].get('Ghost', False)
+    return container['State']['Running'] is True and not container['State'].get('Ghost', False)
 
 
 def get_docker_py_versioninfo():
@@ -682,26 +672,26 @@ class DockerManager(object):
     # docker-py version is a tuple of ints because we have to compare them
     # server APIVersion is passed to a docker-py function that takes strings
     _cap_ver_req = {
-            'devices': ((0, 7, 0), '1.2'),
-            'dns': ((0, 3, 0), '1.10'),
-            'volumes_from': ((0, 3, 0), '1.10'),
-            'restart_policy': ((0, 5, 0), '1.14'),
-            'extra_hosts': ((0, 7, 0), '1.3.1'),
-            'pid': ((1, 0, 0), '1.17'),
-            'log_driver': ((1, 2, 0), '1.18'),
-            'log_opt': ((1, 2, 0), '1.18'),
-            'host_config': ((0, 7, 0), '1.15'),
-            'cpu_set': ((0, 6, 0), '1.14'),
-            'cap_add': ((0, 5, 0), '1.14'),
-            'cap_drop': ((0, 5, 0), '1.14'),
-            'read_only': ((1, 0, 0), '1.17'),
-            'labels': ((1, 2, 0), '1.18'),
-            'stop_timeout': ((0, 5, 0), '1.0'),
-            'ulimits': ((1, 2, 0), '1.18'),
-            # Clientside only
-            'insecure_registry': ((0, 5, 0), '0.0'),
-            'env_file': ((1, 4, 0), '0.0')
-            }
+        'devices': ((0, 7, 0), '1.2'),
+        'dns': ((0, 3, 0), '1.10'),
+        'volumes_from': ((0, 3, 0), '1.10'),
+        'restart_policy': ((0, 5, 0), '1.14'),
+        'extra_hosts': ((0, 7, 0), '1.3.1'),
+        'pid': ((1, 0, 0), '1.17'),
+        'log_driver': ((1, 2, 0), '1.18'),
+        'log_opt': ((1, 2, 0), '1.18'),
+        'host_config': ((0, 7, 0), '1.15'),
+        'cpu_set': ((0, 6, 0), '1.14'),
+        'cap_add': ((0, 5, 0), '1.14'),
+        'cap_drop': ((0, 5, 0), '1.14'),
+        'read_only': ((1, 0, 0), '1.17'),
+        'labels': ((1, 2, 0), '1.18'),
+        'stop_timeout': ((0, 5, 0), '1.0'),
+        'ulimits': ((1, 2, 0), '1.18'),
+        # Clientside only
+        'insecure_registry': ((0, 5, 0), '0.0'),
+        'env_file': ((1, 4, 0), '0.0')
+        }
 
     def __init__(self, module):
         self.module = module
@@ -902,11 +892,11 @@ class DockerManager(object):
             self.ensure_capability('env_file')
             parsed_env_file = docker.utils.parse_env_file(env_file)
 
-            for name, value in parsed_env_file.iteritems():
+            for name, value in parsed_env_file.items():
                 final_env[name] = str(value)
 
         if env:
-            for name, value in env.iteritems():
+            for name, value in env.items():
                 final_env[name] = str(value)
 
         return final_env
@@ -998,7 +988,7 @@ class DockerManager(object):
             self.ensure_capability('log_driver')
             log_config = docker.utils.LogConfig(type=docker.utils.LogConfig.types.JSON)
             if optionals['log_opt'] is not None:
-                for k, v in optionals['log_opt'].iteritems():
+                for k, v in optionals['log_opt'].items():
                     log_config.set_config_value(k, v)
             log_config.type = optionals['log_driver']
             params['log_config'] = log_config
@@ -1073,7 +1063,7 @@ class DockerManager(object):
         '''
 
         parts = []
-        for k, v in self.counters.iteritems():
+        for k, v in self.counters.items():
             if v == 0:
                 continue
 
@@ -1100,7 +1090,7 @@ class DockerManager(object):
 
     def get_summary_counters_msg(self):
         msg = ""
-        for k, v in self.counters.iteritems():
+        for k, v in self.counters.items():
             msg = msg + "%s %d " % (k, v)
 
         return msg
@@ -1109,7 +1099,7 @@ class DockerManager(object):
         self.counters[name] = self.counters[name] + 1
 
     def has_changed(self):
-        for k, v in self.counters.iteritems():
+        for k, v in self.counters.items():
             if v > 0:
                 return True
 
@@ -1287,7 +1277,7 @@ class DockerManager(object):
                 expected_env[name] = value
 
             if self.environment:
-                for name, value in self.environment.iteritems():
+                for name, value in self.environment.items():
                     expected_env[name] = str(value)
 
             actual_env = {}
@@ -1304,7 +1294,7 @@ class DockerManager(object):
             # LABELS
 
             expected_labels = {}
-            for name, value in self.module.params.get('labels').iteritems():
+            for name, value in self.module.params.get('labels').items():
                 expected_labels[name] = str(value)
 
             if isinstance(container['Config']['Labels'], dict):
@@ -1401,7 +1391,7 @@ class DockerManager(object):
 
             expected_bound_ports = {}
             if self.port_bindings:
-                for container_port, config in self.port_bindings.iteritems():
+                for container_port, config in self.port_bindings.items():
                     if isinstance(container_port, int):
                         container_port = "{0}/tcp".format(container_port)
                     if len(config) == 1:
@@ -1437,10 +1427,13 @@ class DockerManager(object):
             # LINKS
 
             expected_links = set()
-            for link, alias in (self.links or {}).iteritems():
+            for link, alias in (self.links or {}).items():
                 expected_links.add("/{0}:{1}/{2}".format(link, container["Name"], alias))
 
-            actual_links = set(container['HostConfig']['Links'] or [])
+            actual_links = set()
+            for link in (container['HostConfig']['Links'] or []):
+                actual_links.add(link)
+
             if actual_links != expected_links:
                 self.reload_reasons.append('links ({0} => {1})'.format(actual_links, expected_links))
                 differing.append(container)
@@ -1553,12 +1546,12 @@ class DockerManager(object):
 
                 image_matches = running_image in repo_tags
 
-                if command == None:
+                if command is None:
                     command_matches = True
                 else:
                     command_matches = (command == details['Config']['Cmd'])
 
-                if entrypoint == None:
+                if entrypoint is None:
                     entrypoint_matches = True
                 else:
                     entrypoint_matches = (
@@ -1754,7 +1747,8 @@ def present(manager, containers, count, name):
     if delta < 0:
         # If both running and stopped containers exist, remove
         # stopped containers first.
-        containers.deployed.sort(lambda cx, cy: cmp(is_running(cx), is_running(cy)))
+        # Use key param for python 2/3 compatibility.
+        containers.deployed.sort(key=is_running)
 
         to_stop = []
         to_remove = []
@@ -1974,8 +1968,6 @@ def main():
     except RequestException as e:
         module.fail_json(changed=manager.has_changed(), msg=repr(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

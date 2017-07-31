@@ -5,24 +5,16 @@
 # (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
 # (c) 2015, Jonathan Lestrelin <jonathan.lestrelin@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -71,13 +63,17 @@ EXAMPLES = '''
 
 import os
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def get_local_version(pear_output):
     """Take pear remoteinfo output and get the installed version"""
     lines = pear_output.split('\n')
     for line in lines:
         if 'Installed ' in line:
             installed = line.rsplit(None, 1)[-1].strip()
-            if installed == '-': continue
+            if installed == '-':
+                continue
             return installed
     return None
 
@@ -120,7 +116,7 @@ def query_package(module, name, state="present"):
 
 def remove_packages(module, packages):
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         installed, updated = query_package(module, package)
@@ -233,8 +229,6 @@ def main():
         elif p['state'] == 'absent':
             remove_packages(module, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

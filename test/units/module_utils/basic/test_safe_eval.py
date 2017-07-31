@@ -30,44 +30,48 @@ from units.mock.generator import add_method
 
 # Strings that should be converted into a typed value
 VALID_STRINGS = (
-        [("'a'", 'a')],
-        [("'1'", '1')],
-        [("1", 1)],
-        [("True", True)],
-        [("False", False)],
-        [("{}", {})],
-        )
+    [("'a'", 'a')],
+    [("'1'", '1')],
+    [("1", 1)],
+    [("True", True)],
+    [("False", False)],
+    [("{}", {})],
+)
 
 # Passing things that aren't strings should just return the object
 NONSTRINGS = (
-        [({'a':1}, {'a':1})],
-        )
+    [({'a': 1}, {'a': 1})],
+)
 
 # These strings are not basic types.  For security, these should not be
 # executed.  We return the same string and get an exception for some
 INVALID_STRINGS = (
-        [("a=1", "a=1", SyntaxError)],
-        [("a.foo()", "a.foo()", None)],
-        [("import foo", "import foo", None)],
-        [("__import__('foo')", "__import__('foo')", ValueError)],
-        )
+    [("a=1", "a=1", SyntaxError)],
+    [("a.foo()", "a.foo()", None)],
+    [("import foo", "import foo", None)],
+    [("__import__('foo')", "__import__('foo')", ValueError)],
+)
 
 
 def _check_simple_types(self, code, expected):
     # test some basic usage for various types
     self.assertEqual(self.am.safe_eval(code), expected)
 
+
 def _check_simple_types_with_exceptions(self, code, expected):
     # Test simple types with exceptions requested
     self.assertEqual(self.am.safe_eval(code, include_exceptions=True), (expected, None))
 
+
 def _check_invalid_strings(self, code, expected):
     self.assertEqual(self.am.safe_eval(code), expected)
+
 
 def _check_invalid_strings_with_exceptions(self, code, expected, exception):
     res = self.am.safe_eval("a=1", include_exceptions=True)
     self.assertEqual(res[0], "a=1")
     self.assertEqual(type(res[1]), SyntaxError)
+
 
 @add_method(_check_simple_types, *VALID_STRINGS)
 @add_method(_check_simple_types, *NONSTRINGS)

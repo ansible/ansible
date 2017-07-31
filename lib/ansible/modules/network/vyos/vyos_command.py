@@ -16,15 +16,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
 module: vyos_command
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
+author: "Nathaniel Case (@qalthos)"
 short_description: Run one or more commands on VyOS devices
 description:
   - The command module allows running one or more commands on remote
@@ -70,7 +71,7 @@ options:
   retries:
     description:
       - Specifies the number of retries a command should be tried
-        before it is considered failed.  The command is run on the
+        before it is considered failed. The command is run on the
         target device every retry and evaluated against the I(wait_for)
         conditionals.
     required: false
@@ -78,8 +79,8 @@ options:
   interval:
     description:
       - Configures the interval in seconds to wait between I(retries)
-        of the command.  If the command does not pass the specified
-        conditional, the interval indicates how to long to wait before
+        of the command. If the command does not pass the specified
+        conditions, the interval indicates how long to wait before
         trying the command again.
     required: false
     default: 1
@@ -90,36 +91,28 @@ notes:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: vyos
-    password: vyos
-    transport: cli
+tasks:
+  - name: show configuration on ethernet devices eth0 and eth1
+    vyos_command:
+      commands:
+        - show interfaces ethernet {{ item }}
+    with_items:
+      - eth0
+      - eth1
 
-- vyos_command:
-    commands:
-      - show interfaces ethernet {{ item }}
-    provider: "{{ cli }}"
-  with_items:
-    - eth0
-    - eth1
-
-- vyos_command:
-    commands:
-      - show version
-      - show hardware cpu
-    wait_for:
-      - "result[0] contains 'VyOS 1.1.7'"
-    provider: "{{ cli }}"
+  - name: run multiple commands and check if version output contains specific version string
+    vyos_command:
+      commands:
+        - show version
+        - show hardware cpu
+      wait_for:
+        - "result[0] contains 'VyOS 1.1.7'"
 """
 
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
@@ -128,7 +121,7 @@ stdout_lines:
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-  description: The conditionals that failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
@@ -138,14 +131,15 @@ warnings:
   type: list
   sample: ['...', '...']
 """
-import ansible.module_utils.vyos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.six import string_types
+import time
 
-VALID_KEYS = ['command', 'output', 'prompt', 'response']
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.six import string_types
+from ansible.module_utils.vyos import run_commands
+from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
 def to_lines(stdout):
     for item in stdout:
@@ -153,21 +147,26 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
-def parse_commands(module):
-    for cmd in module.params['commands']:
-        if isinstance(cmd, string_types):
-            cmd = dict(command=cmd, output=None)
-        elif 'command' not in cmd:
-            module.fail_json(msg='command keyword argument is required')
-        elif cmd.get('output') not in [None, 'text']:
-            module.fail_json(msg='invalid output specified for command')
-        elif not set(cmd.keys()).issubset(VALID_KEYS):
-            module.fail_json(msg='unknown keyword specified')
-        yield cmd
+
+def parse_commands(module, warnings):
+    command = ComplexList(dict(
+        command=dict(key=True),
+        prompt=dict(),
+        answer=dict(),
+    ), module)
+    commands = command(module.params['commands'])
+
+    for index, cmd in enumerate(commands):
+        if module.check_mode and not cmd['command'].startswith('show'):
+            warnings.append('only show commands are supported when using '
+                            'check mode, not executing `%s`' % cmd['command'])
+        commands[index] = module.jsonify(cmd)
+
+    return commands
+
 
 def main():
     spec = dict(
-        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -177,63 +176,55 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = NetworkModule(argument_spec=spec,
-                           connect_on_load=False,
-                           supports_check_mode=True)
+    spec.update(vyos_argument_spec)
 
-    commands = list(parse_commands(module))
-    conditionals = module.params['wait_for'] or list()
+    module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     warnings = list()
+    check_args(module, warnings)
 
-    runner = CommandRunner(module)
+    commands = parse_commands(module, warnings)
 
-    for cmd in commands:
-        if module.check_mode and not cmd['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        else:
-            if cmd['command'].startswith('conf'):
-                module.fail_json(msg='vyos_command does not support running '
-                                     'config mode commands.  Please use '
-                                     'vyos_config instead')
-            try:
-                runner.add_command(**cmd)
-            except AddCommandError:
-                exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
-
-    for item in conditionals:
-        runner.add_conditional(item)
-
-    runner.retries = module.params['retries']
-    runner.interval = module.params['interval']
-    runner.match = module.params['match']
-
+    wait_for = module.params['wait_for'] or list()
     try:
-        runner.run()
-    except FailedConditionsError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
-    except NetworkError:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError:
         exc = get_exception()
         module.fail_json(msg=str(exc))
 
-    result = dict(changed=False, stdout=list())
+    retries = module.params['retries']
+    interval = module.params['interval']
+    match = module.params['match']
 
-    for cmd in commands:
-        try:
-            output = runner.get_command(cmd['command'])
-        except ValueError:
-            output = 'command not executed due to check_mode, see warnings'
-        result['stdout'].append(output)
+    for _ in range(retries):
+        responses = run_commands(module, commands)
 
-    result['warnings'] = warnings
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+        for item in conditionals:
+            if item(responses):
+                if match == 'any':
+                    conditionals = list()
+                    break
+                conditionals.remove(item)
+
+            if not conditionals:
+                break
+
+            time.sleep(interval)
+
+    if conditionals:
+        failed_conditions = [item.raw for item in conditionals]
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, falied_conditions=failed_conditions)
+
+    result = {
+        'changed': False,
+        'stdout': responses,
+        'warnings': warnings,
+        'stdout_lines': list(to_lines(responses)),
+    }
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-

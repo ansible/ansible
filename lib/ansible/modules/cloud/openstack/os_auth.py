@@ -15,16 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    from shade import meta
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -37,6 +31,11 @@ description:
 requirements:
     - "python >= 2.6"
     - "shade"
+options:
+  availability_zone:
+    description:
+      - Ignored. Present for backwards compatibility
+    required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -49,6 +48,14 @@ EXAMPLES = '''
   debug:
     var: service_catalog
 '''
+
+try:
+    import shade
+    from shade import meta
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 
 def main():
 
@@ -64,10 +71,10 @@ def main():
         module.exit_json(
             changed=False,
             ansible_facts=dict(
-              auth_token=cloud.auth_token,
-              service_catalog=cloud.service_catalog))
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+                auth_token=cloud.auth_token,
+                service_catalog=cloud.service_catalog))
+    except Exception as e:
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *

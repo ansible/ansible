@@ -5,7 +5,7 @@
 - name: setup
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
 
 - name: configure single command
@@ -31,10 +31,20 @@
     that:
       - "result.changed == false"
 
+- name: confirm previous commit
+  junos_config:
+    confirm_commit: yes
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
 - name: teardown
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
 
 

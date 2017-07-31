@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -96,7 +97,8 @@ EXAMPLES = '''
 import os.path
 import re
 
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems, string_types
 
 
 # exceptions -------------------------------------------------------------- {{{
@@ -162,7 +164,7 @@ class HomebrewCask(object):
              - os.path.sep
         '''
 
-        if isinstance(path, basestring):
+        if isinstance(path, (string_types)):
             return not cls.INVALID_PATH_REGEX.search(path)
 
         try:
@@ -190,7 +192,7 @@ class HomebrewCask(object):
             return True
 
         return (
-            isinstance(brew_path, basestring)
+            isinstance(brew_path, string_types)
             and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
         )
 
@@ -202,7 +204,7 @@ class HomebrewCask(object):
             return True
 
         return (
-            isinstance(cask, basestring)
+            isinstance(cask, string_types)
             and not cls.INVALID_CASK_REGEX.search(cask)
         )
 
@@ -218,7 +220,7 @@ class HomebrewCask(object):
             return True
         else:
             return (
-                isinstance(state, basestring)
+                isinstance(state, string_types)
                 and state.lower() in (
                     'installed',
                     'absent',
@@ -263,7 +265,7 @@ class HomebrewCask(object):
             raise HomebrewCaskException(self.message)
 
         else:
-            if isinstance(path, basestring):
+            if isinstance(path, string_types):
                 self._path = path.split(':')
             else:
                 self._path = path
@@ -422,7 +424,7 @@ class HomebrewCask(object):
             'update',
         ])
         if rc == 0:
-            if out and isinstance(out, basestring):
+            if out and isinstance(out, string_types):
                 already_updated = any(
                     re.search(r'Already up-to-date.', s.strip(), re.IGNORECASE)
                     for s in out.split('\n')
@@ -602,8 +604,6 @@ def main():
     else:
         module.exit_json(changed=changed, msg=message)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

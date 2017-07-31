@@ -1,24 +1,15 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -86,7 +77,7 @@ options:
     description:
       - the protocol used for the load-balancer packet forwarding, tcp or udp
     required: false
-    default: "tcp" 
+    default: "tcp"
     choices: ['tcp', 'udp']
   region:
     description:
@@ -151,7 +142,7 @@ author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 
 EXAMPLES = '''
 # Simple example of creating a new LB, adding members, and a health check
-- local_action: 
+- local_action:
     module: gce_lb
     name: testlb
     region: us-central1
@@ -173,6 +164,9 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import USER_AGENT_PRODUCT, USER_AGENT_VERSION, gce_connect, unexpected_error_msg
+
 
 def main():
     module = AnsibleModule(
@@ -193,8 +187,8 @@ def main():
             members = dict(type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
         )
     )
@@ -225,7 +219,7 @@ def main():
     try:
         gcelb = get_driver_lb(Provider_lb.GCE)(gce_driver=gce)
         gcelb.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
+            USER_AGENT_PRODUCT, USER_AGENT_VERSION))
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
@@ -341,9 +335,6 @@ def main():
     json_output['changed'] = changed
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 if __name__ == '__main__':
     main()

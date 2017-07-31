@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -31,7 +32,8 @@ description:
   - Results can be sorted and sliced
 author: "Tom Bamford (@tombamford)"
 notes:
-  - This module is not backwards compatible with the previous version of the ec2_search_ami module which worked only for Ubuntu AMIs listed on cloud-images.ubuntu.com.
+  - This module is not backwards compatible with the previous version of the ec2_search_ami module which worked only for Ubuntu AMIs listed on
+    cloud-images.ubuntu.com.
   - See the example below for a suggestion of how to search by distro/release.
 options:
   region:
@@ -44,7 +46,9 @@ options:
       - Search AMIs owned by the specified owner
       - Can specify an AWS account ID, or one of the special IDs 'self', 'amazon' or 'aws-marketplace'
       - If not specified, all EC2 AMIs in the specified region will be searched.
-      - You can include wildcards in many of the search options. An asterisk (*) matches zero or more characters, and a question mark (?) matches exactly one character. You can escape special characters using a backslash (\) before the character. For example, a value of \*amazon\?\\ searches for the literal string *amazon?\.
+      - You can include wildcards in many of the search options. An asterisk (*) matches zero or more characters, and a question mark (?) matches exactly one
+        character. You can escape special characters using a backslash (\) before the character. For example, a value of \*amazon\?\\ searches for the
+        literal string *amazon?\.
     required: false
     default: null
   ami_id:
@@ -83,12 +87,34 @@ options:
       - Platform type to match.
     default: null
     required: false
+  product_code:
+    description:
+      - Marketplace product code to match.
+    default: null
+    required: false
+    version_added: "2.3"
   sort:
     description:
       - Optional attribute which with to sort the results.
       - If specifying 'tag', the 'tag_name' parameter is required.
-      - Starting at version 2.1, additional sort choices of architecture, block_device_mapping, creationDate, hypervisor, is_public, location, owner_id, platform, root_device_name, root_device_type, state, and virtualization_type are supported.  
-    choices: ['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location', 'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']
+      - Starting at version 2.1, additional sort choices of architecture, block_device_mapping, creationDate, hypervisor, is_public, location, owner_id,
+        platform, root_device_name, root_device_type, state, and virtualization_type are supported.
+    choices:
+        - 'name'
+        - 'description'
+        - 'tag'
+        - 'architecture'
+        - 'block_device_mapping'
+        - 'creationDate'
+        - 'hypervisor'
+        - 'is_public'
+        - 'location'
+        - 'owner_id'
+        - 'platform'
+        - 'root_device_name'
+        - 'root_device_type'
+        - 'state'
+        - 'virtualization_type'
     default: null
     required: false
   sort_tag:
@@ -187,7 +213,7 @@ architecture:
 block_device_mapping:
     description: block device mapping associated with image
     returned: when AMI found
-    type: dictionary of block devices
+    type: dict
     sample: "{
         '/dev/xvda': {
             'delete_on_termination': true,
@@ -237,12 +263,12 @@ platform:
     type: string
     sample: null
 root_device_name:
-    description: rood device name of image
+    description: root device name of image
     returned: when AMI found
     type: string
     sample: "/dev/xvda"
 root_device_type:
-    description: rood device type of image
+    description: root device type of image
     returned: when AMI found
     type: string
     sample: "ebs"
@@ -254,7 +280,7 @@ state:
 tags:
     description: tags assigned to image
     returned: when AMI found
-    type: dictionary of tags
+    type: dict
     sample: "{
         'Environment': 'devel',
         'Name': 'test-server01',
@@ -298,31 +324,34 @@ def get_block_device_mapping(image):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            owner = dict(required=False, default=None),
-            ami_id = dict(required=False),
-            ami_tags = dict(required=False, type='dict',
+        owner = dict(required=False, default=None),
+        ami_id = dict(required=False),
+        ami_tags = dict(required=False, type='dict',
                 aliases = ['search_tags', 'image_tags']),
-            architecture = dict(required=False),
-            hypervisor = dict(required=False),
-            is_public = dict(required=False, type='bool'),
-            name = dict(required=False),
-            platform = dict(required=False),
-            sort = dict(required=False, default=None,
-                choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location', 'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
-            sort_tag = dict(required=False),
-            sort_order = dict(required=False, default='ascending',
+        architecture = dict(required=False),
+        hypervisor = dict(required=False),
+        is_public = dict(required=False, type='bool'),
+        name = dict(required=False),
+        platform = dict(required=False),
+        product_code = dict(required=False),
+        sort = dict(required=False, default=None,
+                    choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location',
+                             'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
+        sort_tag = dict(required=False),
+        sort_order = dict(required=False, default='ascending',
                 choices=['ascending', 'descending']),
-            sort_start = dict(required=False),
-            sort_end = dict(required=False),
-            state = dict(required=False, default='available'),
-            virtualization_type = dict(required=False),
-            no_result_action = dict(required=False, default='success',
+        sort_start = dict(required=False),
+        sort_end = dict(required=False),
+        state = dict(required=False, default='available'),
+        virtualization_type = dict(required=False),
+        no_result_action = dict(required=False, default='success',
                 choices = ['success', 'fail']),
-        )
+    )
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     if not HAS_BOTO:
@@ -336,6 +365,7 @@ def main():
     name = module.params.get('name')
     owner = module.params.get('owner')
     platform = module.params.get('platform')
+    product_code = module.params.get('product_code')
     sort = module.params.get('sort')
     sort_tag = module.params.get('sort_tag')
     sort_order = module.params.get('sort_order')
@@ -357,11 +387,13 @@ def main():
     if hypervisor:
         filter['hypervisor'] = hypervisor
     if is_public:
-        filter['is_public'] = is_public
+        filter['is_public'] = 'true'
     if name:
         filter['name'] = name
     if platform:
         filter['platform'] = platform
+    if product_code:
+        filter['product-code'] = product_code
     if virtualization_type:
         filter['virtualization_type'] = virtualization_type
 

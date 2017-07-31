@@ -1,0 +1,72 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_vrrp sanity test"
+
+- block:
+  - name: "Enable interface-vlan"
+    nxos_feature: 
+      feature: interface-vlan
+      state: enabled
+      provider: "{{ cli }}"
+
+  - name: "Enable vrrp"
+    nxos_feature: 
+      feature: vrrp
+      state: enabled
+      provider: "{{ cli }}"
+
+  - name: "create int vlan 10"
+    nxos_interface: 
+      interface: "vlan 10"
+      state: present
+      provider: "{{ cli }}"
+
+  - name: Ensure vrrp group 100 and vip 10.1.100.1 is on vlan10
+    nxos_vrrp:
+      interface: vlan10
+      group: 100
+      vip: 10.1.100.1
+      provider: "{{ cli }}"
+
+  - name: Ensure removal of the vrrp group config
+  # vip is required to ensure the user knows what they are removing
+    nxos_vrrp: &remove
+      interface: vlan10
+      group: 100
+      vip: 10.1.100.1
+      state: absent
+      provider: "{{ cli }}"
+
+  - pause:
+      seconds: 30
+
+  - name: Re-config with more params
+    nxos_vrrp:
+      interface: vlan10
+      group: 100
+      vip: 10.1.100.1
+      preempt: false
+      priority: 130
+      authentication: AUTHKEY
+      provider: "{{ cli }}"
+
+  always:
+    - name: remove vrrp
+      nxos_vrrp: *remove
+      ignore_errors: yes
+  
+    - name: "Disable interface-vlan"
+      nxos_config: 
+        commands:
+          - no feature interface-vlan
+        provider: "{{ cli }}"
+        match: none
+      ignore_errors: yes
+
+    - name: "Disable vrrp"
+      nxos_feature: 
+        feature: vrrp
+        state: disabled
+        provider: "{{ cli }}"
+      ignore_errors: yes
+
+- debug: msg="END TRANSPORT:CLI nxos_vrrp sanity test"

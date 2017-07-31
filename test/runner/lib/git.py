@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 from lib.util import (
     CommonConfig,
+    SubprocessError,
     run_command,
 )
 
@@ -16,6 +17,14 @@ class Git(object):
         """
         self.args = args
         self.git = 'git'
+
+    def get_diff(self, args):
+        """
+        :type args: list[str]
+        :rtype: list[str]
+        """
+        cmd = ['diff'] + args
+        return self.run_git_split(cmd, '\n', str_errors='replace')
 
     def get_diff_names(self, args):
         """
@@ -55,22 +64,36 @@ class Git(object):
         cmd = ['merge-base', '--fork-point', branch]
         return self.run_git(cmd).strip()
 
-    def run_git_split(self, cmd, separator=None):
+    def is_valid_ref(self, ref):
+        """
+        :type ref: str
+        :rtype: bool
+        """
+        cmd = ['show', ref]
+        try:
+            self.run_git(cmd, str_errors='replace')
+            return True
+        except SubprocessError:
+            return False
+
+    def run_git_split(self, cmd, separator=None, str_errors='strict'):
         """
         :type cmd: list[str]
-        :param separator: str | None
+        :type separator: str | None
+        :type str_errors: str
         :rtype: list[str]
         """
-        output = self.run_git(cmd).strip(separator)
+        output = self.run_git(cmd, str_errors=str_errors).strip(separator)
 
-        if len(output) == 0:
+        if not output:
             return []
 
         return output.split(separator)
 
-    def run_git(self, cmd):
+    def run_git(self, cmd, str_errors='strict'):
         """
         :type cmd: list[str]
+        :type str_errors: str
         :rtype: str
         """
-        return run_command(self.args, [self.git] + cmd, capture=True, always=True)[0]
+        return run_command(self.args, [self.git] + cmd, capture=True, always=True, str_errors=str_errors)[0]

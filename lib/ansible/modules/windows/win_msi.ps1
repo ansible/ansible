@@ -19,52 +19,45 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args  -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$path = Get-Attr $params "path" -failifempty $true
-$state = Get-Attr $params "state" "present"
-$creates = Get-Attr $params "creates" $false
-$extra_args = Get-Attr $params "extra_args" ""
-$wait = Get-Attr $params "wait" $false | ConvertTo-Bool
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
+$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
+$removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
+$extra_args = Get-AnsibleParam -obj $params -name "extra_args" -type "str" -default ""
+$wait = Get-AnsibleParam -obj $params -name "wait" -type "bool" -default $false
 
-$result = New-Object psobject @{
+$result = @{
     changed = $false
-};
-
-If (($creates -ne $false) -and ($state -ne "absent") -and (Test-Path $creates))
-{
-    Exit-Json $result;
 }
 
-$logfile = [IO.Path]::GetTempFileName();
-if ($state -eq "absent")
-{
-  If ($wait)
-  {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/x `"$path`" /qn /l $logfile $extra_args" -Verb Runas -Wait;
-  }
-  Else
-  {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/x `"$path`" /qn /l $logfile $extra_args" -Verb Runas;
-  }
-}
-Else
-{
-  If ($wait)
-  {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/i `"$path`" /qn /l $logfile $extra_args" -Verb Runas -Wait;
-  }
-  Else
-  {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/i `"$path`" /qn /l $logfile $extra_args" -Verb Runas;
-  }
+if (-not (Test-Path -Path $path)) {
+    Fail-Json $result "The MSI file ($path) was not found."
 }
 
-Set-Attr $result "changed" $true;
+if ($creates -and (Test-Path -Path $creates)) {
+    Exit-Json $result "The 'creates' file or directory ($creates) already exists."
+}
 
-$logcontents = Get-Content $logfile | Out-String;
-Remove-Item $logfile;
+if ($removes -and -not (Test-Path -Path $removes)) {
+    Exit-Json $result "The 'removes' file or directory ($removes) does not exist."
+}
 
-Set-Attr $result "log" $logcontents;
+if (-not $check_mode) {
 
-Exit-Json $result;
+    $logfile = [IO.Path]::GetTempFileName()
+    if ($state -eq "absent") {
+        Start-Process -FilePath msiexec.exe -ArgumentList "/x `"$path`" /qn /log $logfile $extra_args" -Verb Runas -Wait:$wait
+    } else {
+        Start-Process -FilePath msiexec.exe -ArgumentList "/i `"$path`" /qn /log $logfile $extra_args" -Verb Runas -Wait:$wait
+    }
+    $result.log = Get-Content $logfile | Out-String
+    Remove-Item $logfile
+
+}
+
+$result.changed = $true
+
+Exit-Json $result

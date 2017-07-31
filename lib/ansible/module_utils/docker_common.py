@@ -21,23 +21,31 @@ import re
 import json
 import sys
 import copy
-
 from distutils.version import LooseVersion
-from urlparse import urlparse
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 
 HAS_DOCKER_PY = True
+HAS_DOCKER_PY_2 = False
 HAS_DOCKER_ERROR = None
 
 try:
     from requests.exceptions import SSLError
-    from docker import Client
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError, NotFound
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
-    from docker.utils.types import Ulimit, LogConfig
     from docker import auth
+    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+        HAS_DOCKER_PY_2 = True
+        from docker import APIClient as Client
+        from docker.types import Ulimit, LogConfig
+    else:
+        from docker import Client
+        from docker.utils.types import Ulimit, LogConfig
+
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
@@ -135,7 +143,7 @@ class AnsibleDockerClient(Client):
                                                                                            MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')
-        self.check_mode = self.module.check_mode   
+        self.check_mode = self.module.check_mode
         self._connect_params = self._get_connect_params()
 
         try:
@@ -210,7 +218,7 @@ class AnsibleDockerClient(Client):
             docker_host=self._get_value('docker_host', params['docker_host'], 'DOCKER_HOST',
                                         DEFAULT_DOCKER_HOST),
             tls_hostname=self._get_value('tls_hostname', params['tls_hostname'],
-                                        'DOCKER_TLS_HOSTNAME', 'localhost'),
+                                         'DOCKER_TLS_HOSTNAME', 'localhost'),
             api_version=self._get_value('api_version', params['api_version'], 'DOCKER_API_VERSION',
                                         'auto'),
             cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
@@ -237,12 +245,12 @@ class AnsibleDockerClient(Client):
     def _get_tls_config(self, **kwargs):
         self.log("get_tls_config:")
         for key in kwargs:
-            self.log("  %s: %s" %  (key, kwargs[key]))
+            self.log("  %s: %s" % (key, kwargs[key]))
         try:
             tls_config = TLSConfig(**kwargs)
             return tls_config
         except TLSParameterError as exc:
-           self.fail("TLS config error: %s" % exc)
+            self.fail("TLS config error: %s" % exc)
 
     def _get_connect_params(self):
         auth = self.auth_params
@@ -320,11 +328,10 @@ class AnsibleDockerClient(Client):
     def _handle_ssl_error(self, error):
         match = re.match(r"hostname.*doesn\'t match (\'.*\')", str(error))
         if match:
-            msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
-                "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
-                "You may also use TLS without verification by setting the tls parameter to true." \
-                 %  (self.auth_params['tls_hostname'], match.group(1))
-            self.fail(msg)
+            self.fail("You asked for verification that Docker host name matches %s. The actual hostname is %s. "
+                      "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. "
+                      "You may also use TLS without verification by setting the tls parameter to true."
+                      % (self.auth_params['tls_hostname'], match.group(1), match.group(1)))
         self.fail("SSL Exception: %s" % (error))
 
     def get_container(self, name=None):
@@ -342,7 +349,7 @@ class AnsibleDockerClient(Client):
         try:
             for container in self.containers(all=True):
                 self.log("testing container: %s" % (container['Names']))
-                if search_name in container['Names']:
+                if isinstance(container['Names'], list) and search_name in container['Names']:
                     result = container
                     break
                 if container['Id'].startswith(name):
@@ -377,9 +384,9 @@ class AnsibleDockerClient(Client):
         images = self._image_lookup(name, tag)
         if len(images) == 0:
             # In API <= 1.20 seeing 'docker.io/<name>' as the name of images pulled from docker hub
-            registry, repo_name = auth.resolve_repository_name(name) 
+            registry, repo_name = auth.resolve_repository_name(name)
             if registry == 'docker.io':
-                # the name does not contain a registry, so let's see if docker.io works 
+                # the name does not contain a registry, so let's see if docker.io works
                 lookup = "docker.io/%s" % name
                 self.log("Check for docker.io image: %s" % lookup)
                 images = self._image_lookup(lookup, tag)
@@ -397,9 +404,9 @@ class AnsibleDockerClient(Client):
         self.log("Image %s:%s not found." % (name, tag))
         return None
 
-    def _image_lookup(self, name, tag): 
+    def _image_lookup(self, name, tag):
         '''
-        Including a tag in the name parameter sent to the docker-py images method does not 
+        Including a tag in the name parameter sent to the docker-py images method does not
         work consistently. Instead, get the result set for name and manually check if the tag
         exists.
         '''
@@ -408,7 +415,7 @@ class AnsibleDockerClient(Client):
         except Exception as exc:
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
         images = response
-        if tag: 
+        if tag:
             lookup = "%s:%s" % (name, tag)
             images = []
             for image in response:
@@ -423,6 +430,7 @@ class AnsibleDockerClient(Client):
         Pull an image
         '''
         self.log("Pulling image %s:%s" % (name, tag))
+        old_tag = self.find_image(name, tag)
         try:
             for line in self.pull(name, tag=tag, stream=True, decode=True):
                 self.log(line, pretty_print=True)
@@ -437,6 +445,6 @@ class AnsibleDockerClient(Client):
         except Exception as exc:
             self.fail("Error pulling image %s:%s - %s" % (name, tag, str(exc)))
 
-        return self.find_image(name, tag)
+        new_tag = self.find_image(name, tag)
 
-
+        return new_tag, old_tag == new_tag

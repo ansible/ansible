@@ -14,16 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
 module: ec2_vol
 short_description: create and attach a volume, return volume id and device map
 description:
-    - creates an EBS volume and optionally attaches it to an instance.  If both an instance ID and a device name is given and the instance has a device at the device name, then no volume is created and no attachment is made.  This module has a dependency on python-boto.
+    - creates an EBS volume and optionally attaches it to an instance.
+      If both an instance ID and a device name is given and the instance has a device at the device name, then no volume is created and no attachment is made.
+      This module has a dependency on python-boto.
 version_added: "1.1"
 options:
   instance:
@@ -50,8 +53,8 @@ options:
     default: null
   volume_type:
     description:
-      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS). "Standard" is the old EBS default
-        and continues to remain the Ansible default for backwards compatibility.
+      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS), st1 (Throughput Optimized HDD), sc1 (Cold HDD).
+        "Standard" is the old EBS default and continues to remain the Ansible default for backwards compatibility.
     required: false
     default: standard
     version_added: "1.9"
@@ -66,6 +69,11 @@ options:
       - Enable encryption at rest for this volume.
     default: false
     version_added: "1.8"
+  kms_key_id:
+    description:
+      - Specify the id of the KMS key to use.
+    default: null
+    version_added: "2.3"
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
@@ -104,6 +112,12 @@ options:
     default: present
     choices: ['absent', 'present', 'list']
     version_added: "1.6"
+  tags:
+    description:
+      - tag:value pairs to add to the volume after creation
+    required: false
+    default: {}
+    version_added: "2.3"
 author: "Lester Wade (@lwade)"
 extends_documentation_fragment:
     - aws
@@ -319,15 +333,25 @@ def boto_supports_volume_encryption():
     """
     return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
+def boto_supports_kms_key_id():
+    """
+    Check if Boto library supports kms_key_ids (added in 2.39.0)
+
+    Returns:
+        True if version is equal to or higher then the version needed, else False
+    """
+    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
 
 def create_volume(module, ec2, zone):
     changed = False
     name = module.params.get('name')
     iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
+    kms_key_id = module.params.get('kms_key_id')
     volume_size = module.params.get('volume_size')
     volume_type = module.params.get('volume_type')
     snapshot = module.params.get('snapshot')
+    tags = module.params.get('tags')
     # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
     if iops:
         volume_type = 'io1'
@@ -336,7 +360,10 @@ def create_volume(module, ec2, zone):
     if volume is None:
         try:
             if boto_supports_volume_encryption():
-                volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
+                if kms_key_id is not None:
+                    volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted, kms_key_id)
+                else:
+                    volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
                 changed = True
             else:
                 volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops)
@@ -347,7 +374,9 @@ def create_volume(module, ec2, zone):
                 volume.update()
 
             if name:
-                ec2.create_tags([volume.id], {"Name": name})
+                tags["Name"] = name
+            if tags:
+                ec2.create_tags([volume.id], tags)
         except boto.exception.BotoServerError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
@@ -454,23 +483,23 @@ def get_volume_info(volume, state):
     attachment = volume.attach_data
 
     volume_info = {
-                    'create_time': volume.create_time,
-                    'encrypted': volume.encrypted,
-                    'id': volume.id,
-                    'iops': volume.iops,
-                    'size': volume.size,
-                    'snapshot_id': volume.snapshot_id,
-                    'status': volume.status,
-                    'type': volume.type,
-                    'zone': volume.zone,
-                    'attachment_set': {
-                        'attach_time': attachment.attach_time,
-                        'device': attachment.device,
-                        'instance_id': attachment.instance_id,
-                        'status': attachment.status
-                    },
-                    'tags': volume.tags
-                }
+        'create_time': volume.create_time,
+        'encrypted': volume.encrypted,
+        'id': volume.id,
+        'iops': volume.iops,
+        'size': volume.size,
+        'snapshot_id': volume.snapshot_id,
+        'status': volume.status,
+        'type': volume.type,
+        'zone': volume.zone,
+        'attachment_set': {
+            'attach_time': attachment.attach_time,
+            'device': attachment.device,
+            'instance_id': attachment.instance_id,
+            'status': attachment.status
+        },
+        'tags': volume.tags
+    }
     if hasattr(attachment, 'deleteOnTermination'):
         volume_info['attachment_set']['deleteOnTermination'] = attachment.deleteOnTermination
 
@@ -480,19 +509,21 @@ def get_volume_info(volume, state):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            instance = dict(),
-            id = dict(),
-            name = dict(),
-            volume_size = dict(),
-            volume_type = dict(choices=['standard', 'gp2', 'io1'], default='standard'),
-            iops = dict(),
-            encrypted = dict(type='bool', default=False),
-            device_name = dict(),
-            delete_on_termination = dict(type='bool', default=False),
-            zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
-            snapshot = dict(),
-            state = dict(choices=['absent', 'present', 'list'], default='present')
-        )
+        instance = dict(),
+        id = dict(),
+        name = dict(),
+        volume_size = dict(),
+        volume_type = dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
+        iops = dict(),
+        encrypted = dict(type='bool', default=False),
+        kms_key_id = dict(),
+        device_name = dict(),
+        delete_on_termination = dict(type='bool', default=False),
+        zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
+        snapshot = dict(),
+        state = dict(choices=['absent', 'present', 'list'], default='present'),
+        tags = dict(type='dict', default={})
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -504,10 +535,12 @@ def main():
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
     encrypted = module.params.get('encrypted')
+    kms_key_id = module.params.get('kms_key_id')
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
+    tags = module.params.get('tags')
 
     # Ensure we have the zone or can get the zone
     if instance is None and zone is None and state == 'present':
@@ -547,6 +580,9 @@ def main():
     if encrypted and not boto_supports_volume_encryption():
         module.fail_json(msg="You must use boto >= v2.29.0 to use encrypted volumes")
 
+    if kms_key_id is not None and not boto_supports_kms_key_id():
+        module.fail_json(msg="You must use boto >= v2.39.0 to use kms_key_id")
+
     # Here we need to get the zone info for the instance. This covers situation where
     # instance is specified but zone isn't.
     # Useful for playbooks chaining instance launch with volume create + attach and where the
@@ -573,8 +609,8 @@ def main():
     if not volume_size and not (id or name or snapshot):
         module.fail_json(msg="You must specify volume_size or identify an existing volume by id, name, or snapshot")
 
-    if volume_size and (id or snapshot):
-        module.fail_json(msg="Cannot specify volume_size together with id or snapshot")
+    if volume_size and id:
+        module.fail_json(msg="Cannot specify volume_size together with id")
 
     if state == 'present':
         volume, changed = create_volume(module, ec2, zone)
@@ -583,9 +619,10 @@ def main():
         elif inst is not None:
             volume, changed = attach_volume(module, ec2, volume, inst)
 
-        # Add device, volume_id and volume_type parameters separately to maintain backward compatability
+        # Add device, volume_id and volume_type parameters separately to maintain backward compatibility
         volume_info = get_volume_info(volume, state)
-        module.exit_json(changed=changed, volume=volume_info, device=volume_info['attachment_set']['device'], volume_id=volume_info['id'], volume_type=volume_info['type'])
+        module.exit_json(changed=changed, volume=volume_info, device=volume_info['attachment_set']['device'],
+                         volume_id=volume_info['id'], volume_type=volume_info['type'])
     elif state == 'absent':
         delete_volume(module, ec2)
 

@@ -16,18 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -73,7 +65,6 @@ options:
    provider_network_type:
      description:
         - The type of physical network that maps to this network resource.
-     choices: ['flat', 'vlan', 'vxlan', 'gre', 'uplink']
      required: false
      default: None
      version_added: "2.1"
@@ -92,6 +83,10 @@ options:
      required: false
      default: None
      version_added: "2.1"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements: ["shade"]
 '''
 
@@ -108,7 +103,7 @@ RETURN = '''
 network:
     description: Dictionary describing the network.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Network ID.
@@ -164,6 +159,14 @@ network:
             sample: 101
 '''
 
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
@@ -172,8 +175,7 @@ def main():
         admin_state_up=dict(default=True, type='bool'),
         external=dict(default=False, type='bool'),
         provider_physical_network=dict(required=False),
-        provider_network_type=dict(required=False, default=None,
-                                   choices=['flat', 'vlan', 'vxlan', 'gre', 'uplink']),
+        provider_network_type=dict(required=False),
         provider_segmentation_id=dict(required=False),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None)

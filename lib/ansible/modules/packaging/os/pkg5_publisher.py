@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -111,7 +112,7 @@ def modify_publisher(module, params):
 
     if name in existing:
         for option in ['origin', 'mirror', 'sticky', 'enabled']:
-            if params[option] != None:
+            if params[option] is not None:
                 if params[option] != existing[name][option]:
                     return set_publisher(module, params)
     else:
@@ -124,21 +125,21 @@ def set_publisher(module, params):
     name = params['name']
     args = []
 
-    if params['origin'] != None:
+    if params['origin'] is not None:
         args.append('--remove-origin=*')
         args.extend(['--add-origin=' + u for u in params['origin']])
-    if params['mirror'] != None:
+    if params['mirror'] is not None:
         args.append('--remove-mirror=*')
         args.extend(['--add-mirror=' + u for u in params['mirror']])
 
-    if params['sticky'] != None and params['sticky']:
+    if params['sticky'] is not None and params['sticky']:
         args.append('--sticky')
-    elif params['sticky'] != None:
+    elif params['sticky'] is not None:
         args.append('--non-sticky')
 
-    if params['enabled'] != None and params['enabled']:
+    if params['enabled'] is not None and params['enabled']:
         args.append('--enable')
-    elif params['enabled'] != None:
+    elif params['enabled'] is not None:
         args.append('--disable')
 
     rc, out, err = module.run_command(

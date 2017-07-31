@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>, Alexander Bulimov <lazywolf0@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -203,7 +194,11 @@ EXAMPLES = '''
 
 import re
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 decimal_point = re.compile(r"(\d+)")
+
 
 def mkversion(major, minor, patch):
     return (1000 * 1000 * int(major)) + (1000 * int(minor)) + int(patch)
@@ -262,7 +257,7 @@ def main():
 
     # Determine if the "--yes" option should be used
     version_found = get_lvm_version(module)
-    if version_found == None:
+    if version_found is None:
         module.fail_json(msg="Failed to get LVM version number")
     version_yesopt = mkversion(2, 2, 99) # First LVM with the "--yes" option
     if version_found >= version_yesopt:
@@ -313,16 +308,17 @@ def main():
             size_unit = ''
 
         if not '%' in size:
-        # LVCREATE(8) -L --size option unit
+            # LVCREATE(8) -L --size option unit
             if size[-1].lower() in 'bskmgtpe':
-               size_unit = size[-1].lower()
-               size = size[0:-1]
+                size_unit = size[-1].lower()
+                size = size[0:-1]
 
             try:
-               float(size)
-               if not size[0].isdigit(): raise ValueError()
+                float(size)
+                if not size[0].isdigit():
+                    raise ValueError()
             except ValueError:
-               module.fail_json(msg="Bad size specification of '%s'" % size)
+                module.fail_json(msg="Bad size specification of '%s'" % size)
 
     # when no unit, megabytes by default
     if size_opt == 'l':
@@ -414,10 +410,13 @@ def main():
             if '+' in size:
                 size_requested += this_lv['size']
             if this_lv['size'] < size_requested:
-                if (size_free > 0)  and (('+' not in size) or (size_free >= (size_requested -  this_lv['size']))):
+                if (size_free > 0) and (('+' not in size) or (size_free >= (size_requested - this_lv['size']))):
                     tool = module.get_bin_path("lvextend", required=True)
                 else:
-                    module.fail_json(msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" % (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit))
+                    module.fail_json(
+                        msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" %
+                            (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit)
+                    )
             elif shrink and this_lv['size'] > size_requested + this_vg['ext_size']:  # more than an extent too large
                 if size_requested == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
@@ -488,8 +487,6 @@ def main():
 
     module.exit_json(changed=changed, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

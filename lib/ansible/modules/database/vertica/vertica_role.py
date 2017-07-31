@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -99,6 +100,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -135,12 +137,12 @@ def update_roles(role_facts, cursor, role,
         cursor.execute("revoke {0} from {1}".format(assigned_role, role))
     for assigned_role in set(required) - set(existing):
         cursor.execute("grant {0} to {1}".format(assigned_role, role))
-        
+
 def check(role_facts, role, assigned_roles):
     role_key = role.lower()
     if role_key not in role_facts:
-       return False
-    if assigned_roles and cmp(sorted(assigned_roles), sorted(role_facts[role_key]['assigned_roles'])) != 0:
+        return False
+    if assigned_roles and sorted(assigned_roles) != sorted(role_facts[role_key]['assigned_roles']):
         return False
     return True
 
@@ -153,7 +155,7 @@ def present(role_facts, cursor, role, assigned_roles):
         return True
     else:
         changed = False
-        if assigned_roles and cmp(sorted(assigned_roles), sorted(role_facts[role_key]['assigned_roles'])) != 0:
+        if assigned_roles and (sorted(assigned_roles) !=  sorted(role_facts[role_key]['assigned_roles'])):
             update_roles(role_facts, cursor, role,
                 role_facts[role_key]['assigned_roles'], assigned_roles)
             changed = True
@@ -185,7 +187,7 @@ def main():
             cluster=dict(default='localhost'),
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
         ), supports_check_mode = True)
 
     if not pyodbc_found:
@@ -247,7 +249,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg=e)
+        module.fail_json(msg=to_native(e))
 
     module.exit_json(changed=changed, role=role, ansible_facts={'vertica_roles': role_facts})
 

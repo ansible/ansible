@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -168,22 +169,20 @@ import copy
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
+    # Extend the ZabbixAPI
+    # Since the zabbix-api python module too old (version 1.0, no higher version so far),
+    # it does not support the 'hostinterface' api calls,
+    # so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
+    class ZabbixAPIExtends(ZabbixAPI):
+        hostinterface = None
+
+        def __init__(self, server, timeout, user, passwd, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
+            self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
+
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
-
-
-# Extend the ZabbixAPI
-# Since the zabbix-api python module too old (version 1.0, no higher version so far),
-# it does not support the 'hostinterface' api calls,
-# so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
-class ZabbixAPIExtends(ZabbixAPI):
-    hostinterface = None
-
-    def __init__(self, server, timeout, user, passwd, **kwargs):
-        ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
-        self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
-
 
 class Host(object):
     def __init__(self, module, zbx):
@@ -224,7 +223,7 @@ class Host(object):
             if proxy_id:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
-                parameters['name'] = visible_name 
+                parameters['name'] = visible_name
             host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
                 return host_list['hostids'][0]
@@ -239,7 +238,7 @@ class Host(object):
             if proxy_id:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
-                parameters['name'] = visible_name 
+                parameters['name'] = visible_name
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
             if interfaces:
@@ -378,10 +377,10 @@ class Host(object):
 
         if host['proxy_hostid'] != proxy_id:
             return True
-        
+
         if host['name'] != visible_name:
             return True
-        
+
         return False
 
     # link or clear template of the host
@@ -452,7 +451,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']

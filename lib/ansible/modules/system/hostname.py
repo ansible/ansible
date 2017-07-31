@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -32,10 +23,9 @@ version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
 description:
-    - Set system's hostname.
-    - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI, Alpine Linux.
-    - Any distribution that uses systemd as their init system.
-    - Note, this module does *NOT* modify /etc/hosts. You need to modify it yourself using other modules like template or replace.
+    - Set system's hostname, supports most OSs/Distributions, including those using systemd.
+    - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
+    - Windows, HP-UX and AIX are not currently supported.
 options:
     name:
         required: true
@@ -48,13 +38,19 @@ EXAMPLES = '''
     name: web01
 '''
 
+import os
 import socket
+import traceback
 from distutils.version import LooseVersion
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.facts import *
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.basic import (AnsibleModule,
+                                        get_distribution,
+                                        get_distribution_version,
+                                        get_platform,
+                                        load_platform_subclass,
+                                       )
+from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
+from ansible.module_utils._text import to_native
 
 
 class UnimplementedStrategy(object):
@@ -112,7 +108,7 @@ class Hostname(object):
     def __init__(self, module):
         self.module       = module
         self.name         = module.params['name']
-        if self.platform == 'Linux' and Facts(module).is_systemd_managed():
+        if self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             self.strategy = SystemdStrategy(module)
         else:
             self.strategy = self.strategy_class(module)
@@ -203,20 +199,18 @@ class DebianStrategy(GenericStrategy):
         if not os.path.isfile(self.HOSTNAME_FILE):
             try:
                 open(self.HOSTNAME_FILE, "a").write("")
-            except IOError:
-                err = get_exception()
+            except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                    str(err))
+                                      to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
                 return f.read().strip()
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -225,10 +219,9 @@ class DebianStrategy(GenericStrategy):
                 f.write("%s\n" % name)
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
 # ===========================================
 
@@ -243,20 +236,18 @@ class SLESStrategy(GenericStrategy):
         if not os.path.isfile(self.HOSTNAME_FILE):
             try:
                 open(self.HOSTNAME_FILE, "a").write("")
-            except IOError:
-                err = get_exception()
+            except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                    str(err))
+                                      to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
                 return f.read().strip()
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -265,10 +256,9 @@ class SLESStrategy(GenericStrategy):
                 f.write("%s\n" % name)
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
 # ===========================================
 
@@ -289,10 +279,9 @@ class RedHatStrategy(GenericStrategy):
                         return v.strip()
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -315,10 +304,9 @@ class RedHatStrategy(GenericStrategy):
                 f.writelines(lines)
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
 # ===========================================
 
@@ -339,20 +327,18 @@ class AlpineStrategy(GenericStrategy):
         if not os.path.isfile(self.HOSTNAME_FILE):
             try:
                 open(self.HOSTNAME_FILE, "a").write("")
-            except IOError:
-                err = get_exception()
+            except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                    str(err))
+                                      to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
                 return f.read().strip()
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -361,10 +347,9 @@ class AlpineStrategy(GenericStrategy):
                 f.write("%s\n" % name)
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, '-F', self.HOSTNAME_FILE]
@@ -440,9 +425,9 @@ class OpenRCStrategy(GenericStrategy):
                     line = line.strip()
                     if line.startswith('hostname='):
                         return line[10:].strip('"')
-            except Exception:
-                err = get_exception()
-                self.module.fail_json(msg="failed to read hostname: %s" % str(err))
+            except Exception as e:
+                self.module.fail_json(msg="failed to read hostname: %s" %
+                                      to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
@@ -462,9 +447,9 @@ class OpenRCStrategy(GenericStrategy):
 
                 f = open(self.HOSTNAME_FILE, 'w')
                 f.write('\n'.join(lines) + '\n')
-            except Exception:
-                err = get_exception()
-                self.module.fail_json(msg="failed to update hostname: %s" % str(err))
+            except Exception as e:
+                self.module.fail_json(msg="failed to update hostname: %s" %
+                                      to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
@@ -482,20 +467,18 @@ class OpenBSDStrategy(GenericStrategy):
         if not os.path.isfile(self.HOSTNAME_FILE):
             try:
                 open(self.HOSTNAME_FILE, "a").write("")
-            except IOError:
-                err = get_exception()
+            except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                    str(err))
+                                      to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
                 return f.read().strip()
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -504,10 +487,9 @@ class OpenBSDStrategy(GenericStrategy):
                 f.write("%s\n" % name)
             finally:
                 f.close()
-        except Exception:
-            err = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+                                  to_native(e), exception=traceback.format_exc())
 
 # ===========================================
 
@@ -557,10 +539,9 @@ class FreeBSDStrategy(GenericStrategy):
         if not os.path.isfile(self.HOSTNAME_FILE):
             try:
                 open(self.HOSTNAME_FILE, "a").write("hostname=temporarystub\n")
-            except IOError:
-                err = get_exception()
+            except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                    str(err))
+                                      to_native(e), exception=traceback.format_exc())
         try:
             try:
                 f = open(self.HOSTNAME_FILE, 'r')
@@ -568,9 +549,9 @@ class FreeBSDStrategy(GenericStrategy):
                     line = line.strip()
                     if line.startswith('hostname='):
                         return line[10:].strip('"')
-            except Exception:
-                err = get_exception()
-                self.module.fail_json(msg="failed to read hostname: %s" % str(err))
+            except Exception as e:
+                self.module.fail_json(msg="failed to read hostname: %s" %
+                                      to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
@@ -590,9 +571,9 @@ class FreeBSDStrategy(GenericStrategy):
 
                 f = open(self.HOSTNAME_FILE, 'w')
                 f.write('\n'.join(lines) + '\n')
-            except Exception:
-                err = get_exception()
-                self.module.fail_json(msg="failed to update hostname: %s" % str(err))
+            except Exception as e:
+                self.module.fail_json(msg="failed to update hostname: %s" %
+                                      to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
@@ -637,6 +618,11 @@ class RedHatWorkstationHostname(Hostname):
     distribution = 'Red hat enterprise linux workstation'
     strategy_class = RedHatStrategy
 
+class RedHatAtomicHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux atomic host'
+    strategy_class = RedHatStrategy
+
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
@@ -645,6 +631,16 @@ class CentOSHostname(Hostname):
 class CentOSLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos linux'
+    strategy_class = RedHatStrategy
+
+class CloudlinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinux'
+    strategy_class = RedHatStrategy
+
+class CloudlinuxServerHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinux server'
     strategy_class = RedHatStrategy
 
 class ScientificHostname(Hostname):
@@ -697,6 +693,11 @@ class LinaroHostname(Hostname):
     distribution = 'Linaro'
     strategy_class = DebianStrategy
 
+class DevuanHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Devuan'
+    strategy_class = DebianStrategy
+
 class GentooHostname(Hostname):
     platform = 'Linux'
     distribution = 'Gentoo base system'
@@ -727,6 +728,11 @@ class FreeBSDHostname(Hostname):
     distribution = None
     strategy_class = FreeBSDStrategy
 
+class NetBSDHostname(Hostname):
+    platform = 'NetBSD'
+    distribution = None
+    strategy_class = FreeBSDStrategy
+
 
 # ===========================================
 
@@ -746,6 +752,7 @@ def main():
                                         ansible_nodename=name,
                                         ansible_fqdn=socket.getfqdn(),
                                         ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+
 
 if __name__ == '__main__':
     main()

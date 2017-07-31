@@ -18,12 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import pipes
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -77,23 +75,37 @@ EXAMPLES = '''
     state: absent
 '''
 
+import re
+import pipes
+
+
 def compare_package(version1, version2):
     """ Compare version packages.
         Return values:
         -1 first minor
         0 equal
-        1 fisrt greater """
+        1 first greater """
 
     def normalize(v):
         return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
-    return cmp(normalize(version1), normalize(version2))
+    normalized_version1 = normalize(version1)
+    normalized_version2 = normalize(version2)
+    if normalized_version1 == normalized_version2:
+        rc = 0
+    elif normalized_version1 < normalized_version2:
+        rc = -1
+    else:
+        rc = 1
+    return rc
+
 
 def query_package(module, name, depot=None):
     """ Returns whether a package is installed or not and version. """
 
     cmd_list = '/usr/sbin/swlist -a revision -l product'
     if depot:
-        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)),
+                                                use_unsafe_shell=True)
     else:
         rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
     if rc == 0:
@@ -140,7 +152,7 @@ def main():
     changed = False
     msg = "No changed"
     rc = 0
-    if ( state == 'present' or state == 'latest' ) and depot == None:
+    if ( state == 'present' or state == 'latest' ) and depot is None:
         output = "depot parameter is mandatory in present or latest task"
         module.fail_json(name=name, msg=output, rc=rc)
 
@@ -154,7 +166,7 @@ def main():
     else:
         installed = False
 
-    if ( state == 'present' or state == 'latest' ) and installed == False:
+    if ( state == 'present' or state == 'latest' ) and installed is False:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = install_package(module, depot, name)
@@ -166,7 +178,7 @@ def main():
         else:
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'latest' and installed == True:
+    elif state == 'latest' and installed is True:
         #Check depot version
         rc, version_depot = query_package(module, name, depot)
 
@@ -178,7 +190,7 @@ def main():
                 rc, output = install_package(module, depot, name)
 
                 if not rc:
-                    msg = "Packge upgraded, Before " + version_installed + " Now " + version_depot
+                    msg = "Package upgraded, Before " + version_installed + " Now " + version_depot
                     changed = True
 
                 else:
@@ -188,7 +200,7 @@ def main():
             output = "Software package not in repository " + depot
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'absent' and installed == True:
+    elif state == 'absent' and installed is True:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = remove_package(module, name)

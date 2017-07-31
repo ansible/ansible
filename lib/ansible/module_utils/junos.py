@@ -1,5 +1,5 @@
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2017 Red Hat, Inc.
 #
 # This file is part of Ansible
 #
@@ -16,325 +16,363 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import re
-import shlex
+import collections
+from contextlib import contextmanager
+from copy import deepcopy
 
-from distutils.version import LooseVersion
-
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.network import NetworkError
-from ansible.module_utils.shell import CliBase
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.netconf import send_request, children
+from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 try:
-    from jnpr.junos import Device
-    from jnpr.junos.utils.config import Config
-    from jnpr.junos.version import VERSION
-    from jnpr.junos.exception import RpcError, ConnectError, ConfigLoadError, CommitError
-    from jnpr.junos.exception import LockError, UnlockError
-    if LooseVersion(VERSION) < LooseVersion('1.2.2'):
-        HAS_PYEZ = False
+    from lxml.etree import Element, SubElement, fromstring, tostring
+    HAS_LXML = True
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
+    HAS_LXML = False
+
+ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
+JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
+FORMATS = frozenset(['xml', 'text', 'json'])
+CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
+
+junos_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
+    'transport': dict()
+}
+
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'timeout': 10
+}
+
+
+def get_argspec():
+    return junos_argument_spec
+
+
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in junos_argument_spec:
+        if key not in ('provider',) and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be '
+                            'removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
+
+
+def _validate_rollback_id(module, value):
+    try:
+        if not 0 <= int(value) <= 49:
+            raise ValueError
+    except ValueError:
+        module.fail_json(msg='rollback must be between 0 and 49')
+
+
+def load_configuration(module, candidate=None, action='merge', rollback=None, format='xml'):
+
+    if all((candidate is None, rollback is None)):
+        module.fail_json(msg='one of candidate or rollback must be specified')
+
+    elif all((candidate is not None, rollback is not None)):
+        module.fail_json(msg='candidate and rollback are mutually exclusive')
+
+    if format not in FORMATS:
+        module.fail_json(msg='invalid format specified')
+
+    if format == 'json' and action not in JSON_ACTIONS:
+        module.fail_json(msg='invalid action for format json')
+    elif format in ('text', 'xml') and action not in ACTIONS:
+        module.fail_json(msg='invalid action format %s' % format)
+    if action == 'set' and not format == 'text':
+        module.fail_json(msg='format must be text when action is set')
+
+    if rollback is not None:
+        _validate_rollback_id(module, rollback)
+        xattrs = {'rollback': str(rollback)}
     else:
-        HAS_PYEZ = True
-except ImportError:
-    HAS_PYEZ = False
+        xattrs = {'action': action, 'format': format}
 
-try:
-    import jxmlease
-    HAS_JXMLEASE = True
-except ImportError:
-    HAS_JXMLEASE = False
+    obj = Element('load-configuration', xattrs)
 
-try:
-    from lxml import etree
-except ImportError:
-    import xml.etree.ElementTree as etree
+    if candidate is not None:
+        lookup = {'xml': 'configuration', 'text': 'configuration-text',
+                  'set': 'configuration-set', 'json': 'configuration-json'}
+
+        if action == 'set':
+            cfg = SubElement(obj, 'configuration-set')
+        else:
+            cfg = SubElement(obj, lookup[format])
+
+        if isinstance(candidate, string_types):
+            if format == 'xml':
+                cfg.append(fromstring(candidate))
+            else:
+                cfg.text = to_text(candidate, encoding='latin1')
+        else:
+            cfg.append(candidate)
+    return send_request(module, obj)
 
 
-SUPPORTED_CONFIG_FORMATS = ['text', 'xml']
+def get_configuration(module, compare=False, format='xml', rollback='0'):
+    if format not in CONFIG_FORMATS:
+        module.fail_json(msg='invalid config format specified')
+    xattrs = {'format': format}
+    if compare:
+        _validate_rollback_id(module, rollback)
+        xattrs['compare'] = 'rollback'
+        xattrs['rollback'] = str(rollback)
+    return send_request(module, Element('get-configuration', xattrs))
 
 
-def xml_to_json(val):
-    if isinstance(val, string_types):
-        return jxmlease.parse(val)
+def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None):
+    obj = Element('commit-configuration')
+    if confirm:
+        SubElement(obj, 'confirmed')
+    if check:
+        SubElement(obj, 'check')
+    if comment:
+        subele = SubElement(obj, 'log')
+        subele.text = str(comment)
+    if confirm_timeout:
+        subele = SubElement(obj, 'confirm-timeout')
+        subele.text = str(confirm_timeout)
+    return send_request(module, obj)
+
+
+def command(module, command, format='text', rpc_only=False):
+    xattrs = {'format': format}
+    if rpc_only:
+        command += ' | display xml rpc'
+        xattrs['format'] = 'text'
+    return send_request(module, Element('command', xattrs, text=command))
+
+
+def lock_configuration(x):
+    return send_request(x, Element('lock-configuration'))
+
+
+def unlock_configuration(x):
+    return send_request(x, Element('unlock-configuration'))
+
+
+@contextmanager
+def locked_config(module):
+    try:
+        lock_configuration(module)
+        yield
+    finally:
+        unlock_configuration(module)
+
+
+def get_diff(module):
+
+    reply = get_configuration(module, compare=True, format='text')
+    output = reply.find('.//configuration-output')
+    if output is not None:
+        return to_text(output.text, encoding='latin1').strip()
+
+
+def load_config(module, candidate, warnings, action='merge', format='xml'):
+
+    if not candidate:
+        return
+
+    if isinstance(candidate, list):
+        candidate = '\n'.join(candidate)
+
+    reply = load_configuration(module, candidate, action=action, format=format)
+    if isinstance(reply, list):
+        warnings.extend(reply)
+
+    validate(module)
+
+    return get_diff(module)
+
+
+def get_param(module, key):
+    return module.params[key] or module.params['provider'].get(key)
+
+
+def map_params_to_obj(module, param_to_xpath_map):
+    """
+    Creates a new dictionary with key as xpath corresponding
+    to param and value is a list of dict with metadata and values for
+    the xpath.
+    Acceptable metadata keys:
+        'value': Value of param.
+        'tag_only': Value is indicated by tag only in xml hierarchy.
+        'leaf_only': If operation is to be added at leaf node only.
+        'value_req': If value(text) is requried for leaf node.
+        'is_key': If the field is key or not.
+    eg: Output
+    {
+        'name': [{'value': 'ge-0/0/1'}]
+        'disable': [{'value': True, tag_only': True}]
+    }
+
+    :param module:
+    :param param_to_xpath_map: Modules params to xpath map
+    :return: obj
+    """
+    obj = collections.OrderedDict()
+    for key, attribute in param_to_xpath_map.items():
+        if key in module.params:
+            is_attribute_dict = False
+
+            value = module.params[key]
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+
+            if isinstance(attribute, dict):
+                xpath = attribute.get('xpath')
+                is_attribute_dict = True
+            else:
+                xpath = attribute
+
+            if not obj.get(xpath):
+                obj[xpath] = list()
+
+            for val in value:
+                if is_attribute_dict:
+                    attr = deepcopy(attribute)
+                    del attr['xpath']
+
+                    attr.update({'value': val})
+                    obj[xpath].append(attr)
+                else:
+                    obj[xpath].append({'value': val})
+    return obj
+
+
+def map_obj_to_ele(module, want, top, value_map=None):
+    if not HAS_LXML:
+        module.fail_json(msg='lxml is not installed.')
+
+    root = Element('root')
+    top_ele = top.split('/')
+    ele = SubElement(root, top_ele[0])
+
+    if len(top_ele) > 1:
+        for item in top_ele[1:-1]:
+            ele = SubElement(ele, item)
+    container = ele
+    state = module.params.get('state')
+    active = module.params.get('active')
+    if active:
+        oper = 'active'
     else:
-        return jxmlease.parse_etree(val)
-
-
-def xml_to_string(val):
-    return etree.tostring(val)
-
-
-class Netconf(object):
-
-    def __init__(self):
-        if not HAS_PYEZ:
-            raise NetworkError(
-                msg='junos-eznc >= 1.2.2 is required but does not appear to be installed.  '
-                'It can be installed using `pip install junos-eznc`'
-            )
-        if not HAS_JXMLEASE:
-            raise NetworkError(
-                msg='jxmlease is required but does not appear to be installed.  '
-                'It can be installed using `pip install jxmlease`'
-            )
-        self.device = None
-        self.config = None
-        self._locked = False
-        self._connected = False
-        self.default_output = 'xml'
-
-    def raise_exc(self, msg):
-        if self.device:
-            if self._locked:
-                self.config.unlock()
-            self.disconnect()
-        raise NetworkError(msg)
-
-    def connect(self, params, **kwargs):
-        host = params['host']
-
-        kwargs = dict()
-        kwargs['port'] = params.get('port') or 830
-
-        kwargs['user'] = params['username']
-
-        if params['password']:
-            kwargs['passwd'] = params['password']
-
-        if params['ssh_keyfile']:
-            kwargs['ssh_private_key_file'] = params['ssh_keyfile']
-
-        kwargs['gather_facts'] = False
-
-        try:
-            self.device = Device(host, **kwargs)
-            self.device.open()
-            self.device.timeout = params['timeout']
-        except ConnectError:
-            exc = get_exception()
-            self.raise_exc('unable to connect to %s: %s' % (host, str(exc)))
-
-        self.config = Config(self.device)
-        self._connected = True
-
-    def disconnect(self):
-        try:
-            self.device.close()
-        except AttributeError:
-            pass
-        self._connected = False
-
-    ### Command methods ###
-
-    def run_commands(self, commands):
-        responses = list()
-
-        for cmd in commands:
-            meth = getattr(self, cmd.args.get('command_type'))
-            responses.append(meth(str(cmd), output=cmd.output))
-
-        for index, cmd in enumerate(commands):
-            if cmd.output == 'xml':
-                responses[index] = xml_to_json(responses[index])
-            elif cmd.args.get('command_type') == 'rpc':
-                responses[index] = str(responses[index].text).strip()
-            elif 'RpcError' in responses[index]:
-                raise NetworkError(responses[index])
-
-
-        return responses
-
-    def cli(self, commands, output='xml'):
-        '''Send commands to the device.'''
-        try:
-            return self.device.cli(commands, format=output, warning=False)
-        except (ValueError, RpcError):
-            exc = get_exception()
-            self.raise_exc('Unable to get cli output: %s' % str(exc))
-
-    def rpc(self, command, output='xml'):
-        name, kwargs = rpc_args(command)
-        meth = getattr(self.device.rpc, name)
-        reply = meth({'format': output}, **kwargs)
-        return reply
-
-    ### Config methods ###
-
-    def get_config(self, config_format="text"):
-        if config_format not in SUPPORTED_CONFIG_FORMATS:
-            self.raise_exc(msg='invalid config format.  Valid options are '
-                               '%s' % ', '.join(SUPPORTED_CONFIG_FORMATS))
-
-        ele = self.rpc('get_configuration', output=config_format)
-
-        if config_format == 'text':
-            return unicode(ele.text).strip()
-        else:
-            return ele
-
-    def load_config(self, config, commit=False, replace=False, confirm=None,
-                    comment=None, config_format='text', overwrite=False):
-
-        if all([replace, overwrite]):
-            self.raise_exc('setting both replace and overwrite to True is invalid')
-
-        if replace:
-            merge = False
-            overwrite = False
-        elif overwrite:
-            merge = True
-            overwrite = False
-        else:
-            merge = True
-            overwrite = False
-
-        if overwrite and config_format == 'set':
-            self.raise_exc('replace cannot be True when config_format is `set`')
-
-        self.lock_config()
-
-        try:
-            candidate = '\n'.join(config)
-            self.config.load(candidate, format=config_format, merge=merge,
-                             overwrite=overwrite)
-
-        except ConfigLoadError:
-            exc = get_exception()
-            self.raise_exc('Unable to load config: %s' % str(exc))
-
-        diff = self.config.diff()
-
-        self.check_config()
-
-        if all((commit, diff)):
-            self.commit_config(comment=comment, confirm=confirm)
-
-        self.unlock_config()
-
-        return diff
-
-    def save_config(self):
-        raise NotImplementedError
-
-    ### end of Config ###
-
-    def get_facts(self, refresh=True):
-        if refresh:
-            self.device.facts_refresh()
-        return self.device.facts
-
-    def unlock_config(self):
-        try:
-            self.config.unlock()
-            self._locked = False
-        except UnlockError:
-            exc = get_exception()
-            raise NetworkError('unable to unlock config: %s' % str(exc))
-
-    def lock_config(self):
-        try:
-            self.config.lock()
-            self._locked = True
-        except LockError:
-            exc = get_exception()
-            raise NetworkError('unable to lock config: %s' % str(exc))
-
-    def check_config(self):
-        if not self.config.commit_check():
-            self.raise_exc(msg='Commit check failed')
-
-    def commit_config(self, comment=None, confirm=None):
-        try:
-            kwargs = dict(comment=comment)
-            if confirm and confirm > 0:
-                kwargs['confirm'] = confirm
-            return self.config.commit(**kwargs)
-        except CommitError:
-            exc = get_exception()
-            raise NetworkError('unable to commit config: %s' % str(exc))
-
-    def confirm_commit(self, checkonly=False):
-        try:
-            resp = self.rpc('get_commit_information')
-            needs_confirm = 'commit confirmed, rollback' in resp[0][4].text
-            if checkonly:
-                return needs_confirm
-            return self.commit_config()
-        except IndexError:
-            # if there is no comment tag, the system is not in a commit
-            # confirmed state so just return
-            pass
-
-    def rollback_config(self, identifier, commit=True, comment=None):
-
-        self.lock_config()
-
-        try:
-            self.config.rollback(identifier)
-        except ValueError:
-            exc = get_exception()
-            self.raise_exc('Unable to rollback config: $s' % str(exc))
-
-        diff = self.config.diff()
-        if commit:
-            self.commit_config(comment=comment)
-
-        self.unlock_config()
-        return diff
-
-Netconf = register_transport('netconf')(Netconf)
-
-
-class Cli(CliBase):
-
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"unkown command")
-    ]
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, **kwargs)
-        if self.shell._matched_prompt.strip().endswith('%'):
-            self.execute('cli')
-        self.execute('set cli screen-length 0')
-
-    def configure(self, commands, comment=None):
-        cmds = ['configure']
-        cmds.extend(to_list(commands))
-
-        if comment:
-            cmds.append('commit and-quit comment "%s"' % comment)
-        else:
-            cmds.append('commit and-quit')
-
-        responses = self.execute(cmds)
-        return responses[1:-1]
-
-Cli = register_transport('cli', default=True)(Cli)
-
-def split(value):
-    lex = shlex.shlex(value)
-    lex.quotes = '"'
-    lex.whitespace_split = True
-    lex.commenters = ''
-    return list(lex)
-
-def rpc_args(args):
-    kwargs = dict()
-    args = split(args)
-    name = args.pop(0)
-    for arg in args:
-        key, value = arg.split('=')
-        if str(value).upper() in ['TRUE', 'FALSE']:
-            kwargs[key] = bool(value)
-        elif re.match(r'^[0-9]+$', value):
-            kwargs[key] = int(value)
-        else:
-            kwargs[key] = str(value)
-    return (name, kwargs)
+        oper = 'inactive'
+
+    # build xml subtree
+    if container.tag != top_ele[-1]:
+        node = SubElement(container, top_ele[-1])
+    else:
+        node = container
+
+    for fxpath, attributes in want.items():
+        for attr in attributes:
+            tag_only = attr.get('tag_only', False)
+            leaf_only = attr.get('leaf_only', False)
+            value_req = attr.get('value_req', False)
+            is_key = attr.get('is_key', False)
+            parent_attrib = attr.get('parent_attrib', True)
+            value = attr.get('value')
+            field_top = attr.get('top')
+
+            # operation 'delete' is added as element attribute
+            # only if it is key or leaf only node
+            if state == 'absent' and not (is_key or leaf_only):
+                continue
+
+            # convert param value to device specific value
+            if value_map and fxpath in value_map:
+                value = value_map[fxpath].get(value)
+
+            if (value is not None) or tag_only or leaf_only:
+                ele = node
+                if field_top:
+                    # eg: top = 'system/syslog/file'
+                    #     field_top = 'system/syslog/file/contents'
+                    # <file>
+                    #   <name>test</name>
+                    #   <contents>
+                    #   </contents>
+                    # </file>
+                    ele_list = root.xpath(top + '/' + field_top)
+
+                    if not len(ele_list):
+                        fields = field_top.split('/')
+                        ele = node
+                        for item in fields:
+                            inner_ele = root.xpath(top + '/' + item)
+                            if len(inner_ele):
+                                ele = inner_ele[0]
+                            else:
+                                ele = SubElement(ele, item)
+                    else:
+                        ele = ele_list[0]
+
+                if value is not None and not isinstance(value, bool):
+                    value = to_text(value, errors='surrogate_then_replace')
+
+                if fxpath:
+                    tags = fxpath.split('/')
+                    for item in tags:
+                        ele = SubElement(ele, item)
+
+                if tag_only:
+                    if state == 'present':
+                        if not value:
+                            # if value of tag_only node is false, delete the node
+                            ele.set('delete', 'delete')
+
+                elif leaf_only:
+                    if state == 'present':
+                        ele.set(oper, oper)
+                        ele.text = value
+                    else:
+                        ele.set('delete', 'delete')
+                        # Add value of leaf node if required while deleting.
+                        # in some cases if value is present while deleting, it
+                        # can result in error, hence the check
+                        if value_req:
+                            ele.text = value
+                        if is_key:
+                            par = ele.getparent()
+                            par.set('delete', 'delete')
+                else:
+                    ele.text = value
+                    par = ele.getparent()
+
+                    if parent_attrib:
+                        if state == 'present':
+                            # set replace attribute at parent node
+                            if not par.attrib.get('replace'):
+                                par.set('replace', 'replace')
+
+                            # set active/inactive at parent node
+                            if not par.attrib.get(oper):
+                                par.set(oper, oper)
+                        else:
+                            par.set('delete', 'delete')
+
+    return root.getchildren()[0]

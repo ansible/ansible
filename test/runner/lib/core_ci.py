@@ -19,17 +19,25 @@ from lib.util import (
     ApplicationError,
     run_command,
     make_dirs,
-    CommonConfig,
     display,
     is_shippable,
 )
+
+from lib.config import (
+    EnvironmentConfig,
+)
+
+AWS_ENDPOINTS = {
+    'us-east-1': 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com',
+    'us-east-2': 'https://g5xynwbk96.execute-api.us-east-2.amazonaws.com',
+}
 
 
 class AnsibleCoreCI(object):
     """Client for Ansible Core CI services."""
     def __init__(self, args, platform, version, stage='prod', persist=True, name=None):
         """
-        :type args: CommonConfig
+        :type args: EnvironmentConfig
         :type platform: str
         :type version: str
         :type stage: str
@@ -44,18 +52,50 @@ class AnsibleCoreCI(object):
         self.connection = None
         self.instance_id = None
         self.name = name if name else '%s-%s' % (self.platform, self.version)
+        self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
 
-        if self.platform == 'windows':
-            self.ssh_key = None
-            self.endpoint = 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com'
-            self.port = 5986
-        elif self.platform == 'freebsd':
-            self.ssh_key = SshKey(args)
-            self.endpoint = 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com'
-            self.port = 22
-        elif self.platform == 'osx':
-            self.ssh_key = SshKey(args)
+        aws_platforms = (
+            'aws',
+            'windows',
+            'freebsd',
+            'rhel',
+            'vyos',
+            'junos',
+            'ios',
+        )
+
+        osx_platforms = (
+            'osx',
+        )
+
+        if self.platform in aws_platforms:
+            if args.remote_aws_region:
+                # permit command-line override of region selection
+                region = args.remote_aws_region
+                # use a dedicated CI key when overriding the region selection
+                self.ci_key += '.%s' % args.remote_aws_region
+            elif is_shippable():
+                # split Shippable jobs across multiple regions to maximize use of launch credits
+                if self.platform == 'windows':
+                    region = 'us-east-2'
+                else:
+                    region = 'us-east-1'
+            else:
+                # send all non-Shippable jobs to us-east-1 to reduce api key maintenance
+                region = 'us-east-1'
+
+            self.endpoint = AWS_ENDPOINTS[region]
+
+            if self.platform == 'windows':
+                self.ssh_key = None
+                self.port = 5986
+            else:
+                self.ssh_key = SshKey(args)
+                self.port = 22
+        elif self.platform in osx_platforms:
             self.endpoint = 'https://osx.testing.ansible.com'
+
+            self.ssh_key = SshKey(args)
             self.port = None
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
@@ -67,10 +107,9 @@ class AnsibleCoreCI(object):
                 display.info('Checking existing %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                              verbosity=1)
 
-                self.connection = self.get()
+                self.connection = self.get(always_raise_on=[404])
 
-                display.info('Loaded existing %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                             verbosity=1)
+                display.info('Loaded existing %s/%s from: %s' % (self.platform, self.version, self._uri), verbosity=1)
             except HttpError as ex:
                 if ex.status != 404:
                     raise
@@ -91,22 +130,19 @@ class AnsibleCoreCI(object):
             self.started = False
             self.instance_id = str(uuid.uuid4())
 
-            display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                         verbosity=1)
-
     def start(self):
         """Start instance."""
         if is_shippable():
-            self.start_shippable()
-        else:
-            self.start_remote()
+            return self.start_shippable()
+
+        return self.start_remote()
 
     def start_remote(self):
         """Start instance for remote development/testing."""
-        with open(os.path.expanduser('~/.ansible-core-ci.key'), 'r') as key_fd:
+        with open(self.ci_key, 'r') as key_fd:
             auth_key = key_fd.read().strip()
 
-        self._start(dict(
+        return self._start(dict(
             remote=dict(
                 key=auth_key,
                 nonce=None,
@@ -115,7 +151,7 @@ class AnsibleCoreCI(object):
 
     def start_shippable(self):
         """Start instance on Shippable."""
-        self._start(dict(
+        return self._start(dict(
             shippable=dict(
                 run_id=os.environ['SHIPPABLE_BUILD_ID'],
                 job_number=int(os.environ['SHIPPABLE_JOB_NUMBER']),
@@ -145,9 +181,12 @@ class AnsibleCoreCI(object):
 
         raise self._create_http_error(response)
 
-    def get(self):
+    def get(self, tries=2, sleep=10, always_raise_on=None):
         """
         Get instance connection information.
+        :type tries: int
+        :type sleep: int
+        :type always_raise_on: list[int] | None
         :rtype: InstanceConnection
         """
         if not self.started:
@@ -155,13 +194,26 @@ class AnsibleCoreCI(object):
                          verbosity=1)
             return None
 
+        if not always_raise_on:
+            always_raise_on = []
+
         if self.connection and self.connection.running:
             return self.connection
 
-        response = self.client.get(self._uri)
+        while True:
+            tries -= 1
+            response = self.client.get(self._uri)
 
-        if response.status_code != 200:
-            raise self._create_http_error(response)
+            if response.status_code == 200:
+                break
+
+            error = self._create_http_error(response)
+
+            if not tries or response.status_code in always_raise_on:
+                raise error
+
+            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
+            time.sleep(sleep)
 
         if self.args.explain:
             self.connection = InstanceConnection(
@@ -187,7 +239,8 @@ class AnsibleCoreCI(object):
 
         status = 'running' if self.connection.running else 'starting'
 
-        display.info('Retrieved %s %s/%s instance %s.' % (status, self.platform, self.version, self.instance_id),
+        display.info('Status update: %s/%s on instance %s is %s.' %
+                     (self.platform, self.version, self.instance_id, status),
                      verbosity=1)
 
         return self.connection
@@ -213,12 +266,21 @@ class AnsibleCoreCI(object):
                          verbosity=1)
             return
 
+        display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
+
+        if self.platform == 'windows':
+            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'rb') as winrm_config_fd:
+                winrm_config = winrm_config_fd.read().decode('utf-8')
+        else:
+            winrm_config = None
+
         data = dict(
             config=dict(
                 platform=self.platform,
                 version=self.version,
                 public_key=self.ssh_key.pub_contents if self.ssh_key else None,
                 query=False,
+                winrm_config=winrm_config,
             )
         )
 
@@ -228,16 +290,33 @@ class AnsibleCoreCI(object):
             'Content-Type': 'application/json',
         }
 
-        response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+        tries = 2
+        sleep = 10
 
-        if response.status_code != 200:
-            raise self._create_http_error(response)
+        while True:
+            tries -= 1
+            response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+
+            if response.status_code == 200:
+                break
+
+            error = self._create_http_error(response)
+
+            if not tries:
+                raise error
+
+            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
+            time.sleep(sleep)
 
         self.started = True
         self._save()
 
-        display.info('Started %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                     verbosity=1)
+        display.info('Started %s/%s from: %s' % (self.platform, self.version, self._uri), verbosity=1)
+
+        if self.args.explain:
+            return {}
+
+        return response.json()
 
     def _clear(self):
         """Clear instance information."""
@@ -297,7 +376,7 @@ class SshKey(object):
     """Container for SSH key used to connect to remote instances."""
     def __init__(self, args):
         """
-        :type args: CommonConfig
+        :type args: EnvironmentConfig
         """
         tmp = os.path.expanduser('~/.ansible/test/')
 

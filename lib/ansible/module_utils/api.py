@@ -40,6 +40,7 @@ The 'api' module provides the following common argument specs:
 """
 import time
 
+
 def rate_limit_argument_spec(spec=None):
     """Creates an argument spec for working with rate limiting"""
     arg_spec = (dict(
@@ -49,6 +50,7 @@ def rate_limit_argument_spec(spec=None):
     if spec:
         arg_spec.update(spec)
     return arg_spec
+
 
 def retry_argument_spec(spec=None):
     """Creates an argument spec for working with retrying"""
@@ -60,55 +62,63 @@ def retry_argument_spec(spec=None):
         arg_spec.update(spec)
     return arg_spec
 
+
 def basic_auth_argument_spec(spec=None):
     arg_spec = (dict(
-        api_username=dict(type='str', required=False),
-        api_password=dict(type='str', required=False, no_log=True),
-        api_url=dict(type='str', required=False),
+        api_username=dict(type='str'),
+        api_password=dict(type='str', no_log=True),
+        api_url=dict(type='str'),
         validate_certs=dict(type='bool', default=True)
     ))
     if spec:
         arg_spec.update(spec)
     return arg_spec
 
+
 def rate_limit(rate=None, rate_limit=None):
     """rate limiting decorator"""
     minrate = None
     if rate is not None and rate_limit is not None:
         minrate = float(rate_limit) / float(rate)
+
     def wrapper(f):
         last = [0.0]
-        def ratelimited(*args,**kwargs):
+
+        def ratelimited(*args, **kwargs):
             if minrate is not None:
                 elapsed = time.clock() - last[0]
                 left = minrate - elapsed
                 if left > 0:
                     time.sleep(left)
                 last[0] = time.clock()
-            ret = f(*args,**kwargs)
+            ret = f(*args, **kwargs)
             return ret
+
         return ratelimited
     return wrapper
+
 
 def retry(retries=None, retry_pause=1):
     """Retry decorator"""
     def wrapper(f):
         retry_count = 0
-        def retried(*args,**kwargs):
+
+        def retried(*args, **kwargs):
             if retries is not None:
                 ret = None
                 while True:
-                    retry_count += 1
+                    # pylint doesn't understand this is a closure
+                    retry_count += 1  # pylint: disable=undefined-variable
                     if retry_count >= retries:
                         raise Exception("Retry limit exceeded: %d" % retries)
                     try:
-                        ret = f(*args,**kwargs)
+                        ret = f(*args, **kwargs)
                     except:
                         pass
                     if ret:
                         break
                     time.sleep(retry_pause)
                 return ret
+
         return retried
     return wrapper
-

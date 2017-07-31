@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Joseph Callen <jcallen () csc.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -64,14 +55,16 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # Example vmware_cluster command from Ansible Playbooks
 - name: Create Cluster
-      local_action: >
-        vmware_cluster
-        hostname="{{ ansible_ssh_host }}" username=root password=vmware
-        datacenter_name="datacenter"
-        cluster_name="cluster"
-        enable_ha=True
-        enable_drs=True
-        enable_vsan=True
+  local_action:
+    module: vmware_cluster
+    hostname: "{{ ansible_ssh_host }}"
+    username: root
+    password: vmware
+    datacenter_name: "datacenter"
+    cluster_name: "cluster"
+    enable_ha: True
+    enable_drs: True
+    enable_vsan: True
 '''
 
 try:
@@ -79,6 +72,16 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import (HAS_PYVMOMI,
+                                         TaskError,
+                                         connect_to_api,
+                                         find_cluster_by_name_datacenter,
+                                         find_datacenter_by_name,
+                                         vmware_argument_spec,
+                                         wait_for_task
+                                        )
 
 
 class VMwareCluster(object):
@@ -220,7 +223,7 @@ class VMwareCluster(object):
                                  self.cluster.configurationEx.drsConfig.enabled,
                                  self.cluster.configurationEx.vsanConfigInfo.enabled)
 
-                if cmp(desired_state, current_state) != 0:
+                if desired_state != current_state:
                     return 'update'
                 else:
                     return 'present'
@@ -248,8 +251,6 @@ def main():
     vmware_cluster = VMwareCluster(module)
     vmware_cluster.process_state()
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

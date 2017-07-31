@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -30,7 +31,8 @@ author: "Jim Dalton (@jsdalton)"
 options:
   state:
     description:
-      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed. C(rebooted) will reboot the cluster, resulting in a momentary outage.
+      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed. C(rebooted) will reboot the cluster,
+        resulting in a momentary outage.
     choices: ['present', 'absent', 'rebooted']
     required: true
   name:
@@ -64,7 +66,8 @@ options:
     default: None
   cache_parameter_group:
     description:
-      - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
+      - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group
+        for the specified engine will be used.
     required: false
     default: None
     version_added: "2.0"
@@ -143,8 +146,7 @@ import time
 
 try:
     import boto
-    from boto.elasticache.layer1 import ElastiCacheConnection
-    from boto.regioninfo import RegionInfo
+    from boto.elasticache import connect_to_region
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -385,7 +387,7 @@ class ElastiCacheManager(object):
             'NumCacheNodes': self.num_nodes,
             'EngineVersion': self.cache_engine_version
         }
-        for key, value in modifiable_data.iteritems():
+        for key, value in modifiable_data.items():
             if value is not None and self.data[key] != value:
                 return True
 
@@ -397,12 +399,13 @@ class ElastiCacheManager(object):
             return True
 
         # check vpc security groups
-        vpc_security_groups = []
-        security_groups = self.data['SecurityGroups'] or []
-        for sg in security_groups:
-            vpc_security_groups.append(sg['SecurityGroupId'])
-        if set(vpc_security_groups) != set(self.security_group_ids):
-            return True
+        if len(self.security_group_ids) > 0:
+            vpc_security_groups = []
+            security_groups = self.data['SecurityGroups'] or []
+            for sg in security_groups:
+                vpc_security_groups.append(sg['SecurityGroupId'])
+            if set(vpc_security_groups) != set(self.security_group_ids):
+                return True
 
         return False
 
@@ -418,7 +421,7 @@ class ElastiCacheManager(object):
         # Only check for modifications if zone is specified
         if self.zone is not None:
             unmodifiable_data['zone'] = self.data['PreferredAvailabilityZone']
-        for key, value in unmodifiable_data.iteritems():
+        for key, value in unmodifiable_data.items():
             if getattr(self, key) is not None and getattr(self, key) != value:
                 return True
         return False
@@ -426,10 +429,8 @@ class ElastiCacheManager(object):
     def _get_elasticache_connection(self):
         """Get an elasticache connection"""
         try:
-            endpoint = "elasticache.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            return ElastiCacheConnection(
-                region=connect_region,
+            return connect_to_region(
+                region_name=self.region,
                 **self.aws_connect_kwargs
             )
         except boto.exception.NoAuthHandlerFound as e:
@@ -482,22 +483,22 @@ class ElastiCacheManager(object):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state                 ={'required': True, 'choices': ['present', 'absent', 'rebooted']},
-            name                  ={'required': True},
-            engine                ={'required': False, 'default': 'memcached'},
-            cache_engine_version  ={'required': False},
-            node_type             ={'required': False, 'default': 'cache.m1.small'},
-            num_nodes             ={'required': False, 'default': None, 'type': 'int'},
-            # alias for compat with the original PR 1950
-            cache_parameter_group ={'required': False, 'default': None, 'aliases': ['parameter_group']},
-            cache_port            ={'required': False, 'type': 'int'},
-            cache_subnet_group    ={'required': False, 'default': None},
-            cache_security_groups ={'required': False, 'default': [], 'type': 'list'},
-            security_group_ids    ={'required': False, 'default': [], 'type': 'list'},
-            zone                  ={'required': False, 'default': None},
-            wait                  ={'required': False, 'type' : 'bool', 'default': True},
-            hard_modify           ={'required': False, 'type': 'bool', 'default': False}
-        )
+        state                 ={'required': True, 'choices': ['present', 'absent', 'rebooted']},
+        name                  ={'required': True},
+        engine                ={'required': False, 'default': 'memcached'},
+        cache_engine_version  ={'required': False},
+        node_type             ={'required': False, 'default': 'cache.m1.small'},
+        num_nodes             ={'required': False, 'default': None, 'type': 'int'},
+        # alias for compat with the original PR 1950
+        cache_parameter_group ={'required': False, 'default': None, 'aliases': ['parameter_group']},
+        cache_port            ={'required': False, 'type': 'int'},
+        cache_subnet_group    ={'required': False, 'default': None},
+        cache_security_groups ={'required': False, 'default': [], 'type': 'list'},
+        security_group_ids    ={'required': False, 'default': [], 'type': 'list'},
+        zone                  ={'required': False, 'default': None},
+        wait                  ={'required': False, 'type' : 'bool', 'default': True},
+        hard_modify           ={'required': False, 'type': 'bool', 'default': False}
+    )
     )
 
     module = AnsibleModule(

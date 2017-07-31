@@ -88,7 +88,7 @@ try {
   if (-not $curent_bindings -and $state -eq 'present') {
     New-WebBinding @binding_parameters -Force
 
-    # Select certificat
+    # Select certificate
     if($certificateHash -ne $FALSE) {
 
       $ip = $binding_parameters["IPAddress"]

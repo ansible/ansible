@@ -1,16 +1,16 @@
 #!/usr/bin/python
-# -*- mode: python -*-
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -19,7 +19,8 @@ author:
 module: include_role
 short_description: Load and execute a role
 description:
-     - "Loads and executes a role as a task, this frees roles from the `role:` directive and allows them to be treated more as tasks."
+     - Loads and executes a role as a task, this frees roles from the `role:` directive and allows them to be treated more as tasks.
+     - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
   name:
@@ -41,11 +42,6 @@ options:
       - "File to load from a Role's defaults/ directory."
     required: False
     default: 'main'
-  static:
-    description:
-      - Gives Ansible a hint if this is a 'static' include or not. If static it implies that it won't need templating nor loops nor conditionals and will show included tasks in the --list options.
-    required: False
-    default: None
   allow_duplicates:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
@@ -56,10 +52,12 @@ options:
       - If True the variables from defaults/ and vars/ in a role will not be made available to the rest of the play.
     default: None
 notes:
-    - THIS IS EARLY PREVIEW, THINGS MAY CHANGE
     - Handlers are made available to the whole play.
     - simple dependencies seem to work fine.
-    - "Things not tested (yet): plugin overrides, nesting includes, used as handler, other stuff I did not think of when I wrote this."
+    - As with C(include) this task can be static or dynamic, If static it implies that it won't need templating nor loops nor conditionals and will
+      show included tasks in the --list options. Ansible will try to autodetect what is needed, but you can set `static` to `yes` or `no` at task
+      level to control this.
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = """
@@ -81,8 +79,8 @@ EXAMPLES = """
   include_role:
     name: myrole
   with_items:
-    - "{{roleinput1}}"
-    - "{{roleinput2}}"
+    - '{{ roleinput1 }}'
+    - '{{ roleinput2 }}'
   loop_control:
     loop_var: roleinputvar
 

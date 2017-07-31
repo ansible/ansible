@@ -37,9 +37,6 @@ import shutil
 import sys
 import traceback
 
-# for debug
-from multiprocessing import Lock
-
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
@@ -69,17 +66,23 @@ if __name__ == '__main__':
         display.debug("starting run")
 
         sub = None
+        target = me.split('-')
+        if target[-1][0].isdigit():
+            # Remove any version or python version info as downstreams
+            # sometimes add that
+            target = target[:-1]
+
+        if len(target) > 1:
+            sub = target[1]
+            myclass = "%sCLI" % sub.capitalize()
+        elif target[0] == 'ansible':
+            sub = 'adhoc'
+            myclass = 'AdHocCLI'
+        else:
+            raise AnsibleError("Unknown Ansible alias: %s" % me)
+
         try:
-            if me.find('-') != -1:
-                target = me.split('-')
-                if len(target) > 1:
-                    sub = target[1]
-                    myclass = "%sCLI" % sub.capitalize()
-                    mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
-            elif me == 'ansible':
-                from ansible.cli.adhoc import AdHocCLI as mycli
-            else:
-                raise AnsibleError("Unknown Ansible alias: %s" % me)
+            mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
         except ImportError as e:
             # ImportError members have changed in py3
             if 'msg' in dir(e):
@@ -124,12 +127,12 @@ if __name__ == '__main__':
         exit_code = 99
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
-        display.error("Unexpected Exception: %s" % to_text(e), wrap_text=False)
+        display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
             log_only = False
         else:
             display.display("to see the full traceback, use -vvv")
-            log_only = True 
+            log_only = True
         display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
         exit_code = 250
     finally:

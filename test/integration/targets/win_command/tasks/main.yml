@@ -15,7 +15,6 @@
     - cmdout.stderr == ""
     - cmdout.stdout is search('GROUP INFORMATION')
     - '"GROUP INFORMATION" in cmdout.stdout_lines'
-    - cmdout.warnings == []
 
 - name: execute something nonexistent
   win_command: bogus_command1234
@@ -48,7 +47,6 @@
     - cmdout.stderr is search('some error')
     - cmdout.stdout == "some output \r\n"
     - cmdout.stdout_lines == ["some output "]
-    - cmdout.warnings == []
 
 - name: ensure test file is absent
   win_file:
@@ -122,6 +120,7 @@
   assert:
     that:
     - cmdout|failed
+    - cmdout.failed == True # check the failure key explicitly, since failed does magic with RC
     - cmdout.rc == 254
 
 - name: interleave large writes between stdout/stderr (check for buffer consumption deadlock)

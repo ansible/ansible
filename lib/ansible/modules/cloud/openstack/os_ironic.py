@@ -16,16 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import jsonpatch
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -125,6 +119,10 @@ options:
           re-assert the password field.
       required: false
       default: false
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatibility
+      required: false
 
 requirements: ["shade", "jsonpatch"]
 '''
@@ -151,6 +149,18 @@ EXAMPLES = '''
     chassis_uuid: "00000000-0000-0000-0000-000000000001"
 
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+try:
+    import jsonpatch
+    HAS_JSONPATCH = True
+except ImportError:
+    HAS_JSONPATCH = False
 
 
 def _parse_properties(module):
@@ -225,6 +235,8 @@ def main():
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
+    if not HAS_JSONPATCH:
+        module.fail_json(msg='jsonpatch is required for this module')
     if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
         module.fail_json(msg="Authentication appears to be disabled, "

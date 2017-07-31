@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -43,7 +44,18 @@ options:
     force:
         description:
             - opkg --force parameter used
-        choices: ["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]
+        choices:
+            - ""
+            - "depends"
+            - "maintainer"
+            - "reinstall"
+            - "overwrite"
+            - "downgrade"
+            - "space"
+            - "postinstall"
+            - "remove"
+            - "checksum"
+            - "removal-of-dependent-packages"
         required: false
         default: absent
         version_added: "2.0"
@@ -54,6 +66,9 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
 notes:  []
+requirements:
+    - opkg
+    - python
 '''
 EXAMPLES = '''
 - opkg:
@@ -111,7 +126,7 @@ def remove_packages(module, opkg_path, packages):
         force = "--force-%s" % force
 
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, opkg_path, package):
@@ -160,11 +175,12 @@ def install_packages(module, opkg_path, packages):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=["pkg"], required=True),
-            state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
-            force = dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]),
-            update_cache = dict(default="no", aliases=["update-cache"], type='bool')
+        argument_spec=dict(
+            name=dict(aliases=["pkg"], required=True),
+            state=dict(default="present", choices=["present", "installed", "absent", "removed"]),
+            force=dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove",
+                                            "checksum", "removal-of-dependent-packages"]),
+            update_cache=dict(default="no", aliases=["update-cache"], type='bool')
         )
     )
 

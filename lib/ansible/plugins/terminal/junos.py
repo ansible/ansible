@@ -26,28 +26,31 @@ from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
 
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+    terminal_stdout_re = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$|%"),
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"unknown command"),
         re.compile(r"syntax error,")
     ]
 
     def on_open_shell(self):
         try:
-            for c in ['set cli timestamp disable', 'set cli screen-length 0']:
+            prompt = self._get_prompt()
+            if prompt.strip().endswith('%'):
+                display.vvv('starting cli', self._connection._play_context.remote_addr)
+                self._exec_cli_command('cli')
+            for c in ['set cli timestamp disable', 'set cli screen-length 0', 'set cli screen-width 1024']:
                 self._exec_cli_command(c)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Junos' in stdout.read():
-            return 'junos'
-

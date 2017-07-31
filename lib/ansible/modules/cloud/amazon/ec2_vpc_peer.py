@@ -13,9 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 module: ec2_vpc_peer
@@ -29,6 +31,10 @@ options:
     description:
       - VPC id of the requesting VPC.
     required: false
+  peering_id:
+    description:
+      - Peering connection id.
+    required: false
   peer_vpc_id:
     description:
       - VPC id of the accepting VPC.
@@ -40,7 +46,7 @@ options:
   tags:
     description:
       - Dictionary of tags to look for and apply when creating a Peering Connection.
-    required: false    
+    required: false
   state:
     description:
       - Create, delete, accept, reject a peering connection.
@@ -61,9 +67,9 @@ EXAMPLES = '''
     peer_vpc_id: vpc-87654321
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix       
+      Project: phoenix
   register: vpc_peer
 
 - name: Accept local VPC peering request
@@ -81,9 +87,9 @@ EXAMPLES = '''
     peer_vpc_id: vpc-87654321
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix           
+      Project: phoenix
   register: vpc_peer
 
 - name: delete a local VPC peering Connection
@@ -102,9 +108,9 @@ EXAMPLES = '''
     peer_owner_id: 123456789102
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix         
+      Project: phoenix
   register: vpc_peer
 
 - name: Accept peering connection from remote account
@@ -123,9 +129,9 @@ EXAMPLES = '''
     peer_vpc_id: vpc-87654321
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix          
+      Project: phoenix
   register: vpc_peer
 
 - name: Reject a local VPC peering Connection
@@ -143,9 +149,9 @@ EXAMPLES = '''
     peer_owner_id: 123456789102
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix        
+      Project: phoenix
   register: vpc_peer
 
 - name: Accept a cross account VPC peering connection request
@@ -155,7 +161,7 @@ EXAMPLES = '''
     profile: bot03_profile_for_cross_account
     state: accept
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix
 
@@ -168,9 +174,9 @@ EXAMPLES = '''
     peer_owner_id: 123456789102
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix         
+      Project: phoenix
   register: vpc_peer
 
 - name: Reject a cross account VPC peering Connection
@@ -188,13 +194,14 @@ task:
   type: dictionary
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec
+from ansible.module_utils.ec2 import get_aws_connection_info, HAS_BOTO3
+
 try:
-    import json
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
 
 
 def tags_changed(pcx_id, client, module):
@@ -206,7 +213,7 @@ def tags_changed(pcx_id, client, module):
     if pcx['VpcPeeringConnections']:
         pcx_values = [t.values() for t in pcx['VpcPeeringConnections'][0]['Tags']]
         pcx_tags = [item for sublist in pcx_values for item in sublist]
-        tag_values = [[key, str(value)] for key, value in tags.iteritems()]
+        tag_values = [[key, str(value)] for key, value in tags.items()]
         tags = [item for sublist in tag_values for item in sublist]
         if sorted(pcx_tags) == sorted(tags):
             changed = False
@@ -220,15 +227,19 @@ def tags_changed(pcx_id, client, module):
 
 
 def describe_peering_connections(params, client):
-    result = client.describe_vpc_peering_connections(Filters=[
-        {'Name': 'requester-vpc-info.vpc-id', 'Values': [params['VpcId']]},
-        {'Name': 'accepter-vpc-info.vpc-id', 'Values': [params['PeerVpcId']]}
-        ])
+    result = client.describe_vpc_peering_connections(
+        Filters=[
+            {'Name': 'requester-vpc-info.vpc-id', 'Values': [params['VpcId']]},
+            {'Name': 'accepter-vpc-info.vpc-id', 'Values': [params['PeerVpcId']]}
+        ]
+    )
     if result['VpcPeeringConnections'] == []:
-        result = client.describe_vpc_peering_connections(Filters=[
-            {'Name': 'requester-vpc-info.vpc-id', 'Values': [params['PeerVpcId']]},
-            {'Name': 'accepter-vpc-info.vpc-id', 'Values': [params['VpcId']]}
-            ])
+        result = client.describe_vpc_peering_connections(
+            Filters=[
+                {'Name': 'requester-vpc-info.vpc-id', 'Values': [params['PeerVpcId']]},
+                {'Name': 'accepter-vpc-info.vpc-id', 'Values': [params['VpcId']]}
+            ]
+        )
     return result
 
 
@@ -265,7 +276,29 @@ def create_peer_connection(client, module):
         changed = True
         return (changed, peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))                   
+        module.fail_json(msg=str(e))
+
+
+def remove_peer_connection(client, module):
+    pcx_id = module.params.get('peering_id')
+    params = dict()
+    if not pcx_id:
+        params['VpcId'] = module.params.get('vpc_id')
+        params['PeerVpcId'] = module.params.get('peer_vpc_id')
+        if module.params.get('peer_owner_id'):
+            params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
+        params['DryRun'] = module.check_mode
+        peering_conns = describe_peering_connections(params, client)
+        if not peering_conns:
+            module.exit_json(changed=False)
+        else:
+            pcx_id = peering_conns['VpcPeeringConnections'][0]['VpcPeeringConnectionId']
+    try:
+        params['VpcPeeringConnectionId'] = pcx_id
+        client.delete_vpc_peering_connection(**params)
+        module.exit_json(changed=True)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
 
 
 def peer_status(client, module):
@@ -275,19 +308,17 @@ def peer_status(client, module):
     return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
 
 
-def accept_reject_delete(state, client, module):
+def accept_reject(state, client, module):
     changed = False
     params = dict()
     params['VpcPeeringConnectionId'] = module.params.get('peering_id')
     params['DryRun'] = module.check_mode
-    invocations = {
-        'accept': client.accept_vpc_peering_connection,
-        'reject': client.reject_vpc_peering_connection,
-        'absent': client.delete_vpc_peering_connection
-    }
-    if state == 'absent' or peer_status(client, module) != 'active':
+    if peer_status(client, module) != 'active':
         try:
-            invocations[state](**params)
+            if state == 'accept':
+                client.accept_vpc_peering_connection(**params)
+            else:
+                client.reject_vpc_peering_connection(**params)
             if module.params.get('tags'):
                 create_tags(params['VpcPeeringConnectionId'], client, module)
             changed = True
@@ -301,7 +332,7 @@ def accept_reject_delete(state, client, module):
 def load_tags(module):
     tags = []
     if module.params.get('tags'):
-        for name, value in module.params.get('tags').iteritems():
+        for name, value in module.params.get('tags').items():
             tags.append({'Key': name, 'Value': str(value)})
     return tags
 
@@ -330,38 +361,38 @@ def find_pcx_by_id(pcx_id, client, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        vpc_id=dict(),
-        peer_vpc_id=dict(),
-        peering_id=dict(),
-        peer_owner_id=dict(),
-        tags=dict(required=False, type='dict'),
-        profile=dict(),
-        state=dict(default='present', choices=['present', 'absent', 'accept', 'reject'])
+    argument_spec.update(
+        dict(
+            vpc_id=dict(),
+            peer_vpc_id=dict(),
+            peering_id=dict(),
+            peer_owner_id=dict(),
+            tags=dict(required=False, type='dict'),
+            profile=dict(),
+            state=dict(default='present', choices=['present', 'absent', 'accept', 'reject'])
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
         module.fail_json(msg='json, botocore and boto3 are required.')
-    state = module.params.get('state').lower()
+    state = module.params.get('state')
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        client = boto3_conn(module, conn_type='client', resource='ec2',
+                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg="Can't authorize connection - "+str(e))
 
     if state == 'present':
         (changed, results) = create_peer_connection(client, module)
         module.exit_json(changed=changed, peering_id=results)
+    elif state == 'absent':
+        remove_peer_connection(client, module)
     else:
-        (changed, results) = accept_reject_delete(state, client, module)
+        (changed, results) = accept_reject(state, client, module)
         module.exit_json(changed=changed, peering_id=results)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -35,6 +36,12 @@ options:
     description:
       - Public key material.
     required: false
+  force:
+    description:
+      - Force overwrite of already existing key pair if key has changed.
+    required: false
+    default: true
+    version_added: "2.3"
   state:
     description:
       - create or delete keypair
@@ -80,6 +87,15 @@ EXAMPLES = '''
     key_material: 'ssh-rsa AAAAxyz...== me@example.com'
     state: present
 
+# Given example2 is already existing, the key will not be replaced because the
+# force flag was set to `false`
+- name: example2 ec2 key
+  ec2_key:
+    name: example2
+    key_material: 'ssh-rsa AAAAxyz...== me@example.com'
+    force: false
+    state: present
+
 # Creates a new ec2 key pair named `example` if not present using provided key
 # material
 - name: example3 ec2 key
@@ -101,6 +117,7 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils._text import to_bytes
 import random
 import string
 
@@ -108,12 +125,13 @@ import string
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(required=True),
-            key_material=dict(required=False),
-            state = dict(default='present', choices=['present', 'absent']),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=300),
-        )
+        name=dict(required=True),
+        key_material=dict(required=False),
+        force = dict(required=False, type='bool', default=True),
+        state = dict(default='present', choices=['present', 'absent']),
+        wait = dict(type='bool', default=False),
+        wait_timeout = dict(default=300),
+    )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -126,6 +144,7 @@ def main():
     name = module.params['name']
     state = module.params.get('state')
     key_material = module.params.get('key_material')
+    force = module.params.get('force')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
@@ -162,8 +181,8 @@ def main():
     elif state == 'present':
         if key:
             # existing key found
-            if key_material:
-                # EC2's fingerprints are non-trivial to generate, so push this key 
+            if key_material and force:
+                # EC2's fingerprints are non-trivial to generate, so push this key
                 # to a temporary name and make ec2 calculate the fingerprint for us.
                 #
                 # http://blog.jbrowne.com/?p=23
@@ -177,7 +196,7 @@ def main():
                     test = ec2.get_key_pair(tmpkeyname)
 
                 # create tmp key
-                tmpkey = ec2.import_key_pair(tmpkeyname, key_material)
+                tmpkey = ec2.import_key_pair(tmpkeyname, to_bytes(key_material))
                 # get tmp key fingerprint
                 tmpfingerprint = tmpkey.fingerprint
                 # delete tmp key
@@ -186,7 +205,7 @@ def main():
                 if key.fingerprint != tmpfingerprint:
                     if not module.check_mode:
                         key.delete()
-                        key = ec2.import_key_pair(name, key_material)    
+                        key = ec2.import_key_pair(name, to_bytes(key_material))
 
                         if wait:
                             start = time.time()
@@ -208,10 +227,10 @@ def main():
             if not module.check_mode:
                 if key_material:
                     '''We are providing the key, need to import'''
-                    key = ec2.import_key_pair(name, key_material)
+                    key = ec2.import_key_pair(name, to_bytes(key_material))
                 else:
                     '''
-                    No material provided, let AWS handle the key creation and 
+                    No material provided, let AWS handle the key creation and
                     retrieve the private key
                     '''
                     key = ec2.create_key_pair(name)

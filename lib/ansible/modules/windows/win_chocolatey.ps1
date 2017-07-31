@@ -20,36 +20,44 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$package = Get-Attr -obj $params -name name -failifempty $true -emptyattributefailmessage "missing required argument: name"
-$force = Get-Attr -obj $params -name force -default "false" | ConvertTo-Bool
-$upgrade = Get-Attr -obj $params -name upgrade -default "false" | ConvertTo-Bool
-$version = Get-Attr -obj $params -name version -default $null
+$package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
+$upgrade = Get-AnsibleParam -obj $params -name "upgrade" -type "bool" -default $false
+$version = Get-AnsibleParam -obj $params -name "version" -type "str"
+$source = Get-AnsibleParam -obj $params -name "source" -type "str"
+$showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
+$timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","latest","present","reinstalled"
+$installargs = Get-AnsibleParam -obj $params -name "install_args" -type "str"
+$packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
+$allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
+$ignorechecksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
+$ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
+$skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
 
-$source = Get-Attr -obj $params -name source -default $null
-if ($source) {$source = $source.Tolower()}
-
-$showlog = Get-Attr -obj $params -name showlog -default "false" | ConvertTo-Bool
-$state = Get-Attr -obj $params -name state -default "present"
-
-$installargs = Get-Attr -obj $params -name install_args -default $null
-$packageparams = Get-Attr -obj $params -name params -default $null
-$allowemptychecksums = Get-Attr -obj $params -name allow_empty_checksums -default "false" | ConvertTo-Bool
-$ignorechecksums = Get-Attr -obj $params -name ignore_checksums -default "false" | ConvertTo-Bool
-$ignoredependencies = Get-Attr -obj $params -name ignore_dependencies -default "false" | ConvertTo-Bool
-
-# as of chocolatey 0.9.10, nonzero success exit codes can be returned
-# see https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
-$successexitcodes = (0,1605,1614,1641,3010)
-
-if ("present","absent" -notcontains $state)
-{
-    Fail-Json $result "state is $state; must be present or absent"
+$result = @{
+    changed = $false
 }
 
+if ($source) {
+    $source = $source.Tolower()
+}
+
+if ($upgrade)
+{
+    Add-DeprecationWarning $result "Parameter upgrade=yes is replaced with state=latest"
+    if ($state -eq "present")
+    {
+        $state = "latest"
+    }
+}
+
+# As of chocolatey 0.9.10, nonzero success exit codes can be returned
+# See https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
+$successexitcodes = (0,1605,1614,1641,3010)
 
 Function Chocolatey-Install-Upgrade
 {
@@ -60,24 +68,29 @@ Function Chocolatey-Install-Upgrade
     $ChocoAlreadyInstalled = get-command choco -ErrorAction 0
     if ($ChocoAlreadyInstalled -eq $null)
     {
-        #We need to install chocolatey
+
+        # We need to install chocolatey
         $install_output = (new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1") | powershell -
         if ($LASTEXITCODE -ne 0)
         {
-            Set-Attr $result "choco_bootstrap_output" $install_output
+            $result.choco_bootstrap_output = $install_output
             Fail-Json $result "Chocolatey bootstrap installation failed."
         }
         $result.changed = $true
         $script:executable = "C:\ProgramData\chocolatey\bin\choco.exe"
+        Add-Warning $result 'Chocolatey was missing from this system, so it was installed during this task run.'
+
     }
     else
     {
+
         $script:executable = "choco.exe"
 
         if ([Version](choco --version) -lt [Version]'0.9.9')
         {
-            Choco-Upgrade chocolatey 
+            Choco-Upgrade chocolatey
         }
+
     }
 }
 
@@ -85,35 +98,40 @@ Function Chocolatey-Install-Upgrade
 Function Choco-IsInstalled
 {
     [CmdletBinding()]
-    
+
     param(
         [Parameter(Mandatory=$true, Position=1)]
         [string]$package
     )
 
-    $cmd = "$executable list --local-only $package"
-    $results = invoke-expression $cmd
+    if ($package -eq "all") {
+        return $true
+    }
 
+    $cmd = "$executable list --local-only --exact $package"
+    $output = invoke-expression $cmd
+
+    $result.rc = $LastExitCode
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        
-        Throw "Error checking installation status for $package" 
-    } 
-    
-    If ("$results" -match "$package .* (\d+) packages installed.")
+        $result.choco_error_cmd = $cmd
+        $result.choco_error_log = $output
+
+        Throw "Error checking installation status for $package"
+    }
+
+    If ("$output" -match "(\d+) packages installed.")
     {
         return $matches[1] -gt 0
     }
-    
-    $false
+
+    return $false
 }
 
-Function Choco-Upgrade 
+Function Choco-Upgrade
 {
     [CmdletBinding()]
-    
+
     param(
         [Parameter(Mandatory=$true, Position=1)]
         [string]$package,
@@ -132,7 +150,11 @@ Function Choco-Upgrade
         [Parameter(Mandatory=$false, Position=8)]
         [bool]$ignorechecksums,
         [Parameter(Mandatory=$false, Position=9)]
-        [bool]$ignoredependencies
+        [bool]$ignoredependencies,
+        [Parameter(Mandatory=$false, Position=10)]
+        [int]$timeout,
+        [Parameter(Mandatory=$false, Position=11)]
+        [bool]$skipscripts
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -140,7 +162,12 @@ Function Choco-Upgrade
         throw "$package is not installed, you cannot upgrade"
     }
 
-    $cmd = "$executable upgrade -dv -y $package"
+    $cmd = "$executable upgrade -dv -y $package -timeout $timeout --failonunfound"
+
+    if ($check_mode)
+    {
+        $cmd += " -whatif"
+    }
 
     if ($version)
     {
@@ -171,7 +198,7 @@ Function Choco-Upgrade
     {
         $cmd += " --allow-empty-checksums"
     }
-    
+
     if ($ignorechecksums)
     {
         $cmd += " --ignore-checksums"
@@ -182,16 +209,22 @@ Function Choco-Upgrade
         $cmd += " -ignoredependencies"
     }
 
-    $results = invoke-expression $cmd
-
-    if ($LastExitCode -notin $successexitcodes)
+    if ($skipscripts)
     {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        Throw "Error installing $package" 
+        $cmd += " --skip-scripts"
     }
 
-    if ("$results" -match ' upgraded (\d+)/\d+ package\(s\)\. ')
+    $output = invoke-expression $cmd
+
+    $result.rc = $LastExitCode
+    if ($LastExitCode -notin $successexitcodes)
+    {
+        $result.choco_error_cmd = $cmd
+        $result.choco_error_log = $output
+        Throw "Error installing $package"
+    }
+
+    if ("$output" -match ' upgraded (\d+)/\d+ package')
     {
         if ($matches[1] -gt 0)
         {
@@ -200,10 +233,10 @@ Function Choco-Upgrade
     }
 }
 
-Function Choco-Install 
+Function Choco-Install
 {
     [CmdletBinding()]
-    
+
     param(
         [Parameter(Mandatory=$true, Position=1)]
         [string]$package,
@@ -224,28 +257,36 @@ Function Choco-Install
         [Parameter(Mandatory=$false, Position=9)]
         [bool]$ignorechecksums,
         [Parameter(Mandatory=$false, Position=10)]
-        [bool]$ignoredependencies
+        [bool]$ignoredependencies,
+        [Parameter(Mandatory=$false, Position=11)]
+        [int]$timeout,
+        [Parameter(Mandatory=$false, Position=12)]
+        [bool]$skipscripts
     )
 
     if (Choco-IsInstalled $package)
     {
-        if ($upgrade)
+        if ($state -eq "latest")
         {
             Choco-Upgrade -package $package -version $version -source $source -force $force `
                 -installargs $installargs -packageparams $packageparams `
                 -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-                -ignoredependencies $ignoredependencies
+                -ignoredependencies $ignoredependencies -timeout $timeout
 
             return
         }
-
-        if (-not $force)
+        elseif (-not $force)
         {
             return
         }
     }
 
-    $cmd = "$executable install -dv -y $package"
+    $cmd = "$executable install -dv -y $package -timeout $timeout --failonunfound"
+
+    if ($check_mode)
+    {
+        $cmd += " -whatif"
+    }
 
     if ($version)
     {
@@ -276,7 +317,7 @@ Function Choco-Install
     {
         $cmd += " --allow-empty-checksums"
     }
-    
+
     if ($ignorechecksums)
     {
         $cmd += " --ignore-checksums"
@@ -287,29 +328,40 @@ Function Choco-Install
         $cmd += " -ignoredependencies"
     }
 
-    $results = invoke-expression $cmd
-
-    if ($LastExitCode -notin $successexitcodes)
+    if ($skipscripts)
     {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        Throw "Error installing $package" 
+        $cmd += " --skip-scripts"
     }
 
-     $result.changed = $true
+    $results = invoke-expression $cmd
+
+    $result.rc = $LastExitCode
+    if ($LastExitCode -notin $successexitcodes)
+    {
+        $result.choco_error_cmd = $cmd
+        $result.choco_error_log = $output
+        Throw "Error installing $package"
+    }
+
+    $result.changed = $true
 }
 
-Function Choco-Uninstall 
+Function Choco-Uninstall
 {
     [CmdletBinding()]
-    
+
     param(
         [Parameter(Mandatory=$true, Position=1)]
         [string]$package,
         [Parameter(Mandatory=$false, Position=2)]
         [string]$version,
         [Parameter(Mandatory=$false, Position=3)]
-        [bool]$force
+        [bool]$force,
+        [Parameter(Mandatory=$false, Position=4)]
+        [int]$timeout,
+        [Parameter(Mandatory=$false, Position=5)]
+        [bool]$skipscripts
+
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -317,7 +369,12 @@ Function Choco-Uninstall
         return
     }
 
-    $cmd = "$executable uninstall -dv -y $package"
+    $cmd = "$executable uninstall -dv -y $package -timeout $timeout"
+
+    if ($check_mode)
+    {
+        $cmd += " -whatif"
+    }
 
     if ($version)
     {
@@ -334,38 +391,53 @@ Function Choco-Uninstall
         $cmd += " -params '$packageparams'"
     }
 
-    $results = invoke-expression $cmd
-
-    if ($LastExitCode -notin $successexitcodes)
+    if ($skipscripts)
     {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        Throw "Error uninstalling $package" 
+        $cmd += " --skip-scripts"
     }
 
-     $result.changed = $true
+    $results = invoke-expression $cmd
+
+    $result.rc = $LastExitCode
+    if ($LastExitCode -notin $successexitcodes)
+    {
+        $result.choco_error_cmd = $cmd
+        $result.choco_error_log = $output
+        Throw "Error uninstalling $package"
+    }
+
+    $result.changed = $true
 }
+
 Try
 {
     Chocolatey-Install-Upgrade
 
-    if ($state -eq "present")
+    if ($state -eq "present" -or $state -eq "latest")
     {
-        Choco-Install -package $package -version $version -source $source `
-            -force $force -upgrade $upgrade -installargs $installargs `
-            -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
-            -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies
+        Choco-Install -package $package -version $version -source $source -force $force `
+            -installargs $installargs -packageparams $packageparams `
+            -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
+            -ignoredependencies $ignoredependencies -timeout $timeout -skipscripts $skipscripts
     }
-    else
+    elseif ($state -eq "absent")
     {
-        Choco-Uninstall -package $package -version $version -force $force
+        Choco-Uninstall -package $package -version $version -force $force -timeout $timeout `
+            -skipscripts $skipscripts
+    }
+    elseif ($state -eq "reinstalled")
+    {
+        Choco-Uninstall -package $package -version $version -force $force -timeout $timeout
+
+        Choco-Install -package $package -version $version -source $source -force $force `
+            -installargs $installargs -packageparams $packageparams `
+            -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
+            -ignoredependencies $ignoredependencies -timeout $timeout -skipscripts $skipscripts
     }
 
-    Exit-Json $result;
+    Exit-Json $result
 }
 Catch
 {
-     Fail-Json $result $_.Exception.Message
+    Fail-Json $result $_.Exception.Message
 }
-
-

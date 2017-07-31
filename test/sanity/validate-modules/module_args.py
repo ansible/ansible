@@ -70,7 +70,11 @@ def add_mocks(filename):
         if [s for s in sources if s[:7] in ['ansible', '__main_']]:
             parts = module.split('.')
             for i in range(len(parts)):
-                dotted = '.'.join(parts[:i+1])
+                dotted = '.'.join(parts[:i + 1])
+                # Never mock out ansible or ansible.module_utils
+                # we may get here if a specific module_utils file needed mocked
+                if dotted in ('ansible', 'ansible.module_utils',):
+                    continue
                 sys.modules[dotted] = sys_mock
                 sys_mocks.append(dotted)
 

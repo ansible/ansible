@@ -21,9 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -116,7 +117,9 @@ EXAMPLES = '''
 
 import base64
 import socket
-import urllib
+
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+
 
 class netscaler(object):
 
@@ -128,7 +131,7 @@ class netscaler(object):
     def http_request(self, api_endpoint, data_json={}):
         request_url = self._nsc_protocol + '://' + self._nsc_host + self._nitro_base_url + api_endpoint
 
-        data_json = urllib.urlencode(data_json)
+        data_json = urlencode(data_json)
         if not len(data_json):
             data_json = None
 
@@ -179,7 +182,7 @@ def main():
             nsc_host = dict(required=True),
             nsc_protocol = dict(default='https'),
             user = dict(required=True),
-            password = dict(required=True),
+            password = dict(required=True, no_log=True),
             action = dict(default='enable', choices=['enable','disable']),
             name = dict(default=socket.gethostname()),
             type = dict(default='server', choices=['service', 'server']),

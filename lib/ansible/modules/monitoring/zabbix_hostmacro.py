@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -30,7 +31,7 @@ short_description: Zabbix host macro creates/updates/deletes
 description:
    - manages Zabbix host macros, it can create, update or delete them.
 version_added: "2.0"
-author: 
+author:
     - "(@cave)"
     - Dean Hailin Song
 requirements:
@@ -107,16 +108,15 @@ import copy
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
+    # Extend the ZabbixAPI
+    # Since the zabbix-api python module too old (version 1.0, no higher version so far).
+    class ZabbixAPIExtends(ZabbixAPI):
+        def __init__(self, server, timeout, user, passwd, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
+
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
-
-
-# Extend the ZabbixAPI
-# Since the zabbix-api python module too old (version 1.0, no higher version so far).
-class ZabbixAPIExtends(ZabbixAPI):
-    def __init__(self, server, timeout, user, passwd, **kwargs):
-        ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
 
 
 class HostMacro(object):
@@ -199,7 +199,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']

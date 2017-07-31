@@ -2,14 +2,28 @@
 
 set -o pipefail
 
-add-apt-repository 'deb http://archive.ubuntu.com/ubuntu trusty-backports universe'
-add-apt-repository 'ppa:fkrull/deadsnakes'
+retry.py apt-get update -qq
+retry.py apt-get install -qq \
+    shellcheck \
+    libssl-dev \
+    libffi-dev \
 
-apt-get update -qq
-apt-get install python2.4 shellcheck -qq
+pip install cryptography
 
-pip install tox --disable-pip-version-check
+retry.py pip install tox --disable-pip-version-check
 
-ansible-test compile --color -v
-ansible-test sanity --color -v --tox --skip-test ansible-doc --python 2.7
-ansible-test sanity --color -v --tox --test ansible-doc --coverage
+echo '{"verified": false, "results": []}' > test/results/bot/ansible-test-failure.json
+
+# shellcheck disable=SC2086
+ansible-test compile --failure-ok --color -v --junit --requirements --coverage ${CHANGED:+"$CHANGED"}
+# shellcheck disable=SC2086
+ansible-test sanity  --failure-ok --color -v --junit --tox --skip-test ansible-doc --skip-test import --python 3.5 --coverage ${CHANGED:+"$CHANGED"}
+# shellcheck disable=SC2086
+ansible-test sanity  --failure-ok --color -v --junit --tox --test      ansible-doc --test      import              --coverage ${CHANGED:+"$CHANGED"}
+
+rm test/results/bot/ansible-test-failure.json
+
+if find test/results/bot/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
+    echo "One or more of the above tests reported at least one failure."
+    exit 1
+fi

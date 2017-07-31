@@ -19,9 +19,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -67,10 +68,13 @@ EXAMPLES = '''
     state: absent
 '''
 
-
-import shlex
 import os
+import re
 import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
+
 
 def query_package(module, name):
 
@@ -80,7 +84,7 @@ def query_package(module, name):
     if pkg_info_path:
         pkgng = False
         pkg_glob_path = module.get_bin_path('pkg_glob', True)
-        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, shlex_quote(name)), use_unsafe_shell=True)
     else:
         pkgng = True
         pkg_info_path = module.get_bin_path('pkg', True)
@@ -109,7 +113,7 @@ def matching_packages(module, name):
 
     ports_glob_path = module.get_bin_path('ports_glob', True)
     rc, out, err = module.run_command("%s %s" % (ports_glob_path, name))
-    #counts the numer of packages found
+    # counts the number of packages found
     occurrences = out.count('\n')
     if occurrences == 0:
         name_without_digits = re.sub('[0-9]', '', name)
@@ -130,17 +134,19 @@ def remove_packages(module, packages):
         pkg_delete_path = module.get_bin_path('pkg', True)
         pkg_delete_path = pkg_delete_path + " delete -y"
 
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(package)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, shlex_quote(package)), use_unsafe_shell=True)
 
         if query_package(module, package):
             name_without_digits = re.sub('[0-9]', '', package)
-            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(name_without_digits)),use_unsafe_shell=True)
+            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path,
+                                                              shlex_quote(name_without_digits)),
+                                                              use_unsafe_shell=True)
             if query_package(module, package):
                 module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
@@ -195,10 +201,10 @@ def install_packages(module, packages, use_packages):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True),
-                use_packages = dict(type='bool', default='yes')))
+        argument_spec    = dict(
+            state        = dict(default="present", choices=["present","absent"]),
+            name         = dict(aliases=["pkg"], required=True),
+            use_packages = dict(type='bool', default='yes')))
 
     p = module.params
 
@@ -210,8 +216,6 @@ def main():
     elif p["state"] == "absent":
         remove_packages(module, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

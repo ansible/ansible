@@ -21,17 +21,18 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_get_url
 version_added: "1.7"
 short_description: Fetches a file from a given URL
 description:
  - Fetches a file from a URL and saves to locally
+ - For non-Windows targets, use the M(get_url) module instead.
 author:
     - "Paul Durivage (@angstwad)"
     - "Takeshi Kuramochi (tksarah)"
@@ -71,9 +72,19 @@ options:
     default: null
   skip_certificate_validation:
     description:
-      - Skip SSL certificate validation if true
-    required: false
-    default: false
+    - This option is deprecated since v2.4, please use C(validate_certs) instead.
+    - If C(yes), SSL certificates will not be validated. This should only be used
+      on personally controlled sites using self-signed certificates.
+    default: 'no'
+    type: bool
+  validate_certs:
+    description:
+    - If C(no), SSL certificates will not be validated. This should only be used
+      on personally controlled sites using self-signed certificates.
+    - If C(skip_certificate_validation) was set, it overrides this option.
+    default: 'yes'
+    type: bool
+    version_added: '2.4'
   proxy_url:
     description:
       - The full URL of the proxy server to download through.
@@ -89,26 +100,23 @@ options:
       - Proxy authentication password
     version_added: "2.0"
     required: false
+notes:
+ - For non-Windows targets, use the M(get_url) module instead.
 '''
 
 EXAMPLES = r'''
-# Downloading a JPEG and saving it to a file with the ansible command.
-# Note the "dest" is quoted rather instead of escaping the backslashes
-$ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthrise.jpg dest='C:\\Users\\Administrator\\earthrise.jpg'" all
-
-# Playbook example
-- name: Download earthrise.jpg to 'C:\\Users\\RandomUser\\earthrise.jpg'
+- name: Download earthrise.jpg to specified path
   win_get_url:
     url: http://www.example.com/earthrise.jpg
     dest: C:\Users\RandomUser\earthrise.jpg
 
-- name: Download earthrise.jpg to 'C:\Users\RandomUser\earthrise.jpg' only if modified
+- name: Download earthrise.jpg to specified path only if modified
   win_get_url:
     url: http://www.example.com/earthrise.jpg
     dest: C:\Users\RandomUser\earthrise.jpg
     force: no
 
-- name: Download earthrise.jpg to 'C:\Users\RandomUser\earthrise.jpg' through a proxy server.
+- name: Download earthrise.jpg to specified path through a proxy server.
   win_get_url:
     url: http://www.example.com/earthrise.jpg
     dest: C:\Users\RandomUser\earthrise.jpg
@@ -116,7 +124,8 @@ $ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthr
     proxy_username: username
     proxy_password: password
 '''
-RETURN = '''
+
+RETURN = r'''
 url:
     description: requested url
     returned: always
@@ -126,5 +135,5 @@ dest:
     description: destination file/path
     returned: always
     type: string
-    sample: 'C:\\Users\\RandomUser\\earthrise.jpg'
+    sample: C:\Users\RandomUser\earthrise.jpg
 '''

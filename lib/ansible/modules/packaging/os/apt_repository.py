@@ -21,9 +21,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -117,7 +118,6 @@ EXAMPLES = '''
 - apt_repository:
     repo: 'ppa:nginx/stable'
     codename: 'trusty'
-    repo: 'ppa:nginx/stable'
 '''
 
 import glob
@@ -210,6 +210,7 @@ class SourcesList(object):
             if filename is not None:
                 return filename
             return '_'.join(re.sub('[^a-zA-Z0-9]', ' ', s).split())
+
         def _strip_username_password(s):
             if '@' in s:
                 s = s.split('@', 1)
@@ -459,10 +460,11 @@ class UbuntuSourcesList(SourcesList):
         _repositories = []
         for parsed_repos in self.files.values():
             for parsed_repo in parsed_repos:
-                enabled = parsed_repo[1]
+                valid = parsed_repo[1]
+                enabled = parsed_repo[2]
                 source_line = parsed_repo[3]
 
-                if not enabled:
+                if not valid or not enabled:
                     continue
 
                 if source_line.startswith('ppa:'):

@@ -4,7 +4,7 @@
 # (c) 2013, bleader
 # Written by bleader <bleader@ratonland.org>
 # Based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn> 
+# that was based on pacman module written by Afterburn <http://github.com/afterburn>
 #  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -21,9 +21,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -71,14 +72,19 @@ options:
         description:
             - For pkgng versions 1.5 and later, pkg will install all packages
               within the specified root directory.
-            - Can not be used together with I(chroot) option.
+            - Can not be used together with I(chroot) or I(jail) options.
         required: false
     chroot:
         version_added: "2.1"
         description:
             - Pkg will chroot in the specified environment.
-            - Can not be used together with I(rootdir) option.
+            - Can not be used together with I(rootdir) or I(jail) options.
         required: false
+    jail:
+        version_added: "2.4"
+        description:
+            - Pkg will execute in the given jail name or id.
+            - Can not be used together with I(chroot) or I(rootdir) options.
     autoremove:
         version_added: "2.2"
         description:
@@ -86,7 +92,7 @@ options:
         required: false
         choices: [ "yes", "no" ]
         default: no
-author: "bleader (@bleader)" 
+author: "bleader (@bleader)"
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
 '''
@@ -102,7 +108,7 @@ EXAMPLES = '''
     name: foo,bar
     annotation: '+test1=baz,-test2,:test3=foobar'
 
-# Remove packages foo and bar 
+# Remove packages foo and bar
 - pkgng:
     name: foo,bar
     state: absent
@@ -141,7 +147,7 @@ def pkgng_older_than(module, pkgng_path, compare_version):
 def remove_packages(module, pkgng_path, packages, dir_arg):
 
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, pkgng_path, package, dir_arg):
@@ -175,8 +181,9 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg):
         else:
             pkgsite = "-r %s" % (pkgsite)
 
-    batch_var = 'env BATCH=yes' # This environment variable skips mid-install prompts,
-                                # setting them to their default values.
+    # This environment variable skips mid-install prompts,
+    # setting them to their default values.
+    batch_var = 'env BATCH=yes'
 
     if not module.check_mode and not cached:
         if old_pkgng:
@@ -221,7 +228,7 @@ def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
         rc, out, err = module.run_command('%s %s annotate -y -A %s %s "%s"'
             % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
-            module.fail_json("could not annotate %s: %s"
+            module.fail_json(msg="could not annotate %s: %s"
                 % (package, out), stderr=err)
         return True
     elif _value != value:
@@ -240,7 +247,7 @@ def annotation_delete(module, pkgng_path, package, tag, value, dir_arg):
         rc, out, err = module.run_command('%s %s annotate -y -D %s %s'
             % (pkgng_path, dir_arg, package, tag))
         if rc != 0:
-            module.fail_json("could not delete annotation to %s: %s"
+            module.fail_json(msg="could not delete annotation to %s: %s"
                 % (package, out), stderr=err)
         return True
     return False
@@ -249,7 +256,7 @@ def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
     _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if not value:
         # No such tag
-        module.fail_json("could not change annotation to %s: tag %s does not exist"
+        module.fail_json(msg="could not change annotation to %s: tag %s does not exist"
             % (package, tag))
     elif _value == value:
         # No change in value
@@ -258,7 +265,7 @@ def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
         rc,out,err = module.run_command('%s %s annotate -y -M %s %s "%s"'
             % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
-            module.fail_json("could not change annotation annotation to %s: %s"
+            module.fail_json(msg="could not change annotation annotation to %s: %s"
                 % (package, out), stderr=err)
         return True
 
@@ -304,17 +311,18 @@ def autoremove_packages(module, pkgng_path, dir_arg):
 
 def main():
     module = AnsibleModule(
-            argument_spec       = dict(
-                state           = dict(default="present", choices=["present","absent"], required=False),
-                name            = dict(aliases=["pkg"], required=True, type='list'),
-                cached          = dict(default=False, type='bool'),
-                annotation      = dict(default="", required=False),
-                pkgsite         = dict(default="", required=False),
-                rootdir         = dict(default="", required=False, type='path'),
-                chroot          = dict(default="", required=False, type='path'),
-                autoremove      = dict(default=False, type='bool')),
-            supports_check_mode = True,
-            mutually_exclusive  =[["rootdir", "chroot"]])
+        argument_spec       = dict(
+            state           = dict(default="present", choices=["present","absent"], required=False),
+            name            = dict(aliases=["pkg"], required=True, type='list'),
+            cached          = dict(default=False, type='bool'),
+            annotation      = dict(default="", required=False),
+            pkgsite         = dict(default="", required=False),
+            rootdir         = dict(default="", required=False, type='path'),
+            chroot          = dict(default="", required=False, type='path'),
+            jail            = dict(default="", required=False, type='str'),
+            autoremove      = dict(default=False, type='bool')),
+        supports_check_mode = True,
+        mutually_exclusive  =[["rootdir", "chroot", "jail"]])
 
     pkgng_path = module.get_bin_path('pkg', True)
 
@@ -335,6 +343,9 @@ def main():
 
     if p["chroot"] != "":
         dir_arg = '--chroot %s' % (p["chroot"])
+
+    if p["jail"] != "":
+        dir_arg = '--jail %s' % (p["jail"])
 
     if p["state"] == "present":
         _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], dir_arg)

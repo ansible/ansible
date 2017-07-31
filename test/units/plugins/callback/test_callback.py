@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
+import textwrap
 import types
 
 from ansible.compat.tests import unittest
@@ -74,8 +76,6 @@ class TestCallbackResults(unittest.TestCase):
         self.assertTrue('changed' in result)
         self.assertTrue('invocation' in result)
         cb._clean_results(result, 'debug')
-        self.assertFalse('changed' in result)
-        self.assertFalse('invocation' in result)
 
 
 class TestCallbackDumpResults(unittest.TestCase):
@@ -134,9 +134,15 @@ class TestCallbackDumpResults(unittest.TestCase):
 #       that try except orig appeared in 61d01f549f2143fd9adfa4ffae42f09d24649c26
 #       in 2013 so maybe a < py2.6 issue
 class TestCallbackDiff(unittest.TestCase):
+
+    def setUp(self):
+        self.cb = CallbackBase()
+
+    def _strip_color(self, s):
+        return re.sub('\033\\[[^m]*m', '', s)
+
     def test_difflist(self):
         # TODO: split into smaller tests?
-        cb = CallbackBase()
         difflist = [{'before': ['preface\nThe Before String\npostscript'],
                      'after': ['preface\nThe After String\npostscript'],
                      'before_header': 'just before',
@@ -153,12 +159,157 @@ class TestCallbackDiff(unittest.TestCase):
                     {'before_header': 'just before'},
                     {'after_header': 'just after'}]
 
-        res = cb._get_diff(difflist)
+        res = self.cb._get_diff(difflist)
 
         self.assertIn('Before String', res)
         self.assertIn('After String', res)
         self.assertIn('just before', res)
         self.assertIn('just after', res)
+
+    def test_simple_diff(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before_header': 'somefile.txt',
+                'after_header': 'generated from template somefile.j2',
+                'before': 'one\ntwo\nthree\n',
+                'after': 'one\nthree\nfour\n',
+            })),
+            textwrap.dedent('''\
+                --- before: somefile.txt
+                +++ after: generated from template somefile.j2
+                @@ -1,3 +1,3 @@
+                 one
+                -two
+                 three
+                +four
+
+            '''))
+
+    def test_new_file(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before_header': 'somefile.txt',
+                'after_header': 'generated from template somefile.j2',
+                'before': '',
+                'after': 'one\ntwo\nthree\n',
+            })),
+            textwrap.dedent('''\
+                --- before: somefile.txt
+                +++ after: generated from template somefile.j2
+                @@ -0,0 +1,3 @@
+                +one
+                +two
+                +three
+
+            '''))
+
+    def test_clear_file(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before_header': 'somefile.txt',
+                'after_header': 'generated from template somefile.j2',
+                'before': 'one\ntwo\nthree\n',
+                'after': '',
+            })),
+            textwrap.dedent('''\
+                --- before: somefile.txt
+                +++ after: generated from template somefile.j2
+                @@ -1,3 +0,0 @@
+                -one
+                -two
+                -three
+
+            '''))
+
+    def test_no_trailing_newline_before(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before_header': 'somefile.txt',
+                'after_header': 'generated from template somefile.j2',
+                'before': 'one\ntwo\nthree',
+                'after': 'one\ntwo\nthree\n',
+            })),
+            textwrap.dedent('''\
+                --- before: somefile.txt
+                +++ after: generated from template somefile.j2
+                @@ -1,3 +1,3 @@
+                 one
+                 two
+                -three
+                \\ No newline at end of file
+                +three
+
+            '''))
+
+    def test_no_trailing_newline_after(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before_header': 'somefile.txt',
+                'after_header': 'generated from template somefile.j2',
+                'before': 'one\ntwo\nthree\n',
+                'after': 'one\ntwo\nthree',
+            })),
+            textwrap.dedent('''\
+                --- before: somefile.txt
+                +++ after: generated from template somefile.j2
+                @@ -1,3 +1,3 @@
+                 one
+                 two
+                -three
+                +three
+                \\ No newline at end of file
+
+            '''))
+
+    def test_no_trailing_newline_both(self):
+        self.assertMultiLineEqual(
+            self.cb._get_diff({
+                'before_header': 'somefile.txt',
+                'after_header': 'generated from template somefile.j2',
+                'before': 'one\ntwo\nthree',
+                'after': 'one\ntwo\nthree',
+            }),
+            '')
+
+    def test_no_trailing_newline_both_with_some_changes(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before_header': 'somefile.txt',
+                'after_header': 'generated from template somefile.j2',
+                'before': 'one\ntwo\nthree',
+                'after': 'one\nfive\nthree',
+            })),
+            textwrap.dedent('''\
+                --- before: somefile.txt
+                +++ after: generated from template somefile.j2
+                @@ -1,3 +1,3 @@
+                 one
+                -two
+                +five
+                 three
+                \\ No newline at end of file
+
+            '''))
+
+    def test_diff_dicts(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before': dict(one=1, two=2, three=3),
+                'after': dict(one=1, three=3, four=4),
+            })),
+            textwrap.dedent('''\
+                --- before
+                +++ after
+                @@ -1,5 +1,5 @@
+                 {
+                +    "four": 4,
+                     "one": 1,
+                -    "three": 3,
+                -    "two": 2
+                +    "three": 3
+                 }
+
+            '''))
 
 
 class TestCallbackOnMethods(unittest.TestCase):

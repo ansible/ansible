@@ -1,209 +1,134 @@
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2016 Red Hat Inc.
 #
-# This file is part of Ansible
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
 
-import re
+_DEVICE_CONFIGS = {}
 
-from ansible.module_utils.basic import json
-from ansible.module_utils.netcli import Command
-from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
-from ansible.module_utils.network import add_argument, register_transport, to_list
-from ansible.module_utils.shell import CliBase
-from ansible.module_utils.six.moves.urllib.parse import urlparse
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+ios_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
+}
 
-add_argument('use_ssl', dict(default=True, type='bool'))
-add_argument('validate_certs', dict(default=True, type='bool'))
+
+def get_argspec():
+    return ios_argument_spec
 
 
-class Restconf(object):
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in ios_argument_spec:
+        if module._name == 'ios_user':
+            if key not in ['password', 'provider', 'authorize'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key not in ['provider', 'authorize'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
-    DEFAULT_HEADERS = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+    if provider:
+        for param in ('auth_pass', 'password'):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
+
+
+def get_defaults_flag(module):
+    rc, out, err = exec_command(module, 'show running-config ?')
+    out = to_text(out, errors='surrogate_then_replace')
+
+    commands = set()
+    for line in out.splitlines():
+        if line.strip():
+            commands.add(line.strip().split()[0])
+
+    if 'all' in commands:
+        return ['all']
+    else:
+        return ['full']
+
+
+def get_config(module, flags=[]):
+    cmd = 'show running-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_then_replace'))
+        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
+
+
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
     }
-
-    def __init__(self):
-        self.url = None
-        self.url_args = ModuleStub(url_argument_spec(), self._error)
-
-        self.token = None
-        self.link = None
-
-        self._connected = False
-        self.default_output = 'text'
-
-    def _error(self, msg):
-        raise NetworkError(msg, url=self.url)
-
-    def connect(self, params, **kwargs):
-        host = params['host']
-        port = params['port'] or 55443
-
-        # sets the module_utils/urls.py req parameters
-        self.url_args.params['url_username'] = params['username']
-        self.url_args.params['url_password'] = params['password']
-        self.url_args.params['validate_certs'] = params['validate_certs']
-
-        self.url = 'https://%s:%s/api/v1/' % (host, port)
-
-        response = self.post('auth/token-services')
-
-        self.token = response['token-id']
-        self.link = response['link']
-        self._connected = True
-
-    def disconnect(self, **kwargs):
-        self.delete(self.link)
-        self.url = None
-        self._connected = False
-
-    def authorize(self, params, **kwargs):
-        raise NotImplementedError
-
-    ### REST methods ###
-
-    def request(self, method, path, data=None, headers=None):
-
-        headers = headers or self.DEFAULT_HEADERS
-
-        if self.token:
-            headers['X-Auth-Token'] = self.token
-
-        if path.startswith('/'):
-            path = path[1:]
-
-        url = urlparse.urljoin(self.url, path)
-
-        if data:
-            data = json.dumps(data)
-
-        response, headers = fetch_url(self.url_args, url, data=data,
-                headers=headers, method=method)
-
-        if not 200 <= headers['status'] <= 299:
-            raise NetworkError(response=response, **headers)
-
-        if int(headers['content-length']) > 0:
-            if headers['content-type'].startswith('application/json'):
-                response = json.load(response)
-            elif headers['content-type'].startswith('text/plain'):
-                response = str(response.read())
-
-        return response
-
-    def get(self, path, data=None, headers=None):
-        return self.request('GET', path, data, headers)
-
-    def put(self, path, data=None, headers=None):
-        return self.request('PUT', path, data, headers)
-
-    def post(self, path, data=None, headers=None):
-        return self.request('POST', path, data, headers)
-
-    def delete(self, path, data=None, headers=None):
-        return self.request('DELETE', path, data, headers)
-
-    ### Command methods ###
-
-    def run_commands(self, commands, **kwargs):
-        responses = list()
-        commands = [str(c) for c in commands]
-        for cmd in commands:
-            if str(cmd).startswith('show '):
-                cmd = str(cmd)[4:]
-            responses.append(self.execute(str(cmd)))
-        return responses
-
-    def execute(self, command, **kwargs):
-        data = dict(show=command)
-        response = self.put('global/cli', data=data)
-        return response['results']
-
-    ### Config methods ###
-
-    def configure(self, commands):
-        config = list()
-        for c in commands:
-            config.append(str(c))
-        data = dict(config='\n'.join(config))
-        self.put('global/cli', data=data)
-
-    def load_config(self, commands, **kwargs):
-        return self.configure(commands)
-
-    def get_config(self, **kwargs):
-        hdrs = {'Content-type': 'text/plain', 'Accept': 'text/plain'}
-        return self.get('global/running-config', headers=hdrs)
-
-    def save_config(self):
-        self.put('/api/v1/global/save-config')
-
-Restconf = register_transport('restconf')(Restconf)
+    transform = ComplexList(spec, module)
+    return transform(commands)
 
 
-class Cli(CliBase):
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    commands = to_commands(module, to_list(commands))
+    for cmd in commands:
+        cmd = module.jsonify(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_then_replace'))
+    return responses
 
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
 
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
+def load_config(module, commands):
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+    rc, out, err = exec_command(module, 'configure terminal')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(out, errors='surrogate_then_replace'))
 
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
+    for command in to_list(commands):
+        if command == 'end':
+            continue
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
 
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
-
-    ### Config methods ###
-
-    def configure(self, commands, **kwargs):
-        cmds = ['configure terminal']
-        cmds.extend(to_list(commands))
-        if cmds[-1] != 'end':
-            cmds.append('end')
-        responses = self.execute(cmds)
-        return responses[1:]
-
-    def get_config(self, include_defaults=False, **kwargs):
-        cmd = 'show running-config'
-        if include_defaults:
-            cmd += ' all'
-        return self.execute([cmd])[0]
-
-    def load_config(self, commands, **kwargs):
-        return self.configure(commands)
-
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-
-Cli = register_transport('cli', default=True)(Cli)
+    exec_command(module, 'end')

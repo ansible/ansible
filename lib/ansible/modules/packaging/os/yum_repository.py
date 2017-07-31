@@ -18,23 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-import os
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six.moves import configparser
-
-
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: yum_repository
 author: Jiri Tyr (@jtyr)
 version_added: '2.1'
-short_description: Add and remove YUM repositories
+short_description: Add or remove YUM repositories
 description:
   - Add or remove YUM repositories in RPM-based Linux distributions.
 
@@ -398,6 +392,8 @@ notes:
   - Parameters in a section are ordered alphabetically in an existing repo
     file.
   - The repo file will be automatically deleted if it contains no repository.
+  - When removing a repository, beware that the metadata cache may still remain
+    on disk until you run C(yum clean all). Use a notification handler for this.
 '''
 
 EXAMPLES = '''
@@ -424,10 +420,18 @@ EXAMPLES = '''
     mirrorlist: http://mirrorlist.repoforge.org/el7/mirrors-rpmforge
     enabled: no
 
-- name: Remove repository
+# Handler showing how to clean yum metadata cache
+- name: yum-clean-metadata
+  command: yum clean metadata
+  args:
+    warn: no
+
+# Example removing a repository and cleaning up metadata cache
+- name: Remove repository (and clean up left-over metadata)
   yum_repository:
     name: epel
     state: absent
+  notify: yum-clean-metadata
 
 - name: Remove repository from a specific repo file
   yum_repository:
@@ -467,6 +471,11 @@ state:
     type: string
     sample: "present"
 '''
+
+import os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import configparser
 
 
 class YumRepo(object):
@@ -561,7 +570,7 @@ class YumRepo(object):
         # defined.
         if (self.params['baseurl'], self.params['mirrorlist']) == (None, None):
             self.module.fail_json(
-                msg='Paramater "baseurl" or "mirrorlist" is required for '
+                msg='Parameter "baseurl" or "mirrorlist" is required for '
                 'adding a new repo.')
 
         # Set options

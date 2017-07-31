@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -89,10 +90,10 @@ temporary:
     type: boolean
     sample: "True"
 value:
-    description: value of the property
+    description: value of the property. May be int or string depending on property.
     returned: always
-    type: int/string (depends on property)
-    sample: 1024/never
+    type: int
+    sample: "'1024' or 'never'"
 '''
 
 SUPPORTED_PROTOCOLS = ['ipv4', 'ipv6', 'icmp', 'tcp', 'udp', 'sctp']

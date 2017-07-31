@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -97,7 +98,7 @@ EXAMPLES = '''
       - Example group1
       - Example group2
 
-# Limit the Zabbix group creations to one host since Zabbix can return an error when doing concurent updates
+# Limit the Zabbix group creations to one host since Zabbix can return an error when doing concurrent updates
 - name: Create host groups
   local_action:
     module: zabbix_group
@@ -179,7 +180,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']

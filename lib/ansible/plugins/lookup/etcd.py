@@ -14,6 +14,44 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+'''
+DOCUMENTATION:
+    author:
+        - Jan-Piet Mens (@jpmens)
+    lookup: etcd
+    version_added: "2.1"
+    short_description: get info from etcd server
+    description:
+        - Retrieves data from an etcd server
+    options:
+        _raw:
+            description:
+                - the list of keys to lookup on the etcd server
+            type: list
+            element_type: string
+            required: True
+        _etcd_url:
+            description:
+                - Environment variable with the url for the etcd server
+            default: 'http://127.0.0.1:4001'
+            env_vars:
+                - name: ANSIBLE_ETCD_URL
+        _etcd_version:
+            description:
+                - Environment variable with the etcd protocol version
+            default: 'v1'
+            env_vars:
+                - name: ANSIBLE_ETCD_VERSION
+EXAMPLES:
+    - name: "a value from a locally running etcd"
+      debug: msg={{ lookup('etcd', 'foo') }}
+RETURN:
+    _list:
+        description:
+            - list of values associated with input keys
+        type: strings
+'''
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -36,12 +74,13 @@ ANSIBLE_ETCD_VERSION = 'v1'
 if os.getenv('ANSIBLE_ETCD_VERSION') is not None:
     ANSIBLE_ETCD_VERSION = os.environ['ANSIBLE_ETCD_VERSION']
 
+
 class Etcd:
     def __init__(self, url=ANSIBLE_ETCD_URL, version=ANSIBLE_ETCD_VERSION,
                  validate_certs=True):
         self.url = url
         self.version = version
-        self.baseurl = '%s/%s/keys' % (self.url,self.version)
+        self.baseurl = '%s/%s/keys' % (self.url, self.version)
         self.validate_certs = validate_certs
 
     def get(self, key):
@@ -72,6 +111,7 @@ class Etcd:
             pass
 
         return value
+
 
 class LookupModule(LookupBase):
 

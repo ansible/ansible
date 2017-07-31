@@ -16,17 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -114,6 +107,10 @@ options:
         - An integer value representing the number of seconds to
           wait for the node activation or deactivation to complete.
       version_added: "2.1"
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatibility
+      required: false
 '''
 
 EXAMPLES = '''
@@ -132,6 +129,14 @@ os_ironic_node:
     image_disk_format: "qcow"
   delegate_to: localhost
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _choose_id_value(module):
@@ -208,7 +213,7 @@ def _check_set_power_state(module, cloud, node):
     if 'power off' in str(node['power_state']):
         if (_is_false(module.params['power']) and
                 _is_false(module.params['state'])):
-                    return False
+            return False
         if (_is_false(module.params['power']) and
                 _is_false(module.params['state'])):
             module.exit_json(

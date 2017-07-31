@@ -1,0 +1,23 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_vtp_version sanity test"
+
+- block:
+  - name: enable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: enabled
+      provider: "{{ cli }}"
+
+  - name: configure vtp version
+    nxos_vtp_version:
+      version: 2
+      provider: "{{ cli }}"
+
+  always:
+  - name: disable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: disabled
+      provider: "{{ cli }}"
+
+- debug: msg="END TRANSPORT:CLI nxos_vtp_version sanity test"

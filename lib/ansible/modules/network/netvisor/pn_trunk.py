@@ -18,19 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import shlex
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: pn_trunk
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to create/delete/modify a trunk.
 description:
   - Execute trunk-create or trunk-delete command.
@@ -111,10 +108,10 @@ options:
       - Specify if the configuration receives mirrored traffic.
   pn_unknown_ucast_level:
     description:
-      - Specify an unkown unicast level in percent. The default value is 100%.
+      - Specify an unknown unicast level in percent. The default value is 100%.
   pn_unknown_mcast_level:
     description:
-      - Specify an unkown multicast level in percent. The default value is 100%.
+      - Specify an unknown multicast level in percent. The default value is 100%.
   pn_broadcast_level:
     description:
       - Specify a broadcast level in percent. The default value is 100%.
@@ -148,6 +145,8 @@ EXAMPLES = """
 RETURN = """
 command:
   description: The CLI command run on the target node(s).
+  returned: always
+  type: str
 stdout:
   description: The set of responses from the trunk command.
   returned: always
@@ -161,6 +160,9 @@ changed:
   returned: always
   type: bool
 """
+
+import shlex
+
 TRUNK_EXISTS = None
 
 

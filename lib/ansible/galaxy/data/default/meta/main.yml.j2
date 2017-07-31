@@ -30,19 +30,19 @@ galaxy_info:
   #github_branch:
 
   #
-  # Below are all platforms currently available. Just uncomment the ones that apply
-  # to your role. If you don't see your platform on this list, let us know,
-  # and we'll get it added!
+  # platforms is a list of platforms, and each platform has a name and a list of versions.
   #
-  #platforms:
-  {%- for platform,versions in platforms.items() %}
-  #- name: {{ platform }}
-  #  versions:
-  #  - all
-    {%- for version in versions %}
-  #  - {{ version }}
-    {%- endfor -%}
-  {%- endfor %}
+  # platforms:
+  # - name: Fedora
+  #   versions:
+  #   - all
+  #   - 25
+  # - name: SomePlatform
+  #   versions:
+  #   - all
+  #   - 1.0
+  #   - 7
+  #   - 99.99
 
   galaxy_tags: []
     # List tags for your role here, one per line. A tag is a keyword that describes

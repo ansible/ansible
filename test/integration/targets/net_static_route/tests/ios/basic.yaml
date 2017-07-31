@@ -1,0 +1,140 @@
+---
+- debug: msg="START net_static_route ios/basic.yaml"
+
+- name: create static route
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["ip route 172.16.31.0 255.255.255.0 10.0.0.8 1"]'
+
+- name: create static route again (idempotent)
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: modify admin distance of static route
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["ip route 172.16.31.0 255.255.255.0 10.0.0.8 2"]'
+
+- name: modify admin distance of static route again (idempotent)
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: delete static route
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no ip route 172.16.31.0 255.255.255.0 10.0.0.8"]'
+
+- name: delete static route again (idempotent)
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 2
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Add static route collections
+  net_static_route:
+    aggregate:
+      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["ip route 172.16.32.0 255.255.255.0 10.0.0.8 1", "ip route 172.16.33.0 255.255.255.0 10.0.0.8 1"]'
+
+- name: Add and remove static route collections with overrides
+  net_static_route:
+    aggregate:
+      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8, state: absent }
+      - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no ip route 172.16.33.0 255.255.255.0 10.0.0.8", "ip route 172.16.34.0 255.255.255.0 10.0.0.8 1"]'
+
+- name: Remove static route collections
+  net_static_route:
+    aggregate:
+      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no ip route 172.16.32.0 255.255.255.0 10.0.0.8", "no ip route 172.16.34.0 255.255.255.0 10.0.0.8"]'

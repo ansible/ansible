@@ -15,9 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -78,8 +79,9 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
-import urllib
 import time
+
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 API_BASE = "http://api.uptimerobot.com/"
 
@@ -96,7 +98,7 @@ SUPPORTS_CHECK_MODE = False
 
 def checkID(module, params):
 
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['status'] + data
     req, info = fetch_url(module, full_uri)
     result = req.read()
@@ -108,7 +110,7 @@ def checkID(module, params):
 def startMonitor(module, params):
 
     params['monitorStatus'] = 1
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
     req, info = fetch_url(module, full_uri)
     result = req.read()
@@ -120,7 +122,7 @@ def startMonitor(module, params):
 def pauseMonitor(module, params):
 
     params['monitorStatus'] = 0
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
     req, info = fetch_url(module, full_uri)
     result = req.read()

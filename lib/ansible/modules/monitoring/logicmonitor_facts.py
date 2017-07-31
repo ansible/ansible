@@ -1,60 +1,26 @@
 #!/usr/bin/python
 
-"""LogicMonitor Ansible module for managing Collectors, Hosts and Hostgroups
-   Copyright (C) 2015  LogicMonitor
+# LogicMonitor Ansible module for managing Collectors, Hosts and Hostgroups
+# Copyright (C) 2015  LogicMonitor
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA"""
-
-
-import socket
-import types
-import urllib
-
-HAS_LIB_JSON = True
-try:
-    import json
-    # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
-    try:
-        if (
-         not isinstance(json.loads, types.FunctionType) or
-         not isinstance(json.dumps, types.FunctionType)
-        ):
-            raise ImportError
-    except AttributeError:
-        raise ImportError
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        print(
-            '\n{"msg": "Error: ansible requires the stdlib json or ' +
-            'simplejson module, neither was found!", "failed": true}'
-        )
-        HAS_LIB_JSON = False
-    except SyntaxError:
-        print(
-            '\n{"msg": "SyntaxError: probably due to installed simplejson ' +
-            'being for a different python version", "failed": true}'
-        )
-        HAS_LIB_JSON = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -120,46 +86,24 @@ options:
 '''
 
 EXAMPLES = '''
-#example of querying a list of hosts
-```
----
-- hosts: hosts
-  user: root
-  vars:
-    company: 'yourcompany'
-    user: 'Luigi'
-    password: 'ImaLuigi,number1!'
-  tasks:
-  - name: query a list of hosts
-    # All tasks should use local_action
-    local_action:
-      logicmonitor_facts:
-        target: host
-        company: '{{ company }}'
-        user: '{{ user }}'
-        password: '{{ password }}'
-```
+# Always run those modules on localhost using delegate_to:localhost, or localaction
 
-#example of querying a hostgroup
-```
----
-- hosts: somemachine.superheroes.com
-  user: root
-  vars:
-    company: 'yourcompany'
-    user: 'mario'
-    password: 'itsame.Mario!'
-  tasks:
-  - name: query a host group
-    # All tasks should use local_action
-    local_action:
-      logicmonitor_facts:
-        target: hostgroup
-        fullpath: '/servers/production'
-        company: '{{ company }}'
-        user: '{{ user }}'
-        password: '{{ password }}'
-```
+- name: query a list of hosts
+  logicmonitor_facts:
+    target: host
+    company: yourcompany
+    user: Luigi
+    password: ImaLuigi,number1!
+  delegate_to: localhost
+
+- name: query a host group
+  logicmonitor_facts:
+    target: hostgroup
+    fullpath: /servers/production
+    company: yourcompany
+    user: mario
+    password: itsame.Mario!
+  delegate_to: localhost
 '''
 
 
@@ -168,7 +112,7 @@ RETURN = '''
     ansible_facts:
         description: LogicMonitor properties set for the specified object
         returned: success
-        type: list of dicts containing name/value pairs
+        type: list
         example: >
             {
                 "name": "dc",
@@ -188,6 +132,32 @@ RETURN = '''
             }
 ...
 '''
+
+import socket
+import types
+
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+
+HAS_LIB_JSON = True
+try:
+    import json
+    # Detect the python-json library which is incompatible
+    # Look for simplejson if that's the case
+    try:
+        if (
+            not isinstance(json.loads, types.FunctionType) or
+            not isinstance(json.dumps, types.FunctionType)
+        ):
+            raise ImportError
+    except AttributeError:
+        raise ImportError
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        HAS_LIB_JSON = False
+    except SyntaxError:
+        HAS_LIB_JSON = False
 
 
 class LogicMonitor(object):
@@ -210,8 +180,8 @@ class LogicMonitor(object):
         and return the response"""
         self.module.debug("Running LogicMonitor.rpc")
 
-        param_str = urllib.urlencode(params)
-        creds = urllib.urlencode(
+        param_str = urlencode(params)
+        creds = urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password})
@@ -589,8 +559,8 @@ def selector(module):
     to take given the right parameters"""
 
     if module.params["target"] == "host":
-            target = Host(module.params, module)
-            target.site_facts()
+        target = Host(module.params, module)
+        target.site_facts()
     elif module.params["target"] == "hostgroup":
         # Validate target specific required parameters
         if module.params["fullpath"] is not None:

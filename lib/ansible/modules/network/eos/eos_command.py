@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -83,32 +84,20 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
-
 - name: run show version on remote devices
   eos_command:
     commands: show version
-    provider: "{{ cli }}"
 
 - name: run show version and check to see if output contains Arista
   eos_command:
     commands: show version
     wait_for: result[0] contains Arista
-    provider: "{{ cli }}"
 
 - name: run multiple commands on remote nodes
-   eos_command:
+  eos_command:
     commands:
       - show version
       - show interfaces
-    provider: "{{ cli }}"
 
 - name: run multiple commands and evaluate the output
   eos_command:
@@ -118,70 +107,81 @@ vars:
     wait_for:
       - result[0] contains Arista
       - result[1] contains Loopback0
-    provider: "{{ cli }}"
 
 - name: run commands and specify the output format
   eos_command:
     commands:
       - command: show version
         output: json
-    provider: "{{ cli }}"
 """
 
 RETURN = """
 stdout:
-  description: the set of responses from the commands
-  returned: always
+  description: The set of responses from the commands
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
-
 stdout_lines:
-  description: the value of stdout split into a list
-  returned: always
+  description: The value of stdout split into a list
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
-
 failed_conditions:
-  description: the conditionals that failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
 """
+import time
 
-import ansible.module_utils.eos
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError, AddConditionError
-from ansible.module_utils.netcli import FailedConditionsError
-from ansible.module_utils.netcli import FailedConditionalError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import string_types
+from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.eos import run_commands
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
 def to_lines(stdout):
+    lines = list()
     for item in stdout:
         if isinstance(item, string_types):
             item = str(item).split('\n')
-        yield item
+        lines.append(item)
+    return lines
 
-def parse_commands(module):
-    for cmd in module.params['commands']:
-        if isinstance(cmd, string_types):
-            cmd = dict(command=cmd, output=None)
-        elif 'command' not in cmd:
-            module.fail_json(msg='command keyword argument is required')
-        elif cmd.get('output') not in [None, 'text', 'json']:
-            module.fail_json(msg='invalid output specified for command')
-        elif not set(cmd.keys()).issubset(VALID_KEYS):
-            module.fail_json(msg='unknown command keyword specified.  Valid '
-                                 'values are %s' % ', '.join(VALID_KEYS))
-        yield cmd
+def parse_commands(module, warnings):
+    spec = dict(
+        command=dict(key=True),
+        output=dict(),
+        prompt=dict(),
+        answer=dict()
+    )
+
+    transform = ComplexList(spec, module)
+    commands = transform(module.params['commands'])
+
+    for index, item in enumerate(commands):
+        if module.check_mode and not item['command'].startswith('show'):
+            warnings.append(
+                'Only show commands are supported when using check_mode, not '
+                'executing %s' % item['command']
+            )
+
+    return commands
+
+def to_cli(obj):
+    cmd = obj['command']
+    if obj.get('output') == 'json':
+        cmd += ' | json'
+    return cmd
 
 def main():
-    spec = dict(
-        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
+    """entry point for module execution
+    """
+    argument_spec = dict(
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -191,70 +191,60 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = NetworkModule(argument_spec=spec,
+    argument_spec.update(eos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    commands = list(parse_commands(module))
-    conditionals = module.params['wait_for'] or list()
+    result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
+    commands = parse_commands(module, warnings)
+    if warnings:
+        result['warnings'] = warnings
 
-    runner = CommandRunner(module)
-
-    for cmd in commands:
-        if module.check_mode and not cmd['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        else:
-            if cmd['command'].startswith('conf'):
-                module.fail_json(msg='eos_command does not support running '
-                                     'config mode commands.  Please use '
-                                     'eos_config instead')
-            try:
-                runner.add_command(**cmd)
-            except AddCommandError:
-                exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
+    wait_for = module.params['wait_for'] or list()
 
     try:
-        for item in conditionals:
-            runner.add_conditional(item)
-    except AddConditionError:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError:
         exc = get_exception()
-        module.fail_json(msg=str(exc), condition=exc.condition)
+        module.fail_json(msg=str(exc))
 
+    retries = module.params['retries']
+    interval = module.params['interval']
+    match = module.params['match']
 
-    runner.retries = module.params['retries']
-    runner.interval = module.params['interval']
-    runner.match = module.params['match']
+    while retries > 0:
+        responses = run_commands(module, commands)
 
-    try:
-        runner.run()
-    except FailedConditionsError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
-    except FailedConditionalError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditional=exc.failed_conditional)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+        for item in list(conditionals):
+            if item(responses):
+                if match == 'any':
+                    conditionals = list()
+                    break
+                conditionals.remove(item)
 
-    result = dict(changed=False, stdout=list())
+        if not conditionals:
+            break
 
-    for cmd in commands:
-        try:
-            output = runner.get_command(cmd['command'], cmd.get('output'))
-        except ValueError:
-            output = 'command not executed due to check_mode, see warnings'
-        result['stdout'].append(output)
+        time.sleep(interval)
+        retries -= 1
 
-    result['warnings'] = warnings
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+    if conditionals:
+        failed_conditions = [item.raw for item in conditionals]
+        msg = 'One or more conditional statements have not be satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
+
+    result.update({
+        'changed': False,
+        'stdout': responses,
+        'stdout_lines': to_lines(responses)
+    })
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-

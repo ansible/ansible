@@ -133,7 +133,7 @@ When run for a specific container using the --host option this script returns th
     "docker_hostspath": "/mnt/sda1/var/lib/docker/containers/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14/hosts",
     "docker_id": "9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14",
     "docker_image": "0a6ba66e537a53a5ea94f7c6a99c534c6adb12e3ed09326d4bf3b38f7c3ba4e7",
-    "docker_logpath": "/mnt/sda1/var/lib/docker/containers/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14-json.log",
+    "docker_logpath": "/mnt/sda1/var/lib/docker/containers/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14/9f2f80b0a702361d1ac432e6a-json.log",
     "docker_mountlabel": "",
     "docker_mounts": [],
     "docker_name": "/hello-world",
@@ -444,7 +444,7 @@ class AnsibleDockerClient(Client):
             tls_config = TLSConfig(**kwargs)
             return tls_config
         except TLSParameterError as exc:
-           self.fail("TLS config error: %s" % exc)
+            self.fail("TLS config error: %s" % exc)
 
     def _get_connect_params(self):
         auth = self.auth_params
@@ -525,7 +525,7 @@ class AnsibleDockerClient(Client):
             msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
                 "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                 % (self.auth_params['tls_hostname'], match.group(1))
+                % (self.auth_params['tls_hostname'], match.group(1), match.group(1))
             self.fail(msg)
         self.fail("SSL Exception: %s" % (error))
 
@@ -676,7 +676,7 @@ class DockerInventory(object):
             # use hosts from config file
             for host in hosts_list:
                 docker_host = host.get('host') or def_host or self._args.docker_host or \
-                              self._env_args.docker_host or DEFAULT_DOCKER_HOST
+                    self._env_args.docker_host or DEFAULT_DOCKER_HOST
                 api_version = host.get('version') or def_version or self._args.api_version or \
                     self._env_args.api_version or DEFAULT_DOCKER_API_VERSION
                 tls_hostname = host.get('tls_hostname') or def_tls_hostname or self._args.tls_hostname or \
@@ -735,7 +735,7 @@ class DockerInventory(object):
 
             cert_path = def_cert_path or self._args.cert_path or self._env_args.cert_path
             if cert_path and cert_path == self._env_args.cert_path:
-                    cert_path = os.path.join(cert_path, 'cert.pem')
+                cert_path = os.path.join(cert_path, 'cert.pem')
 
             cacert_path = def_cacert_path or self._args.cacert_path or self._env_args.cert_path
             if cacert_path and cacert_path == self._env_args.cert_path:
@@ -816,27 +816,27 @@ class DockerInventory(object):
         default_config = basename + '.yml'
 
         parser = argparse.ArgumentParser(
-                description='Return Ansible inventory for one or more Docker hosts.')
+            description='Return Ansible inventory for one or more Docker hosts.')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List all containers (default: True)')
+                            help='List all containers (default: True)')
         parser.add_argument('--debug', action='store_true', default=False,
-                           help='Send debug messages to STDOUT')
+                            help='Send debug messages to STDOUT')
         parser.add_argument('--host', action='store',
                             help='Only get information for a specific container.')
         parser.add_argument('--pretty', action='store_true', default=False,
-                           help='Pretty print JSON output(default: False)')
+                            help='Pretty print JSON output(default: False)')
         parser.add_argument('--config-file', action='store', default=default_config,
                             help="Name of the config file to use. Default is %s" % (default_config))
         parser.add_argument('--docker-host', action='store', default=None,
                             help="The base url or Unix sock path to connect to the docker daemon. Defaults to %s"
-                                  % (DEFAULT_DOCKER_HOST))
+                                 % (DEFAULT_DOCKER_HOST))
         parser.add_argument('--tls-hostname', action='store', default='localhost',
                             help="Host name to expect in TLS certs. Defaults to 'localhost'")
         parser.add_argument('--api-version', action='store', default=None,
                             help="Docker daemon API version. Defaults to %s" % (DEFAULT_DOCKER_API_VERSION))
         parser.add_argument('--timeout', action='store', default=None,
                             help="Docker connection timeout in seconds. Defaults to %s"
-                                  % (DEFAULT_TIMEOUT_SECONDS))
+                                 % (DEFAULT_TIMEOUT_SECONDS))
         parser.add_argument('--cacert-path', action='store', default=None,
                             help="Path to the TLS certificate authority pem file.")
         parser.add_argument('--cert-path', action='store', default=None,

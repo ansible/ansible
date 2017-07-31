@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -200,31 +201,22 @@ address:
     sample: "192.0.2.10"
 name:
     description: The name of the Self IP
-    returned:
-        - created
-        - changed
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "self1"
 netmask:
     description: The netmask of the Self IP
-    returned:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "255.255.255.0"
 traffic_group:
     description: The traffic group that the Self IP is a member of
-    return:
-        - changed
-        - created
+    returned: changed or created
     type: string
     sample: "traffic-group-local-only"
 vlan:
     description: The VLAN set on the Self IP
-    return:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "vlan1"
 '''
@@ -536,7 +528,7 @@ class BigIpSelfIp(object):
         BIG-IP, we need to massage the values that are provided by the
         user so that they include the partition.
 
-        :return: List of vlans formatted with preceeding partition
+        :return: List of vlans formatted with preceding partition
         """
         partition = self.params['partition']
         vlans = self.api.tm.net.vlans.get_collection()
@@ -698,7 +690,7 @@ def main():
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

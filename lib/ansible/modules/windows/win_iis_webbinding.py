@@ -19,11 +19,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_iis_webbinding
 version_added: "2.0"
@@ -85,57 +86,46 @@ options:
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
-# This will return binding information for an existing host
-$ ansible -i vagrant-inventory -m win_iis_webbinding -a "name='Default Web Site'" windows
-host | success >> {
-    "added": [],
-    "changed": false,
-    "matched": [
-        {
-            "bindingInformation": "*:80:",
-            "certificateHash": "",
-            "certificateStoreName": "",
-            "isDsMapperEnabled": false,
-            "protocol": "http",
-            "sslFlags": 0
-        }
-    ],
-    "parameters": {
-        "Name": "Default Web Site"
-    },
-    "removed": []
-}
-
-# This will return the HTTPS binding information for an existing host
-$ ansible -i vagrant-inventory -m win_iis_webbinding -a "name='Default Web Site' protocol=https" windows
-
-# This will return the HTTPS binding information for an existing host
-$ ansible -i vagrant-inventory -m win_iis_webbinding -a "name='Default Web Site' port:9090 state=present" windows
-
-# This will add a HTTP binding on port 9090
-$ ansible -i vagrant-inventory -m win_iis_webbinding -a "name='Default Web Site' port=9090 state=present" windows
-
-# This will remove the HTTP binding on port 9090
-$ ansible -i vagrant-inventory -m win_iis_webbinding -a "name='Default Web Site' port=9090 state=present" windows
-
-# This will add a HTTPS binding
-$ ansible -i vagrant-inventory -m win_iis_webbinding -a "name='Default Web Site' protocol=https state=present" windows
-
-# This will add a HTTPS binding and select certificate to use
-# ansible -i vagrant-inventory -m win_iis_webbinding -a "name='Default Web Site' protocol=https certificate_hash= B0D0FA8408FC67B230338FCA584D03792DA73F4C" windows
-
-
-# Playbook example
----
-
-- name: Website http/https bidings
+EXAMPLES = r'''
+- name: Return binding information for an existing host
   win_iis_webbinding:
-    name: "Default Web Site"
+    name: Default Web Site
+
+- name: Return the HTTPS binding information for an existing host
+  win_iis_webbinding:
+    name: Default Web Site
+    protocol: https
+
+- name: Add a HTTP binding on port 9090
+  win_iis_webbinding:
+    name: Default Web Site
+    port: 9090
+    state: present
+
+- name: Remove the HTTP binding on port 9090
+  win_iis_webbinding:
+    name: Default Web Site
+    port: 9090
+    state: absent
+
+- name: Add a HTTPS binding
+  win_iis_webbinding:
+    name: Default Web Site
+    protocol: https
+    state: present
+
+- name: Add a HTTPS binding and select certificate to use
+  win_iis_webbinding:
+    name: Default Web Site
+    protocol: https
+    certificate_hash: B0D0FA8408FC67B230338FCA584D03792DA73F4C
+    state: present
+
+- name: Website https biding to specific port
+  win_iis_webbinding:
+    name: Default Web Site
     protocol: https
     port: 443
-    certificate_hash: "D1A3AF8988FD32D1A3AF8988FD323792DA73F4C"
+    certificate_hash: D1A3AF8988FD32D1A3AF8988FD323792DA73F4C
     state: present
-  when: monitor_use_https
-
 '''

@@ -1,32 +1,21 @@
 #!/usr/bin/python
 #
-# Create a webfaction database using Ansible and the Webfaction API
-#
-# ------------------------------------------
-#
 # (c) Quentin Stafford-Fraser 2015, with contributions gratefully acknowledged from:
 #     * Andy Baker
 #     * Federico Tarantini
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Create a webfaction database using Ansible and the Webfaction API
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -37,7 +26,10 @@ description:
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
-    - "You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API - the location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as your host, you may want to add C(serial: 1) to the plays."
+    - >
+      You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
+      The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
+      your host, you may want to add C(serial: 1) to the plays.
     - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 options:
 
@@ -84,7 +76,7 @@ options:
 EXAMPLES = '''
   # This will also create a default DB user with the same
   # name as the database, and the specified password.
-  
+
   - name: Create a database
     webfaction_db:
       name: "{{webfaction_user}}_db1"
@@ -99,10 +91,13 @@ EXAMPLES = '''
 
 '''
 
-import socket
 import xmlrpclib
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+
 
 def main():
 
@@ -112,9 +107,9 @@ def main():
             state = dict(required=False, choices=['present', 'absent'], default='present'),
             # You can specify an IP address or hostname.
             type = dict(required=True),
-            password = dict(required=False, default=None),
+            password = dict(required=False, default=None, no_log=True),
             login_name = dict(required=True),
-            login_password = dict(required=True),
+            login_password = dict(required=True, no_log=True),
             machine = dict(required=False, default=False),
         ),
         supports_check_mode=True
@@ -145,7 +140,7 @@ def main():
     existing_user = user_map.get(db_name)
 
     result = {}
-    
+
     # Here's where the real stuff happens
 
     if db_state == 'present':
@@ -175,16 +170,16 @@ def main():
 
         # If this isn't a dry run...
         if not module.check_mode:
-  
+
             if not (existing_db or existing_user):
                 module.exit_json(changed = False,)
-                
+
             if existing_db:
                 # Delete the db if it exists
                 result.update(
                     webfaction.delete_db(session_id, db_name, db_type)
                 )
-                    
+
             if existing_user:
                 # Delete the default db user if it exists
                 result.update(
@@ -199,7 +194,6 @@ def main():
         result = result
     )
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

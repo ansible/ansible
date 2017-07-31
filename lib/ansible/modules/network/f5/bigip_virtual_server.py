@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'metadata_version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -75,7 +77,9 @@ options:
       - ip
   port:
     description:
-      - Port of the virtual server . Required when state=present and vs does not exist
+      - Port of the virtual server. Required when state=present and vs does
+        not exist. If you specify a value for this field, it must be a number
+        between 0 and 65535.
     required: false
     default: None
   all_profiles:
@@ -84,6 +88,12 @@ options:
         by the virtual server
     required: false
     default: None
+  all_policies:
+    description:
+      - List of all policies enabled for the virtual server.
+    required: false
+    default: None
+    version_added: "2.3"
   all_rules:
     version_added: "2.2"
     description:
@@ -116,6 +126,13 @@ options:
       - Default Profile which manages the session persistence
     required: false
     default: None
+  fallback_persistence_profile:
+    description:
+      - Specifies the persistence profile you want the system to use if it
+        cannot use the specified default persistence profile.
+    required: false
+    default: None
+    version_added: "2.3"
   route_advertisement_state:
     description:
       - Enable route advertisement for destination
@@ -182,7 +199,6 @@ deleted:
     sample: "my-virtual-server"
 '''
 
-
 # map of state values
 STATES = {
     'enabled': 'STATE_ENABLED',
@@ -211,9 +227,19 @@ def vs_exists(api, vs):
     return result
 
 
-def vs_create(api, name, destination, port, pool):
-    _profiles = [[{'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': 'tcp'}]]
-    created = False
+def vs_create(api, name, destination, port, pool, profiles):
+    if profiles:
+        _profiles = []
+        for profile in profiles:
+            _profiles.append(
+                dict(
+                    profile_context='PROFILE_CONTEXT_TYPE_ALL',
+                    profile_name=profile
+                )
+            )
+    else:
+        _profiles = [{'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': 'tcp'}]
+
     # a bit of a hack to handle concurrent runs of this module.
     # even though we've checked the vs doesn't exist,
     # it may exist by the time we run create_vs().
@@ -224,12 +250,11 @@ def vs_create(api, name, destination, port, pool):
             definitions=[{'name': [name], 'address': [destination], 'port': port, 'protocol': 'PROTOCOL_TCP'}],
             wildmasks=['255.255.255.255'],
             resources=[{'type': 'RESOURCE_TYPE_POOL', 'default_pool_name': pool}],
-            profiles=_profiles)
+            profiles=[_profiles])
         created = True
         return created
     except bigsuds.OperationFailed as e:
-        if "already exists" not in str(e):
-            raise Exception('Error on creating Virtual Server : %s' % e)
+        raise Exception('Error on creating Virtual Server : %s' % e)
 
 
 def vs_remove(api, name):
@@ -250,7 +275,7 @@ def set_rules(api, name, rules_list):
         return False
     rules_list = list(enumerate(rules_list))
     try:
-        current_rules = map(lambda x: (x['priority'], x['rule_name']), get_rules(api, name))
+        current_rules = [(x['priority'], x['rule_name']) for x in get_rules(api, name)]
         to_add_rules = []
         for i, x in rules_list:
             if (i, x) not in current_rules:
@@ -284,9 +309,11 @@ def get_profiles(api, name):
 
 def set_profiles(api, name, profiles_list):
     updated = False
+
     try:
         if profiles_list is None:
             return False
+        profiles_list = list(profiles_list)
         current_profiles = list(map(lambda x: x['profile_name'], get_profiles(api, name)))
         to_add_profiles = []
         for x in profiles_list:
@@ -308,9 +335,52 @@ def set_profiles(api, name, profiles_list):
                 profiles=[to_add_profiles]
             )
             updated = True
+        current_profiles = list(map(lambda x: x['profile_name'], get_profiles(api, name)))
+        if len(current_profiles) == 0:
+            raise F5ModuleError(
+                "Virtual servers must has at least one profile"
+            )
         return updated
     except bigsuds.OperationFailed as e:
         raise Exception('Error on setting profiles : %s' % e)
+
+
+def get_policies(api, name):
+    return api.LocalLB.VirtualServer.get_content_policy(
+        virtual_servers=[name]
+    )[0]
+
+
+def set_policies(api, name, policies_list):
+    updated = False
+    try:
+        if policies_list is None:
+            return False
+        policies_list = list(policies_list)
+        current_policies = get_policies(api, name)
+        to_add_policies = []
+        for x in policies_list:
+            if x not in current_policies:
+                to_add_policies.append(x)
+        to_del_policies = []
+        for x in current_policies:
+            if x not in policies_list:
+                to_del_policies.append(x)
+        if len(to_del_policies) > 0:
+            api.LocalLB.VirtualServer.remove_content_policy(
+                virtual_servers=[name],
+                policies=[to_del_policies]
+            )
+            updated = True
+        if len(to_add_policies) > 0:
+            api.LocalLB.VirtualServer.add_content_policy(
+                virtual_servers=[name],
+                policies=[to_add_policies]
+            )
+            updated = True
+        return updated
+    except bigsuds.OperationFailed as e:
+        raise Exception('Error on setting policies : %s' % e)
 
 
 def get_vlan(api, name):
@@ -325,6 +395,7 @@ def set_enabled_vlans(api, name, vlans_enabled_list):
     try:
         if vlans_enabled_list is None:
             return updated
+        vlans_enabled_list = list(vlans_enabled_list)
         current_vlans = get_vlan(api, name)
 
         # Set allowed list back to default ("all")
@@ -550,19 +621,55 @@ def set_default_persistence_profiles(api, name, persistence_profile):
         raise Exception('Error on setting default persistence profile : %s' % e)
 
 
+def get_fallback_persistence_profile(api, name):
+    return api.LocalLB.VirtualServer.get_fallback_persistence_profile(
+        virtual_servers=[name]
+    )[0]
+
+
+def set_fallback_persistence_profile(api, partition, name, persistence_profile):
+    updated = False
+    if persistence_profile is None:
+        return updated
+    try:
+        # This is needed because the SOAP API expects this to be an "empty"
+        # value to set the fallback profile to "None". The fq_name function
+        # does not take "None" into account though, so I do that here.
+        if persistence_profile != "":
+            persistence_profile = fq_name(partition, persistence_profile)
+
+        current_fallback_profile = get_fallback_persistence_profile(api, name)
+
+        if current_fallback_profile != persistence_profile:
+            api.LocalLB.VirtualServer.set_fallback_persistence_profile(
+                virtual_servers=[name],
+                profile_names=[persistence_profile]
+            )
+            updated = True
+        return updated
+    except bigsuds.OperationFailed as e:
+        raise Exception('Error on setting fallback persistence profile : %s' % e)
+
+
 def get_route_advertisement_status(api, address):
-    result = api.LocalLB.VirtualAddressV2.get_route_advertisement_state(virtual_addresses=[address]).pop(0)
-    result = result.split("STATE_")[-1].lower()
+    result = None
+    results = api.LocalLB.VirtualAddressV2.get_route_advertisement_state(virtual_addresses=[address])
+    if results:
+        result = results.pop(0)
+        result = result.split("STATE_")[-1].lower()
     return result
 
 
 def set_route_advertisement_state(api, destination, partition, route_advertisement_state):
     updated = False
 
+    if route_advertisement_state is None:
+        return False
+
     try:
         state = "STATE_%s" % route_advertisement_state.strip().upper()
         address = fq_name(partition, destination,)
-        current_route_advertisement_state=get_route_advertisement_status(api,address)
+        current_route_advertisement_state = get_route_advertisement_status(api,address)
         if current_route_advertisement_state != route_advertisement_state:
             api.LocalLB.VirtualAddressV2.set_route_advertisement_state(virtual_addresses=[address], states=[state])
             updated = True
@@ -578,15 +685,21 @@ def main():
                    choices=['present', 'absent', 'disabled', 'enabled']),
         name=dict(type='str', required=True, aliases=['vs']),
         destination=dict(type='str', aliases=['address', 'ip']),
-        port=dict(type='int'),
-        all_profiles=dict(type='list'),
+        port=dict(type='str', default=None),
+        all_policies=dict(type='list'),
+        all_profiles=dict(type='list', default=None),
         all_rules=dict(type='list'),
         enabled_vlans=dict(type='list'),
         pool=dict(type='str'),
         description=dict(type='str'),
         snat=dict(type='str'),
-        route_advertisement_state=dict(type='str', default='disabled', choices=['enabled', 'disabled']),
-        default_persistence_profile=dict(type='str')
+        route_advertisement_state=dict(
+            type='str',
+            default=None,
+            choices=['enabled', 'disabled']
+        ),
+        default_persistence_profile=dict(type='str'),
+        fallback_persistence_profile=dict(type='str')
     ))
 
     module = AnsibleModule(
@@ -600,7 +713,9 @@ def main():
     if module.params['validate_certs']:
         import ssl
         if not hasattr(ssl, 'SSLContext'):
-            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+            module.fail_json(
+                msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task'
+            )
 
     server = module.params['server']
     server_port = module.params['server_port']
@@ -613,7 +728,12 @@ def main():
     name = fq_name(partition, module.params['name'])
     destination = module.params['destination']
     port = module.params['port']
+    if port == '' or port is None:
+        port = None
+    else:
+        port = int(port)
     all_profiles = fq_list_names(partition, module.params['all_profiles'])
+    all_policies = fq_list_names(partition, module.params['all_policies'])
     all_rules = fq_list_names(partition, module.params['all_rules'])
 
     enabled_vlans = module.params['enabled_vlans']
@@ -627,9 +747,10 @@ def main():
     snat = module.params['snat']
     route_advertisement_state = module.params['route_advertisement_state']
     default_persistence_profile = fq_name(partition, module.params['default_persistence_profile'])
+    fallback_persistence_profile = module.params['fallback_persistence_profile']
 
-    if 1 > port > 65535:
-        module.fail_json(msg="valid ports must be in range 1 - 65535")
+    if 0 > port > 65535:
+        module.fail_json(msg="valid ports must be in range 0 - 65535")
 
     try:
         api = bigip_api(server, user, password, validate_certs, port=server_port)
@@ -655,7 +776,7 @@ def main():
         else:
             update = False
             if not vs_exists(api, name):
-                if (not destination) or (not port):
+                if (not destination) or (port is None):
                     module.fail_json(msg="both destination and port must be supplied to create a VS")
                 if not module.check_mode:
                     # a bit of a hack to handle concurrent runs of this module.
@@ -664,13 +785,14 @@ def main():
                     # this catches the exception and does something smart
                     # about it!
                     try:
-                        vs_create(api, name, destination, port, pool)
-                        set_profiles(api, name, all_profiles)
+                        vs_create(api, name, destination, port, pool, all_profiles)
+                        set_policies(api, name, all_policies)
                         set_enabled_vlans(api, name, all_enabled_vlans)
                         set_rules(api, name, all_rules)
                         set_snat(api, name, snat)
                         set_description(api, name, description)
                         set_default_persistence_profiles(api, name, default_persistence_profile)
+                        set_fallback_persistence_profile(api, partition, name, fallback_persistence_profile)
                         set_state(api, name, state)
                         set_route_advertisement_state(api, destination, partition, route_advertisement_state)
                         result = {'changed': True}
@@ -693,14 +815,16 @@ def main():
                         result['changed'] |= set_description(api, name, description)
                         result['changed'] |= set_snat(api, name, snat)
                         result['changed'] |= set_profiles(api, name, all_profiles)
+                        result['changed'] |= set_policies(api, name, all_policies)
                         result['changed'] |= set_enabled_vlans(api, name, all_enabled_vlans)
                         result['changed'] |= set_rules(api, name, all_rules)
                         result['changed'] |= set_default_persistence_profiles(api, name, default_persistence_profile)
+                        result['changed'] |= set_fallback_persistence_profile(api, partition, name, fallback_persistence_profile)
                         result['changed'] |= set_state(api, name, state)
                         result['changed'] |= set_route_advertisement_state(api, destination, partition, route_advertisement_state)
                         api.System.Session.submit_transaction()
                     except Exception as e:
-                        raise Exception("Error on updating Virtual Server : %s" % e)
+                        raise Exception("Error on updating Virtual Server : %s" % str(e))
                 else:
                     # check-mode return value
                     result = {'changed': True}
@@ -711,7 +835,7 @@ def main():
     module.exit_json(**result)
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

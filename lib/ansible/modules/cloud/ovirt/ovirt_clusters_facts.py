@@ -19,39 +19,29 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_full_argument_spec,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_clusters_facts
-short_description: Retrieve facts about one or more oVirt clusters
+short_description: Retrieve facts about one or more oVirt/RHV clusters
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt clusters."
+    - "Retrieve facts about one or more oVirt/RHV clusters."
 notes:
     - "This module creates a new top-level C(ovirt_clusters) fact, which
        contains a list of clusters."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search cluster X from datacenter Y use following pattern:
            name=X and datacenter=Y"
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -68,35 +58,51 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_clusters:
     description: "List of dictionaries describing the clusters. Cluster attribues are mapped to dictionary keys,
-                  all clusters attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/cluster."
+                  all clusters attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/cluster."
     returned: On success.
     type: list
 '''
 
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_facts_full_argument_spec,
+)
+
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         clusters_service = connection.system_service().clusters_service()
         clusters = clusters_service.list(search=module.params['pattern'])
         module.exit_json(
             changed=False,
             ansible_facts=dict(
                 ovirt_clusters=[
-                    get_dict_of_struct(c) for c in clusters
+                    get_dict_of_struct(
+                        struct=c,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for c in clusters
                 ],
             ),
         )
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':

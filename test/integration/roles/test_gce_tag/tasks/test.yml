@@ -2,11 +2,12 @@
 
 ## Parameter checking tests ##
 # ============================================================
-- name: "test missing param: instance_name"
+- name: "test missing param: instance_name or instance_pattern"
   gce_tag:
     service_account_email: "{{ service_account_email }}"
     pem_file: "{{ pem_file }}"
     project_id: "{{ project_id }}"
+    tags: foo,bar
   register: result
   ignore_errors: true
   tags:
@@ -16,7 +17,7 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg == "missing required arguments: instance_name"'
+       - 'result.msg == "one of the following is required: instance_name,instance_pattern"'
 
 
 # ============================================================
@@ -36,12 +37,31 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg == "Must specify \"tags\""'
+       - 'result.msg == "missing required arguments: tags"'
 
+# ============================================================
+- name: "test bad regex: instance_pattern"
+  gce_tag:
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    zone: "{{ zone }}"
+    tags: foo,bar
+    instance_pattern: "&23424--["
+  register: result
+  ignore_errors: true
+  tags:
+    - param-check
 
-## Non-existant instance tests ##
+- name: "assert failure when instance_pattern is invalid"
+  assert:
+    that:
+       - 'result.failed'
+       - 'result.msg == "Regex error for pattern &23424--[: unexpected end of regular expression"'
+
+## Non-existent instance tests ##
 # # ============================================================
-- name: "test tag non-existant instance (state==present)"
+- name: "test tag non-existent instance (state==present)"
   gce_tag:
     service_account_email: "{{ service_account_email }}"
     pem_file: "{{ pem_file }}"
@@ -59,7 +79,7 @@
        - 'result.failed'
 
 # # ============================================================
-- name: "test tag non-existant instance (state==absent)"
+- name: "test tag non-existent instance (state==absent)"
   gce_tag:
     service_account_email: "{{ service_account_email }}"
     pem_file: "{{ pem_file }}"
@@ -115,6 +135,45 @@
        - 'result.tags == None'
 
 # # ============================================================
+- name: "add tags using pattern (state==present)"
+  gce_tag:
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    instance_pattern: "{{ instance_name }}"
+    zone: "{{ zone }}"
+    tags: instance-pattern-test
+    state: present
+  register: result
+
+- name: "assert tag using pattern successful"
+  assert:
+    that:
+       - 'result.changed == True'
+       - 'result.tags == ["instance-pattern-test"]'
+       - 'result.instances_updated[0].instance_name == "{{ instance_name }}"'
+       - 'result.instances_updated[0].tags_changed[0] == "instance-pattern-test"'
+
+# # ============================================================
+- name: "add existing tags with pattern, no change (state==present)"
+  gce_tag:
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    instance_pattern: "{{ instance_name }}"
+    zone: "{{ zone }}"
+    tags: instance-pattern-test
+    state: present
+  register: result
+
+- name: "assert tag with pattern no change"
+  assert:
+    that:
+       - 'result.changed == False'
+       - 'result.tags == None'
+       - 'result.instances_updated|length == 0'
+
+# # ============================================================
 - name: "test tags removed from instance (state==absent)"
   gce_tag:
     service_account_email: "{{ service_account_email }}"
@@ -131,3 +190,24 @@
     that:
        - 'result.changed'
        - 'result.tags == ["foo", "bar"]'
+
+
+# # ============================================================
+- name: "test tags removed with instance_pattern (state==absent)"
+  gce_tag:
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    instance_pattern: "{{ instance_name }}"
+    zone: "{{ zone }}"
+    tags: instance-pattern-test
+    state: absent
+  register: result
+
+- name: "assert tags removed with instance_pattern"
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.tags == ["instance-pattern-test"]'
+       - 'result.instances_updated[0].instance_name == "{{ instance_name }}"'
+       - 'result.instances_updated[0].tags_changed[0] == "instance-pattern-test"'

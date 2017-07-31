@@ -13,18 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -61,13 +53,11 @@ options:
      description:
         - Unique name or ID of the external gateway network.
         - required I(interfaces) or I(enable_snat) are provided.
-     type: string
      required: false
      default: None
    project:
      description:
         - Unique name or ID of the project.
-     type: string
      required: false
      default: None
      version_added: "2.2"
@@ -84,6 +74,10 @@ options:
         - List of subnets to attach to the router internal interface.
      required: false
      default: None
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements: ["shade"]
 '''
 
@@ -139,7 +133,7 @@ RETURN = '''
 router:
     description: Dictionary describing the router.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Router ID.
@@ -177,6 +171,14 @@ router:
             description: The extra routes configuration for L3 router.
             type: list
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _needs_update(cloud, module, router, network, internal_subnet_ids):

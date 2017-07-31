@@ -2,30 +2,20 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 CallFire Inc.
-#
-# This file is part of Ansible.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -55,7 +45,7 @@ options:
             - The DNS domain name of the zone (e.g., example.com).
             - One of either I(zone) or I(zone_id) must be specified as an
               option, or the module will fail.
-            - If both I(zone) and I(zone_id) are specifed, I(zone_id) will be
+            - If both I(zone) and I(zone_id) are specified, I(zone_id) will be
               used.
         required: false
     zone_id:
@@ -67,7 +57,7 @@ options:
               with dashes. A zone ID will never have any dots in it.
             - I(zone_id) can be faster than I(zone) in projects with a large
               number of zones.
-            - If both I(zone) and I(zone_id) are specifed, I(zone_id) will be
+            - If both I(zone) and I(zone_id) are specified, I(zone_id) will be
               used.
         required: false
     type:
@@ -144,7 +134,7 @@ notes:
     - See also M(gcdns_zone).
     - This modules's underlying library does not support in-place updates for
       DNS resource records. Instead, resource records are quickly deleted and
-      recreated. 
+      recreated.
     - SOA records are technically supported, but their functionality is limited
       to verifying that a zone's existing SOA record matches a pre-determined
       value. The SOA record cannot be updated.
@@ -331,6 +321,9 @@ try:
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gcdns import gcdns_connect
 
 
 ################################################################################
@@ -786,9 +779,6 @@ def main():
 
     module.exit_json(changed=changed, diff=diff, **json_output)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.gcdns import *
 
 if __name__ == '__main__':
     main()

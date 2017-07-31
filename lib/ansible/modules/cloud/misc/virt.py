@@ -1,23 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Virt management features
+# Copyright 2007, 2012 Red Hat, Inc
+# Michael DeHaan <michael.dehaan@gmail.com>
+# Seth Vidal <skvidal@fedoraproject.org>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Copyright 2007, 2012 Red Hat, Inc
-Michael DeHaan <michael.dehaan@gmail.com>
-Seth Vidal <skvidal@fedoraproject.org>
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-This software may be freely redistributed under the terms of the GNU
-general public license.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -47,13 +44,19 @@ options:
       - in addition to state management, various non-idempotent commands are available. See examples
     required: false
     choices: ["create","status", "start", "stop", "pause", "unpause",
-              "shutdown", "undefine", "destroy", "get_xml", "autostart",
+              "shutdown", "undefine", "destroy", "get_xml",
               "freemem", "list_vms", "info", "nodeinfo", "virttype", "define"]
+  autostart:
+    description:
+      - start VM at host startup
+    choices: [True, False]
+    version_added: "2.3"
+    default: null
   uri:
     description:
       - libvirt connection uri
     required: false
-    defaults: qemu:///system
+    default: qemu:///system
   xml:
     description:
       - XML document used with the define command
@@ -75,17 +78,18 @@ EXAMPLES = '''
     state: running
 
 # /usr/bin/ansible invocations
-ansible host -m virt -a "name=alpha command=status"
-ansible host -m virt -a "name=alpha command=get_xml"
-ansible host -m virt -a "name=alpha command=create uri=lxc:///"
+# ansible host -m virt -a "name=alpha command=status"
+# ansible host -m virt -a "name=alpha command=get_xml"
+# ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 
+---
 # a playbook example of defining and launching an LXC guest
 tasks:
   - name: define vm
     virt:
         name: foo
         command: define
-        xml: '{{ lookup('template', 'container-template.xml.j2') }}'
+        xml: "{{ lookup('template', 'container-template.xml.j2') }}"
         uri: 'lxc:///'
   - name: start vm
     virt:
@@ -96,12 +100,12 @@ tasks:
 
 RETURN = '''
 # for list_vms command
-list_vms: 
+list_vms:
     description: The list of vms defined on the remote system
     type: dictionary
     returned: success
     sample: [
-        "build.example.org", 
+        "build.example.org",
         "dev.example.org"
     ]
 # for status command
@@ -111,11 +115,8 @@ status:
     sample: "success"
     returned: success
 '''
-VIRT_FAILED = 1
-VIRT_SUCCESS = 0
-VIRT_UNAVAILABLE=2
 
-import sys
+import traceback
 
 try:
     import libvirt
@@ -124,21 +125,29 @@ except ImportError:
 else:
     HAS_VIRT = True
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
+
+VIRT_FAILED = 1
+VIRT_SUCCESS = 0
+VIRT_UNAVAILABLE=2
+
 ALL_COMMANDS = []
 VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart', 'define']
+                'shutdown', 'undefine', 'destroy', 'get_xml', 'define']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
 
 VIRT_STATE_NAME_MAP = {
-   0 : "running",
-   1 : "running",
-   2 : "running",
-   3 : "paused",
-   4 : "shutdown",
-   5 : "shutdown",
-   6 : "crashed"
+    0 : "running",
+    1 : "running",
+    2 : "running",
+    3 : "paused",
+    4 : "shutdown",
+    5 : "shutdown",
+    6 : "crashed"
 }
 
 class VMNotFound(Exception):
@@ -199,10 +208,10 @@ class LibvirtConnection(object):
         return self.find_vm(vmid).shutdown()
 
     def pause(self, vmid):
-        return self.suspend(self.conn,vmid)
+        return self.suspend(vmid)
 
     def unpause(self, vmid):
-        return self.resume(self.conn,vmid)
+        return self.resume(vmid)
 
     def suspend(self, vmid):
         return self.find_vm(vmid).suspend()
@@ -338,9 +347,14 @@ class Virt(object):
     def virttype(self):
         return self.__get_conn().get_type()
 
-    def autostart(self, vmid):
+    def autostart(self, vmid, as_flag):
         self.conn = self.__get_conn()
-        return self.conn.set_autostart(vmid, True)
+        # Change autostart flag only if needed
+        if self.conn.get_autostart(vmid) != as_flag:
+            self.conn.set_autostart(vmid, as_flag)
+            return True
+
+        return False
 
     def freemem(self):
         self.conn = self.__get_conn()
@@ -430,6 +444,7 @@ class Virt(object):
 def core(module):
 
     state      = module.params.get('state', None)
+    autostart  = module.params.get('autostart', None)
     guest      = module.params.get('name', None)
     command    = module.params.get('command', None)
     uri        = module.params.get('uri', None)
@@ -448,7 +463,6 @@ def core(module):
         if not guest:
             module.fail_json(msg = "state change requires a guest specified")
 
-        res['changed'] = False
         if state == 'running':
             if v.status(guest) is 'paused':
                 res['changed'] = True
@@ -472,6 +486,9 @@ def core(module):
             module.fail_json(msg="unexpected state")
 
         return VIRT_SUCCESS, res
+
+    if autostart is not None and v.autostart(guest, autostart):
+        res['changed'] = True
 
     if command:
         if command in VM_COMMANDS:
@@ -498,7 +515,7 @@ def core(module):
             return VIRT_SUCCESS, res
 
         else:
-            module.fail_json(msg="Command %s not recognized" % basecmd)
+            module.fail_json(msg="Command %s not recognized" % command)
 
     module.fail_json(msg="expected state or command parameter to be specified")
 
@@ -507,6 +524,7 @@ def main():
     module = AnsibleModule(argument_spec=dict(
         name = dict(aliases=['guest']),
         state = dict(choices=['running', 'shutdown', 'destroyed', 'paused']),
+        autostart = dict(type='bool'),
         command = dict(choices=ALL_COMMANDS),
         uri = dict(default='qemu:///system'),
         xml = dict(),
@@ -520,19 +538,14 @@ def main():
     rc = VIRT_SUCCESS
     try:
         rc, result = core(module)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     if rc != 0: # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
     else:
         module.exit_json(**result)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

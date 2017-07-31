@@ -3,7 +3,7 @@
 
 - name: setup
   vyos_config:
-    lines: set system host-name {{ inventory_hostname }}
+    lines: set system host-name {{ inventory_hostname_short }}
     provider: "{{ cli }}"
     match: none
 
@@ -16,7 +16,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'set system host-name foo' in result.updates"
+      - "'set system host-name foo' in result.commands"
 
 - name: check simple config command idempontent
   vyos_config:
@@ -30,7 +30,7 @@
 
 - name: teardown
   vyos_config:
-    lines: set system host-name {{ inventory_hostname }}
+    lines: set system host-name {{ inventory_hostname_short }}
     provider: "{{ cli }}"
     match: none
 

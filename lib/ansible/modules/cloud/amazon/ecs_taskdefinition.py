@@ -14,16 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: ecs_taskdefinition
 short_description: register a task definition in ecs
 description:
-    - Creates or terminates task definitions
+    - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
 author: Mark Chance(@Java1Guy)
 requirements: [ json, boto, botocore, boto3 ]
@@ -45,24 +46,34 @@ options:
         description:
             - A revision number for the task definition
         required: False
-        type: int
     containers:
         description:
-            - A list of containers definitions 
+            - A list of containers definitions
         required: False
-        type: list of dicts with container definitions
+    network_mode:
+        description:
+            - The Docker networking mode to use for the containers in the task.
+        required: false
+        default: bridge
+        choices: [ 'bridge', 'host', 'none' ]
+        version_added: 2.3
+    task_role_arn:
+        description:
+            - The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted
+              the permissions that are specified in this role.
+        required: false
+        version_added: 2.3
     volumes:
         description:
             - A list of names of volumes to be attached
         required: False
-        type: list of name
 extends_documentation_fragment:
     - aws
     - ec2
 '''
 
 EXAMPLES = '''
-- name: "Create task definition"
+- name: Create task definition
   ecs_taskdefinition:
     containers:
     - name: simple-app
@@ -78,7 +89,10 @@ EXAMPLES = '''
         hostPort: 80
     - name: busybox
       command:
-        - "/bin/sh -c \"while true; do echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done\""
+        - >
+          /bin/sh -c "while true; do echo '<html><head><title>Amazon ECS Sample App</title></head><body><div><h1>Amazon ECS Sample App</h1><h2>Congratulations!
+          </h2><p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom;
+          cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done"
       cpu: 10
       entryPoint:
       - sh
@@ -97,7 +111,8 @@ EXAMPLES = '''
 RETURN = '''
 taskdefinition:
     description: a reflection of the input parameters
-    type: dict inputs plus revision, status, taskDefinitionArn
+    type: dict
+    returned: always
 '''
 try:
     import boto
@@ -113,8 +128,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 
 class EcsTaskManager:
     """Handles ECS Tasks"""
@@ -137,9 +151,32 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, container_definitions, volumes):
-        response = self.ecs.register_task_definition(family=family,
-            containerDefinitions=container_definitions, volumes=volumes)
+    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes):
+        validated_containers = []
+
+        # Ensures the number parameters are int as required by boto
+        for container in container_definitions:
+            for param in ('memory', 'cpu', 'memoryReservation'):
+                if param in container:
+                    container[param] = int(container[param])
+
+            if 'portMappings' in container:
+                for port_mapping in container['portMappings']:
+                    for port in ('hostPort', 'containerPort'):
+                        if port in port_mapping:
+                            port_mapping[port] = int(port_mapping[port])
+
+            validated_containers.append(container)
+
+        try:
+            response = self.ecs.register_task_definition(family=family,
+                                                         taskRoleArn=task_role_arn,
+                                                         networkMode=network_mode,
+                                                         containerDefinitions=container_definitions,
+                                                         volumes=volumes)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+
         return response['taskDefinition']
 
     def describe_task_definitions(self, family):
@@ -167,11 +204,17 @@ class EcsTaskManager:
             pass
 
         # Return the full descriptions of the task definitions, sorted ascending by revision
-        return list(sorted([self.ecs.describe_task_definition(taskDefinition=arn)['taskDefinition'] for arn in data['taskDefinitionArns']], key=lambda td: td['revision']))
+        return list(
+            sorted(
+                [self.ecs.describe_task_definition(taskDefinition=arn)['taskDefinition'] for arn in data['taskDefinitionArns']],
+                key=lambda td: td['revision']
+            )
+        )
 
     def deregister_task(self, taskArn):
         response = self.ecs.deregister_task_definition(taskDefinition=taskArn)
         return response['taskDefinition']
+
 
 def main():
 
@@ -182,20 +225,26 @@ def main():
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
         containers=dict(required=False, type='list'),
-        volumes=dict(required=False, type='list')
-    ))
+        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
+        task_role_arn=dict(required=False, default='', type='str'),
+        volumes=dict(required=False, type='list')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO:
-      module.fail_json(msg='boto is required.')
+        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
-      module.fail_json(msg='boto3 is required.')
+        module.fail_json(msg='boto3 is required.')
 
     task_to_describe = None
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
+
+    for container in module.params['containers']:
+        if 'environment' in container:
+            for environment in container['environment']:
+                environment['value'] = str(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
@@ -219,16 +268,17 @@ def main():
                 # We cannot reactivate an inactive revision
                 module.fail_json(msg="A task in family '%s' already exists for revsion %d, but it is inactive" % (family, revision))
             elif not existing:
-                if len(existing_definitions_in_family) == 0 and revision != 1:
+                if not existing_definitions_in_family and revision != 1:
                     module.fail_json(msg="You have specified a revision of %d but a created revision would be 1" % revision)
-                elif existing_definitions_in_family[-1]['revision'] + 1 != revision:
-                    module.fail_json(msg="You have specified a revision of %d but a created revision would be %d" % (revision, existing_definitions_in_family[-1]['revision'] + 1))
+                elif existing_definitions_in_family and existing_definitions_in_family[-1]['revision'] + 1 != revision:
+                    module.fail_json(msg="You have specified a revision of %d but a created revision would be %d" %
+                                         (revision, existing_definitions_in_family[-1]['revision'] + 1))
         else:
             existing = None
 
             def _right_has_values_of_left(left, right):
                 # Make sure the values are equivalent for everything left has
-                for k, v in left.iteritems():
+                for k, v in left.items():
                     if not ((not v and (k not in right or not right[k])) or (k in right and v == right[k])):
                         # We don't care about list ordering because ECS can change things
                         if isinstance(v, list) and k in right:
@@ -245,7 +295,7 @@ def main():
                             return False
 
                 # Make sure right doesn't have anything that left doesn't
-                for k, v in right.iteritems():
+                for k, v in right.items():
                     if v and k not in left:
                         return False
 
@@ -309,7 +359,10 @@ def main():
                 # Doesn't exist. create it.
                 volumes = module.params.get('volumes', []) or []
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
-                                                                   module.params['containers'], volumes)
+                                                                   module.params['task_role_arn'],
+                                                                   module.params['network_mode'],
+                                                                   module.params['containers'],
+                                                                   volumes)
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
@@ -338,7 +391,6 @@ def main():
                 results['changed'] = True
 
     module.exit_json(**results)
-
 
 if __name__ == '__main__':
     main()

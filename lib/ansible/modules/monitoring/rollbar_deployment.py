@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -81,10 +82,9 @@ EXAMPLES = '''
     comment: Test Deploy
 '''
 
-import urllib
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 
 
@@ -128,7 +128,7 @@ def main():
     url = module.params.get('url')
 
     try:
-        data = urllib.urlencode(params)
+        data = urlencode(params)
         response, info = fetch_url(module, url, data=data)
     except Exception:
         e = get_exception()

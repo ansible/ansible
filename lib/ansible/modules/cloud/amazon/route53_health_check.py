@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -155,14 +156,20 @@ def find_health_check(conn, wanted):
     """Searches for health checks that have the exact same set of immutable values"""
     for check in conn.get_list_health_checks().HealthChecks:
         config = check.HealthCheckConfig
-        if config.get('IPAddress') == wanted.ip_addr and config.get('FullyQualifiedDomainName') == wanted.fqdn and config.get('Type') == wanted.hc_type and config.get('RequestInterval') == str(wanted.request_interval):
+        if (
+            config.get('IPAddress') == wanted.ip_addr and
+            config.get('FullyQualifiedDomainName') == wanted.fqdn and
+            config.get('Type') == wanted.hc_type and
+            config.get('RequestInterval') == str(wanted.request_interval) and
+            config.get('Port') == str(wanted.port)
+        ):
             return check
     return None
 
 def to_health_check(config):
     return HealthCheck(
         config.get('IPAddress'),
-        config.get('Port'),
+        int(config.get('Port')),
         config.get('Type'),
         config.get('ResourcePath'),
         fqdn=config.get('FullyQualifiedDomainName'),
@@ -275,16 +282,16 @@ def update_health_check(conn, health_check_id, health_check_version, health_chec
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state               = dict(choices=['present', 'absent'], default='present'),
-            ip_address          = dict(),
-            port                = dict(type='int'),
-            type                = dict(required=True, choices=['HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP']),
-            resource_path       = dict(),
-            fqdn                = dict(),
-            string_match        = dict(),
-            request_interval    = dict(type='int', choices=[10, 30], default=30),
-            failure_threshold   = dict(type='int', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], default=3),
-        )
+        state               = dict(choices=['present', 'absent'], default='present'),
+        ip_address          = dict(),
+        port                = dict(type='int'),
+        type                = dict(required=True, choices=['HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP']),
+        resource_path       = dict(),
+        fqdn                = dict(),
+        string_match        = dict(),
+        request_interval    = dict(type='int', choices=[10, 30], default=30),
+        failure_threshold   = dict(type='int', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], default=3),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -306,12 +313,12 @@ def main():
 
     # Default port
     if port_in is None:
-      if type_in in ['HTTP', 'HTTP_STR_MATCH']:
-        port_in = 80
-      elif type_in in ['HTTPS', 'HTTPS_STR_MATCH']:
-        port_in = 443
-      else:
-        module.fail_json(msg="parameter 'port' is required for 'type' TCP")
+        if type_in in ['HTTP', 'HTTP_STR_MATCH']:
+            port_in = 80
+        elif type_in in ['HTTPS', 'HTTPS_STR_MATCH']:
+            port_in = 443
+        else:
+            module.fail_json(msg="parameter 'port' is required for 'type' TCP")
 
     # string_match in relation with type
     if type_in in ['HTTP_STR_MATCH', 'HTTPS_STR_MATCH']:
@@ -345,7 +352,7 @@ def main():
             changed = True
         else:
             diff = health_check_diff(existing_config, wanted_config)
-            if not diff:
+            if diff:
                 action = "update"
                 update_health_check(conn, existing_check.Id, int(existing_check.HealthCheckVersion), wanted_config)
                 changed = True

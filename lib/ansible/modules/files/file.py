@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -31,8 +32,10 @@ extends_documentation_fragment: files
 description:
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
-       the M(file) module - including M(copy), M(template), and M(assemble).
+       the C(file) module - including M(copy), M(template), and M(assemble).
+     - For Windows targets, use the M(win_file) module instead.
 notes:
+    - For Windows targets, use the M(win_file) module instead.
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
 author:
@@ -53,7 +56,7 @@ options:
         or M(template) module if you want that behavior.  If C(link), the symbolic
         link will be created or changed. Use C(hard) for hardlinks. If C(absent),
         directories will be recursively deleted, and files or symlinks will be unlinked.
-        Note that M(file) will not fail if the C(path) does not exist as the state did not change.
+        Note that C(file) will not fail if the C(path) does not exist as the state did not change.
         If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
         modification times (similar to the way `touch` works from the command line).
@@ -201,6 +204,7 @@ def main():
 
     params = module.params
     state = params['state']
+    recurse = params['recurse']
     force = params['force']
     diff_peek = params['diff_peek']
     src = params['src']
@@ -231,6 +235,8 @@ def main():
     if state is None:
         if prev_state != 'absent':
             state = prev_state
+        elif recurse:
+            state = 'directory'
         else:
             state = 'file'
 
@@ -246,7 +252,7 @@ def main():
                 module.fail_json(msg='src and dest are required for creating links')
 
     # original_basename is used by other modules that depend on file.
-    if os.path.isdir(b_path) and state not in ("link", "absent"):
+    if state not in ("link", "absent") and os.path.isdir(b_path):
         basename = None
         if params['original_basename']:
             basename = params['original_basename']
@@ -257,7 +263,6 @@ def main():
             b_path = to_bytes(path, errors='surrogate_or_strict')
 
     # make sure the target path is a directory when we're doing a recursive operation
-    recurse = params['recurse']
     if recurse and state != 'directory':
         module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
 
@@ -362,7 +367,7 @@ def main():
 
     elif state in ('link', 'hard'):
 
-        if os.path.isdir(b_path) and not os.path.islink(b_path):
+        if not os.path.islink(b_path) and os.path.isdir(b_path):
             relpath = path
         else:
             b_relpath = os.path.dirname(b_path)
@@ -370,7 +375,7 @@ def main():
 
         absrc = os.path.join(relpath, src)
         b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
-        if not os.path.exists(b_absrc) and not force:
+        if not force and not os.path.exists(b_absrc):
             module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
 
         if state == 'hard':
@@ -390,16 +395,25 @@ def main():
         elif prev_state == 'link':
             b_old_src = os.readlink(b_path)
             if b_old_src != b_src:
+                diff['before']['src'] = to_native(b_old_src, errors='strict')
+                diff['after']['src'] = src
                 changed = True
         elif prev_state == 'hard':
             if not (state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino):
                 changed = True
                 if not force:
                     module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
-        elif prev_state in ('file', 'directory'):
+        elif prev_state == 'file':
             changed = True
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
+        elif prev_state == 'directory':
+            changed = True
+            if os.path.exists(b_path):
+                if state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+                    module.exit_json(path=path, changed=False)
+                elif not force:
+                    module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
@@ -410,8 +424,11 @@ def main():
                     [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
                 )
                 try:
-                    if prev_state == 'directory' and (state == 'hard' or state == 'link'):
+                    if prev_state == 'directory' and state == 'link':
                         os.rmdir(b_path)
+                    elif prev_state == 'directory' and state == 'hard':
+                        if os.path.exists(b_path):
+                            os.remove(b_path)
                     if state == 'hard':
                         os.link(b_src, b_tmppath)
                     else:

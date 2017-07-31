@@ -1,25 +1,16 @@
 #!/usr/bin/python
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: consul_acl
@@ -101,7 +92,7 @@ EXAMPLES = '''
           - key: 'private/foo'
             policy: deny
 
-    - name: create an acl with specific token with both key and serivce rules
+    - name: create an acl with specific token with both key and service rules
       consul_acl:
         mgmt_token: 'some_management_acl'
         name: 'Foo access'
@@ -122,8 +113,6 @@ EXAMPLES = '''
         state: absent
 '''
 
-import sys
-
 try:
     import consul
     from requests.exceptions import ConnectionError
@@ -137,7 +126,9 @@ try:
 except ImportError:
     pyhcl_installed = False
 
-from requests.exceptions import ConnectionError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
+
 
 def execute(module):
 
@@ -152,7 +143,6 @@ def execute(module):
 def update_acl(module):
 
     rules = module.params.get('rules')
-    state = module.params.get('state')
     token = module.params.get('token')
     token_type = module.params.get('token_type')
     mgmt = module.params.get('mgmt_token')
@@ -186,7 +176,7 @@ def update_acl(module):
                 changed = True
             except Exception as e:
                 module.fail_json(
-                    msg="No token returned, check your managment key and that \
+                    msg="No token returned, check your management key and that \
                          the host is in the acl datacenter %s" % e)
     except Exception as e:
         module.fail_json(msg="Could not create/update acl %s" % e)
@@ -199,7 +189,6 @@ def update_acl(module):
 
 
 def remove_acl(module):
-    state = module.params.get('state')
     token = module.params.get('token')
     mgmt = module.params.get('mgmt_token')
 
@@ -215,22 +204,17 @@ def load_rules_for_token(module, consul_api, token):
         rules = Rules()
         info = consul_api.acl.info(token)
         if info and info['Rules']:
-            rule_set = hcl.loads(to_ascii(info['Rules']))
+            rule_set = hcl.loads(to_bytes(info['Rules'], errors='ignore', nonstring='passthru'))
             for rule_type in rule_set:
-                for pattern, policy in rule_set[rule_type].iteritems():
+                for pattern, policy in rule_set[rule_type].items():
                     rules.add_rule(rule_type, Rule(pattern, policy['policy']))
-        return rules
     except Exception as e:
         module.fail_json(
             msg="Could not load rule list from retrieved rule data %s, %s" % (
-                    token, e))
+                token, e))
 
-    return json_to_rules(module, loaded)
+    return rules
 
-def to_ascii(unicode_string):
-    if isinstance(unicode_string, unicode):
-        return unicode_string.encode('ascii', 'ignore')
-    return unicode_string
 
 def yml_to_rules(module, yml_rules):
     rules = Rules()
@@ -272,9 +256,9 @@ class Rules:
 
         rules = ""
         for rule_type in RULE_TYPES:
-            for pattern, rule in self.rules[rule_type].iteritems():
+            for pattern, rule in self.rules[rule_type].items():
                 rules += template % (rule_type, pattern, rule.policy)
-        return to_ascii(rules)
+        return to_bytes(rules, errors='ignore', nonstring='passthru')
 
     def __len__(self):
         count = 0
@@ -288,7 +272,7 @@ class Rules:
             return False
 
         for rule_type in RULE_TYPES:
-            for name, other_rule in other.rules[rule_type].iteritems():
+            for name, other_rule in other.rules[rule_type].items():
                 if not name in self.rules[rule_type]:
                     return False
                 rule = self.rules[rule_type][name]
@@ -357,11 +341,10 @@ def main():
         execute(module)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
-                            module.params.get('host'), module.params.get('port'), str(e)))
+            module.params.get('host'), module.params.get('port'), str(e)))
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

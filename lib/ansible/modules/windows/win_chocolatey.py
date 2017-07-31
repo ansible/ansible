@@ -21,53 +21,55 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_chocolatey
 version_added: "1.9"
 short_description: Installs packages using chocolatey
 description:
-    - Installs packages using Chocolatey (http://chocolatey.org/). If Chocolatey is missing from the system, the module will install it. List of packages can be found at http://chocolatey.org/packages
+    - Installs packages using Chocolatey (U(http://chocolatey.org/)).
+    - If Chocolatey is missing from the system, the module will install it.
+    - List of packages can be found at U(http://chocolatey.org/packages).
 options:
   name:
     description:
-      - Name of the package to be installed
-    required: true
+      - Name of the package to be installed.
+    required: yes
   state:
     description:
-      - State of the package on the system
+      - State of the package on the system.
     choices:
-      - present
       - absent
+      - latest
+      - present
+      - reinstalled
     default: present
   force:
     description:
-      - Forces install of the package (even if it already exists). Using Force will cause ansible to always report that a change was made
-    choices:
-      - yes
-      - no
-    default: no
+      - Forces install of the package (even if it already exists).
+      - Using C(force) will cause ansible to always report that a change was made.
+    type: bool
+    default: 'no'
   upgrade:
     description:
-      - If package is already installed it, try to upgrade to the latest version or to the specified version
-    choices:
-      - yes
-      - no
-    default: no
+      - If package is already installed it, try to upgrade to the latest version or to the specified version.
+      - As of Ansible v2.3 this is deprecated, set parameter C(state) to C(latest) for the same result.
+    type: bool
+    default: 'no'
   version:
     description:
-      - Specific version of the package to be installed
-      - Ignored when state == 'absent'
+      - Specific version of the package to be installed.
+      - Ignored when C(state) is set to C(absent).
   source:
     description:
-      - Specify source rather than using default chocolatey repository
+      - Specify source rather than using default chocolatey repository.
   install_args:
     description:
-      - Arguments to pass to the native installer
+      - Arguments to pass to the native installer.
     version_added: '2.1'
   params:
     description:
@@ -75,46 +77,74 @@ options:
     version_added: '2.1'
   allow_empty_checksums:
     description:
-      - Allow empty Checksums to be used 
-    require: false
-    default: false
+      - Allow empty checksums to be used.
+    type: bool
+    default: 'no'
     version_added: '2.2'
   ignore_checksums:
     description:
-      - Ignore Checksums 
-    require: false
-    default: false
-    version_added: '2.2'      
+      - Ignore checksums altogether.
+    type: bool
+    default: 'no'
+    version_added: '2.2'
   ignore_dependencies:
     description:
-      - Ignore dependencies, only install/upgrade the package itself
-    default: false
+      - Ignore dependencies, only install/upgrade the package itself.
+    type: bool
+    default: 'no'
     version_added: '2.1'
-author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
+  timeout:
+    description:
+      - The time to allow chocolatey to finish before timing out.
+    default: 2700
+    version_added: '2.3'
+    aliases: [ execution_timeout ]
+  skip_scripts:
+    description:
+    - Do not run I(chocolateyInstall.ps1) or I(chocolateyUninstall.ps1) scripts.
+    type: bool
+    default: 'no'
+    version_added: '2.4'
+notes:
+- Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
+  is considered to be a floating-point number and depending on the locale could
+  become C(6,1), which will cause a failure.
+author:
+- Trond Hindenes (@trondhindenes)
+- Peter Mounce (@petemounce)
+- Pepe Barbe (@elventear)
+- Adam Keech (@smadam813)
 '''
 
 # TODO:
 # * Better parsing when a package has dependencies - currently fails
 # * Time each item that is run
 # * Support 'changed' with gems - would require shelling out to `gem list` first and parsing, kinda defeating the point of using chocolatey.
+# * Version provided not as string might be translated to 6,6 depending on Locale (results in errors)
 
-EXAMPLES = '''
-  # Install git
+EXAMPLES = r'''
+- name: Install git
   win_chocolatey:
     name: git
+    state: present
 
-  # Install notepadplusplus version 6.6
+- name: Upgrade installed packages
+  win_chocolatey:
+    name: all
+    state: latest
+
+- name: Install notepadplusplus version 6.6
   win_chocolatey:
     name: notepadplusplus.install
     version: '6.6'
 
-  # Uninstall git
-  win_chocolatey:
-    name: git
-    state: absent
-
-  # Install git from specified repository
+- name: Install git from specified repository
   win_chocolatey:
     name: git
     source: https://someserver/api/v2/
+
+- name: Uninstall git
+  win_chocolatey:
+    name: git
+    state: absent
 '''

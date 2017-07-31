@@ -3,26 +3,16 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -137,10 +127,6 @@ state:
     }
 '''
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import VirtualNetwork, AddressSpace, DhcpOptions
@@ -148,6 +134,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
 
 
 def virtual_network_to_dict(vnet):
@@ -220,7 +207,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
@@ -347,7 +334,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
         try:
             poller = self.network_client.virtual_networks.create_or_update(self.resource_group, self.name, vnet)
             new_vnet = self.get_poller_result(poller)
-        except Exception as  exc:
+        except Exception as exc:
             self.fail("Error creating or updating virtual network {0} - {1}".format(self.name, str(exc)))
         return virtual_network_to_dict(new_vnet)
 
@@ -365,4 +352,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

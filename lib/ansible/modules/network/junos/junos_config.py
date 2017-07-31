@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -44,7 +45,7 @@ options:
   src:
     description:
       - The I(src) argument provides a path to the configuration file
-        to load into the remote system.  The path can either be a full
+        to load into the remote system. The path can either be a full
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) argument.
@@ -101,8 +102,9 @@ options:
         in the corresponding hierarchy of the source configuration loaded
         from this module.
       - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the I(update) argument to C(replace).  This argument
-        will be removed in a future release.
+        the equivalent, set the I(update) argument to C(replace). This argument
+        will be removed in a future release. The C(replace) and C(update) argument
+        is mutually exclusive.
     required: false
     choices: ['yes', 'no']
     default: false
@@ -117,25 +119,53 @@ options:
     default: no
     choices: ['yes', 'no']
     version_added: "2.2"
+  update:
+    description:
+      - This argument will decide how to load the configuration
+        data particulary when the candidate configuration and loaded
+        configuration contain conflicting statements. Following are
+        accepted values.
+        C(merge) combines the data in the loaded configuration with the
+        candidate configuration. If statements in the loaded configuration
+        conflict with statements in the candidate configuration, the loaded
+        statements replace the candidate ones.
+        C(override) discards the entire candidate configuration and replaces
+        it with the loaded configuration.
+        C(replace) substitutes each hierarchy level in the loaded configuration
+        for the corresponding level.
+    required: false
+    default: merge
+    choices: ['merge', 'override', 'replace']
+    version_added: "2.3"
+  confirm_commit:
+    description:
+      - This argument will execute commit operation on remote device.
+        It can be used to confirm a previous commit.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.4"
 requirements:
-  - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Loading JSON-formatted configuration I(json) is supported
+    starting in Junos OS Release 16.1 onwards.
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  netconf:
-    host: "{{ inventory_hostname }}"
-    username: ansible
-    password: Ansible
-
 - name: load configure file into device
   junos_config:
     src: srx.cfg
+    comment: update config
+    provider: "{{ netconf }}"
+
+- name: load configure lines into device
+  junos_config:
+    lines:
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
+      - set vlans vlan01 description "Test vlan"
     comment: update config
     provider: "{{ netconf }}"
 
@@ -151,6 +181,7 @@ vars:
 
 - name: confirm a previous commit
   junos_config:
+    confirm_commit: yes
     provider: "{{ netconf }}"
 """
 
@@ -158,21 +189,53 @@ RETURN = """
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 """
+import re
 import json
 
-from xml.etree import ElementTree
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import get_diff, load_config, get_configuration
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.junos import junos_argument_spec
+from ansible.module_utils.junos import check_args as junos_check_args
+from ansible.module_utils.netconf import send_request
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
-import ansible.module_utils.junos
+try:
+    from lxml.etree import Element, fromstring
+except ImportError:
+    from xml.etree.ElementTree import Element, fromstring
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.netcfg import NetworkConfig
+try:
+    from lxml.etree import ParseError
+except ImportError:
+    try:
+        from xml.etree.ElementTree import ParseError
+    except ImportError:
+        # for Python < 2.7
+        from xml.parsers.expat import ExpatError
+        ParseError = ExpatError
 
-
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
+
+
+def check_args(module, warnings):
+    junos_check_args(module, warnings)
+
+    if module.params['replace'] is not None:
+        module.fail_json(msg='argument replace is deprecated, use update')
+
+
+def zeroize(ele):
+    return send_request(ele, Element('request-system-zeroize'))
+
+
+def rollback(ele):
+    return get_diff(ele)
 
 
 def guess_format(config):
@@ -183,9 +246,9 @@ def guess_format(config):
         pass
 
     try:
-        ElementTree.fromstring(config)
+        fromstring(config)
         return 'xml'
-    except ElementTree.ParseError:
+    except ParseError:
         pass
 
     if config.startswith('set') or config.startswith('delete'):
@@ -193,107 +256,48 @@ def guess_format(config):
 
     return 'text'
 
-def config_to_commands(config):
-    set_format = config.startswith('set') or config.startswith('delete')
-    candidate = NetworkConfig(indent=4, contents=config, device_os='junos')
-    if not set_format:
-        candidate = [c.line for c in candidate.items]
-        commands = list()
-        # this filters out less specific lines
-        for item in candidate:
-            for index, entry in enumerate(commands):
-                if item.startswith(entry):
-                    del commands[index]
-                    break
-            commands.append(item)
 
-    else:
-        commands = str(candidate).split('\n')
+def filter_delete_statements(module, candidate):
+    reply = get_configuration(module, format='set')
+    match = reply.find('.//configuration-set')
+    if match is None:
+        # Could not find configuration-set in reply, perhaps device does not support it?
+        return candidate
+    config = to_native(match.text, encoding='latin1')
 
-    return commands
+    modified_candidate = candidate[:]
+    for index, line in reversed(list(enumerate(candidate))):
+        if line.startswith('delete'):
+            newline = re.sub('^delete', 'set', line)
+            if newline not in config:
+                del modified_candidate[index]
 
-def diff_commands(commands, config):
-    config = [unicode(c).replace("'", '') for c in config]
+    return modified_candidate
 
-    updates = list()
-    visited = set()
 
-    for item in commands:
-        if len(item) > 0:
-            if not item.startswith('set') and not item.startswith('delete'):
-                raise ValueError('line must start with either `set` or `delete`')
+def configure_device(module, warnings, candidate):
 
-            elif item.startswith('set') and item[4:] not in config:
-                updates.append(item)
-
-            elif item.startswith('delete'):
-                for entry in config:
-                    if entry.startswith(item[7:]) and item not in visited:
-                        updates.append(item)
-                        visited.add(item)
-
-    return updates
-
-def load_config(module, result):
-    candidate =  module.params['lines'] or module.params['src']
-    if isinstance(candidate, basestring):
-        candidate = candidate.split('\n')
-
-    kwargs = dict()
-    kwargs['comment'] = module.params['comment']
-    kwargs['confirm'] = module.params['confirm']
-    kwargs['replace'] = module.params['replace']
-    kwargs['commit'] = not module.check_mode
+    kwargs = {}
+    config_format = None
 
     if module.params['src']:
         config_format = module.params['src_format'] or guess_format(str(candidate))
-    elif module.params['lines']:
-        config_format = 'set'
-    kwargs['config_format'] = config_format
+        if config_format == 'set':
+            kwargs.update({'format': 'text', 'action': 'set'})
+        else:
+            kwargs.update({'format': config_format, 'action': module.params['update']})
+
+    if isinstance(candidate, string_types):
+        candidate = candidate.split('\n')
 
     # this is done to filter out `delete ...` statements which map to
     # nothing in the config as that will cause an exception to be raised
-    if config_format == 'set':
-        config = module.config.get_config()
-        config = config_to_commands(config)
-        candidate = diff_commands(candidate, config)
+    if any((module.params['lines'], config_format == 'set')):
+        candidate = filter_delete_statements(module, candidate)
+        kwargs['format'] = 'text'
+        kwargs['action'] = 'set'
 
-    diff = module.config.load_config(candidate, **kwargs)
-
-    if diff:
-        result['changed'] = True
-        result['diff'] = dict(prepared=diff)
-
-def rollback_config(module, result):
-    rollback = module.params['rollback']
-
-    kwargs = dict(comment=module.param['comment'],
-                  commit=not module.check_mode)
-
-    diff = module.connection.rollback_config(rollback, **kwargs)
-
-    if diff:
-        result['changed'] = True
-        result['diff'] = dict(prepared=diff)
-
-def zeroize_config(module, result):
-    if not module.check_mode:
-        module.cli.run_commands('request system zeroize')
-    result['changed'] = True
-
-def confirm_config(module, result):
-    checkonly = module.check_mode
-    result['changed'] = module.connection.confirm_commit(checkonly)
-
-def run(module, result):
-    if module.params['rollback']:
-        return rollback_config(module, result)
-    elif module.params['zeroize']:
-        return zeroize_config(module, result)
-    elif not any((module.params['src'], module.params['lines'])):
-        return confirm_config(module, result)
-    else:
-        return load_config(module, result)
+    return load_config(module, candidate, warnings, **kwargs)
 
 
 def main():
@@ -306,39 +310,90 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        replace=dict(default=False, type='bool'),
+        update=dict(default='merge', choices=['merge', 'override', 'replace', 'update']),
+
+        # deprecated replace in Ansible 2.3
+        replace=dict(type='bool'),
+
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
+        confirm_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
         rollback=dict(type='int'),
-        zeroize=dict(default=False, type='bool'),
 
-        transport=dict(default='netconf', choices=['netconf'])
+        zeroize=dict(default=False, type='bool'),
     )
 
-    mutually_exclusive = [('lines', 'rollback'), ('lines', 'zeroize'),
-                          ('rollback', 'zeroize'), ('lines', 'src'),
-                          ('src', 'zeroize'), ('src', 'rollback')]
+    argument_spec.update(junos_argument_spec)
 
-    required_if = [('replace', True, ['src'])]
+    mutually_exclusive = [('lines', 'src', 'rollback', 'zeroize')]
 
-    module = NetworkModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
-                           required_if=required_if,
                            supports_check_mode=True)
 
-    result = dict(changed=False)
+    warnings = list()
+    check_args(module, warnings)
+
+    candidate = module.params['lines'] or module.params['src']
+    commit = not module.check_mode
+
+    result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        for conf_format in ['set', 'text']:
+            reply = get_configuration(module, format=conf_format)
+            match = reply.find('.//configuration-%s' % conf_format)
+            if match is not None:
+                break
+        else:
+            module.fail_json(msg='unable to retrieve device configuration')
 
-    try:
-        run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+        result['__backup__'] = match.text.strip()
+
+    if module.params['rollback']:
+        if commit:
+            diff = rollback(module)
+            if module._diff:
+                result['diff'] = {'prepared': diff}
+        result['changed'] = True
+
+    elif module.params['zeroize']:
+        if commit:
+            zeroize(module)
+        result['changed'] = True
+
+    else:
+        if candidate:
+            with locked_config(module):
+                diff = configure_device(module, warnings, candidate)
+                if diff:
+                    if commit:
+                        kwargs = {
+                            'comment': module.params['comment']
+                        }
+
+                        if module.params['confirm'] > 0:
+                            kwargs.update({
+                                'confirm': True,
+                                'confirm_timeout': module.params['confirm']
+                            })
+                        commit_configuration(module, **kwargs)
+                    else:
+                        discard_changes(module)
+                    result['changed'] = True
+
+                    if module._diff:
+                        result['diff'] = {'prepared': diff}
+
+        elif module.params['confirm_commit']:
+            with locked_config(module):
+                # confirm a previous commit
+                commit_configuration(module)
+
+            result['changed'] = True
 
     module.exit_json(**result)
 

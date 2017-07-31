@@ -26,8 +26,8 @@ import os.path
 import subprocess
 import traceback
 
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
@@ -40,6 +40,8 @@ except ImportError:
 
 class Connection(ConnectionBase):
     ''' Local BSD Jail based connections '''
+
+    modified_jailname_key = 'conn_jail_name'
 
     transport = 'jail'
     # Pipelining may work.  Someone needs to test by setting this to True and
@@ -54,6 +56,8 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.jail = self._play_context.remote_addr
+        if self.modified_jailname_key in kwargs:
+            self.jail = kwargs[self.modified_jailname_key]
 
         if os.geteuid() != 0:
             raise AnsibleError("jail connection requires running as root")
@@ -118,7 +122,7 @@ class Connection(ConnectionBase):
         display.vvv("EXEC %s" % (local_cmd,), host=self.jail)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 

@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -67,7 +68,7 @@ EXAMPLES = '''
         - 'subnet-bbbbb'
 
 # Remove subnet group
-redshift_subnet_group: >
+- redshift_subnet_group:
     state: absent
     group_name: redshift-subnet
 '''
@@ -76,7 +77,7 @@ RETURN = '''
 group:
     description: dictionary containing all Redshift subnet group information
     returned: success
-    type: dictionary
+    type: complex
     contains:
         name:
             description: name of the Redshift subnet group
@@ -145,7 +146,7 @@ def main():
             exists = len(matching_groups) > 0
         except boto.exception.JSONResponseError as e:
             if e.body['Error']['Code'] != 'ClusterSubnetGroupNotFoundFault':
-            #if e.code != 'ClusterSubnetGroupNotFoundFault':
+                # if e.code != 'ClusterSubnetGroupNotFoundFault':
                 module.fail_json(msg=str(e))
 
         if state == 'absent':
@@ -158,17 +159,17 @@ def main():
                 new_group = conn.create_cluster_subnet_group(group_name, group_description, group_subnets)
                 group = {
                     'name': new_group['CreateClusterSubnetGroupResponse']['CreateClusterSubnetGroupResult']
-                            ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
+                    ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
                     'vpc_id': new_group['CreateClusterSubnetGroupResponse']['CreateClusterSubnetGroupResult']
-                              ['ClusterSubnetGroup']['VpcId'],
+                    ['ClusterSubnetGroup']['VpcId'],
                 }
             else:
                 changed_group = conn.modify_cluster_subnet_group(group_name, group_subnets, description=group_description)
                 group = {
                     'name': changed_group['ModifyClusterSubnetGroupResponse']['ModifyClusterSubnetGroupResult']
-                            ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
+                    ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
                     'vpc_id': changed_group['ModifyClusterSubnetGroupResponse']['ModifyClusterSubnetGroupResult']
-                              ['ClusterSubnetGroup']['VpcId'],
+                    ['ClusterSubnetGroup']['VpcId'],
                 }
 
             changed = True

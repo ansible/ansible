@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,6 +24,7 @@ short_description:  Manage services.
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
+    - For Windows targets, use the M(win_service) module instead.
 options:
     name:
         required: true
@@ -45,7 +37,9 @@ options:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
             service.  C(reloaded) will always reload. B(At least one of state
-            and enabled are required.)
+            and enabled are required.) Note that reloaded will start the
+            service if it is not already started, even if your chosen init
+            system wouldn't normally.
     sleep:
         required: false
         version_added: "1.3"
@@ -84,6 +78,8 @@ options:
             - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         default: 'auto'
         version_added: 2.2
+notes:
+    - For Windows targets, use the M(win_service) module instead.
 '''
 
 EXAMPLES = '''
@@ -126,16 +122,21 @@ EXAMPLES = '''
 
 '''
 
-import platform
-import os
-import re
-import tempfile
-import shlex
-import select
-import time
-import string
 import glob
-from ansible.module_utils.service import fail_if_missing
+import os
+import platform
+import re
+import select
+import shlex
+import string
+import subprocess
+import tempfile
+import time
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -143,6 +144,12 @@ from ansible.module_utils.service import fail_if_missing
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
     from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.service import fail_if_missing
+from ansible.module_utils.six import PY2, b
+from ansible.module_utils._text import to_bytes, to_text
+
 
 class Service(object):
     """
@@ -240,11 +247,19 @@ class Service(object):
                 os._exit(0)
 
             # Start the command
-            if isinstance(cmd, basestring):
+            if PY2:
+                # Python 2.6's shlex.split can't handle text strings correctly
+                cmd = to_bytes(cmd, errors='surrogate_or_strict')
                 cmd = shlex.split(cmd)
+            else:
+                # Python3.x shex.split text strings.
+                cmd = to_text(cmd, errors='surrogate_or_strict')
+                cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(cmd)]
+            # In either of the above cases, pass a list of byte strings to Popen
+
             p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
-            stdout = ""
-            stderr = ""
+            stdout = b("")
+            stderr = b("")
             fds = [p.stdout, p.stderr]
             # Wait for all output, or until the main process is dead and its output is done.
             while fds:
@@ -263,7 +278,8 @@ class Service(object):
                     stderr += dat
             p.wait()
             # Return a JSON blob to parent
-            os.write(pipe[1], json.dumps([p.returncode, stdout, stderr]))
+            blob = json.dumps([p.returncode, to_text(stdout), to_text(stderr)])
+            os.write(pipe[1], to_bytes(blob, errors='surrogate_or_strict'))
             os.close(pipe[1])
             os._exit(0)
         elif pid == -1:
@@ -272,7 +288,7 @@ class Service(object):
             os.close(pipe[1])
             os.waitpid(pid, 0)
             # Wait for data from daemon process and process it.
-            data = ""
+            data = b("")
             while True:
                 rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
                 if pipe[0] in rfd:
@@ -280,7 +296,7 @@ class Service(object):
                     if not dat:
                         break
                     data += dat
-            return json.loads(data)
+            return json.loads(to_text(data, errors='surrogate_or_strict'))
 
     def check_ps(self):
         # Set ps flags
@@ -467,7 +483,7 @@ class LinuxService(Service):
             self.upstart_version = LooseVersion('0.0.0')
             try:
                 version_re = re.compile(r'\(upstart (.*)\)')
-                rc,stdout,stderr = self.module.run_command('initctl version')
+                rc,stdout,stderr = self.module.run_command('%s version' % location['initctl'])
                 if rc == 0:
                     res = version_re.search(stdout)
                     if res:
@@ -475,9 +491,7 @@ class LinuxService(Service):
             except:
                 pass  # we'll use the default of 0.0.0
 
-            if location.get('start', False):
-                # upstart -- rather than being managed by one command, start/stop/restart are actual commands
-                self.svc_cmd = ''
+            self.svc_cmd = location['initctl']
 
         elif location.get('rc-service', False):
             # service is managed by OpenRC
@@ -598,7 +612,7 @@ class LinuxService(Service):
         # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
-            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
+            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, self.arguments ))
             if "stop/waiting" in initctl_status_stdout:
                 self.running = False
             elif "start/running" in initctl_status_stdout:
@@ -623,11 +637,9 @@ class LinuxService(Service):
             cleanout = status_stdout.lower().replace(self.name.lower(), '')
             if "stop" in cleanout:
                 self.running = False
-            elif "run" in cleanout and "not" in cleanout:
-                self.running = False
-            elif "run" in cleanout and "not" not in cleanout:
-                self.running = True
-            elif "start" in cleanout and "not" not in cleanout:
+            elif "run" in cleanout:
+                self.running = not ("not " in cleanout)
+            elif "start" in cleanout and "not " not in cleanout:
                 self.running = True
             elif 'could not access pid file' in cleanout:
                 self.running = False
@@ -832,13 +844,13 @@ class LinuxService(Service):
             return
 
         #
-        # insserv (Debian 7)
+        # insserv (Debian <=7, SLES, others)
         #
         if self.enable_cmd.endswith("insserv"):
             if self.enable:
-                (rc, out, err) = self.execute_command("%s -n %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -v %s" % (self.enable_cmd, self.name))
             else:
-                (rc, out, err) = self.execute_command("%s -nr %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -r -v %s" % (self.enable_cmd, self.name))
 
             self.changed = False
             for line in err.splitlines():
@@ -901,8 +913,13 @@ class LinuxService(Service):
         arguments = self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
-                # SysV and OpenRC take the form <cmd> <name> <action>
-                svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+                if self.svc_cmd.endswith("initctl"):
+                    # initctl commands take the form <cmd> <action> <name>
+                    svc_cmd = self.svc_cmd
+                    arguments = "%s %s" % (self.name, arguments)
+                else:
+                    # SysV and OpenRC take the form <cmd> <name> <action>
+                    svc_cmd = "%s %s" % (self.svc_cmd, self.name)
             else:
                 # systemd commands take the form <cmd> <action> <name>
                 svc_cmd = self.svc_cmd
@@ -1303,6 +1320,19 @@ class SunOSService(Service):
         if not self.svcadm_cmd:
             self.module.fail_json(msg='unable to find svcadm binary')
 
+        if self.svcadm_supports_sync():
+            self.svcadm_sync = '-s'
+        else:
+            self.svcadm_sync = ''
+
+    def svcadm_supports_sync(self):
+        # Support for synchronous restart/refresh is only supported on
+        # Oracle Solaris >= 11.2
+        for line in open('/etc/release', 'r').readlines():
+            m = re.match('\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
+            if m and m.groups()[0] >= 11.2:
+                return True
+
     def get_service_status(self):
         status = self.get_sunos_svcs_status()
         # Only 'online' is considered properly running. Everything else is off
@@ -1394,9 +1424,9 @@ class SunOSService(Service):
         elif self.action == 'stop':
             subcmd = "disable -st"
         elif self.action == 'reload':
-            subcmd = "refresh -s"
+            subcmd = "refresh %s" % (self.svcadm_sync)
         elif self.action == 'restart' and status == 'online':
-            subcmd = "restart -s"
+            subcmd = "restart %s" % (self.svcadm_sync)
         elif self.action == 'restart' and status != 'online':
             subcmd = "enable -rst"
 
@@ -1569,8 +1599,6 @@ def main():
             result['state'] = 'stopped'
 
     module.exit_json(**result)
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

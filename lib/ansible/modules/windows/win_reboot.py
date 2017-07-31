@@ -19,11 +19,12 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION='''
+
+DOCUMENTATION = r'''
 ---
 module: win_reboot
 short_description: Reboot a windows machine
@@ -53,27 +54,33 @@ options:
     description:
     - Command to expect success for to determine the machine is ready for management
     default: whoami
+  msg:
+    description:
+    - Message to display to users
+    default: Reboot initiated by Ansible
+notes:
+- If a shutdown was already scheduled on the system, C(win_reboot) will abort the scheduled shutdown and enforce its own shutdown.
 author:
     - Matt Davis (@nitzmahone)
 '''
 
-EXAMPLES='''
-# unconditionally reboot the machine with all defaults
+EXAMPLES = r'''
+# Unconditionally reboot the machine with all defaults
 - win_reboot:
 
-# apply updates and reboot if necessary
+# Apply updates and reboot if necessary
 - win_updates:
   register: update_result
 - win_reboot:
   when: update_result.reboot_required
 
-# reboot a slow machine that might have lots of updates to apply
+# Reboot a slow machine that might have lots of updates to apply
 - win_reboot:
     shutdown_timeout_sec: 3600
     reboot_timeout_sec: 3600
 '''
 
-RETURN='''
+RETURN = r'''
 rebooted:
     description: true if the machine was rebooted
     returned: always

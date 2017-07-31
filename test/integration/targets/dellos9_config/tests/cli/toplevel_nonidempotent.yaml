@@ -3,7 +3,7 @@
 
 - name: setup
   dellos9_config:
-    lines: ['hostname {{ inventory_hostname }}']
+    lines: ['hostname {{ inventory_hostname_short }}']
     provider: "{{ cli }}"
     match: none
 
@@ -32,7 +32,7 @@
 
 - name: teardown
   dellos9_config:
-    lines: ['hostname {{ inventory_hostname }}']
+    lines: ['hostname {{ inventory_hostname_short }}']
     provider: "{{ cli }}"
     match: none
 

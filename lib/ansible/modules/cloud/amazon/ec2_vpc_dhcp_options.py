@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 ---
@@ -101,7 +102,7 @@ options:
     description:
       - The resource_id of an existing DHCP options set.
         If this is specified, then it will override other settings, except tags
-        (which will be updated to match) 
+        (which will be updated to match)
     required: False
     default: None
     version_added: "2.1"
@@ -206,16 +207,25 @@ EXAMPLES = """
 
 """
 
-import boto.vpc
-import boto.ec2
-from boto.exception import EC2ResponseError
-import socket
 import collections
+import socket
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
+
+if HAS_BOTO:
+    import boto.vpc
+    import boto.ec2
+    from boto.exception import EC2ResponseError
+
 
 def get_resource_tags(vpc_conn, resource_id):
     return dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': resource_id}))
 
-def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
+
+def ensure_tags(module, vpc_conn, resource_id, tags, add_only, check_mode):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
         if tags == cur_tags:
@@ -232,7 +242,7 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
-        module.fail_json(msg=get_error_message(e.args[2]))
+        module.fail_json(msg="Failed to modify tags: %s" % e.message, exception=traceback.format_exc())
 
 def fetch_dhcp_options_for_vpc(vpc_conn, vpc_id):
     """
@@ -247,6 +257,7 @@ def fetch_dhcp_options_for_vpc(vpc_conn, vpc_id):
         return None
     return dhcp_options[0]
 
+
 def match_dhcp_options(vpc_conn, tags=None, options=None):
     """
     Finds a DHCP Options object that optionally matches the tags and options provided
@@ -258,6 +269,7 @@ def match_dhcp_options(vpc_conn, tags=None, options=None):
                 return(True, dopts)
     return(False, None)
 
+
 def remove_dhcp_options_by_id(vpc_conn, dhcp_options_id):
     associations = vpc_conn.get_all_vpcs(filters={'dhcpOptionsId': dhcp_options_id})
     if len(associations) > 0:
@@ -265,6 +277,7 @@ def remove_dhcp_options_by_id(vpc_conn, dhcp_options_id):
     else:
         vpc_conn.delete_dhcp_options(dhcp_options_id)
         return True
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -289,7 +302,9 @@ def main():
     changed = False
     new_options = collections.defaultdict(lambda: None)
 
-  
+    if not HAS_BOTO:
+        module.fail_json(msg='boto is required for this module')
+
     region, ec2_url, boto_params = get_aws_connection_info(module)
     connection = connect_to_aws(boto.vpc, region, **boto_params)
 
@@ -297,17 +312,17 @@ def main():
 
     # First check if we were given a dhcp_options_id
     if not params['dhcp_options_id']:
-    # No, so create new_options from the parameters
-        if params['dns_servers'] != None:
+        # No, so create new_options from the parameters
+        if params['dns_servers'] is not None:
             new_options['domain-name-servers'] = params['dns_servers']
-        if params['netbios_name_servers'] != None:
+        if params['netbios_name_servers'] is not None:
             new_options['netbios-name-servers'] = params['netbios_name_servers']
-        if params['ntp_servers'] != None:
+        if params['ntp_servers'] is not None:
             new_options['ntp-servers'] = params['ntp_servers']
-        if params['domain_name'] != None:
+        if params['domain_name'] is not None:
             # needs to be a list for comparison with boto objects later
             new_options['domain-name'] = [ params['domain_name'] ]
-        if params['netbios_node_type'] != None:
+        if params['netbios_node_type'] is not None:
             # needs to be a list for comparison with boto objects later
             new_options['netbios-node-type'] = [ str(params['netbios_node_type']) ]
         # If we were given a vpc_id then we need to look at the options on that
@@ -333,12 +348,12 @@ def main():
         supplied_options = connection.get_all_dhcp_options(filters={'dhcp-options-id':params['dhcp_options_id']})
         if len(supplied_options) != 1:
             if params['state'] != 'absent':
-              module.fail_json(msg=" a dhcp_options_id was supplied, but does not exist")
+                module.fail_json(msg=" a dhcp_options_id was supplied, but does not exist")
         else:
             found = True
             dhcp_option = supplied_options[0]
             if params['state'] != 'absent' and params['tags']:
-                ensure_tags(connection, dhcp_option.id, params['tags'], False, module.check_mode)
+                ensure_tags(module, connection, dhcp_option.id, params['tags'], False, module.check_mode)
 
     # Now we have the dhcp options set, let's do the necessary
 
@@ -369,7 +384,7 @@ def main():
                 new_options['netbios-node-type'])
             changed = True
             if params['tags']:
-                ensure_tags(connection, dhcp_option.id, params['tags'], False, module.check_mode)
+                ensure_tags(module, connection, dhcp_option.id, params['tags'], False, module.check_mode)
 
     # If we were given a vpc_id, then attach the options we now have to that before we finish
     if params['vpc_id'] and not module.check_mode:
@@ -378,12 +393,9 @@ def main():
         # and remove old ones if that was requested
         if params['delete_old'] and existing_options:
             remove_dhcp_options_by_id(connection, existing_options.id)
-  
-    module.exit_json(changed=changed, new_options=new_options, dhcp_options_id=dhcp_option.id)
-  
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+    module.exit_json(changed=changed, new_options=new_options, dhcp_options_id=dhcp_option.id)
+
 
 if __name__ == "__main__":
     main()

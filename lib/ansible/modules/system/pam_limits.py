@@ -2,40 +2,26 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Sebastien Rohaut <sebastien.rohaut@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import os
-import os.path
-import shutil
-import re
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: pam_limits
 version_added: "2.0"
-authors:
+author:
     - "Sebastien Rohaut (@usawa)"
 short_description: Modify Linux PAM limits
 description:
-     - The M(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
+     - The C(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
        For the full documentation, see man limits.conf(5).
 options:
   domain:
@@ -51,7 +37,26 @@ options:
     description:
       - The limit to be set
     required: true
-    choices: [ "core", "data", "fsize", "memlock", "nofile", "rss", "stack", "cpu", "nproc", "as", "maxlogins", "maxsyslogins", "priority", "locks", "sigpending", "msgqueue", "nice", "rtprio", "chroot" ]
+    choices:
+        - "core"
+        - "data"
+        - "fsize"
+        - "memlock"
+        - "nofile"
+        - "rss"
+        - "stack"
+        - "cpu"
+        - "nproc"
+        - "as"
+        - "maxlogins"
+        - "maxsyslogins"
+        - "priority"
+        - "locks"
+        - "sigpending"
+        - "msgqueue"
+        - "nice"
+        - "rtprio"
+        - "chroot"
   value:
     description:
       - The value of the limit.
@@ -110,15 +115,25 @@ EXAMPLES = '''
 # Add or modify memlock, both soft and hard, limit for the user james with a comment.
 - pam_limits:
     domain: james
-    limit_type: -
+    limit_type: '-'
     limit_item: memlock
     value: unlimited
     comment: unlimited memory lock for james
 '''
 
+import os
+import os.path
+import tempfile
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
+
 def main():
 
-    pam_items = [ 'core', 'data', 'fsize', 'memlock', 'nofile', 'rss', 'stack', 'cpu', 'nproc', 'as', 'maxlogins', 'maxsyslogins', 'priority', 'locks', 'sigpending', 'msgqueue', 'nice', 'rtprio', 'chroot' ]
+    pam_items = ['core', 'data', 'fsize', 'memlock', 'nofile', 'rss', 'stack', 'cpu', 'nproc', 'as', 'maxlogins', 'maxsyslogins', 'priority', 'locks',
+                 'sigpending', 'msgqueue', 'nice', 'rtprio', 'chroot']
 
     pam_types = [ 'soft', 'hard', '-' ]
 
@@ -170,15 +185,15 @@ def main():
     space_pattern = re.compile(r'\s+')
 
     message = ''
-    f = open (limits_conf, 'r')
+    f = open (limits_conf, 'rb')
     # Tempfile
-    nf = tempfile.NamedTemporaryFile()
+    nf = tempfile.NamedTemporaryFile(mode='w+')
 
     found = False
     new_value = value
 
     for line in f:
-
+        line = to_native(line, errors='surrogate_or_strict')
         if line.startswith('#'):
             nf.write(line)
             continue
@@ -272,7 +287,7 @@ def main():
         nf.close()
     except:
         pass
-   
+
     res_args = dict(
         changed = changed, msg = message
     )
@@ -282,9 +297,6 @@ def main():
 
     module.exit_json(**res_args)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

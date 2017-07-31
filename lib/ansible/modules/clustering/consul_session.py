@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: consul_session
@@ -144,6 +135,9 @@ try:
 except ImportError:
     python_consul_installed = False
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def execute(module):
 
     state = module.params.get('state')
@@ -173,7 +167,7 @@ def lookup_sessions(module):
             node = module.params.get('node')
             if not node:
                 module.fail_json(
-                  msg="node name is required to retrieve sessions for node")
+                    msg="node name is required to retrieve sessions for node")
             sessions = consul_client.session.node(node, dc=datacenter)
             module.exit_json(changed=True,
                              node=node,
@@ -182,7 +176,7 @@ def lookup_sessions(module):
             session_id = module.params.get('id')
             if not session_id:
                 module.fail_json(
-                  msg="session_id is required to retrieve indvidual session info")
+                    msg="session_id is required to retrieve indvidual session info")
 
             session_by_id = consul_client.session.info(session_id, dc=datacenter)
             module.exit_json(changed=True,
@@ -276,11 +270,10 @@ def main():
         execute(module)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
-                            module.params.get('host'), module.params.get('port'), str(e)))
+            module.params.get('host'), module.params.get('port'), str(e)))
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

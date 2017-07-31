@@ -211,10 +211,14 @@
 # test simultaneous remove and install using +- prefixes
 
 - name: install hello to prep next task
-  zypper: name=hello, state=present
+  zypper:
+    name: hello
+    state: present
 
 - name: remove metamail to prep next task
-  zypper: name=hello, state=absent
+  zypper:
+    name: metamail
+    state: absent
 
 - name: install and remove in the same run, with +- prefix
   zypper: 
@@ -334,3 +338,27 @@
         - zypperin1|changed
         - not zypperin2|changed
   when: ansible_distribution == 'openSUSE Leap' and ansible_distribution_version == '42.1'
+
+
+# check for https://github.com/ansible/ansible/issues/20139
+- name: run updatecache
+  zypper:
+    name: hello
+    state: present
+    update_cache: True
+  register: zypper_result_update_cache
+
+- name: run updatecache in check mode
+  zypper:
+    name: hello
+    state: present
+    update_cache: True
+  check_mode: True
+  register: zypper_result_update_cache_check
+
+
+- assert:
+    that:
+      - zypper_result_update_cache|success
+      - zypper_result_update_cache_check|success
+      - not zypper_result_update_cache_check|changed

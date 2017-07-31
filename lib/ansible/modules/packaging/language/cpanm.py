@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Franck Cuny <franck@lumberjaph.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -134,20 +124,25 @@ EXAMPLES = '''
     version: '1.0'
 '''
 
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 def _is_package_installed(module, name, locallib, cpanm, version):
     cmd = ""
     if locallib:
         os.environ["PERL5LIB"] = "%s/lib/perl5" % locallib
     cmd = "%s perl -e ' use %s" % (cmd, name)
     if version:
-       cmd = "%s %s;'" % (cmd, version)
+        cmd = "%s %s;'" % (cmd, version)
     else:
-       cmd = "%s;'" % cmd
+        cmd = "%s;'" % cmd
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
     if res == 0:
-       return True
+        return True
     else:
-       return False
+        return False
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
@@ -232,8 +227,6 @@ def main():
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

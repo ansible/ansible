@@ -25,9 +25,9 @@ import os.path
 import re
 import tempfile
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
@@ -36,7 +36,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp()
@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
-            fragment_content = open(self._loader.get_real_file(fragment), 'rb').read()
+            fragment_content = open(self._loader.get_real_file(fragment, decrypt=decrypt), 'rb').read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
@@ -79,37 +79,30 @@ class ActionModule(ActionBase):
         return temp_path
 
     def run(self, tmp=None, task_vars=None):
-        if task_vars is None:
-            task_vars = dict()
+
+        self._supports_check_mode = False
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if self._play_context.check_mode:
-            result['skipped'] = True
-            result['msg'] = "skipped, this module does not support check_mode."
-            return result
+        if task_vars is None:
+            task_vars = dict()
 
-        src        = self._task.args.get('src', None)
-        dest       = self._task.args.get('dest', None)
-        delimiter  = self._task.args.get('delimiter', None)
+        src = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
+        delimiter = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
-        regexp     = self._task.args.get('regexp', None)
-        follow     = self._task.args.get('follow', False)
+        regexp = self._task.args.get('regexp', None)
+        follow = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
+        decrypt = self._task.args.get('decrypt', True)
 
         if src is None or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
             return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-        if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
-
-        if boolean(remote_src):
-            result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
-            self._remove_tmp_path(tmp)
+        if boolean(remote_src, strict=False):
+            result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
             return result
         else:
             try:
@@ -118,6 +111,9 @@ class ActionModule(ActionBase):
                 result['failed'] = True
                 result['msg'] = to_native(e)
                 return result
+
+        if not tmp:
+            tmp = self._make_tmp_path()
 
         if not os.path.isdir(src):
             result['failed'] = True
@@ -129,7 +125,7 @@ class ActionModule(ActionBase):
             _re = re.compile(regexp)
 
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
+        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, decrypt)
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest)
@@ -141,7 +137,7 @@ class ActionModule(ActionBase):
         new_module_args = self._task.args.copy()
 
         # clean assemble specific options
-        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden']:
+        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden', 'decrypt']:
             if opt in new_module_args:
                 del new_module_args[opt]
 
@@ -161,9 +157,9 @@ class ActionModule(ActionBase):
             xfered = self._transfer_file(path, remote_path)
 
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms2((tmp, remote_path), remote_user)
+            self._fixup_perms2((tmp, remote_path))
 
-            new_module_args.update( dict( src=xfered,))
+            new_module_args.update(dict(src=xfered,))
 
             res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False)
             if diff:

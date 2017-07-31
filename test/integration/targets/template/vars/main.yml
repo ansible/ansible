@@ -13,3 +13,8 @@ templated_dict:
   null_type: "{{ null_type }}"
   bool: "{{ bool_var }}"
   multi_part: "{{ part_1 }}{{ part_2 }}"
+
+parent_vars:
+- foo
+- bar
+- bam

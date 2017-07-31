@@ -1,0 +1,21 @@
+# NOTE: The win_scheduled_task module only works on Win2012+
+
+- name: Test Windows capabilities
+  raw: Get-Command New-ScheduledTask -ErrorAction SilentlyContinue; return $?
+  failed_when: no
+  register: new_scheduledtask
+
+- name: Only run tests when Windows is capable
+  when: new_scheduledtask.rc == 0
+  block:
+
+  - name: Test in normal mode
+    include: tests.yml
+    vars:
+      in_check_mode: no
+
+  - name: Test in check-mode
+    include: tests.yml
+    vars:
+      in_check_mode: yes
+    check_mode: yes

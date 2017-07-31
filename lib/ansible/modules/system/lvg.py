@@ -3,25 +3,16 @@
 
 # (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
 # based on lvol module by Jeroen Hoekx <jeroen.hoekx@dsquare.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -39,7 +30,7 @@ options:
   pvs:
     description:
     - List of comma-separated devices to use as physical devices in this volume group. Required when creating or resizing volume group.
-    - The module will take care of running pvcreate if needed. 
+    - The module will take care of running pvcreate if needed.
     required: false
   pesize:
     description:
@@ -89,6 +80,10 @@ EXAMPLES = '''
     vg: vg.services
     state: absent
 '''
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def parse_vgs(data):
     vgs = []
@@ -102,13 +97,13 @@ def parse_vgs(data):
     return vgs
 
 def find_mapper_device_name(module, dm_device):
-        dmsetup_cmd = module.get_bin_path('dmsetup', True)
-        mapper_prefix = '/dev/mapper/'
-        rc, dm_name, err = module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
-        if rc != 0:
-            module.fail_json(msg="Failed executing dmsetup command.", rc=rc, err=err)
-        mapper_device = mapper_prefix + dm_name.rstrip()
-        return mapper_device
+    dmsetup_cmd = module.get_bin_path('dmsetup', True)
+    mapper_prefix = '/dev/mapper/'
+    rc, dm_name, err = module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+    if rc != 0:
+        module.fail_json(msg="Failed executing dmsetup command.", rc=rc, err=err)
+    mapper_device = mapper_prefix + dm_name.rstrip()
+    return mapper_device
 
 def parse_pvs(module, data):
     pvs = []
@@ -262,8 +257,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

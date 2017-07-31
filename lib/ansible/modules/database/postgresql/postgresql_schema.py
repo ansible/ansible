@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -76,7 +77,9 @@ options:
     choices: [ "present", "absent" ]
 notes:
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
+     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed
+     on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before
+     using this module.
 requirements: [ psycopg2 ]
 author: "Flavien Chantelot <contact@flavien.io>"
 '''
@@ -87,7 +90,7 @@ EXAMPLES = '''
     name: acme
 
 # Create a new schema "acme" with a user "bob" who will own it
-- postgresql_schema: 
+- postgresql_schema:
     name: acme
     owner: bob
 
@@ -101,7 +104,6 @@ schema:
     sample: "acme"
 '''
 
-
 try:
     import psycopg2
     import psycopg2.extras
@@ -109,6 +111,10 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
+
+import traceback
+
+from ansible.module_utils._text import to_native
 
 class NotSupportedError(Exception):
     pass
@@ -180,7 +186,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             login_user=dict(default="postgres"),
-            login_password=dict(default=""),
+            login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
             login_unix_socket=dict(default=""),
             port=dict(default="5432"),
@@ -210,7 +216,7 @@ def main():
         "login_password":"password",
         "port":"port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
+    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '' )
 
     # If a login_unix_socket is specified, incorporate it here.
@@ -228,10 +234,10 @@ def main():
                                               .extensions
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(
-                cursor_factory=psycopg2.extras.DictCursor)
+            cursor_factory=psycopg2.extras.DictCursor)
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" %(text, str(e)))
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
@@ -262,7 +268,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg="Database query failed: %s" %(text, str(e)))
+        module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, schema=schema)
 

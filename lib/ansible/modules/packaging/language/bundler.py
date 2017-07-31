@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Tim Hoiberg <tim.hoiberg@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION='''
 ---
@@ -141,6 +131,8 @@ EXAMPLES='''
     chdir: ~/rails_project
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def get_bundler_executable(module):
     if module.params.get('executable'):
@@ -152,23 +144,22 @@ def get_bundler_executable(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-                executable=dict(default=None, required=False),
-                state=dict(default='present', required=False, choices=['present', 'latest']),
-                chdir=dict(default=None, required=False, type='path'),
-                exclude_groups=dict(default=None, required=False, type='list'),
-                clean=dict(default=False, required=False, type='bool'),
-                gemfile=dict(default=None, required=False, type='path'),
-                local=dict(default=False, required=False, type='bool'),
-                deployment_mode=dict(default=False, required=False, type='bool'),
-                user_install=dict(default=True, required=False, type='bool'),
-                gem_path=dict(default=None, required=False, type='path'),
-                binstub_directory=dict(default=None, required=False, type='path'),
-                extra_args=dict(default=None, required=False),
-            ),
+            executable=dict(default=None, required=False),
+            state=dict(default='present', required=False, choices=['present', 'latest']),
+            chdir=dict(default=None, required=False, type='path'),
+            exclude_groups=dict(default=None, required=False, type='list'),
+            clean=dict(default=False, required=False, type='bool'),
+            gemfile=dict(default=None, required=False, type='path'),
+            local=dict(default=False, required=False, type='bool'),
+            deployment_mode=dict(default=False, required=False, type='bool'),
+            user_install=dict(default=True, required=False, type='bool'),
+            gem_path=dict(default=None, required=False, type='path'),
+            binstub_directory=dict(default=None, required=False, type='path'),
+            extra_args=dict(default=None, required=False),
+        ),
         supports_check_mode=True
         )
 
-    executable = module.params.get('executable')
     state = module.params.get('state')
     chdir = module.params.get('chdir')
     exclude_groups = module.params.get('exclude_groups')
@@ -220,6 +211,5 @@ def main():
     module.exit_json(changed='Installing' in out, state=state, stdout=out, stderr=err)
 
 
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

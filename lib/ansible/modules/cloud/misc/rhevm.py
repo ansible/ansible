@@ -1,25 +1,16 @@
 #!/usr/bin/python
 
 # (c) 2016, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,6 +18,7 @@ module: rhevm
 author: Timothy Vandenbrande
 short_description: RHEV/oVirt automation
 description:
+    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.
     - Allows you to create/remove/update or powermanage virtual machines on a RHEV/oVirt platform.
 version_added: "2.2"
 requirements:
@@ -217,8 +209,7 @@ vm:
 
 EXAMPLES = '''
 # basic get info from VM
-  action: rhevm
-  args:
+  - rhevm:
       name: "demo"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -226,8 +217,7 @@ EXAMPLES = '''
       state: "info"
 
 # basic create example from image
-  action: rhevm
-  args:
+  - rhevm:
       name: "demo"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -237,8 +227,7 @@ EXAMPLES = '''
       cluster: "centos"
 
 # power management
-  action: rhevm
-  args:
+  - rhevm:
       name: "uptime_server"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -246,11 +235,10 @@ EXAMPLES = '''
       cluster: "RH"
       state: "down"
       image: "centos7_x64"
-      cluster: "centos
+      cluster: "centos"
 
 # multi disk, multi nic create example
-  action: rhevm
-  args:
+  - rhevm:
       name: "server007"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -290,23 +278,21 @@ EXAMPLES = '''
         - "hd"
 
 # add a CD to the disk cd_drive
-  action: rhevm
-  args:
-    name: 'server007'
-    user: "{{ rhev.admin.name }}"
-    password: "{{ rhev.admin.pass }}"
-    state: 'cd'
-    cd_drive: 'rhev-tools-setup.iso'
+  - rhevm:
+      name: 'server007'
+      user: "{{ rhev.admin.name }}"
+      password: "{{ rhev.admin.pass }}"
+      state: 'cd'
+      cd_drive: 'rhev-tools-setup.iso'
 
 # new host deployment + host network configuration
-  action: rhevm
-  args:
-    name: "ovirt_node007"
-    password: "{{ rhevm.admin.pass }}"
-    type: "host"
-    state: present
-    cluster: "rhevm01"
-    ifaces:
+  - rhevm:
+      name: "ovirt_node007"
+      password: "{{ rhevm.admin.pass }}"
+      type: "host"
+      state: present
+      cluster: "rhevm01"
+      ifaces:
         - name: em1
         - name: em2
         - name: p3p1
@@ -335,9 +321,6 @@ EXAMPLES = '''
 '''
 
 import time
-import sys
-import traceback
-import json
 
 try:
     from ovirtsdk.api import API
@@ -345,6 +328,9 @@ try:
     HAS_SDK = True
 except ImportError:
     HAS_SDK = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 RHEV_FAILED = 1
 RHEV_SUCCESS = 0
@@ -453,7 +439,7 @@ class RHEVConn(object):
                 currentdisk = VM.disks.get(name=diskname)
                 if attempt == 100:
                     setMsg("Error, disk %s, state %s" % (diskname, str(currentdisk.status.state)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)
@@ -493,7 +479,7 @@ class RHEVConn(object):
                 currentnic = VM.nics.get(name=nicname)
                 if attempt == 100:
                     setMsg("Error, iface %s, state %s" % (nicname, str(currentnic.active)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)
@@ -626,10 +612,10 @@ class RHEVConn(object):
                 setFailed()
                 return False
         elif int(DISK.size) < (1024 * 1024 * 1024 * int(disksize)):
-                setMsg("Shrinking disks is not supported")
-                setMsg(str(e))
-                setFailed()
-                return False
+            setMsg("Shrinking disks is not supported")
+            setMsg(str(e))
+            setFailed()
+            return False
         else:
             setMsg("The size of the disk is correct")
         if str(DISK.interface) != str(diskinterface):
@@ -667,7 +653,7 @@ class RHEVConn(object):
             setChanged()
         try:
             NIC.update()
-            setMsg('iface has succesfully been updated.')
+            setMsg('iface has successfully been updated.')
         except Exception as e:
             setMsg("Failed to update the iface.")
             setMsg(str(e))
@@ -937,13 +923,13 @@ class RHEVConn(object):
         VM = self.get_VM(vmname)
         try:
             if str(VM.status.state) == 'down':
-                cdrom = params.CdRom(file=cd_iso)
+                cdrom = params.CdRom(file=cd_drive)
                 VM.cdroms.add(cdrom)
                 setMsg("Attached the image.")
                 setChanged()
             else:
                 cdrom = VM.cdroms.get(id="00000000-0000-0000-0000-000000000000")
-                cdrom.set_file(cd_iso)
+                cdrom.set_file(cd_drive)
                 cdrom.update(current=True)
                 setMsg("Attached the image.")
                 setChanged()
@@ -975,7 +961,7 @@ class RHEVConn(object):
         HOST = self.get_Host_byid(VM.host.id)
         if str(HOST.name) != vmhost:
             try:
-                vm.migrate(
+                VM.migrate(
                     action=params.Action(
                         host=params.Host(
                             name=vmhost,
@@ -1028,13 +1014,13 @@ class RHEV(object):
             vminfo['cpu_cores']   = VM.cpu.topology.cores
             vminfo['cpu_sockets'] = VM.cpu.topology.sockets
             vminfo['cpu_shares']  = VM.cpu_shares
-            vminfo['memory']      = (int(VM.memory) / 1024 / 1024 / 1024)
-            vminfo['mem_pol']     = (int(VM.memory_policy.guaranteed) / 1024 / 1024 / 1024)
+            vminfo['memory']      = (int(VM.memory) // 1024 // 1024 // 1024)
+            vminfo['mem_pol']     = (int(VM.memory_policy.guaranteed) // 1024 // 1024 // 1024)
             vminfo['os']          = VM.get_os().type_
             vminfo['del_prot']    = VM.delete_protected
             try:
                 vminfo['host']    = str(self.conn.get_Host_byid(str(VM.host.id)).name)
-            except Exception as e:
+            except Exception:
                 vminfo['host']    = None
             vminfo['boot_order']  = []
             for boot_dev in VM.os.get_boot():
@@ -1043,7 +1029,7 @@ class RHEV(object):
             for DISK in VM.disks.list():
                 disk = dict()
                 disk['name'] = DISK.name
-                disk['size'] = (int(DISK.size) / 1024 / 1024 / 1024)
+                disk['size'] = (int(DISK.size) // 1024 // 1024 // 1024)
                 disk['domain'] = str((self.conn.get_domain_byid(DISK.get_storage_domains().get_storage_domain()[0].id)).name)
                 disk['interface'] = DISK.interface
                 vminfo['disks'].append(disk)
@@ -1485,7 +1471,7 @@ def main():
         argument_spec = dict(
             state      = dict(default='present', choices=['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']),
             user       = dict(default="admin@internal"),
-            password   = dict(required=True),
+            password   = dict(required=True, no_log=True),
             server     = dict(default="127.0.0.1"),
             port       = dict(default="443"),
             insecure_api = dict(default=False, type='bool'),
@@ -1526,9 +1512,6 @@ def main():
     else:
         module.exit_json(**result)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

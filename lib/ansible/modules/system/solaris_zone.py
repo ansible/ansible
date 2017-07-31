@@ -1,30 +1,16 @@
 #!/usr/bin/python
 
 # (c) 2015, Paul Markham <pmarkham@netrefinery.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import sys
-import os
-import platform
-import tempfile
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -107,57 +93,65 @@ options:
 '''
 
 EXAMPLES = '''
-# Create and install a zone, but don't boot it
-- solaris_zone:
+- name: Create and install a zone, but don't boot it
+  solaris_zone:
     name: zone1
     state: present
     path: /zones/zone1
-    sparse: true
+    sparse: True
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Create and install a zone and boot it
-- solaris_zone:
+- name: Create and install a zone and boot it
+  solaris_zone:
     name: zone1
     state: running
     path: /zones/zone1
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Boot an already installed zone
-- solaris_zone:
+- name: Boot an already installed zone
+  solaris_zone:
     name: zone1
     state: running
 
-# Stop a zone
-- solaris_zone:
+- name: Stop a zone
+  solaris_zone:
     name: zone1
     state: stopped
 
-# Destroy a zone
-- solaris_zone:
+- name: Destroy a zone
+  solaris_zone:
     name: zone1
     state: absent
 
-# Detach a zone
-- solaris_zone:
+- name: Detach a zone
+  solaris_zone:
     name: zone1
     state: detached
 
-# Configure a zone, ready to be attached
-- solaris_zone:
+- name: Configure a zone, ready to be attached
+  solaris_zone:
     name: zone1
     state: configured
     path: /zones/zone1
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Attach a zone
-- solaris_zone:
+- name: Attach zone1
+  solaris_zone:
     name: zone1
     state: attached
-    attach_options=: -u
+    attach_options: -u
 '''
+
+import os
+import platform
+import tempfile
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class Zone(object):
     def __init__(self, module):
@@ -442,18 +436,18 @@ class Zone(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec       = dict(
-            name            = dict(required=True),
-            state           = dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
-            path            = dict(default=None),
-            sparse          = dict(default=False, type='bool'),
-            root_password   = dict(default=None, no_log=True),
-            timeout         = dict(default=600, type='int'),
-            config          = dict(default=''),
-            create_options  = dict(default=''),
-            install_options = dict(default=''),
-            attach_options  = dict(default=''),
-            ),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
+            path=dict(default=None),
+            sparse=dict(default=False, type='bool'),
+            root_password=dict(default=None, no_log=True),
+            timeout=dict(default=600, type='int'),
+            config=dict(default=''),
+            create_options=dict(default=''),
+            install_options=dict(default=''),
+            attach_options=dict(default=''),
+        ),
         supports_check_mode=True
     )
 
@@ -480,7 +474,6 @@ def main():
 
     module.exit_json(changed=zone.changed, msg=', '.join(zone.msg))
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

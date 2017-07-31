@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -51,7 +52,35 @@ options:
     required: false
     default: null
     aliases: []
-    choices: [ 'aurora5.6', 'mariadb10.0', 'mysql5.1', 'mysql5.5', 'mysql5.6', 'mysql5.7', 'oracle-ee-11.2', 'oracle-ee-12.1', 'oracle-se-11.2', 'oracle-se-12.1', 'oracle-se1-11.2', 'oracle-se1-12.1', 'postgres9.3', 'postgres9.4', 'postgres9.5', sqlserver-ee-10.5', 'sqlserver-ee-11.0', 'sqlserver-ex-10.5', 'sqlserver-ex-11.0', 'sqlserver-ex-12.0', 'sqlserver-se-10.5', 'sqlserver-se-11.0', 'sqlserver-se-12.0', 'sqlserver-web-10.5', 'sqlserver-web-11.0', 'sqlserver-web-12.0' ]
+    choices:
+        - 'aurora5.6'
+        - 'mariadb10.0'
+        - 'mariadb10.1'
+        - 'mysql5.1'
+        - 'mysql5.5'
+        - 'mysql5.6'
+        - 'mysql5.7'
+        - 'oracle-ee-11.2'
+        - 'oracle-ee-12.1'
+        - 'oracle-se-11.2'
+        - 'oracle-se-12.1'
+        - 'oracle-se1-11.2'
+        - 'oracle-se1-12.1'
+        - 'postgres9.3'
+        - 'postgres9.4'
+        - 'postgres9.5'
+        - 'postgres9.6'
+        - 'sqlserver-ee-10.5'
+        - 'sqlserver-ee-11.0'
+        - 'sqlserver-ex-10.5'
+        - 'sqlserver-ex-11.0'
+        - 'sqlserver-ex-12.0'
+        - 'sqlserver-se-10.5'
+        - 'sqlserver-se-11.0'
+        - 'sqlserver-se-12.0'
+        - 'sqlserver-web-10.5'
+        - 'sqlserver-web-11.0'
+        - 'sqlserver-web-12.0'
   immediate:
     description:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
@@ -60,7 +89,8 @@ options:
     aliases: []
   params:
     description:
-      - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3), or T for tera (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
+      - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3),
+        or T for tera (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
     required: false
     default: null
     aliases: []
@@ -86,9 +116,24 @@ EXAMPLES = '''
       name: norwegian_blue
 '''
 
+try:
+    import boto.rds
+    from boto.exception import BotoServerError
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+
+
 VALID_ENGINES = [
     'aurora5.6',
     'mariadb10.0',
+    'mariadb10.1',
     'mysql5.1',
     'mysql5.5',
     'mysql5.6',
@@ -102,6 +147,7 @@ VALID_ENGINES = [
     'postgres9.3',
     'postgres9.4',
     'postgres9.5',
+    'postgres9.6',
     'sqlserver-ee-10.5',
     'sqlserver-ee-11.0',
     'sqlserver-ex-10.5',
@@ -115,12 +161,12 @@ VALID_ENGINES = [
     'sqlserver-web-12.0',
 ]
 
-try:
-    import boto.rds
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+INT_MODIFIERS = {
+    'K': 1024,
+    'M': pow(1024, 2),
+    'G': pow(1024, 3),
+    'T': pow(1024, 4),
+}
 
 
 # returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
@@ -136,14 +182,6 @@ class NotModifiableError(Exception):
     def __str__(self):
         return 'NotModifiableError: %s' % self.error_message
 
-INT_MODIFIERS = {
-    'K': 1024,
-    'M': pow(1024, 2),
-    'G': pow(1024, 3),
-    'T': pow(1024, 4),
-}
-
-TRUE_VALUES = ('on', 'true', 'yes', '1',)
 
 def set_parameter(param, value, immediate):
     """
@@ -155,7 +193,7 @@ def set_parameter(param, value, immediate):
         converted_value = str(value)
 
     elif param.type == 'integer':
-        if isinstance(value, basestring):
+        if isinstance(value, string_types):
             try:
                 for modifier in INT_MODIFIERS.keys():
                     if value.endswith(modifier):
@@ -171,8 +209,8 @@ def set_parameter(param, value, immediate):
             converted_value = int(value)
 
     elif param.type == 'boolean':
-        if isinstance(value, basestring):
-            converted_value = value in TRUE_VALUES
+        if isinstance(value, string_types):
+            converted_value = to_native(value) in BOOLEANS_TRUE
         else:
             converted_value = bool(value)
 
@@ -217,13 +255,13 @@ def modify_group(group, params, immediate=False):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state             = dict(required=True,  choices=['present', 'absent']),
-            name              = dict(required=True),
-            engine            = dict(required=False, choices=VALID_ENGINES),
-            description       = dict(required=False),
-            params            = dict(required=False, aliases=['parameters'], type='dict'),
-            immediate         = dict(required=False, type='bool'),
-        )
+        state             = dict(required=True,  choices=['present', 'absent']),
+        name              = dict(required=True),
+        engine            = dict(required=False, choices=VALID_ENGINES),
+        description       = dict(required=False),
+        params            = dict(required=False, aliases=['parameters'], type='dict'),
+        immediate         = dict(required=False, type='bool'),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -305,9 +343,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,36 @@
+---
+- hosts: ovs
+  gather_facts: no
+  remote_user: ubuntu
+  become: yes
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
+
+
+  tasks:
+    - set_fact:
+        test_failed: false
+        failed_modules: []
+    - block:
+      - include_role:
+          name: openvswitch_db
+        when: "limit_to in ['*', 'openvswitch_db']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'openvswitch_db' ]"
+            test_failed: true
+
+
+###########
+    - debug: var=failed_modules
+      when: test_failed
+
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed

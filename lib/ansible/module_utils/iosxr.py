@@ -5,6 +5,7 @@
 # to the complete work.
 #
 # Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2017 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -25,88 +26,124 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
 
-import re
+_DEVICE_CONFIGS = {}
 
-from ansible.module_utils.netcli import Command
-from ansible.module_utils.network import NetworkError, NetworkModule
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import CliBase
+iosxr_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict')
+}
 
 
-class Cli(CliBase):
+def get_argspec():
+    return iosxr_argument_spec
 
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
 
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in iosxr_argument_spec:
+        if module._name == 'iosxr_user':
+            if key not in ['password', 'provider'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key != 'provider' and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send(['terminal length 0', 'terminal exec prompt no-timestamp'])
 
-    ### Config methods ###
+def get_config(module, flags=[]):
+    cmd = 'show running-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
 
-    def configure(self, commands):
-        cmds = ['configure terminal']
-        if commands[-1] == 'end':
-            commands.pop()
-        cmds.extend(to_list(commands))
-        cmds.extend(['commit', 'end'])
-        responses = self.execute(cmds)
-        return responses[1:]
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
 
-    def get_config(self, flags=None):
-        cmd = 'show running-config'
-        if flags:
-            if isinstance(flags, list):
-                cmd += ' %s' % ' '.join(flags)
-            else:
-                cmd += ' %s' % flags
-        return self.execute([cmd])[0]
 
-    def load_config(self, config, commit=False, replace=False, comment=None):
-        commands = ['configure terminal']
-        commands.extend(config)
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
 
-        if commands[-1] == 'end':
-            commands.pop()
 
-        try:
-            self.execute(commands)
-            diff = self.execute(['show commit changes diff'])
-            if commit:
-                if replace:
-                    prompt = re.compile(r'\[no\]:\s$')
-                    commit = 'commit replace'
-                    if comment:
-                        commit += ' comment %s' % comment
-                    cmd = Command(commit, prompt=prompt, response='yes')
-                    self.execute([cmd, 'end'])
-                else:
-                    commit = 'commit'
-                    if comment:
-                        commit += ' comment %s' % comment
-                    self.execute([commit, 'end'])
-            else:
-                self.execute(['abort'])
-        except NetworkError:
-            self.execute(['abort'])
-            diff = None
-            raise
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    commands = to_commands(module, to_list(commands))
+    for cmd in to_list(commands):
+        cmd = module.jsonify(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_or_strict'))
+    return responses
 
-        return diff[0]
 
-Cli = register_transport('cli', default=True)(Cli)
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None, admin=False):
+    cmd = 'configure terminal'
+    if admin:
+        cmd = 'admin ' + cmd
+
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
+
+    failed = False
+    for command in to_list(commands):
+        if command == 'end':
+            continue
+
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            failed = True
+            break
+
+    if failed:
+        exec_command(module, 'abort')
+        module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), commands=commands, rc=rc)
+
+    rc, diff, err = exec_command(module, 'show commit changes diff')
+    if rc != 0:
+        # If we failed, maybe we are in an old version so
+        # we run show configuration instead
+        rc, diff, err = exec_command(module, 'show configuration')
+        if module._diff:
+            warnings.append('device platform does not support config diff')
+
+    if commit:
+        cmd = 'commit'
+        if comment:
+            cmd += ' comment {0}'.format(comment)
+    else:
+        cmd = 'abort'
+        diff = None
+
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        exec_command(module, 'abort')
+        module.fail_json(msg=err, commands=commands, rc=rc)
+
+    return to_text(diff, errors='surrogate_or_strict')

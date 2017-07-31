@@ -97,6 +97,29 @@
         - count_of_zero | skipped
         - not count_of_one | skipped
 
+- name: test with_sequence shortcut syntax (end)
+  set_fact: "{{ 'ws_z_' + item }}={{ item }}"
+  with_sequence: '4'
+
+- name: test with_sequence shortcut syntax (start-end/stride)
+  set_fact: "{{ 'ws_z_' + item }}=stride_{{ item }}"
+  with_sequence: '2-6/2'
+
+- name: test with_sequence shortcut syntax (start-end:format)
+  set_fact: "{{ 'ws_z_' + item }}={{ item }}"
+  with_sequence: '7-8:host%02d'
+
+- name: verify with_sequence shortcut syntax
+  assert:
+    that:
+        - "ws_z_1 == '1'"
+        - "ws_z_2 == 'stride_2'"
+        - "ws_z_3 == '3'"
+        - "ws_z_4 == 'stride_4'"
+        - "ws_z_6 == 'stride_6'"
+        - "ws_z_host07 == 'host07'"
+        - "ws_z_host08 == 'host08'"
+
 # WITH_RANDOM_CHOICE
 
 - name: test with_random_choice
@@ -159,7 +182,7 @@
         - "_xl == 'l'"
 
 
-# WITH_TOGETHER        
+# WITH_TOGETHER
 
 - name: test with_together
   #shell: echo {{ item }}
@@ -201,14 +224,14 @@
 - name: verify with_first_found results
   assert:
     that:
-        - "first_found == first_expected"  
+        - "first_found == first_expected"
         - "first_found != first_unexpected"
 
 # WITH_LINES
 
 - name: test with_lines
   #shell: echo "{{ item }}"
-  set_fact: "{{ item }}=set" 
+  set_fact: "{{ item }}=set"
   with_lines: for i in $(seq 1 5); do echo "l$i" ; done;
 
 - name: verify with_lines results
@@ -244,7 +267,7 @@
   set_fact: "{{ item }}=flattened"
   with_flattened:
     - [ 'a__' ]
-    - [ 'b__', ['c__', 'd__'] ]        
+    - [ 'b__', ['c__', 'd__'] ]
 
 - name: verify with_flattened results
   assert:

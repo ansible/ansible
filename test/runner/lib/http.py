@@ -10,8 +10,15 @@ import json
 try:
     from urllib import urlencode
 except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences,PyUnresolvedReferences
+    # noinspection PyCompatibility, PyUnresolvedReferences
     from urllib.parse import urlencode  # pylint: disable=locally-disabled, import-error, no-name-in-module
+
+try:
+    # noinspection PyCompatibility
+    from urlparse import urlparse
+except ImportError:
+    # noinspection PyCompatibility, PyUnresolvedReferences
+    from urllib.parse import urlparse  # pylint: disable=locally-disabled, ungrouped-imports
 
 from lib.util import (
     CommonConfig,
@@ -76,7 +83,7 @@ class HttpClient(object):
 
         cmd += [url]
 
-        stdout, _ = run_command(self.args, cmd, capture=True, always=self.always)
+        stdout, _ = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)
 
         if self.args.explain and not self.always:
             return HttpResponse(200, '')

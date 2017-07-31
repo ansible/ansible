@@ -25,13 +25,15 @@ import sys
 import time
 from io import BytesIO, StringIO
 
-from ansible.compat.six import PY3
+import pytest
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
+from ansible.module_utils.six import PY3
+import ansible.module_utils.basic
 
 from units.mock.procenv import swap_stdin_and_argv
 
-import ansible.module_utils.basic
 
 class OpenBytesIO(BytesIO):
     """BytesIO with dummy close() method
@@ -44,7 +46,8 @@ class OpenBytesIO(BytesIO):
 
 
 class TestAnsibleModuleRunCommand(unittest.TestCase):
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def run_command_mocked_env(self, mocker):
         self.cmd_out = {
             # os.read() is returning 'bytes', not strings
             sentinel.stdout: BytesIO(),
@@ -61,6 +64,12 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
             if path == '/inaccessible':
                 raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
+        def mock_os_abspath(path):
+            if path.startswith('/'):
+                return path
+            else:
+                return self.os.getcwd.return_value + '/' + path
+
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
@@ -70,7 +79,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
-        self.os = patch('ansible.module_utils.basic.os').start()
+        self.os = mocker.patch('ansible.module_utils.basic.os')
         self.os.path.expandvars.side_effect = lambda x: x
         self.os.path.expanduser.side_effect = lambda x: x
         self.os.environ = {'PATH': '/bin'}
@@ -78,8 +87,9 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.os.path.isdir.return_value = True
         self.os.chdir.side_effect = mock_os_chdir
         self.os.read.side_effect = mock_os_read
+        self.os.path.abspath.side_effect = mock_os_abspath
 
-        self.subprocess = patch('ansible.module_utils.basic.subprocess').start()
+        self.subprocess = mocker.patch('ansible.module_utils.basic.subprocess')
         self.cmd = Mock()
         self.cmd.returncode = 0
         self.cmd.stdin = OpenBytesIO()
@@ -87,13 +97,10 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.cmd.stderr.fileno.return_value = sentinel.stderr
         self.subprocess.Popen.return_value = self.cmd
 
-        self.select = patch('ansible.module_utils.basic.select').start()
+        self.select = mocker.patch('ansible.module_utils.basic.select')
         self.select.select.side_effect = mock_select
+        yield
 
-        self.addCleanup(patch.stopall)
-
-
-    def tearDown(self):
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap.__exit__(None, None, None)
 
@@ -127,6 +134,12 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.module.run_command('/bin/ls', cwd='/new')
         self.assertEqual(self.os.chdir.mock_calls,
                          [call('/new'), call('/old'), ])
+
+    def test_cwd_relative_path(self):
+        self.os.getcwd.return_value = '/old'
+        self.module.run_command('/bin/ls', cwd='sub-dir')
+        self.assertEqual(self.os.chdir.mock_calls,
+                         [call('/old/sub-dir'), call('/old'), ])
 
     def test_cwd_not_a_dir(self):
         self.os.getcwd.return_value = '/old'
@@ -194,4 +207,3 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         else:
             self.assertEqual(stdout.decode('utf-8'), u'Žarn§')
             self.assertEqual(stderr.decode('utf-8'), u'لرئيسية')
-

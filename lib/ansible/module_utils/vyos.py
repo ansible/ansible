@@ -4,7 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2016 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -25,88 +25,104 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network_common import to_list
+from ansible.module_utils.connection import exec_command
 
-import re
-import os
+_DEVICE_CONFIGS = {}
 
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import CliBase
+vyos_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
 
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
-class Cli(CliBase):
-
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\@[\w\-\.]+:\S+?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"\n\s*Invalid command:"),
-        re.compile(r"\nCommit failed"),
-        re.compile(r"\n\s+Set failed"),
-    ]
-
-    TERMINAL_LENGTH = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
+}
 
 
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('set terminal length 0')
-        self.shell.send('set terminal length %s' % self.TERMINAL_LENGTH)
+def get_argspec():
+    return vyos_argument_spec
 
 
-    ### implementation of netcli.Cli ###
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in vyos_argument_spec:
+        if module._name == 'vyos_user':
+            if key not in ['password', 'provider'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key != 'provider' and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
-    def run_commands(self, commands):
-        commands = to_list(commands)
-        return self.execute([str(c) for c in commands])
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
-    ### implementation of netcfg.Config ###
 
-    def configure(self, config):
-        commands = ['configure']
-        commands.extend(config)
-        commands.extend(['commit', 'exit'])
-        response = self.execute(commands)
-        return response[1:-2]
+def get_config(module, target='commands'):
+    cmd = ' '.join(['show configuration', target])
 
-    def load_config(self, config, commit=False, comment=None, save=False, **kwargs):
-        try:
-            config.insert(0, 'configure')
-            self.execute(config)
-        except NetworkError:
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
+
+
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    for cmd in to_list(commands):
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_or_strict'))
+    return responses
+
+
+def load_config(module, commands, commit=False, comment=None):
+    rc, out, err = exec_command(module, 'configure')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
+
+    for cmd in to_list(commands):
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
             # discard any changes in case of failure
-            self.execute(['exit discard'])
-            raise
+            exec_command(module, 'exit discard')
+            module.fail_json(msg='configuration failed')
 
-        if not self.execute('compare')[0].startswith('No changes'):
-            diff = self.execute(['show'])[0]
-        else:
-            diff = None
+    diff = None
+    if module._diff:
+        rc, out, err = exec_command(module, 'compare')
+        out = to_text(out, errors='surrogate_or_strict')
+        if not out.startswith('No changes'):
+            rc, out, err = exec_command(module, 'show')
+            diff = to_text(out, errors='surrogate_or_strict').strip()
 
-        if commit:
-            cmd = 'commit'
-            if comment:
-                cmd += ' comment "%s"' % comment
-            self.execute(cmd)
+    if commit:
+        cmd = 'commit'
+        if comment:
+            cmd += ' comment "%s"' % comment
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            # discard any changes in case of failure
+            exec_command(module, 'exit discard')
+            module.fail_json(msg='commit failed: %s' % err)
 
-        if save:
-            self.execute(['save'])
+    if not commit:
+        exec_command(module, 'exit discard')
+    else:
+        exec_command(module, 'exit')
 
-        if not commit:
-            self.execute(['exit discard'])
-        else:
-            self.execute(['exit'])
-
+    if diff:
         return diff
-
-    def get_config(self, output='text', **kwargs):
-        if output not in ['text', 'set']:
-            raise ValueError('invalid output format specified')
-        if output == 'set':
-            return self.execute(['show configuration commands'])[0]
-        else:
-            return self.execute(['show configuration'])[0]
-
-Cli = register_transport('cli', default=True)(Cli)

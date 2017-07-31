@@ -77,7 +77,7 @@ class TestPlay(unittest.TestCase):
             name="test play",
             hosts=['foo'],
             gather_facts=False,
-            tasks=[dict(action='shell echo "hello world"')], 
+            tasks=[dict(action='shell echo "hello world"')],
         ))
 
     def test_play_with_handlers(self):

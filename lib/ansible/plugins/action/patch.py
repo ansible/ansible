@@ -20,9 +20,9 @@ __metaclass__ = type
 
 import os
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 
 
@@ -34,9 +34,8 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        src        = self._task.args.get('src', None)
-        remote_src = boolean(self._task.args.get('remote_src', 'no'))
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        src = self._task.args.get('src', None)
+        remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)
 
         if src is None:
             result['failed'] = True
@@ -57,13 +56,12 @@ class ActionModule(ActionBase):
 
         # create the remote tmp dir if needed, and put the source file there
         if tmp is None or "-tmp-" not in tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._transfer_file(src, tmp_src)
 
-        self._fixup_perms2((tmp, tmp_src), remote_user)
+        self._fixup_perms2((tmp, tmp_src))
 
         new_module_args = self._task.args.copy()
         new_module_args.update(

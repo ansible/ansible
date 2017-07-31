@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -44,11 +37,11 @@ options:
     required: true
   subscription_user:
     description:
-      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environement variable.
+      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environment variable.
     required: false
   subscription_password:
     description:
-      - THe ProfitBricks password. Overrides the PB_PASSWORD environement variable.
+      - THe ProfitBricks password. Overrides the PB_PASSWORD environment variable.
     required: false
   wait:
     description:
@@ -96,18 +89,21 @@ import uuid
 import time
 
 HAS_PB_SDK = True
-
 try:
     from profitbricks.client import ProfitBricksService, NIC
 except ImportError:
     HAS_PB_SDK = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 uuid_match = re.compile(
     '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         time.sleep(5)
@@ -240,7 +236,7 @@ def main():
             name=dict(default=str(uuid.uuid4()).replace('-','')[:10]),
             lan=dict(),
             subscription_user=dict(),
-            subscription_password=dict(),
+            subscription_password=dict(no_log=True),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             state=dict(default='present'),
@@ -289,7 +285,6 @@ def main():
         except Exception as e:
             module.fail_json(msg='failed to set nic state: %s' % str(e))
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -18,22 +18,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_iis_webapppool
 version_added: "2.0"
-short_description: Configures a IIS Web Application Pool.
+short_description: Configures an IIS Web Application Pool.
 description:
-     - Creates, Removes and configures a IIS Web Application Pool
+     - Creates, Removes and configures an IIS Web Application Pool
 options:
   name:
     description:
-      - Names of application pool
+      - Name of application pool
     required: true
     default: null
     aliases: []
@@ -47,61 +47,49 @@ options:
       - restarted
     required: false
     default: null
-    aliases: []
   attributes:
     description:
-      - Application Pool attributes from string where attributes are seperated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2"
+      - Application Pool attributes from string where attributes are separated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2".
+      - The following attributes may only have the following names.
+      - managedPipelineMode may be either "Integrated" or  "Classic".
+      - startMode may be either "OnDemand" or  "AlwaysRunning".
+      - state may be one of "Starting", "Started", "Stopping", "Stopped", "Unknown".
+        Use the C(state) module parameter to modify, states shown are reflect the possible runtime values.
     required: false
     default: null
-    aliases: []
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
-# This return information about an existing application pool
-$ansible -i inventory -m win_iis_webapppool -a "name='DefaultAppPool'" windows
-host | success >> {
-    "attributes": {},
-    "changed": false,
-    "info": {
-        "attributes": {
-            "CLRConfigFile": "",
-            "applicationPoolSid": "S-1-5-82-3006700770-424185619-1745488364-794895919-4004696415",
-            "autoStart": true,
-            "enable32BitAppOnWin64": false,
-            "enableConfigurationOverride": true,
-            "managedPipelineMode": 0,
-            "managedRuntimeLoader": "webengine4.dll",
-            "managedRuntimeVersion": "v4.0",
-            "name": "DefaultAppPool",
-            "passAnonymousToken": true,
-            "queueLength": 1000,
-            "startMode": 0,
-            "state": 1
-        },
-        "name": "DefaultAppPool",
-        "state": "Started"
-    }
-}
+EXAMPLES = r'''
+- name: return information about an existing application pool
+  win_iis_webapppool:
+    name: DefaultAppPool
 
-# This creates a new application pool in 'Started' state
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=started" windows
+- name: Create a new application pool in 'Started' state
+  win_iis_webapppool:
+    name: AppPool
+    state: started
 
-# This stoppes an application pool
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=stopped" windows
+- name: Stop an application pool
+  win_iis_webapppool:
+    name: AppPool
+    state: stopped
 
-# This restarts an application pool
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=restart" windows
+- name: Restart an application pool
+  win_iis_webapppool:
+    name: AppPool
+    state: restart
 
-# This restarts an application pool
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=restart" windows
+- name: Changes application pool attributes without touching state
+  win_iis_webapppool:
+    name: AppPool
+    attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
 
-# This change application pool attributes without touching state
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' attributes='managedRuntimeVersion:v4.0|autoStart:false'" windows
-
-# This creates an application pool and sets attributes
-$  ansible -i inventory -m win_iis_webapppool -a "name='AnotherAppPool' state=started attributes='managedRuntimeVersion:v4.0|autoStart:false'" windows
-
+- name: Creates an application pool and sets attributes
+  win_iis_webapppool:
+    name: AnotherAppPool
+    state: started
+    attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
 
 # Playbook example
 ---
@@ -113,4 +101,52 @@ $  ansible -i inventory -m win_iis_webapppool -a "name='AnotherAppPool' state=st
     attributes: managedRuntimeVersion:v4.0
   register: webapppool
 
+'''
+
+RETURN = '''
+attributes:
+  description:
+    - Application Pool attributes from that were processed by this module invocation.
+  returned: success
+  type: dictionary
+  sample:
+     "enable32BitAppOnWin64": "true"
+     "managedRuntimeVersion": "v4.0"
+     "managedPipelineMode": "Classic"
+info:
+  description: Information on current state of the Application Pool
+  returned: success
+  type: complex
+  sample:
+  contains:
+    attributes:
+      description: key value pairs showing the current Application Pool attributes
+      returned: success
+      type: dictionary
+      sample:
+            "autoStart": true
+            "managedRuntimeLoader": "webengine4.dll"
+            "managedPipelineMode": "Classic"
+            "name": "DefaultAppPool"
+            "CLRConfigFile": ""
+            "passAnonymousToken": true
+            "applicationPoolSid": "S-1-5-82-1352790163-598702362-1775843902-1923651883-1762956711"
+            "queueLength": 1000
+            "managedRuntimeVersion": "v4.0"
+            "state": "Started"
+            "enableConfigurationOverride": true
+            "startMode": "OnDemand"
+            "enable32BitAppOnWin64": true
+    name:
+      description:
+        - Name of Application Pool that was processed by this module invocation.
+      returned: success
+      type: string
+      sample: "DefaultAppPool"
+    state:
+      description:
+        - Current runtime state of the pool as the module completed.
+      returned: success
+      type: string
+      sample: "Started"
 '''

@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -31,6 +22,7 @@ short_description: Add or remove groups
 requirements: [ groupadd, groupdel, groupmod ]
 description:
     - Manage presence of groups on a host.
+    - For Windows targets, use the M(win_group) module instead.
 options:
     name:
         required: true
@@ -52,7 +44,8 @@ options:
         choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
-
+notes:
+    - For Windows targets, use the M(win_group) module instead.
 '''
 
 EXAMPLES = '''
@@ -63,7 +56,9 @@ EXAMPLES = '''
 '''
 
 import grp
-import platform
+
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+
 
 class Group(object):
     """
@@ -105,7 +100,7 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-            elif key == 'system' and kwargs[key] == True:
+            elif key == 'system' and kwargs[key] is True:
                 cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -190,8 +185,8 @@ class AIX(Group):
         cmd = [self.module.get_bin_path('mkgroup', True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
-                cmd.append('id='+kwargs[key])
-            elif key == 'system' and kwargs[key] == True:
+                cmd.append('id=' + kwargs[key])
+            elif key == 'system' and kwargs[key] is True:
                 cmd.append('-a')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -202,7 +197,7 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid':
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
-                    cmd.append('id='+kwargs[key])
+                    cmd.append('id=' + kwargs[key])
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -275,9 +270,9 @@ class DarwinGroup(Group):
         cmd += [ '-o', 'create' ]
         if self.gid is not None:
             cmd += [ '-i', self.gid ]
-        elif 'system' in kwargs and kwargs['system'] == True:
+        elif 'system' in kwargs and kwargs['system'] is True:
             gid = self.get_lowest_available_system_gid()
-            if gid != False:
+            if gid is not False:
                 self.gid = str(gid)
                 cmd += [ '-i', self.gid ]
         cmd += [ '-L', self.name ]
@@ -302,7 +297,7 @@ class DarwinGroup(Group):
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)
         return (None, '', '')
-    
+
     def get_lowest_available_system_gid(self):
         # check for lowest available system gid (< 500)
         try:
@@ -352,7 +347,6 @@ class OpenBsdGroup(Group):
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
-        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
@@ -394,7 +388,6 @@ class NetBsdGroup(Group):
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
-        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
@@ -468,8 +461,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -15,9 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -60,16 +61,16 @@ options:
     required: false
     default: null
   msg:
-    description: 
+    description:
       - The contents of the annotation message, in plain text.  Limited to 256 characters. Required for annotation.
     required: false
     default: null
-  annotated_by: 
+  annotated_by:
     description:
       - The person or robot who the annotation should be attributed to.
     required: false
     default: "Ansible"
-  level: 
+  level:
     description:
       - one of INFO/WARN/ERROR, defaults to INFO if not supplied.  May affect display.
     choices: ['INFO', 'WARN', 'ERROR']

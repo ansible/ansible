@@ -21,6 +21,7 @@ import re
 import socket
 import time
 import signal
+import json
 
 try:
     import paramiko
@@ -31,22 +32,16 @@ except ImportError:
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkError
-from ansible.module_utils.six.moves import StringIO
+from ansible.module_utils.six import BytesIO
 from ansible.module_utils._text import to_native
+from ansible.module_utils.network_common import to_list, ComplexDict
+from ansible.module_utils.netcli import Command
 
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
     re.compile(r'\x08'),
     re.compile(r'\x1b[^m]*m')
 ]
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
 
 
 class ShellError(Exception):
@@ -78,6 +73,7 @@ class Shell(object):
              allow_agent=False, key_policy="loose"):
 
         self.ssh = paramiko.SSHClient()
+
         if key_policy != "ignore":
             self.ssh.load_system_host_keys()
             try:
@@ -95,14 +91,12 @@ class Shell(object):
         if not look_for_keys:
             look_for_keys = password is None
 
-
         try:
             self.ssh.connect(
                 host, port=port, username=username, password=password,
                 timeout=self._timeout, look_for_keys=look_for_keys, pkey=pkey,
                 key_filename=key_filename, allow_agent=allow_agent,
             )
-
             self.shell = self.ssh.invoke_shell()
             self.shell.settimeout(self._timeout)
         except socket.gaierror:
@@ -132,68 +126,66 @@ class Shell(object):
         raise ShellError('timeout trying to send command: %s' % self._history[-1])
 
     def receive(self, cmd=None):
-        recv = StringIO()
+        recv = BytesIO()
         handled = False
 
         while True:
             data = self.shell.recv(200)
 
             recv.write(data)
-            recv.seek(recv.tell() - 200)
+            recv.seek(recv.tell() - len(data))
 
-            window = self.strip(recv.read())
+            window = self.strip(recv.read().decode('utf8'))
 
-            if hasattr(cmd, 'prompt') and not handled:
-                handled = self.handle_prompt(window, cmd)
+            if cmd:
+                if cmd.get('prompt') and not handled:
+                    handled = self.handle_prompt(window, cmd)
 
             try:
                 if self.find_prompt(window):
-                    resp = self.strip(recv.getvalue())
-                    return self.sanitize(cmd, resp)
+                    resp = self.strip(recv.getvalue().decode('utf8'))
+                    if cmd:
+                        resp = self.sanitize(cmd, resp)
+                    return resp
             except ShellError:
                 exc = get_exception()
-                exc.command = cmd
+                exc.command = cmd['command']
                 raise
 
-    def send(self, commands):
-        responses = list()
+    def send(self, obj):
         try:
-            for command in to_list(commands):
-                signal.alarm(self._timeout)
-                self._history.append(str(command))
-                cmd = '%s\r' % str(command)
-                self.shell.sendall(cmd)
-                if self._timeout == 0:
-                    return
-                responses.append(self.receive(command))
+            self._history.append(str(obj['command']))
+            cmd = '%s\r' % str(obj['command'])
 
-        except socket.timeout:
-            raise ShellError("timeout trying to send command: %s" % cmd)
+            self.shell.sendall(cmd)
 
-        except socket.error:
+            if obj.get('sendonly'):
+                return
+
+            signal.alarm(self._timeout)
+            out = self.receive(obj)
+            signal.alarm(0)
+
+            return (0, out, '')
+        except ShellError:
             exc = get_exception()
-            raise ShellError("problem sending command to host: %s" % to_native(exc))
-
-        return responses
+            return (1, '', to_native(exc))
 
     def close(self):
         self.shell.close()
 
     def handle_prompt(self, resp, cmd):
-        prompt = to_list(cmd.prompt)
-        response = to_list(cmd.response)
-
-        for pr, ans in zip(prompt, response):
-            match = pr.search(resp)
+        for prompt in to_list(cmd['prompt']):
+            match = re.search(prompt, resp)
             if match:
-                answer = '%s\r' % ans
+                answer = '%s\r' % cmd['response']
                 self.shell.sendall(answer)
                 return True
 
     def sanitize(self, cmd, resp):
         cleaned = []
         for line in resp.splitlines():
-            if line.lstrip().startswith(str(cmd)) or self.find_prompt(line):
+            if line.lstrip().startswith(cmd['command']) or self.find_prompt(line):
                 continue
             cleaned.append(line)
         return "\n".join(cleaned)
@@ -222,7 +214,6 @@ class CliBase(object):
 
         self.shell = None
         self._connected = False
-        self.default_output = 'text'
 
     def connect(self, params, kickstart=True):
         host = params['host']
@@ -231,7 +222,8 @@ class CliBase(object):
         username = params['username']
         password = params.get('password')
         key_file = params.get('ssh_keyfile')
-        timeout = params['timeout']
+
+        timeout = params.get('timeout') or 10
 
         try:
             self.shell = Shell(
@@ -255,28 +247,42 @@ class CliBase(object):
         self.shell.close()
         self._connected = False
 
-    def authorize(self, params, **kwargs):
-        pass
+    def to_command(self, obj):
+        if isinstance(obj, Command):
+            cmdobj = dict()
+            cmdobj['command'] = obj.command
+            cmdobj['response'] = obj.response
+            cmdobj['prompt'] = [p.pattern for p in to_list(obj.prompt)]
+            return cmdobj
+
+        elif not isinstance(obj, dict):
+            transform = ComplexDict(dict(
+                command=dict(key=True),
+                prompt=dict(),
+                answer=dict(),
+                sendonly=dict(default=False)
+            ))
+            return transform(obj)
+
+        else:
+            return obj
 
     def execute(self, commands):
         try:
-            return self.shell.send(commands)
+            responses = list()
+            for item in to_list(commands):
+                item = self.to_command(item)
+                rc, out, err = self.shell.send(item)
+                if rc != 0:
+                    raise ShellError(err)
+                responses.append(out)
+            return responses
         except ShellError:
             exc = get_exception()
-            commands = [str(c) for c in commands]
-            raise NetworkError(to_native(exc), commands=commands)
+            raise NetworkError(to_native(exc))
 
-    def run_commands(self, commands):
-        return self.execute(to_list(commands))
+    def run_commands(self, x):
+        return self.execute(to_list(x))
 
-    def configure(self, commands):
-        raise NotImplementedError
-
-    def get_config(self, **kwargs):
-        raise NotImplementedError
-
-    def load_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def save_config(self):
-        raise NotImplementedError
+    def exec_command(self, x):
+        return self.shell.send(self.to_command(x))

@@ -14,16 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -44,6 +38,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -67,7 +65,7 @@ RETURN = '''
 role:
     description: Dictionary describing the role.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique role ID.
@@ -78,6 +76,12 @@ role:
             type: string
             sample: "demo"
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def _system_state_change(state, role):

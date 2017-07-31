@@ -21,11 +21,12 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_updates
 version_added: "2.0"
@@ -60,19 +61,20 @@ options:
         choices:
         - installed
         - searched
-    log_path: 
+    log_path:
         description:
-        - If set, win_updates will append update progress to the specified file. The directory must already exist.
+        - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
         required: false
 author: "Matt Davis (@mattdavispdx)"
 notes:
-- win_updates must be run by a user with membership in the local Administrators group
-- win_updates will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
-- win_updates does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
-- win_updates can take a significant amount of time to complete (hours, in some cases). Performance depends on many factors, including OS version, number of updates, system load, and update server load.
+- C(win_updates) must be run by a user with membership in the local Administrators group
+- C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
+- C(win_updates) does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
+- C(win_updates) can take a significant amount of time to complete (hours, in some cases).
+  Performance depends on many factors, including OS version, number of updates, system load, and update server load.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Install all security, critical, and rollup updates
 - win_updates:
     category_names:
@@ -91,7 +93,7 @@ EXAMPLES = '''
     log_path: c:\ansible_wu.txt
 '''
 
-RETURN = '''
+RETURN = r'''
 reboot_required:
     description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
     returned: success
@@ -99,11 +101,11 @@ reboot_required:
     sample: True
 
 updates:
-    description: List of updates that were found/installed 
+    description: List of updates that were found/installed
     returned: success
-    type: dictionary
-    sample: 
-    contains: 
+    type: complex
+    sample:
+    contains:
         title:
             description: Display name
             returned: always

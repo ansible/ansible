@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -28,7 +29,8 @@ author: "Rob White (@wimnat)"
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     required: false
     default: null
 extends_documentation_fragment:
@@ -74,16 +76,21 @@ def get_route_table_info(route_table):
 
     # Add any routes to array
     routes = []
+    associations = []
     for route in route_table.routes:
         routes.append(route.__dict__)
+    for association in route_table.associations:
+        associations.append(association.__dict__)
 
-    route_table_info = { 'id': route_table.id,
-                         'routes': routes,
-                         'tags': route_table.tags,
-                         'vpc_id': route_table.vpc_id
-                       }
+    route_table_info = {'id': route_table.id,
+                        'routes': routes,
+                        'associations': associations,
+                        'tags': route_table.tags,
+                        'vpc_id': route_table.vpc_id
+                        }
 
     return route_table_info
+
 
 def list_ec2_vpc_route_tables(connection, module):
 
@@ -105,11 +112,12 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(default=None, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')

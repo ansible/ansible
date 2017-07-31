@@ -6,38 +6,16 @@
 # Built using https://github.com/hamnis/useful-scripts/blob/master/python/download-maven-artifact
 # as a reference and starting point.
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-__author__ = 'cschmidt'
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-from lxml import etree
-import os
-import hashlib
-import sys
-import posixpath
-import urlparse
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-try:
-    import boto3
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -153,6 +131,24 @@ EXAMPLES = '''
     dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
+import hashlib
+import os
+import posixpath
+import sys
+
+from lxml import etree
+
+try:
+    import boto3
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib import parse as urlparse
+from ansible.module_utils.urls import fetch_url
+
+
 class Artifact(object):
     def __init__(self, group_id, artifact_id, version, classifier=None, extension='jar'):
         if not group_id:
@@ -245,7 +241,10 @@ class MavenDownloader:
             timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
-                if len(snapshotArtifact.xpath("classifier/text()")) > 0 and snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and len(snapshotArtifact.xpath("extension/text()")) > 0 and snapshotArtifact.xpath("extension/text()")[0] == artifact.extension:
+                if (len(snapshotArtifact.xpath("classifier/text()")) > 0 and
+                        snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and
+                        len(snapshotArtifact.xpath("extension/text()")) > 0 and
+                        snapshotArtifact.xpath("extension/text()")[0] == artifact.extension):
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
 
@@ -265,11 +264,11 @@ class MavenDownloader:
         url_to_use = url
         parsed_url = urlparse(url)
         if parsed_url.scheme=='s3':
-                parsed_url = urlparse(url)
-                bucket_name = parsed_url.netloc
-                key_name = parsed_url.path[1:]
-                client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
-                url_to_use = client.generate_presigned_url('get_object',Params={'Bucket':bucket_name,'Key':key_name},ExpiresIn=10)
+            parsed_url = urlparse(url)
+            bucket_name = parsed_url.netloc
+            key_name = parsed_url.path[1:]
+            client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
+            url_to_use = client.generate_presigned_url('get_object',Params={'Bucket':bucket_name,'Key':key_name},ExpiresIn=10)
 
         req_timeout = self.module.params.get('timeout')
 
@@ -367,8 +366,12 @@ def main():
         )
     )
 
+    repository_url = module.params["repository_url"]
+    if not repository_url:
+        repository_url = "http://repo1.maven.org/maven2"
+
     try:
-        parsed_url = urlparse(module.params["repository_url"])
+        parsed_url = urlparse(repository_url)
     except AttributeError as e:
         module.fail_json(msg='url parsing went wrong %s' % e)
 
@@ -380,14 +383,8 @@ def main():
     version = module.params["version"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
-    repository_url = module.params["repository_url"]
-    repository_username = module.params["username"]
-    repository_password = module.params["password"]
     state = module.params["state"]
     dest = module.params["dest"]
-
-    if not repository_url:
-        repository_url = "http://repo1.maven.org/maven2"
 
     #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
@@ -412,12 +409,12 @@ def main():
 
     try:
         if downloader.download(artifact, dest):
-            module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
+            module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,
+                             extension=extension, repository_url=repository_url, changed=True)
         else:
             module.fail_json(msg="Unable to download the artifact")
     except ValueError as e:
         module.fail_json(msg=e.args[0])
-
 
 
 if __name__ == '__main__':

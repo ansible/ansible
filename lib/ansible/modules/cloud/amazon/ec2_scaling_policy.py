@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 module: ec2_scaling_policy
@@ -109,7 +110,8 @@ def create_scaling_policy(connection, module):
         try:
             connection.create_scaling_policy(sp)
             policy = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])[0]
-            module.exit_json(changed=True, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment, cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
+            module.exit_json(changed=True, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment,
+                             cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError as e:
             module.fail_json(msg=str(e))
     else:
@@ -122,7 +124,7 @@ def create_scaling_policy(connection, module):
             if getattr(policy, 'min_adjustment_step') != module.params.get('min_adjustment_step'):
                 changed = True
 
-        # set the min adjustment step incase the user decided to change their
+        # set the min adjustment step in case the user decided to change their
         # adjustment type to percentage
         setattr(policy, 'min_adjustment_step', module.params.get('min_adjustment_step'))
 
@@ -136,7 +138,8 @@ def create_scaling_policy(connection, module):
             if changed:
                 connection.create_scaling_policy(policy)
                 policy = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])[0]
-            module.exit_json(changed=changed, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment, cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
+            module.exit_json(changed=changed, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment,
+                             cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError as e:
             module.fail_json(msg=str(e))
 

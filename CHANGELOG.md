@@ -1,60 +1,632 @@
 Ansible Changes By Release
 ==========================
 
-## 2.3 TBD - ACTIVE DEVELOPMENT
+## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
 
-###Major Changes:
+### Major Changes
 
-###Minor Changes:
-* The version and release facts for OpenBSD hosts were reversed.  This has been
-  changed so that version has the numeric portion and release has the name of
-  the release.
+* Support for Python-2.4 and Python-2.5 on the managed system's side was dropped. If you need to manage a system that ships with Python-2.4 or Python-2.5, you'll need to install Python-2.6 or better on the managed system or run Ansible-2.3 until you can upgrade the system.
+* New import/include keywords to replace the old bare `include` directives. The use of `static: {yes|no}` on such includes is now deprecated.
+    - Using `import_*` (`import_playbook`, `import_tasks`, `import_role`) directives are static.
+    - Using `include_*` (`include_tasks`, `include_role`) directives are dynamic.
+* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.ansible_os_distribution`).
+  They will continue to be added into the main namespace directly, but now a configuration toggle to disable this, currently off my default, in the future it will be on by default.
+  This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
+* new `order` play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
+* Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous sorting by name'.
+* Inventory has been revamped:
+  - Inventory  classes have been split to allow for better management and deduplication
+  - Logic that each inventory source duplicated is now common and pushed up to reconciliation
+  - VariableManager has been updated for better interaction with inventory
+  - Updated CLI with helper method to initialize base objects for plays
+  - New Inventory plugins for creating inventory
+  - Old inventory formats are still supported via plugins
+  - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
+  - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
+  - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
+  - Loading group_vars/host_vars is now a vars plugin and can be overridden
+  - It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
+  - Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
+  - Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
+  - Improved warnings and error messages across the board
+* Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
+  - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
+  - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
+* Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
+* Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
+
+### Deprecations
+* The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line
+  has changed so that the tags are merged together by default.  See the
+  documentation for how to temporarily use the old behaviour if needed:
+  https://docs.ansible.com/ansible/intro_configuration.html#merge-multiple-cli-tags
+* The `fetch` module's `validate_md5` parameter has been deprecated and will be
+  removed in 2.8.  If you wish to disable post-validation of the downloaded
+  file, use validate_checksum instead.
+* Those using ansible as a library should note that the `ansible.vars.unsafe_proxy`
+  module is deprecated and slated to go away in 2.8.  The functionality has been
+  moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
+
+#### Deprecated Modules:
+* ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
+
+#### Removed Deprecated Modules:
+* eos_template (use eos_config instead)
+* ios_template (use ios_config instead)
+* iosxr_template (use iosxr_config instead)
+* junos_template (use junos_config instead)
+* nxos_template (use nxos_config instead)
+* ops_template (use ops_template instead)
+
+### Minor Changes
+* removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
+* removed unused and deprecated config option `pattern`
+* Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
+* The include_dir var is not a global anymore, as we now allow mulitple inventory sources, it is now host dependant.
+  This means it cannot be used wherever host vars are not permittied, for example in task/handler names.
+* Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
+  was a quoted string with hash marks ("#") in it then the parsed string
+  included the quotes.  Now the string will not be quoted.  Previously, if the
+  quoting ended before the string finished and then the hash mark appeared, the
+  hash mark was included as part of the string.  Now it is treated as
+  a trailing comment:
+
+      # Before:
+      var1="string#comment"   ===>  var1: "\"string#comment\""
+      var1="string" #comment  ===>  var1: "\"string\" #comment"
+      # After:
+      var1="string#comment"   ===>  var1: "string#comment"
+      var1="string" #comment  ===>  var1: "string"
+
+  The new behaviour mirrors how the variables would appear if there was no hash
+  mark in the string.
+* As of 2.4.0, the fetch module fails if there are errors reading the remote file.
+  Use `ignore_errors` or `failed_when` in playbooks if you wish to ignore errors.
+* Experimentally added pmrun become method.
+* Enable the docker connection plugin to use su as a become method
+* Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
+* By default, Ansible now uses the cryptography module to implement vault instead of the older pycrypto module.
+* Changed task state resulting from both `rc` and `failed` fields returned, 'rc' no longer overrides 'failed'. Test plugins have also been updated accordingly.
+* The win_unzip module no longer includes dictionary 'win_unzip' in its results,
+  the content is now directly in the resulting output, like pretty much every other module.
+* Rewrite of the copy module so that it handles cornercases with symbolic links
+  and empty directories.  The copy module has a new parameter, local_follow
+  which controls how links on the source system are treated. (The older
+  parameter, follow is for links on the remote system.)
+* Update the handling of symbolic file permissions in file-related mode
+  parameters to deal with multiple operators.  For instance, mode='u=rw+x-X' to
+  set the execute bit on directories, remove it from filea, and set read-write
+  on both is now supported
+* Added better cookie parsing to fetch_url/open_url. Cookies are now in a dictionary named `cookies`
+  in the fetch_url result. Anything using `open_url` directly can pass a cookie object as a named arg
+  (`cookies`), and then parse/format the cookies in the result.
+* The bundled copy of six in lib/ansible/module_utils/six is now used
+  unconditionally.  The code to fallback on a system six interfered with static
+  analysis of the code so the cost of using the fallback code became too high.
+  Distributions which wish to unbundle may do so by replacing the bundled six
+  in ansible/module_utils/six/__init__.py.  Six is tricky to unbundle, however,
+  so they may want to base their efforts off the code we were using:
+    * https://github.com/ansible/ansible/blob/2fff690caab6a1c6a81973f704be3fbd0bde2c2f/lib/ansible/module_utils/six/__init__.py
+
+#### New Callbacks:
+- profile_roles
+- stderr
+
+#### New Inventory Plugins:
+- advanced_host_list
+- constructed_groups
+- host_list
+- ini
+- script
+- yaml
+- virtualbox
+
+#### New Inventory scripts:
+- lxd
+
+#### New: Tests
+- any : true if any element is true
+- all: true if all elements are true
+
+### Module Notes
+
+- The docker_container module has gained a new option, working_dir which allows
+  specifying the working directory for the command being run in the image.
+- The ec2_win_password module now requires the cryptography python module be installed to run
+- The stat module added a field, lnk_target.  When the file being stated is
+  a symlink, lnk_target will contain the target of the link.  This differs from
+  lnk_source when the target is specified relative to the symlink.  In this
+  case, lnk_target will remain relative while lnk_source will be expanded to an
+  absolute path.
+
+### New Modules
+
+- aix_lvol
+- amazon
+  * ec2_metadata_facts
+  * ec2_vpc_endpoint
+  * iam_cert_facts
+  * lightsail
+- atomic
+  * atomic_container
+- avi
+  * avi_cloud
+  * avi_cloudconnectoruser
+  * avi_cloudproperties
+  * avi_controllerproperties
+  * avi_dnspolicy
+  * avi_gslb
+  * avi_gslbapplicationpersistenceprofile
+  * avi_gslbgeodbprofile
+  * avi_gslbhealthmonitor
+  * avi_gslbservice
+  * avi_httppolicyset
+  * avi_ipaddrgroup
+  * avi_network
+  * avi_networksecuritypolicy
+  * avi_seproperties
+  * avi_serviceenginegroup
+  * avi_stringgroup
+  * avi_useraccountprofile
+  * avi_vsdatascriptset
+  * avi_vsvip
+- awall
+- catapult
+- cloudengine
+  * ce_aaa_server
+  * ce_aaa_server_host
+  * ce_acl
+  * ce_acl_advance
+  * ce_acl_interface
+  * ce_bgp
+  * ce_bgp_af
+  * ce_bgp_neighbor
+  * ce_bgp_neighbor_af
+  * ce_config
+  * ce_dldp
+  * ce_dldp_interface
+  * ce_eth_trunk
+  * ce_evpn_bd_vni
+  * ce_evpn_bgp
+  * ce_evpn_bgp_rr
+  * ce_facts
+  * ce_file_copy
+  * ce_info_center_debug
+  * ce_info_center_global
+  * ce_info_center_log
+  * ce_info_center_trap
+  * ce_interface
+  * ce_interface_ospf
+  * ce_ip_interface
+  * ce_link_status
+  * ce_mlag_config
+  * ce_mlag_interface
+  * ce_mtu
+  * ce_netconf
+  * ce_netstream_aging
+  * ce_netstream_export
+  * ce_netstream_global
+  * ce_netstream_template
+  * ce_ntp
+  * ce_ntp_auth
+  * ce_ospf
+  * ce_ospf_vrf
+  * ce_reboot
+  * ce_rollback
+  * ce_sflow
+  * ce_snmp_community
+  * ce_snmp_contact
+  * ce_snmp_location
+  * ce_snmp_target_host
+  * ce_snmp_traps
+  * ce_snmp_user
+  * ce_startup
+  * ce_static_route
+  * ce_stp
+  * ce_switchport
+  * ce_vlan
+  * ce_vrf
+  * ce_vrf_af
+  * ce_vrf_interface
+  * ce_vxlan_arp
+  * ce_vxlan_gateway
+  * ce_vxlan_global
+  * ce_vxlan_tunnel
+  * ce_vxlan_vap
+- cloudstack
+  * cs_network_acl
+  * cs_network_acl_rule
+  * cs_vpn_gateway
+- crypto
+  * openssl_csr
+- digital_ocean_floating_ip
+- f5
+  * bigip_command
+  * bigip_switchport
+  * bigip_user
+- github_issue
+- google
+  * gcp_backend_service
+  * gcp_forwarding_rule
+  * gcp_healthcheck
+  * gcp_target_proxy
+  * gcp_url_map
+- gunicorn
+- nuage
+  * nuage_vpsk
+- purestorage
+  * purefa_hg
+  * purefa_host
+  * purefa_pg
+  * purefa_volume
+- imc
+  * imc_xml
+- rundeck
+  * rundeck_acl_policy
+  * rundeck_project
+- sensu_silence
+- vmware
+  * vmware_guest_find
+- windows
+  * win_defrag
+  * win_domain_group
+  * win_dsc
+  * win_firewall
+  * win_psmodule
+  * win_route
+  * win_security_policy
+  * win_wakeonlan
+
+
+## 2.3 "Ramble On" - 2017-04-12
+
+### Major Changes
+* Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
+* Allow module_utils for custom modules to be placed in site-specific directories and shipped in roles
+* On platforms that support it, use more modern system polling API instead of select in the ssh connection plugin.
+  This removes one limitation on how many parallel forks are feasible on these systems.
+* Windows/WinRM supports (experimental) become method "runas" to run modules and scripts as a different user, and to transparently access network resources.
+* The WinRM connection plugin now uses pipelining when executing modules, resulting in significantly faster execution for small tasks.
+* The WinRM connection plugin can now manage Kerberos tickets automatically when `ansible_winrm_transport=kerberos` and `ansible_user`/`ansible_password` are specified.
+* Refactored/standardized most Windows modules, adding check-mode and diff support where possible.
+* Extended Windows module API with parameter-type support, helper functions. (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
+* restructured how async works to allow it to apply to action plugins that choose to support it.
+
+### Minor Changes
+* The version and release facts for OpenBSD hosts were reversed.
+  This has been changed so that version has the numeric portion and release has the name of the release.
 * removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
-  any user can add back via config options if they don't use those package managers or othewise avoid the errors.
+  any user can add back via config options if they don't use those package managers or otherwise avoid the errors.
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
+* Added 'metadata' to modules to enable classification
+* ansible-doc now displays path to module and existing 'metadata'
+* added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing, ssh plugin is also now 'smarter' when using these options
+* default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
+* Various fixes for Python3 compatibility
+* Fixed issues with inventory formats not handling 'all' and 'ungrouped' in an uniform way.
+* 'service' tasks can now use async again, we had lost this capability when changed into an action plugin.
+* made any_errors_fatal inheritable from play to task and all other objects in between.
+* many small performance improvements in inventory and variable handling and in task execution.
 
-###Deprecations:
+### Deprecations
 * Specifying --tags (or --skip-tags) multiple times on the command line
-  currently leads to the last one overridding all the previous ones.  This
-  behaviour is deprecated.  In the future, if you specify --tags multiple times
-  the tags will be merged together.  In 2.3, using --tags multiple times on one
-  command line will emit a deprecation warning.  Setting the
-  merge_multiple_cli_tags option to True in the ansible.cfg file will enable
-  the new behaviour.  In 2.4, the default will be to merge and you can enable
-  the old overwriting behaviour via the config option.  In 2.5, multiple --tags
-  options will be merged with no way to go back to the old behaviour.
+  currently leads to the last one overriding all the previous ones. This behaviour is deprecated.
+  In the future, if you specify --tags multiple times the tags will be merged together.
+  From now on, using --tags multiple times on one command line will emit a deprecation warning.
+  Setting the merge_multiple_cli_tags option to True in the ansible.cfg file will enable the new behaviour.
+  In 2.4, the default will be to merge and you can enable the old overwriting behaviour via the config option.
+  In 2.5, multiple --tags options will be merged with no way to go back to the old behaviour.
 
-###New Modules:
-- archive
-- aws
+* Modules (scheduled for removal in 2.5)
+  * ec2_vpc
+  * cl_bond
+  * cl_bridge
+  * cl_img_install
+  * cl_interface
+  * cl_interface_policy
+  * cl_license
+  * cl_ports
+  * nxos_mtu, use nxos_system instead
+
+#### New: Callbacks
+
+- dense: minimal stdout output with fallback to default when verbose
+
+#### New: lookups
+
+- keyring: allows getting password from the 'controller' system's keyrings
+- chef_databag: allows querying Chef Databags via pychef library
+
+#### New: cache
+
+- pickle (uses python's own serializer)
+- yaml
+
+#### New: inventory scripts
+- oVirt/RHV
+
+#### New: filters
+- combinations
+- permutations
+- zip
+- zip_longest
+
+
+### Module Notes
+- AWS lambda: previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
+- oVirt/RHV: Added support for 4.1 features and the following:
+  * data centers, clusters, hosts, storage domains and networks management.
+  * hosts and virtual machines affinity groups and labels.
+  * users, groups and permissions management.
+  * Improved virtual machines and disks management.
+- Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
+
+### New Modules
+- a10_server_axapi3
+- amazon:
+  * aws_kms
+  * cloudfront_facts
+  * ec2_group_facts
   * ec2_lc_facts
-- f5
+  * ec2_vpc_igw_facts
+  * ec2_vpc_nat_gateway_facts
+  * ec2_vpc_vgw_facts
+  * ecs_ecr
+  * elasticache_parameter_group
+  * elasticache_snapshot
+  * iam_role
+  * s3_sync
+- archive
+- beadm
+- bigswitch:
+  * bigmon_chain
+  * bigmon_policy
+- cisco
+  * cisco_spark
+- cloudengine:
+  * ce_command
+- cloudscale_server
+- cloudstack:
+  * cs_host
+  * cs_nic
+  * cs_region
+  * cs_role
+  * cs_vpc
+- dimensiondata_network
+- eos:
+  * eos_banner
+  * eos_system
+  * eos_user
+- f5:
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
-- free_ipa:
+  * bigip_sys_global
+- foreman:
+  * foreman
+  * katello
+- fortios
+  * fortios_config
+- gconftool2
+- google:
+  * gce_eip
+  * gce_snapshot
+  * gcpubsub
+  * gcpubsub_facts
+- hpilo:
+  * hpilo_boot
+  * hpilo_facts
+  * hponcfg
+- icinga2_feature
+- illumos:
+  * dladm_iptun
+  * dladm_linkprop
+  * dladm_vlan
+  * ipadm_addr
+  * ipadm_addrprop
+  * ipadm_ifprop
+- infinidat:
+  * infini_export
+  * infini_export_client
+  * infini_fs
+  * infini_host
+  * infini_pool
+  * infini_vol
+- ipa:
   * ipa_group
   * ipa_hbacrule
-  * ipa_hostgroup
   * ipa_host
+  * ipa_hostgroup
   * ipa_role
-  * ipa_sudocmdgroup
   * ipa_sudocmd
+  * ipa_sudocmdgroup
   * ipa_sudorule
   * ipa_user
+- ipinfoio_facts
+- ios:
+  * ios_banner
+  * ios_system
+  * ios_vrf
+- iosxr_system
+- iso_extract
+- java_cert
+- jenkins_script
+- ldap:
+  * ldap_attr
+  * ldap_entry
+- logstash_plugin
+- mattermost
+- net_command
+- netapp:
+  * sf_account_manager
+  * sf_snapshot_schedule_manager
+  * sf_volume_manager
+  * sf_volume_access_group_manager
+- nginx_status_facts
+- nsupdate
+- omapi_host
+- openssl:
+  * openssl_privatekey
+  * openssl_publickey
+- openstack:
+  * os_nova_host_aggregate
+  * os_quota
 - openwrt_init
+- ordnance:
+  * ordnance_config
+  * ordnance_facts
+- ovirt:
+  * ovirt_affinity_groups
+  * ovirt_affinity_labels
+  * ovirt_affinity_labels_facts
+  * ovirt_clusters
+  * ovirt_clusters_facts
+  * ovirt_datacenters
+  * ovirt_datacenters_facts
+  * ovirt_external_providers
+  * ovirt_external_providers_facts
+  * ovirt_groups
+  * ovirt_groups_facts
+  * ovirt_host_networks
+  * ovirt_host_pm
+  * ovirt_hosts
+  * ovirt_hosts_facts
+  * ovirt_mac_pools
+  * ovirt_networks
+  * ovirt_networks_facts
+  * ovirt_nics
+  * ovirt_nics_facts
+  * ovirt_permissions
+  * ovirt_permissions_facts
+  * ovirt_quotas
+  * ovirt_quotas_facts
+  * ovirt_snapshots
+  * ovirt_snapshots_facts
+  * ovirt_storage_domains
+  * ovirt_storage_domains_facts
+  * ovirt_tags
+  * ovirt_tags_facts
+  * ovirt_templates
+  * ovirt_templates_facts
+  * ovirt_users
+  * ovirt_users_facts
+  * ovirt_vmpools
+  * ovirt_vmpools_facts
+  * ovirt_vms_facts
+- pacemaker_cluster
+- packet:
+  * packet_device
+  * packet_sshkey
+- pamd
+- panos:
+  * panos_address
+  * panos_admin
+  * panos_admpwd
+  * panos_cert_gen_ssh
+  * panos_check
+  * panos_commit
+  * panos_dag
+  * panos_import
+  * panos_interface
+  * panos_lic
+  * panos_loadcfg
+  * panos_mgtconfig
+  * panos_nat_policy
+  * panos_pg
+  * panos_restart
+  * panos_security_policy
+  * panos_service
+- postgresql_schema
+- proxmox_kvm
+- pubnub_blocks
+- pulp_repo
+- runit
+- serverless
+- set_stats
+- panos:
+  * panos_security_policy
+- smartos:
+  * imgadm
+  * vmadm
+- sorcery
+- stacki_host
+- swupd
+- tempfile
+- tower:
+  * tower_credential
+  * tower_group
+  * tower_host
+  * tower_inventory
+  * tower_job_template
+  * tower_label
+  * tower_organization
+  * tower_project
+  * tower_role
+  * tower_team
+  * tower_user
+- vmware:
+  * vmware_guest_facts
+  * vmware_guest_snapshot
+- web_infrastructure:
+  * jenkins_script
+- system
+  * parted
 - windows:
+  * win_disk_image
+  * win_dns_client
+  * win_domain
+  * win_domain_controller
+  * win_domain_membership
+  * win_find
+  * win_msg
+  * win_path
+  * win_psexec
+  * win_reg_stat
+  * win_region
   * win_say
+  * win_shortcut
+  * win_tempfile
+- xbps
+- zfs:
+  * zfs_facts
+  * zpool_facts
 
-####New Callbacks:
 
-* dense: minimal stdout output with fallback to default when verbose
+## 2.2.1 "The Battle of Evermore" - 2017-01-16
 
-## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
+### Major Changes
 
-###Major Changes:
+* Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
+
+### Minor Changes
+
+* Fixes a bug where undefined variables in with_* loops would cause a task failure even if the when condition would cause the task to be skipped.
+* Fixed a bug related to roles where in certain situations a role may be run more than once despite not allowing duplicates.
+* Fixed some additional bugs related to atomic_move for modules.
+* Fixes multiple bugs related to field/attribute inheritance in nested blocks and includes, as well as task iteration logic during failures.
+* Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
+* Fixed dnf on systems with dnf-2.0.x (some changes in the API).
+* Fixed traceback with dnf install of groups.
+* Fixes a bug in which include_vars was not working with failed_when.
+* Fix for include_vars only loading files with .yml, .yaml, and .json extensions.  This was only supposed to apply to loading a directory of vars files.
+* Fixes several bugs related to properly incrementing the failed count in the host statistics.
+* Fixes a bug with listening handlers which did not specify a `name` field.
+* Fixes a bug with the `play_hosts` internal variable, so that it properly reflects the current list of hosts.
+* Fixes a bug related to the v2_playbook_on_start callback method and legacy (v1) plugins.
+* Fixes an openssh related process exit race condition, related to the fact that connections using ControlPersist do not close stderr.
+* Improvements and fixes to OpenBSD fact gathering.
+* Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
+* Fixed Windows async to avoid blocking due to handle inheritance.
+* Fixed bugs in the mount module on older Linux kernels and *BSDs
+* Various minor fixes for Python 3
+* Inserted some checks for jinja2-2.9, which can cause some issues with Ansible currently.
+
+
+## 2.2 "The Battle of Evermore" - 2016-11-01
+
+### Major Changes:
 
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Major performance improvements.
@@ -62,7 +634,7 @@ Ansible Changes By Release
 * Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
 * Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
 * `meta` tasks can now use conditionals.
-* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
+* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * New privilege escalation become method `ksu`
 * Windows `async:` support for long-running or background tasks.
 * Windows `environment:` support for setting module environment vars in play/task.
@@ -91,7 +663,7 @@ Ansible Changes By Release
   * All functionality from *_template network modules have been combined into *_config module
   * Network *_command modules not longer allow configuration mode statements
 
-####New Modules:
+#### New Modules
 - apache2_mod_proxy
 - asa
   * asa_acl
@@ -319,10 +891,10 @@ Ansible Changes By Release
   * win_robocopy
   * win_shell
 
-####New Callbacks:
+#### New Callbacks
 * foreman
 
-###Minor Changes:
+### Minor Changes
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
 * loop_control now has a label option to allow fine grained control what gets displayed per item
 * loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
@@ -334,7 +906,7 @@ Ansible Changes By Release
 * ansible_play_hosts is a new magic variable to provide a list of hosts in scope for the current play. Unlike play_hosts it is not subject to the 'serial' keyword.
 * ansible_play_batch is a new magic variable meant to substitute the current play_hosts.
 
-###For custom front ends using the API:
+### For custom front ends using the API
 * ansible.parsing.vault:
   * VaultLib.is_encrypted() has been deprecated.  It will be removed in 2.4.
     Use ansible.parsing.vault.is_encrypted() instead
@@ -349,13 +921,13 @@ Ansible Changes By Release
     whenever it is written to but not read), run ``ansible-vault rekey
     [filename]`` to move to VaultAES256.
 
-###Removed Deprecated:
+### Removed Deprecated
 * ';' as host list separator.
 * with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
 * skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
 * skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
 
-###Deprecations
+### Deprecations
 Notice given that the following will be removed in Ansible 2.4:
 * Modules
   * eos_template
@@ -365,9 +937,32 @@ Notice given that the following will be removed in Ansible 2.4:
   * nxos_template
   * ops_template
 
-## 2.1.2 "The Song Remains the Same" - 09-29-2016
+## 2.1.4 "The Song Remains the Same" - 2017-01-16
 
-###Minor Changes:
+* Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
+* Fixed a bug with conditionals in loops, where undefined variables and other errors will defer raising the error until the conditional has been evaluated.
+* Added a version check for jinja2-2.9, which does not fully work with Ansible currently.
+
+## 2.1.3 "The Song Remains the Same" - 2016-11-04
+
+* Security fix for CVE-2016-8628 - Command injection by compromised server via fact variables. In some situations, facts returned by modules could overwrite connection-based facts or some other special variables, leading to injected commands running on the Ansible controller as the user running Ansible (or via escalated permissions).
+* Security fix for CVE-2016-8614 - apt_key module not properly validating keys in some situations.
+
+### Minor Changes:
+* The subversion module from core now marks its password parameter as no_log so
+  the password is obscured when logging.
+* The postgresql_lang and postgresql_ext modules from extras now mark
+  login_password as no_log so the password is obscured when logging.
+* Fixed several bugs related to locating files relative to role/playbook directories.
+* Fixed a bug in the way hosts were tested for failed states, resulting in incorrectly skipped block sessions.
+* Fixed a bug in the way our custom JSON encoder is used for the to_json* filters.
+* Fixed some bugs related to the use of non-ascii characters in become passwords.
+* Fixed a bug with Azure modules which may be using the latest rc6 library.
+* Backported some docker_common fixes.
+
+## 2.1.2 "The Song Remains the Same" - 2016-09-29
+
+### Minor Changes
 * Fixed a bug related to creation of retry files (#17456)
 * Fixed a bug in the way include params are used when an include task is dynamic (#17064)
 * Fixed a bug related to including blocks in an include task (#15963)
@@ -415,12 +1010,12 @@ Module fixes:
 * Fixed a bug where the fetch module was not idempotent when retrieving the target of a symlink.
 * Many minor fixes for bugs in extras modules.
 
-###Deprecations:
+### Deprecations
 
 * Deprecated the use of `_fixup_perms`. Use `_fixup_perms2` instead.
   This change only impacts custom action plugins using `_fixup_perms`.
 
-###Incompatible Changes:
+### Incompatible Changes
 
 * Use of `_fixup_perms` with `recursive=True` (the default) is no longer supported.
   Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
@@ -429,7 +1024,7 @@ Module fixes:
 
 ## 2.1 "The Song Remains the Same"
 
-###Major Changes:
+### Major Changes:
 
 * Official support for the networking modules, originally available in 2.0 as a tech preview.
 * Refactored and expanded support for Docker with new modules and many improvements to existing modules, as well as a new Kubernetes module.
@@ -455,7 +1050,7 @@ Module fixes:
 * Improved winrm argument validation and feature sniffing (for upcoming pywinrm NTLM support).
 * Improved winrm error handling: basic parsing of stderr from CLIXML stream.
 
-####New Modules:
+#### New Modules
 - aws
   * ec2_vol_facts
   * ec2_vpc_dhcp_options
@@ -569,30 +1164,30 @@ Module fixes:
 - yum_repository
 
 
-####New Strategies:
+#### New Strategies
 * debug
 
-####New Filters:
+#### New Filters
 * extract
 * ip4_hex
 * regex_search
 * regex_findall
 
-####New Callbacks:
+#### New Callbacks
 * actionable (only shows changed and failed)
 * slack
 * json
 
-####New Tests:
+#### New Tests
 * issubset
 * issuperset
 
-####New Inventory scripts:
+#### New Inventory scripts:
 * brook
 * rackhd
 * azure_rm
 
-###Minor Changes:
+### Minor Changes:
 
 * Added support for pipelining mode to more connection plugins, which helps prevent
   module data from being written to disk.
@@ -607,7 +1202,7 @@ Module fixes:
   10-first-callback.py and 20-second-callback.py.
 * Added (alpha) Centirfy's dzdo as another become meethod (privilege escalation)
 
-###Deprecations:
+### Deprecations:
 
 * Deprecated the use of "bare" variables in loops (ie. `with_items: foo`, where `foo` is a variable).
   The full jinja2 variable syntax of `{{foo}}` should always be used instead. This warning will be removed
@@ -666,7 +1261,7 @@ Module fixes:
   running rsync.  In 1.9.x and previous, sudo was run on the host that rsync
   connected to.  2.0.1 restores the 1.9.x behaviour.
 * Additionally, several other problems with where synchronize chose to run when
-  combined with delegate_to were fixed.  In particular, if a playbook targetted
+  combined with delegate_to were fixed.  In particular, if a playbook targeted
   localhost and then delegated_to a remote host the prior behavior (in 1.9.x
   and 2.0.0.x) was to copy files between the src and destination directories on
   the delegated host.  This has now been fixed to copy between localhost and
@@ -702,7 +1297,7 @@ Module fixes:
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
-###Major Changes:
+### Major Changes:
 
 * Releases are now named after Led Zeppelin songs, 1.9 will be the last Van Halen named release.
 * The new block/rescue/always directives allow for making task blocks and exception-like semantics
@@ -733,7 +1328,7 @@ Module fixes:
 * Backslashes used when specifying parameters in jinja2 expressions in YAML dicts sometimes needed to be escaped twice.
   This has been fixed so that escaping once works. Here's an example of how playbooks need to be modified:
 
-    ```
+    ```yaml
     # Syntax in 1.9.x
     - debug:
         msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
@@ -751,7 +1346,7 @@ format the trailing newlines were kept. In v2, both methods of specifying the
 string will keep the trailing newlines. If you relied on the trailing
 newline being stripped you can change your playbook like this:
 
-    ```
+    ```yaml
     # Syntax in 1.9.2
     vars:
       message: >
@@ -778,7 +1373,7 @@ variable syntax ('{{var_name}}') - bare variable names there are no longer accep
 In fact, even specifying args with variables has been deprecated, and will not be
 allowed in future versions:
 
-    ```
+    ```yaml
     ---
     - hosts: localhost
       connection: local
@@ -793,13 +1388,13 @@ allowed in future versions:
           with_items: my_dirs
     ```
 
-###Plugins
+### Plugins
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
 * WinRM connection plugin passes all vars named `ansible_winrm_*` to the underlying pywinrm client. This allows, for instance, `ansible_winrm_server_cert_validation=ignore` to be used with newer versions of pywinrm to disable certificate validation on Python 2.7.9+.
 * WinRM connection plugin put_file is significantly faster and no longer has file size limitations.
 
-####Deprecated Modules (new ones in parens):
+#### Deprecated Modules (new ones in parens):
 
 * ec2_ami_search (ec2_ami_find)
 * quantum_network (os_network)
@@ -810,7 +1405,7 @@ allowed in future versions:
 * quantum_router_gateway (os_router)
 * quantum_router_interface (os_router)
 
-####New Modules:
+#### New Modules:
 
 - amazon
   * ec2_ami_copy
@@ -1026,7 +1621,7 @@ allowed in future versions:
   * zabbix_screen
 - znode
 
-####New Inventory scripts:
+#### New Inventory scripts:
 
 * cloudstack
 * fleetctl
@@ -1037,27 +1632,27 @@ allowed in future versions:
 * rudder
 * serf
 
-####New Lookups:
+#### New Lookups:
 
 * credstash
 * hashi_vault
 * ini
 * shelvefile
 
-####New Filters:
+#### New Filters:
 
 * combine
 
-####New Connection:
+#### New Connection:
 
 * docker: for talking to docker containers on the ansible controller machine without using ssh.
 
-####New Callbacks:
+#### New Callbacks:
 
 * logentries: plugin to send play data to logentries service
 * skippy: same as default but does not display skip messages
 
-###Minor changes:
+### Minor changes:
 
 * Many more tests. The new API makes things more testable and we took advantage of it.
 * big_ip modules now support turning off ssl certificate validation (use only for self-signed certificates).
@@ -1782,7 +2377,7 @@ New modules and plugins.
   * rax_clb *-- manages Rackspace cloud load balancers*
 - files
   * acl *-- set or get acls on a file*
-  * synchronize *-- a useful wraper around rsyncing trees of files*
+  * synchronize *-- a useful wrapper around rsyncing trees of files*
   * unarchive *-- pushes and extracts tarballs*
 - system
   * blacklist *-- add or remove modules from the kernel blacklist*
@@ -2199,7 +2794,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * added basename and dirname as Jinja2 filters available to all templates
 * pip works better when sudoing from unprivileged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
-* fix for some unicode encoding errors in outputing some data in verbose mode
+* fix for some unicode encoding errors in outputting some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
 * debug module always outputs data without having to specify -v
 * fix for sysctl module creating new keys (must specify checks=none)
@@ -2573,7 +3168,7 @@ New Modules:
 * new LSB facts (release, distro, etc)
 * pause module -- (pause seconds=10) (pause minutes=1) (pause prompt=foo) -- it's an action plugin
 * a module for adding entries to the main crontab (though you may still wish to just drop template files into cron.d)
-* debug module can be used for outputing messages without using 'shell echo'
+* debug module can be used for outputting messages without using 'shell echo'
 * a fail module is now available for causing errors, you might want to use it with only_if to fail in certain conditions
 
 Other module Changes, Upgrades, and Fixes:
@@ -2841,4 +3436,3 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
-

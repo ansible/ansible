@@ -1,24 +1,15 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +18,7 @@ version_added: "1.5"
 short_description: create/destroy GCE networks and firewall rules
 description:
     - This module can create and destroy Google Compute Engine networks and
-      firewall rules U(https://developers.google.com/compute/docs/networking).
+      firewall rules U(https://cloud.google.com/compute/docs/networking).
       The I(name) parameter is reserved for referencing a network while the
       I(fwname) parameter is used to reference firewall rules.
       IPv4 Address ranges must be specified using the CIDR
@@ -64,20 +55,20 @@ options:
     description:
       - the source IPv4 address range in CIDR notation
     required: false
-    default: null
+    default: []
     aliases: ['src_cidr']
   src_tags:
     description:
       - the source instance tags for creating a firewall rule
     required: false
-    default: null
+    default: []
     aliases: []
   target_tags:
     version_added: "1.9"
     description:
       - the target instance tags for creating a firewall rule
     required: false
-    default: null
+    default: []
     aliases: []
   state:
     description:
@@ -152,41 +143,124 @@ options:
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials"
-author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>"
 '''
 
 EXAMPLES = '''
-# Simple example of creating a new network
-- local_action:
-    module: gce_net
-    name: privatenet
-    ipv4_range: '10.240.16.0/24'
+# Create a 'legacy' Network
+- name: Create Legacy Network
+  gce_net:
+    name: legacynet
+    ipv4_range: '10.24.17.0/24'
+    mode: legacy
+    state: present
 
-# Simple example of creating a new firewall rule
-- local_action:
-    module: gce_net
-    name: privatenet
-    fwname: all-web-webproxy
-    allowed: tcp:80,8080
-    src_tags: ["web", "proxy"]
-
-# Simple example of creating a new auto network
-- local_action:
-    module: gce_net
-    name: privatenet
+# Create an 'auto' Network
+- name: Create Auto Network
+  gce_net:
+    name: autonet
     mode: auto
+    state: present
 
-# Simple example of creating a new custom subnet
-- local_action:
-    module: gce_net
+# Create a 'custom' Network
+- name: Create Custom Network
+  gce_net:
+    name: customnet
+    mode: custom
+    subnet_name: "customsubnet"
+    subnet_region: us-east1
+    ipv4_range: '10.240.16.0/24'
+    state: "present"
+
+# Create Firewall Rule with Source Tags
+- name: Create Firewall Rule w/Source Tags
+  gce_net:
+    name: default
+    fwname: "my-firewall-rule"
+    allowed: tcp:80
+    state: "present"
+    src_tags: "foo,bar"
+
+# Create Firewall Rule with Source Range
+- name: Create Firewall Rule w/Source Range
+  gce_net:
+    name: default
+    fwname: "my-firewall-rule"
+    allowed: tcp:80
+    state: "present"
+    src_range: ['10.1.1.1/32']
+
+# Create Custom Subnetwork
+- name: Create Custom Subnetwork
+  gce_net:
     name: privatenet
     mode: custom
     subnet_name: subnet_example
     subnet_region: us-central1
-    ipv4_range: 10.0.0.0/16
-
+    ipv4_range: '10.0.0.0/16'
 '''
 
+RETURN = '''
+allowed:
+    description: Rules (ports and protocols) specified by this firewall rule.
+    returned: When specified
+    type: string
+    sample: "tcp:80;icmp"
+
+fwname:
+    description: Name of the firewall rule.
+    returned: When specified
+    type: string
+    sample: "my-fwname"
+
+ipv4_range:
+    description: IPv4 range of the specified network or subnetwork.
+    returned: when specified or when a subnetwork is created
+    type: string
+    sample: "10.0.0.0/16"
+
+name:
+    description: Name of the network.
+    returned: always
+    type: string
+    sample: "my-network"
+
+src_range:
+    description: IP address blocks a firewall rule applies to.
+    returned: when specified
+    type: list
+    sample: [ '10.1.1.12/8' ]
+
+src_tags:
+    description: Instance Tags firewall rule applies to.
+    returned: when specified while creating a firewall rule
+    type: list
+    sample: [ 'foo', 'bar' ]
+
+state:
+    description: State of the item operated on.
+    returned: always
+    type: string
+    sample: "present"
+
+subnet_name:
+    description: Name of the subnetwork.
+    returned: when specified or when a subnetwork is created
+    type: string
+    sample: "my-subnetwork"
+
+subnet_region:
+    description: Region of the specified subnet.
+    returned: when specified or when a subnetwork is created
+    type: string
+    sample: "us-east1"
+
+target_tags:
+    description: Instance Tags with these tags receive traffic allowed by firewall rule.
+    returned: when specified while creating a firewall rule
+    type: list
+    sample: [ 'foo', 'bar' ]
+'''
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
@@ -196,6 +270,10 @@ try:
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect, unexpected_error_msg
+
 
 def format_allowed_section(allowed):
     """Format each section of the allowed list"""
@@ -208,7 +286,7 @@ def format_allowed_section(allowed):
         return []
     if ports.count(","):
         ports = ports.split(",")
-    else:
+    elif ports:
         ports = [ports]
     return_val = {"IPProtocol": protocol}
     if ports:
@@ -231,7 +309,7 @@ def sorted_allowed_list(allowed_list):
     # sort by protocol
     allowed_by_protocol = sorted(allowed_list,key=lambda x: x['IPProtocol'])
     # sort the ports list
-    return sorted(allowed_by_protocol, key=lambda y: y['ports'].sort())
+    return sorted(allowed_by_protocol, key=lambda y: y.get('ports', []).sort())
 
 
 def main():
@@ -241,13 +319,13 @@ def main():
             ipv4_range = dict(),
             fwname = dict(),
             name = dict(),
-            src_range = dict(type='list'),
-            src_tags = dict(type='list'),
-            target_tags = dict(type='list'),
+            src_range = dict(default=[], type='list'),
+            src_tags = dict(default=[], type='list'),
+            target_tags = dict(default=[], type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
             mode = dict(default='legacy', choices=['legacy', 'auto', 'custom']),
             subnet_name = dict(),
@@ -257,7 +335,7 @@ def main():
     )
 
     if not HAS_LIBCLOUD:
-        module.exit_json(msg='libcloud with GCE support (0.17.0+) required for this module')
+        module.fail_json(msg='libcloud with GCE support (0.17.0+) required for this module')
 
     gce = gce_connect(module)
 
@@ -287,7 +365,7 @@ def main():
                 json_output['ipv4_range'] = network.cidr
             if network and mode == 'custom' and subnet_name:
                 if not hasattr(gce, 'ex_get_subnetwork'):
-                     module.fail_json(msg="Update libcloud to a more recent version (>1.0) that supports network 'mode' parameter", changed=False)
+                    module.fail_json(msg="Update libcloud to a more recent version (>1.0) that supports network 'mode' parameter", changed=False)
 
                 subnet = gce.ex_get_subnetwork(subnet_name, region=subnet_region)
                 json_output['subnet_name'] = subnet_name
@@ -351,11 +429,14 @@ def main():
                 fw = gce.ex_get_firewall(fwname)
 
                 # If old and new attributes are different, we update the firewall rule.
-                # This implicitly let's us clear out attributes as well.
+                # This implicitly lets us clear out attributes as well.
                 # allowed_list is required and must not be None for firewall rules.
                 if allowed_list and (sorted_allowed_list(allowed_list) != sorted_allowed_list(fw.allowed)):
                     fw.allowed = allowed_list
                     fw_changed = True
+
+                # source_ranges might not be set in the project; cast it to an empty list
+                fw.source_ranges = fw.source_ranges or []
 
                 # If these attributes are lists, we sort them first, then compare.
                 # Otherwise, we update if they differ.
@@ -368,14 +449,20 @@ def main():
                         fw.source_ranges = src_range
                         fw_changed = True
 
+                # source_tags might not be set in the project; cast it to an empty list
+                fw.source_tags = fw.source_tags or []
+
                 if fw.source_tags != src_tags:
-                    if isinstance(src_range, list):
+                    if isinstance(src_tags, list):
                         if sorted(fw.source_tags) != sorted(src_tags):
                             fw.source_tags = src_tags
                             fw_changed = True
                     else:
                         fw.source_tags = src_tags
                         fw_changed = True
+
+                # target_tags might not be set in the project; cast it to an empty list
+                fw.target_tags = fw.target_tags or []
 
                 if fw.target_tags != target_tags:
                     if isinstance(target_tags, list):
@@ -450,20 +537,15 @@ def main():
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if network:
-#                json_output['d4'] = 'deleting %s' % name
                 try:
                     gce.ex_destroy_network(network)
                 except Exception as e:
                     module.fail_json(msg=unexpected_error_msg(e), changed=False)
-#                json_output['d5'] = 'deleted %s' % name
                 changed = True
 
     json_output['changed'] = changed
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 if __name__ == '__main__':
     main()

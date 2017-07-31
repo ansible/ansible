@@ -18,11 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_iis_website
 version_added: "2.0"
@@ -91,42 +92,16 @@ options:
     aliases: []
   parameters:
     description:
-      - Custom site Parameters from string where properties are seperated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
+      - Custom site Parameters from string where properties are separated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
     required: false
     default: null
     aliases: []
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
-# This return information about an existing host
-$ ansible -i vagrant-inventory -m win_iis_website -a "name='Default Web Site'" window
-host | success >> {
-    "changed": false,
-    "site": {
-        "ApplicationPool": "DefaultAppPool",
-        "Bindings": [
-            "*:80:"
-        ],
-        "ID": 1,
-        "Name": "Default Web Site",
-        "PhysicalPath": "%SystemDrive%\\inetpub\\wwwroot",
-        "State": "Stopped"
-    }
-}
+EXAMPLES = r'''
 
-# This stops an existing site.
-$ ansible -i hosts -m win_iis_website -a "name='Default Web Site' state=stopped" host
-
-# This creates a new site.
-$ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
-
-# Change logfile .
-$ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
-
-
-# Playbook example
----
+# Start a website
 
 - name: Acme IIS site
   win_iis_website:
@@ -136,8 +111,40 @@ $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acm
     ip: 127.0.0.1
     hostname: acme.local
     application_pool: "acme"
-    physical_path: 'c:\\sites\\acme'
-    parameters: 'logfile.directory:c:\\sites\\logs'
+    physical_path: c:\sites\acme
+    parameters: logfile.directory:c:\sites\logs
   register: website
 
+# Remove Default Web Site and the standard port 80 binding
+- name: Remove Default Web Site
+  win_iis_website:
+    name: "Default Web Site"
+    state: absent
+
+# Some commandline examples:
+
+# This return information about an existing host
+# $ ansible -i vagrant-inventory -m win_iis_website -a "name='Default Web Site'" window
+# host | success >> {
+#     "changed": false,
+#     "site": {
+#         "ApplicationPool": "DefaultAppPool",
+#         "Bindings": [
+#             "*:80:"
+#         ],
+#         "ID": 1,
+#         "Name": "Default Web Site",
+#         "PhysicalPath": "%SystemDrive%\\inetpub\\wwwroot",
+#         "State": "Stopped"
+#     }
+# }
+
+# This stops an existing site.
+# $ ansible -i hosts -m win_iis_website -a "name='Default Web Site' state=stopped" host
+
+# This creates a new site.
+# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
+
+# Change logfile.
+# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
 '''

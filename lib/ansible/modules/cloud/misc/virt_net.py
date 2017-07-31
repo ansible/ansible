@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Maciej Delmanowski <drybjed@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -140,11 +131,6 @@ EXAMPLES = '''
     name: br_nat
 '''
 
-VIRT_FAILED = 1
-VIRT_SUCCESS = 0
-VIRT_UNAVAILABLE=2
-
-
 try:
     import libvirt
 except ImportError:
@@ -160,7 +146,12 @@ else:
     HAS_XML = True
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
+
+VIRT_FAILED = 1
+VIRT_SUCCESS = 0
+VIRT_UNAVAILABLE=2
 
 ALL_COMMANDS = []
 ENTRY_COMMANDS = ['create', 'status', 'start', 'stop',
@@ -260,7 +251,7 @@ class LibvirtConnection(object):
                 else:
                     # pretend there was a change
                     res = 0
-                if res == 0: 
+                if res == 0:
                     return True
             else:
                 # change the host
@@ -277,7 +268,7 @@ class LibvirtConnection(object):
                     if res == 0:
                         return True
             #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet '+unicode(xml))
+            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
@@ -369,6 +360,10 @@ class LibvirtConnection(object):
         state = self.find_entry(entryid).isPersistent()
         return ENTRY_STATE_PERSISTENT_MAP.get(state,"unknown")
 
+    def get_dhcp_leases(self, entryid):
+        network = self.find_entry(entryid)
+        return network.DHCPLeases()
+
     def define_from_xml(self, entryid, xml):
         if not self.module.check_mode:
             return self.conn.networkDefineXML(xml)
@@ -417,7 +412,7 @@ class VirtNetwork(object):
 
     def create(self, entryid):
         return self.conn.create(entryid)
-    
+
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
 
@@ -454,6 +449,11 @@ class VirtNetwork(object):
             results[entry]["state"] = self.conn.get_status(entry)
             results[entry]["bridge"] = self.conn.get_bridge(entry)
             results[entry]["uuid"] = self.conn.get_uuid(entry)
+            try:
+                results[entry]["dhcp_leases"] = self.conn.get_dhcp_leases(entry)
+            # not supported on RHEL 6
+            except AttributeError:
+                pass
 
             try:
                 results[entry]["forward_mode"] = self.conn.get_forward(entry)

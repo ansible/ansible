@@ -15,20 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -91,6 +81,10 @@ options:
      required: false
      default: false
      version_added: "2.3"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -141,7 +135,7 @@ RETURN = '''
 openstack_flavors:
     description: Dictionary describing the flavors.
     returned: On success.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Flavor ID.
@@ -184,6 +178,16 @@ openstack_flavors:
             type: bool
             sample: true
 '''
+
+import re
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def main():

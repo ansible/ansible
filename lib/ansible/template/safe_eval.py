@@ -14,17 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
 import sys
 
-from ansible.compat.six import string_types
-from ansible.compat.six.moves import builtins
-
 from ansible import constants as C
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import builtins
 from ansible.plugins import filter_loader, test_loader
+
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
@@ -32,10 +33,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     with_items: a_list_variable
 
     Where Jinja2 would return a string but we do not want to allow it to
-    call functions (outside of Jinja2, where the env is constrained). If
-    the input data to this function came from an untrusted (remote) source,
-    it should first be run through _clean_data_struct() to ensure the data
-    is further sanitized prior to evaluation.
+    call functions (outside of Jinja2, where the env is constrained).
 
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
@@ -57,7 +55,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         (
             ast.Add,
             ast.BinOp,
-            ast.Call,
+            # ast.Call,
             ast.Compare,
             ast.Dict,
             ast.Div,
@@ -69,6 +67,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             ast.Name,
             ast.Str,
             ast.Sub,
+            ast.USub,
             ast.Tuple,
             ast.UnaryOp,
         )
@@ -107,6 +106,9 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             elif isinstance(node, ast.Call):
                 inside_call = True
             elif isinstance(node, ast.Name) and inside_call:
+                # Disallow calls to builtin functions that we have not vetted
+                # as safe.  Other functions are excluded by setting locals in
+                # the call to eval() later on
                 if hasattr(builtins, node.id) and node.id not in CALL_WHITELIST:
                     raise Exception("invalid function: %s" % node.id)
             # iterate over all child nodes
@@ -124,6 +126,9 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
+        # Note: passing our own globals and locals here constrains what
+        # callables (and other identifiers) are recognized.  this is in
+        # addition to the filtering of builtins done in CleansingNodeVisitor
         result = eval(compiled, JSON_TYPES, dict(locals))
 
         if include_exceptions:

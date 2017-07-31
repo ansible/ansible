@@ -16,17 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -66,6 +59,10 @@ options:
         - A timeout in seconds to tell the role to wait for the node to complete introspection if wait is set to True.
       required: false
       default: 1200
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatibility
+      required: false
 
 requirements: ["shade"]
 '''
@@ -74,7 +71,7 @@ RETURN = '''
 ansible_facts:
     description: Dictionary of new facts representing discovered properties of the node..
     returned: changed
-    type: dictionary
+    type: complex
     contains:
         memory_mb:
             description: Amount of node memory as updated in the node properties
@@ -99,6 +96,14 @@ EXAMPLES = '''
 - os_ironic_inspect:
     name: "testnode1"
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _choose_id_value(module):
@@ -153,7 +158,7 @@ def main():
         if server:
             cloud.inspect_machine(server['uuid'], module.params['wait'])
             # TODO(TheJulia): diff properties, ?and ports? and determine
-            # if a change occured.  In theory, the node is always changed
+            # if a change occurred.  In theory, the node is always changed
             # if introspection is able to update the record.
             module.exit_json(changed=True,
                              ansible_facts=server['properties'])

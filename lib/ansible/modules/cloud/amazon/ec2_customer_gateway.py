@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +28,9 @@ version_added: "2.2"
 author: Michael Baydoun (@MichaelBaydoun)
 requirements: [ botocore, boto3 ]
 notes:
-    - You cannot create more than one customer gateway with the same IP address. If you run an identical request more than one time, the first request creates the customer gateway, and subsequent requests return information about the existing customer gateway. The subsequent requests do not create new customer gateway resources.
+    - You cannot create more than one customer gateway with the same IP address. If you run an identical request more than one time, the
+      first request creates the customer gateway, and subsequent requests return information about the existing customer gateway. The subsequent
+      requests do not create new customer gateway resources.
     - Return values contain customer_gateway and customer_gateways keys which are identical dicts. You should use
       customer_gateway. See U(https://github.com/ansible/ansible-modules-extras/issues/2773) for details.
 options:
@@ -43,7 +46,7 @@ options:
   name:
     description:
       - Name of the customer gateway.
-    required: true 
+    required: true
   state:
     description:
       - Create or terminate the Customer Gateway.
@@ -108,7 +111,7 @@ gateway.customer_gateways:
         type:
             description: encryption type.
             returned: when gateway exists and is available.
-            sample: ipsec.1 
+            sample: ipsec.1
             type: string
 '''
 
@@ -148,7 +151,7 @@ class Ec2CustomerGatewayManager:
             CustomerGatewayId=gw_id
         )
         return response
-            
+
     def ensure_cgw_present(self, bgp_asn, ip_address):
         response = self.ec2.create_customer_gateway(
             DryRun=False,
@@ -178,13 +181,13 @@ class Ec2CustomerGatewayManager:
             DryRun=False,
             Filters=[
                 {
-                    'Name': 'state', 
+                    'Name': 'state',
                     'Values': [
                         'available',
                     ]
                 },
                 {
-                    'Name': 'ip-address', 
+                    'Name': 'ip-address',
                     'Values': [
                         ip_address,
                     ]
@@ -223,22 +226,20 @@ def main():
     name = module.params.get('name')
 
     existing = gw_mgr.describe_gateways(module.params['ip_address'])
-    # describe_gateways returns a key of CustomerGateways where as create_gateway returns a
-    # key of CustomerGateway. For consistency, change it here
-    existing['CustomerGateway'] = existing['CustomerGateways']
 
     results = dict(changed=False)
     if module.params['state'] == 'present':
-        if existing['CustomerGateway']:
+        if existing['CustomerGateways']:
+            existing['CustomerGateway'] = existing['CustomerGateways'][0]
             results['gateway'] = existing
-            if existing['CustomerGateway'][0]['Tags']:
-                tag_array = existing['CustomerGateway'][0]['Tags']
+            if existing['CustomerGateway']['Tags']:
+                tag_array = existing['CustomerGateway']['Tags']
                 for key, value in enumerate(tag_array):
                     if value['Key'] == 'Name':
                         current_name = value['Value']
                         if current_name != name:
                             results['name'] = gw_mgr.tag_cgw_name(
-                                results['gateway']['CustomerGateway'][0]['CustomerGatewayId'],
+                                results['gateway']['CustomerGateway']['CustomerGatewayId'],
                                 module.params['name'],
                             )
                             results['changed'] = True
@@ -255,11 +256,12 @@ def main():
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
-        if existing['CustomerGateway']:
+        if existing['CustomerGateways']:
+            existing['CustomerGateway'] = existing['CustomerGateways'][0]
             results['gateway'] = existing
             if not module.check_mode:
                 results['gateway'] = gw_mgr.ensure_cgw_absent(
-                    existing['CustomerGateway'][0]['CustomerGatewayId']
+                    existing['CustomerGateway']['CustomerGatewayId']
                 )
             results['changed'] = True
 

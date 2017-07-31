@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -209,7 +210,7 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
         'Content-Type' : 'application/json',
     }
     request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
-    
+
     if requester_id:
         request_data['requester_id'] = requester_id
     else:
@@ -235,7 +236,7 @@ def absent(module, name, user, passwd, token, requester_id, service):
         'Content-Type' : 'application/json',
     }
     request_data = {}
-    
+
     if requester_id:
         request_data['requester_id'] = requester_id
     else:
@@ -259,17 +260,17 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'started', 'ongoing', 'absent']),
-        name=dict(required=True),
-        user=dict(required=False),
-        passwd=dict(required=False),
-        token=dict(required=False),
-        service=dict(required=False, type='list', aliases=["services"]),
-        requester_id=dict(required=False),
-        hours=dict(default='1', required=False),
-        minutes=dict(default='0', required=False),
-        desc=dict(default='Created by Ansible', required=False),
-        validate_certs = dict(default='yes', type='bool'),
+            state=dict(required=True, choices=['running', 'started', 'ongoing', 'absent']),
+            name=dict(required=True),
+            user=dict(required=False),
+            passwd=dict(required=False, no_log=True),
+            token=dict(required=False, no_log=True),
+            service=dict(required=False, type='list', aliases=["services"]),
+            requester_id=dict(required=False),
+            hours=dict(default='1', required=False),
+            minutes=dict(default='0', required=False),
+            desc=dict(default='Created by Ansible', required=False),
+            validate_certs = dict(default='yes', type='bool'),
         )
     )
 

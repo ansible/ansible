@@ -1,21 +1,16 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -26,8 +21,8 @@ description:
 version_added: "2.2"
 author: Pascal HERAUD @pascalheraud
 notes:
-    - Uses the python OVH Api U(https://github.com/ovh/python-ovh). 
-      You have to create an application (a key and secret) with a consummer 
+    - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
+      You have to create an application (a key and secret) with a consummer
       key as described into U(https://eu.api.ovh.com/g934.first_step_with_api)
 requirements:
     - ovh >  0.3.5
@@ -45,7 +40,7 @@ options:
         default: present
         choices: ['present', 'absent']
         description:
-            - Determines wether the backend is to be created/modified 
+            - Determines whether the backend is to be created/modified
               or deleted
     probe:
         required: false
@@ -76,16 +71,15 @@ options:
             - The consumer key to use
     timeout:
         required: false
-        type: "int"
         default: 120
         description:
-            - The timeout in seconds used to wait for a task to be 
-              completed. Default is 120 seconds.
+            - The timeout in seconds used to wait for a task to be
+              completed.
 
 '''
 
 EXAMPLES = '''
-# Adds or modify the backend '212.1.1.1' to a 
+# Adds or modify the backend '212.1.1.1' to a
 # loadbalancing 'ip-1.1.1.1'
 - ovh_ip_loadbalancing:
     name: ip-1.1.1.1
@@ -113,6 +107,7 @@ RETURN = '''
 '''
 
 import time
+
 try:
     import ovh
     import ovh.exceptions
@@ -120,6 +115,9 @@ try:
     HAS_OVH = True
 except ImportError:
     HAS_OVH = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def getOvhClient(ansibleModule):
     endpoint = ansibleModule.params.get('endpoint')
@@ -170,7 +168,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
     backend = module.params.get('backend')
-    weight = long(module.params.get('weight'))
+    weight = module.params.get('weight')
     probe = module.params.get('probe')
     timeout = module.params.get('timeout')
 
@@ -309,8 +307,6 @@ def main():
 
     module.exit_json(changed=moduleChanged)
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

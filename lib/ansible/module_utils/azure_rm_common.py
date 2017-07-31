@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
@@ -16,9 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-import ConfigParser
 import json
 import os
 import re
@@ -27,9 +24,11 @@ import copy
 import importlib
 import inspect
 
-from distutils.version import LooseVersion
+from packaging.version import Version
 from os.path import expanduser
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import configparser
 
 AZURE_COMMON_ARGS = dict(
     profile=dict(type='str'),
@@ -72,9 +71,18 @@ AZURE_FAILED_STATE = "Failed"
 HAS_AZURE = True
 HAS_AZURE_EXC = None
 
+HAS_MSRESTAZURE = True
+HAS_MSRESTAZURE_EXC = None
+
+# NB: packaging issue sometimes cause msrestazure not to be installed, check it separately
+try:
+    from msrest.serialization import Serializer
+except ImportError as exc:
+    HAS_MSRESTAZURE_EXC = exc
+    HAS_MSRESTAZURE = False
+
 try:
     from enum import Enum
-    from msrest.serialization import Serializer
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
@@ -112,6 +120,7 @@ AZURE_EXPECTED_VERSIONS = dict(
 
 AZURE_MIN_RELEASE = '2.0.0rc5'
 
+
 class AzureRMModuleBase(object):
 
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
@@ -142,8 +151,12 @@ class AzureRMModuleBase(object):
                                     supports_check_mode=supports_check_mode,
                                     required_if=merged_required_if)
 
+        if not HAS_MSRESTAZURE:
+            self.fail("Do you have msrestazure installed? Try `pip install msrestazure`"
+                      "- {0}".format(HAS_MSRESTAZURE_EXC))
+
         if not HAS_AZURE:
-            self.fail("Do you have azure=={1} installed? Try `pip install azure=={1}`"
+            self.fail("Do you have azure>={1} installed? Try `pip install 'azure>={1}' --upgrade`"
                       "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
 
         self._network_client = None
@@ -172,7 +185,11 @@ class AzureRMModuleBase(object):
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'])
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
-            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            tenant = self.credentials.get('tenant')
+            if tenant is not None:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)
+            else:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
@@ -185,11 +202,11 @@ class AzureRMModuleBase(object):
         self.module.exit_json(**res)
 
     def check_client_version(self, client_name, client_version, expected_version):
-        # Pinning Azure modules to 2.0.0rc5.
-        if LooseVersion(client_version) < LooseVersion(expected_version):
+        # Ensure Azure modules are at least 2.0.0rc5.
+        if Version(client_version) < Version(expected_version):
             self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
-                      "`pip install azure>={3}`".format(client_name, client_version, expected_version,
-                                                        AZURE_MIN_RELEASE))
+                      "`pip install azure>={3} --upgrade`".format(client_name, client_version, expected_version,
+                                                                  AZURE_MIN_RELEASE))
 
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
@@ -207,11 +224,11 @@ class AzureRMModuleBase(object):
     def log(self, msg, pretty_print=False):
         pass
         # Use only during module development
-        #if self.debug:
-        #    log_file = open('azure_rm.log', 'a')
-        #   if pretty_print:
+        # if self.debug:
+        #     log_file = open('azure_rm.log', 'a')
+        #     if pretty_print:
         #         log_file.write(json.dumps(msg, indent=4, sort_keys=True))
-        #    else:
+        #     else:
         #         log_file.write(msg + u'\n')
 
     def validate_tags(self, tags):
@@ -240,12 +257,12 @@ class AzureRMModuleBase(object):
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
         changed = False
         if isinstance(self.module.params.get('tags'), dict):
-            for key, value in self.module.params['tags'].iteritems():
+            for key, value in self.module.params['tags'].items():
                 if not new_tags.get(key) or new_tags[key] != value:
                     changed = True
                     new_tags[key] = value
             if isinstance(tags, dict):
-                for key, value in tags.iteritems():
+                for key, value in tags.items():
                     if not self.module.params['tags'].get(key):
                         new_tags.pop(key)
                         changed = True
@@ -299,7 +316,7 @@ class AzureRMModuleBase(object):
     def _get_profile(self, profile="default"):
         path = expanduser("~/.azure/credentials")
         try:
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(path)
         except Exception as exc:
             self.fail("Failed to access {0}. Check that the file exists and you have read "
@@ -318,7 +335,7 @@ class AzureRMModuleBase(object):
 
     def _get_env_credentials(self):
         env_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             env_credentials[attribute] = os.environ.get(env_variable, None)
 
         if env_credentials['profile']:
@@ -333,11 +350,11 @@ class AzureRMModuleBase(object):
     def _get_credentials(self, params):
         # Get authentication credentials.
         # Precedence: module parameters-> environment variables-> default profile in ~/.azure/credentials.
-        
+
         self.log('Getting credentials')
 
         arg_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             arg_credentials[attribute] = params.get(attribute, None)
 
         # try module params
@@ -345,11 +362,11 @@ class AzureRMModuleBase(object):
             self.log('Retrieving credentials with profile parameter.')
             credentials = self._get_profile(arg_credentials['profile'])
             return credentials
-        
+
         if arg_credentials['subscription_id']:
             self.log('Received credentials from parameters.')
             return arg_credentials
-        
+
         # try environment
         env_credentials = self._get_env_credentials()
         if env_credentials:
@@ -375,11 +392,11 @@ class AzureRMModuleBase(object):
         '''
         dependencies = dict()
         if enum_modules:
-            for module_name in enum_modules:  
-               mod = importlib.import_module(module_name)
-               for mod_class_name, mod_class_obj in inspect.getmembers(mod, predicate=inspect.isclass):
-                   dependencies[mod_class_name] = mod_class_obj 
-            self.log("dependencies: ");
+            for module_name in enum_modules:
+                mod = importlib.import_module(module_name)
+                for mod_class_name, mod_class_obj in inspect.getmembers(mod, predicate=inspect.isclass):
+                    dependencies[mod_class_name] = mod_class_obj
+            self.log("dependencies: ")
             self.log(str(dependencies))
         serializer = Serializer(classes=dependencies)
         return serializer.body(obj, class_name)
@@ -567,7 +584,11 @@ class AzureRMModuleBase(object):
             resource_client = self.rm_client
             resource_client.providers.register(key)
         except Exception as exc:
-            self.fail("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("You might need to register {0} using an admin account".format(key))
+            self.log(("To register a provider using the Python CLI: "
+                      "https://docs.microsoft.com/azure/azure-resource-manager/"
+                      "resource-manager-common-deployment-errors#noregisteredproviderfound"))
 
     @property
     def storage_client(self):

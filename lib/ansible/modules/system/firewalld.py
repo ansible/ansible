@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Adam Miller (maxamillion@fedoraproject.org)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -59,13 +50,17 @@ options:
     version_added: "2.1"
   zone:
     description:
-      - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
+      - >
+        The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices
+        can be extended based on per-system configs, listed here are "out of the box" defaults).
     required: false
     default: system-default(public)
     choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block" ]
   permanent:
     description:
-      - "Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can operate on firewalld configs when it's not running (requires firewalld >= 3.0.9)"
+      - >
+        Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can
+        operate on firewalld configs when it's not running (requires firewalld >= 3.0.9)
     required: false
     default: null
   immediate:
@@ -155,7 +150,6 @@ fw_offline = False
 Rich_Rule = None
 FirewallClientZoneSettings = None
 
-module = None
 
 #####################
 # exception handling
@@ -211,14 +205,14 @@ def update_fw_settings(fw_zone, fw_settings):
 # masquerade handling
 #
 def get_masquerade_enabled(zone):
-    if fw.queryMasquerade(zone) == True:
+    if fw.queryMasquerade(zone) is True:
         return True
     else:
         return False
 
 def get_masquerade_enabled_permanent(zone):
     fw_zone, fw_settings = get_fw_zone_settings(zone)
-    if fw_settings.getMasquerade() == True:
+    if fw_settings.getMasquerade() is True:
         return True
     else:
         return False
@@ -279,7 +273,7 @@ def set_port_disabled_permanent(zone, port, protocol):
 def get_source(zone, source):
     fw_zone, fw_settings = get_fw_zone_settings(zone)
     if source in fw_settings.getSources():
-       return True
+        return True
     else:
         return False
 
@@ -317,7 +311,7 @@ def get_interface_permanent(zone, interface):
     fw_zone, fw_settings = get_fw_zone_settings(zone)
 
     if interface in fw_settings.getInterfaces():
-       return True
+        return True
     else:
         return False
 
@@ -494,7 +488,8 @@ def main():
     except ImportError:
         ## Make python 2.4 shippable ci tests happy
         e = sys.exc_info()[1]
-        module.fail_json(msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required (3.0.9 or newer for offline operations) \n %s' % e)
+        module.fail_json(msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required '
+                             '(3.0.9 or newer for offline operations) \n %s' % e)
 
     if fw_offline:
         ## Pre-run version checking
@@ -507,7 +502,7 @@ def main():
 
         ## Check for firewalld running
         try:
-            if fw.connected == False:
+            if fw.connected is False:
                 module.fail_json(msg='firewalld service must be running, or try with offline=true')
         except AttributeError:
             module.fail_json(msg="firewalld connection can't be established,\
@@ -515,10 +510,10 @@ def main():
 
 
     ## Verify required params are provided
-    if module.params['source'] == None and module.params['permanent'] == None:
+    if module.params['source'] is None and module.params['permanent'] is None:
         module.fail_json(msg='permanent is a required parameter')
 
-    if module.params['interface'] != None and module.params['zone'] == None:
+    if module.params['interface'] is not None and module.params['zone'] is None:
         module.fail(msg='zone is a required parameter')
 
     if module.params['immediate'] and fw_offline:
@@ -531,14 +526,14 @@ def main():
     rich_rule = module.params['rich_rule']
     source = module.params['source']
 
-    if module.params['port'] != None:
+    if module.params['port'] is not None:
         port, protocol = module.params['port'].split('/')
-        if protocol == None:
+        if protocol is None:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
         port = None
 
-    if module.params['zone'] != None:
+    if module.params['zone'] is not None:
         zone = module.params['zone']
     else:
         if fw_offline:
@@ -554,21 +549,21 @@ def main():
     masquerade = module.params['masquerade']
 
     modification_count = 0
-    if service != None:
+    if service is not None:
         modification_count += 1
-    if port != None:
+    if port is not None:
         modification_count += 1
-    if rich_rule != None:
+    if rich_rule is not None:
         modification_count += 1
-    if interface != None:
+    if interface is not None:
         modification_count += 1
-    if masquerade != None:
+    if masquerade is not None:
         modification_count += 1
 
     if modification_count > 1:
         module.fail_json(msg='can only operate on port, service, rich_rule or interface at once')
 
-    if service != None:
+    if service is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_service_enabled_permanent,
@@ -623,7 +618,7 @@ def main():
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -633,7 +628,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -651,7 +646,7 @@ def main():
 
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -661,7 +656,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -671,15 +666,15 @@ def main():
                     )
                     changed=True
 
-        if changed == True:
+        if changed is True:
             msgs.append("Changed service %s to %s" % (service, desired_state))
 
     # FIXME - source type does not handle non-permanent mode, this was an
     #         oversight in the past.
-    if source != None:
+    if source is not None:
         is_enabled = action_handler(get_source, (zone, source))
         if desired_state == "enabled":
-            if is_enabled == False:
+            if is_enabled is False:
                 if module.check_mode:
                     module.exit_json(changed=True)
 
@@ -687,7 +682,7 @@ def main():
                 changed=True
                 msgs.append("Added %s to zone %s" % (source, zone))
         elif desired_state == "disabled":
-            if is_enabled == True:
+            if is_enabled is True:
                 if module.check_mode:
                     module.exit_json(changed=True)
 
@@ -695,7 +690,7 @@ def main():
                 changed=True
                 msgs.append("Removed %s from zone %s" % (source, zone))
 
-    if port != None:
+    if port is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_port_enabled_permanent,
@@ -749,7 +744,7 @@ def main():
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -759,7 +754,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -776,7 +771,7 @@ def main():
             msgs.append('Non-permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -786,7 +781,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -796,11 +791,11 @@ def main():
                     )
                     changed=True
 
-        if changed == True:
+        if changed is True:
             msgs.append("Changed port %s to %s" % ("%s/%s" % (port, protocol), \
                         desired_state))
 
-    if rich_rule != None:
+    if rich_rule is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_rich_rule_enabled_permanent,
@@ -853,7 +848,7 @@ def main():
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -863,7 +858,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -880,7 +875,7 @@ def main():
             msgs.append('Non-permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -890,7 +885,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -900,10 +895,10 @@ def main():
                     )
                     changed=True
 
-        if changed == True:
+        if changed is True:
             msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
 
-    if interface != None:
+    if interface is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_interface_permanent,
@@ -948,7 +943,7 @@ def main():
             )
             msgs.append('Permanent operation')
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -956,7 +951,7 @@ def main():
                     changed=True
                     msgs.append("Changed %s to zone %s" % (interface, zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -970,7 +965,7 @@ def main():
             )
             msgs.append('Non-permanent operation')
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -978,7 +973,7 @@ def main():
                     changed=True
                     msgs.append("Changed %s to zone %s" % (interface, zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -986,14 +981,14 @@ def main():
                     changed=True
                     msgs.append("Removed %s from zone %s" % (interface, zone))
 
-    if masquerade != None:
+    if masquerade is not None:
 
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_masquerade_enabled_permanent,
-                (zone)
+                (zone,)
             )
-            is_enabled_immediate = action_handler(get_masquerade_enabled, (zone))
+            is_enabled_immediate = action_handler(get_masquerade_enabled, (zone,))
             msgs.append('Permanent and Non-Permanent(immediate) operation')
 
             if desired_state == "enabled":
@@ -1004,7 +999,7 @@ def main():
                     action_handler(set_masquerade_permanent, (zone, True))
                     changed=True
                 if not is_enabled_immediate:
-                    action_handler(set_masquerade_enabled, (zone))
+                    action_handler(set_masquerade_enabled, (zone,))
                     changed=True
                 if changed:
                     msgs.append("Added masquerade to zone %s" % (zone))
@@ -1017,17 +1012,17 @@ def main():
                     action_handler(set_masquerade_permanent, (zone, False))
                     changed=True
                 if is_enabled_immediate:
-                    action_handler(set_masquerade_disabled, (zone))
+                    action_handler(set_masquerade_disabled, (zone,))
                     changed=True
                 if changed:
                     msgs.append("Removed masquerade from zone %s" % (zone))
 
         elif permanent and not immediate:
-            is_enabled = action_handler(get_masquerade_enabled_permanent, (zone))
+            is_enabled = action_handler(get_masquerade_enabled_permanent, (zone,))
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -1035,7 +1030,7 @@ def main():
                     changed=True
                     msgs.append("Added masquerade to zone %s" % (zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -1043,11 +1038,11 @@ def main():
                     changed=True
                     msgs.append("Removed masquerade from zone %s" % (zone))
         elif immediate and not permanent:
-            is_enabled = action_handler(get_masquerade_enabled, (zone))
+            is_enabled = action_handler(get_masquerade_enabled, (zone,))
             msgs.append('Non-permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -1055,7 +1050,7 @@ def main():
                     changed=True
                     msgs.append("Added masquerade to zone %s" % (zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 

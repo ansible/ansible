@@ -1,25 +1,16 @@
 #!/usr/bin/python
 
 # (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -103,27 +94,28 @@ except ImportError:
     HAVE_SEOBJECT=False
 
 ### Add missing entries (backward compatible)
-seobject.file_types.update(dict(
-  a = seobject.SEMANAGE_FCONTEXT_ALL,
-  b = seobject.SEMANAGE_FCONTEXT_BLOCK,
-  c = seobject.SEMANAGE_FCONTEXT_CHAR,
-  d = seobject.SEMANAGE_FCONTEXT_DIR,
-  f = seobject.SEMANAGE_FCONTEXT_REG,
-  l = seobject.SEMANAGE_FCONTEXT_LINK,
-  p = seobject.SEMANAGE_FCONTEXT_PIPE,
-  s = seobject.SEMANAGE_FCONTEXT_SOCK,
-))
+if HAVE_SEOBJECT:
+    seobject.file_types.update(dict(
+        a = seobject.SEMANAGE_FCONTEXT_ALL,
+        b = seobject.SEMANAGE_FCONTEXT_BLOCK,
+        c = seobject.SEMANAGE_FCONTEXT_CHAR,
+        d = seobject.SEMANAGE_FCONTEXT_DIR,
+        f = seobject.SEMANAGE_FCONTEXT_REG,
+        l = seobject.SEMANAGE_FCONTEXT_LINK,
+        p = seobject.SEMANAGE_FCONTEXT_PIPE,
+        s = seobject.SEMANAGE_FCONTEXT_SOCK,
+    ))
 
 ### Make backward compatible
 option_to_file_type_str = dict(
-  a = 'all files',
-  b = 'block device',
-  c = 'character device',
-  d = 'directory',
-  f = 'regular file',
-  l = 'symbolic link',
-  p = 'named pipe',
-  s = 'socket file',
+    a = 'all files',
+    b = 'block device',
+    c = 'character device',
+    d = 'directory',
+    f = 'regular file',
+    l = 'symbolic link',
+    p = 'named pipe',
+    s = 'socket file',
 )
 
 def semanage_fcontext_exists(sefcontext, target, ftype):
@@ -224,14 +216,14 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-                target  = dict(required=True, aliases=['path']),
-                ftype   = dict(required=False, choices=option_to_file_type_str.keys(), default='a'),
-                setype  = dict(required=True),
-                seuser  = dict(required=False, default=None),
-                selevel = dict(required=False, default=None, aliases=['serange']),
-                state   = dict(required=False, choices=['present', 'absent'], default='present'),
-                reload  = dict(required=False, type='bool', default='yes'),
-            ),
+            target  = dict(required=True, aliases=['path']),
+            ftype   = dict(required=False, choices=option_to_file_type_str.keys(), default='a'),
+            setype  = dict(required=True),
+            seuser  = dict(required=False, default=None),
+            selevel = dict(required=False, default=None, aliases=['serange']),
+            state   = dict(required=False, choices=['present', 'absent'], default='present'),
+            reload  = dict(required=False, type='bool', default='yes'),
+        ),
         supports_check_mode = True,
     )
     if not HAVE_SELINUX:

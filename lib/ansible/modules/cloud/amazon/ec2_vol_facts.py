@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -28,7 +29,8 @@ author: "Rob White (@wimnat)"
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) for possible filters.
     required: false
     default: null
 extends_documentation_fragment:
@@ -63,6 +65,8 @@ EXAMPLES = '''
 # fix this
 RETURN = '''# '''
 
+import traceback
+
 try:
     import boto.ec2
     from boto.exception import BotoServerError
@@ -72,6 +76,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def get_volume_info(volume):
@@ -79,24 +84,25 @@ def get_volume_info(volume):
     attachment = volume.attach_data
 
     volume_info = {
-                    'create_time': volume.create_time,
-                    'id': volume.id,
-                    'iops': volume.iops,
-                    'size': volume.size,
-                    'snapshot_id': volume.snapshot_id,
-                    'status': volume.status,
-                    'type': volume.type,
-                    'zone': volume.zone,
-                    'region': volume.region.name,
-                    'attachment_set': {
-                        'attach_time': attachment.attach_time,
-                        'device': attachment.device,
-                        'instance_id': attachment.instance_id,
-                        'status': attachment.status
-                    },
-                    'tags': volume.tags
-                }
-    
+        'create_time': volume.create_time,
+        'id': volume.id,
+        'encrypted': volume.encrypted,
+        'iops': volume.iops,
+        'size': volume.size,
+        'snapshot_id': volume.snapshot_id,
+        'status': volume.status,
+        'type': volume.type,
+        'zone': volume.zone,
+        'region': volume.region.name,
+        'attachment_set': {
+            'attach_time': attachment.attach_time,
+            'device': attachment.device,
+            'instance_id': attachment.instance_id,
+            'status': attachment.status
+            },
+        'tags': volume.tags
+        }
+
     return volume_info
 
 def list_ec2_volumes(connection, module):
@@ -133,8 +139,8 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
-            module.fail_json(msg=str(e))
+        except (boto.exception.NoAuthHandlerFound, Exception) as e:
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     else:
         module.fail_json(msg="region must be specified")
 

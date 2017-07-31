@@ -396,3 +396,30 @@
   assert:
     that:
         - 'content.stdout == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\" ssh-dss DATA_BASIC root@testing"'
+
+# -------------------------------------------------------------
+# check mode
+
+- name: copy an existing file in place with comments
+  copy: src=existing_authorized_keys dest="{{output_dir|expanduser}}/authorized_keys"
+
+- authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order_2 }}"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+  check_mode: True
+  register: result
+
+- name: assert that the key would be added and that the diff is shown
+  assert:
+    that:
+      - 'result.changed'
+      - '"ssh-rsa WHATEVER 2.5@testing" in result.diff.after'
+
+- name: assert that the file was not changed
+  copy: src=existing_authorized_keys dest="{{output_dir|expanduser}}/authorized_keys"
+  register: result
+- assert:
+    that:
+      - 'result.changed == False'

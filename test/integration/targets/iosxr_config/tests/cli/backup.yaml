@@ -9,12 +9,11 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
   delegate_to: localhost
 
@@ -28,7 +27,6 @@
   iosxr_config:
     src: basic/config.j2
     backup: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -39,7 +37,7 @@
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
   delegate_to: localhost
 

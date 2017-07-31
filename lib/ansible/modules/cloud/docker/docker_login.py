@@ -4,26 +4,16 @@
 #          Chris Houseknecht, <house@redhat.com>
 #          James Tanner, <jtanner@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -93,7 +83,7 @@ requirements:
     - "docker-py >= 1.7.0"
     - "Docker API >= 1.20"
     - 'Only to be able to logout (state=absent): the docker command line utility'
-authors:
+author:
     - "Olaf Kilian <olaf.kilian@symanex.com>"
     - "Chris Houseknecht (@chouseknecht)"
     - "James Tanner (@jctanner)"
@@ -141,8 +131,12 @@ login_results:
 '''
 
 import base64
+import json
+import os
+import re
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.docker_common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
 
 
 class LoginManager(DockerBaseClass):
@@ -275,8 +269,13 @@ class LoginManager(DockerBaseClass):
             self.log("Adding registry_url %s to auths." % (self.registry_url))
             config['auths'][self.registry_url] = dict()
 
+        b64auth = base64.b64encode(
+            to_bytes(self.username) + b':' + to_bytes(self.password)
+        )
+        auth = to_text(b64auth)
+
         encoded_credentials = dict(
-            auth=base64.b64encode(self.username + b':' + self.password),
+            auth=auth,
             email=self.email
         )
 
@@ -318,16 +317,14 @@ def main():
         login_result={}
     )
 
-    if module.params['state'] == 'present' and module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not module.params['email']:
-        module.fail_json(msg="'email' is required when loging into DockerHub")
+    if client.module.params['state'] == 'present' and client.module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not client.module.params['email']:
+        client.module.fail_json(msg="'email' is required when logging into DockerHub")
 
     LoginManager(client, results)
     if 'actions' in results:
         del results['actions']
     client.module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -38,7 +28,7 @@ options:
         required: true
     architecture:
         description:
-          - The archiecture for the container (e.g. "x86_64" or "i686").
+          - The architecture for the container (e.g. "x86_64" or "i686").
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
     config:
@@ -96,14 +86,14 @@ options:
         default: 30
     wait_for_ipv4_addresses:
         description:
-          - If this is true, the M(lxd_container) waits until IPv4 addresses
+          - If this is true, the C(lxd_container) waits until IPv4 addresses
             are set to the all network interfaces in the container after
             starting or restarting.
         required: false
         default: false
     force_stop:
         description:
-          - If this is true, the M(lxd_container) forces to stop the container
+          - If this is true, the C(lxd_container) forces to stop the container
             when it stops or restarts the container.
         required: false
         default: false
@@ -141,7 +131,7 @@ notes:
     2.1, the later requires python to be installed in the container which can
     be done with the command module.
   - You can copy a file from the host to the container
-    with the Ansible M(copy) and M(templater) module and the `lxd` connection plugin.
+    with the Ansible M(copy) and M(template) module and the `lxd` connection plugin.
     See the example below.
   - You can copy a file in the creatd container to the localhost
     with `command=lxc file pull container_name/dir/filename filename`.
@@ -230,7 +220,7 @@ RETURN='''
 addresses:
   description: Mapping from the network device name to a list of IPv4 addresses in the container
   returned: when state is started or restarted
-  type: object
+  type: dict
   sample: {"eth0": ["10.155.92.191"]}
 old_state:
   description: The old state of the container
@@ -248,9 +238,13 @@ actions:
   type: list
   sample: '["create", "start"]'
 '''
-
+import datetime
 import os
+import time
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.lxd import LXDClient, LXDClientException
+
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -275,16 +269,6 @@ CONFIG_PARAMS = [
     'architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source'
 ]
 
-try:
-    callable(all)
-except NameError:
-    # For python <2.5
-    # This definition is copied from https://docs.python.org/2/library/functions.html#all
-    def all(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
 
 class LXDContainerManagement(object):
     def __init__(self, module):
@@ -388,7 +372,7 @@ class LXDContainerManagement(object):
 
     @staticmethod
     def _has_all_ipv4_addresses(addresses):
-        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.itervalues()])
+        return len(addresses) > 0 and all(len(v) > 0 for v in addresses.values())
 
     def _get_addresses(self):
         try:
@@ -599,9 +583,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict(
-                type='str',
-            )
+            trust_password=dict( type='str', no_log=True )
         ),
         supports_check_mode=False,
     )
@@ -609,7 +591,6 @@ def main():
     lxd_manage = LXDContainerManagement(module=module)
     lxd_manage.run()
 
-# import module bits
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

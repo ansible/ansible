@@ -51,7 +51,7 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 
         ansible.module_utils.basic._ANSIBLE_ARGS = None
         self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
         self.am._name = 'unittest'
 
@@ -89,7 +89,7 @@ class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
 
         ansible.module_utils.basic._ANSIBLE_ARGS = None
         self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
         self.am._name = 'unittest'
 
@@ -115,20 +115,20 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
     """Test the AnsibleModule Log Method"""
 
     py2_output_data = {
-            u'Text string': b'Text string',
-            u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test'.encode('utf-8'),
-            b'Byte string': b'Byte string',
-            u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test'.encode('utf-8'),
-            b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace').encode('utf-8'),
-            }
+        u'Text string': b'Text string',
+        u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test'.encode('utf-8'),
+        b'Byte string': b'Byte string',
+        u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test'.encode('utf-8'),
+        b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace').encode('utf-8'),
+    }
 
     py3_output_data = {
-            u'Text string': u'Text string',
-            u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
-            b'Byte string': u'Byte string',
-            u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test',
-            b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
-            }
+        u'Text string': u'Text string',
+        u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
+        b'Byte string': u'Byte string',
+        u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test',
+        b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
+    }
 
     def setUp(self):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
@@ -138,7 +138,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
 
         ansible.module_utils.basic._ANSIBLE_ARGS = None
         self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
         self.am._name = 'unittest'
 
@@ -184,12 +184,12 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
     """Test the AnsibleModule Log Method"""
 
     output_data = {
-            u'Text string': u'Text string',
-            u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
-            b'Byte string': u'Byte string',
-            u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test',
-            b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
-            }
+        u'Text string': u'Text string',
+        u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
+        b'Byte string': u'Byte string',
+        u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test',
+        b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
+    }
 
     # overriding run lets us use context managers for setup/teardown-esque behavior
     def setUp(self):
@@ -200,7 +200,7 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
 
         ansible.module_utils.basic._ANSIBLE_ARGS = None
         self.am = ansible.module_utils.basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
         self.am._name = 'unittest'
 
@@ -270,4 +270,3 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
         # We added this journal field
         self.assertIn('TEST', mock_func.call_args[1])
         self.assertIn('log unittest', mock_func.call_args[1]['TEST'])
-

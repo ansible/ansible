@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -76,7 +77,7 @@ EXAMPLES = '''
     revision: '4.2'
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 # ===========================================
 # Module execution.
@@ -121,7 +122,7 @@ def main():
         module.exit_json(changed=True)
 
     # Send the data to airbrake
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     response, info = fetch_url(module, url, data=data)
     if info['status'] == 200:
         module.exit_json(changed=True)

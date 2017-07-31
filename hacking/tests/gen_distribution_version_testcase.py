@@ -15,23 +15,23 @@ import json
 import sys
 
 filelist = [
-        '/etc/oracle-release',
-        '/etc/slackware-version',
-        '/etc/redhat-release',
-        '/etc/vmware-release',
-        '/etc/openwrt_release',
-        '/etc/system-release',
-        '/etc/alpine-release',
-        '/etc/release',
-        '/etc/arch-release',
-        '/etc/os-release',
-        '/etc/SuSE-release',
-        '/etc/gentoo-release',
-        '/etc/os-release',
-        '/etc/lsb-release',
-        '/etc/altlinux-release',
-        '/etc/os-release',
-        '/etc/coreos/update.conf',
+    '/etc/oracle-release',
+    '/etc/slackware-version',
+    '/etc/redhat-release',
+    '/etc/vmware-release',
+    '/etc/openwrt_release',
+    '/etc/system-release',
+    '/etc/alpine-release',
+    '/etc/release',
+    '/etc/arch-release',
+    '/etc/os-release',
+    '/etc/SuSE-release',
+    '/etc/gentoo-release',
+    '/etc/os-release',
+    '/etc/lsb-release',
+    '/etc/altlinux-release',
+    '/etc/os-release',
+    '/etc/coreos/update.conf',
 ]
 
 fcont = {}
@@ -60,7 +60,7 @@ parsed = json.loads(ansible_out[ansible_out.index('{'):])
 ansible_facts = {}
 for fact in facts:
     try:
-        ansible_facts[fact] = parsed['ansible_facts']['ansible_'+fact]
+        ansible_facts[fact] = parsed['ansible_facts']['ansible_' + fact]
     except:
         ansible_facts[fact] = "N/A"
 
@@ -74,4 +74,3 @@ output = {
 }
 
 print(json.dumps(output, indent=4))
-

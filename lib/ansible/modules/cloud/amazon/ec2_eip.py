@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -65,6 +66,12 @@ options:
     required: false
     default: false
     version_added: "2.0"
+  private_ip_address:
+    description:
+      - The primary or secondary private IP address to associate with the Elastic IP address.
+    required: False
+    default: None
+    version_added: "2.3"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -77,11 +84,13 @@ notes:
      pause to delay further playbook execution until the instance is reachable,
      if necessary.
    - This module returns multiple changed statuses on disassociation or release.
-     It returns an overall status based on any changes occuring. It also returns
+     It returns an overall status based on any changes occurring. It also returns
      individual changed statuses for disassociation and release.
 '''
 
 EXAMPLES = '''
+# Note: These examples do not set authentication details, see the AWS Guide for details.
+
 - name: associate an elastic IP with an instance
   ec2_eip:
     device_id: i-1212f003
@@ -109,7 +118,8 @@ EXAMPLES = '''
     device_id: i-1212f003
 
 - name: allocate a new elastic IP without associating it to anything
-  action: ec2_eip
+  ec2_eip:
+    state: present
   register: eip
 
 - name: output the IP
@@ -157,7 +167,7 @@ class EIPException(Exception):
     pass
 
 
-def associate_ip_and_device(ec2, address, device_id, check_mode, isinstance=True):
+def associate_ip_and_device(ec2, address, private_ip_address, device_id, check_mode, isinstance=True):
     if address_is_associated_with_device(ec2, address, device_id, isinstance):
         return {'changed': False}
 
@@ -165,11 +175,11 @@ def associate_ip_and_device(ec2, address, device_id, check_mode, isinstance=True
     if not check_mode:
         if isinstance:
             if address.domain == "vpc":
-                res = ec2.associate_address(device_id, allocation_id=address.allocation_id)
+                res = ec2.associate_address(device_id, allocation_id=address.allocation_id, private_ip_address=private_ip_address)
             else:
-                res = ec2.associate_address(device_id, public_ip=address.public_ip)
+                res = ec2.associate_address(device_id, public_ip=address.public_ip, private_ip_address=private_ip_address)
         else:
-            res = ec2.associate_address(network_interface_id=device_id, allocation_id=address.allocation_id)
+            res = ec2.associate_address(network_interface_id=device_id, allocation_id=address.allocation_id, private_ip_address=private_ip_address)
         if not res:
             raise EIPException('association failed')
 
@@ -286,7 +296,7 @@ def find_device(ec2, module, device_id, isinstance=True):
     raise EIPException("could not find instance" + device_id)
 
 
-def ensure_present(ec2, module, domain, address, device_id,
+def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                    reuse_existing_ip_allowed, check_mode, isinstance=True):
     changed = False
 
@@ -303,15 +313,15 @@ def ensure_present(ec2, module, domain, address, device_id,
         if isinstance:
             instance = find_device(ec2, module, device_id)
             if reuse_existing_ip_allowed:
-                if len(instance.vpc_id) > 0 and domain is None:
+                if instance.vpc_id and len(instance.vpc_id) > 0 and domain is None:
                     raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, device_id,
+            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
                                                  check_mode)
         else:
             instance = find_device(ec2, module, device_id, isinstance=False)
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, device_id,
+            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
                                                  check_mode, isinstance=False)
 
         if instance.vpc_id:
@@ -351,6 +361,7 @@ def main():
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
         wait_timeout=dict(default=300),
+        private_ip_address=dict(required=False, default=None, type='str')
     ))
 
     module = AnsibleModule(
@@ -366,11 +377,16 @@ def main():
     device_id = module.params.get('device_id')
     instance_id = module.params.get('instance_id')
     public_ip = module.params.get('public_ip')
+    private_ip_address = module.params.get('private_ip_address')
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
     domain = 'vpc' if in_vpc else None
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
+
+    # Parameter checks
+    if private_ip_address is not None and device_id is None:
+        module.fail_json(msg="parameters are required together: ('device_id', 'private_ip_address')")
 
     if instance_id:
         warnings = ["instance_id is no longer used, please use device_id going forward"]
@@ -392,9 +408,8 @@ def main():
 
         if state == 'present':
             if device_id:
-                result = ensure_present(ec2, module, domain, address, device_id,
-                                    reuse_existing_ip_allowed,
-                                    module.check_mode, isinstance=is_instance)
+                result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
+                                    reuse_existing_ip_allowed, module.check_mode, isinstance=is_instance)
             else:
                 address = allocate_address(ec2, domain, reuse_existing_ip_allowed)
                 result = {'changed': True, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}

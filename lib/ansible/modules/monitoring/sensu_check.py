@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -84,6 +85,12 @@ options:
       - Timeout for the check
     required: false
     default: 10
+  ttl:
+    description:
+      - Time to live in seconds until the check is considered stale
+    required: false
+    default: null
+    version_added: 2.4
   handle:
     description:
       - Whether the check should be handled or not
@@ -145,18 +152,18 @@ options:
     default: no
   low_flap_threshold:
     description:
-      - The low threshhold for flap detection
+      - The low threshold for flap detection
     required: false
     default: null
   high_flap_threshold:
     description:
-      - The high threshhold for flap detection
+      - The high threshold for flap detection
     required: false
     default: null
   custom:
     version_added: "2.1"
     description:
-      - A hash/dictionary of custom parameters for mixing to the configuration. 
+      - A hash/dictionary of custom parameters for mixing to the configuration.
       - You can't rewrite others module parameters using this
     required: false
     default: {}
@@ -262,6 +269,7 @@ def sensu_check(module, path, name, state='present', backup=False):
                        'subscribers',
                        'interval',
                        'timeout',
+                       'ttl',
                        'handle',
                        'dependencies',
                        'standalone',
@@ -286,29 +294,29 @@ def sensu_check(module, path, name, state='present', backup=False):
                     reasons.append('`{opt}\' was removed'.format(opt=opt))
 
         if module.params['custom']:
-          # Convert to json
-          custom_params = module.params['custom']
-          overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue','subdue_begin','subdue_end'])
-          if overwrited_fields:
-            msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {opt}'.format(opt=list(overwrited_fields))
-            module.fail_json(msg=msg)
+            # Convert to json
+            custom_params = module.params['custom']
+            overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue','subdue_begin','subdue_end'])
+            if overwrited_fields:
+                msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {opt}'.format(opt=list(overwrited_fields))
+                module.fail_json(msg=msg)
 
-          for k,v in custom_params.items():
-            if k in config['checks'][name]:
-              if not config['checks'][name][k] == v:
-                changed = True
-                reasons.append('`custom param {opt}\' was changed'.format(opt=k))
-            else:
-              changed = True
-              reasons.append('`custom param {opt}\' was added'.format(opt=k))
-            check[k] = v
-          simple_opts += custom_params.keys()
+            for k,v in custom_params.items():
+                if k in config['checks'][name]:
+                    if not config['checks'][name][k] == v:
+                        changed = True
+                        reasons.append('`custom param {opt}\' was changed'.format(opt=k))
+                else:
+                    changed = True
+                    reasons.append('`custom param {opt}\' was added'.format(opt=k))
+                check[k] = v
+            simple_opts += custom_params.keys()
 
         # Remove obsolete custom params
         for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type','subdue','subdue_begin','subdue_end']):
-          changed = True
-          reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
-          del check[opt]
+            changed = True
+            reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
+            del check[opt]
 
         if module.params['metric']:
             if 'type' not in check or check['type'] != 'metric':
@@ -362,6 +370,7 @@ def main():
                 'subscribers':  {'type': 'list'},
                 'interval':     {'type': 'int'},
                 'timeout':      {'type': 'int'},
+                'ttl':          {'type': 'int'},
                 'handle':       {'type': 'bool'},
                 'subdue_begin': {'type': 'str'},
                 'subdue_end':   {'type': 'str'},

@@ -23,9 +23,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -249,7 +250,7 @@ def remove_packages(module, packages):
 
     remove_c = 0
 
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, package):
@@ -318,7 +319,7 @@ def do_upgrade_packages(module, full=False):
         module.fail_json(msg="could not %s packages" % cmd)
 
 def upgrade_packages(module):
-        do_upgrade_packages(module)
+    do_upgrade_packages(module)
 
 def full_upgrade_packages(module):
     do_upgrade_packages(module, True)
@@ -336,16 +337,16 @@ def clean_cache(module):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], type='list'),
-                update_cache = dict(default='no', type='bool'),
-                upgrade      = dict(default='no', type='bool'),
-                full_upgrade = dict(default='no', type='bool'),
-                clean        = dict(default='no', type='bool'),
-                force        = dict(default='no', type='bool')),
-            required_one_of = [['name', 'update_cache', 'upgrade', 'full_upgrade', 'clean']],
-            supports_check_mode = True)
+        argument_spec    = dict(
+            state        = dict(default="present", choices=["present","absent"]),
+            name         = dict(aliases=["pkg"], type='list'),
+            update_cache = dict(default='no', type='bool'),
+            upgrade      = dict(default='no', type='bool'),
+            full_upgrade = dict(default='no', type='bool'),
+            clean        = dict(default='no', type='bool'),
+            force        = dict(default='no', type='bool')),
+        required_one_of = [['name', 'update_cache', 'upgrade', 'full_upgrade', 'clean']],
+        supports_check_mode = True)
 
     global PKGIN_PATH
     PKGIN_PATH = module.get_bin_path('pkgin', True, ['/opt/local/bin'])

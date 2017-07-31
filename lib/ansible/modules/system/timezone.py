@@ -2,51 +2,36 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Shinichi TAMURA (@tmshn)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import os
-import re
-from ansible.module_utils.basic import AnsibleModule, get_platform
-from ansible.module_utils.six import iteritems
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: timezone
 short_description: Configure timezone setting
 description:
-  - This module configures the timezone setting, both of the system clock
-    and of the hardware clock. I(Currently only Linux platform is supported.)
-    It is recommended to restart C(crond) after changing the timezone,
-    otherwise the jobs may run at the wrong time.
-    It uses the C(timedatectl) command if available. Otherwise, it edits
-    C(/etc/sysconfig/clock) or C(/etc/timezone) for the system clock,
-    and uses the C(hwclock) command for the hardware clock.
-    If you want to set up the NTP, use M(service) module.
-version_added: "2.2.0"
+  - This module configures the timezone setting, both of the system clock and of the hardware clock. If you want to set up the NTP, use M(service) module.
+  - It is recommended to restart C(crond) after changing the timezone, otherwise the jobs may run at the wrong time.
+  - Several different tools are used depending on the OS/Distribution involved.
+    For Linux it can use C(timedatectl)  or edit C(/etc/sysconfig/clock) or C(/etc/timezone) andC(hwclock).
+    On SmartOS , C(sm-set-timezone), for BSD, C(/etc/localtime) is modified.
+  - As of version 2.3 support was added for SmartOS and BSDs.
+  - Windows, AIX and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
+version_added: "2.2"
 options:
   name:
     description:
       - Name of the timezone for the system clock.
-        Default is to keep current setting.
+        Default is to keep current setting. B(At least one of name and
+        hwclock are required.)
     required: false
   hwclock:
     description:
@@ -54,16 +39,22 @@ options:
         Default is to keep current setting.
         Note that this option is recommended not to change and may fail
         to configure, especially on virtual environments such as AWS.
+        B(At least one of name and hwclock are required.)
+        I(Only used on Linux.)
     required: false
     aliases: ['rtc']
-author: "Shinichi TAMURA (@tmshn)"
+notes:
+  - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
+author:
+  - "Shinichi TAMURA (@tmshn)"
+  - "Jasper Lievisse Adriaanse (@jasperla)"
 '''
 
 RETURN = '''
 diff:
   description: The differences about the given arguments.
   returned: success
-  type: dictionary
+  type: complex
   contains:
     before:
       description: The values before change
@@ -79,6 +70,15 @@ EXAMPLES = '''
     name: Asia/Tokyo
 '''
 
+import os
+import platform
+import random
+import re
+import string
+
+from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.six import iteritems
+
 
 class Timezone(object):
     """This is a generic Timezone manipulation class that is subclassed based on platform.
@@ -91,17 +91,31 @@ class Timezone(object):
     def __new__(cls, module):
         """Return the platform-specific subclass.
 
-        It does not use load_platform_subclass() because it need to judge based
-        on whether the `timedatectl` command exists.
+        It does not use load_platform_subclass() because it needs to judge based
+        on whether the `timedatectl` command exists and is available.
 
         Args:
             module: The AnsibleModule.
         """
         if get_platform() == 'Linux':
-            if module.get_bin_path('timedatectl') is not None:
+            timedatectl = module.get_bin_path('timedatectl')
+            if timedatectl is not None and module.run_command(timedatectl)[0] == 0:
                 return super(Timezone, SystemdTimezone).__new__(SystemdTimezone)
             else:
                 return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
+        elif re.match('^joyent_.*Z', platform.version()):
+            # get_platform() returns SunOS, which is too broad. So look at the
+            # platform version instead. However we have to ensure that we're not
+            # running in the global zone where changing the timezone has no effect.
+            zonename_cmd = module.get_bin_path('zonename')
+            if zonename_cmd is not None:
+                (rc, stdout, _ ) = module.run_command(zonename_cmd)
+                if rc == 0 and stdout.strip() == 'global':
+                    module.fail_json(msg='Adjusting timezone is not supported in Global Zone')
+
+            return super(Timezone, SmartOSTimezone).__new__(SmartOSTimezone)
+        elif re.match('^(Free|Net|Open)BSD', platform.platform()):
+            return super(Timezone, BSDTimezone).__new__(BSDTimezone)
         else:
             # Not supported yet
             return super(Timezone, Timezone).__new__(Timezone)
@@ -228,10 +242,11 @@ class Timezone(object):
         tzfile = '/usr/share/zoneinfo/%s' % tz
         if not os.path.isfile(tzfile):
             self.abort('given timezone "%s" is not available' % tz)
+        return tzfile
 
 
 class SystemdTimezone(Timezone):
-    """This is a Timezone manipulation class systemd-powered Linux.
+    """This is a Timezone manipulation class for systemd-powered Linux.
 
     It uses the `timedatectl` command to check/set all arguments.
     """
@@ -306,7 +321,7 @@ class NosystemdTimezone(Timezone):
         super(NosystemdTimezone, self).__init__(module)
         # Validate given timezone
         if 'name' in self.value:
-            self._verify_timezone()
+            tzfile = self._verify_timezone()
             self.update_timezone  = self.module.get_bin_path('cp', required=True)
             self.update_timezone += ' %s /etc/localtime' % tzfile
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
@@ -426,15 +441,119 @@ class NosystemdTimezone(Timezone):
             self.abort('unknown parameter "%s"' % key)
 
 
+class SmartOSTimezone(Timezone):
+    """This is a Timezone manipulation class for SmartOS instances.
+
+    It uses the C(sm-set-timezone) utility to set the timezone, and
+    inspects C(/etc/default/init) to determine the current timezone.
+
+    NB: A zone needs to be rebooted in order for the change to be
+    activated.
+    """
+
+    def __init__(self, module):
+        super(SmartOSTimezone, self).__init__(module)
+        self.settimezone = self.module.get_bin_path('sm-set-timezone', required=False)
+        if not self.settimezone:
+            module.fail_json(msg='sm-set-timezone not found. Make sure the smtools package is installed.')
+
+    def get(self, key, phase):
+        """Lookup the current timezone name in `/etc/default/init`. If anything else
+        is requested, or if the TZ field is not set we fail.
+        """
+        if key == 'name':
+            try:
+                f = open('/etc/default/init', 'r')
+                for line in f:
+                    m = re.match('^TZ=(.*)$', line.strip())
+                    if m:
+                        return m.groups()[0]
+            except:
+                self.module.fail_json(msg='Failed to read /etc/default/init')
+        else:
+            self.module.fail_json(msg='{0} is not a supported option on target platform'.format(key))
+
+    def set(self, key, value):
+        """Set the requested timezone through sm-set-timezone, an invalid timezone name
+        will be rejected and we have no further input validation to perform.
+        """
+        if key == 'name':
+            cmd = 'sm-set-timezone {0}'.format(value)
+
+            (rc, stdout, stderr) = self.module.run_command(cmd)
+
+            if rc != 0:
+                self.module.fail_json(msg=stderr)
+
+            # sm-set-timezone knows no state and will always set the timezone.
+            # XXX: https://github.com/joyent/smtools/pull/2
+            m = re.match('^\* Changed (to)? timezone (to)? ({0}).*'.format(value), stdout.splitlines()[1])
+            if not (m and m.groups()[-1] == value):
+                self.module.fail_json(msg='Failed to set timezone')
+        else:
+            self.module.fail_json(msg='{0} is not a supported option on target platform'.
+                                  format(key))
+
+
+class BSDTimezone(Timezone):
+    """This is the timezone implementation for *BSD which works simply through
+    updating the `/etc/localtime` symlink to point to a valid timezone name under
+    `/usr/share/zoneinfo`.
+    """
+
+    def __init__(self, module):
+        super(BSDTimezone, self).__init__(module)
+
+    def get(self, key, phase):
+        """Lookup the current timezone by resolving `/etc/localtime`."""
+        if key == 'name':
+            try:
+                tz = os.readlink('/etc/localtime')
+                return tz.replace('/usr/share/zoneinfo/', '')
+            except:
+                self.module.warn('Could not read /etc/localtime. Assuming UTC')
+                return 'UTC'
+        else:
+            self.module.fail_json(msg='{0} is not a supported option on target platform'.
+                                  format(key))
+
+    def set(self, key, value):
+        if key == 'name':
+            # First determine if the requested timezone is valid by looking in
+            # the zoneinfo directory.
+            zonefile = '/usr/share/zoneinfo/' + value
+            try:
+                if not os.path.isfile(zonefile):
+                    self.module.fail_json(msg='{0} is not a recognized timezone'.format(value))
+            except:
+                self.module.fail_json(msg='Failed to stat {0}'.format(zonefile))
+
+            # Now (somewhat) atomically update the symlink by creating a new
+            # symlink and move it into place. Otherwise we have to remove the
+            # original symlink and create the new symlink, however that would
+            # create a race condition in case another process tries to read
+            # /etc/localtime between removal and creation.
+            suffix = "".join([random.choice(string.ascii_letters + string.digits) for x in range(0, 10)])
+            new_localtime = '/etc/localtime.' + suffix
+
+            try:
+                os.symlink(zonefile, new_localtime)
+                os.rename(new_localtime, '/etc/localtime')
+            except:
+                os.remove(new_localtime)
+                self.module.fail_json(msg='Could not update /etc/localtime')
+        else:
+            self.module.fail_json(msg='{0} is not a supported option on target platform'.format(key))
+
+
 def main():
     # Construct 'module' and 'tz'
-    arg_spec = dict(
-        hwclock=dict(choices=['UTC', 'local'], aliases=['rtc']),
-        name   =dict(),
-    )
     module = AnsibleModule(
-        argument_spec=arg_spec,
-        required_one_of=[arg_spec.keys()],
+        argument_spec=dict(
+            hwclock=dict(choices=['UTC', 'local'], aliases=['rtc']),
+            name=dict(),
+        ),
+        required_one_of=[['hwclock', 'name']],
         supports_check_mode=True
     )
     tz = Timezone(module)

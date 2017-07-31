@@ -1,5 +1,12 @@
+cryptography
 jinja2
 mock
+paramiko
+pycodestyle
 pylint
+pytest
+rstcheck
+sphinx
+virtualenv
 voluptuous
 yamllint

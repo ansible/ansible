@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -120,52 +121,49 @@ notes:
       so if Zabbix server's time and host's time are not synchronized,
       you will get strange results.
     - Install required module with 'pip install zabbix-api' command.
-    - Checks existance only by maintenance name.
+    - Checks existence only by maintenance name.
 '''
 
 EXAMPLES = '''
-# Create maintenance window named "Update of www1"
-# for host www1.example.com for 90 minutes
-- zabbix_maintenance:
+- name: Create a named maintenance window for host www1 for 90 minutes
+  zabbix_maintenance:
     name: Update of www1
     host_name: www1.example.com
     state: present
     minutes: 90
-    server_url: 'https://monitoring.example.com'
+    server_url: https://monitoring.example.com
     login_user: ansible
     login_password: pAsSwOrD
 
-# Create maintenance window named "Mass update"
-# for host www1.example.com and host groups Office and Dev
-- zabbix_maintenance:
+- name: Create a named maintenance window for host www1 and host groups Office and Dev
+  zabbix_maintenance:
     name: Update of www1
     host_name: www1.example.com
     host_groups:
       - Office
       - Dev
     state: present
-    server_url: 'https://monitoring.example.com'
+    server_url: https://monitoring.example.com
     login_user: ansible
     login_password: pAsSwOrD
 
-# Create maintenance window named "update"
-# for hosts www1.example.com and db1.example.com and without data collection.
-- zabbix_maintenance:
+- name: Create a named maintenance window for hosts www1 and db1, without data collection.
+  zabbix_maintenance:
     name: update
     host_names:
       - www1.example.com
       - db1.example.com
     state: present
-    collect_data: false
-    server_url: 'https://monitoring.example.com'
+    collect_data: False
+    server_url: https://monitoring.example.com
     login_user: ansible
     login_password: pAsSwOrD
 
-# Remove maintenance window named "Test1"
-- zabbix_maintenance:
+- name: Remove maintenance window by name
+  zabbix_maintenance:
     name: Test1
     state: absent
-    server_url: 'https://monitoring.example.com'
+    server_url: https://monitoring.example.com
     login_user: ansible
     login_password: pAsSwOrD
 '''
@@ -301,7 +299,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     host_names = module.params['host_names']
     host_groups = module.params['host_groups']
@@ -352,7 +350,7 @@ def main():
 
         (rc, maintenance, error) = get_maintenance_id(zbx, name)
         if rc != 0:
-            module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
+            module.fail_json(msg="Failed to check maintenance %s existence: %s" % (name, error))
 
         if not maintenance:
             if not host_names and not host_groups:
@@ -371,7 +369,7 @@ def main():
 
         (rc, maintenance, error) = get_maintenance_id(zbx, name)
         if rc != 0:
-            module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
+            module.fail_json(msg="Failed to check maintenance %s existence: %s" % (name, error))
 
         if maintenance:
             if module.check_mode:

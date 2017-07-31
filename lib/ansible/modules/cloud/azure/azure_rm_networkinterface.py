@@ -3,25 +3,16 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -137,7 +128,6 @@ options:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
-        type: list
         required: false
         default: null
 extends_documentation_fragment:
@@ -151,14 +141,14 @@ author:
 
 EXAMPLES = '''
     - name: Create a network interface with minimal parameters
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic001
             resource_group: Testing
             virtual_network_name: vnet001
             subnet_name: subnet001
 
-     - name: Create a network interface with private IP address only (no Public IP)
-        azure_rm_networkinterface:
+    - name: Create a network interface with private IP address only (no Public IP)
+      azure_rm_networkinterface:
             name: nic001
             resource_group: Testing
             virtual_network_name: vnet001
@@ -166,7 +156,7 @@ EXAMPLES = '''
             public_ip: no
 
     - name: Create a network interface for use in a Windows host (opens RDP port) with custom RDP port
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic002
             resource_group: Testing
             virtual_network_name: vnet001
@@ -175,7 +165,7 @@ EXAMPLES = '''
             rdp_port: 3399
 
     - name: Create a network interface using existing security group and public IP
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic003
             resource_group: Testing
             virtual_network_name: vnet001
@@ -184,7 +174,7 @@ EXAMPLES = '''
             public_ip_address_name: publicip001
 
     - name: Delete network interface
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             resource_group: Testing
             name: nic003
             state: absent
@@ -226,9 +216,6 @@ state:
     }
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import NetworkInterface, NetworkInterfaceIPConfiguration, Subnet, \
@@ -237,6 +224,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
 
 
 def nic_to_dict(nic):
@@ -336,7 +324,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         results = dict()
@@ -508,7 +496,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             id=pip.id,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
-                     #name=pip.name,
+                    #name=pip.name,
 
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
@@ -577,6 +565,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 def main():
     AzureRMNetworkInterface()
 
+
 if __name__ == '__main__':
     main()
-

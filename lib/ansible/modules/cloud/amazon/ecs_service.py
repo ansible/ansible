@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,12 +28,14 @@ description:
 notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
   - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
-dependencies:
-  - An IAM role must have been created
+  - An IAM role must have been previously created
 version_added: "2.1"
 author:
     - "Mark Chance (@java1guy)"
     - "Darek Kaczynski (@kaczynskid)"
+    - "Stephane Maarek (@simplesteph)"
+    - "Zac Blazic (@zacblazic)"
+
 requirements: [ json, boto, botocore, boto3 ]
 options:
     state:
@@ -50,16 +53,15 @@ options:
         required: false
     task_definition:
         description:
-          - The task definition the service will run
+          - The task definition the service will run. This parameter is required when state=present
         required: false
     load_balancers:
         description:
           - The list of ELBs defined for this service
         required: false
-
     desired_count:
         description:
-          - The count of how many instances of the service
+          - The count of how many instances of the service. This parameter is required when state=present
         required: false
     client_token:
         description:
@@ -67,7 +69,8 @@ options:
         required: false
     role:
         description:
-          - The name or full Amazon Resource Name (ARN) of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer on your behalf. This parameter is only required if you are using a load balancer with your service.
+          - The name or full Amazon Resource Name (ARN) of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer
+            on your behalf. This parameter is only required if you are using a load balancer with your service.
         required: false
     delay:
         description:
@@ -79,6 +82,21 @@ options:
           - The number of times to check that the service is available
         required: false
         default: 10
+    deployment_configuration:
+        description:
+          - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
+        required: false
+        version_added: 2.3
+    placement_constraints:
+        description:
+          - The placement constraints for the tasks in the service
+        required: false
+        version_added: 2.4
+    placement_strategy:
+        description:
+          - The placement strategy objects to use for tasks in your service. You can specify a maximum of 5 strategy rules per service
+        required: false
+        version_added: 2.4
 extends_documentation_fragment:
     - aws
     - ec2
@@ -90,7 +108,7 @@ EXAMPLES = '''
     state: present
     name: console-test-service
     cluster: new_cluster
-    task_definition: new_cluster-task:1"
+    task_definition: 'new_cluster-task:1'
     desired_count: 0
 
 # Basic provisioning example
@@ -104,6 +122,23 @@ EXAMPLES = '''
     name: default
     state: absent
     cluster: new_cluster
+
+# With custom deployment configuration (added in version 2.3), placement constraints and strategy (added in version 2.4)
+- ecs_service:
+    state: present
+    name: test-service
+    cluster: test-cluster
+    task_definition: test-task-definition
+    desired_count: 3
+    deployment_configuration:
+      minimum_healthy_percent: 75
+      maximum_percent: 150
+    placement_constraints:
+      - type: memberOf
+        expression: 'attribute:flavor==test'
+    placement_strategy:
+      - type: binpack
+        field: memory
 '''
 
 RETURN = '''
@@ -146,7 +181,9 @@ service:
             returned: always
             type: int
         serviceArn:
-            description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
+            description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region
+                         of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example,
+                         arn:aws:ecs:region :012345678910 :service/my-service .
             returned: always
             type: string
         serviceName:
@@ -165,10 +202,52 @@ service:
             description: list of service deployments
             returned: always
             type: list of complex
+        deploymentConfiguration:
+            description: dictionary of deploymentConfiguration
+            returned: always
+            type: complex
+            contains:
+                maximumPercent:
+                    description: maximumPercent param
+                    returned: always
+                    type: int
+                minimumHealthyPercent:
+                    description: minimumHealthyPercent param
+                    returned: always
+                    type: int
         events:
-            description: lost of service events
+            description: list of service events
             returned: always
             type: list of complex
+        placementConstraints:
+            description: List of placement constraints objects
+            returned: always
+            type: list of complex
+            contains:
+                type:
+                    description: The type of constraint. Valid values are distinctInstance and memberOf.
+                    returned: always
+                    type: string
+                expression:
+                    description: A cluster query language expression to apply to the constraint. Note you cannot specify an expression if the constraint type is
+                                 distinctInstance.
+                    returned: always
+                    type: string
+        placementStrategy:
+            description: List of placement strategy objects
+            returned: always
+            type: list of complex
+            contains:
+                type:
+                    description: The type of placement strategy. Valid values are random, spread and binpack.
+                    returned: always
+                    type: string
+                field:
+                    description: The field to apply the placement strategy against. For the spread placement strategy, valid values are instanceId
+                                 (or host, which has the same effect), or any platform or custom attribute that is applied to a container instance,
+                                 such as attribute:ecs.availability-zone. For the binpack placement strategy, valid values are CPU and MEMORY.
+                    returned: always
+                    type: string
 ansible_facts:
     description: Facts about deleted service.
     returned: when deleting a service
@@ -180,6 +259,12 @@ ansible_facts:
             type: complex
 '''
 import time
+
+DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
+    'maximum_percent': 'int',
+    'minimum_healthy_percent': 'int'
+}
+
 
 try:
     import boto
@@ -195,7 +280,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict, map_complex_type
 
 
 class EcsServiceManager:
@@ -205,22 +290,12 @@ class EcsServiceManager:
         self.module = module
 
         try:
-            # self.ecs = boto3.client('ecs')
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound as e:
             self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
-
-    # def list_clusters(self):
-    #     return self.client.list_clusters()
-    # {'failures=[],
-    # 'ResponseMetadata={'HTTPStatusCode=200, 'RequestId='ce7b5880-1c41-11e5-8a31-47a93a8a98eb'},
-    # 'clusters=[{'activeServicesCount=0, 'clusterArn='arn:aws:ecs:us-west-2:777110527155:cluster/default', 'status='ACTIVE', 'pendingTasksCount=0, 'runningTasksCount=0, 'registeredContainerInstancesCount=0, 'clusterName='default'}]}
-    # {'failures=[{'arn='arn:aws:ecs:us-west-2:777110527155:cluster/bogus', 'reason='MISSING'}],
-    # 'ResponseMetadata={'HTTPStatusCode=200, 'RequestId='0f66c219-1c42-11e5-8a31-47a93a8a98eb'},
-    # 'clusters=[]}
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
         for c in array_of_services:
@@ -231,13 +306,11 @@ class EcsServiceManager:
     def describe_service(self, cluster_name, service_name):
         response = self.ecs.describe_services(
             cluster=cluster_name,
-            services=[
-                service_name
-        ])
+            services=[service_name])
         msg = ''
         if len(response['failures'])>0:
             c = self.find_in_array(response['failures'], service_name, 'arn')
-            msg += ", failure reason is "+c['reason']
+            msg += ", failure reason is " + c['reason']
             if c and c['reason']=='MISSING':
                 return None
             # fall thru and look through found ones
@@ -245,7 +318,7 @@ class EcsServiceManager:
             c = self.find_in_array(response['services'], service_name)
             if c:
                 return c
-        raise StandardError("Unknown problem describing service %s." % service_name)
+        raise Exception("Unknown problem describing service %s." % service_name)
 
     def is_matching_service(self, expected, existing):
         if expected['task_definition'] != existing['taskDefinition']:
@@ -259,8 +332,9 @@ class EcsServiceManager:
 
         return True
 
-    def create_service(self, service_name, cluster_name, task_definition,
-        load_balancers, desired_count, client_token, role):
+    def create_service(self, service_name, cluster_name, task_definition, load_balancers,
+                       desired_count, client_token, role, deployment_configuration,
+                       placement_constraints, placement_strategy):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -268,16 +342,20 @@ class EcsServiceManager:
             loadBalancers=load_balancers,
             desiredCount=desired_count,
             clientToken=client_token,
-            role=role)
+            role=role,
+            deploymentConfiguration=deployment_configuration,
+            placementConstraints=placement_constraints,
+            placementStrategy=placement_strategy)
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-        load_balancers, desired_count, client_token, role):
+                       load_balancers, desired_count, client_token, role, deployment_configuration):
         response = self.ecs.update_service(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
-            desiredCount=desired_count)
+            desiredCount=desired_count,
+            deploymentConfiguration=deployment_configuration)
         return self.jsonize(response['service'])
 
     def jsonize(self, service):
@@ -298,43 +376,52 @@ class EcsServiceManager:
     def delete_service(self, service, cluster=None):
         return self.ecs.delete_service(cluster=cluster, service=service)
 
-def main():
 
+def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent', 'deleting'] ),
-        name=dict(required=True, type='str' ),
-        cluster=dict(required=False, type='str' ),
-        task_definition=dict(required=False, type='str' ),
-        load_balancers=dict(required=False, type='list' ),
-        desired_count=dict(required=False, type='int' ),
-        client_token=dict(required=False, type='str' ),
-        role=dict(required=False, type='str' ),
+        state=dict(required=True, choices=['present', 'absent', 'deleting']),
+        name=dict(required=True, type='str'),
+        cluster=dict(required=False, type='str'),
+        task_definition=dict(required=False, type='str'),
+        load_balancers=dict(required=False, default=[], type='list'),
+        desired_count=dict(required=False, type='int'),
+        client_token=dict(required=False, default='', type='str'),
+        role=dict(required=False, default='', type='str'),
         delay=dict(required=False, type='int', default=10),
-        repeat=dict(required=False, type='int', default=10)
+        repeat=dict(required=False, type='int', default=10),
+        deployment_configuration=dict(required=False, default={}, type='dict'),
+        placement_constraints=dict(required=False, default=[], type='list'),
+        placement_strategy=dict(required=False, default=[], type='list')
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True,
+                           required_if=[
+                               ('state', 'present', ['task_definition', 'desired_count'])
+                           ],
+                           required_together=[['load_balancers', 'role']]
+                           )
 
     if not HAS_BOTO:
-      module.fail_json(msg='boto is required.')
+        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
-      module.fail_json(msg='boto3 is required.')
-
-    if module.params['state'] == 'present':
-        if not 'task_definition' in module.params and module.params['task_definition'] is None:
-            module.fail_json(msg="To use create a service, a task_definition must be specified")
-        if not 'desired_count' in module.params and module.params['desired_count'] is None:
-            module.fail_json(msg="To use create a service, a desired_count must be specified")
+        module.fail_json(msg='boto3 is required.')
 
     service_mgr = EcsServiceManager(module)
+
+    deployment_configuration = map_complex_type(module.params['deployment_configuration'],
+                                                DEPLOYMENT_CONFIGURATION_TYPE_MAP)
+
+    deploymentConfiguration = snake_dict_to_camel_dict(deployment_configuration)
+
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
     except Exception as e:
-        module.fail_json(msg="Exception describing service '"+module.params['name']+"' in cluster '"+module.params['cluster']+"': "+str(e))
+        module.fail_json(msg="Exception describing service '" + module.params['name'] + "' in cluster '" + module.params['cluster'] + "': " + str(e))
 
-    results = dict(changed=False )
+    results = dict(changed=False)
     if module.params['state'] == 'present':
 
         matching = False
@@ -348,18 +435,13 @@ def main():
 
         if not matching:
             if not module.check_mode:
-                if module.params['load_balancers'] is None:
-                    loadBalancers = []
-                else:
-                    loadBalancers = module.params['load_balancers']
-                if module.params['role'] is None:
-                    role = ''
-                else:
-                    role = module.params['role']
-                if module.params['client_token'] is None:
-                    clientToken = ''
-                else:
-                    clientToken = module.params['client_token']
+                loadBalancers = module.params['load_balancers']
+                for loadBalancer in loadBalancers:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
+
+                role = module.params['role']
+                clientToken = module.params['client_token']
 
                 if update:
                     # update required
@@ -369,7 +451,8 @@ def main():
                         loadBalancers,
                         module.params['desired_count'],
                         clientToken,
-                        role)
+                        role,
+                        deploymentConfiguration)
                 else:
                     # doesn't exist. create it.
                     response = service_mgr.create_service(module.params['name'],
@@ -378,7 +461,10 @@ def main():
                         loadBalancers,
                         module.params['desired_count'],
                         clientToken,
-                        role)
+                        role,
+                        deploymentConfiguration,
+                        module.params['placement_constraints'],
+                        module.params['placement_strategy'])
 
                 results['service'] = response
 
@@ -408,7 +494,7 @@ def main():
 
     elif module.params['state'] == 'deleting':
         if not existing:
-            module.fail_json(msg="Service '"+module.params['name']+" not found.")
+            module.fail_json(msg="Service '" + module.params['name'] + " not found.")
             return
         # it exists, so we should delete it and mark changed.
         # return info about the cluster deleted
@@ -422,8 +508,8 @@ def main():
                 results['changed'] = True
                 break
             time.sleep(delay)
-        if i is repeat-1:
-            module.fail_json(msg="Service still not deleted after "+str(repeat)+" tries of "+str(delay)+" seconds each.")
+        if i is repeat - 1:
+            module.fail_json(msg="Service still not deleted after " + str(repeat) + " tries of " + str(delay) + " seconds each.")
             return
 
     module.exit_json(**results)

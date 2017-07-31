@@ -18,24 +18,25 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import fcntl
-import textwrap
+import getpass
+import locale
+import logging
 import os
 import random
 import subprocess
 import sys
+import textwrap
 import time
-import locale
-import logging
-import getpass
-import errno
+
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.utils.color import stringc
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.utils.color import stringc
 
 
 try:
@@ -47,7 +48,7 @@ except NameError:
 
 
 logger = None
-#TODO: make this a logging callback instead
+# TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
     if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
@@ -58,11 +59,14 @@ if C.DEFAULT_LOG_PATH:
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
-b_COW_PATHS = (b"/usr/bin/cowsay",
-               b"/usr/games/cowsay",
-               b"/usr/local/bin/cowsay",  # BSD path for cowsay
-               b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
-              )
+b_COW_PATHS = (
+    b"/usr/bin/cowsay",
+    b"/usr/games/cowsay",
+    b"/usr/local/bin/cowsay",  # BSD path for cowsay
+    b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
+)
+
+
 class Display:
 
     def __init__(self, verbosity=0):
@@ -72,8 +76,8 @@ class Display:
 
         # list of all deprecation messages to prevent duplicate display
         self._deprecations = {}
-        self._warns        = {}
-        self._errors       = {}
+        self._warns = {}
+        self._errors = {}
 
         self.b_cowsay = None
         self.noncow = C.ANSIBLE_COW_SELECTION
@@ -84,7 +88,9 @@ class Display:
             try:
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                self.cows_available = [ to_bytes(c) for c in set(C.ANSIBLE_COW_WHITELIST).intersection(out.split())]
+                self.cows_available = set([to_text(c) for c in out.split()])
+                if C.ANSIBLE_COW_WHITELIST:
+                    self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
             except:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
@@ -244,10 +250,10 @@ class Display:
         runcmd = [self.b_cowsay, b"-W", b"60"]
         if self.noncow:
             thecow = self.noncow
-            if thecow == b'random':
-                thecow = random.choice(self.cows_available)
+            if thecow == 'random':
+                thecow = random.choice(list(self.cows_available))
             runcmd.append(b'-f')
-            runcmd.append(thecow)
+            runcmd.append(to_bytes(thecow))
         runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()

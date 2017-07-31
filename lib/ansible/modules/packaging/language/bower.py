@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Michael Warkentin <mwarkentin@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -76,7 +67,7 @@ EXAMPLES = '''
     name: bootstrap
 
 - name: Install "bootstrap" bower package on version 3.1.1.
- bower:
+  bower:
     name: bootstrap
     version: '3.1.1'
 
@@ -103,6 +94,10 @@ EXAMPLES = '''
     path: /app/location
     relative_execpath: node_modules/.bin
 '''
+import json
+import os
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class Bower(object):
@@ -209,7 +204,7 @@ def main():
     name = module.params['name']
     offline = module.params['offline']
     production = module.params['production']
-    path = os.path.expanduser(module.params['path'])
+    path = module.params['path']
     relative_execpath = module.params['relative_execpath']
     state = module.params['state']
     version = module.params['version']
@@ -238,7 +233,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# Import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

@@ -1,0 +1,95 @@
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- name: wait for flask server
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+  register: vcsim_instance
+
+- name: wait for vcsim server
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim   
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+# vcsim embeds the datacenter into the path and
+# the VM name, so it can be chopped out for later
+# use or verification
+- name: show the datacenter(s)
+  debug:
+    msg: "{{ (item|basename).split('_')[0] }}"
+  with_items: "{{ vmlist['json'] }}"
+
+- name: find folders for each vm
+  vmware_guest_find:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: folders
+
+- debug: var=item
+  with_items: "{{ folders.results }}"
+
+# We only care that each VM was found, not that the folder path
+# is completely accurate. Eventually the test should be extended
+# to validate the full path for each VM.
+- assert:
+    that:
+        - "{{ 'folders' in item }}"
+        - "{{ item['folders']|length == 1 }}"
+  with_items: "{{ folders.results }}"
+
+# Testcase 2: Find VMS using UUID
+- name: get details about VMS from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vms_detail_list
+
+- name: find folders for each vm using UUID
+  vmware_guest_find:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    uuid: "{{ vms_detail_list['json'][item|basename]['UUID'] }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: folders_uuid
+
+- debug: var=item
+  with_items: "{{ folders_uuid.results }}"
+
+- assert:
+    that:
+        - "{{ 'folders' in item }}"
+        - "{{ item['folders']|length == 1 }}"
+  with_items: "{{ folders_uuid.results }}"

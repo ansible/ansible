@@ -1,0 +1,78 @@
+---
+- name: Create user (SetUp)
+  ios_user:
+    name: ansibletest1
+    privilege: 15
+    role: network-operator
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username ansibletest1 view network-operator", "username ansibletest1 privilege 15"]'
+
+- name: Collection of users (SetUp)
+  ios_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    authorize: yes
+    state: present
+    view: network-admin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username ansibletest2 view network-admin", "username ansibletest3 view network-admin"]'
+
+- name: Add user again (Idempotent)
+  ios_user:
+    name: ansibletest1
+    privilege: 15
+    role: network-operator
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Add collection of users again (Idempotent)
+  ios_user:
+    aggregate:
+      - name: anisbletest2
+      - name: ansibletest3
+    authorize: yes
+    state: present
+    view: network-admin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: tearDown
+  ios_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no username ansibletest1", "no username ansibletest2", "no username ansibletest3"]'

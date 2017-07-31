@@ -21,11 +21,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -48,11 +47,10 @@ options:
             - The optional git URL of the repository to tap. The URL is not
               assumed to be on GitHub, and the protocol doesn't have to be HTTP.
               Any location and protocol that git can handle is fine.
-        required: false
-        version_added: "2.2"
-        note:
             - I(name) option may not be a list of multiple taps (but a single
               tap instead) when this option is provided.
+        required: false
+        version_added: "2.2"
     state:
         description:
             - state of the repository.
@@ -78,6 +76,8 @@ EXAMPLES = '''
     name: telemachus/brew
     url: 'https://bitbucket.org/telemachus/brew'
 '''
+
+import re
 
 
 def a_valid_tap(tap):
@@ -239,7 +239,7 @@ def main():
             # When an tap URL is provided explicitly, we allow adding
             # *single* tap only. Validate and proceed to add single tap.
             if len(taps) > 1:
-                msg = "List of muliple taps may not be provided with 'url' option."
+                msg = "List of multiple taps may not be provided with 'url' option."
                 module.fail_json(msg=msg)
             else:
                 failed, changed, msg = add_tap(module, brew_path, taps[0], url)

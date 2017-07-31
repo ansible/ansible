@@ -21,20 +21,31 @@ __metaclass__ = type
 
 from ansible.parsing.dataloader import DataLoader
 
+
 class TaskResult:
     '''
-    This class is responsible for interpretting the resulting data
+    This class is responsible for interpreting the resulting data
     from an executed task, and provides helper methods for determining
     the result of a given task.
     '''
 
-    def __init__(self, host, task, return_data):
+    def __init__(self, host, task, return_data, task_fields=None):
         self._host = host
         self._task = task
+
         if isinstance(return_data, dict):
             self._result = return_data.copy()
         else:
             self._result = DataLoader().load(return_data)
+
+        if task_fields is None:
+            self._task_fields = dict()
+        else:
+            self._task_fields = task_fields
+
+    @property
+    def task_name(self):
+        return self._task_fields.get('name', None) or self._task.get_name()
 
     def is_changed(self):
         return self._check_key('changed')
@@ -56,7 +67,7 @@ class TaskResult:
            'results' in self._result and True in [True for x in self._result['results'] if 'failed_when_result' in x]:
             return self._check_key('failed_when_result')
         else:
-            return self._check_key('failed') or self._result.get('rc', 0) != 0
+            return self._check_key('failed')
 
     def is_unreachable(self):
         return self._check_key('unreachable')

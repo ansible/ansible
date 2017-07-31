@@ -22,16 +22,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Import Datadog
-try:
-    from datadog import initialize, api
-    HAS_DATADOG = True
-except:
-    HAS_DATADOG = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -74,6 +68,11 @@ options:
         required: false
         default: normal
         choices: [normal, low]
+    host:
+        description: ["Host name to associate with the event."]
+        required: false
+        default: "{{ ansible_hostname }}"
+        version_added: "2.4"
     tags:
         description: ["Comma separated list of tags to apply to the event."]
         required: false
@@ -115,6 +114,16 @@ EXAMPLES = '''
 '''
 
 # Import Datadog
+try:
+    from datadog import initialize, api
+    HAS_DATADOG = True
+except:
+    HAS_DATADOG = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -126,6 +135,7 @@ def main():
             priority=dict(
                 required=False, default='normal', choices=['normal', 'low']
             ),
+            host=dict(required=False, default=None),
             tags=dict(required=False, default=None, type='list'),
             alert_type=dict(
                 required=False, default='info',
@@ -152,8 +162,11 @@ def main():
 
 def _post_event(module):
     try:
+        if module.params['host'] is None:
+            module.params['host'] = platform.node().split('.')[0]
         msg = api.Event.create(title=module.params['title'],
                                text=module.params['text'],
+                               host=module.params['host'],
                                tags=module.params['tags'],
                                priority=module.params['priority'],
                                alert_type=module.params['alert_type'],

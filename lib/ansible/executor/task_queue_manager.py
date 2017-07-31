@@ -24,10 +24,10 @@ import os
 import tempfile
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
@@ -36,12 +36,14 @@ from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
+from ansible.vars.reserved import warn_if_reserved
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['TaskQueueManager']
 
@@ -58,34 +60,34 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    RUN_OK                = 0
-    RUN_ERROR             = 1
-    RUN_FAILED_HOSTS      = 2
+    RUN_OK = 0
+    RUN_ERROR = 1
+    RUN_FAILED_HOSTS = 2
     RUN_UNREACHABLE_HOSTS = 4
     RUN_FAILED_BREAK_PLAY = 8
-    RUN_UNKNOWN_ERROR     = 255
+    RUN_UNKNOWN_ERROR = 255
 
     def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
 
-        self._inventory        = inventory
+        self._inventory = inventory
         self._variable_manager = variable_manager
-        self._loader           = loader
-        self._options          = options
-        self._stats            = AggregateStats()
-        self.passwords         = passwords
-        self._stdout_callback  = stdout_callback
+        self._loader = loader
+        self._options = options
+        self._stats = AggregateStats()
+        self.passwords = passwords
+        self._stdout_callback = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
-        self._run_tree         = run_tree
+        self._run_tree = run_tree
 
         self._callbacks_loaded = False
         self._callback_plugins = []
-        self._start_at_done    = False
+        self._start_at_done = False
 
-        # make sure the module path (if specified) is parsed and
-        # added to the module_loader object
-        if options.module_path is not None:
-            for path in options.module_path.split(os.pathsep):
-                module_loader.add_directory(path)
+        # make sure any module paths (if specified) are added to the module_loader
+        if isinstance(options.module_path, list):
+            for path in options.module_path:
+                if path is not None:
+                    module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -95,7 +97,7 @@ class TaskQueueManager:
         self._listening_handlers = dict()
 
         # dictionaries to keep track of failed/unreachable hosts
-        self._failed_hosts      = dict()
+        self._failed_hosts = dict()
         self._unreachable_hosts = dict()
 
         self._final_q = multiprocessing.Queue()
@@ -135,26 +137,23 @@ class TaskQueueManager:
         handler_list = []
         for handler_block in play.handlers:
             handler_list.extend(_process_block(handler_block))
-
         # then initialize it with the given handler list
+        self.update_handler_list(handler_list)
+
+    def update_handler_list(self, handler_list):
         for handler in handler_list:
-            if handler not in self._notified_handlers:
-                self._notified_handlers[handler] = []
+            if handler._uuid not in self._notified_handlers:
+                display.debug("Adding handler %s to notified list" % handler.name)
+                self._notified_handlers[handler._uuid] = []
             if handler.listen:
                 listeners = handler.listen
                 if not isinstance(listeners, list):
-                    listeners = [ listeners ]
+                    listeners = [listeners]
                 for listener in listeners:
                     if listener not in self._listening_handlers:
                         self._listening_handlers[listener] = []
-
-                    # if the handler has a name, we append it to the list of listening
-                    # handlers, otherwise we use the uuid to avoid trampling on other
-                    # nameless listeners
-                    if handler.name:
-                        self._listening_handlers[listener].append(handler.get_name())
-                    else:
-                        self._listening_handlers[listener].append(handler._uuid)
+                    display.debug("Adding handler %s to listening list" % handler.name)
+                    self._listening_handlers[listener].append(handler._uuid)
 
     def load_callbacks(self):
         '''
@@ -187,7 +186,7 @@ class TaskQueueManager:
                 # the name of the current plugin and type to see if we need to skip
                 # loading this callback plugin
                 callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
-                callback_needs_whitelist  = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
+                callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
                 if callback_type == 'stdout':
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
@@ -215,7 +214,8 @@ class TaskQueueManager:
         if not self._callbacks_loaded:
             self.load_callbacks()
 
-        all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+        all_vars = self._variable_manager.get_vars(play=play)
+        warn_if_reserved(all_vars)
         templar = Templar(loader=self._loader, variables=all_vars)
 
         new_play = play.copy()
@@ -266,7 +266,7 @@ class TaskQueueManager:
             play_context=play_context,
             variable_manager=self._variable_manager,
             all_vars=all_vars,
-            start_at_done = self._start_at_done,
+            start_at_done=self._start_at_done,
         )
 
         # Because the TQM may survive multiple play runs, we start by marking
@@ -336,9 +336,9 @@ class TaskQueueManager:
         # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
 
         defunct = False
-        for idx,x in enumerate(self._workers):
+        for (idx, x) in enumerate(self._workers):
             if hasattr(x[0], 'exitcode'):
-                if x[0].exitcode in [-9, -15]:
+                if x[0].exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct
 
@@ -354,28 +354,13 @@ class TaskQueueManager:
             for possible in [method_name, 'v2_on_any']:
                 gotit = getattr(callback_plugin, possible, None)
                 if gotit is None:
-                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
+                    gotit = getattr(callback_plugin, possible.replace('v2_', ''), None)
                 if gotit is not None:
                     methods.append(gotit)
 
             for method in methods:
                 try:
-                    # Previously, the `v2_playbook_on_start` callback API did not accept
-                    # any arguments. In recent versions of the v2 callback API, the play-
-                    # book that started execution is given. In order to support both of
-                    # these method signatures, we need to use this `inspect` hack to send
-                    # no arguments to the methods that don't accept them. This way, we can
-                    # not break backwards compatibility until that API is deprecated.
-                    # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
-                    if method_name == 'v2_playbook_on_start':
-                        import inspect
-                        argspec = inspect.getargspec(method)
-                        if argspec.args == ['self']:
-                            method()
-                        else:
-                            method(*args, **kwargs)
-                    else:
-                        method(*args, **kwargs)
+                    method(*args, **kwargs)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))

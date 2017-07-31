@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -114,33 +115,33 @@ EXAMPLES = '''
 RETURN = '''
 creation_time:
     description: timestamp of creation date
-    returned:
-    type: datetime
-    sample: 2015-11-16 07:30:57-05:00
+    returned: always
+    type: string
+    sample: "2015-11-16 07:30:57-05:00"
 creation_token:
     description: EFS creation token
-    returned:
-    type: UUID
-    sample: console-88609e04-9a0e-4a2e-912c-feaa99509961
+    returned: always
+    type: string
+    sample: "console-88609e04-9a0e-4a2e-912c-feaa99509961"
 file_system_id:
     description: ID of the file system
-    returned:
-    type: unique ID
-    sample: fs-xxxxxxxx
+    returned: always
+    type: string
+    sample: "fs-xxxxxxxx"
 life_cycle_state:
     description: state of the EFS file system
-    returned:
-    type: str
-    sample: creating, available, deleting, deleted
+    returned: always
+    type: string
+    sample: "creating, available, deleting, deleted"
 mount_point:
     description: url of file system
-    returned:
-    type: str
-    sample: .fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
+    returned: always
+    type: string
+    sample: ".fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
 mount_targets:
     description: list of mount targets
-    returned:
-    type: list of dicts
+    returned: always
+    type: list
     sample:
         [
             {
@@ -159,22 +160,22 @@ mount_targets:
         ]
 name:
     description: name of the file system
-    returned:
-    type: str
-    sample: my-efs
+    returned: always
+    type: string
+    sample: "my-efs"
 number_of_mount_targets:
     description: the number of targets mounted
-    returned:
+    returned: always
     type: int
     sample: 3
 owner_id:
     description: AWS account ID of EFS owner
-    returned:
-    type: str
-    sample: XXXXXXXXXXXX
+    returned: always
+    type: string
+    sample: "XXXXXXXXXXXX"
 size_in_bytes:
     description: size of the file system in bytes as of a timestamp
-    returned:
+    returned: always
     type: dict
     sample:
         {
@@ -183,12 +184,12 @@ size_in_bytes:
         }
 performance_mode:
     description: performance mode of the file system
-    returned:
-    type: str
+    returned: always
+    type: string
     sample: "generalPurpose"
 tags:
     description: tags on the efs instance
-    returned:
+    returned: always
     type: dict
     sample:
         {
@@ -242,6 +243,7 @@ class EFSConnection(object):
             **kwargs
         )
         for item in items:
+            item['Name'] = item['CreationToken']
             item['CreationTime'] = str(item['CreationTime'])
             """
             Suffix of network path to be used as NFS device for mount. More detail here:
@@ -515,6 +517,9 @@ def iterate_all(attr, map_method, **kwargs):
                 sleep(wait)
                 wait = wait * 2
                 continue
+            else:
+                raise
+
 
 def targets_equal(keys, a, b):
     """

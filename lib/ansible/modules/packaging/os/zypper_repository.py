@@ -20,9 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -87,7 +88,7 @@ options:
         version_added: "2.1"
     auto_import_keys:
         description:
-            - Automatically import the gpg signing key of the new or changed repository. 
+            - Automatically import the gpg signing key of the new or changed repository.
             - Has an effect only if state is I(present). Has no effect on existing (unchanged) repositories or in combination with I(absent).
             - Implies runrefresh.
         required: false
@@ -111,7 +112,7 @@ options:
         version_added: "2.2"
 
 
-requirements: 
+requirements:
     - "zypper >= 1.0  # included in openSuSE >= 11.1 or SuSE Linux Enterprise Server/Desktop >= 11.0"
     - python-xml
 '''
@@ -135,17 +136,17 @@ EXAMPLES = '''
 
 # Refresh all repos
 - zypper_repository:
-    repo: *
+    repo: '*'
     runrefresh: yes
 
 # Add a repo and add it's gpg key
 - zypper_repository:
     repo: 'http://download.opensuse.org/repositories/systemsmanagement/openSUSE_Leap_42.1/'
     auto_import_keys: yes
- 
+
 # Force refresh of a repository
 - zypper_repository:
-    repo: 'http://my_internal_ci_repo/repo
+    repo: 'http://my_internal_ci_repo/repo'
     name: my_ci_repo
     state: present
     runrefresh: yes
@@ -246,7 +247,7 @@ def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
         cmd.extend(['--name', repodata['name']])
 
     # priority on addrepo available since 1.12.25
-    # https://github.com/openSUSE/zypper/blob/b9b3cb6db76c47dc4c47e26f6a4d2d4a0d12b06d/package/zypper.changes#L327-L336 
+    # https://github.com/openSUSE/zypper/blob/b9b3cb6db76c47dc4c47e26f6a4d2d4a0d12b06d/package/zypper.changes#L327-L336
     if repodata['priority']:
         if zypper_version >= LooseVersion('1.12.25'):
             cmd.extend(['--priority', str(repodata['priority'])])

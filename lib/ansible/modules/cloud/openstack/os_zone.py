@@ -14,18 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -72,6 +64,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -106,7 +102,7 @@ RETURN = '''
 zone:
     description: Dictionary describing the zone.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique zone ID
@@ -137,6 +133,14 @@ zone:
             type: list
             sample: []
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _system_state_change(state, email, description, ttl, masters, zone):
@@ -205,16 +209,16 @@ def main():
             else:
                 if masters is None:
                     masters = []
-                
+
                 pre_update_zone = zone
                 changed = _system_state_change(state, email,
                                                description, ttl,
                                                masters, pre_update_zone)
                 if changed:
                     zone = cloud.update_zone(
-                                name, email=email,
-                                description=description,
-                                ttl=ttl, masters=masters)
+                        name, email=email,
+                        description=description,
+                        ttl=ttl, masters=masters)
             module.exit_json(changed=changed, zone=zone)
 
         elif state == 'absent':

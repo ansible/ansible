@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,12 +28,13 @@ description:
      - Manages filesystem user defined extended attributes, requires that they are enabled
        on the target filesystem and that the setfattr/getfattr utilities are present.
 options:
-  name:
+  path:
     required: true
     default: None
-    aliases: ['path']
+    aliases: ['name']
     description:
-      - The full path of the file/object to get the facts of
+      - The full path of the file/object to get the facts of.
+      - Before 2.3 this option was only usable as I(name).
   key:
     required: false
     default: None
@@ -61,6 +63,8 @@ options:
     description:
       - if yes, dereferences symlinks and sets/gets attributes on symlink target,
         otherwise acts on symlink itself.
+notes:
+  - As of Ansible 2.3, the I(name) option has been changed to I(path) as default, but I(name) still works as well.
 
 author: "Brian Coca (@bcoca)"
 '''
@@ -68,7 +72,7 @@ author: "Brian Coca (@bcoca)"
 EXAMPLES = '''
 # Obtain the extended attributes  of /etc/foo.conf
 - xattr:
-    name: /etc/foo.conf
+    path: /etc/foo.conf
 
 # Sets the key 'foo' to value 'bar'
 - xattr:
@@ -78,7 +82,7 @@ EXAMPLES = '''
 
 # Removes the key 'foo'
 - xattr:
-    name: /etc/foo.conf
+    path: /etc/foo.conf
     key: user.foo
     state: absent
 '''
@@ -86,6 +90,10 @@ EXAMPLES = '''
 import operator
 import re
 import os
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
 def get_xattr_keys(module,path,follow):
     cmd = [ module.get_bin_path('getfattr', True) ]
@@ -156,7 +164,7 @@ def _run_xattr(module,cmd,check_rc=True):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, aliases=['path'], type='path'),
+            path = dict(required=True, aliases=['name'], type='path'),
             key = dict(required=False, default=None, type='str'),
             value = dict(required=False, default=None, type='str'),
             state = dict(required=False, default='read', choices=[ 'read', 'present', 'all', 'keys', 'absent' ], type='str'),
@@ -164,7 +172,7 @@ def main():
         ),
         supports_check_mode=True,
     )
-    path = module.params.get('name')
+    path = module.params.get('path')
     key = module.params.get('key')
     value = module.params.get('value')
     state = module.params.get('state')
@@ -214,8 +222,5 @@ def main():
 
     module.exit_json(changed=changed, msg=msg, xattr=res)
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 if __name__ == '__main__':
     main()

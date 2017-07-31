@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Chris Hoffman <christopher.hoffman@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -81,59 +72,54 @@ options:
 '''
 
 EXAMPLES = '''
-description: Install "coffee-script" node.js package.
-- npm:
+- name: Install "coffee-script" node.js package.
+  npm:
     name: coffee-script
     path: /app/location
 
-description: Install "coffee-script" node.js package on version 1.6.1.
-- npm:
+- name: Install "coffee-script" node.js package on version 1.6.1.
+  npm:
     name: coffee-script
     version: '1.6.1'
     path: /app/location
 
-description: Install "coffee-script" node.js package globally.
-- npm:
+- name: Install "coffee-script" node.js package globally.
+  npm:
     name: coffee-script
     global: yes
 
-description: Remove the globally package "coffee-script".
-- npm:
+- name: Remove the globally package "coffee-script".
+  npm:
     name: coffee-script
     global: yes
     state: absent
 
-description: Install "coffee-script" node.js package from custom registry.
-- npm:
+- name: Install "coffee-script" node.js package from custom registry.
+  npm:
     name: coffee-script
     registry: 'http://registry.mysite.com'
 
-description: Install packages based on package.json.
-- npm:
+- name: Install packages based on package.json.
+  npm:
     path: /app/location
 
-description: Update packages based on package.json to their latest version.
-- npm:
+- name: Update packages based on package.json to their latest version.
+  npm:
     path: /app/location
     state: latest
 
-description: Install packages based on package.json using the npm installed with nvm v0.10.1.
-- npm:
+- name: Install packages based on package.json using the npm installed with nvm v0.10.1.
+  npm:
     path: /app/location
     executable: /opt/nvm/v0.10.1/bin/npm
     state: present
 '''
 
+import json
 import os
+import re
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+from ansible.module_utils.basic import AnsibleModule
 
 
 class Npm(object):
@@ -288,8 +274,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

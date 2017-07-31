@@ -19,25 +19,20 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4 as sdk
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_auth
-short_description: "Module to manage authentication to oVirt."
+short_description: "Module to manage authentication to oVirt/RHV"
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.2"
 description:
-    - "This module authenticates to oVirt engine and creates SSO token, which should be later used in
-       all other oVirt modules, so all modules don't need to perform login and logout.
+    - "This module authenticates to oVirt/RHV engine and creates SSO token, which should be later used in
+       all other oVirt/RHV modules, so all modules don't need to perform login and logout.
        This module returns an Ansible fact called I(ovirt_auth). Every module can use this
        fact as C(auth) parameter, to perform authentication."
 options:
@@ -89,20 +84,29 @@ options:
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
+requirements:
+  - python >= 2.7
+  - ovirt-engine-sdk-python >= 4.0.0
 notes:
   - "Everytime you use ovirt_auth module to obtain ticket, you need to also revoke the ticket,
      when you no longer need it, otherwise the ticket would be revoked by engine when it expires.
      For an example of how to achieve that, please take a look at I(examples) section."
+  - "In order to use this module you have to install oVirt/RHV Python SDK.
+     To ensure it's installed with correct version you can create the following task:
+     I(pip: name=ovirt-engine-sdk-python version=4.0.0)"
+  - "Note that in oVirt/RHV 4.1 if you want to use a user which is not administrator
+     you must enable the I(ENGINE_API_FILTER_BY_DEFAULT) variable in engine. In
+     oVirt/RHV 4.2 and later it's enabled by default."
 '''
 
 EXAMPLES = '''
 tasks:
   - block:
        # Create a vault with `ovirt_password` variable which store your
-       # oVirt user's password, and include that yaml file with variable:
+       # oVirt/RHV user's password, and include that yaml file with variable:
        - include_vars: ovirt_password.yml
 
-       - name: Obtain SSO token with using username/password credentials:
+       - name: Obtain SSO token with using username/password credentials
          ovirt_auth:
            url: https://ovirt.example.com/ovirt-engine/api
            username: admin@internal
@@ -116,26 +120,26 @@ tasks:
            state: absent
            name: myvm
 
-      always:
-        - name: Always revoke the SSO token
-          ovirt_auth:
-            state: absent
-            ovirt_auth: "{{ ovirt_auth }}"
+    always:
+      - name: Always revoke the SSO token
+        ovirt_auth:
+          state: absent
+          ovirt_auth: "{{ ovirt_auth }}"
 '''
 
 RETURN = '''
 ovirt_auth:
-    description: Authentication facts, needed to perform authentication to oVirt.
+    description: Authentication facts, needed to perform authentication to oVirt/RHV.
     returned: success
-    type: dictionary
+    type: complex
     contains:
         token:
-            description: SSO token which is used for connection to oVirt engine.
+            description: SSO token which is used for connection to oVirt/RHV engine.
             returned: success
             type: string
             sample: "kdfVWp9ZgeewBXV-iq3Js1-xQJZPSEQ334FLb3eksoEPRaab07DhZ8ED8ghz9lJd-MQ2GqtRIeqhvhCkrUWQPw"
         url:
-            description: URL of the oVirt engine API endpoint.
+            description: URL of the oVirt/RHV engine API endpoint.
             returned: success
             type: string
             sample: "https://ovirt.example.com/ovirt-engine/api"
@@ -166,6 +170,16 @@ ovirt_auth:
             sample: False
 '''
 
+import traceback
+
+try:
+    import ovirtsdk4 as sdk
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import check_sdk
+
 
 def main():
     module = AnsibleModule(
@@ -185,6 +199,7 @@ def main():
             ('state', 'absent', ['ovirt_auth']),
             ('state', 'present', ['username', 'password', 'url']),
         ],
+        supports_check_mode=True,
     )
     check_sdk(module)
 
@@ -222,13 +237,11 @@ def main():
             )
         )
     except Exception as e:
-        module.fail_json(msg="Error: %s" % e)
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         # Close the connection, but don't revoke token
         connection.close(logout=state == 'absent')
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ovirt import *
 if __name__ == "__main__":
     main()

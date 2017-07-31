@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest, mock
+from ansible.errors import AnsibleError
 from ansible.plugins.cache import FactCache
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
@@ -56,6 +57,14 @@ class TestFactCache(unittest.TestCase):
         self.assertEqual(type(a_copy), dict)
         self.assertEqual(a_copy, dict(avocado='fruit', daisy='flower'))
 
+    def test_plugin_load_failure(self):
+        # See https://github.com/ansible/ansible/issues/18751
+        # Note no fact_connection config set, so this will fail
+        with mock.patch('ansible.constants.CACHE_PLUGIN', 'json'):
+            self.assertRaisesRegexp(AnsibleError,
+                                    "Unable to load the facts cache plugin.*json.*",
+                                    FactCache)
+
 
 class TestAbstractClass(unittest.TestCase):
 
@@ -67,16 +76,16 @@ class TestAbstractClass(unittest.TestCase):
 
     def test_subclass_error(self):
         class CacheModule1(BaseCacheModule):
-                pass
+            pass
         with self.assertRaises(TypeError):
-            CacheModule1()
+            CacheModule1()  # pylint: disable=abstract-class-instantiated
 
         class CacheModule2(BaseCacheModule):
             def get(self, key):
                 super(CacheModule2, self).get(key)
 
         with self.assertRaises(TypeError):
-            CacheModule2()
+            CacheModule2()  # pylint: disable=abstract-class-instantiated
 
     def test_subclass_success(self):
         class CacheModule3(BaseCacheModule):

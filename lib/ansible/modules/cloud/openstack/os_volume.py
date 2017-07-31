@@ -15,17 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -67,11 +60,27 @@ options:
        - Volume snapshot id to create from
      required: false
      default: None
+   volume:
+     description:
+       - Volume name or id to create from
+     required: false
+     default: None
+     version_added: "2.3"
    state:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
+   scheduler_hints:
+     description:
+       - Scheduler hints passed to volume API in form of dict
+     required: false
+     default: None
+     version_added: "2.4"
 requirements:
      - "python >= 2.6"
      - "shade"
@@ -89,7 +98,17 @@ EXAMPLES = '''
       availability_zone: az2
       size: 40
       display_name: test_volume
+      scheduler_hints:
+        same_host: 243e8d3c-8f47-4a61-93d6-7215c344b0c0
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _present_volume(module, cloud):
@@ -109,6 +128,15 @@ def _present_volume(module, cloud):
         image_id = cloud.get_image_id(module.params['image'])
         volume_args['imageRef'] = image_id
 
+    if module.params['volume']:
+        volume_id = cloud.get_volume_id(module.params['volume'])
+        if not volume_id:
+            module.fail_json(msg="Failed to find volume '%s'" % module.params['volume'])
+        volume_args['source_volid'] = volume_id
+
+    if module.params['scheduler_hints']:
+        volume_args['scheduler_hints'] = module.params['scheduler_hints']
+
     volume = cloud.create_volume(
         wait=module.params['wait'], timeout=module.params['timeout'],
         **volume_args)
@@ -116,14 +144,16 @@ def _present_volume(module, cloud):
 
 
 def _absent_volume(module, cloud):
-    try:
-        cloud.delete_volume(
-            name_or_id=module.params['display_name'],
-            wait=module.params['wait'],
-            timeout=module.params['timeout'])
-    except shade.OpenStackCloudTimeout:
-        module.exit_json(changed=False)
-    module.exit_json(changed=True)
+    changed = False
+    if cloud.volume_exists(module.params['display_name']):
+        try:
+            changed = cloud.delete_volume(name_or_id=module.params['display_name'],
+                                          wait=module.params['wait'],
+                                          timeout=module.params['timeout'])
+        except shade.OpenStackCloudTimeout:
+            module.exit_json(changed=changed)
+
+    module.exit_json(changed=changed)
 
 
 def main():
@@ -134,17 +164,24 @@ def main():
         display_description=dict(default=None, aliases=['description']),
         image=dict(default=None),
         snapshot_id=dict(default=None),
+        volume=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
+        scheduler_hints=dict(default=None, type='dict')
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
-            ['image', 'snapshot_id'],
+            ['image', 'snapshot_id', 'volume'],
         ],
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
+
+    if (module.params['scheduler_hints'] and
+            StrictVersion(shade.__version__) < StrictVersion('1.22')):
+        module.fail_json(msg="To utilize scheduler_hints, the installed version of"
+                             "the shade library MUST be >= 1.22")
 
     state = module.params['state']
 

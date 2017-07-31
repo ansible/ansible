@@ -15,15 +15,16 @@
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 module: sns_topic
 short_description: Manages AWS SNS topics and subscriptions
 description:
-    - The M(sns_topic) module allows you to create, delete, and manage subscriptions for AWS SNS topics.
+    - The C(sns_topic) module allows you to create, delete, and manage subscriptions for AWS SNS topics.
 version_added: 2.0
 author:
   - "Joel Thompson (@joelthompson)"
@@ -81,16 +82,16 @@ EXAMPLES = """
     name: "alarms"
     state: present
     display_name: "alarm SNS topic"
-    delivery_policy: 
+    delivery_policy:
       http:
-        defaultHealthyRetryPolicy: 
+        defaultHealthyRetryPolicy:
             minDelayTarget: 2
             maxDelayTarget: 4
             numRetries: 3
             numMaxDelayRetries: 5
             backoffFunction: "<linear|arithmetic|geometric|exponential>"
         disableSubscriptionOverrides: True
-        defaultThrottlePolicy: 
+        defaultThrottlePolicy:
             maxReceivesPerSecond: 10
     subscriptions:
       - endpoint: "my_email_address@example.com"
@@ -104,11 +105,13 @@ RETURN = '''
 sns_arn:
     description: The ARN of the topic you are modifying
     type: string
+    returned: always
     sample: "arn:aws:sns:us-east-1:123456789012:my_topic_name"
 
 sns_topic:
     description: Dict of sns topic details
     type: dict
+    returned: always
     sample:
       name: sns-topic-name
       state: present
@@ -275,8 +278,8 @@ class SnsTopicManager(object):
             for sub in self.subscriptions_existing:
                 sub_key = (sub['Protocol'], sub['Endpoint'])
                 subscriptions_existing_list.append(sub_key)
-                if self.purge_subscriptions and sub_key not in desired_subscriptions and \
-                    sub['SubscriptionArn'] != 'PendingConfirmation':
+                if (self.purge_subscriptions and sub_key not in desired_subscriptions and
+                        sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted')):
                     self.changed = True
                     self.subscriptions_deleted.append(sub_key)
                     if not self.check_mode:
@@ -294,7 +297,7 @@ class SnsTopicManager(object):
         # NOTE: subscriptions in 'PendingConfirmation' timeout in 3 days
         #       https://forums.aws.amazon.com/thread.jspa?threadID=85993
         for sub in self.subscriptions_existing:
-            if sub['SubscriptionArn'] != 'PendingConfirmation':
+            if sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted'):
                 self.subscriptions_deleted.append(sub['SubscriptionArn'])
                 self.changed = True
                 if not self.check_mode:
@@ -319,10 +322,10 @@ class SnsTopicManager(object):
     def ensure_gone(self):
         self.arn_topic = self._arn_topic_lookup()
         if self.arn_topic:
-           self._get_topic_subs()
-           if self.subscriptions_existing:
-               self._delete_subscriptions()
-           self._delete_topic()
+            self._get_topic_subs()
+            if self.subscriptions_existing:
+                self._delete_subscriptions()
+            self._delete_topic()
 
 
     def get_info(self):

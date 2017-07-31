@@ -19,48 +19,30 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_networks
-short_description: Module to manage logical networks in oVirt
+short_description: Module to manage logical networks in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage logical networks in oVirt"
+    - "Module to manage logical networks in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the network to manage."
+            - "Name of the network to manage."
         required: true
     state:
         description:
             - "Should the network be present or absent"
         choices: ['present', 'absent']
         default: present
-    datacenter:
+    data_center:
         description:
             - "Datacenter name where network reside."
     description:
@@ -98,7 +80,7 @@ EXAMPLES = '''
 
 # Create network
 - ovirt_networks:
-    datacenter: mydatacenter
+    data_center: mydatacenter
     name: mynetwork
     vlan_tag: 1
     vm_network: true
@@ -116,10 +98,29 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 network:
-    description: "Dictionary of all the network attributes. Network attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/network."
+    description: "Dictionary of all the network attributes. Network attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/network."
     returned: "On success if network is found."
+    type: dict
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 class NetworksModule(BaseModule):
@@ -130,8 +131,8 @@ class NetworksModule(BaseModule):
             comment=self._module.params['comment'],
             description=self._module.params['description'],
             data_center=otypes.DataCenter(
-                name=self._module.params['datacenter'],
-            ) if self._module.params['datacenter'] else None,
+                name=self._module.params['data_center'],
+            ) if self._module.params['data_center'] else None,
             vlan=otypes.Vlan(
                 self._module.params['vlan_tag'],
             ) if self._module.params['vlan_tag'] else None,
@@ -201,7 +202,7 @@ def main():
             choices=['present', 'absent'],
             default='present',
         ),
-        datacenter=dict(default=None, required=True),
+        data_center=dict(default=None, required=True),
         name=dict(default=None, required=True),
         description=dict(default=None),
         comment=dict(default=None),
@@ -218,7 +219,8 @@ def main():
     check_params(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         clusters_service = connection.system_service().clusters_service()
         networks_service = connection.system_service().networks_service()
         networks_module = NetworksModule(
@@ -227,41 +229,40 @@ def main():
             service=networks_service,
         )
         state = module.params['state']
-        network = networks_module.search_entity(
-            search_params={
-                'name': module.params['name'],
-                'datacenter': module.params['datacenter'],
-            },
-        )
+        search_params = {
+            'name': module.params['name'],
+            'datacenter': module.params['data_center'],
+        }
         if state == 'present':
-            ret = networks_module.create(entity=network)
+            ret = networks_module.create(search_params=search_params)
 
             # Update clusters networks:
-            for param_cluster in module.params.get('clusters', []):
-                cluster = search_by_name(clusters_service, param_cluster.get('name', None))
-                if cluster is None:
-                    raise Exception("Cluster '%s' was not found." % cluster_name)
-                cluster_networks_service = clusters_service.service(cluster.id).networks_service()
-                cluster_networks_module = ClusterNetworksModule(
-                    network_id=ret['id'],
-                    cluster_network=param_cluster,
-                    connection=connection,
-                    module=module,
-                    service=cluster_networks_service,
-                )
-                if param_cluster.get('assigned', True):
-                    ret = cluster_networks_module.create()
-                else:
-                    ret = cluster_networks_module.remove()
+            if module.params.get('clusters') is not None:
+                for param_cluster in module.params.get('clusters'):
+                    cluster = search_by_name(clusters_service, param_cluster.get('name'))
+                    if cluster is None:
+                        raise Exception("Cluster '%s' was not found." % param_cluster.get('name'))
+                    cluster_networks_service = clusters_service.service(cluster.id).networks_service()
+                    cluster_networks_module = ClusterNetworksModule(
+                        network_id=ret['id'],
+                        cluster_network=param_cluster,
+                        connection=connection,
+                        module=module,
+                        service=cluster_networks_service,
+                    )
+                    if param_cluster.get('assigned', True):
+                        ret = cluster_networks_module.create()
+                    else:
+                        ret = cluster_networks_module.remove()
 
         elif state == 'absent':
-            ret = networks_module.remove(entity=network)
+            ret = networks_module.remove(search_params=search_params)
 
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

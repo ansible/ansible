@@ -19,31 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4 as sdk
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.ovirt import *
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_host_networks
-short_description: Module to manage host networks in oVirt
+short_description: Module to manage host networks in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage host networks in oVirt."
+    - "Module to manage host networks in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the host to manage networks for."
+            - "Name of the host to manage networks for."
         required: true
     state:
         description:
@@ -67,7 +59,7 @@ options:
             - "C(address) - IP address in case of I(static) boot protocol is used."
             - "C(prefix) - Routing prefix in case of I(static) boot protocol is used."
             - "C(gateway) - Gateway in case of I(static) boot protocol is used."
-            - "C(version) - IP version. Either v4 or v6."
+            - "C(version) - IP version. Either v4 or v6. Default is v4."
     labels:
         description:
             - "List of names of the network label to be assigned to bond or interface."
@@ -141,10 +133,31 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 host_nic:
-    description: "Dictionary of all the host NIC attributes. Host NIC attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host_nic."
+    description: "Dictionary of all the host NIC attributes. Host NIC attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host_nic."
     returned: On success if host NIC is found.
+    type: dict
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_entity,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 class HostNetworksModule(BaseModule):
@@ -152,11 +165,11 @@ class HostNetworksModule(BaseModule):
     def build_entity(self):
         return otypes.Host()
 
-    def update_address(self, attachment, network):
+    def update_address(self, attachments_service, attachment, network):
         # Check if there is any change in address assignenmts and
         # update it if needed:
         for ip in attachment.ip_address_assignments:
-            if str(ip.ip.version) == network.get('version'):
+            if str(ip.ip.version) == network.get('version', 'v4'):
                 changed = False
                 if not equal(network.get('boot_protocol'), str(ip.assignment_method)):
                     ip.assignment_method = otypes.BootProtocol(network.get('boot_protocol'))
@@ -167,12 +180,13 @@ class HostNetworksModule(BaseModule):
                 if not equal(network.get('gateway'), ip.ip.gateway):
                     ip.ip.gateway = network.get('gateway')
                     changed = True
-                if not equal(network.get('prefix'), int(ip.ip.netmask)):
+                if not equal(network.get('prefix'), int(ip.ip.netmask) if ip.ip.netmask else None):
                     ip.ip.netmask = str(network.get('prefix'))
                     changed = True
 
                 if changed:
-                    attachments_service.service(attachment.id).update(attachment)
+                    if not self._module.check_mode:
+                        attachments_service.service(attachment.id).update(attachment)
                     self.changed = True
                     break
 
@@ -180,7 +194,7 @@ class HostNetworksModule(BaseModule):
         update = False
         bond = self._module.params['bond']
         networks = self._module.params['networks']
-        nic = nic_service.get()
+        nic = get_entity(nic_service)
 
         if nic is None:
             return update
@@ -214,7 +228,7 @@ class HostNetworksModule(BaseModule):
             if attachment is None:
                 return True
 
-            self.update_address(attachment, network)
+            self.update_address(attachments_service, attachment, network)
 
         return update
 
@@ -243,7 +257,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
         host_networks_module = HostNetworksModule(
             connection=connection,
@@ -359,10 +374,10 @@ def main():
             'host_nic': get_dict_of_struct(nic),
         })
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
-from ansible.module_utils.basic import *
+
 if __name__ == "__main__":
     main()

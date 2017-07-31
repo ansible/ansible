@@ -20,13 +20,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import math
 import collections
+import itertools
+import math
+
 from ansible import errors
 from ansible.module_utils import basic
 
+
 def unique(a):
-    if isinstance(a,collections.Hashable):
+    if isinstance(a, collections.Hashable):
         c = set(a)
     else:
         c = []
@@ -35,41 +38,47 @@ def unique(a):
                 c.append(x)
     return c
 
+
 def intersect(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) & set(b)
     else:
         c = unique(filter(lambda x: x in b, a))
     return c
 
+
 def difference(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) - set(b)
     else:
         c = unique(filter(lambda x: x not in b, a))
     return c
 
+
 def symmetric_difference(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) ^ set(b)
     else:
-        c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
+        c = unique(filter(lambda x: x not in intersect(a, b), union(a, b)))
     return c
 
+
 def union(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) | set(b)
     else:
         c = unique(a + b)
     return c
 
+
 def min(a):
     _min = __builtins__.get('min')
-    return _min(a);
+    return _min(a)
+
 
 def max(a):
     _max = __builtins__.get('max')
-    return _max(a);
+    return _max(a)
 
 
 def logarithm(x, base=math.e):
@@ -94,7 +103,7 @@ def inversepower(x, base=2):
         if base == 2:
             return math.sqrt(x)
         else:
-            return math.pow(x, 1.0/float(base))
+            return math.pow(x, 1.0 / float(base))
     except TypeError as e:
         raise errors.AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
 
@@ -106,6 +115,7 @@ def human_readable(size, isbits=False, unit=None):
     except:
         raise errors.AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
+
 def human_to_bytes(size, default_unit=None, isbits=False):
     ''' Return bytes count from a human readable string '''
     try:
@@ -113,14 +123,15 @@ def human_to_bytes(size, default_unit=None, isbits=False):
     except:
         raise errors.AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
+
 class FilterModule(object):
     ''' Ansible math jinja2 filters '''
 
     def filters(self):
-        return {
+        filters = {
             # general math
-            'min' : min,
-            'max' : max,
+            'min': min,
+            'max': max,
 
             # exponents and logarithms
             'log': logarithm,
@@ -128,14 +139,31 @@ class FilterModule(object):
             'root': inversepower,
 
             # set theory
-            'unique' : unique,
+            'unique': unique,
             'intersect': intersect,
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
 
+            # combinatorial
+            'permutations': itertools.permutations,
+            'combinations': itertools.combinations,
+
             # computer theory
-            'human_readable' : human_readable,
-            'human_to_bytes' : human_to_bytes,
+            'human_readable': human_readable,
+            'human_to_bytes': human_to_bytes,
 
         }
+
+        # py2 vs py3, reverse when py3 is predominant version
+        try:
+            filters['zip'] = itertools.izip
+            filters['zip_longest'] = itertools.izip_longest
+        except AttributeError:
+            try:
+                filters['zip'] = itertools.zip
+                filters['zip_longest'] = itertools.zip_longest
+            except:
+                pass
+
+        return filters

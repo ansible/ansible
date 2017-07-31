@@ -2,6 +2,12 @@
 
 set -o pipefail
 
-pip install tox --disable-pip-version-check
+declare -a args
+IFS='/:' read -ra args <<< "${TEST}"
 
-ansible-test units --color -v --tox --coverage
+version="${args[1]}"
+
+retry.py pip install tox --disable-pip-version-check
+
+# shellcheck disable=SC2086
+ansible-test units --color -v --tox --python "${version}" --coverage ${CHANGED:+"$CHANGED"} \

@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -67,7 +68,9 @@ options:
 notes:
    - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
+     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed
+     on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using
+     this module.
 requirements: [ psycopg2 ]
 author: "Daniel Schep (@dschep)"
 '''
@@ -143,7 +146,7 @@ def main():
     state = module.params["state"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so 
+    # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
@@ -152,7 +155,7 @@ def main():
         "login_password":"password",
         "port":"port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
+    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '' )
     try:
         db_connection = psycopg2.connect(database=db, **kw)
@@ -164,7 +167,7 @@ def main():
                                               .extensions
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(
-                cursor_factory=psycopg2.extras.DictCursor)
+            cursor_factory=psycopg2.extras.DictCursor)
     except Exception:
         e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" % e)
@@ -178,7 +181,7 @@ def main():
         else:
             if state == "absent":
                 changed = ext_delete(cursor, ext)
-    
+
             elif state == "present":
                 changed = ext_create(cursor, ext)
     except NotSupportedError:

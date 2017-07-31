@@ -1,29 +1,23 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: profitbricks
 short_description: Create, destroy, start, stop, and reboot a ProfitBricks virtual machine.
 description:
-     - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
+     - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait
+       for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
 version_added: "2.0"
 options:
   auto_increment:
@@ -109,12 +103,12 @@ options:
     default: 1
   subscription_user:
     description:
-      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environement variable.
+      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environment variable.
     required: false
     default: null
   subscription_password:
     description:
-      - THe ProfitBricks password. Overrides the PB_PASSWORD environement variable.
+      - THe ProfitBricks password. Overrides the PB_PASSWORD environment variable.
     required: false
     default: null
   wait:
@@ -202,6 +196,7 @@ EXAMPLES = '''
 import re
 import uuid
 import time
+import traceback
 
 HAS_PB_SDK = True
 
@@ -211,7 +206,8 @@ except ImportError:
     HAS_PB_SDK = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_native
 
 
 LOCATIONS = ['us/las',
@@ -223,7 +219,8 @@ uuid_match = re.compile(
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         time.sleep(5)
@@ -398,12 +395,11 @@ def create_virtual_machine(module, profitbricks):
 
         try:
             name % 0
-        except TypeError:
-            e = get_exception()
+        except TypeError as e:
             if e.message.startswith('not all'):
                 name = '%s%%d' % name
             else:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg=e.message, exception=traceback.format_exc())
 
         number_range = xrange(count_offset, count_offset + count + len(numbers))
         available_numbers = list(set(number_range).difference(numbers))
@@ -484,9 +480,8 @@ def remove_virtual_machine(module, profitbricks):
             # Remove the server
             try:
                 server_response = profitbricks.delete_server(datacenter_id, server_id)
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="failed to terminate the virtual server: %s" % str(e))
+            except Exception as e:
+                module.fail_json(msg="failed to terminate the virtual server: %s" % to_native(e), exception=traceback.format_exc())
             else:
                 changed = True
 
@@ -501,9 +496,8 @@ def _remove_boot_volume(module, profitbricks, datacenter_id, server_id):
         server = profitbricks.get_server(datacenter_id, server_id)
         volume_id = server['properties']['bootVolume']['id']
         volume_response = profitbricks.delete_volume(datacenter_id, volume_id)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="failed to remove the server's boot volume: %s" % str(e))
+    except Exception as e:
+        module.fail_json(msg="failed to remove the server's boot volume: %s" % to_native(e), exception=traceback.format_exc())
 
 
 def startstop_machine(module, profitbricks, state):
@@ -597,7 +591,7 @@ def main():
                             default='AMD_OPTERON'),
             volume_size=dict(type='int', default=10),
             disk_type=dict(choices=['HDD', 'SSD'], default='HDD'),
-            image_password=dict(default=None),
+            image_password=dict(default=None, no_log=True),
             ssh_keys=dict(type='list', default=[]),
             bus=dict(choices=['VIRTIO', 'IDE'], default='VIRTIO'),
             lan=dict(type='int', default=1),
@@ -605,7 +599,7 @@ def main():
             auto_increment=dict(type='bool', default=True),
             instance_ids=dict(type='list', default=[]),
             subscription_user=dict(),
-            subscription_password=dict(),
+            subscription_password=dict(no_log=True),
             location=dict(choices=LOCATIONS, default='us/las'),
             assign_public_ip=dict(type='bool', default=False),
             wait=dict(type='bool', default=True),
@@ -635,9 +629,8 @@ def main():
         try:
             (changed) = remove_virtual_machine(module, profitbricks)
             module.exit_json(changed=changed)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set instance state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % to_native(e), exception=traceback.format_exc())
 
     elif state in ('running', 'stopped'):
         if not module.params.get('datacenter'):
@@ -646,9 +639,8 @@ def main():
         try:
             (changed) = startstop_machine(module, profitbricks, state)
             module.exit_json(changed=changed)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set instance state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % to_native(e), exception=traceback.format_exc())
 
     elif state == 'present':
         if not module.params.get('name'):
@@ -665,9 +657,8 @@ def main():
         try:
             (machine_dict_array) = create_virtual_machine(module, profitbricks)
             module.exit_json(**machine_dict_array)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='failed to set instance state: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

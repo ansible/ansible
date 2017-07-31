@@ -24,7 +24,7 @@ import os
 import smtplib
 import json
 
-from ansible.compat.six import string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
 
@@ -32,11 +32,11 @@ from ansible.plugins.callback import CallbackBase
 def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
 
     if sender is None:
-        sender='<root>'
+        sender = '<root>'
     if to is None:
-        to='root'
+        to = 'root'
     if smtphost is None:
-        smtphost=os.getenv('SMTPHOST', 'localhost')
+        smtphost = os.getenv('SMTPHOST', 'localhost')
 
     if body is None:
         body = subject
@@ -58,9 +58,9 @@ def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, 
     b_content += b_body
 
     b_addresses = b_to.split(b',')
-    if b_cc:
+    if cc:
         b_addresses += b_cc.split(b',')
-    if b_bcc:
+    if bcc:
         b_addresses += b_bcc.split(b',')
 
     for b_address in b_addresses:
@@ -87,7 +87,7 @@ class CallbackModule(CallbackBase):
         sender = '"Ansible: %s" <root>' % host
         attach = res._task.action
         if 'invocation' in res._result:
-            attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
+            attach = "%s:  %s" % (res._task.action, json.dumps(res._result['invocation']['module_args']))
 
         subject = 'Failed: %s' % attach
         body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % attach

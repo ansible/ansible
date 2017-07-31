@@ -1,4 +1,4 @@
-#!/usr/bin/pythonapi/
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
@@ -19,40 +19,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from collections import defaultdict
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    ovirt_full_argument_spec,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_affinity_labels
-short_description: Module to affinity labels in oVirt
+short_description: Module to manage affinity labels in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manage affinity labels in oVirt. It can also manage assignments
+    - "This module manage affinity labels in oVirt/RHV. It can also manage assignments
        of those labels to hosts and VMs."
 options:
     name:
         description:
-            - "Name of the the affinity label to manage."
+            - "Name of the affinity label to manage."
         required: true
     state:
         description:
@@ -103,11 +87,28 @@ id:
     returned: On success if affinity label is found.
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
-template:
-    description: "Dictionary of all the affinity label attributes. Affinity label attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_label."
+affinity_label:
+    description: "Dictionary of all the affinity label attributes. Affinity label attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/affinity_label."
+    type: dict
     returned: On success if affinity label is found.
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    ovirt_full_argument_spec,
+)
 
 
 class AffinityLabelsModule(BaseModule):
@@ -182,7 +183,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         affinity_labels_service = connection.system_service().affinity_labels_service()
         affinity_labels_module = AffinityLabelsModule(
             connection=connection,
@@ -200,7 +202,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

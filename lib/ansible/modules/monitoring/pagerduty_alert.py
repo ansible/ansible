@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -55,15 +56,20 @@ options:
         required: true
     desc:
         description:
-            - For C(triggered) I(state) - Required. Short description of the problem that led to this trigger. This field (or a truncated version) will be used when generating phone calls, SMS messages and alert emails. It will also appear on the incidents tables in the PagerDuty UI. The maximum length is 1024 characters.
+            - For C(triggered) I(state) - Required. Short description of the problem that led to this trigger. This field (or a truncated version)
+              will be used when generating phone calls, SMS messages and alert emails. It will also appear on the incidents tables in the PagerDuty UI.
+              The maximum length is 1024 characters.
             - For C(acknowledged) or C(resolved) I(state) - Text that will appear in the incident's log associated with this event.
         required: false
         default: Created via Ansible
     incident_key:
         description:
             - Identifies the incident to which this I(state) should be applied.
-            - For C(triggered) I(state) - If there's no open (i.e. unresolved) incident with this key, a new one will be created. If there's already an open incident with a matching key, this event will be appended to that incident's log. The event key provides an easy way to "de-dup" problem reports.
-            - For C(acknowledged) or C(resolved) I(state) - This should be the incident_key you received back when the incident was first opened by a trigger event. Acknowledge events referencing resolved or nonexistent incidents will be discarded.
+            - For C(triggered) I(state) - If there's no open (i.e. unresolved) incident with this key, a new one will be created. If there's already an
+              open incident with a matching key, this event will be appended to that incident's log. The event key provides an easy way to "de-dup"
+              problem reports.
+            - For C(acknowledged) or C(resolved) I(state) - This should be the incident_key you received back when the incident was first opened by a
+              trigger event. Acknowledge events referencing resolved or nonexistent incidents will be discarded.
         required: false
     client:
         description:
@@ -189,10 +195,10 @@ def main():
     incident_key = module.params['incident_key']
 
     state_event_dict = {
-            'triggered': 'trigger',
-            'acknowledged': 'acknowledge',
-            'resolved': 'resolve'
-        }
+        'triggered': 'trigger',
+        'acknowledged': 'acknowledge',
+        'resolved': 'resolve'
+    }
 
     event_type = state_event_dict[state]
 

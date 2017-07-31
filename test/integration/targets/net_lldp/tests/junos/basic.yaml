@@ -1,0 +1,50 @@
+---
+- debug: msg="START net_lldp junos/basic.yaml"
+
+
+- name: setup - remove lldp
+  net_lldp:
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: configure lldp
+  net_lldp:
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'-   disable;' in result.diff.prepared"
+
+- name: configure lldp (idempotent)
+  net_lldp:
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Disable lldp
+  net_lldp:
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'+   disable;' in result.diff.prepared"
+
+- name: Disable lldp (idempotent)
+  net_lldp:
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"

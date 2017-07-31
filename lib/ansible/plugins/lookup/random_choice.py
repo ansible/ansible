@@ -28,12 +28,12 @@ from ansible.plugins.lookup import LookupBase
 #        - debug: msg=$item
 #          with_random_choice:
 #             - one
-#             - two 
+#             - two
 #             - three
+
 
 class LookupModule(LookupBase):
 
     def run(self, terms, inject=None, **kwargs):
 
-        return [ random.choice(terms) ]
-
+        return [random.choice(terms)]

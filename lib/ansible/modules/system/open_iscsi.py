@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Serge van Ginderachter <serge@vanginderachter.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -80,7 +71,7 @@ options:
         - whether the list of target nodes on the portal should be
           (re)discovered and added to the persistent iscsi database.
           Keep in mind that iscsiadm discovery resets configurtion, like node.startup
-          to manual, hence combined with auto_node_startup=yes will allways return
+          to manual, hence combined with auto_node_startup=yes will always return
           a changed state.
     show_nodes:
         required: false
@@ -117,7 +108,11 @@ EXAMPLES = '''
 '''
 
 import glob
+import os
 import time
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 ISCSIADM = 'iscsiadm'
 
@@ -151,7 +146,7 @@ def iscsi_get_cached_nodes(module, portal=None):
 
     # older versions of scsiadm don't have nice return codes
     # for newer versions see iscsiadm(8); also usr/iscsiadm.c for details
-                                  # err can contain [N|n]o records...
+    # err can contain [N|n]o records...
     elif rc == 21 or (rc == 255 and "o records found" in err):
         nodes = []
     else:
@@ -276,7 +271,7 @@ def main():
             target = dict(required=False, aliases=['name', 'targetname']),
             node_auth = dict(required=False, default='CHAP'),
             node_user = dict(required=False),
-            node_pass = dict(required=False),
+            node_pass = dict(required=False, no_log=True),
 
             # actions
             login = dict(type='bool', aliases=['state']),
@@ -381,9 +376,6 @@ def main():
 
     module.exit_json(**result)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
