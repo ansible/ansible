@@ -211,9 +211,11 @@
 
 - name: setup link target for absolute link
   copy: dest=/tmp/ansible-test-abs-link content=target
+  connection: local
 
 - name: setup link target dir for absolute link
   file: dest=/tmp/ansible-test-abs-link-dir state=directory
+  connection: local
 
 - name: test recursive copy to directory no trailing slash, local_follow=False
   copy: src=subdir dest={{output_subdir}} directory_mode=0700 local_follow=False
@@ -338,9 +340,11 @@
 
 - name: setup link target for absolute link
   copy: dest=/tmp/ansible-test-abs-link content=target
+  connection: local
 
 - name: setup link target dir for absolute link
   file: dest=/tmp/ansible-test-abs-link-dir state=directory
+  connection: local
 
 - name: test recursive copy to directory trailing slash, local_follow=False
   copy: src=subdir/ dest={{output_subdir}} directory_mode=0700 local_follow=False
@@ -464,9 +468,11 @@
 
 - name: setup link target for absolute link
   copy: dest=/tmp/ansible-test-abs-link content=target
+  connection: local
 
 - name: setup link target dir for absolute link
   file: dest=/tmp/ansible-test-abs-link-dir state=directory
+  connection: local
 
 - name: test recursive copy to directory no trailing slash, local_follow=True
   copy: src=subdir dest={{output_subdir}} directory_mode=0700 local_follow=True
