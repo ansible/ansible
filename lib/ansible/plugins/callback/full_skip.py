@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
+
 class CallbackModule(CallbackModule_default):
 
     '''
@@ -67,5 +68,5 @@ class CallbackModule(CallbackModule_default):
         (first, rest) = self.outlines[0], self.outlines[1:]
         self._display.banner(first)
         for line in rest:
-                self._display.display(line)
+            self._display.display(line)
         self.outlines = []
