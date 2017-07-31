@@ -206,3 +206,47 @@
   assert:
     that:
     - add_firewall_rule_with_ipv4_remoteip_again.changed == false
+
+- name: Add firewall rule when remoteip contains a netmask
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.2.0/255.255.255.0
+    action: allow
+    direction: in
+    protocol: tcp
+
+- name: Add same firewall rule when remoteip in CIDR notation
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.2.0/24
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_same_firewall_rule_with_cidr_remoteip
+
+- name: Check that creating same firewall rule succeeds without a change when remoteip contains a netmask or CIDR
+  assert:
+    that:
+    - add_same_firewall_rule_with_cidr_remoteip.changed == false
+
+- name: Add firewall rule with multiple ports
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: '80,81-83'
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule_with_multiple_ports
+
+- name: Check that creating firewall rule with multiple ports succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_multiple_ports.changed == true
