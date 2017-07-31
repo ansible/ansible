@@ -150,7 +150,7 @@ def get_value(arg, config, module):
         value = ''
         if arg == 'description':
             if NO_DESC_REGEX.search(config):
-                value = ''
+                value = False
             elif PARAM_TO_COMMAND_KEYMAP[arg] in config:
                 value = REGEX.search(config).group('value').strip()
         elif arg == 'source_interface':
@@ -169,7 +169,7 @@ def get_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['all']))
 
     interface_string = 'interface {0}'.format(module.params['interface'].lower())
     parents = [interface_string]
@@ -294,18 +294,14 @@ def main():
     proposed = {}
     for key, value in proposed_args.items():
         if key != 'interface':
-            if str(value).lower() == 'true':
-                value = True
-            elif str(value).lower() == 'false':
-                value = False
-            elif str(value).lower() == 'default':
+            if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)
                 if value is None:
                     if key in BOOL_PARAMS:
                         value = False
                     else:
                         value = 'default'
-            if existing.get(key) != value:
+            if str(existing.get(key)).lower() != str(value).lower():
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)

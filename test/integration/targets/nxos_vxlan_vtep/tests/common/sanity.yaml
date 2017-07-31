@@ -1,0 +1,65 @@
+---
+- - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vxlan_vtep sanity test"
+
+- block:
+  - name: "Enable feature nv overlay"
+    nxos_config: 
+      commands:
+        - feature nv overlay
+      provider: "{{ connection }}"
+      match: none
+
+  - name: configure vxlan_vtep
+    nxos_vxlan_vtep: &configure
+      interface: nve1
+      description: default
+      host_reachability: true
+      source_interface: Loopback0
+      source_interface_hold_down_time: 30
+      shutdown: true
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vxlan_vtep: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: remove vxlan_vtep
+    nxos_vxlan_vtep: &remove
+      interface: nve1
+      description: default
+      host_reachability: true
+      source_interface: Loopback0
+      source_interface_hold_down_time: 30
+      shutdown: true
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Remove Idempotence"
+    nxos_vxlan_vtep: *remove
+    register: result
+
+  - assert: *false
+
+  when: (platform | search('N9K'))
+
+  always:
+  - name: "Disable feature nv overlay"
+    nxos_feature: 
+      feature: nve
+      state: disabled
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vxlan_vtep sanity test"
