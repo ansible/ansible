@@ -86,7 +86,9 @@ options:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
   instance_monitoring:
     description:
-      - Whether instances in group are launched with detailed monitoring. Can be used in place of advanced_instance_monitoring.
+      - Specifies whether instances are launched with detailed monitoring.
+    aliases:
+      - advanced_instance_monitoring
     default: false
   assign_public_ip:
     description:
@@ -121,11 +123,6 @@ options:
   instance_id:
     description:
       - The Id of a running instance to use as a basis for a launch configuration. Can be used in place of image_id and instance_type.
-    version_added: "2.4"
-  advanced_instance_monitoring:
-    description:
-      - A bool representing whether advanced instance monitoring is to be used or not. Can be used in place of instance_monitoring.
-    default: false
     version_added: "2.4"
   placement_tenancy:
     description:
