@@ -52,17 +52,19 @@ options:
     description:
       - If C(directory), all immediate subdirectories will be created if they
         do not exist, since 1.7 they will be created with the supplied permissions.
-        If C(file), the file will NOT be created if it does not exist, see the M(copy)
-        or M(template) module if you want that behavior.  If C(link), the symbolic
+        If C(file), the file will NOT be created if it does not exist, see C(create)
+        if you want that behavior.  If C(link), the symbolic
         link will be created or changed. Use C(hard) for hardlinks. If C(absent),
         directories will be recursively deleted, and files or symlinks will be unlinked.
         Note that C(file) will not fail if the C(path) does not exist as the state did not change.
         If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
         modification times (similar to the way `touch` works from the command line).
+        If C(create) (new in 2.4), a empty file will be created, but a existing file will
+        not have modification time updated.
     required: false
     default: file
-    choices: [ file, link, directory, hard, touch, absent ]
+    choices: [ file, link, directory, hard, touch, create, absent ]
   src:
     required: false
     default: null
@@ -189,7 +191,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
+            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'create', 'absent'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
@@ -455,36 +457,40 @@ def main():
         changed = module.set_fs_attributes_if_different(file_args, changed, diff)
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
-    elif state == 'touch':
-        if not module.check_mode:
-
-            if prev_state == 'absent':
+    elif state in ['touch', 'create']:
+        changed = False
+        if prev_state == 'absent':
+            if not module.check_mode:
                 try:
                     open(b_path, 'wb').close()
+                    changed = True
                 except OSError:
                     e = get_exception()
                     module.fail_json(path=path, msg='Error, could not touch target: %s' % to_native(e, nonstring='simplerepr'))
-            elif prev_state in ('file', 'directory', 'hard'):
-                try:
-                    os.utime(b_path, None)
-                except OSError:
-                    e = get_exception()
-                    module.fail_json(path=path, msg='Error while touching existing target: %s' % to_native(e, nonstring='simplerepr'))
-            else:
-                module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
-            try:
-                module.set_fs_attributes_if_different(file_args, True, diff)
-            except SystemExit:
-                e = get_exception()
-                if e.code:
-                    # We take this to mean that fail_json() was called from
-                    # somewhere in basic.py
-                    if prev_state == 'absent':
-                        # If we just created the file we can safely remove it
-                        os.remove(b_path)
-                raise e
+        elif prev_state in ('file', 'directory', 'hard'):
+            if state == 'touch':
+                changed = True
+                if not module.check_mode:
+                    try:
+                        os.utime(b_path, None)
+                    except OSError:
+                        e = get_exception()
+                        module.fail_json(path=path, msg='Error while touching existing target: %s' % to_native(e, nonstring='simplerepr'))
+        else:
+            module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
+        try:
+            changed = module.set_fs_attributes_if_different(file_args, True, diff) or changed
+        except SystemExit:
+            e = get_exception()
+            if e.code:
+                # We take this to mean that fail_json() was called from
+                # somewhere in basic.py
+                if prev_state == 'absent':
+                    # If we just created the file we can safely remove it
+                    os.remove(b_path)
+            raise e
 
-        module.exit_json(dest=path, changed=True, diff=diff)
+        module.exit_json(dest=path, changed=changed, diff=diff)
 
     module.fail_json(path=path, msg='unexpected position reached')
 
