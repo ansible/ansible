@@ -909,7 +909,7 @@
 
 - name: stat the circular symlink
   stat:
-    path: '{{ output_dir }}/top_dir/subdir/circle'
+    path: '{{ output_dir }}/new_dir/top_dir/subdir/circle'
   register: stat_circular_symlink_result
 
 - name: assert that the directory exists
