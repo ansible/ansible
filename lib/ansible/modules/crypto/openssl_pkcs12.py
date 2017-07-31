@@ -3,6 +3,9 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -135,7 +138,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.action = module.params['action']
         self.iter_size = module.params['iter_size']
         self.maciter_size = module.params['maciter_size']
-        self.mode = module.params['mode']
         self.privatekey_path = module.params['privatekey_path']
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.cert_path = module.params['cert_path']
@@ -143,13 +145,24 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.friendly_name = module.params['friendly_name']
         self.passphrase = module.params['passphrase']
 
+        self.module = module
 
     def generate(self, module):
         ''' Generate pkcs#12 file archive. '''
 
-        if not self.check(module, perms_required=False) or self.force:
+        file_args = self.module.load_file_common_arguments(module.params)
+        this_mode = self.module.params['mode']
+        if not this_mode:
+            this_mode = int('0400', 8)
 
+        if not self.check(module, perms_required=False) or not self.force:
             self.pkcs12 = crypto.PKCS12()
+
+            try:
+                self.remove()
+            except PkcsError as exc:
+                module.fail_json(msg=to_native(exc))
+        
 
             if self.ca_certificates:
                 ca_certs = [crypto_utils.load_certificate(ca_cert) for ca_cert
@@ -167,10 +180,10 @@ class Pkcs(crypto_utils.OpenSSLObject):
                 self.pkcs12.set_privatekey(crypto_utils.load_privatekey(
                                             self.privatekey_path,
                                             self.privatekey_passphrase)
-                                            )
+                                           )
 
             try:
-                with open(self.path, 'wb', self.mode) as archive:
+                with open(self.path, 'wb', this_mode) as archive:
                     archive.write(
                         self.pkcs12.export(
                             self.passphrase,
@@ -178,13 +191,14 @@ class Pkcs(crypto_utils.OpenSSLObject):
                             self.maciter_size
                         )
                     )
+                self.module.set_mode_if_different(self.path, this_mode, False)
                 self.changed = True
             except (IOError, OSError) as exc:
                 self.remove()
                 raise PkcsError(exc)
 
-        file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
+            self.module.set_mode_if_different(self.path, this_mode, False)
             self.changed = True
 
     def check(self, module, perms_required=True):
@@ -202,8 +216,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         if not state_and_perms or not _check_passphrase():
             return False
-        
-        return True
 
     def dump(self):
         ''' Serialize the object into a dictionary. '''
@@ -227,7 +239,6 @@ def main():
         friendly_name=dict(required=True, type='str', aliases=['name']),
         iter_size=dict(default=2048, type='int'),
         maciter_size=dict(default=1, type='int'),
-        mode=dict(default=0400, type='int'),
         passphrase=dict(type='str', no_log=True),
         path=dict(required=True, type='path'),
         privatekey_path=dict(required=True, type='path'),
@@ -246,11 +257,11 @@ def main():
     ]
 
     module = AnsibleModule(
-        argument_spec = argument_spec,
-        required_if = required_if,
-        required_together = required_together,
-        supports_check_mode = True,
-        add_file_common_args = True,
+        argument_spec=argument_spec,
+        add_file_common_args=True,
+        required_if=required_if,
+        required_together=required_together,
+        supports_check_mode=True,
     )
 
     if not pyopenssl_found:
@@ -290,7 +301,6 @@ def main():
     result = pkcs12.dump()
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()
