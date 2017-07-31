@@ -1,18 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -41,26 +30,25 @@ options:
     action:
         required: False
         default: 'export'
-        choices: [ 'parse', 'export' ]
+        choices: ['parse', 'export']
         description:
             - Create (export) or parse a PKCS #12.
-    dest:
+    path:
         required: True
         default: null
-        aliases: ['path', 'destfile']
         description:
             - Filename to write the PKCS#12 file to.
     force:
         required: False
         default: False
-        choices: [ True, False ]
         description:
+            - Should the file be regenerated even it it already exists.
     friendly_name:
         required: True
         default: null
         aliases: 'name'
         description:
-            - Specifies the "friendly name" for the certificate and private key.
+            - Specifies the friendly name for the certificate and private key.
     iter_size:
         required: False
         default: 2048
@@ -81,7 +69,7 @@ options:
         default: null
         description:
             - The PKCS#12 password.
-    privatekey:
+    privatekey_path:
         required: True
         description:
             - File to read private key from.
@@ -93,23 +81,28 @@ options:
     state:
         required: False
         default: 'present'
-        choices: [ 'present', 'absent' ]
+        choices: ['present', 'absent']
         description:
             - Whether the file should exist or not.
 '''
 
 EXAMPLES = '''
-name: 'Generate PKCS #12 file'
-openssl_pkcs12:
-  path: '/opt/certs/ansible.p12'
-  friendly_name: 'raclette'
-  privatekey_path: '/opt/certs/keys/key.pem'
-  cert_path: '/opt/certs/cert.pem'
-  ca_certificates: '/opt/certs/ca.pem'
-  state: present
+- name: 'Generate PKCS #12 file'
+  openssl_pkcs12:
+    path: '/opt/certs/ansible.p12'
+    friendly_name: 'raclette'
+    privatekey_path: '/opt/certs/keys/key.pem'
+    cert_path: '/opt/certs/cert.pem'
+    ca_certificates: '/opt/certs/ca.pem'
+    state: present
 '''
 
 RETURN = '''
+filename:
+    description: Path to the generate PKCS#12 file.
+    returned: changed or success
+    type: string
+    sample: /opt/certs/ansible.p12
 '''
 
 import os
@@ -122,22 +115,27 @@ else:
     pyopenssl_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.crypto import OpenSSLModule, OpenSSLModuleError, load_certificate, load_privatekey
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native
 
 
-class PkcsError(OpenSSLModuleError):
+class PkcsError(crypto_utils.OpenSSLObjectError):
     pass
 
 
-class Pkcs(OpenSSLModule):
+class Pkcs(crypto_utils.OpenSSLObject):
 
     def __init__(self, module):
-        super(Pkcs, self).__init__(module)
+        super(Pkcs, self).__init__(
+            module.params['path'],
+            module.params['force'],
+            module.params['state'],
+            module.check_mode
+        )
         self.action = module.params['action']
         self.iter_size = module.params['iter_size']
         self.maciter_size = module.params['maciter_size']
+        self.mode = module.params['mode']
         self.privatekey_path = module.params['privatekey_path']
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.cert_path = module.params['cert_path']
@@ -145,50 +143,74 @@ class Pkcs(OpenSSLModule):
         self.friendly_name = module.params['friendly_name']
         self.passphrase = module.params['passphrase']
 
-    def export(self):
+
+    def generate(self, module):
         ''' Generate pkcs#12 file archive. '''
 
-        if os.path.exists(self.path) and not self.force:
-            self.changed = False
-            return
+        if not self.check(module, perms_required=False) or self.force:
 
-        self.pkcs12 = crypto.PKCS12()
+            self.pkcs12 = crypto.PKCS12()
 
-        if self.ca_certificates:
-            ca_certs = tuple([load_certificate(ca_cert) for ca_cert in self.ca_certificates])
-            self.pkcs12.set_ca_certificates(ca_certs)
+            if self.ca_certificates:
+                ca_certs = [crypto_utils.load_certificate(ca_cert) for ca_cert
+                            in self.ca_certificates]
+                self.pkcs12.set_ca_certificates(ca_certs)
 
-        if self.cert_path:
-            self.pkcs12.set_certificate(load_certificate(self.cert_path))
+            if self.cert_path:
+                self.pkcs12.set_certificate(crypto_utils.load_certificate(
+                                            self.cert_path))
 
-        if self.friendly_name:
-            self.pkcs12.set_friendlyname(self.friendly_name)
+            if self.friendly_name:
+                self.pkcs12.set_friendlyname(self.friendly_name)
 
-        if self.privatekey_path:
-            self.pkcs12.set_privatekey(load_privatekey(
-                                        self.privatekey_path,
-                                        self.privatekey_passphrase)
-                                        )
+            if self.privatekey_path:
+                self.pkcs12.set_privatekey(crypto_utils.load_privatekey(
+                                            self.privatekey_path,
+                                            self.privatekey_passphrase)
+                                            )
 
-        try:
-            with open(self.path, 'w') as archive:
-                archive.write(
-                    self.pkcs12.export(
-                        self.passphrase,
-                        self.iter_size,
-                        self.maciter_size
+            try:
+                with open(self.path, 'wb', self.mode) as archive:
+                    archive.write(
+                        self.pkcs12.export(
+                            self.passphrase,
+                            self.iter_size,
+                            self.maciter_size
+                        )
                     )
-                )
-        except (IOError, OSError) as exc:
-            raise PkcsError(exc)
+                self.changed = True
+            except (IOError, OSError) as exc:
+                self.remove()
+                raise PkcsError(exc)
 
-    def check(self):
+        file_args = module.load_file_common_arguments(module.params)
+        if module.set_fs_attributes_if_different(file_args, False):
+            self.changed = True
+
+    def check(self, module, perms_required=True):
+        ''' Ensure the resource is in its desired state. '''
+
+        state_and_perms = super(Pkcs, self).check(module, perms_required)
+
+        def _check_passphrase():
+            try:
+                crypto_utils.load_privatekey(self.path,
+                                             self.privatekey_passphrase)
+                return True
+            except crypto.Error:
+                return False
+
+        if not state_and_perms or not _check_passphrase():
+            return False
+        
         return True
 
     def dump(self):
+        ''' Serialize the object into a dictionary. '''
+
         result = {
             'changed': self.changed,
-            'path': self.path,
+            'filename': self.path,
         }
 
         return result
@@ -202,7 +224,7 @@ def main():
         ca_certificates=dict(type='list'),
         cert_path=dict(type='path'),
         force=dict(default=False, type='bool'),
-        friendly_name=dict(required=True, type='str'),
+        friendly_name=dict(required=True, type='str', aliases=['name']),
         iter_size=dict(default=2048, type='int'),
         maciter_size=dict(default=1, type='int'),
         mode=dict(default=0400, type='int'),
@@ -215,12 +237,17 @@ def main():
                    type='str'),
     )
 
+    required_if = [
+        ['state', 'present', ['privatekey_path']]
+    ]
+
     required_together = [
         ['path', 'privatekey_path', 'friendly_name'],
     ]
 
     module = AnsibleModule(
         argument_spec = argument_spec,
+        required_if = required_if,
         required_together = required_together,
         supports_check_mode = True,
         add_file_common_args = True,
@@ -229,22 +256,30 @@ def main():
     if not pyopenssl_found:
         module.fail_json(msg='The python pyOpenSSL library is required')
 
+    base_dir = os.path.dirname(module.params['path'])
+    if not os.path.isdir(base_dir):
+        module.fail_json(
+            name=base_dir,
+            msg='The directory %s does not exist or '
+                'the file is not a directory' % base_dir
+        )
+
     pkcs12 = Pkcs(module)
 
     if module.params['state'] == 'present':
         if module.check_mode:
             result = pkcs12.dump()
-            result['changed'] = module.params['force'] or not pkcs12.check()
+            result['changed'] = module.params['force'] or not pkcs12.check(module)
             module.exit_json(**result)
 
         try:
-            pkcs12.generate()
+            pkcs12.generate(module)
         except PkcsError as exc:
             module.fail_json(msg=to_native(exc))
     else:
         if module.check_mode:
             result = pkcs12.dump()
-            result['changed'] = pkcs12.check()
+            result['changed'] = os.path.exists(module.params['path'])
             module.exit_json(**result)
 
         try:
