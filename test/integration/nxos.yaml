@@ -215,6 +215,15 @@
 
     - block:
       - include_role:
+          name: nxos_vxlan_vtep
+        when: "limit_to in ['*', 'nxos_vxlan_vtep']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vxlan_vtep' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
