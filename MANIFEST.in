@@ -7,7 +7,7 @@ include .coveragerc
 include .yamllint
 include examples/hosts
 include examples/ansible.cfg
-include lib/ansible/module_utils/powershell/*.psm1
+recursive-include lib/ansible/module_utils/powershell *
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *
 recursive-include docs *
