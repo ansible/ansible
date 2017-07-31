@@ -155,7 +155,7 @@ cyberark_user:
             type: string
             returned: always
         Expired:
-            description: Whether or not the user’s password has expired.
+            description: Whether or not the user password has expired.
             type: bool
             returned: always
         ExpiryDate:
@@ -282,7 +282,6 @@ def userAddOrUpdate(module, HTTPMethod):
     elif HTTPMethod == "PUT":
         end_point = "/PasswordVault/WebServices/PIMServices.svc/Users/{0}"
         end_point = end_point.format(username)
-
 
     # --- Optionally populate payload based on parameters passed ---
     if "initial_password" in module.params:
