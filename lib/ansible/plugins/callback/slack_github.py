@@ -43,7 +43,7 @@ class CallbackModule(CallbackBase):
                 'ascii', 'ignore'), 'slack.json')
         if not os.path.isfile(config_file):
             self._display.warning(
-                'File {} not found. SlackGithub callback has been disabled'.format(config_file))
+                'File {0} not found. SlackGithub callback has been disabled'.format(config_file))
             self.disabled = True
             return
         with open(config_file) as config_file:
@@ -77,12 +77,12 @@ class CallbackModule(CallbackBase):
                 data=data,
                 method='POST')
         except Exception as e:
-            self._display.warning('Could not submit play recap: {}'.format(e))
+            self._display.warning('Could not submit play recap: {0}'.format(e))
 
         gist = json.loads(response.read())
         url = gist[u'html_url'].encode('ascii', 'ignore')
-        hosts = '*{}*'.format(', '.join(self.play.hosts))
-        message = 'Playbook *{}* has been played against {} by *{}* *<{}#file-recap-md|Details>*'.format(
+        hosts = '*{0}*'.format(', '.join(self.play.hosts))
+        message = 'Playbook *{0}* has been played against {1} by *{2}* *<{3}#file-recap-md|Details>*'.format(
             self.playbook_name, hosts, self.user, url)
         payload = {'username': self.config['username'],
                    'attachments': [{'fallback': message,
@@ -99,16 +99,16 @@ class CallbackModule(CallbackBase):
             response = open_url(self.config['webhook'], data=data)
         except Exception as e:
             self._display.warning(
-                'Could not submit notification to Slack: {}'.format(e))
+                'Could not submit notification to Slack: {0}'.format(e))
 
     def v2_playbook_on_start(self, playbook):
         self.init_config(playbook)
-        self.log('**Playbook**: {}\n\n'.format(os.path.basename(playbook._file_name)))
+        self.log('**Playbook**: {0}\n\n'.format(os.path.basename(playbook._file_name)))
 
     def v2_playbook_on_play_start(self, play):
         self.play = play
-        name = play.name or 'Not specified #{}'.format(play._uuid)
-        self.log('# Play: {}\n\n'.format(name))
+        name = play.name or 'Not specified #{0}'.format(play._uuid)
+        self.log('# Play: {0}\n\n'.format(name))
 
     def v2_playbook_on_stats(self, stats):
         color = 'good'
@@ -116,32 +116,32 @@ class CallbackModule(CallbackBase):
         hosts = sorted(stats.processed.keys())
         for host in hosts:
             summary = stats.summarize(host)
-            self.log('**Host**: {}\n'.format(host))
+            self.log('**Host**: {0}\n'.format(host))
             for item, count in summary.items():
-                self.log('> **{}**: {}\n\n'.format(item, count))
+                self.log('> **{0}**: {1}\n\n'.format(item, count))
                 if item == 'failures' and count > 0:
                     color = 'danger'
         self.send(color)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        self.log('**_FAILED_ {}** | {}\n\n'.format(result._host.get_name(),
+        self.log('**_FAILED_ {0}** | {1}\n\n'.format(result._host.get_name(),
                                                    result._task.get_name().strip()))
         self.log(
-            '```json\n{}\n```\n\n'.format(
+            '```json\n{0}\n```\n\n'.format(
                 json.dumps(
                     result._result,
                     indent=1,
                     sort_keys=True)))
 
     def v2_runner_on_ok(self, result):
-        self.log('**{}** | {}\n\n'.format(result._host.get_name(),
+        self.log('**{0}** | {1}\n\n'.format(result._host.get_name(),
                                           result._task.get_name().strip()))
 
     def v2_runner_on_unreachable(self, result):
-        self.log('**_UNREACHABLE_ {}** | {}\n\n'.format(result._host.get_name(),
+        self.log('**_UNREACHABLE_ {0}** | {1}\n\n'.format(result._host.get_name(),
                                                         result._task.get_name().strip))
         self.log(
-            '```json\n{}\n```\n\n'.format(
+            '```json\n{0}\n```\n\n'.format(
                 json.dumps(
                     result._result,
                     indent=1,
