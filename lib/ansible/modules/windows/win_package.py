@@ -35,7 +35,6 @@ description:
 - These packages can be sources from the local file system, network file share
   or a url.
 - Please read the notes section around some caveats with this module.
-short_description: Installs/Uninstalls an installable package, either from local file system or url
 options:
   arguments:
     description:
@@ -122,8 +121,10 @@ options:
     description:
     - If C(no), SSL certificates will not be validated. This should only be
       used on personally controlled sites using self-signed certificates.
+    - Before Ansible 2.4 this defaulted to C(no).
     type: bool
     default: 'yes'
+    version_added: '2.4'
 notes:
 - For non Windows targets, use the M(package) module instead.
 - When C(state=absent) and the product is an exe, the path may be different
