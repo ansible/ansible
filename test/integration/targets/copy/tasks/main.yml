@@ -310,7 +310,7 @@
     - "subdir/subdir2/subdir3/subdir4"
 
 #- debug: var=dir_stats
-- name: assert recursive copied directories mode
+- name: assert recursive copied directories mode (1)
   assert:
     that:
       - "item.stat.mode == '0700'"
@@ -438,7 +438,7 @@
     - "subdir2/subdir3/subdir4"
 
 #- debug: var=dir_stats
-- name: assert recursive copied directories mode
+- name: assert recursive copied directories mode (2)
   assert:
     that:
       - "item.stat.mode == '0700'"
@@ -575,7 +575,7 @@
     - "subdir/subdir2/subdir3/subdir4"
 
 #- debug: var=dir_stats
-- name: assert recursive copied directories mode
+- name: assert recursive copied directories mode (3)
   assert:
     that:
       - "item.stat.mode == '0700'"
