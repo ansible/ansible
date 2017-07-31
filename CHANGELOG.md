@@ -10,16 +10,16 @@ Ansible Changes By Release
     - Using `import_*` (`import_playbook`, `import_tasks`, `import_role`) directives are static.
     - Using `include_*` (`include_tasks`, `include_role`) directives are dynamic.
 * Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.ansible_os_distribution`).
-  They will continue to be added into the main namespace directly, but now a configuration toggle to disable this, currently off my default, in the future it will be on by default.
+  They will continue to be added into the main namespace directly, but now a configuration toggle to disable this, currently off by default, in the future it will be on by default.
   This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
-* new `order` play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
+* New `order` play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
 * Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous sorting by name'.
 * Inventory has been revamped:
-  - Inventory  classes have been split to allow for better management and deduplication
+  - Inventory classes have been split to allow for better management and deduplication
   - Logic that each inventory source duplicated is now common and pushed up to reconciliation
   - VariableManager has been updated for better interaction with inventory
   - Updated CLI with helper method to initialize base objects for plays
-  - New Inventory plugins for creating inventory
+  - New inventory plugins for creating inventory
   - Old inventory formats are still supported via plugins
   - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
   - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
@@ -56,14 +56,14 @@ Ansible Changes By Release
 * iosxr_template (use iosxr_config instead)
 * junos_template (use junos_config instead)
 * nxos_template (use nxos_config instead)
-* ops_template (use ops_template instead)
+* ops_template (use ops_config instead)
 
 ### Minor Changes
-* removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
-* removed unused and deprecated config option `pattern`
+* Removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
+* Removed unused and deprecated config option `pattern`
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
-* The include_dir var is not a global anymore, as we now allow mulitple inventory sources, it is now host dependant.
-  This means it cannot be used wherever host vars are not permittied, for example in task/handler names.
+* The `include_dir` var is not a global anymore, as we now allow multiple inventory sources, it is now host dependant.
+  This means it cannot be used wherever host vars are not permitted, for example in task/handler names.
 * Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
   was a quoted string with hash marks ("#") in it then the parsed string
   included the quotes.  Now the string will not be quoted.  Previously, if the
@@ -90,11 +90,11 @@ Ansible Changes By Release
 * The win_unzip module no longer includes dictionary 'win_unzip' in its results,
   the content is now directly in the resulting output, like pretty much every other module.
 * Rewrite of the copy module so that it handles cornercases with symbolic links
-  and empty directories.  The copy module has a new parameter, local_follow
+  and empty directories.  The copy module has a new parameter, `local_follow`
   which controls how links on the source system are treated. (The older
   parameter, follow is for links on the remote system.)
 * Update the handling of symbolic file permissions in file-related mode
-  parameters to deal with multiple operators.  For instance, mode='u=rw+x-X' to
+  parameters to deal with multiple operators.  For instance, `mode='u=rw+x-X'` to
   set the execute bit on directories, remove it from filea, and set read-write
   on both is now supported
 * Added better cookie parsing to fetch_url/open_url. Cookies are now in a dictionary named `cookies`
@@ -118,8 +118,8 @@ Ansible Changes By Release
 - host_list
 - ini
 - script
-- yaml
 - virtualbox
+- yaml
 
 #### New Inventory scripts:
 - lxd
@@ -129,8 +129,7 @@ Ansible Changes By Release
 - all: true if all elements are true
 
 ### Module Notes
-
-- The docker_container module has gained a new option, working_dir which allows
+- The docker_container module has gained a new option, `working_dir` which allows
   specifying the working directory for the command being run in the image.
 - The ec2_win_password module now requires the cryptography python module be installed to run
 - The stat module added a field, lnk_target.  When the file being stated is
@@ -140,7 +139,6 @@ Ansible Changes By Release
   absolute path.
 
 ### New Modules
-
 - aci
   * aci_rest
 - aix_lvol
@@ -274,6 +272,7 @@ Ansible Changes By Release
   * win_domain_group
   * win_dsc
   * win_firewall
+  * win_group_member
   * win_psmodule
   * win_route
   * win_security_policy
