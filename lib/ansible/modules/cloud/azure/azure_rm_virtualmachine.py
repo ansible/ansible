@@ -72,7 +72,6 @@ options:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
               subscription and location. Check your subscription for available choices.
-        default: Standard_D1
         required: true
     admin_username:
         description:
