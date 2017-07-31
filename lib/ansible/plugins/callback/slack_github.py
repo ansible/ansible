@@ -103,7 +103,8 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_start(self, playbook):
         self.init_config(playbook)
-        self.log('**Playbook**: {0}\n\n'.format(os.path.basename(playbook._file_name)))
+        self.log(
+            '**Playbook**: {0}\n\n'.format(os.path.basename(playbook._file_name)))
 
     def v2_playbook_on_play_start(self, play):
         self.play = play
@@ -124,8 +125,10 @@ class CallbackModule(CallbackBase):
         self.send(color)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        self.log('**_FAILED_ {0}** | {1}\n\n'.format(result._host.get_name(),
-                                                   result._task.get_name().strip()))
+        self.log(
+            '**_FAILED_ {0}** | {1}\n\n'.format(
+                result._host.get_name(),
+                result._task.get_name().strip()))
         self.log(
             '```json\n{0}\n```\n\n'.format(
                 json.dumps(
@@ -135,11 +138,13 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
         self.log('**{0}** | {1}\n\n'.format(result._host.get_name(),
-                                          result._task.get_name().strip()))
+                                            result._task.get_name().strip()))
 
     def v2_runner_on_unreachable(self, result):
-        self.log('**_UNREACHABLE_ {0}** | {1}\n\n'.format(result._host.get_name(),
-                                                        result._task.get_name().strip))
+        self.log(
+            '**_UNREACHABLE_ {0}** | {1}\n\n'.format(
+                result._host.get_name(),
+                result._task.get_name().strip))
         self.log(
             '```json\n{0}\n```\n\n'.format(
                 json.dumps(
