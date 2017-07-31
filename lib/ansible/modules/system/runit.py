@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, Brian Coca <bcoca@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -98,10 +88,13 @@ EXAMPLES = '''
     service_dir: /run/service
 '''
 
-import platform
-import shlex
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import *
+import os
+import re
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 def _load_dist_subclass(cls, *args, **kwargs):
     '''
@@ -164,9 +157,8 @@ class Sv(object):
         if os.path.exists(self.src_full):
             try:
                 os.symlink(self.src_full, self.svc_full)
-            except OSError:
-                e = get_exception()
-                self.module.fail_json(path=self.src_full, msg='Error while linking: %s' % str(e))
+            except OSError as e:
+                self.module.fail_json(path=self.src_full, msg='Error while linking: %s' % to_native(e))
         else:
             self.module.fail_json(msg="Could not find source for service to enable (%s)." % self.src_full)
 
@@ -174,9 +166,8 @@ class Sv(object):
         self.execute_command([self.svc_cmd,'force-stop',self.src_full])
         try:
             os.unlink(self.svc_full)
-        except OSError:
-            e = get_exception()
-            self.module.fail_json(path=self.svc_full, msg='Error while unlinking: %s' % str(e))
+        except OSError as e:
+            self.module.fail_json(path=self.svc_full, msg='Error while unlinking: %s' % to_native(e))
 
     def get_status(self):
         (rc, out, err) = self.execute_command([self.svstat_cmd, 'status', self.svc_full])
@@ -238,9 +229,8 @@ class Sv(object):
     def execute_command(self, cmd):
         try:
             (rc, out, err) = self.module.run_command(' '.join(cmd))
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg="failed to execute: %s" % str(e))
+        except Exception as e:
+            self.module.fail_json(msg="failed to execute: %s" % to_native(e), exception=traceback.format_exc())
         return (rc, out, err)
 
     def report(self):
@@ -283,9 +273,8 @@ def main():
                     sv.enable()
                 else:
                     sv.disable()
-            except (OSError, IOError):
-                e = get_exception()
-                module.fail_json(msg="Could not change service link: %s" % str(e))
+            except (OSError, IOError) as e:
+                module.fail_json(msg="Could not change service link: %s" % to_native(e), exception=traceback.format_exc())
 
     if state is not None and state != sv.state:
         changed = True
@@ -293,8 +282,6 @@ def main():
             getattr(sv,state)()
 
     module.exit_json(changed=changed, sv=sv.report())
-
-
 
 
 if __name__ == '__main__':

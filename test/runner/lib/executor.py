@@ -629,6 +629,12 @@ def integration_environment(args, target, cmd):
     if args.debug_strategy:
         env.update(dict(ANSIBLE_STRATEGY='debug'))
 
+    if 'non_local/' in target.aliases:
+        if args.coverage:
+            display.warning('Skipping coverage reporting for non-local test: %s' % target.name)
+
+        env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
+
     env.update(integration)
 
     cloud_environment = get_cloud_environment(args, target)
@@ -835,7 +841,7 @@ def compile_version(args, python_version, include, exclude):
     :type args: CompileConfig
     :type python_version: str
     :type include: tuple[CompletionTarget]
-    :param exclude: tuple[CompletionTarget]
+    :type exclude: tuple[CompletionTarget]
     :rtype: TestResult
     """
     command = 'compile'

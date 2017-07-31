@@ -63,14 +63,6 @@
 
     - block:
       - include_role:
-          name: junos_template
-        when: "limit_to in ['*', 'junos_template']"
-      rescue:
-        - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'junos_template' ]"
-            test_failed: true
-    - block:
-      - include_role:
           name: junos_vlan
         when: "limit_to in ['*', 'junos_vlan']"
       rescue:

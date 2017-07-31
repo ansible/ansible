@@ -44,20 +44,20 @@
 
     - block:
       - include_role:
-          name: nxos_template
-        when: "limit_to in ['*', 'nxos_template']"
-      rescue:
-        - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'nxos_template' ]"
-            test_failed: true
-
-    - block:
-      - include_role:
           name: nxos_nxapi
         when: "limit_to in ['*', 'nxos_nxapi']"
       rescue:
         - set_fact:
             failed_modules: "{{ failed_modules }} + [ 'nxos_nxapi' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_evpn_vni
+        when: "limit_to in ['*', 'nxos_evpn_vni']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_evpn_vni' ]"
             test_failed: true
 
     - block:
@@ -143,11 +143,82 @@
 
     - block:
       - include_role:
+          name: nxos_vrf
+        when: "limit_to in ['*', 'nxos_vrf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrf' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrf_interface
+        when: "limit_to in ['*', 'nxos_vrf_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrf_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrrp
+        when: "limit_to in ['*', 'nxos_vrrp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrrp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_domain
+        when: "limit_to in ['*', 'nxos_vtp_domain']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_domain' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_password
+        when: "limit_to in ['*', 'nxos_vtp_password']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_password' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_version
+        when: "limit_to in ['*', 'nxos_vtp_version']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_version' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_rollback
+        when: "limit_to in ['*', 'nxos_rollback']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_rollback' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_portchannel
+        when: "limit_to in ['*', 'nxos_portchannel']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_portchannel' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
         - set_fact: test_failed=true
-
 
 ###########
     - debug: var=failed_modules

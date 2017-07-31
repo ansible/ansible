@@ -3,22 +3,11 @@
 
 # Copyright (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -82,16 +71,6 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.univention_umc import (
-    umc_module_for_add,
-    umc_module_for_edit,
-    ldap_search,
-    base_dn,
-    config,
-    uldap,
-)
-
 HAVE_UNIVENTION = False
 try:
     from univention.admin.handlers.dns import (
@@ -101,6 +80,16 @@ try:
     HAVE_UNIVENTION = True
 except ImportError:
     pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.univention_umc import (
+    umc_module_for_add,
+    umc_module_for_edit,
+    ldap_search,
+    base_dn,
+    config,
+    uldap,
+)
 
 
 def main():

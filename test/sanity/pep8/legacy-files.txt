@@ -69,17 +69,12 @@ lib/ansible/modules/cloud/atomic/atomic_host.py
 lib/ansible/modules/cloud/atomic/atomic_image.py
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py
 lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py
-lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress.py
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress_facts.py
-lib/ansible/modules/cloud/azure/azure_rm_resourcegroup.py
-lib/ansible/modules/cloud/azure/azure_rm_resourcegroup_facts.py
-lib/ansible/modules/cloud/azure/azure_rm_securitygroup_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py
 lib/ansible/modules/cloud/azure/azure_rm_storageblob.py
 lib/ansible/modules/cloud/azure/azure_rm_subnet.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py
-lib/ansible/modules/cloud/azure/azure_rm_virtualmachineimage_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork_facts.py
 lib/ansible/modules/cloud/centurylink/clc_loadbalancer.py
@@ -111,7 +106,6 @@ lib/ansible/modules/cloud/google/gce_net.py
 lib/ansible/modules/cloud/google/gce_pd.py
 lib/ansible/modules/cloud/google/gce_tag.py
 lib/ansible/modules/cloud/google/gcpubsub.py
-lib/ansible/modules/cloud/google/gcpubsub_facts.py
 lib/ansible/modules/cloud/google/gcspanner.py
 lib/ansible/modules/cloud/linode/linode.py
 lib/ansible/modules/cloud/lxc/lxc_container.py
@@ -176,8 +170,6 @@ lib/ansible/modules/cloud/rackspace/rax_mon_check.py
 lib/ansible/modules/cloud/rackspace/rax_mon_entity.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification.py
 lib/ansible/modules/cloud/rackspace/rax_mon_notification_plan.py
-lib/ansible/modules/cloud/rackspace/rax_network.py
-lib/ansible/modules/cloud/rackspace/rax_queue.py
 lib/ansible/modules/cloud/smartos/vmadm.py
 lib/ansible/modules/cloud/softlayer/sl_vm.py
 lib/ansible/modules/cloud/univention/udm_dns_record.py
@@ -192,14 +184,12 @@ lib/ansible/modules/cloud/vmware/vmware_cluster.py
 lib/ansible/modules/cloud/vmware/vmware_dvswitch.py
 lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py
 lib/ansible/modules/cloud/vmware/vmware_migrate_vmk.py
-lib/ansible/modules/cloud/vmware/vmware_target_canonical_facts.py
 lib/ansible/modules/cloud/vmware/vmware_vmotion.py
 lib/ansible/modules/cloud/vmware/vsphere_copy.py
 lib/ansible/modules/cloud/vmware/vsphere_guest.py
 lib/ansible/modules/cloud/webfaction/webfaction_app.py
 lib/ansible/modules/cloud/webfaction/webfaction_db.py
 lib/ansible/modules/cloud/webfaction/webfaction_domain.py
-lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py
 lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/clustering/consul_acl.py
 lib/ansible/modules/clustering/consul_kv.py
@@ -207,7 +197,6 @@ lib/ansible/modules/clustering/consul_session.py
 lib/ansible/modules/clustering/kubernetes.py
 lib/ansible/modules/clustering/pacemaker_cluster.py
 lib/ansible/modules/commands/command.py
-lib/ansible/modules/crypto/openssl_publickey.py
 lib/ansible/modules/database/misc/elasticsearch_plugin.py
 lib/ansible/modules/database/misc/kibana_plugin.py
 lib/ansible/modules/database/misc/redis.py
@@ -239,10 +228,8 @@ lib/ansible/modules/messaging/rabbitmq_binding.py
 lib/ansible/modules/messaging/rabbitmq_exchange.py
 lib/ansible/modules/messaging/rabbitmq_parameter.py
 lib/ansible/modules/messaging/rabbitmq_plugin.py
-lib/ansible/modules/messaging/rabbitmq_policy.py
 lib/ansible/modules/messaging/rabbitmq_queue.py
 lib/ansible/modules/messaging/rabbitmq_user.py
-lib/ansible/modules/messaging/rabbitmq_vhost.py
 lib/ansible/modules/monitoring/airbrake_deployment.py
 lib/ansible/modules/monitoring/bigpanda.py
 lib/ansible/modules/monitoring/boundary_meter.py
@@ -298,7 +285,6 @@ lib/ansible/modules/network/cumulus/_cl_ports.py
 lib/ansible/modules/network/cumulus/nclu.py
 lib/ansible/modules/net_tools/dnsimple.py
 lib/ansible/modules/net_tools/dnsmadeeasy.py
-lib/ansible/modules/network/eos/_eos_template.py
 lib/ansible/modules/network/eos/eos_banner.py
 lib/ansible/modules/network/eos/eos_command.py
 lib/ansible/modules/network/eos/eos_config.py
@@ -312,13 +298,11 @@ lib/ansible/modules/network/fortios/fortios_config.py
 lib/ansible/modules/network/fortios/fortios_ipv4_policy.py
 lib/ansible/modules/network/illumos/dladm_iptun.py
 lib/ansible/modules/network/illumos/dladm_linkprop.py
-lib/ansible/modules/network/ios/_ios_template.py
 lib/ansible/modules/network/ios/ios_banner.py
 lib/ansible/modules/network/ios/ios_command.py
 lib/ansible/modules/network/ios/ios_facts.py
 lib/ansible/modules/network/ios/ios_system.py
 lib/ansible/modules/network/ios/ios_vrf.py
-lib/ansible/modules/network/iosxr/_iosxr_template.py
 lib/ansible/modules/network/iosxr/iosxr_command.py
 lib/ansible/modules/network/iosxr/iosxr_config.py
 lib/ansible/modules/network/iosxr/iosxr_facts.py
@@ -337,7 +321,6 @@ lib/ansible/modules/network/netvisor/pn_vrouterif.py
 lib/ansible/modules/network/netvisor/pn_vrouterlbif.py
 lib/ansible/modules/net_tools/nmcli.py
 lib/ansible/modules/network/nxos/_nxos_mtu.py
-lib/ansible/modules/network/nxos/_nxos_template.py
 lib/ansible/modules/network/nxos/nxos_aaa_server.py
 lib/ansible/modules/network/nxos/nxos_aaa_server_host.py
 lib/ansible/modules/network/nxos/nxos_command.py
@@ -348,7 +331,6 @@ lib/ansible/modules/network/nxos/nxos_igmp.py
 lib/ansible/modules/network/nxos/nxos_igmp_interface.py
 lib/ansible/modules/network/nxos/nxos_igmp_snooping.py
 lib/ansible/modules/network/nxos/nxos_install_os.py
-lib/ansible/modules/network/nxos/nxos_interface.py
 lib/ansible/modules/network/nxos/nxos_ntp.py
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py
 lib/ansible/modules/network/nxos/nxos_ntp_options.py
@@ -375,7 +357,6 @@ lib/ansible/modules/network/nxos/nxos_vtp_domain.py
 lib/ansible/modules/network/nxos/nxos_vtp_password.py
 lib/ansible/modules/network/nxos/nxos_vtp_version.py
 lib/ansible/modules/net_tools/omapi_host.py
-lib/ansible/modules/network/openswitch/_ops_template.py
 lib/ansible/modules/network/openswitch/ops_command.py
 lib/ansible/modules/network/openswitch/ops_config.py
 lib/ansible/modules/network/openswitch/ops_facts.py
@@ -460,9 +441,6 @@ lib/ansible/modules/remote_management/hpilo/hpilo_facts.py
 lib/ansible/modules/remote_management/hpilo/hponcfg.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
 lib/ansible/modules/source_control/bzr.py
-lib/ansible/modules/source_control/gitlab_group.py
-lib/ansible/modules/source_control/gitlab_project.py
-lib/ansible/modules/source_control/gitlab_user.py
 lib/ansible/modules/source_control/hg.py
 lib/ansible/modules/source_control/subversion.py
 lib/ansible/modules/storage/infinidat/infini_export.py
@@ -480,7 +458,6 @@ lib/ansible/modules/storage/netapp/sf_snapshot_schedule_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_access_group_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_manager.py
 lib/ansible/modules/storage/zfs/zfs.py
-lib/ansible/modules/storage/zfs/zpool_facts.py
 lib/ansible/modules/system/aix_inittab.py
 lib/ansible/modules/system/alternatives.py
 lib/ansible/modules/system/at.py

@@ -451,7 +451,10 @@ def command_sanity_pylint(args, targets):
         skip_paths = skip_fd.read().splitlines()
 
     with open('test/sanity/pylint/disable.txt', 'r') as disable_fd:
-        disable = set(disable_fd.read().splitlines())
+        disable = set(c for c in disable_fd.read().splitlines() if not c.strip().startswith('#'))
+
+    with open('test/sanity/pylint/enable.txt', 'r') as enable_fd:
+        enable = set(c for c in enable_fd.read().splitlines() if not c.strip().startswith('#'))
 
     skip_paths_set = set(skip_paths)
 
@@ -469,6 +472,7 @@ def command_sanity_pylint(args, targets):
         '--ignored-modules', '_MovedItems',
         '--output-format', 'json',
         '--disable', ','.join(sorted(disable)),
+        '--enable', ','.join(sorted(enable)),
     ] + paths
 
     env = ansible_environment(args)

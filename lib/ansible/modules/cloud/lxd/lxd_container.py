@@ -2,21 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -249,9 +238,13 @@ actions:
   type: list
   sample: '["create", "start"]'
 '''
-
+import datetime
 import os
+import time
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.lxd import LXDClient, LXDClientException
+
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -276,16 +269,6 @@ CONFIG_PARAMS = [
     'architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source'
 ]
 
-try:
-    callable(all)
-except NameError:
-    # For python <2.5
-    # This definition is copied from https://docs.python.org/2/library/functions.html#all
-    def all(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
 
 class LXDContainerManagement(object):
     def __init__(self, module):
@@ -389,7 +372,7 @@ class LXDContainerManagement(object):
 
     @staticmethod
     def _has_all_ipv4_addresses(addresses):
-        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.values()])
+        return len(addresses) > 0 and all(len(v) > 0 for v in addresses.values())
 
     def _get_addresses(self):
         try:
@@ -608,7 +591,6 @@ def main():
     lxd_manage = LXDContainerManagement(module=module)
     lxd_manage.run()
 
-# import module bits
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

@@ -50,6 +50,14 @@ Ansible Changes By Release
 #### Deprecated Modules:
 * ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
 
+#### Removed Deprecated Modules:
+* eos_template (use eos_config instead)
+* ios_template (use ios_config instead)
+* iosxr_template (use iosxr_config instead)
+* junos_template (use junos_config instead)
+* nxos_template (use nxos_config instead)
+* ops_template (use ops_template instead)
+
 ### Minor Changes
 * removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
 * removed unused and deprecated config option `pattern`
@@ -102,6 +110,7 @@ Ansible Changes By Release
 
 #### New Callbacks:
 - profile_roles
+- stderr
 
 #### New Inventory Plugins:
 - advanced_host_list
@@ -328,6 +337,7 @@ Ansible Changes By Release
 #### New: lookups
 
 - keyring: allows getting password from the 'controller' system's keyrings
+- chef_databag: allows querying Chef Databags via pychef library
 
 #### New: cache
 
