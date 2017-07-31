@@ -351,7 +351,7 @@ def main():
                 if existing:
                     break
 
-        if existing and not ('force_create' in module.params and module.params['force_create']):
+        if existing and not module.params.get('force_create'):
             # Awesome. Have an existing one. Nothing to do.
             results['taskdefinition'] = existing
         else:
