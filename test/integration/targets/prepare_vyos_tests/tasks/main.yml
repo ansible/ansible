@@ -1,0 +1,7 @@
+---
+
+# Some AWS hostnames can be longer than those allowed by the system we are testing
+# Truncate the hostname
+# http://jinja.pocoo.org/docs/2.9/templates/#truncate
+- set_fact:
+    shorter_hostname: '{{ inventory_hostname_short| truncate(10, True, "") |replace("_","-") }}'

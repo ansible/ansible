@@ -1,6 +1,6 @@
 ---
 cli:
-  host: "{{ inventory_hostname }}"
+  host: "{{ ansible_host }}"
   username: "{{ iosxr_cli_user | default('root') }}"
   password: "{{ iosxr_cli_pass | default('root') }}"
   transport: cli
