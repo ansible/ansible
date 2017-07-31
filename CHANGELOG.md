@@ -55,6 +55,8 @@ Ansible Changes By Release
 * Fix seboolean module for incompatibility in newer Python3 selinux bindings
 * Optimization for inventory, no need to dedup at every stage, its redundant and slow
 * Fix fact gathering for package and service action plugins
+* make random_choice more error resilient (#27380)
+* ensure prefix in plugin loading to avoid conflicts
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
