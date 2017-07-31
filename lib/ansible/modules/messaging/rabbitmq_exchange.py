@@ -35,31 +35,6 @@ options:
         choices: [ "present", "absent" ]
         required: false
         default: present
-    login_user:
-        description:
-            - rabbitMQ user for connection
-        required: false
-        default: guest
-    login_password:
-        description:
-            - rabbitMQ password for connection
-        required: false
-        default: false
-    login_host:
-        description:
-            - rabbitMQ host for connection
-        required: false
-        default: localhost
-    login_port:
-        description:
-            - rabbitMQ management api port
-        required: false
-        default: 15672
-    vhost:
-        description:
-            - rabbitMQ virtual host
-        required: false
-        default: "/"
     durable:
         description:
             - whether exchange is durable or not
@@ -90,6 +65,7 @@ options:
             - extra arguments for exchange. If defined this argument is a key/value dictionary
         required: false
         default: {}
+extends_documentation.fragment: rabbitmq.documentation
 '''
 
 EXAMPLES = '''
@@ -111,26 +87,25 @@ import urllib
 from ansible.module_utils.basic import AnsibleModule
 
 
+
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+
+    argument_spec = rabbitmq_argument_spec()
+    argument_spec.update(
+        dict(
             state = dict(default='present', choices=['present', 'absent'], type='str'),
             name = dict(required=True, type='str'),
-            login_user = dict(default='guest', type='str'),
-            login_password = dict(default='guest', type='str', no_log=True),
-            login_host = dict(default='localhost', type='str'),
-            login_port = dict(default='15672', type='str'),
-            vhost = dict(default='/', type='str'),
             durable = dict(default=True, type='bool'),
             auto_delete = dict(default=False, type='bool'),
             internal = dict(default=False, type='bool'),
             exchange_type = dict(default='direct', aliases=['type'], type='str'),
             arguments = dict(default=dict(), type='dict')
-        ),
-        supports_check_mode = True
+        )
     )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    url = "http://%s:%s/api/exchanges/%s/%s" % (
+    url = "%s://%s:%s/api/exchanges/%s/%s" % (
+        module.params['login_protocol'],
         module.params['login_host'],
         module.params['login_port'],
         urllib.quote(module.params['vhost'],''),
@@ -138,7 +113,8 @@ def main():
     )
 
     # Check if exchange already exists
-    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
+    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']),
+                     verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
 
     if r.status_code==200:
         exchange_exists = True
@@ -182,19 +158,22 @@ def main():
     if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
-                url,
-                auth = (module.params['login_user'],module.params['login_password']),
-                headers = { "content-type": "application/json"},
-                data = json.dumps({
-                    "durable": module.params['durable'],
-                    "auto_delete": module.params['auto_delete'],
-                    "internal": module.params['internal'],
-                    "type": module.params['exchange_type'],
-                    "arguments": module.params['arguments']
-                    })
-            )
+                    url,
+                    auth = (module.params['login_user'],module.params['login_password']),
+                    headers = { "content-type": "application/json"},
+                    data = json.dumps({
+                        "durable": module.params['durable'],
+                        "auto_delete": module.params['auto_delete'],
+                        "internal": module.params['internal'],
+                        "type": module.params['exchange_type'],
+                        "arguments": module.params['arguments']
+                    }),
+                    verify=module.params['cacert'],
+                    cert=(module.params['cert'], module.params['key'])
+                )
         elif module.params['state'] == 'absent':
-            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
+            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']),
+                                verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
 
         # RabbitMQ 3.6.7 changed this response code from 204 to 201
         if r.status_code == 204 or r.status_code == 201:
@@ -215,6 +194,9 @@ def main():
             name = module.params['name']
         )
 
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.rabbitmq import *
 
 if __name__ == '__main__':
     main()
