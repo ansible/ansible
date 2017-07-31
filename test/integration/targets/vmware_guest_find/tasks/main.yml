@@ -1,3 +1,7 @@
+# Test code for the vmware_guest_find module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 - name: make sure pyvmomi is installed
   pip:
     name: pyvmomi
