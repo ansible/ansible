@@ -1,7 +1,9 @@
 {% set name = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
-============
+{% set name_slug = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
+
+{{ '=' * name|length }}
 ``{{name}}``
-============
+{{ '=' * name|length }}
 
 Synopsis
 ========
@@ -14,21 +16,22 @@ Synopsis
 Description
 ===========
 
-*{{name}}* {{ long_desc|default('', True)|wordwrap }}
+*{{name}}* {{ long_desc|default('', True)  }}
 
 {% if options %}
 Common Options
 ==============
 
+.. program:: ansible
+
 {% for option in options|sort(attribute='options') %}
 
-.. option:: {% for switch in option['options'] %}{{switch}}{% if option['arg'] %}'{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+.. option:: {% for switch in option['options'] %}{{switch}}{% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
   {{ option['desc'] }}
 {% endfor %}
 {% endif %}
 
-.. program:: ansible
 
 
 {% if arguments %}
@@ -59,8 +62,10 @@ Actions
 
 {% if actions[action]['uncommon_options'] %}
 
+.. program:: ansible {{action}}
+
 {% for option in actions[action]['uncommon_options']|sort %}
-  .. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+.. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
     {{ option['desc'] }}
 {% endfor %}
@@ -68,8 +73,6 @@ Actions
 
 {% endfor %}
 {% endif %}
-
-
 
 
 See also
