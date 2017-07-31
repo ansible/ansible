@@ -103,6 +103,19 @@ function Parse-EdgeTraversalOptions
     }
 }
 
+function Parse-SecureFlags
+{
+    param($secureOptionsStr)
+
+    switch ($secureOptionsStr) {
+        "authnoencap" { return 1 }
+        "authenticate" { return 2 }
+        "authdynenc" { return 3 }
+        "authenc" { return 4 }
+        default { throw "Unknown secure flags '$secureOptionsStr'." }
+    }
+}
+
 function New-FWRule
 {
     param (
@@ -120,9 +133,11 @@ function New-FWRule
         [bool]$enabled,
         [string]$profiles,
         [string]$interfaceTypes,
-        [string]$edgeTraversalOptions
+        [string]$edgeTraversalOptions,
+        [string]$secureFlags
     )
 
+    # INetFwRule interface description: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365344(v=vs.85).aspx
     $rule = New-Object -ComObject HNetCfg.FWRule
     $rule.Name = $name
     $rule.Enabled = $enabled
@@ -139,9 +154,15 @@ function New-FWRule
     if ($profiles) { $rule.Profiles = Parse-Profiles -profilesStr $profiles }
     if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
     if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
-        # EdgeTraversalOptions property exists from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
+        # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
         if ($rule | Get-Member -Name 'EdgeTraversalOptions') {
             $rule.EdgeTraversalOptions = Parse-EdgeTraversalOptions -edgeTraversalOptionsStr $edgeTraversalOptions
+        }
+    }
+    if ($secureFlags -and $secureFlags -ne "notrequired") {
+        # SecureFlags property exists only from Windows 8/Windows Server 2012: https://msdn.microsoft.com/en-us/library/windows/desktop/hh447465(v=vs.85).aspx
+        if ($rule | Get-Member -Name 'SecureFlags') {
+            $rule.SecureFlags = Parse-SecureFlags -secureFlagsStr $secureFlags
         }
     }
 
@@ -173,9 +194,7 @@ $remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str"
 $protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
 $interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "str" -default "any"
 $edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
-
-# TODO: add to FWRule
-$security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired"
+$security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
@@ -208,9 +227,10 @@ try {
                        -remotePorts $remoteport `
                        -protocol $protocol `
                        -interfaceTypes $interfacetypes `
-                       -edgeTraversalOptions $edge
+                       -edgeTraversalOptions $edge `
+                       -secureFlags $security
 
-    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions')
+    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
 
     if ($state -eq "absent") {
         if ($existingRule -eq $null) {

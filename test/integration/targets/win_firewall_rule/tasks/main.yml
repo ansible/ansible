@@ -285,7 +285,7 @@
     that:
     - add_firewall_rule_with_interface_type_any.changed == true
 
-- name: Add firewall rule with edge traversal options 'deferapp'
+- name: Add firewall rule with edge traversal options 'deferapp' should not throw
   win_firewall_rule:
     name: http
     enabled: yes
@@ -295,9 +295,14 @@
     direction: in
     protocol: tcp
     edge: deferapp
-  register: add_firewall_rule_with_edge_traversal_options
 
-- name: Check that creating firewall rule with edge traversal options succeeds with a change
-  assert:
-    that:
-    - add_firewall_rule_with_edge_traversal_options.changed == true
+- name: Add firewall rule with 'authenticate' secure flags should not throw
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: '80,81-83'
+    action: allow
+    direction: in
+    protocol: tcp
+    security: authenticate
