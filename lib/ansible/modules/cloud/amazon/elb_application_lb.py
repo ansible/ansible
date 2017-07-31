@@ -62,10 +62,16 @@ options:
       - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric
         characters or hyphens, and must not begin or end with a hyphen.
     required: true
+  purge_listeners:
+    description:
+      - If yes, existing listeners will be purged from the ELB to match exactly what is defined by I(listeners) parameter. If the I(listeners) parameter is
+        not set then listeners will not be modified
+    default: yes
+    choices: [ 'yes', 'no' ]
   purge_tags:
     description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags
-        will not be modified.
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
+        tags will not be modified.
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
@@ -97,6 +103,9 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+notes:
+  - Listeners are matched based on port. If a listener's port is changed then a new listener will be created.
+  - Listener rules are matched based on priority. If a rule's priority is changed then a new rule will be created.
 '''
 
 EXAMPLES = '''
@@ -154,7 +163,7 @@ EXAMPLES = '''
       - subnet-12345678
       - subnet-87654321
     security_groups:
-     - sg-12345678
+      - sg-12345678
     scheme: internal
     listeners:
       - Protocol: HTTPS
@@ -167,9 +176,9 @@ EXAMPLES = '''
         SslPolicy: ELBSecurityPolicy-2015-05
         Rules:
           - Conditions:
-            - Field: path-pattern
-              Values:
-                - '/test'
+              - Field: path-pattern
+                Values:
+                  - '/test'
             Priority: '1'
             Actions:
               - TargetGroupName: test-target-group
@@ -332,13 +341,15 @@ vpc_id:
     type: string
     sample: vpc-0011223344
 '''
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, get_ec2_security_group_ids_from_names, \
-    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
+import time
 import collections
 from copy import deepcopy
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, get_ec2_security_group_ids_from_names, \
+    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
 
 try:
     import boto3
@@ -347,18 +358,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-def convert(data):
-    if isinstance(data, basestring):
-        return str(data)
-    elif isinstance(data, collections.Mapping):
-        return dict(map(convert, data.items()))
-    elif isinstance(data, collections.Iterable):
-        return type(data)(map(convert, data))
-    else:
-        return data
-
-
-def convert_tg_name_arn(connection, module, tg_name):
+def convert_tg_name_to_arn(connection, module, tg_name):
 
     try:
         response = connection.describe_target_groups(Names=[tg_name])
@@ -370,21 +370,9 @@ def convert_tg_name_arn(connection, module, tg_name):
     return tg_arn
 
 
-def convert_tg_arn_name(connection, module, tg_arn):
-
-    try:
-        response = connection.describe_target_groups(TargetGroupArns=[tg_arn])
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
-    tg_name = response['TargetGroups'][0]['TargetGroupName']
-
-    return tg_name
-
-
 def wait_for_status(connection, module, elb_arn, status):
     polling_increment_secs = 15
-    max_retries = (module.params.get('wait_timeout') / polling_increment_secs)
+    max_retries = module.params.get('wait_timeout') / polling_increment_secs
     status_achieved = False
 
     for x in range(0, max_retries):
@@ -414,7 +402,8 @@ def _get_subnet_ids_from_subnet_list(subnet_list):
 def get_elb_listeners(connection, module, elb_arn):
 
     try:
-        return connection.describe_listeners(LoadBalancerArn=elb_arn)['Listeners']
+        listener_paginator = connection.get_paginator('describe_listeners')
+        return (listener_paginator.paginate(LoadBalancerArn=elb_arn).build_full_result())['Listeners']
     except ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -427,16 +416,43 @@ def get_elb_attributes(connection, module, elb_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
-    for k, v in elb_attributes.items():
+    for k, v in dict(elb_attributes).items():
         elb_attributes[k.replace('.', '_')] = v
         del elb_attributes[k]
 
     return elb_attributes
 
 
+def get_listener(connection, module, elb_arn, listener_port):
+    """
+    Get a listener based on the port provided.
+
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
+    :param listener_port:
+    :return:
+    """
+
+    try:
+        listener_paginator = connection.get_paginator('describe_listeners')
+        listeners = (listener_paginator.paginate(LoadBalancerArn=elb_arn).build_full_result())['Listeners']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+    l = None
+
+    for listener in listeners:
+        if listener['Port'] == listener_port:
+            l = listener
+            break
+
+    return l
+
+
 def get_elb(connection, module):
     """
     Get an application load balancer based on name. If not found, return None
+
     :param connection: ELBv2 boto3 connection
     :param module: Ansible module object
     :return: Dict of load balancer attributes or None if not found
@@ -452,173 +468,314 @@ def get_elb(connection, module):
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
+def get_listener_rules(connection, module, listener_arn):
+
+    try:
+        return connection.describe_rules(ListenerArn=listener_arn)['Rules']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
+def ensure_listeners_default_action_has_arn(connection, module, listeners):
+    """
+    If a listener DefaultAction has been passed with a Target Group Name instead of ARN, lookup the ARN and
+    replace the name.
+
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
+    :param listeners: a list of listener dicts
+    :return: the same list of dicts ensuring that each listener DefaultActions dict has TargetGroupArn key. If a TargetGroupName key exists, it is removed.
+    """
+
+    if not listeners:
+        listeners = []
+
+    for listener in listeners:
+        if 'TargetGroupName' in listener['DefaultActions'][0]:
+            listener['DefaultActions'][0]['TargetGroupArn'] = convert_tg_name_to_arn(connection, module, listener['DefaultActions'][0]['TargetGroupName'])
+            del listener['DefaultActions'][0]['TargetGroupName']
+
+    return listeners
+
+
+def ensure_rules_action_has_arn(connection, module, rules):
+    """
+    If a rule Action has been passed with a Target Group Name instead of ARN, lookup the ARN and
+    replace the name.
+
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
+    :param rules: a list of rule dicts
+    :return: the same list of dicts ensuring that each rule Actions dict has TargetGroupArn key. If a TargetGroupName key exists, it is removed.
+    """
+
+    for rule in rules:
+        if 'TargetGroupName' in rule['Actions'][0]:
+            rule['Actions'][0]['TargetGroupArn'] = convert_tg_name_to_arn(connection, module, rule['Actions'][0]['TargetGroupName'])
+            del rule['Actions'][0]['TargetGroupName']
+
+    return rules
+
+
+def compare_listener(current_listener, new_listener):
+    """
+    Compare two listeners.
+
+    :param current_listener:
+    :param new_listener:
+    :return:
+    """
+
+    modified_listener = {}
+
+    # Port
+    if current_listener['Port'] != new_listener['Port']:
+        modified_listener['Port'] = new_listener['Port']
+
+    # Protocol
+    if current_listener['Protocol'] != new_listener['Protocol']:
+        modified_listener['Protocol'] = new_listener['Protocol']
+
+    # If Protocol is HTTPS, check additional attributes
+    if current_listener['Protocol'] == 'HTTPS' and new_listener['Protocol'] == 'HTTPS':
+        # Cert
+        if current_listener['SslPolicy'] != new_listener['SslPolicy']:
+            modified_listener['SslPolicy'] = new_listener['SslPolicy']
+        if current_listener['Certificates'][0]['CertificateArn'] != new_listener['Certificates'][0]['CertificateArn']:
+            modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
+    elif current_listener['Protocol'] != 'HTTPS' and new_listener['Protocol'] == 'HTTPS':
+        modified_listener['SslPolicy'] = new_listener['SslPolicy']
+        modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
+
+    # Default action
+    #   We wont worry about the Action Type because it is always 'forward'
+    if current_listener['DefaultActions'][0]['TargetGroupArn'] != new_listener['DefaultActions'][0]['TargetGroupArn']:
+        modified_listener['DefaultActions'] = []
+        modified_listener['DefaultActions'].append({})
+        modified_listener['DefaultActions'][0]['TargetGroupArn'] = new_listener['DefaultActions'][0]['TargetGroupArn']
+        modified_listener['DefaultActions'][0]['Type'] = 'forward'
+
+    if modified_listener:
+        return modified_listener
+    else:
+        return None
+
+
+def compare_condition(current_conditions, condition):
+    """
+
+    :param current_conditions:
+    :param condition:
+    :return:
+    """
+
+    condition_found = False
+
+    for current_condition in current_conditions:
+        if current_condition['Field'] == condition['Field'] and current_condition['Values'][0] == condition['Values'][0]:
+            condition_found = True
+            break
+
+    return condition_found
+
+
+def compare_rule(current_rule, new_rule):
+    """
+    Compare two rules.
+
+    :param current_rule:
+    :param new_rule:
+    :return:
+    """
+
+    modified_rule = {}
+
+    # Priority
+    if current_rule['Priority'] != new_rule['Priority']:
+        modified_rule['Priority'] = new_rule['Priority']
+
+    # Actions
+    #   We wont worry about the Action Type because it is always 'forward'
+    if current_rule['Actions'][0]['TargetGroupArn'] != new_rule['Actions'][0]['TargetGroupArn']:
+        modified_rule['Actions'] = []
+        modified_rule['Actions'].append({})
+        modified_rule['Actions'][0]['TargetGroupArn'] = new_rule['Actions'][0]['TargetGroupArn']
+        modified_rule['Actions'][0]['Type'] = 'forward'
+
+    # Conditions
+    modified_conditions = []
+    for condition in new_rule['Conditions']:
+        if not compare_condition(current_rule['Conditions'], condition):
+            modified_conditions.append(condition)
+
+    if modified_conditions:
+        modified_rule['Conditions'] = modified_conditions
+
+    return modified_rule
+
+
+def compare_listeners(connection, module, current_listeners, new_listeners, purge_listeners):
+    """
+    Compare listeners and return listeners to add, listeners to modify and listeners to remove
+    Listeners are compared based on port
+
+    :param current_listeners:
+    :param new_listeners:
+    :param purge_listeners:
+    :return:
+    """
+
+    listeners_to_modify = []
+    listeners_to_delete = []
+
+    # Check each current listener port to see if it's been passed to the module
+    for current_listener in current_listeners:
+        current_listener_passed_to_module = False
+        for new_listener in new_listeners[:]:
+            if current_listener['Port'] == new_listener['Port']:
+                current_listener_passed_to_module = True
+                # Remove what we match so that what is left can be marked as 'to be added'
+                new_listeners.remove(new_listener)
+                modified_listener = compare_listener(current_listener, new_listener)
+                if modified_listener:
+                    modified_listener['Port'] = current_listener['Port']
+                    modified_listener['ListenerArn'] = current_listener['ListenerArn']
+                    listeners_to_modify.append(modified_listener)
+                break
+
+        # If the current listener was not matched against passed listeners and purge is True, mark for removal
+        if not current_listener_passed_to_module and purge_listeners:
+            listeners_to_delete.append(current_listener['ListenerArn'])
+
+    listeners_to_add = new_listeners
+
+    return listeners_to_add, listeners_to_modify, listeners_to_delete
+
+
+def compare_rules(connection, module, current_listeners, listener):
+
+    """
+    Compare rules and return rules to add, rules to modify and rules to remove
+    Rules are compared based on priority
+
+    :param connection:
+    :param module:
+    :param current_listeners:
+    :param listener:
+    :return:
+    """
+
+    # Run through listeners looking for a match (by port) to get the ARN
+    for current_listener in current_listeners:
+        if current_listener['Port'] == listener['Port']:
+            listener['ListenerArn'] = current_listener['ListenerArn']
+            break
+
+    # Get rules for the listener
+    current_rules = get_listener_rules(connection, module, listener['ListenerArn'])
+
+    rules_to_modify = []
+    rules_to_delete = []
+
+    for current_rule in current_rules:
+        current_rule_passed_to_module = False
+        for new_rule in listener['Rules'][:]:
+            if current_rule['Priority'] == new_rule['Priority']:
+                current_rule_passed_to_module = True
+                # Remove what we match so that what is left can be marked as 'to be added'
+                listener['Rules'].remove(new_rule)
+                modified_rule = compare_rule(current_rule, new_rule)
+                if modified_rule:
+                    modified_rule['Priority'] = int(current_rule['Priority'])
+                    modified_rule['RuleArn'] = current_rule['RuleArn']
+                    modified_rule['Actions'] = current_rule['Actions']
+                    modified_rule['Conditions'] = current_rule['Conditions']
+                    rules_to_modify.append(modified_rule)
+                break
+
+        # If the current rule was not matched against passed rules, mark for removal
+        if not current_rule_passed_to_module and not current_rule['IsDefault']:
+            rules_to_delete.append(current_rule['RuleArn'])
+
+    rules_to_add = listener['Rules']
+
+    return rules_to_add, rules_to_modify, rules_to_delete
+
+
 def create_or_update_elb_listeners(connection, module, elb):
     """Create or update ELB listeners. Return true if changed, else false"""
 
     listener_changed = False
-    listeners = module.params.get("listeners")
+    # Ensure listeners are using Target Group ARN not name
+    listeners = ensure_listeners_default_action_has_arn(connection, module, module.params.get("listeners"))
+    purge_listeners = module.params.get("purge_listeners")
 
-    # create a copy of original list as we remove list elements for initial comparisons
-    listeners_rules = deepcopy(listeners)
-    listener_matches = False
+    # Does the ELB have any listeners exist?
+    current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
 
-    if listeners is not None:
-        current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
-        # If there are no current listeners we can just create the new ones
-        current_listeners_array = []
+    listeners_to_add, listeners_to_modify, listeners_to_delete = compare_listeners(connection, module, current_listeners, deepcopy(listeners), purge_listeners)
 
-        if current_listeners:
-            # the describe_listeners action returns keys as unicode so I've converted them to string for easier comparison
-            for current_listener in current_listeners:
-                del current_listener['ListenerArn']
-                del current_listener['LoadBalancerArn']
-                current_listeners_s = convert(current_listener)
-                current_listeners_array.append(current_listeners_s)
+    # Add listeners
+    for listener_to_add in listeners_to_add:
+        try:
+            listener_to_add['LoadBalancerArn'] = elb['LoadBalancerArn']
+            connection.create_listener(**listener_to_add)
+            listener_changed = True
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-            for curr_listener in current_listeners_array:
-                for default_action in curr_listener['DefaultActions']:
-                    default_action['TargetGroupName'] = convert_tg_arn_name(connection, module, default_action['TargetGroupArn'])
-                    del default_action['TargetGroupArn']
+    # Modify listeners
+    for listener_to_modify in listeners_to_modify:
+        try:
+            connection.modify_listener(**listener_to_modify)
+            listener_changed = True
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-            listeners_to_add = []
+    # Delete listeners
+    for listener_to_delete in listeners_to_delete:
+        try:
+            connection.delete_listener(ListenerArn=listener_to_delete)
+            listener_changed = True
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-            # remove rules from the comparison. We will handle them separately.
-            for listener in listeners:
-                if 'Rules' in listener.keys():
-                    del listener['Rules']
+    # For each listener, check rules
+    for listener in listeners:
+        if 'Rules' in listener:
+            # Ensure rules are using Target Group ARN not name
+            listener['Rules'] = ensure_rules_action_has_arn(connection, module, listener['Rules'])
+            rules_to_add, rules_to_modify, rules_to_delete = compare_rules(connection, module, current_listeners, listener)
 
-            for listener in listeners:
-                if listener not in current_listeners_array:
-                    listeners_to_add.append(listener)
+            # Get listener based on port so we can use ARN
+            looked_up_listener = get_listener(connection, module, elb['LoadBalancerArn'], listener['Port'])
 
-            listeners_to_remove = []
-            for current_listener in current_listeners_array:
-                if current_listener not in listeners:
-                    listeners_to_remove.append(current_listener)
+            # Add rules
+            for rule in rules_to_add:
+                try:
+                    rule['ListenerArn'] = looked_up_listener['ListenerArn']
+                    rule['Priority'] = int(rule['Priority'])
+                    connection.create_rule(**rule)
+                    listener_changed = True
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-            # for listeners to remove, we need to lookup the arns using unique listener attributes. Port must be unique for
-            # all listeners so I've retrieved the ARN based on Port.
-            if listeners_to_remove:
-                arns_to_remove = []
-                current_listeners = connection.describe_listeners(LoadBalancerArn=elb['LoadBalancerArn'])['Listeners']
-                listener_changed = True
-                for listener in listeners_to_remove:
-                    for current_listener in current_listeners:
-                        if current_listener['Port'] == listener['Port']:
-                            arns_to_remove.append(current_listener['ListenerArn'])
+            # Modify rules
+            for rule in rules_to_modify:
+                try:
+                    del rule['Priority']
+                    connection.modify_rule(**rule)
+                    listener_changed = True
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-                for arn in arns_to_remove:
-                    connection.delete_listener(ListenerArn=arn)
-
-            if listeners_to_add:
-                listener_changed = True
-                for listener in listeners_to_add:
-                    listener['LoadBalancerArn'] = elb['LoadBalancerArn']
-                    for default_action in listener['DefaultActions']:
-                        default_action['TargetGroupArn'] = convert_tg_name_arn(connection, module, default_action['TargetGroupName'])
-                        del default_action['TargetGroupName']
-                    connection.create_listener(**listener)
-
-            # Lookup the listeners again and this time we will retain the rules so we can comapre for changes:
-            current_listeners = connection.describe_listeners(LoadBalancerArn=elb['LoadBalancerArn'])['Listeners']
-
-            # lookup the arns of the current listeners
-            for listener in listeners_rules:
-                # we only want listeners which have rules defined
-                if 'Rules' in listener.keys():
-                    for current_listener in current_listeners:
-                        if current_listener['Port'] == listener['Port']:
-                            # look up current rules for the current listener
-                            current_rules = connection.describe_rules(ListenerArn=current_listener['ListenerArn'])['Rules']
-                            current_rules_array = []
-                            for rules in current_rules:
-                                del rules['RuleArn']
-                                del rules['IsDefault']
-                                if rules['Priority'] != 'default':
-                                    current_rules_s = convert(rules)
-                                    current_rules_array.append(current_rules_s)
-
-                            for curr_rule in current_rules_array:
-                                for action in curr_rule['Actions']:
-                                    action['TargetGroupName'] = convert_tg_arn_name(connection, module, action['TargetGroupArn'])
-                                    del action['TargetGroupArn']
-
-                            rules_to_remove = []
-                            for current_rule in current_rules_array:
-                                if listener['Rules']:
-                                    if current_rule not in listener['Rules']:
-                                        rules_to_remove.append(current_rule)
-                                else:
-                                    rules_to_remove.append(current_rule)
-
-                            # for rules to remove we need to lookup the rule arn using unique attributes.
-                            # I have used path and priority
-                            if rules_to_remove:
-                                rule_arns_to_remove = []
-                                current_rules = connection.describe_rules(ListenerArn=current_listener['ListenerArn'])['Rules']
-                                # listener_changed = True
-                                for rules in rules_to_remove:
-                                    for current_rule in current_rules:
-                                        # if current_rule['Priority'] != 'default':
-                                        if current_rule['Conditions'] == rules['Conditions'] and current_rule['Priority'] == rules['Priority']:
-                                            rule_arns_to_remove.append(current_rule['RuleArn'])
-
-                                listener_changed = True
-                                for arn in rule_arns_to_remove:
-                                    connection.delete_rule(RuleArn=arn)
-
-                            rules_to_add = []
-                            if listener['Rules']:
-                                for rules in listener['Rules']:
-                                    if rules not in current_rules_array:
-                                        rules_to_add.append(rules)
-
-                            if rules_to_add:
-                                listener_changed = True
-                                for rule in rules_to_add:
-                                    rule['ListenerArn'] = current_listener['ListenerArn']
-                                    rule['Priority'] = int(rule['Priority'])
-                                    for action in rule['Actions']:
-                                        action['TargetGroupArn'] = convert_tg_name_arn(connection, module, action['TargetGroupName'])
-                                        del action['TargetGroupName']
-                                    connection.create_rule(**rule)
-
-        else:
-            for listener in listeners:
-                listener['LoadBalancerArn'] = elb['LoadBalancerArn']
-                if 'Rules' in listener.keys():
-                    del listener['Rules']
-
-                # handle default
-                for default_action in listener['DefaultActions']:
-                    default_action['TargetGroupArn'] = convert_tg_name_arn(connection, module, default_action['TargetGroupName'])
-                    del default_action['TargetGroupName']
-
-                connection.create_listener(**listener)
-                listener_changed = True
-
-            # lookup the new listeners
-            current_listeners = connection.describe_listeners(LoadBalancerArn=elb['LoadBalancerArn'])['Listeners']
-
-            for current_listener in current_listeners:
-                for listener in listeners_rules:
-                    if current_listener['Port'] == listener['Port']:
-                        if 'Rules' in listener.keys():
-                            for rules in listener['Rules']:
-                                rules['ListenerArn'] = current_listener['ListenerArn']
-                                rules['Priority'] = int(rules['Priority'])
-                                for action in rules['Actions']:
-                                    action['TargetGroupArn'] = convert_tg_name_arn(connection, module, action['TargetGroupName'])
-                                    del action['TargetGroupName']
-                                connection.create_rule(**rules)
-
-    # listeners is none. If we have any current listeners we need to remove them
-    else:
-        current_listeners = connection.describe_listeners(LoadBalancerArn=elb['LoadBalancerArn'])['Listeners']
-        if current_listeners:
-            for listener in current_listeners:
-                listener_changed = True
-                connection.delete_listener(ListenerArn=listener['ListenerArn'])
+            # Delete rules
+            for rule in rules_to_delete:
+                try:
+                    connection.delete_rule(RuleArn=rule)
+                    listener_changed = True
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     return listener_changed
 
@@ -756,6 +913,10 @@ def create_or_update_elb(connection, connection_ec2, module):
     # Get the ELB listeners again
     elb['listeners'] = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
 
+    # For each listener, get listener rules
+    for listener in elb['listeners']:
+        listener['rules'] = get_listener_rules(connection, module, listener['ListenerArn'])
+
     # Get the ELB attributes again
     elb.update(get_elb_attributes(connection, module, elb['LoadBalancerArn']))
 
@@ -791,21 +952,22 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            access_logs_enabled=dict(required=False, type='bool'),
-            access_logs_s3_bucket=dict(required=False, type='str'),
-            access_logs_s3_prefix=dict(required=False, type='str'),
-            deletion_protection=dict(required=False, default=False, type='bool'),
-            idle_timeout=dict(required=False, type='int'),
-            listeners=dict(required=False, type='list'),
+            access_logs_enabled=dict(type='bool'),
+            access_logs_s3_bucket=dict(type='str'),
+            access_logs_s3_prefix=dict(type='str'),
+            deletion_protection=dict(default=False, type='bool'),
+            idle_timeout=dict(type='int'),
+            listeners=dict(type='list'),
             name=dict(required=True, type='str'),
-            purge_tags=dict(required=False, default=True, type='bool'),
-            subnets=dict(required=False, type='list'),
-            security_groups=dict(required=False, type='list'),
-            scheme=dict(required=False, default='internet-facing', choices=['internet-facing', 'internal']),
-            state=dict(required=True, choices=['present', 'absent'], type='str'),
-            tags=dict(required=False, default={}, type='dict'),
-            wait_timeout=dict(required=False, type='int'),
-            wait=dict(required=False, type='bool')
+            purge_listeners=dict(default=True, type='bool'),
+            purge_tags=dict(default=True, type='bool'),
+            subnets=dict(type='list'),
+            security_groups=dict(type='list'),
+            scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
+            state=dict(choices=['present', 'absent'], type='str'),
+            tags=dict(default={}, type='dict'),
+            wait_timeout=dict(type='int'),
+            wait=dict(type='bool')
         )
     )
 

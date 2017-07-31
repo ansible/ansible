@@ -38,6 +38,23 @@
     that:
     - instance|success
 
+- name: test instance facts in check mode
+  cs_instance_facts:
+    name: "{{ cs_resource_prefix }}-vm"
+  register: instance_facts
+  check_mode: true
+- name: verify test instance facts in check mode
+  assert:
+    that:
+    - instance_facts|success
+    - not instance_facts|changed
+    - cloudstack_instance.id == instance.id
+    - cloudstack_instance.domain == instance.domain
+    - cloudstack_instance.account == instance.account
+    - cloudstack_instance.zone == instance.zone
+    - cloudstack_instance.name == instance.name
+    - cloudstack_instance.service_offering == instance.service_offering
+
 - name: test instance facts
   cs_instance_facts:
     name: "{{ cs_resource_prefix }}-vm"

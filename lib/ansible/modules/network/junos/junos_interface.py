@@ -43,10 +43,7 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Configure operational status of the interface link.
-        If value is I(yes/true), interface is configured in up state.
-        For I(no/false) interface is configured in down state.
-    default: yes
+      - Interface link status.
   speed:
     description:
       - Interface link speed.
@@ -64,18 +61,24 @@ options:
   rx_rate:
     description:
       - Receiver rate.
-  collection:
+  aggregate:
     description: List of Interfaces definitions.
   purge:
     description:
-      - Purge Interfaces not defined in the collections parameter.
+      - Purge Interfaces not defined in the aggregates parameter.
         This applies only for logical interface.
     default: no
   state:
     description:
-      - State of the Interface configuration.
+      - State of the Interface configuration, C(up) means present and
+        operationally up and C(down) means present and operationally C(down)
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
+    choices: ['present', 'absent', 'up', 'down']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -97,24 +100,24 @@ EXAMPLES = """
 - name: make interface down
   junos_interface:
     name: ge-0/0/1
-    state: present
-    enabled: False
+    state: down
 
 - name: make interface up
   junos_interface:
     name: ge-0/0/1
-    state: present
-    enabled: True
+    state: up
 
 - name: Deactivate interface config
   junos_interface:
     name: ge-0/0/1
-    state: suspend
+    state: present
+    active: False
 
 - name: Activate interface config
   net_interface:
     name: ge-0/0/1
-    state: active
+    state: present
+    active: True
 
 - name: Configure interface speed, mtu, duplex
   junos_interface:
@@ -123,27 +126,25 @@ EXAMPLES = """
     speed: 1g
     mtu: 256
     duplex: full
-    enabled: True
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
   type: string
   sample: >
-            <interfaces>
-                <interface>
-                    <name>ge-0/0/0</name>
-                    <description>test interface</description>
-                </interface>
-            </interfaces>
+        [edit interfaces]
+        +   ge-0/0/1 {
+        +       description test-interface;
+        +   }
 """
 import collections
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -172,16 +173,17 @@ def main():
     argument_spec = dict(
         name=dict(required=True),
         description=dict(),
-        enabled=dict(default=True, type='bool'),
+        enabled=dict(),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
         tx_rate=dict(),
         rx_rate=dict(),
-        collection=dict(),
+        aggregate=dict(),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
-                   choices=['present', 'absent', 'active', 'suspend'])
+                   choices=['present', 'absent', 'up', 'down']),
+        active=dict(default=True, type='bool')
     )
 
     argument_spec.update(junos_argument_spec)
@@ -200,38 +202,45 @@ def main():
     top = 'interfaces/interface'
 
     param_to_xpath_map = collections.OrderedDict()
-    param_to_xpath_map.update({
-        'name': {'xpath': 'name', 'is_key': True},
-        'description': 'description',
-        'speed': 'speed',
-        'mtu': 'mtu',
-        'enabled': {'xpath': 'disable', 'tag_only': True},
-        'duplex': 'link-mode'
-    })
+    param_to_xpath_map.update([
+        ('name', {'xpath': 'name', 'is_key': True}),
+        ('description', 'description'),
+        ('speed', 'speed'),
+        ('mtu', 'mtu'),
+        ('duplex', 'link-mode'),
+        ('disable', {'xpath': 'disable', 'tag_only': True})
+    ])
+
+    state = module.params.get('state')
+    module.params['disable'] = True if state == 'down' else False
+
+    if state in ('present', 'up', 'down'):
+        module.params['state'] = 'present'
+    else:
+        module.params['disable'] = True
 
     choice_to_value_map = {
-        'link-mode': {'full': 'full-duplex', 'half': 'half-duplex', 'auto': 'automatic'},
-        'disable': {True: False, False: True}
+        'link-mode': {'full': 'full-duplex', 'half': 'half-duplex', 'auto': 'automatic'}
     }
 
     validate_param_values(module, param_to_xpath_map)
 
-    want = list()
-    want.append(map_params_to_obj(module, param_to_xpath_map))
-
+    want = map_params_to_obj(module, param_to_xpath_map)
     ele = map_obj_to_ele(module, want, top, choice_to_value_map)
 
-    kwargs = {'commit': not module.check_mode}
-    kwargs['action'] = 'replace'
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, action='replace')
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
-        })
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

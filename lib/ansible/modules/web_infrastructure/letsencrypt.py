@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -164,11 +154,24 @@ authorizations:
         type: dict
 '''
 
+import base64
 import binascii
 import copy
+import hashlib
+import json
 import locale
+import os
+import re
+import shutil
+import tempfile
 import textwrap
+import time
+import traceback
 from datetime import datetime
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
 
 
 def nopad_b64(data):
@@ -235,7 +238,7 @@ def write_file(module, dest, content):
         f.write(content)
     except Exception as err:
         os.remove(tmpsrc)
-        module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
     f.close()
     checksum_src = None
     checksum_dest = None
@@ -267,7 +270,7 @@ def write_file(module, dest, content):
             changed = True
         except Exception as err:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(err)), exception=traceback.format_exc())
     os.remove(tmpsrc)
     return changed
 
@@ -536,7 +539,7 @@ class ACMEClient(object):
         _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         domains = set([])
-        common_name = re.search(r"Subject:.*? CN=([^\s,;/]+)", out.decode('utf8'))
+        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", out.decode('utf8'))
         if common_name is not None:
             domains.add(common_name.group(1))
         subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", out.decode('utf8'), re.MULTILINE | re.DOTALL)
@@ -630,8 +633,8 @@ class ACMEClient(object):
                 len_ka_digest = len(ka_digest)
                 resource = 'subjectAlternativeNames'
                 value = [
-                    "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest / 2], token_digest[len_token_digest / 2:]),
-                    "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest / 2], ka_digest[len_ka_digest / 2:]),
+                    "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest // 2], token_digest[len_token_digest // 2:]),
+                    "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest // 2], ka_digest[len_ka_digest // 2:]),
                 ]
             elif type == 'dns-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.4
@@ -805,9 +808,6 @@ def main():
     else:
         module.exit_json(changed=False, cert_days=cert_days)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

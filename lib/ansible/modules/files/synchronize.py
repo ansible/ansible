@@ -483,7 +483,7 @@ def main():
         if dest_port is not None:
             ssh_cmd.extend(['-o', 'Port=%s' % dest_port])
         if not verify_host:
-            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no'])
+            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null'])
         ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
         if ssh_args:
             ssh_cmd_str += ' %s' % ssh_args

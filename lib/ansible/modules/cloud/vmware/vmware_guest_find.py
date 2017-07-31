@@ -1,20 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -39,40 +30,43 @@ requirements:
 options:
    name:
         description:
-            - Name of the VM to work with
-        required: True
+            - Name of the VM to work with.
+            - This is required if uuid is not supplied.
    uuid:
         description:
-            - UUID of the instance to manage if known, this is VMware's uid.
+            - UUID of the instance to manage if known, this is VMware's BIOS UUID.
             - This is required if name is not supplied.
    datacenter:
         description:
-            - Destination datacenter for the deploy operation
+            - Destination datacenter for the deploy operation.
         required: True
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: Gather VM facts
+- name: Find Guest's Folder using name
   vmware_guest_find:
     hostname: 192.168.1.209
     username: administrator@vsphere.local
     password: vmware
     validate_certs: no
     name: testvm
+  register: vm_folder
+
+- name: Find Guest's Folder using UUID
+  vmware_guest_find:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    uuid: 38c4c89c-b3d7-4ae6-ae4e-43c5118eae49
+  register: vm_folder
 '''
 
 RETURN = """
 """
 
 import os
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.vmware import connect_to_api, gather_vm_facts
-from ansible.module_utils.vmware import get_all_objs
-
 
 HAS_PYVMOMI = False
 try:
@@ -82,6 +76,11 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.vmware import (connect_to_api, gather_vm_facts, get_all_objs,
+                                         compile_folder_path_for_object, vmware_argument_spec)
 
 
 class PyVmomiHelper(object):
@@ -102,7 +101,7 @@ class PyVmomiHelper(object):
         self.params = module.params
         self.content = connect_to_api(self.module)
 
-    def getvm_folder_paths(self, name=None, uuid=None, folder=None):
+    def getvm_folder_paths(self, name=None, uuid=None):
 
         results = []
 
@@ -115,9 +114,9 @@ class PyVmomiHelper(object):
             vobj = item[0]
             if not isinstance(vobj.parent, vim.Folder):
                 continue
-            # Match by name
-            if vobj.config.name == name:
-                folderpath = self.compile_folder_path_for_object(vobj)
+            # Match by name or uuid
+            if vobj.config.name == name or vobj.config.uuid == uuid:
+                folderpath = compile_folder_path_for_object(vobj)
                 results.append(folderpath)
 
         return results
@@ -191,24 +190,6 @@ class PyVmomiHelper(object):
         self.folders = self._build_folder_tree(self.datacenter.vmFolder)
         self._build_folder_map(self.folders)
 
-    @staticmethod
-    def compile_folder_path_for_object(vobj):
-        """ make a /vm/foo/bar/baz like folder path for an object """
-
-        paths = []
-        if isinstance(vobj, vim.Folder):
-            paths.append(vobj.name)
-
-        thisobj = vobj
-        while hasattr(thisobj, 'parent'):
-            thisobj = thisobj.parent
-            if isinstance(thisobj, vim.Folder):
-                paths.append(thisobj.name)
-        paths.reverse()
-        if paths[0] == 'Datacenters':
-            paths.remove('Datacenters')
-        return '/' + '/'.join(paths)
-
     def get_datacenter(self):
         self.datacenter = get_obj(
             self.content,
@@ -239,27 +220,15 @@ def get_obj(content, vimtype, name):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=True, type='str'),
-            uuid=dict(required=False, type='str'),
-            datacenter=dict(required=True, type='str'),
-        ),
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        name=dict(type='str'),
+        uuid=dict(type='str'),
+        datacenter=dict(type='str', required=True)
     )
 
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=[['name', 'uuid']])
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
     folders = pyv.getvm_folder_paths(
@@ -271,11 +240,16 @@ def main():
     if folders:
         try:
             module.exit_json(folders=folders)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Folder enumeration failed with exception %s" % e)
+        except Exception as exc:
+            module.fail_json(msg="Folder enumeration failed with exception %s" % to_native(exc))
     else:
-        module.fail_json(msg="Unable to find folders for VM %(name)s" % module.params)
+        msg = "Unable to find folders for VM "
+        if module.params['name']:
+            msg += "%(name)s" % module.params
+        elif module.params['uuid']:
+            msg += "%(uuid)s" % module.params
+        module.fail_json(msg=msg)
+
 
 if __name__ == '__main__':
     main()

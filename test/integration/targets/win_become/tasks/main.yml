@@ -1,0 +1,87 @@
+- set_fact:
+    become_test_username: ansible_become_test
+    gen_pw: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+
+- name: create unprivileged user
+  win_user:
+    name: "{{ become_test_username }}"
+    password: "{{ gen_pw }}"
+    update_password: always
+    groups: Users
+
+- name: execute tests and ensure that test user is deleted regardless of success/failure
+  block:
+  - name: ensure current user is not the become user
+    win_shell: whoami
+    register: whoami_out
+
+  - name: verify output
+    assert:
+      that:
+      - not whoami_out.stdout_lines[0].endswith(become_test_username)
+
+  - name: get become user profile dir so we can clean it up later
+    vars: &become_vars
+      ansible_become_user: "{{ become_test_username }}"
+      ansible_become_password: "{{ gen_pw }}"
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: profile_dir_out
+
+  - name: ensure profile dir contains test username (eg, if become fails silently, prevent deletion of real user profile)
+    assert:
+      that:
+      - become_test_username in profile_dir_out.stdout_lines[0]
+
+  - name: test become runas via task vars
+    vars: *become_vars
+    win_shell: whoami
+    register: whoami_out
+
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0].endswith(become_test_username)
+
+  - name: test become runas via task keywords
+    vars:
+      ansible_become_password: "{{ gen_pw }}"
+    become: yes
+    become_method: runas
+    become_user: "{{ become_test_username }}"
+    win_shell: whoami
+
+    register: whoami_out
+
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0].endswith(become_test_username)
+
+  - name: test become via block vars
+    vars: *become_vars
+    block:
+    - name: ask who the current user is
+      win_shell: whoami
+      register: whoami_out
+
+    - name: verify output
+      assert:
+        that:
+        - whoami_out.stdout_lines[0].endswith(become_test_username)
+
+# FUTURE: test raw + script become behavior once they're running under the exec wrapper again
+# FUTURE: add standalone playbook tests to include password prompting and play become keywords
+
+  always:
+  - name: ensure test user is deleted
+    win_user:
+      name: "{{ become_test_username }}"
+      state: absent
+  - name: ensure test user profile is deleted
+    # NB: have to work around powershell limitation of long filenames until win_file fixes it
+    win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
+    args:
+      executable: cmd.exe
+    when: become_test_username in profile_dir_out.stdout_lines[0]

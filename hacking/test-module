@@ -42,6 +42,7 @@ from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
 import ansible.executor.module_common as module_common
 import ansible.constants as C
+from ansible.module_utils._text import to_text
 
 try:
     import json
@@ -159,7 +160,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     print("* including generated source, if any, saving to: %s" % modfile2_path)
     if module_style not in ('ansiballz', 'old'):
         print("* this may offset any line numbers in tracebacks/debuggers!")
-    modfile2 = open(modfile2_path, 'w')
+    modfile2 = open(modfile2_path, 'wb')
     modfile2.write(module_data)
     modfile2.close()
     modfile = modfile2_path
@@ -178,12 +179,13 @@ def ansiballz_setup(modfile, modname, interpreters):
 
     cmd = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = cmd.communicate()
+    out, err = to_text(out, errors='surrogate_or_strict'), to_text(err)
     lines = out.splitlines()
     if len(lines) != 2 or 'Module expanded into' not in lines[0]:
         print("*" * 35)
         print("INVALID OUTPUT FROM ANSIBALLZ MODULE WRAPPER")
         print(out)
-        sys.exit(1)
+        sys.exit(err)
     debug_dir = lines[1].strip()
 
     argsfile = os.path.join(debug_dir, 'args')
@@ -209,6 +211,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
 
     cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
+    out, err = to_text(out), to_text(err)
 
     try:
         print("*" * 35)
@@ -228,11 +231,11 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
     print(jsonify(results,format=True))
 
 
-def rundebug(debugger, modfile, argspath, modname, module_style):
+def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
     """Run interactively with console debugger."""
 
     if module_style == 'ansiballz':
-        modfile, argspath = ansiballz_setup(modfile, modname)
+        modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
 
     if argspath is not None:
         subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
@@ -257,7 +260,7 @@ def main():
 
     if options.execute:
         if options.debugger:
-            rundebug(options.debugger, modfile, argspath, modname, module_style)
+            rundebug(options.debugger, modfile, argspath, modname, module_style, interpreters)
         else:
             runtest(modfile, argspath, modname, module_style, interpreters)
 

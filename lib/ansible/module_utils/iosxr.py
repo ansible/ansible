@@ -51,8 +51,12 @@ def get_argspec():
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in iosxr_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+        if module._name == 'iosxr_user':
+            if key not in ['password', 'provider'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key != 'provider' and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
     if provider:
         for param in ('password',):
@@ -98,9 +102,12 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def load_config(module, commands, warnings, commit=False, replace=False, comment=None):
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None, admin=False):
+    cmd = 'configure terminal'
+    if admin:
+        cmd = 'admin ' + cmd
 
-    rc, out, err = exec_command(module, 'configure terminal')
+    rc, out, err = exec_command(module, cmd)
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
 
@@ -133,6 +140,10 @@ def load_config(module, commands, warnings, commit=False, replace=False, comment
     else:
         cmd = 'abort'
         diff = None
-    exec_command(module, cmd)
+
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        exec_command(module, 'abort')
+        module.fail_json(msg=err, commands=commands, rc=rc)
 
     return to_text(diff, errors='surrogate_or_strict')

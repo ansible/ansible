@@ -2,21 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Kevin Carter <kevin.carter@rackspace.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -431,7 +420,13 @@ lxc_container:
             sample: True
 """
 
+import os
+import os.path
 import re
+import shutil
+import subprocess
+import tempfile
+import time
 
 try:
     import lxc
@@ -439,6 +434,10 @@ except ImportError:
     HAS_LXC = False
 else:
     HAS_LXC = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.six.moves import xrange
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
@@ -562,11 +561,6 @@ def create_script(command):
     :type command: ``str``
     """
 
-    import os
-    import os.path as path
-    import subprocess
-    import tempfile
-
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
     try:
@@ -682,7 +676,7 @@ class LxcContainerManagement(object):
             variables.pop(v, None)
 
         return_dict = dict()
-        false_values = [None, ''] + BOOLEANS_FALSE
+        false_values = BOOLEANS_FALSE.union([None, ''])
         for k, v in variables.items():
             _var = self.module.params.get(k)
             if _var not in false_values:
@@ -1761,7 +1755,5 @@ def main():
     lxc_manage.run()
 
 
-# import module bits
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -32,6 +22,7 @@ description:
 - Retries the transport connection after a timeout of C(connect_timeout).
 - Tests the transport connection every C(sleep) seconds.
 - This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+- This module is also supported for Windows targets.
 version_added: "2.3"
 options:
   connect_timeout:
@@ -50,6 +41,8 @@ options:
     description:
       - Maximum number of seconds to wait for.
     default: 600
+notes:
+- This module is also supported for Windows targets.
 author: "Dag Wieers (@dagwieers)"
 '''
 

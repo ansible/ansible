@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 # see examples/playbooks/get_url.yml
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -41,6 +30,7 @@ description:
        your proxy environment for both protocols is correct.
      - From Ansible 2.4 when run with C(--check), it will do a HEAD request to validate the URL but
        will not download the entire file or verify it against hashes.
+     - For Windows targets, use the M(win_get_url) module instead.
 version_added: '0.6'
 options:
   url:
@@ -162,7 +152,10 @@ options:
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
-author: Jan-Piet Mens (@jpmens)
+notes:
+     - For Windows targets, use the M(win_get_url) module instead.
+author:
+- Jan-Piet Mens (@jpmens)
 '''
 
 EXAMPLES = r'''
@@ -202,14 +195,104 @@ EXAMPLES = r'''
     dest: /tmp/afilecopy.txt
 '''
 
+RETURN = r'''
+backup_file:
+    description: name of backup file created after download
+    returned: changed and if backup=yes
+    type: string
+    sample: /path/to/file.txt.2015-02-12@22:09~
+checksum_dest:
+    description: sha1 checksum of the file after copy
+    returned: success
+    type: string
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+checksum_src:
+    description: sha1 checksum of the file
+    returned: success
+    type: string
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+dest:
+    description: destination file/path
+    returned: success
+    type: string
+    sample: /path/to/file.txt
+gid:
+    description: group id of the file
+    returned: success
+    type: int
+    sample: 100
+group:
+    description: group of the file
+    returned: success
+    type: string
+    sample: "httpd"
+md5sum:
+    description: md5 checksum of the file after download
+    returned: when supported
+    type: string
+    sample: "2a5aeecc61dc98c4d780b14b330e3282"
+mode:
+    description: permissions of the target
+    returned: success
+    type: string
+    sample: "0644"
+msg:
+    description: the HTTP message from the request
+    returned: always
+    type: string
+    sample: OK (unknown bytes)
+owner:
+    description: owner of the file
+    returned: success
+    type: string
+    sample: httpd
+secontext:
+    description: the SELinux security context of the file
+    returned: success
+    type: string
+    sample: unconfined_u:object_r:user_tmp_t:s0
+size:
+    description: size of the target
+    returned: success
+    type: int
+    sample: 1220
+src:
+    description: source file used after download
+    returned: changed
+    type: string
+    sample: /tmp/tmpAdFLdV
+state:
+    description: state of the target
+    returned: success
+    type: string
+    sample: file
+status:
+    description: the HTTP status code from the request
+    returned: always
+    type: int
+    sample: 200
+uid:
+    description: owner id of the file, after execution
+    returned: success
+    type: int
+    sample: 100
+url:
+    description: the actual URL used for the request
+    returned: always
+    type: string
+    sample: https://www.ansible.com/
+'''
+
 import datetime
 import os
 import re
 import shutil
 import tempfile
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 # ==============================================================
@@ -263,10 +346,10 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     f = os.fdopen(fd, 'wb')
     try:
         shutil.copyfileobj(rsp, f)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % e)
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
+                         exception=traceback.format_exc())
     f.close()
     rsp.close()
     return tempname, info
@@ -444,10 +527,10 @@ def main():
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
             shutil.copyfile(tmpsrc, dest)
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, e))
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
+                             exception=traceback.format_exc())
         changed = True
     else:
         changed = False

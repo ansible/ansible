@@ -231,6 +231,7 @@ Just `Control-C` to kill it and run it again adding the appropriate password.
 
 
 .. _order:
+
 .. versionadded:: 2.4
 
 You can also control the order in which hosts are run. The default is to follow the order supplied by the inventory::

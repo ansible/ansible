@@ -72,6 +72,7 @@ class TestNetconfConnectionClass(unittest.TestCase):
         mock_manager = MagicMock(name='self._manager.connect')
         type(mock_manager).session_id = PropertyMock(return_value='123456789')
         netconf.manager.connect.return_value = mock_manager
+        conn._play_context.network_os = 'default'
 
         rc, out, err = conn._connect()
 

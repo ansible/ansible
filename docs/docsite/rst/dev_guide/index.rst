@@ -18,6 +18,7 @@ To get started, select one of the following topics.
    overview_architecture
    developing_modules
    developing_modules_general
+   developing_modules_general_windows
    developing_modules_documenting
    developing_modules_best_practices
    developing_modules_checklist
@@ -33,6 +34,6 @@ To get started, select one of the following topics.
    developing_rebasing
    testing
    repomerge
-   developing_releases
+   ../release_and_maintenance
    ../committer_guidelines
    ./style_guide/index

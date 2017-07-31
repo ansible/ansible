@@ -152,6 +152,9 @@ class AdHocCLI(CLI):
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'
+        # Respect custom 'stdout_callback' only with enabled 'bin_ansible_callbacks'
+        elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
+            cb = C.DEFAULT_STDOUT_CALLBACK
         else:
             cb = 'minimal'
 

@@ -37,7 +37,7 @@ class TestNxosCommandModule(TestNxosModule):
     def tearDown(self):
         self.mock_run_commands.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
@@ -48,9 +48,8 @@ class TestNxosCommandModule(TestNxosModule):
                     command = obj['command']
                 except ValueError:
                     command = item['command']
-                filename = str(command).replace(' ', '_')
-                filename = 'nxos_command/%s.txt' % filename
-                output.append(load_fixture(filename))
+                filename = '%s.txt' % str(command).replace(' ', '_')
+                output.append(load_fixture('nxos_command', filename))
             return output
 
         self.run_commands.side_effect = load_from_file
@@ -68,7 +67,7 @@ class TestNxosCommandModule(TestNxosModule):
         self.assertTrue(result['stdout'][0].startswith('Cisco'))
 
     def test_nxos_command_wait_for(self):
-        wait_for = 'result[0] contains "Cisco NX-OS"'
+        wait_for = 'result[0] contains "NX-OS"'
         set_module_args(dict(commands=['show version'], wait_for=wait_for))
         self.execute_module()
 
@@ -92,7 +91,7 @@ class TestNxosCommandModule(TestNxosModule):
 
     def test_nxos_command_match_all(self):
         wait_for = ['result[0] contains "Cisco"',
-                    'result[0] contains "system image file"']
+                    'result[0] contains "image file"']
         set_module_args(dict(commands=['show version'], wait_for=wait_for, match='all'))
         self.execute_module()
 

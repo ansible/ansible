@@ -1,11 +1,12 @@
 boto
 boto3
 placebo
+cryptography
+pycrypto
 jinja2
 mock
 nose
 passlib
-pycrypto
 pytest
 pytest-mock
 pytest-xdist
@@ -21,3 +22,9 @@ ipaddress
 f5-sdk ; python_version >= '2.7'
 f5-icontrol-rest ; python_version >= '2.7'
 deepdiff
+
+# requirement for modules using Netconf protocol
+ncclient
+
+# requirement for aci_rest module
+xmljson

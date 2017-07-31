@@ -45,7 +45,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
    To protect your system from any potential changes caused by integration tests, and to ensure the a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/runner/completion/docker.txt>`_ for options.
 
-.. note:: Avoiding pulling new Docker images:
+.. note:: Avoiding pulling new Docker images
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
 
@@ -98,9 +98,9 @@ Tests in Docker containers
 If you have a Linux system with Docker installed, running integration tests using the same Docker containers used by
 the Ansible continuous integration (CI) system is recommended.
 
-.. note: Docker on non-Linux::
+.. note:: Docker on non-Linux
 
-   Using Docker Engine to run Docker on a non-Linux host is not recommended.
+   Using Docker Engine to run Docker on a non-Linux host (such as macOS) is not recommended.
    Some tests may fail, depending on the image used for testing.
    Using the ``--docker-privileged`` option may resolve the issue.
 
@@ -267,4 +267,4 @@ A top level playbook is required such as ``ansible/test/integration/eos.yaml`` w
 Where to find out more
 ======================
 
-If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.

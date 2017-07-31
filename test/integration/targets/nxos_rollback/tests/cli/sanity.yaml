@@ -1,0 +1,29 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_rollback sanity test"
+
+- name: delete existing checkpoint file
+  nxos_config: &delete
+    commands:
+      - terminal dont-ask
+      - delete backup.cfg
+    match: none
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: Create checkpoint file
+  nxos_rollback:
+    checkpoint_file: backup.cfg
+    timeout: 300
+    provider: "{{ cli }}"
+
+- name: rollback to the previously created checkpoint file
+  nxos_rollback:
+    rollback_to: backup.cfg
+    timeout: 300
+    provider: "{{ cli }}"
+
+- name: cleanup checkpoint file
+  nxos_config: *delete
+  ignore_errors: yes
+
+- debug: msg="END TRANSPORT:CLI nxos_rollback sanity test"

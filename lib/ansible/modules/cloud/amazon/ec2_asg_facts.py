@@ -375,10 +375,13 @@ def find_asgs(conn, module, name=None, tags=None):
             if 'target_group_ar_ns' in asg:
                 asg['target_group_arns'] = asg['target_group_ar_ns']
                 del(asg['target_group_ar_ns'])
-            if elbv2 and asg.get('target_group_arns'):
-                tg_paginator = elbv2.get_paginator('describe_target_groups')
-                tg_result = tg_paginator.paginate(TargetGroupArns=asg['target_group_arns']).build_full_result()
-                asg['target_group_names'] = [tg['TargetGroupName'] for tg in tg_result['TargetGroups']]
+            if asg.get('target_group_arns'):
+                if elbv2:
+                    tg_paginator = elbv2.get_paginator('describe_target_groups')
+                    tg_result = tg_paginator.paginate(TargetGroupArns=asg['target_group_arns']).build_full_result()
+                    asg['target_group_names'] = [tg['TargetGroupName'] for tg in tg_result['TargetGroups']]
+            else:
+                asg['target_group_names'] = []
             matched_asgs.append(asg)
 
     return matched_asgs

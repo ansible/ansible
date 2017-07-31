@@ -31,7 +31,7 @@ from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
-from ansible.executor.module_common import modify_module, build_windows_module_payload
+from ansible.executor.module_common import modify_module
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
@@ -153,18 +153,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                    "run 'git pull --rebase' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
-                                                                    task_vars=task_vars, module_compression=self._play_context.module_compression)
+        final_environment = dict()
+        self._compute_environment_string(final_environment)
 
-        # FUTURE: we'll have to get fancier about this to support powershell over SSH on Windows...
-        if self._connection.transport == "winrm":
-            # WinRM always pipelines, so we need to build up a fancier module payload...
-            final_environment = dict()
-            self._compute_environment_string(final_environment)
-            module_data = build_windows_module_payload(module_name=module_name, module_path=module_path,
-                                                       b_module_data=module_data, module_args=module_args,
-                                                       task_vars=task_vars, task=self._task,
-                                                       play_context=self._play_context, environment=final_environment)
+        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
+                                                                    task_vars=task_vars, module_compression=self._play_context.module_compression,
+                                                                    async_timeout=self._task.async, become=self._play_context.become,
+                                                                    become_method=self._play_context.become_method, become_user=self._play_context.become_user,
+                                                                    become_password=self._play_context.become_pass,
+                                                                    environment=final_environment)
 
         return (module_style, module_shebang, module_data, module_path)
 
@@ -184,7 +181,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # block then task 'win' in precedence
             environments.reverse()
             for environment in environments:
-                if environment is None:
+                if environment is None or len(environment) == 0:
                     continue
                 temp_environment = self._templar.template(environment)
                 if not isinstance(temp_environment, dict):
@@ -193,7 +190,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # these environment settings should not need to merge sub-dicts
                 final_environment.update(temp_environment)
 
-        final_environment = self._templar.template(final_environment)
+        if len(final_environment) > 0:
+            final_environment = self._templar.template(final_environment)
 
         if isinstance(raw_environment_out, dict):
             raw_environment_out.clear()
@@ -212,13 +210,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Determines if we are required and can do pipelining
         '''
-        if self._connection.always_pipeline_modules:
-            return True  # eg, winrm
 
         # any of these require a true
         for condition in [
             self._connection.has_pipelining,
-            self._play_context.pipelining,
+            self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
             not wrap_async,                            # async does not support pipelining
@@ -245,11 +241,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             use_system_tmp = True
 
         tmp_mode = 0o700
-
-        if use_system_tmp:
-            tmpdir = None
-        else:
-            tmpdir = self._remote_expand_user(C.DEFAULT_REMOTE_TMP, sudoable=False)
+        tmpdir = self._remote_expand_user(self._play_context.remote_tmp_dir, sudoable=False)
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
@@ -274,7 +266,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                           'Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". '
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
-                output = output + u": %s" % result['stdout']
+                output = output + u", stdout output: %s" % result['stdout']
+            if self._play_context.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+                output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
             self._cleanup_remote_tmp = True
@@ -814,7 +808,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # then we remove them (except for ssh host keys)
         for r_key in remove_keys:
             if not r_key.startswith('ansible_ssh_host_key_'):
-                display.warning("Removed restricted key from module data: %s = %s" % (r_key, data[r_key]))
+                try:
+                    r_val = to_text(data[r_key])
+                    if len(r_val) > 24:
+                        r_val = '%s ... %s' % (r_val[:13], r_val[-6:])
+                except:
+                    r_val = ' <failed to convert value to a string> '
+                display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
                 del data[r_key]
 
         self._remove_internal_keys(data)
@@ -844,7 +844,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -857,6 +857,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             used as a key or is going to be written back out to a file
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
+        :kwarg chdir: cd into this directory before executing the command.
         '''
 
         display.debug("_low_level_execute_command(): starting")
@@ -864,6 +865,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 #            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
 #            display.debug("_low_level_execute_command(): no command, exiting")
 #           return dict(stdout='', stderr='', rc=254)
+
+        if chdir:
+            display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
+            cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user
@@ -983,9 +988,5 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # dwim already deals with playbook basedirs
         path_stack = self._task.get_search_path()
 
-        result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
-
-        if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % to_native(needle))
-
-        return result
+        # if missing it will return a file not found exception
+        return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)

@@ -20,9 +20,9 @@ matrix:
     - env: TEST=freebsd/10.3-STABLE
     - env: TEST=freebsd/11.0-STABLE
 
-    - env: TEST=windows/1
-    - env: TEST=windows/2
-    - env: TEST=windows/3
+    - env: TEST=rhel/7.3
+
+    - env: TEST=windows
 
     - env: TEST=network
 

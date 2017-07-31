@@ -656,7 +656,11 @@ class Ec2Inventory(object):
 
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
-            if not e.reason == "Forbidden":
+            elif e.error_code == "OptInRequired":
+                error = "RDS hasn't been enabled for this account yet. " \
+                    "You must either log in to the RDS service through the AWS console to enable it, " \
+                    "or set 'rds = False' in ec2.ini"
+            elif not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
             self.fail_with_error(error, 'getting RDS instances')
 
@@ -738,7 +742,11 @@ class Ec2Inventory(object):
 
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
-            if not e.reason == "Forbidden":
+            elif e.error_code == "OptInRequired":
+                error = "ElastiCache hasn't been enabled for this account yet. " \
+                    "You must either log in to the ElastiCache service through the AWS console to enable it, " \
+                    "or set 'elasticache = False' in ec2.ini"
+            elif not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
             self.fail_with_error(error, 'getting ElastiCache clusters')
 
@@ -991,7 +999,7 @@ class Ec2Inventory(object):
         self.push(self.inventory, 'ec2', hostname)
 
         self.inventory["_meta"]["hostvars"][hostname] = self.get_host_info_dict_from_instance(instance)
-        self.inventory["_meta"]["hostvars"][hostname]['ansible_ssh_host'] = dest
+        self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = dest
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
@@ -1088,7 +1096,7 @@ class Ec2Inventory(object):
         self.push(self.inventory, 'rds', hostname)
 
         self.inventory["_meta"]["hostvars"][hostname] = self.get_host_info_dict_from_instance(instance)
-        self.inventory["_meta"]["hostvars"][hostname]['ansible_ssh_host'] = dest
+        self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = dest
 
     def add_elasticache_cluster(self, cluster, region):
         ''' Adds an ElastiCache cluster to the inventory and index, as long as

@@ -133,6 +133,10 @@ class InventoryData(object):
             group = self.groups[g]
             group_names.add(group.name)
 
+            # ensure all groups inherit from 'all'
+            if group.name != 'all' and not group.get_ancestors():
+                self.add_child('all', group.name)
+
         host_names = set()
         # get host vars from host_vars/ files and vars plugins
         for host in self.hosts.values():

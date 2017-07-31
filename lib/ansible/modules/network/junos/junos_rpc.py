@@ -89,8 +89,8 @@ output_lines:
   returned: always
   type: list
 """
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
 

@@ -28,7 +28,8 @@ module: win_stat
 version_added: "1.7"
 short_description: returns information about a Windows file
 description:
-     - Returns information about a Windows file
+     - Returns information about a Windows file.
+     - For non-Windows targets, use the M(stat) module instead.
 options:
     path:
         description:
@@ -59,6 +60,8 @@ options:
         default: sha1
         choices: ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
         version_added: "2.3"
+notes:
+     - For non-Windows targets, use the M(stat) module instead.
 author: "Chris Church (@cchurch)"
 '''
 

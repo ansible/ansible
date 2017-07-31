@@ -54,12 +54,6 @@ ARGS_DEFAULT_VALUE = {
     'timeout': 10
 }
 
-OPERATION_LOOK_UP = {
-    'absent': 'delete',
-    'active': 'active',
-    'suspend': 'inactive'
-}
-
 
 def get_argspec():
     return junos_argument_spec
@@ -197,31 +191,21 @@ def get_diff(module):
         return to_text(output.text, encoding='latin1').strip()
 
 
-def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
-                comment=None, confirm=False, confirm_timeout=None):
+def load_config(module, candidate, warnings, action='merge', format='xml'):
 
     if not candidate:
         return
 
-    with locked_config(module):
-        if isinstance(candidate, list):
-            candidate = '\n'.join(candidate)
+    if isinstance(candidate, list):
+        candidate = '\n'.join(candidate)
 
-        reply = load_configuration(module, candidate, action=action, format=format)
-        if isinstance(reply, list):
-            warnings.extend(reply)
+    reply = load_configuration(module, candidate, action=action, format=format)
+    if isinstance(reply, list):
+        warnings.extend(reply)
 
-        validate(module)
-        diff = get_diff(module)
+    validate(module)
 
-        if diff:
-            if commit:
-                commit_configuration(module, confirm=confirm, comment=comment,
-                                     confirm_timeout=confirm_timeout)
-            else:
-                discard_changes(module)
-
-        return diff
+    return get_diff(module)
 
 
 def get_param(module, key):
@@ -280,70 +264,115 @@ def map_params_to_obj(module, param_to_xpath_map):
 
 
 def map_obj_to_ele(module, want, top, value_map=None):
+    if not HAS_LXML:
+        module.fail_json(msg='lxml is not installed.')
+
+    root = Element('root')
     top_ele = top.split('/')
-    root = Element(top_ele[0])
-    ele = root
+    ele = SubElement(root, top_ele[0])
 
     if len(top_ele) > 1:
         for item in top_ele[1:-1]:
             ele = SubElement(ele, item)
     container = ele
     state = module.params.get('state')
+    active = module.params.get('active')
+    if active:
+        oper = 'active'
+    else:
+        oper = 'inactive'
 
     # build xml subtree
-    for obj in want:
-        oper = None
-        if container.tag != top_ele[-1]:
-            node = SubElement(container, top_ele[-1])
-        else:
-            node = container
+    if container.tag != top_ele[-1]:
+        node = SubElement(container, top_ele[-1])
+    else:
+        node = container
 
-        if state and state != 'present':
-            oper = OPERATION_LOOK_UP.get(state)
+    for fxpath, attributes in want.items():
+        for attr in attributes:
+            tag_only = attr.get('tag_only', False)
+            leaf_only = attr.get('leaf_only', False)
+            value_req = attr.get('value_req', False)
+            is_key = attr.get('is_key', False)
+            parent_attrib = attr.get('parent_attrib', True)
+            value = attr.get('value')
+            field_top = attr.get('top')
 
-        for xpath, attributes in obj.items():
-            for attr in attributes:
-                tag_only = attr.get('tag_only', False)
-                leaf_only = attr.get('leaf_only', False)
-                is_value = attr.get('value_req', False)
-                is_key = attr.get('is_key', False)
-                value = attr.get('value')
+            # operation 'delete' is added as element attribute
+            # only if it is key or leaf only node
+            if state == 'absent' and not (is_key or leaf_only):
+                continue
 
-                # operation (delete/active/inactive) is added as element attribute
-                # only if it is key or tag only or leaf only node
-                if oper and not (is_key or tag_only or leaf_only):
-                    continue
+            # convert param value to device specific value
+            if value_map and fxpath in value_map:
+                value = value_map[fxpath].get(value)
 
-                # convert param value to device specific value
-                if value_map and xpath in value_map:
-                    value = value_map[xpath].get(value)
+            if (value is not None) or tag_only or leaf_only:
+                ele = node
+                if field_top:
+                    # eg: top = 'system/syslog/file'
+                    #     field_top = 'system/syslog/file/contents'
+                    # <file>
+                    #   <name>test</name>
+                    #   <contents>
+                    #   </contents>
+                    # </file>
+                    ele_list = root.xpath(top + '/' + field_top)
 
-                if value or tag_only or (leaf_only and value):
-                    ele = node
-                    tags = xpath.split('/')
-                    if value:
-                        value = to_text(value, errors='surrogate_then_replace')
+                    if not len(ele_list):
+                        fields = field_top.split('/')
+                        ele = node
+                        for item in fields:
+                            inner_ele = root.xpath(top + '/' + item)
+                            if len(inner_ele):
+                                ele = inner_ele[0]
+                            else:
+                                ele = SubElement(ele, item)
+                    else:
+                        ele = ele_list[0]
 
+                if value is not None and not isinstance(value, bool):
+                    value = to_text(value, errors='surrogate_then_replace')
+
+                if fxpath:
+                    tags = fxpath.split('/')
                     for item in tags:
                         ele = SubElement(ele, item)
 
-                    if tag_only:
+                if tag_only:
+                    if state == 'present':
                         if not value:
+                            # if value of tag_only node is false, delete the node
                             ele.set('delete', 'delete')
-                    elif leaf_only:
-                        if oper:
-                            ele.set(oper, oper)
-                            if is_value:
-                                ele.text = value
-                        else:
-                            ele.text = value
-                    else:
-                        ele.text = value
-                        if HAS_LXML:
-                            par = ele.getparent()
-                        else:
-                            module.fail_json(msg='lxml is not installed.')
-                        if is_key and oper and not par.attrib.get(oper):
-                            par.set(oper, oper)
 
-    return root
+                elif leaf_only:
+                    if state == 'present':
+                        ele.set(oper, oper)
+                        ele.text = value
+                    else:
+                        ele.set('delete', 'delete')
+                        # Add value of leaf node if required while deleting.
+                        # in some cases if value is present while deleting, it
+                        # can result in error, hence the check
+                        if value_req:
+                            ele.text = value
+                        if is_key:
+                            par = ele.getparent()
+                            par.set('delete', 'delete')
+                else:
+                    ele.text = value
+                    par = ele.getparent()
+
+                    if parent_attrib:
+                        if state == 'present':
+                            # set replace attribute at parent node
+                            if not par.attrib.get('replace'):
+                                par.set('replace', 'replace')
+
+                            # set active/inactive at parent node
+                            if not par.attrib.get(oper):
+                                par.set(oper, oper)
+                        else:
+                            par.set('delete', 'delete')
+
+    return root.getchildren()[0]

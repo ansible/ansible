@@ -29,54 +29,69 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: win_regedit
-version_added: "2.0"
+version_added: '2.0'
 short_description: Add, change, or remove registry keys and values
 description:
-    - Add, modify or remove registry keys and values.
-    - More information about the windows registry from Wikipedia (https://en.wikipedia.org/wiki/Windows_Registry).
+- Add, modify or remove registry keys and values.
+- More information about the windows registry from Wikipedia
+  U(https://en.wikipedia.org/wiki/Windows_Registry).
 options:
   path:
     description:
-      - Name of registry path.
-      - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU, HKLM, HKU.'
+    - Name of the registry path.
+    - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU,
+      HKLM, HKU.'
     required: true
     aliases: [ key ]
   name:
     description:
-      - Name of registry entry in C(path).
-      - This is an entry in the above C(key) parameter.
-      - If not provided, or empty we use the default name '(default)'.
+    - Name of the registry entry in the above C(path) parameters.
+    - If not provided, or empty then the '(Default)' property for the key will
+      be used.
     aliases: [ entry ]
   data:
     description:
-      - Value of the registry entry C(name) in C(path).
-      - Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and
-        use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).
-        The C(hex:) prefix is optional.
+    - Value of the registry entry C(name) in C(path).
+    - If not specified then the value for the property will be null for the
+      corresponding C(type).
+    - Binary and None data should be expressed in a yaml byte array or as comma
+      separated hex values.
+    - An easy way to generate this is to run C(regedit.exe) and use the
+      I(export) option to save the registry values to a file.
+    - In the exported file, binary value will look like C(hex:be,ef,be,ef), the
+      C(hex:) prefix is optional.
+    - DWORD and QWORD values should either be represented as a decimal number
+      or a hex value.
+    - Multistring values should be passed in as a list.
+    - See the examples for more details on how to format this data.
   type:
     description:
-      - Registry value data type.
-    choices:
-      - binary
-      - dword
-      - expandstring
-      - multistring
-      - string
-      - qword
+    - The registry value data type.
+    choices: [ binary, dword, expandstring, multistring, string, qword ]
     default: string
     aliases: [ datatype ]
   state:
     description:
-      - State of registry entry.
-    choices:
-      - present
-      - absent
+    - The state of the registry entry.
+    choices: [ present, absent ]
     default: present
+  delete_key:
+    description:
+    - When C(state) is 'absent' then this will delete the entire key.
+    - If this is False then it will only clear out the '(Default)' property for
+      that key.
+    type: bool
+    default: 'yes'
+    version_added: '2.4'
 notes:
 - Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before
   applying changes.
 - Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths.
-author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
+- Since ansible 2.4, when checking if a string registry value has changed, a case-sensitive test is used. Previously the test was case-insensitive.
+author:
+- Adam Keech (@smadam813)
+- Josh Ludwig (@joshludwig)
+- Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
@@ -90,26 +105,47 @@ EXAMPLES = r'''
     name: hello
     data: world
 
-- name: Add or update registry path MyCompany, with entry 'hello', and containing 1337
+- name: Add or update registry path MyCompany, with dword entry 'hello', and containing 1337 as the decimal value
   win_regedit:
     path: HKCU:\Software\MyCompany
     name: hello
     data: 1337
     type: dword
 
-- name: Add or update registry path MyCompany, with entry 'hello', and containing binary data in hex-string format
+- name: Add or update registry path MyCompany, with dword entry 'hello', and containing 0xff2500ae as the hex value
+  win_regedit:
+    path: HKCU:\Software\MyCompany
+    name: hello
+    data: 0xff2500ae
+    type: dword
+
+- name: Add or update registry path MyCompany, with binary entry 'hello', and containing binary data in hex-string format
   win_regedit:
     path: HKCU:\Software\MyCompany
     name: hello
     data: hex:be,ef,be,ef,be,ef,be,ef,be,ef
     type: binary
 
-- name: Add or update registry path MyCompany, with entry 'hello', and containing binary data in yaml format
+- name: Add or update registry path MyCompany, with binary entry 'hello', and containing binary data in yaml format
   win_regedit:
     path: HKCU:\Software\MyCompany
     name: hello
     data: [0xbe,0xef,0xbe,0xef,0xbe,0xef,0xbe,0xef,0xbe,0xef]
     type: binary
+
+- name: Add or update registry path MyCompany, with expand string entry 'hello'
+  win_regedit:
+    path: HKCU:\Software\MyCompany
+    name: hello
+    data: '%appdata%\local'
+    type: expandstring
+
+- name: Add or update registry path MyCompany, with multi string entry 'hello'
+  win_regedit:
+    path: HKCU:\Software\MyCompany
+    name: hello
+    data: ['hello', 'world']
+    type: multistring
 
 - name: Disable keyboard layout hotkey for all users (changes existing)
   win_regedit:
@@ -129,6 +165,13 @@ EXAMPLES = r'''
   win_regedit:
     path: HKCU:\Software\MyCompany
     state: absent
+    delete_key: yes
+
+- name: Clear the existing (Default) entry at path MyCompany
+  win_regedit:
+    path: HKCU:\Software\MyCompany
+    state: absent
+    delete_key: no
 
 - name: Remove entry 'hello' from registry path MyCompany
   win_regedit:

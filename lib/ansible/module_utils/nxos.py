@@ -27,7 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import re
+
 import collections
 
 from ansible.module_utils._text import to_text
@@ -375,11 +375,9 @@ def to_command(module, commands):
 
     commands = transform(to_list(commands))
 
-    for index, item in enumerate(commands):
+    for item in commands:
         if is_json(item['command']):
             item['output'] = 'json'
-        elif is_text(item['command']):
-            item['output'] = 'text'
 
     return commands
 

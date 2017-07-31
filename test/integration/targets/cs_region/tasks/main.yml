@@ -1,0 +1,154 @@
+---
+- name: setup
+  cs_region:
+    id: 2
+    state: absent
+  register: region
+- name: verify setup
+  assert:
+    that:
+    - region|success
+
+- name: test fail if missing params
+  cs_region:
+  register: region
+  ignore_errors: true
+- name: verify results of fail if missing name
+  assert:
+    that:
+    - region|failed
+    - "region.msg.startswith('missing required arguments: ')"
+
+- name: test create region in check mode
+  cs_region:
+    id: 2
+    name: geneva
+    endpoint: https://cloud.gva.example.com
+  register: region
+  check_mode: true
+- name: verify test create region in check mode
+  assert:
+    that:
+    - region|changed
+
+- name: test create region in check mode
+  cs_region:
+    id: 2
+    name: geneva
+    endpoint: https://cloud.gva.example.com
+  register: region
+- name: verify test create region in check mode
+  assert:
+    that:
+    - region|changed
+    - region.name == 'geneva'
+    - region.id == 2
+    - region.endpoint == 'https://cloud.gva.example.com'
+    - region.gslb_service_enabled == true
+    - region.portable_ip_service_enabled == false
+
+- name: test create region idempotence
+  cs_region:
+    id: 2
+    name: geneva
+    endpoint: https://cloud.gva.example.com
+  register: region
+- name: verify test create region idempotence
+  assert:
+    that:
+    - not region|changed
+    - region.name == 'geneva'
+    - region.id == 2
+    - region.endpoint == 'https://cloud.gva.example.com'
+    - region.gslb_service_enabled == true
+    - region.portable_ip_service_enabled == false
+
+- name: test update region in check mode
+  cs_region:
+    id: 2
+    name: zuerich
+    endpoint: https://cloud.zrh.example.com
+  register: region
+  check_mode: true
+- name: verify test update region in check mode
+  assert:
+    that:
+    - region|changed
+    - region.name == 'geneva'
+    - region.id == 2
+    - region.endpoint == 'https://cloud.gva.example.com'
+    - region.gslb_service_enabled == true
+    - region.portable_ip_service_enabled == false
+
+- name: test update region
+  cs_region:
+    id: 2
+    name: zuerich
+    endpoint: https://cloud.zrh.example.com
+  register: region
+- name: verify test update region
+  assert:
+    that:
+    - region|changed
+    - region.name == 'zuerich'
+    - region.id == 2
+    - region.endpoint == 'https://cloud.zrh.example.com'
+    - region.gslb_service_enabled == true
+    - region.portable_ip_service_enabled == false
+
+- name: test update region idempotence
+  cs_region:
+    id: 2
+    name: zuerich
+    endpoint: https://cloud.zrh.example.com
+  register: region
+- name: verify test update region idempotence
+  assert:
+    that:
+    - not region|changed
+    - region.name == 'zuerich'
+    - region.id == 2
+    - region.endpoint == 'https://cloud.zrh.example.com'
+    - region.gslb_service_enabled == true
+    - region.portable_ip_service_enabled == false
+
+- name: test remove region in check mdoe
+  cs_region:
+    id: 2
+    state: absent
+  register: region
+  check_mode: true
+- name: verify test remove region in check mode
+  assert:
+    that:
+    - region|changed
+    - region.name == 'zuerich'
+    - region.id == 2
+    - region.endpoint == 'https://cloud.zrh.example.com'
+    - region.gslb_service_enabled == true
+    - region.portable_ip_service_enabled == false
+
+- name: test remove region
+  cs_region:
+    id: 2
+    state: absent
+  register: region
+- name: verify test remove region
+  assert:
+    that:
+    - region|changed
+    - region.name == 'zuerich'
+    - region.id == 2
+    - region.endpoint == 'https://cloud.zrh.example.com'
+    - region.gslb_service_enabled == true
+    - region.portable_ip_service_enabled == false
+
+- name: test remove region idempotence
+  cs_region:
+    id: 2
+    state: absent
+  register: region
+- name: verify test remove region idempotence
+  assert:
+    that:
+    - not region|changed

@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Davis Phillips davis.phillips@gmail.com
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -147,9 +137,9 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
-from ansible.module_utils.vmware import get_all_objs, connect_to_api, vmware_argument_spec, find_datacenter_by_name, \
-    find_cluster_by_name_datacenter, wait_for_task
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import (get_all_objs, connect_to_api, vmware_argument_spec,
+                                         find_datacenter_by_name, find_cluster_by_name_datacenter, wait_for_task)
 
 
 class VMwareResourcePool(object):
@@ -216,7 +206,6 @@ class VMwareResourcePool(object):
             if name in [c.name, c._GetMoId()]:
                 if return_all is False:
                     return c
-                    break
                 else:
                     obj.append(c)
 
@@ -266,8 +255,6 @@ class VMwareResourcePool(object):
 
     def state_add_rp(self):
         changed = True
-        result = None
-        root_resource_pool = None
 
         rp_spec = vim.ResourceConfigSpec()
         cpu_alloc = vim.ResourceAllocationInfo()
@@ -291,7 +278,7 @@ class VMwareResourcePool(object):
         self.cluster_obj = find_cluster_by_name_datacenter(
             self.dc_obj, self.cluster)
         rootResourcePool = self.cluster_obj.resourcePool
-        task = rootResourcePool.CreateResourcePool(self.resource_pool, rp_spec)
+        rootResourcePool.CreateResourcePool(self.resource_pool, rp_spec)
 
         self.module.exit_json(changed=changed)
 
@@ -337,6 +324,7 @@ def main():
 
     vmware_rp = VMwareResourcePool(module)
     vmware_rp.process_state()
+
 
 if __name__ == '__main__':
     main()

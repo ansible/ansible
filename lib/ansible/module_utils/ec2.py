@@ -30,6 +30,7 @@ import os
 import re
 from time import sleep
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.cloud import CloudRetry
 
 try:
@@ -278,7 +279,10 @@ def boto_fix_security_token_in_profile(conn, profile_name):
 
 
 def connect_to_aws(aws_module, region, **params):
-    conn = aws_module.connect_to_region(region, **params)
+    try:
+        conn = aws_module.connect_to_region(region, **params)
+    except(boto.provider.ProfileNotFoundError):
+        raise AnsibleAWSError("Profile given for AWS was not found.  Please fix and retry.")
     if not conn:
         if region not in [aws_module_region.name for aws_module_region in aws_module.regions()]:
             raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade "
@@ -300,13 +304,13 @@ def ec2_connect(module):
     if region:
         try:
             ec2 = connect_to_aws(boto.ec2, region, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError, boto.provider.ProfileNotFoundError) as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     elif ec2_url:
         try:
             ec2 = boto.connect_ec2_endpoint(ec2_url, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError, boto.provider.ProfileNotFoundError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="Either region or ec2_url must be specified")
@@ -492,7 +496,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value
 
     tags_list = []
     for k, v in tags_dict.items():
-        tags_list.append({tag_name_key_name: k, tag_value_key_name: v})
+        tags_list.append({tag_name_key_name: k, tag_value_key_name: to_native(v)})
 
     return tags_list
 

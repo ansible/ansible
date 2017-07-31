@@ -31,6 +31,7 @@ version_added: "2.0"
 short_description: Return a list of files based on specific criteria
 description:
     - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
+    - For Windows targets, use the M(win_find) module instead.
 options:
     age:
         description:
@@ -96,6 +97,8 @@ options:
         choices: [ 'no', 'yes' ]
         description:
             - If false the patterns are file globs (shell) if true they are python regexes.
+notes:
+    - For Windows targets, use the M(win_find) module instead.
 '''
 
 
@@ -122,14 +125,14 @@ EXAMPLES = r'''
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
 - find:
-    paths: /var/tmp
+    paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
 - find:
-    paths: /var/tmp
+    paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
     use_regex: yes

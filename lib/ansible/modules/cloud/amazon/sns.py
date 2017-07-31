@@ -129,14 +129,8 @@ EXAMPLES = """
   delegate_to: localhost
 """
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
-from ansible.module_utils.pycompat24 import get_exception
+import json
+import traceback
 
 try:
     import boto
@@ -145,6 +139,10 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def arn_topic_lookup(connection, short_topic):
@@ -196,9 +194,8 @@ def main():
         module.fail_json(msg="region must be specified")
     try:
         connection = connect_to_aws(boto.sns, region, **aws_connect_params)
-    except boto.exception.NoAuthHandlerFound:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except boto.exception.NoAuthHandlerFound as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     if not message_structure == 'string' and message_attributes:
         module.fail_json(msg="when specifying message_attributes, the message_structure must be set to 'string'; otherwise the attributes will not be sent.")
@@ -237,11 +234,11 @@ def main():
         connection.publish(topic=arn_topic, subject=subject,
                            message_structure=message_structure, message=json_msg,
                            message_attributes=message_attributes)
-    except boto.exception.BotoServerError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(msg="OK")
+
 
 if __name__ == '__main__':
     main()

@@ -1,11 +1,13 @@
 ---
 - include: setup.yml
+
 - include: present.yml
 - include: tags.yml
 - include: absent.yml
-- include: cleanup.yml
 
-- include: setup.yml
 - include: present_display_name.yml
 - include: absent_display_name.yml
+
+- include: sshkeys.yml
+
 - include: cleanup.yml

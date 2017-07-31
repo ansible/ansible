@@ -961,6 +961,10 @@ def interfaceLevel2Config(
         # debugOutput("shutdown")
         command = interfaceL2Arg1
 
+    elif (interfaceL2Arg1 == "no shutdown"):
+        # debugOutput("no shutdown")
+        command = interfaceL2Arg1
+
     elif (interfaceL2Arg1 == "snmp"):
         # debugOutput("snmp")
         command = interfaceL2Arg1 + "  trap link-status "
@@ -1950,7 +1954,7 @@ def bgpConfig(
 
     elif(bgpArg1 == "log-neighbor-changes"):
         # debugOutput(bgpArg1)
-        command = command + bgpArg1f
+        command = command + bgpArg1
 
     elif(bgpArg1 == "maxas-limit"):
         # debugOutput(bgpArg1)
@@ -3257,15 +3261,14 @@ def checkSanityofVariable(deviceType, variableId, variableValue):
 def getRuleStringForVariable(deviceType, ruleFile, variableId):
     retVal = ""
     try:
-        # with open(ruleFile, 'r') as f:
-        f = open(errorFile, 'r')
-        for line in f:
-            # debugOutput(line)
-            if(':' in line):
-                data = line.split(':')
-                # debugOutput(data[0])
-                if(data[0].strip() == variableId):
-                    retVal = line
+        with open(ruleFile, 'r') as f:
+            for line in f:
+                # debugOutput(line)
+                if(':' in line):
+                    data = line.split(':')
+                    # debugOutput(data[0])
+                    if(data[0].strip() == variableId):
+                        retVal = line
     except Exception:
         ruleString = cnos_devicerules.getRuleString(deviceType, variableId)
         retVal = ruleString.strip()
@@ -3342,7 +3345,7 @@ def validateValueAgainstRule(ruleString, variableValue):
             return "Error-115"
 
     elif(variableType == "LONG"):
-        result = checkLong(variableValue)
+        result = checkInteger(variableValue)
         if(result is True):
             return "ok"
         else:
@@ -3350,11 +3353,11 @@ def validateValueAgainstRule(ruleString, variableValue):
 
     elif(variableType == "LONG_VALUE"):
         long_range = varRange.split('-')
-        r = range(long(long_range[0].strip()), long(long_range[1].strip()))
-        if(checkLong(variableValue) is not True):
+        r = range(int(long_range[0].strip()), int(long_range[1].strip()))
+        if(checkInteger(variableValue) is not True):
             # debugOutput(variableValue)
             return "Error-116"
-        result = long(variableValue) in r
+        result = int(variableValue) in r
         if(result is True):
             return "ok"
         else:
@@ -3362,10 +3365,10 @@ def validateValueAgainstRule(ruleString, variableValue):
 
     elif(variableType == "LONG_VALUE_RANGE"):
         long_range = varRange.split('-')
-        r = range(long(long_range[0].strip()), long(long_range[1].strip()))
+        r = range(int(long_range[0].strip()), int(long_range[1].strip()))
         val_range = variableValue.split('-')
-        if((checkLong(val_range[0]) is not True) or
-                (checkLong(val_range[1]) is not True)):
+        if((checkInteger(val_range[0]) is not True) or
+                (checkInteger(val_range[1]) is not True)):
             return "Error-117"
         result = (val_range[0] in r) and (
             val_range[1] in r) and (val_range[0] < val_range[1])
@@ -3375,7 +3378,7 @@ def validateValueAgainstRule(ruleString, variableValue):
             return "Error-113"
     elif(variableType == "LONG_OPTIONS"):
         long_options = varRange.split(',')
-        if(checkLong(variableValue) is not True):
+        if(checkInteger(variableValue) is not True):
             return "Error-116"
         for opt in long_options:
             if(opt.strip() == variableValue):
@@ -3529,14 +3532,6 @@ def checkFloat(s):
     except ValueError:
         return False
 # EOM
-
-
-def checkLong(s):
-    try:
-        long(s)
-        return True
-    except ValueError:
-        return False
 
 
 def debugOutput(command):

@@ -49,17 +49,22 @@ options:
     description:
       - List of interfaces to check the VLAN has been
         configured correctly.
-  collection:
+  aggregate:
     description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the collections parameter.
+      - Purge VLANs not defined in the aggregates parameter.
     default: no
   state:
     description:
       - State of the VLAN configuration.
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
+    choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -82,26 +87,33 @@ EXAMPLES = """
 - name: deactive VLAN configuration
   junos_vlan:
     vlan_name: test
-    state: suspend
+    state: present
+    active: False
 
 - name: activate VLAN configuration
   junos_vlan:
     vlan_name: test
-    state: active
+    state: present
+    active: True
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
   type: string
-  sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
+  sample: >
+         [edit vlans]
+         +   test-vlan-1 {
+         +       vlan-id 60;
+         +   }
 """
 import collections
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -132,10 +144,10 @@ def main():
         vlan_id=dict(required=True, type='int'),
         description=dict(),
         interfaces=dict(),
-        collection=dict(),
+        aggregate=dict(),
         purge=dict(default=False, type='bool'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'active', 'suspend'])
+        state=dict(default='present', choices=['present', 'absent']),
+        active=dict(default=True, type='bool')
     )
 
     argument_spec.update(junos_argument_spec)
@@ -154,29 +166,30 @@ def main():
     top = 'vlans/vlan'
 
     param_to_xpath_map = collections.OrderedDict()
-    param_to_xpath_map.update({
-        'name': {'xpath': 'name', 'is_key': True},
-        'vlan_id': 'vlan-id',
-        'description': 'description'
-    })
+    param_to_xpath_map.update([
+        ('name', {'xpath': 'name', 'is_key': True}),
+        ('vlan_id', 'vlan-id'),
+        ('description', 'description')
+    ])
 
     validate_param_values(module, param_to_xpath_map)
 
-    want = list()
-    want.append(map_params_to_obj(module, param_to_xpath_map))
+    want = map_params_to_obj(module, param_to_xpath_map)
     ele = map_obj_to_ele(module, want, top)
 
-    kwargs = {'commit': not module.check_mode}
-    kwargs['action'] = 'replace'
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, action='replace')
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
-        })
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

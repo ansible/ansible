@@ -2,18 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Cumulus Networks <ce-ceng@cumulusnetworks.com>
-#
-# This file is part of Ansible
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['deprecated'],
@@ -84,6 +77,14 @@ msg:
     type: string
     sample: "interface bond0 config updated"
 '''
+import os
+import re
+import tempfile
+import shutil
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 PORTS_CONF = '/etc/cumulus/ports.conf'
 
@@ -95,9 +96,8 @@ def hash_existing_ports_conf(module):
 
     try:
         existing_ports_conf = open(PORTS_CONF).readlines()
-    except IOError:
-        error_msg = get_exception()
-        _msg = "Failed to open %s: %s" % (PORTS_CONF, error_msg)
+    except IOError as e:
+        _msg = "Failed to open %s: %s" % (PORTS_CONF, to_native(e))
         module.fail_json(msg=_msg)
         return # for testing only should return on module.fail_json
 
@@ -155,9 +155,8 @@ def make_copy_of_orig_ports_conf(module):
 
     try:
         shutil.copyfile(PORTS_CONF, PORTS_CONF + '.orig')
-    except IOError:
-        error_msg = get_exception()
-        _msg = "Failed to save the original %s: %s" % (PORTS_CONF, error_msg)
+    except IOError as e:
+        _msg = "Failed to save the original %s: %s" % (PORTS_CONF, to_native(e))
         module.fail_json(msg=_msg)
         return  # for testing only
 
@@ -178,10 +177,8 @@ def write_to_ports_conf(module):
                 temp.write(_str)
             temp.seek(0)
             shutil.copyfile(temp.name, PORTS_CONF)
-        except IOError:
-            error_msg = get_exception()
-            module.fail_json(
-                msg="Failed to write to %s: %s" % (PORTS_CONF, error_msg))
+        except IOError as e:
+            module.fail_json(msg="Failed to write to %s: %s" % (PORTS_CONF, to_native(e)))
     finally:
         temp.close()
 
@@ -212,13 +209,6 @@ def main():
         _msg = 'No change in /etc/ports.conf'
     module.exit_json(changed=_changed, msg=_msg)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-# from ansible.module_utils.urls import *
-import os
-import tempfile
-import shutil
 
 if __name__ == '__main__':
     main()

@@ -1,19 +1,10 @@
 # this is a virtual module that is entirely implemented server side
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -50,6 +41,7 @@ description:
        available. There is no change handler support for this module.
      - This module does not require python on the remote system, much like
        the M(script) module.
+     - This module is also supported for Windows targets.
 notes:
     - "If using raw from a playbook, you may need to disable fact gathering
       using C(gather_facts: no) if you're using C(raw) to bootstrap python
@@ -59,6 +51,7 @@ notes:
     - the C(environment) keyword does not work with raw normally, it requires a shell
       which means it only works if C(executable) is set or using the module
       with privilege escalation (C(become)).
+    - This module is also supported for Windows targets.
 author:
     - Ansible Core Team
     - Michael DeHaan

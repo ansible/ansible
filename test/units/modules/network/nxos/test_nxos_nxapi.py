@@ -42,15 +42,15 @@ class TestNxosNxapiModule(TestNxosModule):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
-            output = list()
+            module_name = self.module.__name__.rsplit('.', 1)[1]
 
+            output = list()
             for command in commands:
-                filename = str(command).replace(' ', '_')
-                filename = os.path.join('nxos_nxapi', filename)
-                output.append(load_fixture(filename))
+                filename = str(command).split(' | ')[0].replace(' ', '_')
+                output.append(load_fixture(module_name, filename, device))
             return output
 
         self.run_commands.side_effect = load_from_file
@@ -58,12 +58,12 @@ class TestNxosNxapiModule(TestNxosModule):
 
     def test_nxos_nxapi_no_change(self):
         set_module_args(dict(http=True, https=False, http_port=80, https_port=443, sandbox=False))
-        self.execute_module(changed=False, commands=[])
+        self.execute_module_devices(changed=False, commands=[])
 
     def test_nxos_nxapi_disable(self):
         set_module_args(dict(state='absent'))
-        self.execute_module(changed=True, commands=['no feature nxapi'])
+        self.execute_module_devices(changed=True, commands=['no feature nxapi'])
 
     def test_nxos_nxapi_no_http(self):
         set_module_args(dict(https=True, http=False, https_port=8443))
-        self.execute_module(changed=True, commands=['no nxapi http', 'nxapi https port 8443'])
+        self.execute_module_devices(changed=True, commands=['no nxapi http', 'nxapi https port 8443'])

@@ -32,21 +32,25 @@ module: win_share
 version_added: "2.1"
 short_description: Manage Windows shares
 description:
-     - Add, modify or remove Windows share and set share permissions.
+  - Add, modify or remove Windows share and set share permissions.
 requirements:
-    - Windows 8.1 / Windows 2012 or newer
+  - As this module used newer cmdlets like New-SmbShare this can only run on
+    Windows 8 / Windows 2012 or newer.
+  - This is due to the reliance on the WMI provider MSFT_SmbShare
+    U(https://msdn.microsoft.com/en-us/library/hh830471) which was only added
+    with these Windows releases.
 options:
   name:
     description:
-      - Share name
+      - Share name.
     required: True
   path:
     description:
-      - Share directory
+      - Share directory.
     required: True
   state:
     description:
-      - Specify whether to add C(present) or remove C(absent) the specified share
+      - Specify whether to add C(present) or remove C(absent) the specified share.
     choices:
       - present
       - absent
@@ -56,10 +60,9 @@ options:
       - Share description
   list:
     description:
-      - Specify whether to allow or deny file listing, in case user got no permission on share
-    choices:
-      - yes
-      - no
+      - Specify whether to allow or deny file listing, in case user got no permission on share.
+    type: bool
+    default: 'no'
   read:
     description:
       - Specify user list that should get read access on share, separated by comma.
@@ -84,7 +87,14 @@ options:
       - Unknown
     default: "Manual"
     version_added: "2.3"
-author: Hans-Joachim Kliemeck (@h0nIg), David Baumann (@daBONDi)
+  encrypt:
+    description: Sets whether to encrypt the traffic to the share or not.
+    type: bool
+    default: 'no'
+    version_added: "2.4"
+author:
+  - Hans-Joachim Kliemeck (@h0nIg)
+  - David Baumann (@daBONDi)
 '''
 
 EXAMPLES = r'''
@@ -96,7 +106,7 @@ EXAMPLES = r'''
     name: internal
     description: top secret share
     path: C:\shares\internal
-    list: 'no'
+    list: no
     full: Administrators,CEO
     read: HR-Global
     deny: HR-External
@@ -106,16 +116,20 @@ EXAMPLES = r'''
     name: company
     description: top secret share
     path: C:\shares\company
-    list: 'yes'
+    list: yes
     full: Administrators,CEO
     read: Global
 
-# Remove previously added share
+- name: Remove previously added share
   win_share:
     name: internal
     state: absent
 '''
 
 RETURN = r'''
-
+actions:
+    description: A list of action cmdlets that were run by the module.
+    returned: success
+    type: list
+    sample: ['New-SmbShare -Name share -Path C:\temp']
 '''

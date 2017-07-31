@@ -7,9 +7,9 @@ locally-disabled
 locally-enabled
 method-hidden
 no-member
-no-name-in-module
 no-value-for-parameter
 non-iterator-returned
+no-name-in-module
 not-a-mapping
 not-an-iterable
 not-callable
@@ -17,7 +17,6 @@ R
 raising-bad-type
 raising-non-exception
 too-many-function-args
-undefined-variable
 unexpected-keyword-arg
 unsubscriptable-object
 unsupported-membership-test

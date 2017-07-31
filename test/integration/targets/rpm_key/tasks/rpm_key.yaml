@@ -1,0 +1,83 @@
+---
+- name: download EPEL GPG key
+  get_url:
+    url: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+    dest: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: download sl rpm
+  get_url:
+    url: https://download.fedoraproject.org/pub/epel/7/x86_64/s/sl-5.02-1.el7.x86_64.rpm
+    dest: /tmp/sl.rpm
+
+- name: remove EPEL GPG key from keyring
+  rpm_key:
+    state: absent
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: check GPG signature of sl. Should fail
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+  ignore_errors: yes
+
+- name: confirm that signature check failed
+  assert:
+    that:
+      - "'MISSING KEYS' in sl_check.stdout"
+      - "sl_check.failed"
+
+- name: remove EPEL GPG key from keyring (Idempotant)
+  rpm_key:
+    state: absent
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+  register: idempotant_test
+
+- name: check Idempotant
+  assert:
+    that: "not idempotant_test.changed"
+
+- name: add EPEL GPG key to key ring
+  rpm_key:
+    state: present
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: add EPEL GPG key to key ring (Idempotant)
+  rpm_key:
+    state: present
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: check GPG signature of sl. Should return okay
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+
+- name: confirm that signature check succeeded
+  assert:
+    that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout"
+
+- name: remove GPG key from url
+  rpm_key:
+    state: absent
+    key: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+
+- name: Confirm key is missing
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+  ignore_errors: yes
+
+- name: confirm that signature check failed
+  assert:
+    that:
+      - "'MISSING KEYS' in sl_check.stdout"
+      - "sl_check.failed"
+
+- name: add GPG key from url
+  rpm_key:
+    state: present
+    key: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+
+- name: check GPG signature of sl. Should return okay
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+
+- name: confirm that signature check succeeded
+  assert:
+    that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout"

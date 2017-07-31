@@ -4,7 +4,6 @@
     name: netend
     roles: network-operator
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -15,10 +14,9 @@
 
 - name: Collection of users
   nxos_user:
-    users:
+    aggregate:
       - name: test1
       - name: test2
-    authorize: yes
     state: present
     roles: network-admin
     provider: "{{ cli }}"
@@ -32,7 +30,6 @@
 - name: tearDown
   nxos_user:
     purge: yes
-    authorize: yes
     provider: "{{ cli }}"
   register: result
 

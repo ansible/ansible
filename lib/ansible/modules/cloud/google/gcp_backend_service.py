@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # Copyright 2017 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -180,6 +170,11 @@ timeout:
     sample: "myhttpport"
 '''
 
+try:
+    from ast import literal_eval
+    HAS_PYTHON26 = True
+except ImportError:
+    HAS_PYTHON26 = False
 
 try:
     import libcloud
@@ -193,13 +188,6 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
-
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect
 from ansible.module_utils.gcp import check_params
@@ -352,7 +340,7 @@ def main():
         healthchecks=dict(type='list', required=True),
         service_account_email=dict(),
         service_account_permissions=dict(type='list'),
-        enable_cdn=dict(type='bool', choices=[True, False]),
+        enable_cdn=dict(type='bool'),
         port_name=dict(type='str'),
         protocol=dict(type='str', default='TCP',
                       choices=['HTTP', 'HTTPS', 'SSL', 'TCP']),
@@ -415,6 +403,7 @@ def main():
     json_output['changed'] = changed
     json_output.update(params)
     module.exit_json(**json_output)
+
 
 if __name__ == '__main__':
     main()

@@ -6,18 +6,11 @@
 # Built using https://github.com/hamnis/useful-scripts/blob/master/python/download-maven-artifact
 # as a reference and starting point.
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -138,19 +131,22 @@ EXAMPLES = '''
     dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
-from lxml import etree
-import os
 import hashlib
-import sys
+import os
 import posixpath
-import urlparse
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+import sys
+
+from lxml import etree
+
 try:
     import boto3
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib import parse as urlparse
+from ansible.module_utils.urls import fetch_url
 
 
 class Artifact(object):
@@ -387,8 +383,6 @@ def main():
     version = module.params["version"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
-    repository_username = module.params["username"]
-    repository_password = module.params["password"]
     state = module.params["state"]
     dest = module.params["dest"]
 
@@ -421,7 +415,6 @@ def main():
             module.fail_json(msg="Unable to download the artifact")
     except ValueError as e:
         module.fail_json(msg=e.args[0])
-
 
 
 if __name__ == '__main__':

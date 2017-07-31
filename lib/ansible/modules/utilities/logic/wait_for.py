@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -39,6 +29,7 @@ description:
      - In 1.8 and later, this module can also be used to wait for active
        connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
+     - This module is also supported for Windows targets.
 version_added: "0.7"
 options:
   host:
@@ -99,6 +90,8 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
+  - This module is also supported for Windows targets.
+  - See also M(wait_for_connection)
 author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)
@@ -106,7 +99,6 @@ author:
 '''
 
 EXAMPLES = r'''
-
 - name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
@@ -183,7 +175,6 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils._text import to_native
-from ansible.module_utils.pycompat24 import get_exception
 
 
 HAS_PSUTIL = False
@@ -241,14 +232,23 @@ class TCPConnectionInfo(object):
     def get_active_connections_count(self):
         active_connections = 0
         for p in psutil.process_iter():
-            connections = p.get_connections(kind='inet')
+            if hasattr(p, 'get_connections'):
+                connections = p.get_connections(kind='inet')
+            else:
+                connections = p.connections(kind='inet')
             for conn in connections:
                 if conn.status not in self.module.params['active_connection_states']:
                     continue
-                (local_ip, local_port) = conn.local_address
+                if hasattr(conn, 'local_address'):
+                    (local_ip, local_port) = conn.local_address
+                else:
+                    (local_ip, local_port) = conn.laddr
                 if self.port != local_port:
                     continue
-                (remote_ip, remote_port) = conn.remote_address
+                if hasattr(conn, 'remote_address'):
+                    (remote_ip, remote_port) = conn.remote_address
+                else:
+                    (remote_ip, remote_port) = conn.raddr
                 if (conn.family, remote_ip) in self.exclude_ips:
                     continue
                 if any((
@@ -505,8 +505,7 @@ def main():
             if path:
                 try:
                     os.stat(path)
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     # If anything except file not present, throw an error
                     if e.errno != 2:
                         elapsed = datetime.datetime.utcnow() - start

@@ -58,6 +58,7 @@ class IncludeRole(TaskInclude):
         self._from_files = {}
         self._parent_role = role
         self._role_name = None
+        self._role_path = None
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
@@ -74,6 +75,9 @@ class IncludeRole(TaskInclude):
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
+        # save this for later use
+        self._role_path = actual_role._role_path
+
         # compile role with parent roles as dependencies to ensure they inherit
         # variables
         if not self._parent_role:
@@ -87,9 +91,9 @@ class IncludeRole(TaskInclude):
             b._parent = self
 
         # updated available handlers in play
-        myplay.handlers = myplay.handlers + actual_role.get_handler_blocks(play=myplay)
-
-        return blocks
+        handlers = actual_role.get_handler_blocks(play=myplay)
+        myplay.handlers = myplay.handlers + handlers
+        return blocks, handlers
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):

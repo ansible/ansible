@@ -80,9 +80,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["vrf context ntc", "address-family ipv4 unicast",
-            "afi ipv4", "route-target both auto evpn", "vrf ntc",
-            "safi unicast"]
+    sample: ["vrf context ntc", "address-family ipv4 unicast"]
 '''
 
 import re
@@ -95,9 +93,6 @@ from ansible.module_utils.netcfg import CustomNetworkConfig
 
 BOOL_PARAMS = ['route_target_both_auto_evpn']
 PARAM_TO_COMMAND_KEYMAP = {
-    'vrf': 'vrf',
-    'safi': 'safi',
-    'afi': 'afi',
     'route_target_both_auto_evpn': 'route-target both auto evpn'
 }
 PARAM_TO_DEFAULT_KEYMAP = {}
@@ -179,11 +174,10 @@ def state_present(module, existing, proposed, candidate):
             command = '{0} {1}'.format(key, value.lower())
             commands.append(command)
 
-    if commands:
-        parents = ['vrf context {0}'.format(module.params['vrf'])]
-        parents.append('address-family {0} {1}'.format(module.params['afi'],
-                                                       module.params['safi']))
-        candidate.add(commands, parents=parents)
+    parents = ['vrf context {0}'.format(module.params['vrf'])]
+    parents.append('address-family {0} {1}'.format(module.params['afi'],
+                                                   module.params['safi']))
+    candidate.add(commands, parents=parents)
 
 
 def state_absent(module, existing, proposed, candidate):
@@ -201,10 +195,7 @@ def main():
         afi=dict(required=True, type='str', choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         m_facts=dict(required=False, default=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -238,9 +229,10 @@ def main():
         state_absent(module, existing, proposed, candidate)
 
     if candidate:
+        candidate = candidate.items_text()
         load_config(module, candidate)
         result['changed'] = True
-        result['commands'] = candidate.items_text()
+        result['commands'] = candidate
 
     else:
         result['commands'] = []

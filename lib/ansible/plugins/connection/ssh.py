@@ -111,15 +111,13 @@ from functools import wraps
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils.basic import BOOLEANS
 from ansible.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.path import unfrackpath, makedirs_safe
-
-boolean = C.mk_boolean
 
 try:
     from __main__ import display
@@ -612,6 +610,7 @@ class Connection(ConnectionBase):
 
         try:
             while True:
+                poll = p.poll()
                 events = selector.select(timeout)
 
                 # We pay attention to timeouts only while negotiating a prompt.
@@ -621,7 +620,7 @@ class Connection(ConnectionBase):
                     if state <= states.index('awaiting_escalation'):
                         # If the process has already exited, then it's not really a
                         # timeout; we'll let the normal error handling deal with it.
-                        if p.poll() is not None:
+                        if poll is not None:
                             break
                         self._terminate_process(p)
                         raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
@@ -723,7 +722,7 @@ class Connection(ConnectionBase):
                 # Now we're awaiting_exit: has the child process exited? If it has,
                 # and we've read all available output from it, we're done.
 
-                if p.poll() is not None:
+                if poll is not None:
                     if not selector.get_map() or not events:
                         break
                     # We should not see further writes to the stdout/stderr file
@@ -791,7 +790,7 @@ class Connection(ConnectionBase):
             if not isinstance(scp_if_ssh, bool):
                 scp_if_ssh = scp_if_ssh.lower()
                 if scp_if_ssh in BOOLEANS:
-                    scp_if_ssh = boolean(scp_if_ssh)
+                    scp_if_ssh = boolean(scp_if_ssh, strict=False)
                 elif scp_if_ssh != 'smart':
                     raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
             if scp_if_ssh == 'smart':
@@ -893,7 +892,7 @@ class Connection(ConnectionBase):
 
     def reset(self):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = map(to_bytes, self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host))
+        cmd = self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host)
         controlpersist, controlpath = self._persistence_controls(cmd)
         if controlpersist:
             display.vvv(u'sending stop: %s' % cmd)

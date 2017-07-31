@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Fabrizio Colonna <colofabrix@tin.it>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -355,7 +345,7 @@ def format_disk_size(size_bytes, unit):
     elif unit in units_iec:
         multiplier = 1024.0 ** units_iec.index(unit)
 
-    output = size_bytes / multiplier * (1 + 1E-16)
+    output = size_bytes // multiplier * (1 + 1E-16)
 
     # Corrections to round up as per IEEE754 standard
     if output < 10:
@@ -590,7 +580,7 @@ def main():
         },
         supports_check_mode=True,
     )
-    module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
+    module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C', 'LC_CTYPE': 'C'}
 
     # Data extraction
     device = module.params['device']
