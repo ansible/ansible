@@ -5,9 +5,6 @@
 # GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
 #
 
-- set_fact:
-    output_dir_expanded: '{{ output_dir | expanduser }}'
-
 - name: record the output directory
   set_fact: output_file={{output_dir}}/foo.txt
 
@@ -27,6 +24,9 @@
   assert:
     that:
       - "file_result_check.mode == '0444'"
+
+- set_fact:
+    output_dir_expanded: '{{ file_result_check.path | dirname }}'
 
 #- debug:
 #    var: copy_result
