@@ -353,7 +353,10 @@ def main():
         if existing.get('mapped_vni'):
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                     existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
-                commands.insert(1, 'no vn-segment')
+                if state == 'absent':
+                    commands = ['vlan ' + vlan_id, 'no vn-segment', 'no vlan ' + vlan_id]
+                else:
+                    commands.insert(1, 'no vn-segment')
         if module.check_mode:
             module.exit_json(changed=True, commands=commands)
         else:
