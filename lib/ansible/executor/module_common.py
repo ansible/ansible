@@ -791,7 +791,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         for line in lines:
             # legacy, equivalent to #Requires -Modules powershell
             if REPLACER_WINDOWS in line:
-                module_names.add(b'Ansible.ModuleUtils.PowerShellLegacy')
+                module_names.add(b'Ansible.ModuleUtils.Legacy')
             line_match = requires_module_list.match(line)
             if line_match:
                 module_names.add(line_match.group(1))
