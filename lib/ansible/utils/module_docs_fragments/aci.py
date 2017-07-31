@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2017 Dag Wieers <dag@wieers.com>
+# Copyright 2017 Swetha Chunduri (@schunduri)
 
 # This file is part of Ansible by Red Hat
 #
@@ -25,18 +26,18 @@ options:
   hostname:
     description:
     - IP Address or hostname of APIC resolvable by Ansible control host.
-    required: true
+    required: yes
     aliases: [ host ]
   username:
     description:
     - The username to use for authentication.
-    required: true
+    required: yes
     default: admin
     aliases: [ user ]
   password:
     description:
     - The password to use for authentication.
-    required: true
+    required: yes
   timeout:
     description:
     - The socket level timeout in seconds.
