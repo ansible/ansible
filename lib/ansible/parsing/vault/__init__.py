@@ -303,15 +303,15 @@ class PromptVaultSecret(VaultSecret):
             raise AnsibleError("Passwords do not match")
 
 
-def script_is_agent(filename):
-    '''Determine if a vault secret script is an agent that can be given --vault-id args'''
+def script_is_client(filename):
+    '''Determine if a vault secret script is a client script that can be given --vault-id args'''
 
-    # if password script is 'something-agent' or 'something-agent.[sh|py|rb|etc]'
+    # if password script is 'something-client' or 'something-client.[sh|py|rb|etc]'
     # script_name can still have '.' or could be entire filename if there is no ext
     script_name, ext = os.path.splitext(filename)
 
     # TODO: for now, this is entirely based on filename
-    if script_name.endswith('-agent'):
+    if script_name.endswith('-client'):
         return True
 
     return False
@@ -324,11 +324,11 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
         raise AnsibleError("The vault password file %s was not found" % this_path)
 
     if loader.is_executable(this_path):
-        if script_is_agent(filename):
-            print('is agent')
+        if script_is_client(filename):
+            display.vvvv('The vault password file %s is a client script.' % filename)
             # TODO: pass vault_id_name to script via cli
-            return AgentScriptVaultSecret(filename=this_path, vault_id=vault_id,
-                                          encoding=encoding, loader=loader)
+            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id,
+                                           encoding=encoding, loader=loader)
         else:
             # just a plain vault password script. No args, returns a byte array
             return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
@@ -416,13 +416,13 @@ class ScriptVaultSecret(FileVaultSecret):
         return [self.filename]
 
 
-class AgentScriptVaultSecret(ScriptVaultSecret):
+class ClientScriptVaultSecret(ScriptVaultSecret):
     def __init__(self, filename=None, encoding=None, loader=None, vault_id=None):
         super(ScriptVaultSecret, self).__init__(filename=filename,
                                                 encoding=encoding,
                                                 loader=loader)
         self._vault_id = vault_id
-        print('agent script filename=%s vault-id=%s' % (filename, vault_id))
+        display.vvvv('Executing vault password client script: %s --vault-id=%s' % (filename, vault_id))
 
     def _build_command(self):
         command = [self.filename]
