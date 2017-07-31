@@ -712,23 +712,23 @@
 
 - name: Cleanup
   file:
-    path: '{{ output_dir_expanded }}/destination'
+    path: '{{ output_dir }}/destination'
     state: absent
 
 # Try again with no trailing slash
 
 - name: Create a directory to place the test output in
   file:
-    path: '{{ output_dir_expanded }}/destination'
+    path: '{{ output_dir }}/destination'
     state: directory
 
 - name: Copy just the files inside of the directory
   copy:
     src: '{{ role_path }}/tmp/source_recursive/'
-    dest: '{{ output_dir_expanded }}/destination'
+    dest: '{{ output_dir }}/destination'
 
 - name: stat the recursively copied directory
-  stat: path={{output_dir_expanded}}/destination/{{item}}
+  stat: path={{ output_dir }}/destination/{{ item }}
   register: copied_stat
   with_items:
     - "source_recursive"
