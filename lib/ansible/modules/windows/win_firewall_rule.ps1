@@ -37,7 +37,7 @@ function Parse-ProtocolType {
     }
 }
 
-# See 'Direction' constants here: https://msdn.microsoft.com/ru-ru/library/windows/desktop/aa364724(v=vs.85).aspx
+# See 'Direction' constants here: https://msdn.microsoft.com/en-us/library/windows/desktop/aa364724(v=vs.85).aspx
 function Parse-Direction {
     param($directionStr)
 
@@ -48,7 +48,7 @@ function Parse-Direction {
     }
 }
 
-# See 'Action' constants here: https://msdn.microsoft.com/ru-ru/library/windows/desktop/aa364724(v=vs.85).aspx
+# See 'Action' constants here: https://msdn.microsoft.com/en-us/library/windows/desktop/aa364724(v=vs.85).aspx
 function Parse-Action {
     param($actionStr)
 
@@ -91,6 +91,17 @@ function Parse-InterfaceTypes
     }) -Join ","
 }
 
+function Parse-EdgeTraversalOptions
+{
+    param($edgeTraversalOptionsStr)
+
+    switch ($edgeTraversalOptionsStr) {
+        "yes" { return 1 }
+        "deferapp" { return 2 }
+        "deferuser" { return 3 }
+        default { throw "Unknown edge traversal options '$edgeTraversalOptionsStr'." }
+    }
+}
 
 function New-FWRule
 {
@@ -108,7 +119,8 @@ function New-FWRule
         [string]$action,
         [bool]$enabled,
         [string]$profiles,
-        [string]$interfaceTypes
+        [string]$interfaceTypes,
+        [string]$edgeTraversalOptions
     )
 
     $rule = New-Object -ComObject HNetCfg.FWRule
@@ -126,6 +138,12 @@ function New-FWRule
     if ($action) { $rule.Action = Parse-Action -actionStr $action }
     if ($profiles) { $rule.Profiles = Parse-Profiles -profilesStr $profiles }
     if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
+    if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
+        # EdgeTraversalOptions property exists from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
+        if ($rule | Get-Member -Name 'EdgeTraversalOptions') {
+            $rule.EdgeTraversalOptions = Parse-EdgeTraversalOptions -edgeTraversalOptionsStr $edgeTraversalOptions
+        }
+    }
 
     return $rule
 }
@@ -154,9 +172,9 @@ $localport = Get-AnsibleParam -obj $params -name "localport" -type "str"
 $remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str"
 $protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
 $interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "str" -default "any"
+$edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
 
 # TODO: add to FWRule
-$edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
 $security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
@@ -189,9 +207,10 @@ try {
                        -localPorts $localport `
                        -remotePorts $remoteport `
                        -protocol $protocol `
-                       -interfaceTypes $interfacetypes
+                       -interfaceTypes $interfacetypes `
+                       -edgeTraversalOptions $edge
 
-    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes')
+    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions')
 
     if ($state -eq "absent") {
         if ($existingRule -eq $null) {
