@@ -1091,7 +1091,7 @@ class CloudFrontValidationManager(object):
             self.validate_required_key('geo_restriction', 'restrictions.geo_restriction', restrictions)
             geo_restriction = restrictions.get('geo_restriction')
             self.validate_required_key('restriction_type', 'restrictions.geo_restriction.restriction_type', geo_restriction)
-            valid_restrictions = python_list_to_aws_list(geo_restriction.get('items'))
+            valid_restrictions = helpers.python_list_to_aws_list(geo_restriction.get('items'))
             valid_restrictions['restriction_type'] = geo_restriction.get('restriction_type')
             return valid_restrictions
         except Exception as e:
