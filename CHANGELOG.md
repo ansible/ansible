@@ -138,6 +138,7 @@ Ansible Changes By Release
   lnk_source when the target is specified relative to the symlink.  In this
   case, lnk_target will remain relative while lnk_source will be expanded to an
   absolute path.
+- The archive module has a new parameter exclude_path which lists paths to exclude from the archive
 
 ### New Modules
 
