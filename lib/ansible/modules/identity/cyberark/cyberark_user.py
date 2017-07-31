@@ -42,12 +42,12 @@ options:
             - The name of the user who will be queried (for details), added, updated or deleted.
     state:
         default: details
-        choices: ['details', present, 'update', 'addtogroup', absent]
+        choices: [details, present, update, addtogroup, absent]
         description:
             - Specifies the state (defining the action to follow) needed for the user
-              'details' for query user details, 'present' for create user,
-              'update' for update user (even the password), 'addtogroup' to add user to a group,
-              'absent' for delete user.
+              details for query user details, present for create user,
+              update for update user (even the password), addtogroup to add user to a group,
+              absent for delete user.
     cyberark_session:
         required: True
         description:
@@ -55,19 +55,19 @@ options:
     initial_password:
         description:
             - The password that the new user will use to log on the first time. This password must meet the password policy requirements.
-              this parameter is required when state is 'present' -- Add User.
+              this parameter is required when state is present -- Add User.
     new_password:
         description:
-            - The user's updated password. Make sure that this password meets the password policy requirements.
+            - The user updated password. Make sure that this password meets the password policy requirements.
     email:
         description:
-            - The user's email address.
+            - The user email address.
     first_name:
         description:
-            - The user's first name.
+            - The user first name.
     last_name:
         description:
-            - The user's last name.
+            - The user last name.
     change_password_on_the_next_logon:
         type: bool
         default: 'no'
@@ -76,7 +76,7 @@ options:
               Valid values = true/false.
     expiry_date:
         description:
-            - The date and time when the user's account will expire and become disabled.
+            - The date and time when the user account will expire and become disabled.
     user_type_name:
         default: EPVUser
         description:
@@ -91,7 +91,7 @@ options:
             - The Vault Location for the user.
     group_name:
         description:
-            - The name of the group the user will be added to, this parameter is required when state is 'addtogroup' otherwise ignored.
+            - The name of the group the user will be added to, this parameter is required when state is addtogroup otherwise ignored.
 '''
 
 EXAMPLES = '''
