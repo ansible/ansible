@@ -209,15 +209,15 @@ class ACIModule(object):
 
         # Handle APIC response
         if query['status'] != 200:
-            result['response'] = query['msg']
-            result['status'] = query['status']
+            self.result['response'] = query['msg']
+            self.result['status'] = query['status']
             try:
                 # APIC error
                 aci_response_json(self.result, query['body'])
-                module.fail_json(msg='Query failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.module.fail_json(msg='Query failed: %(error_code)s %(error_text)s' % self.result, **self.result)
             except KeyError:
                 # Connection error
-                module.fail_json(msg='Query failed for %(url)s. %(msg)s' % query)
+                self.module.fail_json(msg='Query failed for %(url)s. %(msg)s' % query)
 
         query = json.loads(resp.read())
 
