@@ -324,10 +324,3 @@ class CloudFrontFactsServiceManager:
                     keyed_list.update({alias: item})
             keyed_list.update({distribution_id: item})
         return keyed_list
-
-
-def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
-    facts[distribution_id].update(details)
-    for alias in aliases:
-        facts[alias].update(details)
-    return facts

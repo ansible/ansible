@@ -231,6 +231,13 @@ from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceMana
 from ansible.module_utils.basic import AnsibleModule
 
 
+def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
+    facts[distribution_id].update(details)
+    for alias in aliases:
+        facts[alias].update(details)
+    return facts
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(

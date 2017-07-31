@@ -110,8 +110,7 @@ def python_list_to_aws_list(list_items=None, include_quantity=True):
     if list_items is None:
         list_items = []
     if not isinstance(list_items, list):
-        self.module.fail_json(
-            msg='expected a python list, got a python {0} with value {1}'.format(type(list_items).__name__, str(list_items)))
+        raise ValueError('Expected a list, got a {0} with value {1}'.format(type(list_items).__name__, str(list_items)))
     result = {}
     if include_quantity:
         result['quantity'] = len(list_items)
