@@ -57,7 +57,7 @@
 
 - name: test chdir
   expect:
-    command: "pwd"
+    command: "/bin/sh -c 'pwd && sleep 1'"
     chdir: "{{output_dir}}"
     responses:
       foo: bar
