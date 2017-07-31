@@ -28,11 +28,9 @@ short_description: Module for CyberArk User Management using PAS Web Services SD
 author: Edward Nunez (@enunez-cyberark)
 version_added: 2.4
 description:
-    - CyberArk User Management using PAS Web Services SDK.
-      It currently supports the following actions: Get User Details, Add User,
-      Update User, Delete User.
-      It requires C(cyberark_session) parameter to be passed as a current
-      session established by logon/logoff using cyberark_authentication.module.
+    - CyberArk User Management using PAS Web Services SDK. It currently supports the following
+      actions: Get User Details, Add User, Update User, Delete User. It requires C(cyberark_session)
+      parameter to be passed as a current session established by logon/logoff using cyberark_authentication.module.
 
 
 options:
