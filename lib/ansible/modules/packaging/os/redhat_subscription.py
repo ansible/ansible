@@ -344,7 +344,7 @@ class Rhsm(RegistrationBase):
 
     def register(self, username, password, autosubscribe, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register, environment,
-                 rhsm_baseurl, server_insecure):
+                 rhsm_baseurl, server_insecure, server_hostname):
         '''
             Register the current system to the provided RHSM or Sat6 server
             Raises:
@@ -361,6 +361,9 @@ class Rhsm(RegistrationBase):
 
         if server_insecure:
             args.extend(['--insecure'])
+
+        if server_hostname:
+            args.extend(['--serverurl', server_hostname])
 
         if activationkey:
             args.extend(['--activationkey', activationkey])
@@ -725,7 +728,7 @@ def main():
                 rhsm.configure(**module.params)
                 rhsm.register(username, password, autosubscribe, activationkey, org_id,
                               consumer_type, consumer_name, consumer_id, force_register,
-                              environment, rhsm_baseurl, server_insecure)
+                              environment, rhsm_baseurl, server_insecure, server_hostname)
                 if pool_ids:
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
                 else:
