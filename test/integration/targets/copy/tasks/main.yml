@@ -174,7 +174,7 @@
 
 - name: Copy with mode=preserve
   copy:
-    src: '{{ output_file }}'
+    src: 'foo.txt'
     dest: '{{ output_dir }}/copy-foo.txt'
     mode: preserve
   register: copy_results
