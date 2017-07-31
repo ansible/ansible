@@ -250,7 +250,6 @@ def create_launch_config(connection, module):
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
     instance_monitoring = module.params.get('instance_monitoring')
-    advanced_instance_monitoring = module.params.get('advanced_instance_monitoring')
     assign_public_ip = module.params.get('assign_public_ip')
     instance_profile_name = module.params.get('instance_profile_name')
     ebs_optimized = module.params.get('ebs_optimized')
@@ -295,8 +294,8 @@ def create_launch_config(connection, module):
     if classic_link_vpc_id is not None:
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
 
-    if instance_monitoring or advanced_instance_monitoring:
-        launch_config['InstanceMonitoring'] = {'Enabled': advanced_instance_monitoring or instance_monitoring}
+    if instance_monitoring:
+        launch_config['InstanceMonitoring'] = {'Enabled': instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
         launch_config['ClassicLinkVPCSecurityGroups'] = classic_link_vpc_security_groups
@@ -393,8 +392,7 @@ def main():
             instance_profile_name=dict(),
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
-            instance_monitoring=dict(default=False, type='bool'),
-            advanced_instance_monitoring=dict(default=False, type='bool'),
+            instance_monitoring=dict(aliases=['advanced_instance_monitoring'], default=False, type='bool'),
             assign_public_ip=dict(type='bool'),
             classic_link_vpc_security_groups=dict(type='list'),
             classic_link_vpc_id=dict(),
