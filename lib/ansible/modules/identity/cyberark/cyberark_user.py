@@ -138,7 +138,7 @@ EXAMPLES = '''
 
 RETURN = '''
 cyberark_user:
-    description: Dictionary containing result property.
+    description: Dictionary containing result properties.
     returned: success
     type: dictionary
     contains:
