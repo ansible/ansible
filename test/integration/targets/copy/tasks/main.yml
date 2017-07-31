@@ -169,8 +169,9 @@
 # Test copy with mode=preserve
 - name: Set file perms to an odd value
   file:
-    path: '{{ output_file }}'
+    path: '{{ role_path }}/files/foo.txt'
     mode: 0547
+  connection: local
 
 - name: Copy with mode=preserve
   copy:
@@ -200,6 +201,7 @@
   file:
     path: '{{ role_path }}/files/subdir/subdira'
     state: directory
+  connection: local
 
 - name: set the output subdirectory
   set_fact: output_subdir={{output_dir}}/sub
@@ -588,36 +590,38 @@
 #
 # Recursive copy of tricky symlinks
 #
-- name: Create a directory to copy from
-  file:
-    path: '{{ output_dir }}/source1'
-    state: directory
+- block:
+  - name: Create a directory to copy from
+    file:
+      path: '{{ role_path }}/tmp/source1'
+      state: directory
 
-- name: Create a directory outside of the tree
-  file:
-    path: '{{ output_dir }}/source2'
-    state: directory
+  - name: Create a directory outside of the tree
+    file:
+      path: '{{ role_path }}/tmp/source2'
+      state: directory
 
-- name: Create a symlink to a directory outside of the tree
-  file:
-    path: '{{ output_dir }}/source1/link'
-    src: '{{ output_dir }}/source2'
-    state: link
+  - name: Create a symlink to a directory outside of the tree
+    file:
+      path: '{{ role_path }}/tmp/source1/link'
+      src: '{{ role_path }}/tmp/source2'
+      state: link
 
-- name: Create a circular link back to the tree
-  file:
-    path: '{{ output_dir }}/source2/circle'
-    src: '../source1'
-    state: link
+  - name: Create a circular link back to the tree
+    file:
+      path: '{{ role_path }}/tmp/source2/circle'
+      src: '../source1'
+      state: link
 
-- name: Create output directory
-  file:
-    path: '{{ output_dir }}/dest1'
-    state: directory
+  - name: Create output directory
+    file:
+      path: '{{ role_path }}/tmp/dest1'
+      state: directory
+  connection: local
 
 - name: Recursive copy the source
   copy:
-    src: '{{ output_dir }}/source1'
+    src: '{{ role_path }}/tmp/source1'
     dest: '{{ output_dir }}/dest1'
     local_follow: True
   register: copy_result
@@ -643,7 +647,7 @@
 
 - name: Recursive copy the source a second time
   copy:
-    src: '{{ output_dir }}/source1'
+    src: '{{ role_path }}/tmp/source1'
     dest: '{{ output_dir }}/dest1'
     local_follow: True
   register: copy_result
@@ -661,25 +665,27 @@
     that:
       - '{{ output_dir_expanded[0] == "/" }}'
 
-- name: create a directory to copy
-  file:
-    path: '{{ output_dir_expanded }}/source_recursive'
-    state: directory
+- block:
+  - name: create a directory to copy
+    file:
+      path: '{{ role_path }}/tmp/source_recursive'
+      state: directory
 
-- name: create a file inside of the directory
-  copy:
-    content: "testing"
-    dest: '{{ output_dir_expanded }}/source_recursive/file'
+  - name: create a file inside of the directory
+    copy:
+      content: "testing"
+      dest: '{{ role_path }}/tmp/source_recursive/file'
 
-- name: Create a directory to place the test output in
-  file:
-    path: '{{ output_dir_expanded }}/destination'
-    state: directory
+  - name: Create a directory to place the test output in
+    file:
+      path: '{{ role_path }}/tmp/destination'
+      state: directory
+  connection: local
 
 - name: Copy the directory and files within (no trailing slash)
   copy:
-    src: '{{ output_dir_expanded }}/source_recursive'
-    dest: '{{ output_dir_expanded }}/destination'
+    src: '{{ role_path }}/tmp/source_recursive'
+    dest: '{{ output_dir }}/destination'
 
 - name: stat the recursively copied directory
   stat: path={{output_dir}}/destination/{{item}}
@@ -711,7 +717,7 @@
 
 - name: Copy just the files inside of the directory
   copy:
-    src: '{{ output_dir_expanded }}/source_recursive/'
+    src: '{{ role_path }}/tmp/source_recursive/'
     dest: '{{ output_dir_expanded }}/destination'
 
 - name: stat the recursively copied directory
@@ -840,42 +846,45 @@
 #
 # Recursive copying with symlinks tests
 #
-- name: create a test dir to copy
-  file:
-    path: '{{ output_dir }}/top_dir'
-    state: directory
+- block:
+  - name: create a test dir to copy
+    file:
+      path: '{{ role_path }}/tmp/top_dir'
+      state: directory
 
-- name: create a test dir to symlink to
-  file:
-    path: '{{ output_dir }}/linked_dir'
-    state: directory
+  - name: create a test dir to symlink to
+    file:
+      path: '{{ role_path }}/tmp/linked_dir'
+      state: directory
 
-- name: create a file in the test dir
-  copy:
-    dest: '{{ output_dir }}/linked_dir/file1'
-    content: 'hello world'
+  - name: create a file in the test dir
+    copy:
+      dest: '{{ role_path }}/tmp/linked_dir/file1'
+      content: 'hello world'
 
-- name: create a link to the test dir
-  file:
-    path: '{{ output_dir }}/top_dir/follow_link_dir'
-    src: '{{ output_dir }}/linked_dir'
-    state: link
+  - name: create a link to the test dir
+    file:
+      path: '{{ role_path }}/tmp/top_dir/follow_link_dir'
+      src: '{{ role_path }}/tmp/linked_dir'
+      state: link
 
-- name: create a circular subdir
-  file:
-    path: '{{ output_dir }}/top_dir/subdir'
-    state: directory
+  - name: create a circular subdir
+    file:
+      path: '{{ role_path }}/tmp/top_dir/subdir'
+      state: directory
 
-### FIXME:  Also add a test for a relative symlink
-- name: create a circular symlink
-  file:
-    path: '{{ output_dir }}/top_dir/subdir/circle'
-    src: '{{ output_dir }}/top_dir/'
-    state: link
+  ### FIXME:  Also add a test for a relative symlink
+  - name: create a circular symlink
+    file:
+      path: '{{ role_path }}/tmp/top_dir/subdir/circle'
+      src: '{{ role_path }}/tmp/top_dir/'
+      state: link
+
+  connection: local
 
 - name: copy the directory's link
   copy:
-    src: '{{ output_dir }}/top_dir'
+    src: '{{ role_path }}/tmp/top_dir'
     dest: '{{ output_dir }}/new_dir'
     local_follow: True
 
