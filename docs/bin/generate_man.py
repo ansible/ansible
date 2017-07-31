@@ -69,7 +69,7 @@ def opts_docs(cli, name):
             cli.set_action()
             docs['actions'][action] = {}
             docs['actions'][action]['name'] = action
-            docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__
+            docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
             action_doc_list = opt_doc_list(cli)
 
             uncommon_options = []
@@ -140,10 +140,9 @@ if __name__ == '__main__':
 
     cli_list = allvars.keys()
 
-    templates = ['man.j2', 'cli_rst.j2']
     templates = {'man.j2': {'out_dir': '../man/man1/%s',
                             'out_file_format': '%s1.asciidoc.1.in'},
-                 'cli_rst.j2': {'out_dir': '../cli_rst/%s',
+                 'cli_rst.j2': {'out_dir': '../docsite/rst/cli/%s',
                                 'out_file_format': '%s.rst'}}
 
     for libname in cli_list:

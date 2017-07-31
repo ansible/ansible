@@ -55,12 +55,12 @@ Actions
 {{ action}}
 {{ '=' * action|length }}
 
-{{ (actions[action]['desc']|default(' '))}}
+  {{ (actions[action]['desc']|default(' '))}}
 
 {% if actions[action]['uncommon_options'] %}
 
 {% for option in actions[action]['uncommon_options']|sort %}
-.. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+  .. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
     {{ option['desc'] }}
 {% endfor %}
