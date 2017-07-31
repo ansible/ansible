@@ -140,25 +140,56 @@ RETURN = '''
 cyberark_user:
     description: Dictionary containing result properties.
     returned: success
-    type: dictionary
-    contains:
-        result:
-            description: properties of the result user (either added/updated).
-            type: dictionary
-            sample: {
-                        "AgentUser": false,
-                        "Disabled": false,
-                        "Email": "",
-                        "Expired": false,
-                        "ExpiryDate": null,
-                        "FirstName": "",
-                        "LastName": "",
-                        "Location": "Applications",
-                        "Source": "Internal",
-                        "Suspended": false,
-                        "username": "Prov_centos01",
-                        "UserTypeName": "AppProvider"
-                    }
+    type: dict
+    sample:
+        AgentUser:
+            description: Whether or not this user is a gateway user.
+            type: bool
+            returned: always
+        Disabled:
+            description: Whether or not the activated user is disabled.
+            type: bool
+            returned: always
+        Email:
+            description: User email address.
+            type: string
+            returned: always
+        Expired:
+            description: Whether or not the user’s password has expired.
+            type: bool
+            returned: always
+        ExpiryDate:
+            description: The date when the user account will expire and become disabled.
+            type: string
+            returned: always
+        FirstName:
+            description: The user first name.
+            type: string
+            returned: always
+        LastName:
+            description: The user last name.
+            type: string
+            returned: always
+        Location:
+            description: The Location of the user in the Vault hierarchy.
+            type: string
+            returned: always
+        Source:
+            description: Whether user was created internally, or is an external user who was created from an LDAP directory.
+            type: string
+            returned: always
+        Suspended:
+            description: Whether or not the user is suspended.
+            type: bool
+            returned: always
+        username:
+            description: The name of the user.
+            type: string
+            returned: always
+        UserTypeName:
+            description: The type of the user.
+            type: string
+            returned: always
 status_code:
     description: Result HTTP Status code
     returned: success
