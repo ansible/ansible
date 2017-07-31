@@ -161,11 +161,12 @@ def load_config(module, config, commit=False):
     exec_command(module, 'top')
     rc, diff, err = exec_command(module, 'show | compare')
 
-    if commit:
-        exec_command(module, 'commit and-quit')
-    else:
-        for cmd in ['rollback 0', 'exit']:
-            exec_command(module, cmd)
+    if diff:
+        if commit:
+            exec_command(module, 'commit and-quit')
+        else:
+            for cmd in ['rollback 0', 'exit']:
+                exec_command(module, cmd)
 
     return str(diff).strip()
 
@@ -196,16 +197,11 @@ def main():
 
     if commands:
         commit = not module.check_mode
-        diff = load_config(module, commands)
+        diff = load_config(module, commands, commit=commit)
         if diff:
-            if commit:
-                commit_configuration(module)
-            else:
-                discard_changes(module)
-            result['changed'] = True
-
             if module._diff:
                 result['diff'] = {'prepared': diff}
+            result['changed'] = True
 
     module.exit_json(**result)
 
