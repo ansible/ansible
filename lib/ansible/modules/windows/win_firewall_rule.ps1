@@ -77,6 +77,21 @@ function Parse-Profiles
     return $profiles
 }
 
+function Parse-InterfaceTypes
+{
+    param($interfaceTypesStr)
+
+    return ($interfaceTypesStr.Split(',') | Select -uniq | ForEach {
+        switch ($_) {
+            "wireless" { return "Wireless" }
+            "lan" { return "Lan" }
+            "ras" { return "RemoteAccess" }
+            default { throw "Unknown interface type '$_'." }
+        }
+    }) -Join ","
+}
+
+
 function New-FWRule
 {
     param (
@@ -92,7 +107,8 @@ function New-FWRule
         [string]$direction,
         [string]$action,
         [bool]$enabled,
-        [string]$profiles
+        [string]$profiles,
+        [string]$interfaceTypes
     )
 
     $rule = New-Object -ComObject HNetCfg.FWRule
@@ -109,6 +125,7 @@ function New-FWRule
     if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
     if ($action) { $rule.Action = Parse-Action -actionStr $action }
     if ($profiles) { $rule.Profiles = Parse-Profiles -profilesStr $profiles }
+    if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
 
     return $rule
 }
@@ -136,10 +153,10 @@ $remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str" -default 
 $localport = Get-AnsibleParam -obj $params -name "localport" -type "str"
 $remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str"
 $protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
+$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "str" -default "any"
 
 # TODO: add to FWRule
 $edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
-$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "str" -default "any"
 $security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
@@ -171,10 +188,10 @@ try {
                        -remoteAddresses $remoteip `
                        -localPorts $localport `
                        -remotePorts $remoteport `
-                       -protocol $protocol
+                       -protocol $protocol `
+                       -interfaceTypes $interfacetypes
 
-    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol')
-
+    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes')
 
     if ($state -eq "absent") {
         if ($existingRule -eq $null) {

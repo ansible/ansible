@@ -250,3 +250,37 @@
   assert:
     that:
     - add_firewall_rule_with_multiple_ports.changed == true
+
+- name: Add firewall rule with interface types
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: '80,81-83'
+    action: allow
+    direction: in
+    protocol: tcp
+    interfacetypes: 'ras,lan,wireless'
+  register: add_firewall_rule_with_interface_types
+
+- name: Check that creating firewall rule with interface types succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_interface_types.changed == true
+
+- name: Add firewall rule with interface type 'any'
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: '80,81-83'
+    action: allow
+    direction: in
+    protocol: tcp
+    interfacetypes: any
+  register: add_firewall_rule_with_interface_type_any
+
+- name: Check that creating firewall rule with interface type 'any' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_interface_type_any.changed == true
