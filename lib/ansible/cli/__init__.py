@@ -333,9 +333,9 @@ class CLI(with_metaclass(ABCMeta, object)):
     def unfrack_paths(option, opt, value, parser):
         paths = getattr(parser.values, option.dest)
         if isinstance(value, string_types):
-            paths.extend([unfrackpath(x) for x in value.split(os.pathsep)])
+            paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep)]
         elif isinstance(value, list):
-            paths.extend([unfrackpath(x) for x in value])
+            paths[:0] = [unfrackpath(x) for x in value]
         else:
             pass  # FIXME: should we raise options error?
         setattr(parser.values, option.dest, paths)
