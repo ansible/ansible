@@ -26,7 +26,7 @@ author: James Laska
 notes:
     - In order to register a system, rhnreg_ks requires either a username and password, or an activationkey.
 requirements:
-    - rhnreg_ks
+    - rhnreg_ks, either libxml2 or lxml
 options:
     state:
         description:
