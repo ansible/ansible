@@ -134,6 +134,12 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+try:
+    from functools import cmp_to_key
+    PY3_COMPARISON = True
+except ImportError:
+    PY3_COMPARISON = False
+
 
 def get_request_payment_status(bucket):
 
@@ -196,8 +202,30 @@ def hashable_policy(policy, policy_list):
     if len(policy_list) == 1 and isinstance(policy_list[0], tuple):
         policy_list = policy_list[0]
     if isinstance(policy_list, list):
-        policy_list.sort()
+        if PY3_COMPARISON:
+            policy_list.sort(key=cmp_to_key(py3cmp))
+        else:
+            policy_list.sort()
     return policy_list
+
+
+def py3cmp(a, b):
+    ''' Python 2 can sort lists of mixed types. Strings < tuples. Without this function this fails on Python 3.'''
+    try:
+        if a > b:
+            return 1
+        elif a < b:
+            return -1
+        else:
+            return 0
+    except TypeError as e:
+        # check to see if they're tuple-string
+        # always say strings are less than tuples (to maintain compatibility with python2)
+        if 'unorderable types: str() > tuple()' == to_text(e):
+            return -1
+        elif 'unorderable types: tuple() > str()' == to_text(e):
+            return 1
+        raise
 
 
 def compare_policies(current_policy, new_policy):
