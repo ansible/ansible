@@ -242,7 +242,6 @@ def userDetails(module):
             msg=("Error while performing userDetails."
                  "Please validate parameters provided."
                  "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
-            payload=payload,
             headers=headers,
             status_code=http_exception.code)
 
@@ -251,7 +250,6 @@ def userDetails(module):
         module.fail_json(
             msg=("Unknown error while performing userDetails."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
-            payload=payload,
             headers=headers,
             status_code=-1)
 
@@ -398,7 +396,6 @@ def userDelete(module):
             msg=("Error while performing userDelete."
                  "Please validate parameters provided."
                  "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
-            payload=payload,
             headers=headers,
             status_code=http_exception.code)
 
@@ -407,7 +404,6 @@ def userDelete(module):
         module.fail_json(
             msg=("Unknown error while performing userDelete."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
-            payload=payload,
             headers=headers,
             status_code=-1)
 
