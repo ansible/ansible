@@ -78,8 +78,7 @@ options:
   duplex:
     description:
       - Interface link status
-    default: auto
-    choices: ['full', 'half', 'auto']
+    choices: ['full', 'half']
   tx_rate:
     description:
       - Transmit rate
@@ -132,7 +131,7 @@ commands:
   returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
   sample:
-  - interface GigabitEthernet0/2
+  - interface GigabitEthernet0/0/0/2
   - description test-interface
   - duplex half
   - mtu 512
@@ -182,12 +181,6 @@ def search_obj_in_list(name, lst):
             return o
 
     return None
-
-
-def add_command_to_interface(interface, cmd, commands):
-    if interface not in commands:
-        commands.append(interface)
-    commands.append(cmd)
 
 
 def map_params_to_obj(module):
@@ -297,29 +290,24 @@ def map_obj_to_commands(updates):
                     running = obj_in_have.get(item)
                     if candidate != running:
                         if candidate:
-                            cmd = item + ' ' + str(candidate)
-                            add_command_to_interface(interface, cmd, commands)
+                            cmd = interface + ' ' + item + ' ' + str(candidate)
+                            commands.append(cmd)
                         elif running:
-                            # if value present in device is default value for
-                            # interface, don't delete
-                            if running == 'auto' and item in ('speed', 'duplex'):
-                                continue
-                            cmd = 'no ' + item + ' ' + str(running)
-                            add_command_to_interface(interface, cmd, commands)
+                            cmd = 'no ' + interface + ' ' + item + ' ' + str(running)
+                            commands.append(cmd)
 
                 if disable and not obj_in_have.get('disable', False):
-                    add_command_to_interface(interface, 'shutdown', commands)
+                    commands.append(interface + ' shutdown')
                 elif not disable and obj_in_have.get('disable', False):
-                    add_command_to_interface(interface, 'no shutdown', commands)
+                    commands.append('no ' + interface + ' shutdown')
             else:
-                commands.append(interface)
                 for item in args:
                     value = w.get(item)
                     if value:
-                        commands.append(item + ' ' + str(value))
+                        commands.append(interface + ' ' + item + ' ' + str(value))
 
                 if disable:
-                    commands.append('no shutdown')
+                    commands.append('no ' + interface + ' shutdown')
     return commands
 
 
@@ -331,7 +319,7 @@ def main():
         description=dict(default=DEFAULT_DESCRIPTION),
         speed=dict(),
         mtu=dict(),
-        duplex=dict(choices=['full', 'half', 'auto']),
+        duplex=dict(choices=['full', 'half']),
         enabled=dict(),
         tx_rate=dict(),
         rx_rate=dict(),
