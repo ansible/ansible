@@ -220,7 +220,7 @@ class Rhn(redhat.RegistrationBase):
                     root = etree.fromstring(xml_data)
                     systemid = root.xpath(xpath_str)[0].text
                 except ImportError:
-                    pass
+                    raise Exception('"libxml2" or "lxml" is required for this module.')
 
             # Strip the 'ID-' prefix
             if systemid is not None and systemid.startswith('ID-'):
