@@ -105,14 +105,14 @@ function Parse-EdgeTraversalOptions
 
 function Parse-SecureFlags
 {
-    param($secureOptionsStr)
+    param($secureFlagsStr)
 
-    switch ($secureOptionsStr) {
+    switch ($secureFlagsStr) {
         "authnoencap" { return 1 }
         "authenticate" { return 2 }
         "authdynenc" { return 3 }
         "authenc" { return 4 }
-        default { throw "Unknown secure flags '$secureOptionsStr'." }
+        default { throw "Unknown secure flags '$secureFlagsStr'." }
     }
 }
 

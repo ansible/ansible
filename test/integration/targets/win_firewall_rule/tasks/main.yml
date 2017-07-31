@@ -240,7 +240,7 @@
     name: http
     enabled: yes
     state: present
-    localport: '80,81-83'
+    localport: '80,81'
     action: allow
     direction: in
     protocol: tcp
@@ -256,7 +256,7 @@
     name: http
     enabled: yes
     state: present
-    localport: '80,81-83'
+    localport: 80
     action: allow
     direction: in
     protocol: tcp
@@ -273,7 +273,7 @@
     name: http
     enabled: yes
     state: present
-    localport: '80,81-83'
+    localport: 80
     action: allow
     direction: in
     protocol: tcp
@@ -290,7 +290,7 @@
     name: http
     enabled: yes
     state: present
-    localport: '80,81-83'
+    localport: 80
     action: allow
     direction: in
     protocol: tcp
@@ -301,7 +301,7 @@
     name: http
     enabled: yes
     state: present
-    localport: '80,81-83'
+    localport: 80
     action: allow
     direction: in
     protocol: tcp
