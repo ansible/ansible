@@ -1,0 +1,38 @@
+---
+
+- name: setup lb monitor
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_lb_monitor:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: present
+
+    monitorname: lb-monitor-diameter
+    type: DIAMETER
+
+    originhost: origin.host
+    originrealm: some.realm
+    hostipaddress: 192.168.1.1
+    vendorid: 20
+    productname: someproduct
+    firmwarerevision: 10
+    authapplicationid:
+      - "100"
+      - "200"
+    inbandsecurityid: NO_INBAND_SECURITY
+    supportedvendorids:
+      - "10"
+      - "20"
+    vendorspecificvendorid: 10
+    vendorspecificauthapplicationids:
+      - "11"
+      - "22"
+    vendorspecificacctapplicationids:
+      - "12"
+      - "23"
+    acctapplicationid:
+      - "1"
+      - "2"

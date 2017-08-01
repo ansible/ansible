@@ -1,0 +1,20 @@
+---
+
+- name: setup lb monitor
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_lb_monitor:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: present
+
+    monitorname: lb-monitor-radius
+    type: RADIUS
+
+    username: someuser
+    password: somepass
+    radkey: somekey
+    radnasid: someid
+    radnasip: 192.168.1.1
