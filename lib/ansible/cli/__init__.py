@@ -194,7 +194,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             vault_ids.append(id_slug)
 
         if ask_vault_pass:
-            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt')
+            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
             vault_ids.append(id_slug)
 
         return vault_ids
@@ -206,11 +206,17 @@ class CLI(with_metaclass(ABCMeta, object)):
         # list of tuples
         vault_secrets = []
 
+        # Depending on the vault_id value (including how --ask-vault-pass / --vault-password-file create a vault_id)
+        # we need to show different prompts. This is for compat with older Towers that expect a
+        # certain vault password prompt format, so 'promp_ask_vault_pass' vault_id gets the old format.
+        prompt_formats = {}
         if create_new_password:
-            prompt_formats = ['New vault password (%s): ',
-                              'Confirm vew vault password (%s): ']
+            prompt_formats['prompt'] = ['New vault password (%(vault_id)s): ',
+                                        'Confirm vew vault password (%(vault_id)s): ']
         else:
-            prompt_formats = ['Vault password (%s): ']
+            prompt_formats['prompt'] = ['Vault password (%(vault_id)s): ']
+            # The format when we use just --ask-vault-pass needs to match 'Vault password:\s*?$'
+            prompt_formats['prompt_ask_vault_pass'] = ['Vault password: ']
 
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
@@ -218,15 +224,19 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         for index, vault_id_slug in enumerate(vault_ids):
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
-            if vault_id_value == 'prompt':
-                # TODO: we could assume --vault-id=prompt implies --ask-vault-pass
-                #       if not, we need to 'if ask_vault_pass' here
+            if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
+
+                # --vault-id some_name@prompt_ask_vault_pass --vault-id other_name@prompt_ask_vault_pass will be a little
+                # confusing since it will use the old format without the vault id in the prompt
                 if vault_id_name:
-                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats, vault_id=vault_id_name)
+                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
+                                                              vault_id=vault_id_name)
                     prompted_vault_secret.load()
                     vault_secrets.append((vault_id_name, prompted_vault_secret))
                 else:
-                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats,
+                    # ie, we used --ask-vault-pass, so we need to use the old vault password prompt
+                    # format since Tower needs to match on that format.
+                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
                                                               vault_id=C.DEFAULT_VAULT_IDENTITY)
                     prompted_vault_secret.load()
                     vault_secrets.append((C.DEFAULT_VAULT_IDENTITY, prompted_vault_secret))
