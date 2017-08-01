@@ -170,6 +170,8 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.ec2 import paging
+
 
 def list_launch_configs(connection, module):
 
@@ -180,7 +182,8 @@ def list_launch_configs(connection, module):
     sort_end = module.params.get('sort_end')
 
     try:
-        launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=launch_config_name)
+        launch_configs = {'LaunchConfigurations': paging(pause=0, marker_property='NextToken', result_key='LaunchConfigurations')
+                                                        (connection.describe_launch_configurations)(LaunchConfigurationNames=launch_config_name)}
     except ClientError as e:
         module.fail_json(msg=e.message)
 
