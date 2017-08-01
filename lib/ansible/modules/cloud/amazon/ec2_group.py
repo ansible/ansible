@@ -207,6 +207,18 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+try:
+    import ipaddress
+    HAS_IPADDRESS = True
+    HAS_NETADDR = False
+except ImportError:
+    HAS_IPADDRESS = False
+    try:
+        import netaddr
+        HAS_NETADDR = True
+    except ImportError:
+        HAS_NETADDR = False
+
 
 def deduplicate_rules_args(rules):
     """Returns unique rules"""
@@ -237,6 +249,21 @@ def add_rules_to_loopkup(ipPermissions, group_id, prefix, dict):
             dict[make_rule_key(prefix, rule, group_id, ipv6Grants.get('CidrIpv6'))] = (rule, ipv6Grants)
 
 
+def validate_cidr_ip(module, cidr_ip):
+    # takes cidr_ip string and returns valid cidr_ip string or aborts module execution
+    try:
+        if HAS_IPADDRESS:
+            return str(ipaddress.IPv4Interface(cidr_ip.decode('utf-8')).network)
+        elif HAS_NETADDR:
+            return str(netaddr.IPNetwork(cidr_ip).cidr)
+        else:
+            module.warnings.append('CIDR validation was skipped - ipaddress or'
+                                   ' netaddr python module is required.')
+            return cidr_ip
+    except:
+        module.fail_json(msg='cidr_ip not valid: %s' % str(cidr_ip))
+
+
 def validate_rule(module, rule):
     VALID_PARAMS = ('cidr_ip', 'cidr_ipv6',
                     'group_id', 'group_name', 'group_desc',
@@ -246,6 +273,8 @@ def validate_rule(module, rule):
     for k in rule:
         if k not in VALID_PARAMS:
             module.fail_json(msg='Invalid rule parameter \'{}\''.format(k))
+        if k == 'cidr_ip':
+            rule['cidr_ip'] = validate_cidr_ip(module, rule['cidr_ip'])
 
     if 'group_id' in rule and 'cidr_ip' in rule:
         module.fail_json(msg='Specify group_id OR cidr_ip, not both')
@@ -496,6 +525,8 @@ def main():
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
+
+    module.warnings = []
 
     name = module.params['name']
     group_id = module.params['group_id']
@@ -755,9 +786,9 @@ def main():
                     changed = True
 
     if group:
-        module.exit_json(changed=changed, group_id=group.id)
+        module.exit_json(changed=changed, group_id=group.id, warnings=module.warnings)
     else:
-        module.exit_json(changed=changed, group_id=None)
+        module.exit_json(changed=changed, group_id=None, warnings=module.warnings)
 
 if __name__ == '__main__':
     main()
