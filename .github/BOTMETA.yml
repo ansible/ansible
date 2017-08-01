@@ -24,6 +24,7 @@
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
 #           support - used for files without internal metadata
+#           labels - list of GitHub labels to apply
 #
 
 files: 
@@ -835,34 +836,92 @@ files:
     - inventory
     - inventory parsing
   $module_utils/a10.py: ericchou1 mischapeters
+    labels:
+    - networking
   $module_utils/aireos.py: jmighion
+    labels:
+    - networking
   $module_utils/eos.py: $team_networking
+    labels:
+    - networking
   $module_utils/aruba.py: jmighion
+    labels:
+    - networking
   $module_utils/asa.py: ogenstad
+    labels:
+    - networking
   $module_utils/avi.py: $team_avi
+    labels:
+    - networking
   $module_utils/bigswitch_utils.py: jayakody tedelhourani vuile
+    labels:
+    - networking
   $module_utils/cisco_usc.py: ragupta-git
+    labels:
+    - networking
   $module_utils/cloudengine.py: QijunPan
+    labels:
+    - networking
   $module_utils/cnos_devicerules.py: dkasberg
+    labels:
+    - networking
   $module_utils/cnos_errorcodes.py: dkasberg
+    labels:
+    - networking
   $module_utils/cnos.py: dkasberg
+    labels:
+    - networking
   $module_utils/dellos: skg-net
+    labels:
+    - networking
   $module_utils/eos.py: $team_networking
+    labels:
+    - networking
   $module_utils/f5_utils.py: caphrim007
+    labels:
+    - networking
   $module_utils/fortios.py: bjolivot
+    labels:
+    - networking
   $module_utils/ios.py: $team_networking
+    labels:
+    - networking
   $module_utils/iosxr.py: $team_networking
+    labels:
+    - networking
   $module_utils/junos.py: $team_networking
+    labels:
+    - networking
   $module_utils/netcfg.py: $team_networking
+    labels:
+    - networking
   $module_utils/netconf.py: $team_networking
+    labels:
+    - networking
   $module_utils/netcli.py: $team_networking
+    labels:
+    - networking
   $module_utils/netscaler.py: $team_networking
+    labels:
+    - networking
   $module_utils/network_common.py: $team_networking
+    labels:
+    - networking
   $module_utils/network.py: $team_networking
+    labels:
+    - networking
   $module_utils/nxos.py: $team_networking
+    labels:
+    - networking
   $module_utils/ordnance.py: alexanderturner djh00t
+    labels:
+    - networking
   $module_utils/sros.py: $team_networking
+    labels:
+    - networking
   $module_utils/vyos: $team_networking
+    labels:
+    - networking
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -883,33 +942,89 @@ files:
     - role dep
     - role dependency
   lib/ansible/plugins/action/asa: ogenstad
+    labels:
+    - networking
   lib/ansible/plugins/action/aireos: jmighion
+    labels:
+    - networking
   lib/ansible/plugins/action/aruba: jmighion
+    labels:
+    - networking
   lib/ansible/plugins/action/dellos: skg-net
+    labels:
+    - networking
   lib/ansible/plugins/action/eos: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/action/ios: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/action/iosxr_: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/action/junos_: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/action/net: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/action/nxos: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/action/sros: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/action/vyos: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/cliconf/: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/connection/netconf.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/connection/network_cli.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/connection/persistent.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/netconf/: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/terminal/aireos.py: jmighion
+    labels:
+    - networking
   lib/ansible/plugins/terminal/aruba.py: jmighion
+    labels:
+    - networking
   lib/ansible/plugins/terminal/asa.py: ogenstad
+    labels:
+    - networking
   lib/ansible/plugins/terminal/dellos10: skg-net
+    labels:
+    - networking
   lib/ansible/plugins/terminal/eos.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/terminal/ios.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/terminal/iosxr.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/terminal/junos.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/terminal/nxos.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/terminal/sros.py: $team_networking
+    labels:
+    - networking
   lib/ansible/plugins/terminal/vyos.py: $team_networking
+    labels:
+    - networking
   lib/ansible/template:
     keywords:
     - jinja
