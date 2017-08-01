@@ -21,33 +21,29 @@ description:
 requirements:
     - "python-pyOpenSSL"
 options:
+    action:
+        required: False
+        default: None
+        choices: ['parse', 'export', None]
+        description:
+            - Create (export) or parse a PKCS #12.
+              Use None with state 'absent'.
     ca_certificates:
         required: False
         description:
             - List of CA certificate to include.
-    certificate:
+    cert_path:
         required: False
         description:
             - The path to read certificates and private keys from.
               Must be in PEM format.
-    action:
-        required: False
-        default: 'export'
-        choices: ['parse', 'export']
-        description:
-            - Create (export) or parse a PKCS #12.
-    path:
-        required: True
-        default: null
-        description:
-            - Filename to write the PKCS#12 file to.
     force:
         required: False
         default: False
         description:
             - Should the file be regenerated even it it already exists.
     friendly_name:
-        required: True
+        required: False
         default: null
         aliases: 'name'
         description:
@@ -72,26 +68,36 @@ options:
         default: null
         description:
             - The PKCS#12 password.
-    privatekey_path:
+    path:
         required: True
+        default: null
         description:
-            - File to read private key from.
+            - Filename to write the PKCS#12 file to.
     privatekey_passphrase:
         required: False
         default: null
         description:
             - Passphrase source to decrypt any input private keys with.
+    privatekey_path:
+        required: False
+        description:
+            - File to read private key from.
     state:
         required: False
         default: 'present'
         choices: ['present', 'absent']
         description:
             - Whether the file should exist or not.
+    src:
+        required: False
+        description:
+            - PKCS#12 file path to parse.
 '''
 
 EXAMPLES = '''
 - name: 'Generate PKCS#12 file'
   openssl_pkcs12:
+    action: export
     path: '/opt/certs/ansible.p12'
     friendly_name: 'raclette'
     privatekey_path: '/opt/certs/keys/key.pem'
@@ -101,6 +107,7 @@ EXAMPLES = '''
 
 - name: 'Change PKCS#12 file permission'
   openssl_pkcs12:
+    action: export
     path: '/opt/certs/ansible.p12'
     friendly_name: 'raclette'
     privatekey_path: '/opt/certs/keys/key.pem'
@@ -111,6 +118,8 @@ EXAMPLES = '''
 
 - name: 'Regen PKCS#12 file'
   openssl_pkcs12:
+    action: export
+    src: '/opt/certs/ansible.p12'
     path: '/opt/certs/ansible.p12'
     friendly_name: 'raclette'
     privatekey_path: '/opt/certs/keys/key.pem'
@@ -119,6 +128,13 @@ EXAMPLES = '''
     state: present
     mode: 0600
     force: True
+
+- name: 'Dump/Parse PKCS#12 file'
+  openssl_pkcs12:
+    action: parse
+    src: '/opt/certs/ansible.p12'
+    path: '/opt/certs/ansible.pem'
+    state: present
 
 - name: 'Remove PKCS#12 file'
   openssl_pkcs12:
@@ -132,6 +148,11 @@ filename:
     returned: changed or success
     type: string
     sample: /opt/certs/ansible.p12
+privatekey:
+    description: Path to the TLS/SSL private key the public key was generated from
+    returned: changed or success
+    type: string
+    sample: /etc/ssl/private/ansible.com.pem
 '''
 
 import os
@@ -162,20 +183,52 @@ class Pkcs(crypto_utils.OpenSSLObject):
             module.check_mode
         )
         self.action = module.params['action']
+        self.ca_certificates = module.params['ca_certificates']
+        self.cert_path = module.params['cert_path']
+        self.friendly_name = module.params['friendly_name']
         self.iter_size = module.params['iter_size']
         self.maciter_size = module.params['maciter_size']
-        self.pkcs12 = None
-        self.privatekey_path = module.params['privatekey_path']
-        self.privatekey_passphrase = module.params['privatekey_passphrase']
-        self.cert_path = module.params['cert_path']
-        self.ca_certificates = module.params['ca_certificates']
-        self.friendly_name = module.params['friendly_name']
         self.passphrase = module.params['passphrase']
+        self.pkcs12 = None
+        self.privatekey_passphrase = module.params['privatekey_passphrase']
+        self.privatekey_path = module.params['privatekey_path']
+        self.src = module.params['src']
+
+    def check(self, module, perms_required=True):
+        ''' Ensure the resource is in its desired state. '''
+
+        state_and_perms = super(Pkcs, self).check(module, perms_required)
+
+        def _check_pkey_passphrase():
+            if self.privatekey_passphrase:
+                try:
+                    crypto_utils.load_privatekey(self.path,
+                                                 self.privatekey_passphrase)
+                    return True
+                except crypto.Error:
+                    return False
+            return True
+
+        if not state_and_perms:
+            return state_and_perms
+
+        return _check_pkey_passphrase
+
+    def dump(self):
+        ''' Serialize the object into a dictionary. '''
+
+        result = {
+            'changed': self.changed,
+            'filename': self.path,
+        }
+        if self.privatekey_path:
+            result['privatekey_path'] = self.privatekey_path
+
+        return result
 
     def generate(self, module):
         ''' Generate PKCS#12 file archive. '''
 
-        file_args = module.load_file_common_arguments(module.params)
         this_mode = module.params['mode']
         if not this_mode:
             this_mode = int('0400', 8)
@@ -215,68 +268,72 @@ class Pkcs(crypto_utils.OpenSSLObject):
                             self.maciter_size
                         )
                     )
+                module.set_mode_if_different(self.path, this_mode, False)
                 self.changed = True
             except (IOError, OSError) as exc:
                 self.remove()
                 raise PkcsError(exc)
 
+        file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             module.set_mode_if_different(self.path, this_mode, False)
             self.changed = True
 
-    def check(self, module, perms_required=True):
-        ''' Ensure the resource is in its desired state. '''
+    def parse(self, module):
+        ''' Read PKCS#12 file. '''
 
-        state_and_perms = super(Pkcs, self).check(module, perms_required)
+        this_mode = module.params['mode']
+        if not this_mode:
+            this_mode = int('0400', 8)
 
-        def _check_pkey_passphrase():
-            if self.privatekey_passphrase:
-                try:
-                    crypto_utils.load_privatekey(self.path,
-                                                 self.privatekey_passphrase)
-                    return True
-                except crypto.Error:
-                    return False
-            return True
+        if not self.check(module, perms_required=False) or module.params['force']:
+            try:
+                self.remove()
+            
+                p12 = crypto.load_pkcs12(open(self.src, 'rb').read(),
+                                        passphrase=self.passphrase)
+                pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
+                                              p12.get_privatekey())
+                crt = crypto.dump_certificate(crypto.FILETYPE_PEM,
+                                              p12.get_certificate())
 
-        if not state_and_perms:
-            return state_and_perms
+                with open(self.path, 'wb') as content:
+                    content.write("%s%s" % (pkey, crt))
+                module.set_mode_if_different(self.path, this_mode, False)
+                self.changed = True
+            except IOError as exc:
+                self.remove()
+                raise PkcsError(exc)
 
-        return _check_pkey_passphrase
-
-    def dump(self):
-        ''' Serialize the object into a dictionary. '''
-
-        result = {
-            'changed': self.changed,
-            'filename': self.path,
-        }
-
-        return result
-
+        file_args = module.load_file_common_arguments(module.params)
+        if module.set_fs_attributes_if_different(file_args, False):
+            module.set_mode_if_different(self.path, this_mode, False)
+            self.changed = True
 
 def main():
     argument_spec = dict(
-        action=dict(default='export',
+        action=dict(default=None,
                     choices=['parse', 'export'],
                     type='str'),
         ca_certificates=dict(type='list'),
         cert_path=dict(type='path'),
         force=dict(default=False, type='bool'),
-        friendly_name=dict(required=False, type='str', aliases=['name']),
+        friendly_name=dict(type='str', aliases=['name']),
         iter_size=dict(default=2048, type='int'),
         maciter_size=dict(default=1, type='int'),
         passphrase=dict(type='str', no_log=True),
         path=dict(required=True, type='path'),
-        privatekey_path=dict(required=False, type='path'),
         privatekey_passphrase=dict(type='str', no_log=True),
+        privatekey_path=dict(type='path'),
         state=dict(default='present',
                    choices=['present', 'absent'],
                    type='str'),
+        src=dict(type='path'),
     )
 
     required_if = [
-        ['state', 'present', ['privatekey_path', 'friendly_name']]
+        ['action', 'export', ['friendly_name']],
+        ['action', 'parse', ['src']],
     ]
 
     required_together = [
@@ -284,8 +341,8 @@ def main():
     ]
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
         add_file_common_args=True,
+        argument_spec=argument_spec,
         required_if=required_if,
         required_together=required_together,
         supports_check_mode=True,
@@ -311,7 +368,10 @@ def main():
             module.exit_json(**result)
 
         try:
-            pkcs12.generate(module)
+            if module.params['action'] == 'export':
+               pkcs12.generate(module)
+            else:
+               pkcs12.parse(module)
         except PkcsError as exc:
             module.fail_json(msg=to_native(exc))
     else:
