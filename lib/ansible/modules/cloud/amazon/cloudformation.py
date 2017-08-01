@@ -309,7 +309,7 @@ def create_stack(module, stack_params, cfn):
         result = stack_operation(cfn, stack_params['StackName'], 'CREATE')
     except Exception as err:
         error_msg = boto_exception(err)
-        module.fail_json(msg=error_msg)
+        module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
     if not result:
         module.fail_json(msg="empty result")
     return result
@@ -349,7 +349,7 @@ def create_changeset(module, stack_params, cfn):
         if 'No updates are to be performed.' in error_msg:
             result = dict(changed=False, output='Stack is already up-to-date.')
         else:
-            module.fail_json(msg=error_msg)
+            module.fail_json(msg="Failed to create change set: {0}".format(error_msg), exception=traceback.format_exc())
 
     if not result:
         module.fail_json(msg="empty result")
@@ -371,7 +371,7 @@ def update_stack(module, stack_params, cfn):
         if 'No updates are to be performed.' in error_msg:
             result = dict(changed=False, output='Stack is already up-to-date.')
         else:
-            module.fail_json(msg=error_msg)
+            module.fail_json(msg="Failed to update stack {0}: {1}".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
     if not result:
         module.fail_json(msg="empty result")
     return result
