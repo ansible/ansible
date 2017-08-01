@@ -3,6 +3,7 @@
 - name: Ensure we have loopback 888 for testing
   ios_config:
     src: config.j2
+    authorize: yes
     provider: "{{ cli }}"
 
 
