@@ -24,6 +24,7 @@ __metaclass__ = type
 import sys
 import copy
 
+from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.dellos9 import dellos9_argument_spec
@@ -56,7 +57,7 @@ class ActionModule(_ActionModule):
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = provider['timeout'] or self._play_context.timeout
+        pc.timeout = provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
         pc.become = provider['authorize'] or False
         pc.become_pass = provider['auth_pass']
 
