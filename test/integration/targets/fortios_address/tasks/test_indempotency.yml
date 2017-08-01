@@ -1,0 +1,82 @@
+---
+ - name: Add address
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: github
+     value: 192.30.253.113
+     state: present
+   register: add_addr
+
+ - name: Assert
+   assert:
+     that:
+      - "add_addr.changed == true"
+
+ - name: Add the same address 
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: github
+     value: 192.30.253.113
+     state: present
+   register: add_addr
+
+ - name: Assert
+   assert:
+     that:
+      - "add_addr.changed == false"
+
+ - name: change value
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: github
+     value: 192.1.2.3
+     state: present
+   register: change_addr
+
+ - name: Assert
+   assert:
+     that:
+      - "change_addr.changed == true"
+
+ - name: change value second time
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: github
+     value: 192.1.2.3
+     state: present
+   register: change_addr
+
+ - name: Assert
+   assert:
+     that:
+      - "change_addr.changed == false"
+
+ - name: Delete existing address
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: github
+     state: absent
+   register: del_addr
+
+ - name: Assert
+   assert:
+     that:
+      - "del_addr.changed == true"
+
+ - name: Delete same existing address
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: github
+     state: absent
+   register: del_addr
+
+ - name: Assert
+   assert:
+     that:
+      - "del_addr.changed == false"
