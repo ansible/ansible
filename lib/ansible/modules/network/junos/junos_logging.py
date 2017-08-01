@@ -217,11 +217,13 @@ def main():
     param_to_xpath_map.update([
         ('name', {'xpath': 'name', 'is_key': True, 'top': dest}),
         ('facility', {'xpath': 'name', 'is_key': is_facility_key, 'top': field_top}),
-        ('level', {'xpath': module.params.get('level'), 'tag_only': True, 'top': field_top}),
         ('size', {'xpath': 'size', 'leaf_only': True, 'is_key': True, 'top': 'archive'}),
         ('files', {'xpath': 'files', 'leaf_only': True, 'is_key': True, 'top': 'archive'}),
         ('rotate_frequency', {'xpath': 'log-rotate-frequency', 'leaf_only': True}),
     ])
+
+    if module.params.get('level'):
+        param_to_xpath_map['level'] = {'xpath': module.params.get('level'), 'tag_only': True, 'top': field_top}
 
     validate_param_values(module, param_to_xpath_map)
 
