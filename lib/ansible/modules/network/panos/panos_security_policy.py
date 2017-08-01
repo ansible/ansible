@@ -272,22 +272,39 @@ except ImportError:
     HAS_LIB = False
 
 
-def security_rule_exists(device, rule_name):
+def security_rule_exists(device, sec_rule):
     if isinstance(device, pandevice.firewall.Firewall):
         rule_base = pandevice.policies.Rulebase.refreshall(device)
     elif isinstance(device, pandevice.panorama.Panorama):
         # look for only pre-rulebase ATM
         rule_base = pandevice.policies.PreRulebase.refreshall(device)
 
+    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability'
+                   'spyware', 'url_filtering', 'file_blocking', 'data_filtering',
+                   'wildfire_analysis', 'type', 'action', 'tag', 'log_start', 'log_end']
+    list_check = ['tozone', 'fromzone', 'source', 'source_user', 'destination', 'category',
+                  'application', 'service', 'hip_profiles']
+
+    change_check = False
     if rule_base:
         rule_base = rule_base[0]
         security_rules = rule_base.findall(pandevice.policies.SecurityRule)
-
         if security_rules:
             for r in security_rules:
-                if r.name == rule_name:
-                    return True
-
+                if r.name == sec_rule.name:
+                    change_check = True
+                    for check in match_check:
+                        propose_check = getattr(sec_rule, check, None)
+                        current_check = getattr(r, check, None)
+                        if propose_check != current_check:
+                            return True
+                    for check in list_check:
+                        propose_check = getattr(sec_rule, check, [])
+                        current_check = getattr(r, check, [])
+                        if set(propose_check) != set(current_check):
+                            return True
+    if change_check:
+        return 'no_change'
     return False
 
 
@@ -334,13 +351,15 @@ def create_security_rule(**kwargs):
     return security_rule
 
 
-def add_security_rule(device, sec_rule):
+def add_security_rule(device, sec_rule, rule_exist):
     if isinstance(device, pandevice.firewall.Firewall):
         rule_base = pandevice.policies.Rulebase.refreshall(device)
     elif isinstance(device, pandevice.panorama.Panorama):
         # look for only pre-rulebase ATM
         rule_base = pandevice.policies.PreRulebase.refreshall(device)
 
+    if rule_exist:
+        return False
     if rule_base:
         rule_base = rule_base[0]
 
@@ -449,38 +468,38 @@ def main():
     else:
         device = pandevice.firewall.Firewall(ip_address, username, password, api_key=api_key)
 
-    if security_rule_exists(device, rule_name):
-        module.fail_json(msg='Rule with the same name already exists.')
+    sec_rule = create_security_rule(
+        rule_name=rule_name,
+        description=description,
+        tag=tag,
+        from_zone=from_zone,
+        to_zone=to_zone,
+        source=source,
+        source_user=source_user,
+        destination=destination,
+        category=category,
+        application=application,
+        service=service,
+        hip_profiles=hip_profiles,
+        group_profile=group_profile,
+        antivirus=antivirus,
+        vulnerability=vulnerability,
+        spyware=spyware,
+        url_filtering=url_filtering,
+        file_blocking=file_blocking,
+        data_filtering=data_filtering,
+        wildfire_analysis=wildfire_analysis,
+        log_start=log_start,
+        log_end=log_end,
+        rule_type=rule_type,
+        action=action
+    )
 
+    rule_exist = security_rule_exists(device, sec_rule)
+    if rule_exist is True:
+        module.fail_json(msg='Rule with the same name but different objects exists.')
     try:
-        sec_rule = create_security_rule(
-            rule_name=rule_name,
-            description=description,
-            tag=tag,
-            from_zone=from_zone,
-            to_zone=to_zone,
-            source=source,
-            source_user=source_user,
-            destination=destination,
-            category=category,
-            application=application,
-            service=service,
-            hip_profiles=hip_profiles,
-            group_profile=group_profile,
-            antivirus=antivirus,
-            vulnerability=vulnerability,
-            spyware=spyware,
-            url_filtering=url_filtering,
-            file_blocking=file_blocking,
-            data_filtering=data_filtering,
-            wildfire_analysis=wildfire_analysis,
-            log_start=log_start,
-            log_end=log_end,
-            rule_type=rule_type,
-            action=action
-        )
-
-        changed = add_security_rule(device, sec_rule)
+        changed = add_security_rule(device, sec_rule, rule_exist)
     except PanXapiError:
         exc = get_exception()
         module.fail_json(msg=exc.message)
