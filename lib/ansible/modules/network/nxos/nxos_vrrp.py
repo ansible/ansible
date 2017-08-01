@@ -122,12 +122,12 @@ def execute_show_command(command, module):
         output = 'json'
     else:
         output = 'text'
-    cmds = [{
+
+    commands = [{
         'command': command,
         'output': output,
     }]
-    body = run_commands(module, cmds)
-    return body
+    return run_commands(module, commands)[0]
 
 
 def apply_key_map(key_map, table):
@@ -163,7 +163,7 @@ def is_default(interface, module):
     command = 'show run interface {0}'.format(interface)
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = execute_show_command(command, module)
         if 'invalid' in body.lower():
             return 'DNE'
         else:
@@ -180,7 +180,7 @@ def get_interface_mode(interface, intf_type, module):
     command = 'show interface {0}'.format(interface)
     interface = {}
     mode = 'unknown'
-    body = execute_show_command(command, module)[0]
+    body = execute_show_command(command, module)
     interface_table = body['TABLE_interface']['ROW_interface']
     name = interface_table.get('interface')
 
@@ -197,7 +197,7 @@ def get_interface_mode(interface, intf_type, module):
 
 def get_vrr_status(group, module, interface):
     command = 'show run all | section interface.{0}$'.format(interface)
-    body = execute_show_command(command, module)[0]
+    body = execute_show_command(command, module)
     vrf_index = None
     admin_state = 'shutdown'
 
@@ -231,7 +231,7 @@ def get_existing_vrrp(interface, group, module, name):
     }
 
     try:
-        vrrp_table = body[0]['TABLE_vrrp_group']
+        vrrp_table = body['TABLE_vrrp_group']
     except (AttributeError, IndexError, TypeError):
         return {}
 
