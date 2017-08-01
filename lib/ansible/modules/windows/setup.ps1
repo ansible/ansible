@@ -74,6 +74,7 @@ foreach ($adapter in $ActiveNetcfg)
         dns_domain = $adapter.dnsdomain
         interface_index = $adapter.InterfaceIndex
         interface_name = $adapter.description
+        macaddress = $adapter.macaddress
     }
 
     if ($adapter.defaultIPGateway)
