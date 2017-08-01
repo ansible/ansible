@@ -63,17 +63,17 @@ class CyberarkPassword:
         result_dict = {}
 
         try:
-            allParms = [
+            all_parms = [
                 CLIPASSWORDSDK_CMD,
                 'GetPassword',
                 '-p', 'AppDescs.AppID=%s' % self.appid,
                 '-p', 'Query=%s' % self.query,
                 '-o', self.output,
                 '-d', self.delimiter]
-            allParms.extend(self.extra_parms)
+            all_parms.extend(self.extra_parms)
 
             credential = ""
-            tmp_output,tmp_error = Popen(allParms, stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate()
+            tmp_output,tmp_error = Popen(all_parms, stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate()
 
             if tmp_output:
                 credential = tmp_output
