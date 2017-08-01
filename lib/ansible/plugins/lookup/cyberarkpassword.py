@@ -19,7 +19,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 import os
 import subprocess
-from subprocess import PIPE,Popen
+from subprocess import PIPE
+from subprocess import Popen
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -73,7 +74,7 @@ class CyberarkPassword:
             all_parms.extend(self.extra_parms)
 
             credential = ""
-            tmp_output,tmp_error = Popen(all_parms, stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate()
+            tmp_output, tmp_error = Popen(all_parms, stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate()
 
             if tmp_output:
                 credential = tmp_output
