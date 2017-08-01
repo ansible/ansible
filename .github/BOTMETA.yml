@@ -480,6 +480,7 @@ files:
   $modules/network/sros/: $team_openswitch
   $modules/network/system/: $team_networking
   $modules/network/vyos/: Qalthos
+  $modules/notification/bearychat.py: tonyseek
   $modules/notification/campfire.py: fabulops
   $modules/notification/catapult.py: Jmainguy
   $modules/notification/cisco_spark.py:
