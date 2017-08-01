@@ -18,78 +18,85 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 module: vdirect_file
-author: Evgeny Fedoruk (@evgenyfedoruk)
+author: Evgeny Fedoruk @ Radware LTD (@evgenyfedoruk)
 short_description: Uploads a new or updates an existing runnable file into Radware vDirect server
 description:
     - Uploads a new or updates an existing configuration template or workflow template into the Radware vDirect server.
-      All parameters are not mandatory required since they may be set as environment variables.
+      All parameters may be set as environment variables.
 notes:
-    - Requires the Radware vdirect-client Python package on the host. This is as easy as pip
-      install vdirect-client
-version_added: "devel"
+    - Requires the Radware vdirect-client Python package on the host. This is as easy as
+      C(pip install vdirect-client)
+version_added: "2.4"
 options:
   vdirect_ip:
     description:
-     - Primary vDirect server IP address.
-    required: false
+     - Primary vDirect server IP address, may be set as VDIRECT_IP environment variable.
+    required: true
   vdirect_user:
     description:
-     - vDirect server username
-    required: false
+     - vDirect server username, may be set as VDIRECT_USER environment variable.
+    required: true
     default: None
   vdirect_password:
     description:
-     - vDirect server password
+     - vDirect server password, may be set as VDIRECT_PASSWORD environment variable.
+    required: true
+    default: None
+  vdirect_secondary_ip:
+    description:
+     - Secondary vDirect server IP address, may be set as VDIRECT_SECONDARY_IP environment variable.
     required: false
     default: None
   vdirect_wait:
     description:
-     - Wait for async operation to complete.
+     - Wait for async operation to complete, may be set as VDIRECT_WAIT environment variable.
     required: false
-    default: None
-  vdirect_secondary_ip:
-    description:
-     - Secondary vDirect server IP address.
-    required: false
+    type: bool
+    default: 'yes'
   vdirect_https_port:
     description:
-     - vDirect server HTTPS port number.
+     - vDirect server HTTPS port number, may be set as VDIRECT_HTTPS_PORT environment variable.
     required: false
-    default: None
+    default: 2189
   vdirect_http_port:
     description:
-     - vDirect server HTTP port number.
+     - vDirect server HTTP port number, may be set as VDIRECT_HTTP_PORT environment variable.
     required: false
-    default: None
+    default: 2188
   vdirect_timeout:
     description:
-     - Amount of time to wait for async operation completion [seconds].
+     - Amount of time to wait for async operation completion [seconds],
+     - may be set as VDIRECT_TIMEOUT environment variable.
     required: false
-    default: None
-  vdirect_https:
+    default: 60
+  vdirect_use_ssl:
     description:
-     - Use HTTPS.
+     - If C(no), an HTTP connection will be used instead of the default HTTPS connection,
+     - may be set as VDIRECT_HTTPS or VDIRECT_USE_SSL environment variable.
     required: false
-    default: None
-  vdirect_strict_http_results:
+    type: bool
+    default: 'yes'
+  vdirect_validate_certs:
     description:
-     - Throw exception for status codes 4xx,5xx or not.
+     - If C(no), SSL certificates will not be validated,
+     - may be set as VDIRECT_VALIDATE_CERTS or VDIRECT_VERIFY environment variable.
+     - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     required: false
-    default: None
-  vdirect_ssl_verify_context:
-    description:
-     - SSL contect verification.
-    required: false
-    default: None
+    type: bool
+    default: 'yes'
   file_name:
     description:
-     - vDirect runnable file name to be uploaded. May be configuration template or workflow template.
+     - vDirect runnable file name to be uploaded.
+     - May be velocity configuration template (.vm) or workflow template zip file (.zip).
     required: true
 
 requirements:
@@ -105,20 +112,68 @@ EXAMPLES = '''
       file_name: /tmp/get_vlans.vm
 '''
 
+RETURN = '''
+result:
+    description: Message detailing upload result
+    returned: success
+    type: string
+    sample: "Workflow template created"
+'''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
+import os
+import os.path
+
 try:
-    from vdirect_client import vdirect_client as rest_client
+    from vdirect_client import rest_client
     HAS_REST_CLIENT = True
-    import pkg_resources
-    version = pkg_resources.get_distribution("vdirect_client").version
-    if version.startswith("4.1.1"):
-        HAS_REST_CLIENT_VERSION = True
-    else:
-        HAS_REST_CLIENT_VERSION = False
 except ImportError:
     HAS_REST_CLIENT = False
 
 TEMPLATE_EXTENSION = '.vm'
 WORKFLOW_EXTENSION = '.zip'
+WRONG_EXTENSION_ERROR = 'The file_name parameter must have ' \
+                        'velocity script (.vm) extension or ZIP archive (.zip) extension'
+CONFIGURATION_TEMPLATE_CREATED_SUCCESS = 'Configuration template created'
+CONFIGURATION_TEMPLATE_UPDATED_SUCCESS = 'Configuration template updated'
+WORKFLOW_TEMPLATE_CREATED_SUCCESS = 'Workflow template created'
+WORKFLOW_TEMPLATE_UPDATED_SUCCESS = 'Workflow template updated'
+
+meta_args = dict(
+    vdirect_ip=dict(
+        required=True, fallback=(env_fallback, ['VDIRECT_IP']),
+        default=None),
+    vdirect_user=dict(
+        required=True, fallback=(env_fallback, ['VDIRECT_USER']),
+        default=None),
+    vdirect_password=dict(
+        required=True, fallback=(env_fallback, ['VDIRECT_PASSWORD']),
+        default=None, no_log=True, type='str'),
+    vdirect_secondary_ip=dict(
+        required=False, fallback=(env_fallback, ['VDIRECT_SECONDARY_IP']),
+        default=None),
+    vdirect_use_ssl=dict(
+        required=False, fallback=(env_fallback, ['VDIRECT_HTTPS', 'VDIRECT_USE_SSL']),
+        default=True, type='bool'),
+    vdirect_wait=dict(
+        required=False, fallback=(env_fallback, ['VDIRECT_WAIT']),
+        default=True, type='bool'),
+    vdirect_timeout=dict(
+        required=False, fallback=(env_fallback, ['VDIRECT_TIMEOUT']),
+        default=60, type='int'),
+    vdirect_validate_certs=dict(
+        required=False, fallback=(env_fallback, ['VDIRECT_VERIFY', 'VDIRECT_VALIDATE_CERTS']),
+        default=True, type='bool'),
+    vdirect_https_port=dict(
+        required=False, fallback=(env_fallback, ['VDIRECT_HTTPS_PORT']),
+        default=2189, type='int'),
+    vdirect_http_port=dict(
+        required=False, fallback=(env_fallback, ['VDIRECT_HTTP_PORT']),
+        default=2188, type='int'),
+    file_name=dict(required=True, default=None)
+)
+
 
 class VdirectFile(object):
     def __init__(self, params):
@@ -130,9 +185,8 @@ class VdirectFile(object):
                                              https_port=params['vdirect_https_port'],
                                              http_port=params['vdirect_http_port'],
                                              timeout=params['vdirect_timeout'],
-                                             https=params['vdirect_https'],
-                                             strict_http_results=params['vdirect_strict_http_results'],
-                                             ssl_verify_context=params['vdirect_ssl_verify_context'])
+                                             https=params['vdirect_use_ssl'],
+                                             verify=params['vdirect_validate_certs'])
 
     def upload(self, fqn):
         if fqn.endswith(TEMPLATE_EXTENSION):
@@ -144,9 +198,9 @@ class VdirectFile(object):
             result = template.create_from_source(file_content, template_name, fail_if_invalid=True)
             if result[rest_client.RESP_STATUS] == 409:
                 template.upload_source(file_content, template_name, fail_if_invalid=True)
-                result = "Template updated"
+                result = CONFIGURATION_TEMPLATE_UPDATED_SUCCESS
             else:
-                result = "Template created"
+                result = CONFIGURATION_TEMPLATE_CREATED_SUCCESS
         elif fqn.endswith(WORKFLOW_EXTENSION):
             workflow = rest_client.WorkflowTemplate(self.client)
 
@@ -155,12 +209,11 @@ class VdirectFile(object):
             result = workflow.create_template_from_archive(file_content, fail_if_invalid=True)
             if result[rest_client.RESP_STATUS] == 409:
                 workflow.update_archive(file_content, os.path.splitext(os.path.basename(fqn))[0])
-                result = "Workflow template updated"
+                result = WORKFLOW_TEMPLATE_UPDATED_SUCCESS
             else:
-                result = "Workflow template created"
+                result = WORKFLOW_TEMPLATE_CREATED_SUCCESS
         else:
-            result = "The file_name parameter must have " \
-                     "velocity script (.vm) extension or ZIP archive (.zip) extension"
+            result = WRONG_EXTENSION_ERROR
         return result
 
 
@@ -168,64 +221,16 @@ def main():
 
     if not HAS_REST_CLIENT:
         raise ImportError("The python vdirect-client module is required")
-    elif not HAS_REST_CLIENT_VERSION:
-        raise ImportError("The python vdirect-client module version should be 4.1.1 and above")
 
-    meta_args = dict(
-        vdirect_ip=dict(
-            required=False,
-            default=None),
-        vdirect_user=dict(
-            required=False,
-            default=None),
-        vdirect_password=dict(
-            required=False,
-            no_log=True,
-            type='str',
-            default=None),
-        vdirect_secondary_ip=dict(
-            required=False,
-            default=None),
-        vdirect_https=dict(
-            required=False,
-            default=None),
-        vdirect_wait=dict(
-            required=False,
-            default=None),
-        vdirect_timeout=dict(
-            required=False,
-            default=None),
-        vdirect_ssl_verify_context=dict(
-            required=False,
-            default=None),
-        vdirect_https_port=dict(
-            required=False,
-            default=None),
-        vdirect_http_port=dict(
-            required=False,
-            default=None),
-        vdirect_strict_http_results=dict(
-            required=False,
-            default=None),
-        file_name=dict(required=True, default=None),
-    )
-
-    module = AnsibleModule(
-        argument_spec=meta_args
-    )
+    module = AnsibleModule(argument_spec=meta_args)
 
     try:
-        params = module.params
         vdirect_file = VdirectFile(module.params)
-        result = vdirect_file.upload(params['file_name'])
+        result = vdirect_file.upload(module.params['file_name'])
         result = dict(result=result)
         module.exit_json(**result)
     except Exception as e:
         module.fail_json(msg=str(e))
-
-import os
-import os.path
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()
