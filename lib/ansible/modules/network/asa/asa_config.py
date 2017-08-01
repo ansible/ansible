@@ -279,7 +279,7 @@ def run(module, result):
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
-            module.config.load_config(commands)
+            result['responses'] = module.config.load_config(commands)
         result['changed'] = True
 
     if module.params['save']:
