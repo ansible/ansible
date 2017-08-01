@@ -1286,7 +1286,10 @@ class AnsibleModule(object):
                     try:
                         rc, out, err = self.run_command(attrcmd)
                         if rc != 0 or err:
-                            raise Exception("Error while setting attributes: %s" % (out + err))
+                            #raise Exception("Error while setting attributes: %s" % (out + err))
+                            msg = 'Error setting attribs: %s %s %s' % (attributes, type(attributes), attrcmd)
+                            msg += ' %s' % (out + err)
+                            raise Exception(msg)
                     except:
                         e = get_exception()
                         path = to_text(b_path)
@@ -2287,8 +2290,10 @@ class AnsibleModule(object):
                 raise
 
         # Set the attributes
-        attribs = self.get_file_attributes(src)
-        self.set_attributes_if_different(dest, attribs.get('attr_flags', []), True)
+        current_attribs = self.get_file_attributes(src)
+        current_attribs = current_attribs.get('attr_flags', [])
+        current_attribs = ''.join(current_attribs)
+        self.set_attributes_if_different(dest, current_attribs, True)
 
     def atomic_move(self, src, dest, unsafe_writes=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success

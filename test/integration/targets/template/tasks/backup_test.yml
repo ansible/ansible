@@ -25,6 +25,7 @@
     mode: 0777
     owner: "{{ t_username }}"
     group: "{{ t_groupname }}"
+    attributes: j
 
 - name: run the template
   template:
