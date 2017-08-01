@@ -107,6 +107,8 @@ Ansible Changes By Release
   in ansible/module_utils/six/__init__.py.  Six is tricky to unbundle, however,
   so they may want to base their efforts off the code we were using:
     * https://github.com/ansible/ansible/blob/2fff690caab6a1c6a81973f704be3fbd0bde2c2f/lib/ansible/module_utils/six/__init__.py
+* Update ipaddr Jinja filters to replace existing non RFC compliant ones. Added additional filters for easier use
+  of handling IP addresses. (PR# 26566)
 
 #### New Callbacks:
 - full_skip
