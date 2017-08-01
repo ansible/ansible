@@ -791,6 +791,10 @@ class DockerInventory(object):
         if config_path:
             try:
                 config_file = os.path.abspath(config_path)
+                # default config path is docker.yml in same directory as this script
+                # old behaviour is docker.yml in current directory. Handle both.
+                if not os.path.exists(config_file):
+                    config_file = os.path.abspath(os.path.basename(config_path))
             except:
                 config_file = None
 
@@ -825,7 +829,7 @@ class DockerInventory(object):
         # Parse command line arguments
 
         basename = os.path.splitext(os.path.basename(__file__))[0]
-        default_config = basename + '.yml'
+        default_config = os.path.join(os.path.dirname(__file__), basename + '.yml')
 
         parser = argparse.ArgumentParser(
             description='Return Ansible inventory for one or more Docker hosts.')
