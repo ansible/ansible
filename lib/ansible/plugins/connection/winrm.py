@@ -42,6 +42,7 @@ from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
@@ -279,7 +280,10 @@ class Connection(ConnectionBase):
 
             # NB: this can hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
             # FUTURE: Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
-            response = Response(self.protocol.get_command_output(self.shell_id, command_id))
+            resptuple = self.protocol.get_command_output(self.shell_id, command_id)
+            # ensure stdout/stderr are text for py3
+            # FUTURE: this should probably be done internally by pywinrm
+            response = Response(tuple(to_text(v) if isinstance(v, binary_type) else v for v in resptuple))
 
             # TODO: check result from response and set stdin_push_failed if we have nonzero
             if from_exec:
