@@ -257,15 +257,15 @@ def main():
             command = get_commands_to_config_vrf(delta, vrf)
             commands.extend(command)
 
-    if commands:
+    if state == 'present' and commands:
         if proposed.get('vni'):
             if existing.get('vni') and existing.get('vni') != '':
                 commands.insert(1, 'no vni {0}'.format(existing['vni']))
 
-        if not module.check_mode:
-            load_config(module, commands)
-
+    if commands and not module.check_mode:
+        load_config(module, commands)
         results['changed'] = True
+
         if 'configure' in commands:
             commands.pop(0)
 
