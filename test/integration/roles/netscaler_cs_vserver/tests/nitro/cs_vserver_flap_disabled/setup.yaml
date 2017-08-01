@@ -1,0 +1,39 @@
+---
+
+- name: flap http cs vserver
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_cs_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: cs-vserver-flap
+    servicetype: HTTP
+    ipv46: 192.168.1.1
+    port: 80
+    td: 0
+
+    disabled: "{{ item|int % 2 }}"
+  with_sequence: count=20
+  delay: 1
+
+- name: flap http cs vserver
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_cs_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: cs-vserver-flap
+    servicetype: HTTP
+    ipv46: 192.168.1.1
+    port: 80
+    td: 0
+
+    disabled: "{{ item|int % 2 }}"
+  with_sequence: count=20
+  delay: 5
