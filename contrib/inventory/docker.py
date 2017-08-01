@@ -371,13 +371,25 @@ HAS_DOCKER_PY = True
 HAS_DOCKER_ERROR = False
 
 try:
-    from docker import Client
     from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
+
+# Client has recently been split into DockerClient and APIClient
+try:
+    from docker import Client
+except ImportError as exc:
+    try:
+        from docker import APIClient as Client
+    except ImportError as exc:
+        HAS_DOCKER_ERROR = str(exc)
+        HAS_DOCKER_PY = False
+
+        class Client:
+            pass
 
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
