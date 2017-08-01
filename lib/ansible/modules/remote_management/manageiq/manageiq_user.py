@@ -245,7 +245,7 @@ def main():
             password=dict(no_log=True),
             group=dict(),
             email=dict(),
-            state=dict(choices=['absent', 'present'], default='present')
+            state=dict(choices=['absent', 'present'], default='present', no_log=True)
         ),
     )
 
