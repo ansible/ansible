@@ -26,10 +26,6 @@ sys.modules['__future__'] = Mock()
 ONEVIEW_MODULE_UTILS_PATH = 'ansible.module_utils.oneview'
 from ansible.module_utils.oneview import (HPOneViewException,
                                           HPOneViewTaskError,
-                                          OneViewModuleBase,
-                                          SPKeys,
-                                          ServerProfileMerger,
-                                          ServerProfileReplaceNamesByUris,
-                                          ResourceComparator)
+                                          OneViewModuleBase)
 
 from ansible.modules.remote_management.hpe.oneview_fc_network import FcNetworkModule

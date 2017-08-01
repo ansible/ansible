@@ -82,7 +82,6 @@ fc_network:
     type: dict
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.oneview import OneViewModuleBase
 
 
