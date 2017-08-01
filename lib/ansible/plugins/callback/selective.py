@@ -178,7 +178,7 @@ class CallbackModule(CallbackBase):
         unreachable = result._result.get("unreachable")
 
         if 'print_action' in result._task.tags or failed or unreachable or \
-            self._display.verbosity > 1:
+                self._display.verbosity > 1:
             self._print_task()
             self.last_skipped = False
             msg = to_text(result._result.get('msg', '')) or\
@@ -204,7 +204,6 @@ class CallbackModule(CallbackBase):
 
                     stderr = [r.get('exception', None), r.get('module_stderr', None)]
                     stderr = "\n".join([e for e in stderr if e]).strip()
-
 
                     self._print_host_or_item(r['item'],
                                              r.get('changed', False),
