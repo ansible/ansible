@@ -1,0 +1,13 @@
+---
+
+- name: Setup cs policy
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_policy:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: absent
+    policyname: somepolicy_rule
