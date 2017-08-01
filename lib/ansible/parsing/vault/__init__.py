@@ -259,7 +259,7 @@ class PromptVaultSecret(VaultSecret):
         b_vault_passwords = []
 
         for prompt_format in self.prompt_formats:
-            prompt = prompt_format % self.vault_id
+            prompt = prompt_format % {'vault_id': self.vault_id}
             try:
                 vault_pass = display.prompt(prompt, private=True)
             except EOFError:
