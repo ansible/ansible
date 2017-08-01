@@ -1,0 +1,78 @@
+---
+
+- name: Setup server
+  delegate_to: localhost
+  netscaler_server:
+    nsip: "{{ nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+
+    state: "{{ state }}"
+    name: "server-{{ item }}"
+    ipaddress: "192.168.1.{{ item }}"
+  with_sequence: count=6
+
+
+- name: Setup http service
+  delegate_to: localhost
+  netscaler_service:
+      nsip: "{{ nsip }}"
+      nitro_user: "{{ nitro_user }}"
+      nitro_pass: "{{ nitro_pass }}"
+
+      state: "{{ state }}"
+      name: "service-http-{{ item }}"
+      servername: "server-{{ item }}"
+      servicetype: HTTP
+      port: 80
+  with_sequence: count=2
+
+- name: Setup service group
+  delegate_to: localhost
+  netscaler_servicegroup:
+      nsip: "{{ nsip }}"
+      nitro_user: "{{ nitro_user }}"
+      nitro_pass: "{{ nitro_pass }}"
+
+      state: "{{ state }}"
+      servicegroupname: service-group-1
+      servicetype: HTTP
+      servicemembers:
+        - servername: server-3
+          port: 80
+          weight: 50
+        - servername: server-4
+          port: 80
+          weight: 50
+
+- name: Setup service group
+  delegate_to: localhost
+  netscaler_servicegroup:
+      nsip: "{{ nsip }}"
+      nitro_user: "{{ nitro_user }}"
+      nitro_pass: "{{ nitro_pass }}"
+
+      state: "{{ state }}"
+      servicegroupname: service-group-2
+      servicetype: HTTP
+      servicemembers:
+        - servername: server-5
+          port: 80
+          weight: 50
+        - servername: server-6
+          port: 80
+          weight: 50
+
+- name: Setup push vserver
+  delegate_to: localhost
+  netscaler_lb_vserver:
+    nsip: "{{ nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+
+    state: "{{ state }}"
+
+    name: lb-vserver-push
+    port: 80
+    servicetype: PUSH
+    ipv46: 193.1.1.1

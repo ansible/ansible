@@ -1,0 +1,21 @@
+---
+
+- name: setup http lb vserver
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_lb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: present
+    name: lb-vserver-11
+    port: 80
+    servicetype: HTTP
+    lbmethod: DESTINATIONIPHASH
+    netmask: 255.255.255.0
+    ippattern: 10.69.0.0
+    ipmask: 255.255.0.0
+    v6netmasklen: 24
+    pushvserver: lb-vserver-push
+    pushlabel: none
