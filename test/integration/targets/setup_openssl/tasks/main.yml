@@ -27,3 +27,7 @@
 - name: register openssl version
   shell: "openssl version | cut -d' ' -f2"
   register: openssl_version
+
+- name: register cryptography version
+  command: python -c 'import cryptography; print(cryptography.__version__)'
+  register: cryptography_version
