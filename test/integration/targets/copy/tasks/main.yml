@@ -8,6 +8,8 @@
 
     - set_fact:
         local_temp_dir: '{{ tempfile_result.path }}'
+        # output_dir is hardcoded in test/runner/lib/executor.py and created there
+        remote_dir: '{{ output_dir }}'
 
     - name: create remote unprivileged remote user
       user:
@@ -29,7 +31,7 @@
         remote_src: yes
 
     - file:
-        path: "{{ output_dir }}"
+        path: "{{ remote_dir }}"
         state: directory
       remote_user: '{{ remote_unprivileged_user }}'
 

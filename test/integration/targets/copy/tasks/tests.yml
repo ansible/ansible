@@ -6,18 +6,18 @@
 #
 
 - name: record the output directory
-  set_fact: output_file={{output_dir}}/foo.txt
+  set_fact: remote_file={{remote_dir}}/foo.txt
 
 - name: locate sha1sum/shasum
   shell: which sha1sum || which shasum
   register: sha1sum
 
 - name: initiate a basic copy, and also test the mode
-  copy: src=foo.txt dest={{output_file}} mode=0444
+  copy: src=foo.txt dest={{remote_file}} mode=0444
   register: copy_result
 
 - name: check the mode of the output file
-  file: name={{output_file}} state=file
+  file: name={{remote_file}} state=file
   register: file_result_check
 
 - name: assert the mode is correct
@@ -26,11 +26,11 @@
       - "file_result_check.mode == '0444'"
 
 # same as expanduser & expandvars
-- command: 'echo {{ output_dir }}'
+- command: 'echo {{ remote_dir }}'
   register: echo
 
 - set_fact:
-    output_dir_expanded: '{{ echo.stdout }}'
+    remote_dir_expanded: '{{ echo.stdout }}'
 
 #- debug:
 #    var: copy_result
@@ -67,7 +67,7 @@
   when: ansible_fips|bool != True
 
 - name: check the stat results of the file
-  stat: path={{output_file}}
+  stat: path={{remote_file}}
   register: stat_results
 
 #- debug: var=stat_results
@@ -89,7 +89,7 @@
   when: ansible_fips|bool != True
 
 - name: overwrite the file via same means
-  copy: src=foo.txt dest={{output_file}}
+  copy: src=foo.txt dest={{remote_file}}
   register: copy_result2
 
 - name: assert that the file was not changed
@@ -98,11 +98,11 @@
       - "not copy_result2|changed"
 
 - name: overwrite the file using the content system
-  copy: content="modified" dest={{output_file}}
+  copy: content="modified" dest={{remote_file}}
   register: copy_result3
 
 - name: check the stat results of the file
-  stat: path={{output_file}}
+  stat: path={{remote_file}}
   register: stat_results
 
 #- debug: var=stat_results
@@ -116,11 +116,11 @@
        - "stat_results.stat.mode != '0700'"
 
 - name: overwrite the file again using the content system, also passing along file params
-  copy: content="modified" dest={{output_file}} mode=0700
+  copy: content="modified" dest={{remote_file}} mode=0700
   register: copy_result4
 
 - name: check the stat results of the file
-  stat: path={{output_file}}
+  stat: path={{remote_file}}
   register: stat_results
 
 #- debug: var=stat_results
@@ -134,7 +134,7 @@
        - "stat_results.stat.mode == '0700'"
 
 - name: try invalid copy input location fails
-  copy: src=invalid_file_location_does_not_exist dest={{output_dir}}/file.txt
+  copy: src=invalid_file_location_does_not_exist dest={{remote_dir}}/file.txt
   ignore_errors: True
   register: failed_copy
 
@@ -146,19 +146,19 @@
 
 - name: Clean up
   file:
-    path: "{{ output_file }}"
+    path: "{{ remote_file }}"
     state: absent
 
 - name: Copy source file to destination directory with mode
   copy:
     src: foo.txt
-    dest: "{{ output_dir }}"
+    dest: "{{ remote_dir }}"
     mode: 0500
   register: copy_results
 
 - name: check the stat results of the file
   stat:
-    path: '{{ output_file }}'
+    path: '{{ remote_file }}'
   register: stat_results
 
 #- debug: var=stat_results
@@ -181,13 +181,13 @@
 - name: Copy with mode=preserve
   copy:
     src: '{{ local_temp_dir }}/foo.txt'
-    dest: '{{ output_dir }}/copy-foo.txt'
+    dest: '{{ remote_dir }}/copy-foo.txt'
     mode: preserve
   register: copy_results
 
 - name: check the stat results of the file
   stat:
-    path: '{{ output_dir }}/copy-foo.txt'
+    path: '{{ remote_dir }}/copy-foo.txt'
   register: stat_results
 
 - name: assert that the file has changed and has correct mode
@@ -209,10 +209,10 @@
   connection: local
 
 - name: set the output subdirectory
-  set_fact: output_subdir={{output_dir}}/sub
+  set_fact: remote_subdir={{remote_dir}}/sub
 
 - name: make an output subdirectory
-  file: name={{output_subdir}} state=directory
+  file: name={{remote_subdir}} state=directory
 
 - name: setup link target for absolute link
   copy: dest=/tmp/ansible-test-abs-link content=target
@@ -223,7 +223,7 @@
   connection: local
 
 - name: test recursive copy to directory no trailing slash, local_follow=False
-  copy: src=subdir dest={{output_subdir}} directory_mode=0700 local_follow=False
+  copy: src=subdir dest={{remote_subdir}} directory_mode=0700 local_follow=False
   register: recursive_copy_result
 
 #- debug: var=recursive_copy_result
@@ -233,15 +233,15 @@
       - "recursive_copy_result|changed"
 
 - name: check that a file in a directory was transferred
-  stat: path={{output_dir}}/sub/subdir/bar.txt
+  stat: path={{remote_dir}}/sub/subdir/bar.txt
   register: stat_bar
 
 - name: check that a file in a deeper directory was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir2/baz.txt
+  stat: path={{remote_dir}}/sub/subdir/subdir2/baz.txt
   register: stat_bar2
 
 - name: check that a file in a directory whose parent contains a directory alone was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir2/subdir3/subdir4/qux.txt
+  stat: path={{remote_dir}}/sub/subdir/subdir2/subdir3/subdir4/qux.txt
   register: stat_bar3
 
 - name: assert recursive copy files
@@ -253,32 +253,32 @@
 
 - name: check symlink to absolute path
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/ansible-test-abs-link'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/ansible-test-abs-link'
   register: stat_abs_link
 
 - name: check symlink to relative path
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/bar.txt'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/bar.txt'
   register: stat_relative_link
 
 - name: check symlink to self
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/invalid'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/invalid'
   register: stat_self_link
 
 - name: check symlink to nonexistent file
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/invalid2'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/invalid2'
   register: stat_invalid_link
 
 - name: check symlink to directory in copy
   stat:
-   path: '{{ output_dir }}/sub/subdir/subdir1/subdir3'
+   path: '{{ remote_dir }}/sub/subdir/subdir1/subdir3'
   register: stat_dir_in_copy_link
 
 - name: check symlink to directory outside of copy
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/ansible-test-abs-link-dir'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/ansible-test-abs-link-dir'
   register: stat_dir_outside_copy_link
 
 - name: assert recursive copy symlinks local_follow=False
@@ -304,7 +304,7 @@
       - "'/tmp/ansible-test-abs-link-dir' == stat_dir_outside_copy_link.stat.lnk_target"
 
 - name: stat the recursively copied directories
-  stat: path={{output_dir}}/sub/{{item}}
+  stat: path={{remote_dir}}/sub/{{item}}
   register: dir_stats
   with_items:
     - "subdir"
@@ -323,7 +323,7 @@
   with_items: "{{dir_stats.results}}"
 
 - name: test recursive copy to directory no trailing slash, local_follow=False second time
-  copy: src=subdir dest={{output_subdir}} directory_mode=0700 local_follow=False
+  copy: src=subdir dest={{remote_subdir}} directory_mode=0700 local_follow=False
   register: recursive_copy_result
 
 - name: assert that the second copy did not change anything
@@ -332,17 +332,17 @@
       - "not recursive_copy_result|changed"
 
 - name: cleanup the recursive copy subdir
-  file: name={{output_subdir}} state=absent
+  file: name={{remote_subdir}} state=absent
 
 #
 # Recursive copy with local_follow=False, trailing slash
 #
 
 - name: set the output subdirectory
-  set_fact: output_subdir={{output_dir}}/sub
+  set_fact: remote_subdir={{remote_dir}}/sub
 
 - name: make an output subdirectory
-  file: name={{output_subdir}} state=directory
+  file: name={{remote_subdir}} state=directory
 
 - name: setup link target for absolute link
   copy: dest=/tmp/ansible-test-abs-link content=target
@@ -353,7 +353,7 @@
   connection: local
 
 - name: test recursive copy to directory trailing slash, local_follow=False
-  copy: src=subdir/ dest={{output_subdir}} directory_mode=0700 local_follow=False
+  copy: src=subdir/ dest={{remote_subdir}} directory_mode=0700 local_follow=False
   register: recursive_copy_result
 
 #- debug: var=recursive_copy_result
@@ -363,15 +363,15 @@
       - "recursive_copy_result|changed"
 
 - name: check that a file in a directory was transferred
-  stat: path={{output_dir}}/sub/bar.txt
+  stat: path={{remote_dir}}/sub/bar.txt
   register: stat_bar
 
 - name: check that a file in a deeper directory was transferred
-  stat: path={{output_dir}}/sub/subdir2/baz.txt
+  stat: path={{remote_dir}}/sub/subdir2/baz.txt
   register: stat_bar2
 
 - name: check that a file in a directory whose parent contains a directory alone was transferred
-  stat: path={{output_dir}}/sub/subdir2/subdir3/subdir4/qux.txt
+  stat: path={{remote_dir}}/sub/subdir2/subdir3/subdir4/qux.txt
   register: stat_bar3
 
 - name: assert recursive copy files
@@ -383,32 +383,32 @@
 
 - name: check symlink to absolute path
   stat:
-    path: '{{ output_dir }}/sub/subdir1/ansible-test-abs-link'
+    path: '{{ remote_dir }}/sub/subdir1/ansible-test-abs-link'
   register: stat_abs_link
 
 - name: check symlink to relative path
   stat:
-    path: '{{ output_dir }}/sub/subdir1/bar.txt'
+    path: '{{ remote_dir }}/sub/subdir1/bar.txt'
   register: stat_relative_link
 
 - name: check symlink to self
   stat:
-    path: '{{ output_dir }}/sub/subdir1/invalid'
+    path: '{{ remote_dir }}/sub/subdir1/invalid'
   register: stat_self_link
 
 - name: check symlink to nonexistent file
   stat:
-    path: '{{ output_dir }}/sub/subdir1/invalid2'
+    path: '{{ remote_dir }}/sub/subdir1/invalid2'
   register: stat_invalid_link
 
 - name: check symlink to directory in copy
   stat:
-    path: '{{ output_dir }}/sub/subdir1/subdir3'
+    path: '{{ remote_dir }}/sub/subdir1/subdir3'
   register: stat_dir_in_copy_link
 
 - name: check symlink to directory outside of copy
   stat:
-    path: '{{ output_dir }}/sub/subdir1/ansible-test-abs-link-dir'
+    path: '{{ remote_dir }}/sub/subdir1/ansible-test-abs-link-dir'
   register: stat_dir_outside_copy_link
 
 - name: assert recursive copy symlinks local_follow=False trailing slash
@@ -434,7 +434,7 @@
       - "'/tmp/ansible-test-abs-link-dir' == stat_dir_outside_copy_link.stat.lnk_target"
 
 - name: stat the recursively copied directories
-  stat: path={{output_dir}}/sub/{{item}}
+  stat: path={{remote_dir}}/sub/{{item}}
   register: dir_stats
   with_items:
     - "subdira"
@@ -451,7 +451,7 @@
   with_items: "{{dir_stats.results}}"
 
 - name: test recursive copy to directory trailing slash, local_follow=False second time
-  copy: src=subdir/ dest={{output_subdir}} directory_mode=0700 local_follow=False
+  copy: src=subdir/ dest={{remote_subdir}} directory_mode=0700 local_follow=False
   register: recursive_copy_result
 
 - name: assert that the second copy did not change anything
@@ -460,17 +460,17 @@
       - "not recursive_copy_result|changed"
 
 - name: cleanup the recursive copy subdir
-  file: name={{output_subdir}} state=absent
+  file: name={{remote_subdir}} state=absent
 
 #
 # test recursive copy local_follow=True, no trailing slash
 #
 
 - name: set the output subdirectory
-  set_fact: output_subdir={{output_dir}}/sub
+  set_fact: remote_subdir={{remote_dir}}/sub
 
 - name: make an output subdirectory
-  file: name={{output_subdir}} state=directory
+  file: name={{remote_subdir}} state=directory
 
 - name: setup link target for absolute link
   copy: dest=/tmp/ansible-test-abs-link content=target
@@ -481,7 +481,7 @@
   connection: local
 
 - name: test recursive copy to directory no trailing slash, local_follow=True
-  copy: src=subdir dest={{output_subdir}} directory_mode=0700 local_follow=True
+  copy: src=subdir dest={{remote_subdir}} directory_mode=0700 local_follow=True
   register: recursive_copy_result
 
 #- debug: var=recursive_copy_result
@@ -491,19 +491,19 @@
       - "recursive_copy_result|changed"
 
 - name: check that a file in a directory was transferred
-  stat: path={{output_dir}}/sub/subdir/bar.txt
+  stat: path={{remote_dir}}/sub/subdir/bar.txt
   register: stat_bar
 
 - name: check that a file in a deeper directory was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir2/baz.txt
+  stat: path={{remote_dir}}/sub/subdir/subdir2/baz.txt
   register: stat_bar2
 
 - name: check that a file in a directory whose parent contains a directory alone was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir2/subdir3/subdir4/qux.txt
+  stat: path={{remote_dir}}/sub/subdir/subdir2/subdir3/subdir4/qux.txt
   register: stat_bar3
 
 - name: check that a file in a directory whose parent is a symlink was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir1/subdir3/subdir4/qux.txt
+  stat: path={{remote_dir}}/sub/subdir/subdir1/subdir3/subdir4/qux.txt
   register: stat_bar4
 
 - name: assert recursive copy files
@@ -516,32 +516,32 @@
 
 - name: check symlink to absolute path
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/ansible-test-abs-link'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/ansible-test-abs-link'
   register: stat_abs_link
 
 - name: check symlink to relative path
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/bar.txt'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/bar.txt'
   register: stat_relative_link
 
 - name: check symlink to self
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/invalid'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/invalid'
   register: stat_self_link
 
 - name: check symlink to nonexistent file
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/invalid2'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/invalid2'
   register: stat_invalid_link
 
 - name: check symlink to directory in copy
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/subdir3'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/subdir3'
   register: stat_dir_in_copy_link
 
 - name: check symlink to directory outside of copy
   stat:
-    path: '{{ output_dir }}/sub/subdir/subdir1/ansible-test-abs-link-dir'
+    path: '{{ remote_dir }}/sub/subdir/subdir1/ansible-test-abs-link-dir'
   register: stat_dir_outside_copy_link
 
 - name: assert recursive copy symlinks local_follow=True
@@ -568,7 +568,7 @@
       - "stat_dir_outside_copy_link.stat.isdir"
 
 - name: stat the recursively copied directories
-  stat: path={{output_dir}}/sub/{{item}}
+  stat: path={{remote_dir}}/sub/{{item}}
   register: dir_stats
   with_items:
     - "subdir"
@@ -588,7 +588,7 @@
   with_items: "{{dir_stats.results}}"
 
 - name: test recursive copy to directory no trailing slash, local_follow=True second time
-  copy: src=subdir dest={{output_subdir}} directory_mode=0700 local_follow=True
+  copy: src=subdir dest={{remote_subdir}} directory_mode=0700 local_follow=True
   register: recursive_copy_result
 
 - name: assert that the second copy did not change anything
@@ -597,7 +597,7 @@
       - "not recursive_copy_result|changed"
 
 - name: cleanup the recursive copy subdir
-  file: name={{output_subdir}} state=absent
+  file: name={{remote_subdir}} state=absent
 
 #
 # Recursive copy of tricky symlinks
@@ -634,18 +634,18 @@
 - name: Recursive copy the source
   copy:
     src: '{{ local_temp_dir }}/source1'
-    dest: '{{ output_dir }}/dest1'
+    dest: '{{ remote_dir }}/dest1'
     local_follow: True
   register: copy_result
 
 - name: Check that the tree link is now a directory
   stat:
-    path: '{{ output_dir }}/dest1/source1/link'
+    path: '{{ remote_dir }}/dest1/source1/link'
   register: link_result
 
 - name: Check that the out of tree link is still a link
   stat:
-    path: '{{ output_dir }}/dest1/source1/link/circle'
+    path: '{{ remote_dir }}/dest1/source1/link/circle'
   register: circle_result
 
 - name: Verify that the recursive copy worked
@@ -660,7 +660,7 @@
 - name: Recursive copy the source a second time
   copy:
     src: '{{ local_temp_dir }}/source1'
-    dest: '{{ output_dir }}/dest1'
+    dest: '{{ remote_dir }}/dest1'
     local_follow: True
   register: copy_result
 
@@ -672,10 +672,10 @@
 #
 # Recursive copy with absolute paths (#27439)
 #
-- name: Test that output_dir is appropriate for this test (absolute path)
+- name: Test that remote_dir is appropriate for this test (absolute path)
   assert:
     that:
-      - '{{ output_dir_expanded[0] == "/" }}'
+      - '{{ remote_dir_expanded[0] == "/" }}'
 
 - block:
   - name: create a directory to copy
@@ -697,10 +697,10 @@
 - name: Copy the directory and files within (no trailing slash)
   copy:
     src: '{{ local_temp_dir }}/source_recursive'
-    dest: '{{ output_dir }}/destination'
+    dest: '{{ remote_dir }}/destination'
 
 - name: stat the recursively copied directory
-  stat: path={{output_dir}}/destination/{{item}}
+  stat: path={{remote_dir}}/destination/{{item}}
   register: copied_stat
   with_items:
     - "source_recursive"
@@ -717,23 +717,23 @@
 
 - name: Cleanup
   file:
-    path: '{{ output_dir }}/destination'
+    path: '{{ remote_dir }}/destination'
     state: absent
 
 # Try again with no trailing slash
 
 - name: Create a directory to place the test output in
   file:
-    path: '{{ output_dir }}/destination'
+    path: '{{ remote_dir }}/destination'
     state: directory
 
 - name: Copy just the files inside of the directory
   copy:
     src: '{{ local_temp_dir }}/source_recursive/'
-    dest: '{{ output_dir }}/destination'
+    dest: '{{ remote_dir }}/destination'
 
 - name: stat the recursively copied directory
-  stat: path={{ output_dir }}/destination/{{ item }}
+  stat: path={{ remote_dir }}/destination/{{ item }}
   register: copied_stat
   with_items:
     - "source_recursive"
@@ -760,7 +760,7 @@
     this line is after an empty line
     this line is the last line
     '
-    dest={{output_dir}}/multiline.txt
+    dest={{remote_dir}}/multiline.txt
   register: copy_result6
 
 #- debug: var=copy_result6
@@ -769,11 +769,11 @@
   assert:
     that:
       - "copy_result6.changed"
-      - "copy_result6.dest == '{{output_dir_expanded}}/multiline.txt'"
+      - "copy_result6.dest == '{{remote_dir_expanded}}/multiline.txt'"
       - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 # test overwriting a file as an unprivileged user (pull request #8624)
-# this can't be relative to {{output_dir}} as ~root usually has mode 700
+# this can't be relative to {{remote_dir}} as ~root usually has mode 700
 - block:
   - name: create world writable directory
     file: dest=/tmp/worldwritable state=directory mode=0777
@@ -803,17 +803,17 @@
 # is preserved and the link target is updated
 
 - name: create a test file to symlink to
-  copy: dest={{output_dir}}/follow_test content="this is the follow test file\n"
+  copy: dest={{remote_dir}}/follow_test content="this is the follow test file\n"
 
 - name: create a symlink to the test file
-  file: path={{output_dir}}/follow_link src='./follow_test' state=link
+  file: path={{remote_dir}}/follow_link src='./follow_test' state=link
 
 - name: update the test file using follow=True to preserve the link
-  copy: dest={{output_dir}}/follow_link content="this is the new content\n" follow=yes
+  copy: dest={{remote_dir}}/follow_link content="this is the new content\n" follow=yes
   register: replace_follow_result
 
 - name: stat the link path
-  stat: path={{output_dir}}/follow_link
+  stat: path={{remote_dir}}/follow_link
   register: stat_link_result
 
 - name: assert that the link is still a link
@@ -822,7 +822,7 @@
     - stat_link_result.stat.islnk
 
 - name: get the checksum of the link target
-  shell: "{{ sha1sum.stdout }} {{output_dir}}/follow_test | cut -f1 -sd ' '"
+  shell: "{{ sha1sum.stdout }} {{remote_dir}}/follow_test | cut -f1 -sd ' '"
   register: target_file_result
 
 - name: assert that the link target was updated
@@ -832,14 +832,14 @@
 
 - name: update the test file using follow=False to overwrite the link
   copy:
-    dest: '{{ output_dir }}/follow_link'
+    dest: '{{ remote_dir }}/follow_link'
     content: 'modified'
     follow: False
   register: copy_results
 
 - name: check the stat results of the file
   stat:
-    path: '{{output_dir}}/follow_link'
+    path: '{{remote_dir}}/follow_link'
   register: stat_results
 
 #- debug: var=stat_results
@@ -899,22 +899,22 @@
 - name: copy the directory's link
   copy:
     src: '{{ local_temp_dir }}/top_dir'
-    dest: '{{ output_dir }}/new_dir'
+    dest: '{{ remote_dir }}/new_dir'
     local_follow: True
 
 - name: stat the copied path
   stat:
-    path: '{{ output_dir }}/new_dir/top_dir/follow_link_dir'
+    path: '{{ remote_dir }}/new_dir/top_dir/follow_link_dir'
   register: stat_dir_result
 
 - name: stat the copied file
   stat:
-    path: '{{ output_dir }}/new_dir/top_dir/follow_link_dir/file1'
+    path: '{{ remote_dir }}/new_dir/top_dir/follow_link_dir/file1'
   register: stat_file_in_dir_result
 
 - name: stat the circular symlink
   stat:
-    path: '{{ output_dir }}/new_dir/top_dir/subdir/circle'
+    path: '{{ remote_dir }}/new_dir/top_dir/subdir/circle'
   register: stat_circular_symlink_result
 
 - name: assert that the directory exists
