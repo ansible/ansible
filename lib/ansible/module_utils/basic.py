@@ -1286,10 +1286,7 @@ class AnsibleModule(object):
                     try:
                         rc, out, err = self.run_command(attrcmd)
                         if rc != 0 or err:
-                            #raise Exception("Error while setting attributes: %s" % (out + err))
-                            msg = 'Error setting attribs: %s %s %s' % (attributes, type(attributes), attrcmd)
-                            msg += ' %s' % (out + err)
-                            raise Exception(msg)
+                            raise Exception("Error while setting attributes: %s" % (out + err))
                     except:
                         e = get_exception()
                         path = to_text(b_path)
