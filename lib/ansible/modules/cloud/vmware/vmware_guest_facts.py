@@ -26,9 +26,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: vmware_guest_facts
-short_description: Gather facts about a single VM
+short_description: Gather facts about a single Virtual Machine
 description:
-    - Gather facts about a single VM on a VMware ESX cluster
+    - Gather facts about a single Virtual Machine on a VMware ESX cluster
 version_added: 2.3
 author:
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
@@ -40,11 +40,11 @@ requirements:
 options:
    name:
         description:
-            - Name of the VM to work with
+            - Name of the Virtual Machine to work with
         required: True
    name_match:
         description:
-            - If multiple VMs matching the name, use the first or last found
+            - If multiple Virtual Machines matching the name, use the first or last found
         default: 'first'
         choices: ['first', 'last']
    uuid:
@@ -53,8 +53,22 @@ options:
             - This is required if name is not supplied.
    folder:
         description:
-            - Destination folder, absolute path to find an existing guest.
+            - Destination folder, absolute or relative path to find an existing guest.
             - This is required if name is supplied.
+            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+            - 'Examples:'
+            - '   folder: /ha-datacenter/vm'
+            - '   folder: ha-datacenter/vm'
+            - '   folder: /datacenter1/vm'
+            - '   folder: datacenter1/vm'
+            - '   folder: /datacenter1/vm/folder1'
+            - '   folder: datacenter1/vm/folder1'
+            - '   folder: /folder1/datacenter1/vm'
+            - '   folder: folder1/datacenter1/vm'
+            - '   folder: /folder1/datacenter1/vm/folder2'
+            - '   folder: vm/folder2'
+            - '   folder: folder2'
+        default: /vm
    datacenter:
         description:
             - Destination datacenter for the deploy operation
@@ -63,15 +77,14 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Gather facts
-  - name: gather the VM facts
-    vmware_guest_facts:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      uuid: 421e4592-c069-924d-ce20-7e7533fab926
-    register: facts
+- name: gather the Virtual Machine facts
+  vmware_guest_facts:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+  register: facts
 '''
 
 RETURN = """
@@ -83,12 +96,8 @@ instance:
 """
 
 import os
-import time
-
-# import module snippets
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts
 
 try:
@@ -96,14 +105,14 @@ try:
 except ImportError:
     import simplejson as json
 
-HAS_PYVMOMI = False
+
 try:
     import pyVmomi
     from pyVmomi import vim
 
     HAS_PYVMOMI = True
 except ImportError:
-    pass
+    HAS_PYVMOMI = False
 
 
 class PyVmomiHelper(object):
@@ -121,10 +130,7 @@ class PyVmomiHelper(object):
         if uuid:
             vm = find_vm_by_id(self.content, vm_id=uuid, vm_id_type="uuid")
         elif folder:
-            # Build the absolute folder path to pass into the search method
-            if not self.params['folder'].startswith('/'):
-                self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
-            searchpath = '%(datacenter)s%(folder)s' % self.params
+            searchpath = '%(folder)s' % self.params
 
             # get all objects for this path ...
             f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
@@ -143,27 +149,6 @@ class PyVmomiHelper(object):
 
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
-
-
-def get_obj(content, vimtype, name):
-    """
-    Return an object by name, if name is None the
-    first found object is returned
-    """
-    obj = None
-    container = content.viewManager.CreateContainerView(
-        content.rootFolder, vimtype, True)
-    for c in container.view:
-        if name:
-            if c.name == name:
-                obj = c
-                break
-        else:
-            obj = c
-            break
-
-    container.Destroy()
-    return obj
 
 
 def main():
@@ -190,26 +175,24 @@ def main():
         ),
     )
 
-    # Prepend /vm if it was missing from the folder path, also strip trailing slashes
-    if not module.params['folder'].startswith('/vm') and module.params['folder'].startswith('/'):
-        module.params['folder'] = '/vm%(folder)s' % module.params
+    # FindByInventoryPath() does not require an absolute path
+    # so we should leave the input folder path unmodified
     module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
-    # Check if the VM exists before continuing
+    # Check if the Virtual Machine exists before continuing
     vm = pyv.getvm(name=module.params['name'],
                    folder=module.params['folder'],
                    uuid=module.params['uuid'])
 
-    # VM already exists
+    # Virtual Machine already exists
     if vm:
         try:
             module.exit_json(instance=pyv.gather_facts(vm))
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Fact gather failed with exception %s" % e)
+        except Exception as e:
+            module.fail_json(msg="Fact gather failed with exception %s" % to_native(e))
     else:
-        module.fail_json(msg="Unable to gather facts for non-existing VM %(name)s" % module.params)
+        module.fail_json(msg="Unable to gather facts for non-existing Virtual Machine %(name)s" % module.params)
 
 if __name__ == '__main__':
     main()
