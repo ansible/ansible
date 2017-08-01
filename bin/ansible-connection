@@ -291,7 +291,11 @@ def main():
         sys.stderr.write(traceback.format_exc())
         sys.exit("FAIL: %s" % e)
 
+
+    default_debug = C.DEFAULT_DEBUG
+    C.DEFAULT_DEBUG = False
     ssh = connection_loader.get('ssh', class_only=True)
+    C.DEFAULT_DEBUG = default_debug
     cp = ssh._create_control_path(pc.remote_addr, pc.connection, pc.remote_user)
 
     # create the persistent connection dir if need be and create the paths
@@ -338,7 +342,9 @@ def main():
         time.sleep(1)
         timeout -= 1
     else:
-        raise AnsibleConnectionFailure('timeout waiting for local socket', pc.remote_addr)
+        sys.stdout.write(to_native(''))
+        sys.stderr.write(to_native('timeout waiting for local socket to %s' % pc.remote_addr))
+        sys.exit(2)
 
     # now connect to the daemon process
     # FIXME: if the socket file existed but the daemonized process was killed,
