@@ -26,9 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import (absolute_import,
-                        division,
-                        print_function)
+from __future__ import (absolute_import, division, print_function)
 
 import collections
 import json
@@ -418,7 +416,8 @@ class ResourceMerger():
             else:
                 merged_items[item_key] = item.copy()
 
-        return [val for (_, val) in merged_items.items()]
+        return list(merged_items.values())
+        # return [val for (_, val) in merged_items.items()]
 
 
 class SPKeys(object):
