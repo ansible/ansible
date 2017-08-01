@@ -92,7 +92,6 @@ import tempfile
 import time
 import traceback
 
-import SocketServer
 
 import datetime
 from threading import Thread, Lock
@@ -100,6 +99,7 @@ from threading import Thread, Lock
 # import module snippets
 # we must import this here at the top so we can use get_module_path()
 from ansible.module_utils.basic import AnsibleModule, get_module_path
+from ansible.module_utils.six.moves import socketserver
 
 # the chunk size to read and send, assuming mtu 1500 and
 # leaving room for base64 (+33%) encoding and header (100 bytes)
@@ -285,7 +285,7 @@ class ThreadWithReturnValue(Thread):
         Thread.join(self, timeout=timeout)
         return self._return
 
-class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
+class ThreadedTCPServer(socketserver.ThreadingTCPServer):
     key_list = []
     last_event = datetime.datetime.now()
     last_event_lock = Lock()
@@ -303,13 +303,13 @@ class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
             self.local_thread = LocalSocketThread(kwargs=dict(server=self))
             self.local_thread.start()
 
-        SocketServer.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
+        socketserver.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
 
     def shutdown(self):
         self.running = False
-        SocketServer.ThreadingTCPServer.shutdown(self)
+        socketserver.ThreadingTCPServer.shutdown(self)
 
-class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
+class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     # the key to use for this connection
     active_key = None
 
@@ -518,7 +518,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             fd.close()
             tb = traceback.format_exc()
             log("failed to fetch the file: %s" % tb)
-            return dict(failed=True, stderr="Could not fetch the file: %s" % str(e))
+            return dict(failed=True, stderr="Could not fetch the file: %s" % e)
 
         fd.close()
         return dict()
