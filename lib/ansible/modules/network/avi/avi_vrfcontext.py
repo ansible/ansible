@@ -68,10 +68,6 @@ options:
         description:
             - Name of the object.
         required: true
-    routemap:
-        description:
-            - Configure route-map.
-            - Field introduced in 17.1.3.
     static_routes:
         description:
             - List of staticroute.
@@ -128,7 +124,6 @@ def main():
         gateway_mon=dict(type='list',),
         internal_gateway_monitor=dict(type='dict',),
         name=dict(type='str', required=True),
-        routemap=dict(type='list',),
         static_routes=dict(type='list',),
         system_default=dict(type='bool',),
         tenant_ref=dict(type='str',),

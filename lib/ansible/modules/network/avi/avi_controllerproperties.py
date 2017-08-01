@@ -116,7 +116,7 @@ options:
     portal_token:
         description:
             - Token used for uploading tech-support to portal.
-            - Field introduced in 17.1.2.
+            - Field introduced in 16.4.6,17.1.2.
         version_added: "2.4"
     query_host_fail:
         description:

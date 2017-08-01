@@ -94,9 +94,6 @@ options:
             - Allowed hmac list for ssh to the management interface on the controller and service engines.
             - If this is not specified, all the default hmacs are allowed.
             - Ssh -q mac provides the list of default hmacs supported.
-    tech_support_uploader_configuration:
-        description:
-            - Techsupportuploaderconfiguration settings for systemconfiguration.
     url:
         description:
             - Avi controller URL of the object.
@@ -150,7 +147,6 @@ def main():
         snmp_configuration=dict(type='dict',),
         ssh_ciphers=dict(type='list',),
         ssh_hmacs=dict(type='list',),
-        tech_support_uploader_configuration=dict(type='dict',),
         url=dict(type='str',),
         uuid=dict(type='str',),
     )

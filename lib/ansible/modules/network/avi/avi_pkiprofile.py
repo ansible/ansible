@@ -62,6 +62,14 @@ options:
             - When enabled, avi will not trust intermediate and root certs presented by a client.
             - Instead, only the chain certs configured in the certificate authority section will be used to verify trust of the client's cert.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+    is_federated:
+        description:
+            - This field describes the object's replication scope.
+            - If the field is set to false, then the object is visible within the controller-cluster and its associated service-engines.
+            - If the field is set to true, then the object is replicated across the federation.
+            - Field introduced in 17.1.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.4"
     name:
         description:
             - Name of the pki profile.
@@ -118,6 +126,7 @@ def main():
         crl_check=dict(type='bool',),
         crls=dict(type='list',),
         ignore_peer_chain=dict(type='bool',),
+        is_federated=dict(type='bool',),
         name=dict(type='str', required=True),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
