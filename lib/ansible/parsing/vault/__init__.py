@@ -159,7 +159,7 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     # used by decrypt
     default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
 
-    b_tmpdata = b_vaulttext_envelope.split(b'\n')
+    b_tmpdata = b_vaulttext_envelope.splitlines()
     b_tmpheader = b_tmpdata[0].strip().split(b';')
 
     b_version = b_tmpheader[1].strip()
