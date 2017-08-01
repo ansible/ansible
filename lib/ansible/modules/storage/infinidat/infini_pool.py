@@ -50,6 +50,13 @@ options:
     required: false
     default: yes
     type: bool
+  compression:
+    description:
+      - Enable/Disable Compression on Pool
+    required: false
+    default: yes
+    type: bool
+
 notes:
   - Infinibox Admin level access is required for pool modifications
 extends_documentation_fragment:
@@ -72,6 +79,14 @@ EXAMPLES = '''
   infini_pool:
     name: foo
     ssd_cache: no
+    user: admin
+    password: secret
+    system: ibox001
+
+- name: Disable Compression on pool
+  infini_pool:
+    name: foo
+    compression: no
     user: admin
     password: secret
     system: ibox001
@@ -109,6 +124,7 @@ def create_pool(module, system):
     size = module.params['size']
     vsize = module.params['vsize']
     ssd_cache = module.params['ssd_cache']
+    compression = module.params['compression']
 
     if not module.check_mode:
         if not size and not vsize:
@@ -122,6 +138,9 @@ def create_pool(module, system):
         # Default value of ssd_cache is True. Disable ssd chacing if False
         if not ssd_cache:
             pool.update_ssd_enabled(ssd_cache)
+        # Default value of compression is True. Disable compression if False
+        if not compression:
+            pool.update_compression_enabled(compression)
 
     module.exit_json(changed=True)
 
@@ -134,6 +153,7 @@ def update_pool(module, system, pool):
     size = module.params['size']
     vsize = module.params['vsize']
     ssd_cache = module.params['ssd_cache']
+    compression = module.params['compression']
 
     # Roundup the capacity to mimic Infinibox behaviour
     if size:
@@ -153,6 +173,11 @@ def update_pool(module, system, pool):
     if pool.is_ssd_enabled() != ssd_cache:
         if not module.check_mode:
             pool.update_ssd_enabled(ssd_cache)
+        changed = True
+
+    if pool.is_compression_enabled() != compression:
+        if not module.check_mode:
+            pool.update_compression_enabled(compression)
         changed = True
 
     module.exit_json(changed=changed)
@@ -175,6 +200,7 @@ def main():
             size=dict(),
             vsize=dict(),
             ssd_cache=dict(type='bool', default=True)
+            compression=dict(type='bool', default=True)
         )
     )
 
