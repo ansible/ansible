@@ -121,11 +121,11 @@ import __main__
 # stdlib module
 scriptdir = None
 try:
-    scriptdir = os.path.dirname(os.path.abspath(__main__.__file__))
+    scriptdir = os.path.dirname(os.path.realpath(__main__.__file__))
 except (AttributeError, OSError):
     # Some platforms don't set __file__ when reading from stdin
     # OSX raises OSError if using abspath() in a directory we don't have
-    # permission to read.
+    # permission to read (realpath calls abspath)
     pass
 if scriptdir is not None:
     sys.path = [p for p in sys.path if p != scriptdir]
