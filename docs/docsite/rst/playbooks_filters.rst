@@ -609,8 +609,8 @@ To make use of one attribute from each item in a list of complex variables, use 
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
-    # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
-    {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
+    # get amount of seconds between two dates, default date format is %Y-%m-%d %H:%M:%S but you can pass your own one
+    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).seconds  }}
 
 
 Combination Filters
