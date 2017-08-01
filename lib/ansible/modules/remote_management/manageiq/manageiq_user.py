@@ -243,13 +243,13 @@ class ManageIQUser(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict'),
+            manageiq_connection=dict(required=True, type='dict', no_log=True),
             userid=dict(required=True, type='str'),
             name=dict(),
             password=dict(no_log=True),
             group=dict(),
             email=dict(),
-            state=dict(choices=['absent', 'present'], default='present', no_log=True)
+            state=dict(choices=['absent', 'present'], default='present')
         ),
     )
 
