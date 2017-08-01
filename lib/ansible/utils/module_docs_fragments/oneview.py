@@ -24,8 +24,9 @@ options:
     config:
       description:
         - Path to a .json configuration file containing the OneView client configuration.
-          The configuration file is optional. If the file path is not provided, the configuration will be loaded from
-          environment variables.
+          The configuration file is optional and when used should be present in the host running the ansible commands.
+          If the file path is not provided, the configuration will be loaded from environment variables.
+          For links to example configuration files or how to use the environment variables verify the notes section.
       required: false
 
 notes:
