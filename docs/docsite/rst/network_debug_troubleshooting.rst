@@ -166,7 +166,6 @@ or:
        "changed": false,
        "failed": true,
        "msg": "unable to open shell",
-       "rc": 255
    }
 
 Suggestions to resolve:
@@ -301,8 +300,8 @@ For example:
    2017-04-04 12:19:05,670 p=18591 u=fred |  using connection plugin network_cli
    2017-04-04 12:19:06,606 p=18591 u=fred |  connecting to host veos01 returned an error
    2017-04-04 12:19:06,606 p=18591 u=fred |  No authentication methods available
-   2017-04-04 12:19:35,708 p=18591 u=fred |  number of connection attempts exceeded, unable to connect to control socket
-   2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_interval=1, persistent_connect_retries=30
+   2017-04-04 12:19:35,708 p=18591 u=fred |  connect retry timeout expired, unable to connect to control socket
+   2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_retry_timeout is 15 secs
 
 
 Suggestions to resolve:
@@ -328,15 +327,61 @@ Timeout issues
 
 Timeouts
 --------
+Persistent connection idle timeout:
 
-All network modules support a timeout value that can be set on a per task
-basis.  The timeout value controls the amount of time in seconds before the
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
+
+Suggestions to resolve:
+
+Increase value of presistent connection idle timeout.
+.. code-block:: yaml
+
+   export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=60
+
+To make this a permanent change, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   connect_timeout = 60
+
+Command timeout:
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+
+Suggestions to resolve:
+
+Options 1:
+Increase value of command timeout in configuration file or by setting enviornment variable.
+Note: This value should be less than persistent connection idle timeout ie. connect_timeout
+
+.. code-block:: yaml
+
+   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=30
+
+To make this a permanent change, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   command_timeout = 30
+
+Option 2:
+Increase command timeout per task basis. All network modules support a
+timeout value that can be set on a per task basis.
+The timeout value controls the amount of time in seconds before the
 task will fail if the command has not returned.
 
 For example:
 
 .. FIXME: Detail error here
-
 
 Suggestions to resolve:
 
@@ -353,6 +398,33 @@ example is saving the current running config on IOS devices to startup config.
 In this case, changing the timeout value form the default 10 seconds to 30
 seconds will prevent the task from failing before the command completes
 successfully.
+Note: This value should be less than persistent connection idle timeout ie. connect_timeout
+
+Persistent socket connect timeout:
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:35,708 p=18591 u=fred |  connect retry timeout expired, unable to connect to control socket
+   2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_retry_timeout is 15 secs
+
+Suggestions to resolve:
+
+Increase value of presistent connection idle timeout.
+Note: This value should be greater than SSH timeout ie. timeout value under defaults
+section in configuration file and less than the value of the persistent
+connection idle timeout (connect_timeout)
+
+.. code-block:: yaml
+
+   export ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT=30
+
+To make this a permanent change, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   connect_retry_timeout = 30
 
 
 
@@ -403,7 +475,6 @@ For example:
       "changed": false,
       "failed": true,
      "msg": "unable to enter configuration mode",
-      "rc": 255
   }
 
 Suggestions to resolve:
@@ -461,8 +532,8 @@ Add `authorize: yes` to the task. For example:
    .. code-block:: yaml
    
      less $ANSIBLE_LOG_PATH
-     2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
-     2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
+     2017-03-10 15:32:06,173 p=19677 u=fred |  connect retry timeout expired, unable to connect to control socket
+     2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_retry_timeout is 15 secs
      2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
    
    Suggestions to resolve:

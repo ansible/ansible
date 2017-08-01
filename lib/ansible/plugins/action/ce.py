@@ -22,6 +22,7 @@ __metaclass__ = type
 import sys
 import copy
 
+from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.ce import ce_argument_spec
@@ -57,7 +58,7 @@ class ActionModule(_ActionModule):
             pc.port = int(provider['port']) or int(self._play_context.port) or 22
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
-            pc.timeout = provider['timeout'] or self._play_context.timeout
+            pc.timeout = provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
             self._task.args['provider'] = provider.update(
                 host=pc.remote_addr,
                 port=pc.port,
