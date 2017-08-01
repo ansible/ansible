@@ -1,0 +1,38 @@
+---
+
+- name: setup lb monitor
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_lb_monitor:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: present
+
+    monitorname: lb-monitor-rtsp
+    type: RTSP
+
+    rtsprequest: OPTIONS
+
+    deviation: 100
+    units1: MSEC
+    interval: 5
+    units3: SEC
+    resptimeout: 10
+    units4: MSEC
+    resptimeoutthresh: 10
+    retries: 5
+    failureretries: 3
+    alertretries: 2
+    successretries: 4
+    downtime: 60
+    units2: MSEC
+    destip: 10.10.10.10
+    destport: 1111
+    reverse: yes
+    transparent: yes
+    iptunnel: no
+    tos: yes
+    tosid: 20
+    secure: no
