@@ -334,15 +334,15 @@ class NosystemdTimezone(Timezone):
         # Validate given timezone
         if 'name' in self.value:
             tzfile = self._verify_timezone()
-            self.update_timezone  = self.module.get_bin_path('cp', required=True)
-            self.update_timezone += ' %s /etc/localtime' % tzfile
+            self.update_timezone  = ['%s %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
         self.allow_no_file['hwclock'] = True  # Since this is only used for get values, file absense does not metter
         # Distribution-specific configurations
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
-            self.update_timezone       = self.module.get_bin_path('dpkg-reconfigure', required=True)
-            self.update_timezone      += ' --frontend noninteractive tzdata'
+            # With additional hack for https://bugs.launchpad.net/ubuntu/+source/tzdata/+bug/1554806
+            self.update_timezone       = ['rm -f /etc/localtime', '%s --frontend noninteractive tzdata' %
+                                          self.module.get_bin_path('dpkg-reconfigure', required=True)]
             self.conf_files['name']    = '/etc/timezone'
             self.allow_no_file['name'] = True
             self.conf_files['hwclock'] = '/etc/default/rcS'
@@ -351,7 +351,7 @@ class NosystemdTimezone(Timezone):
         else:
             # RHEL/CentOS
             if self.module.get_bin_path('tzdata-update') is not None:
-                self.update_timezone       = self.module.get_bin_path('tzdata-update', required=True)
+                self.update_timezone   = [self.module.get_bin_path('tzdata-update', required=True)]
                 self.allow_no_file['name'] = True
             # else:
             #   self.update_timezone       = 'cp ...' <- configured above
@@ -456,7 +456,8 @@ class NosystemdTimezone(Timezone):
                         regexp=self.regexps['name'],
                         value=self.tzline_format % value,
                         key='name')
-        self.execute(self.update_timezone)
+        for cmd in self.update_timezone:
+            self.execute(cmd)
 
     def set_hwclock(self, value):
         if value == 'local':
@@ -652,7 +653,8 @@ def main():
         # Examine if the current state matches planned state
         (after, planned) = tz.diff('after', 'planned').values()
         if after != planned:
-            tz.abort('still not desired state, though changes have made')
+            tz.abort('still not desired state, though changes have made - '
+                     'planned: %s, after: %s' % (str(planned), str(after)))
         diff = tz.diff('before', 'after')
 
     changed = (diff['before'] != diff['after'])
