@@ -180,7 +180,7 @@ def copy_image(module, ec2):
 
         module.exit_json(changed=True, image_id=image_id)
     except WaiterError as we:
-        module.fail_json(msg='An error occurred waiting for the image to become available. (%s)' % str(we))
+        module.fail_json(msg='An error occurred waiting for the image to become available. (%s)' % str(we), exception=traceback.format_exc())
     except ClientError as ce:
         module.fail_json(msg=ce.message)
     except NoCredentialsError:
