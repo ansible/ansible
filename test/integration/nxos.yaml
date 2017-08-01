@@ -215,6 +215,24 @@
 
     - block:
       - include_role:
+          name: nxos_vlan
+        when: "limit_to in ['*', 'nxos_vlan']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vlan' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_switchport
+        when: "limit_to in ['*', 'nxos_switchport']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_switchport' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_vxlan_vtep
         when: "limit_to in ['*', 'nxos_vxlan_vtep']"
       rescue:
