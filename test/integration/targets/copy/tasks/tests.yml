@@ -25,8 +25,12 @@
     that:
       - "file_result_check.mode == '0444'"
 
+# same as expanduser & expandvars
+- command: 'echo {{ output_dir }}'
+  register: echo
+
 - set_fact:
-    output_dir_expanded: '{{ file_result_check.path | dirname }}'
+    output_dir_expanded: '{{ echo.stdout }}'
 
 #- debug:
 #    var: copy_result
