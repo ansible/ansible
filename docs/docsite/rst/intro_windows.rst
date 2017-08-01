@@ -47,17 +47,27 @@ If you would like to experiment with the Windows Subsystem for Linux (WSL), firs
 `these instructions <https://www.jeffgeerling.com/blog/2017/using-ansible-through-windows-10s-subsystem-linux>`_.
 This requires a reboot.
 
-Once WSL is enabled, you can open the Bash terminal. The first time you so this, a few questions need to be answered.
-At the prompt you can quickly start using the Ansible devel branch by running the following commands::
+Once WSL is enabled, you can open the Bash terminal. At the prompt, you can quickly start using the latest Ansible release by running the following commands::
 
-    sudo apt-get install python-pip
-    pip install pywinrm
-    git clone https://github.com/ansible/ansible.git
-    source ansible/hacking/env-setup
+    sudo apt-get update
+    sudo apt-get install python-pip git libffi-dev libssl-dev -y
+    pip install ansible pywinrm
+
+    # this step is only necessary for Windows builds earlier than 16188, and must be repeated each time bash is launched,
+    # unless bash is launched as ``bash --login``
+    # see https://github.com/Microsoft/BashOnWindows/issues/2148 and
+    # https://github.com/Microsoft/BashOnWindows/issues/816#issuecomment-301216901 for details
+    source ~/.profile
 
 After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targeting systems using the plethora of available Windows modules.
 
-.. Note:: Ansible is also reported to work on Cygwin, but this is more cumbersome and doesn't scale as well as WSL.
+If you want to run Ansible from source for development purposes, simply uninstall the pip-installed version (which will leave all the necessary dependencies behind), then clone the Ansible source, and run the hacking script to configure it to run from source::
+
+    pip uninstall ansible -y
+    git clone https://github.com/ansible/ansible.git
+    source ansible/hacking/env-setup
+
+.. Note:: Ansible is also reported to "work" on Cygwin, but installation is more cumbersome, and will incur sporadic failures due to Cygwin's implementation of ``fork()``.
 
 
 Authentication Options
