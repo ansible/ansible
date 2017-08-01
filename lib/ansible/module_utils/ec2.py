@@ -47,12 +47,6 @@ try:
 except:
     HAS_BOTO3 = False
 
-try:
-    from distutils.version import LooseVersion
-    HAS_LOOSE_VERSION = True
-except:
-    HAS_LOOSE_VERSION = False
-
 from ansible.module_utils.six import string_types, binary_type, text_type
 
 
@@ -345,17 +339,27 @@ def paging(pause=0, marker_property='marker'):
     return wrapper
 
 
+def _camel_to_snake(name):
+
+    def prepend_underscore_and_lower(m):
+        return '_' + m.group(0).lower()
+
+    import re
+    # Cope with pluralized abbreviations such as TargetGroupARNs
+    # that would otherwise be rendered target_group_ar_ns
+    plural_pattern = r'[A-Z]{3,}s$'
+    s1 = re.sub(plural_pattern, prepend_underscore_and_lower, name)
+    # Handle when there was nothing before the plural_pattern
+    if s1.startswith("_") and not name.startswith("_"):
+        s1 = s1[1:]
+    # Remainder of solution seems to be https://stackoverflow.com/a/1176023
+    first_cap_pattern = r'(.)([A-Z][a-z]+)'
+    all_cap_pattern = r'([a-z0-9])([A-Z]+)'
+    s2 = re.sub(first_cap_pattern, r'\1_\2', s1)
+    return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
+
+
 def camel_dict_to_snake_dict(camel_dict):
-
-    def camel_to_snake(name):
-
-        import re
-
-        first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-        all_cap_re = re.compile('([a-z0-9])([A-Z])')
-        s1 = first_cap_re.sub(r'\1_\2', name)
-
-        return all_cap_re.sub(r'\1_\2', s1).lower()
 
     def value_is_list(camel_list):
 
@@ -373,11 +377,11 @@ def camel_dict_to_snake_dict(camel_dict):
     snake_dict = {}
     for k, v in camel_dict.items():
         if isinstance(v, dict):
-            snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
+            snake_dict[_camel_to_snake(k)] = camel_dict_to_snake_dict(v)
         elif isinstance(v, list):
-            snake_dict[camel_to_snake(k)] = value_is_list(v)
+            snake_dict[_camel_to_snake(k)] = value_is_list(v)
         else:
-            snake_dict[camel_to_snake(k)] = v
+            snake_dict[_camel_to_snake(k)] = v
 
     return snake_dict
 
