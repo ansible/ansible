@@ -20,6 +20,7 @@
                 "ec2:CreateVpc",
                 "ec2:DeleteKeyPair",
                 "ec2:DeleteNatGateway",
+                "ec2:DeleteVpc",
                 "ec2:Describe*",
                 "ec2:DisassociateAddress",
                 "ec2:DisassociateRouteTable",
