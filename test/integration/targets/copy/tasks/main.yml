@@ -1,13 +1,12 @@
 - block:
 
     - name: Create a local temporary directory
-      tempfile:
-        state: directory
+      shell: mktemp -d "${TMPDIR:-/tmp}/ansible_test.XXXXXXXXX"
       register: tempfile_result
       connection: local
 
     - set_fact:
-        local_temp_dir: '{{ tempfile_result.path }}'
+        local_temp_dir: '{{ tempfile_result.stdout }}'
         # output_dir is hardcoded in test/runner/lib/executor.py and created there
         remote_dir: '{{ output_dir }}'
 
