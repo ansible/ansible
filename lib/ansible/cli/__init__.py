@@ -210,6 +210,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         # we need to show different prompts. This is for compat with older Towers that expect a
         # certain vault password prompt format, so 'promp_ask_vault_pass' vault_id gets the old format.
         prompt_formats = {}
+
+        vault_password_files = vault_password_files or []
+        if C.DEFAULT_VAULT_PASSWORD_FILE:
+            vault_password_files.append(C.DEFAULT_VAULT_PASSWORD_FILE)
+
         if create_new_password:
             prompt_formats['prompt'] = ['New vault password (%(vault_id)s): ',
                                         'Confirm vew vault password (%(vault_id)s): ']

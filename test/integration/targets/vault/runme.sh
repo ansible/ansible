@@ -87,6 +87,15 @@ echo "rc was $WRONG_RC (1 is expected)"
 # new 1.2 format, view, using password script with vault-id, ENFORCE_IDENTITY_MATCH=true, 'test_vault_id' provided should work
 ANSIBLE_VAULT_ID_MATCH=1 ansible-vault view "$@" --vault-id=test_vault_id@password-script.py format_1_2_AES256.yml
 
+# test with a default vault password set via config/env, right password
+ANSIBLE_VAULT_PASSWORD_FILE=vault-password ansible-vault view "$@" format_1_1_AES256.yml
+
+# test with a default vault password set via config/env, wrong password
+ANSIBLE_VAULT_PASSWORD_FILE=vault-password-wrong ansible-vault view "$@" format_1_1_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
 # encrypt it
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
@@ -213,6 +222,9 @@ ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-pass
 
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password --vault-password-file vault-password-wrong --syntax-check
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password-wrong --vault-password-file vault-password
+
+# test with a default vault password file set in config
+ANSIBLE_VAULT_PASSWORD_FILE=vault-password ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password-wrong
 
 # test that we can have a vault encrypted yaml file that includes embedded vault vars
 # that were encrypted with a different vault secret
