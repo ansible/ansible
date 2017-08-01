@@ -1,5 +1,5 @@
-Appendix: Module Utilities
-``````````````````````````
+Module Utilities
+````````````````
 
 Ansible provides a number of module utilities that provide helper functions that you can use when developing your own modules. The `basic.py` module utility provides the main entry point for accessing the Ansible library, and all Ansible modules must, at minimum, import from basic.py::
 

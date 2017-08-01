@@ -37,3 +37,4 @@ To get started, select one of the following topics.
    ../release_and_maintenance
    ../committer_guidelines
    ./style_guide/index
+   developer_labs
