@@ -248,6 +248,7 @@ class Interfaces(FactsBase):
 
     COMMANDS = [
         'show interfaces',
+        'show ip interface',
         'show ipv6 interface',
         'show lldp'
     ]
@@ -266,9 +267,14 @@ class Interfaces(FactsBase):
         data = self.responses[1]
         if data:
             data = self.parse_interfaces(data)
-            self.populate_ipv6_interfaces(data)
+            self.populate_ipv4_interfaces(data)
 
         data = self.responses[2]
+        if data:
+            data = self.parse_interfaces(data)
+            self.populate_ipv6_interfaces(data)
+
+        data = self.responses[3]
         if data:
             neighbors = self.run(['show lldp neighbors detail'])
             if neighbors:
@@ -281,11 +287,6 @@ class Interfaces(FactsBase):
             intf['description'] = self.parse_description(value)
             intf['macaddress'] = self.parse_macaddress(value)
 
-            ipv4 = self.parse_ipv4(value)
-            intf['ipv4'] = self.parse_ipv4(value)
-            if ipv4:
-                self.add_ip_address(ipv4['address'], 'ipv4')
-
             intf['mtu'] = self.parse_mtu(value)
             intf['bandwidth'] = self.parse_bandwidth(value)
             intf['mediatype'] = self.parse_mediatype(value)
@@ -296,6 +297,21 @@ class Interfaces(FactsBase):
 
             facts[key] = intf
         return facts
+
+    def populate_ipv4_interfaces(self, data):
+        for key, value in data.items():
+            self.facts['interfaces'][key]['ipv4'] = list()
+            primary_address = addresses = []
+            primary_address = re.findall(r'Internet address is (.+)$', value, re.M)
+            addresses = re.findall(r'Secondary address (.+)$', value, re.M)
+            if len(primary_address) == 0:
+                continue
+            addresses.append(primary_address[0])
+            for address in addresses:
+                addr, subnet = address.split("/")
+                ipv4 = dict(address=addr.strip(), subnet=subnet.strip())
+                self.add_ip_address(addr.strip(), 'ipv4')
+                self.facts['interfaces'][key]['ipv4'].append(ipv4)
 
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
