@@ -18,9 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -68,7 +68,7 @@ options:
     default: E
   SetAllocUnitSize:
     description:
-      - Allocation Unit size which should be set for the file system on found disk (possible values for file system NTFS are 4,8,16,32,64KB; possible value for file system ReFs is 64KB)
+      - Allocation Unit size which should be set for the file system on found disk (possible values per file system: NTFS - 4,8,16,32,64KB; ReFs - 64KB)
     required: false
     default: 4
     choices:
@@ -121,7 +121,7 @@ EXAMPLES = '''
   win_disk:
     FindSize: 100
     FindPartitionStyle: RAW
-    FindOperationalStatus: Offline    
+    FindOperationalStatus: Offline
     SetPartitionStyle: MBR
     SetDriveLetter: E
     SetFileSystem: NTFS
