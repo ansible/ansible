@@ -229,6 +229,46 @@
            - 'result.group_id.startswith("sg-")'
 
     # ============================================================
+    - name: add tags to existing group (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        tags:
+          Foo: Bar
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: add same tags to existing group (expected changed=false)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        tags:
+          Foo: Bar
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'not result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
     - name: test state=present for ipv6 (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
