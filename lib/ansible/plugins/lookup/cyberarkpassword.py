@@ -80,7 +80,7 @@ class CyberarkPassword:
                 credential = tmp_output
 
             if tmp_error:
-                raise AnsibleError("ERROR => %s " % (tmp_error))
+                raise AnsibleError("ERROR ==> %s " % (tmp_error))
 
             if credential and credential.endswith(b'\n'):
                 credential = credential[:-1]
