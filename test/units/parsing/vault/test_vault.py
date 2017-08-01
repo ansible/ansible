@@ -516,6 +516,14 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
+    def test_parse_vaulttext_envelope_crlf(self):
+        b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\r\nansible"
+        b_ciphertext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
+        b_lines = b_ciphertext.split(b'\n')
+        self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
+        self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(b_version, b"9.9", msg="version was not properly set")
+
     def test_encrypt_decrypt_aes(self):
         self.v.cipher_name = u'AES'
         vault_secrets = self._vault_secrets_from_password('default', 'ansible')
