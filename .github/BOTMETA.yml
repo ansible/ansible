@@ -959,10 +959,7 @@ files:
   lib/ansible/plugins/action/ios:
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/iosxr_:
-    maintainers: $team_networking
-    labels: networking
-  lib/ansible/plugins/action/junos_:
+  lib/ansible/plugins/action/junos:
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/action/net:
