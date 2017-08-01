@@ -1089,7 +1089,7 @@ DEFAULT_VAULT_IDENTITY:
   vars: []
   yaml: {key: defaults.vault_identity}
 DEFAULT_VAULT_PASSWORD_FILE:
-  default: ~
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_VAULT_PASSWORD_FILE}]
   ini:
