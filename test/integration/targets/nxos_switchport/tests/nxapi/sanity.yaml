@@ -1,0 +1,4 @@
+---
+- set_fact: connection="{{ nxapi }}"
+
+- import_tasks: targets/nxos_switchport/tests/common/sanity.yaml
