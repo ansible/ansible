@@ -109,6 +109,7 @@ Ansible Changes By Release
     * https://github.com/ansible/ansible/blob/2fff690caab6a1c6a81973f704be3fbd0bde2c2f/lib/ansible/module_utils/six/__init__.py
 
 #### New Callbacks:
+- full_skip
 - profile_roles
 - stderr
 
