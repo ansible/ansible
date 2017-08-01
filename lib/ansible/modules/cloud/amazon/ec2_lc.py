@@ -87,8 +87,6 @@ options:
   instance_monitoring:
     description:
       - Specifies whether instances are launched with detailed monitoring.
-    aliases:
-      - advanced_instance_monitoring
     default: false
   assign_public_ip:
     description:
@@ -392,7 +390,7 @@ def main():
             instance_profile_name=dict(),
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
-            instance_monitoring=dict(aliases=['advanced_instance_monitoring'], default=False, type='bool'),
+            instance_monitoring=dict(default=False, type='bool'),
             assign_public_ip=dict(type='bool'),
             classic_link_vpc_security_groups=dict(type='list'),
             classic_link_vpc_id=dict(),
