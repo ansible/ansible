@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -90,7 +90,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: 'Generate PKCS #12 file'
+- name: 'Generate PKCS#12 file'
   openssl_pkcs12:
     path: '/opt/certs/ansible.p12'
     friendly_name: 'raclette'
@@ -98,6 +98,32 @@ EXAMPLES = '''
     cert_path: '/opt/certs/cert.pem'
     ca_certificates: '/opt/certs/ca.pem'
     state: present
+
+- name: 'Change PKCS#12 file permission'
+  openssl_pkcs12:
+    path: '/opt/certs/ansible.p12'
+    friendly_name: 'raclette'
+    privatekey_path: '/opt/certs/keys/key.pem'
+    cert_path: '/opt/certs/cert.pem'
+    ca_certificates: '/opt/certs/ca.pem'
+    state: present
+    mode: 0600
+
+- name: 'Regen PKCS#12 file'
+  openssl_pkcs12:
+    path: '/opt/certs/ansible.p12'
+    friendly_name: 'raclette'
+    privatekey_path: '/opt/certs/keys/key.pem'
+    cert_path: '/opt/certs/cert.pem'
+    ca_certificates: '/opt/certs/ca.pem'
+    state: present
+    mode: 0600
+    force: True
+
+- name: 'Remove PKCS#12 file'
+  openssl_pkcs12:
+    path: '/opt/certs/ansible.p12'
+    state: absent
 '''
 
 RETURN = '''
@@ -138,6 +164,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.action = module.params['action']
         self.iter_size = module.params['iter_size']
         self.maciter_size = module.params['maciter_size']
+        self.pkcs12 = None
         self.privatekey_path = module.params['privatekey_path']
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.cert_path = module.params['cert_path']
@@ -145,24 +172,21 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.friendly_name = module.params['friendly_name']
         self.passphrase = module.params['passphrase']
 
-        self.module = module
-
     def generate(self, module):
-        ''' Generate pkcs#12 file archive. '''
+        ''' Generate PKCS#12 file archive. '''
 
-        file_args = self.module.load_file_common_arguments(module.params)
-        this_mode = self.module.params['mode']
+        file_args = module.load_file_common_arguments(module.params)
+        this_mode = module.params['mode']
         if not this_mode:
             this_mode = int('0400', 8)
 
-        if not self.check(module, perms_required=False) or not self.force:
+        if not self.check(module, perms_required=False) or module.params['force']:
             self.pkcs12 = crypto.PKCS12()
 
             try:
                 self.remove()
             except PkcsError as exc:
                 module.fail_json(msg=to_native(exc))
-        
 
             if self.ca_certificates:
                 ca_certs = [crypto_utils.load_certificate(ca_cert) for ca_cert
@@ -178,8 +202,8 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
             if self.privatekey_path:
                 self.pkcs12.set_privatekey(crypto_utils.load_privatekey(
-                                            self.privatekey_path,
-                                            self.privatekey_passphrase)
+                                           self.privatekey_path,
+                                           self.privatekey_passphrase)
                                            )
 
             try:
@@ -191,14 +215,14 @@ class Pkcs(crypto_utils.OpenSSLObject):
                             self.maciter_size
                         )
                     )
-                self.module.set_mode_if_different(self.path, this_mode, False)
+                #module.set_mode_if_different(self.path, this_mode, False)
                 self.changed = True
             except (IOError, OSError) as exc:
                 self.remove()
                 raise PkcsError(exc)
 
         if module.set_fs_attributes_if_different(file_args, False):
-            self.module.set_mode_if_different(self.path, this_mode, False)
+            module.set_mode_if_different(self.path, this_mode, False)
             self.changed = True
 
     def check(self, module, perms_required=True):
@@ -206,16 +230,20 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         state_and_perms = super(Pkcs, self).check(module, perms_required)
 
-        def _check_passphrase():
-            try:
-                crypto_utils.load_privatekey(self.path,
-                                             self.privatekey_passphrase)
-                return True
-            except crypto.Error:
-                return False
+        def _check_pkey_passphrase():
+            if self.privatekey_passphrase:
+                try:
+                    crypto_utils.load_privatekey(self.path,
+                                                 self.privatekey_passphrase)
+                    return True
+                except crypto.Error:
+                    return False
+            return True
 
-        if not state_and_perms or not _check_passphrase():
-            return False
+        if not state_and_perms:
+            return state_and_perms
+
+        return _check_pkey_passphrase
 
     def dump(self):
         ''' Serialize the object into a dictionary. '''
@@ -236,12 +264,12 @@ def main():
         ca_certificates=dict(type='list'),
         cert_path=dict(type='path'),
         force=dict(default=False, type='bool'),
-        friendly_name=dict(required=True, type='str', aliases=['name']),
+        friendly_name=dict(required=False, type='str', aliases=['name']),
         iter_size=dict(default=2048, type='int'),
         maciter_size=dict(default=1, type='int'),
         passphrase=dict(type='str', no_log=True),
         path=dict(required=True, type='path'),
-        privatekey_path=dict(required=True, type='path'),
+        privatekey_path=dict(required=False, type='path'),
         privatekey_passphrase=dict(type='str', no_log=True),
         state=dict(default='present',
                    choices=['present', 'absent'],
@@ -249,11 +277,11 @@ def main():
     )
 
     required_if = [
-        ['state', 'present', ['privatekey_path']]
+        ['state', 'present', ['privatekey_path', 'friendly_name']]
     ]
 
     required_together = [
-        ['path', 'privatekey_path', 'friendly_name'],
+        ['privatekey_path', 'friendly_name'],
     ]
 
     module = AnsibleModule(
