@@ -437,46 +437,26 @@ files:
   $modules/net_tools/snmp_facts.py: ogenstad
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: dagwieers schunduri
+  $modules/network/aireos/: jmighion
   $modules/network/aos/: dgarros jeremyschulman
-  $modules/network/asa/asa_acl.py: gundalow ogenstad
-  $modules/network/asa/asa_command.py: gundalow ogenstad privateip
-  $modules/network/asa/asa_config.py: gundalow ogenstad privateip
+  $modules/network/aruba/: jmighion
+  $modules/network/asa/: ogenstad
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/citrix/netscaler.py: $team_ansible
   $modules/network/cloudengine/: QijunPan
-  $modules/network/cumulus/nclu.py: $team_cumulus
+  $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
   $modules/network/dellos6/: abirami-n skg-net
   $modules/network/dellos9/: dhivyap skg-net
-  $modules/network/eos/eos_banner.py: privateip trishnaguha
-  $modules/network/eos/eos_command.py: privateip trishnaguha
-  $modules/network/eos/eos_config.py: privateip trishnaguha
-  $modules/network/eos/eos_eapi.py: privateip trishnaguha
-  $modules/network/eos/eos_facts.py: privateip trishnaguha
-  $modules/network/eos/eos_system.py: privateip trishnaguha
-  $modules/network/eos/eos_user.py: privateip trishnaguha
-  $modules/network/eos/eos_vlan.py: privateip rcarrillocruz trishnaguha
-  $modules/network/eos/eos_vrf.py: privateip rcarrillocruz trishnaguha
+  $modules/network/eos/: privateip trishnaguha
   $modules/network/f5/: caphrim007
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
   $modules/network/ios/: privateip rcarrillocruz
   $modules/network/iosxr/: privateip rcarrillocruz
-  $modules/network/junos/junos_banner.py: Qalthos ganeshrn
-  $modules/network/junos/junos_command.py: Qalthos ganeshrn privateip
-  $modules/network/junos/junos_config.py: Qalthos ganeshrn privateip
-  $modules/network/junos/junos_facts.py: Qalthos ganeshrn qalthos
-  $modules/network/junos/junos_interface.py: Qalthos ganeshrn
-  $modules/network/junos/junos_logging.py: Qalthos ganeshrn
-  $modules/network/junos/junos_netconf.py: Qalthos ganeshrn privateip
-  $modules/network/junos/junos_package.py: Qalthos ganeshrn privateip
-  $modules/network/junos/junos_rpc.py: Qalthos ganeshrn privateip
-  $modules/network/junos/junos_static_route.py: Qalthos ganeshrn
-  $modules/network/junos/junos_system.py: Qalthos ganeshrn
-  $modules/network/junos/junos_user.py: Qalthos ganeshrn privateip
-  $modules/network/junos/junos_vlan.py: Qalthos ganeshrn
+  $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
   $modules/network/lenovo/: dkasberg
@@ -486,42 +466,20 @@ files:
   $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
   $modules/network/openswitch/: $team_openswitch
+  $modules/network/openvswitch/: $team_networking
+    ignored: stygstra
+    maintainers: privateip rcarrillocruz
   $modules/network/ordnance/: alexanderturner djh00t
-  $modules/network/ovs/openvswitch_bridge.py:
+  $modules/network/ovs/:
     ignored: stygstra
     maintainers: privateip rcarrillocruz
-  $modules/network/ovs/openvswitch_db.py: privateip rcarrillocruz
-  $modules/network/ovs/openvswitch_port.py:
-    ignored: stygstra
-    maintainers: privateip rcarrillocruz
+  $modules/network/panos/: ivanbojer jtschichold
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
-  $modules/network/panos/panos_admin.py: ivanbojer jtschichold
-  $modules/network/panos/panos_admpwd.py: ivanbojer jtschichold
-  $modules/network/panos/panos_cert_gen_ssh.py: ivanbojer jtschichold
-  $modules/network/panos/panos_check.py: ivanbojer jtschichold
-  $modules/network/panos/panos_commit.py: ivanbojer jtschichold
-  $modules/network/panos/panos_dag.py: ivanbojer jtschichold
-  $modules/network/panos/panos_import.py: ivanbojer jtschichold
-  $modules/network/panos/panos_interface.py: ivanbojer jtschichold
-  $modules/network/panos/panos_lic.py: ivanbojer jtschichold
-  $modules/network/panos/panos_loadcfg.py: ivanbojer jtschichold
-  $modules/network/panos/panos_mgtconfig.py: ivanbojer jtschichold
-  $modules/network/panos/panos_nat_policy.py: ivanbojer jtschichold
-  $modules/network/panos/panos_pg.py: ivanbojer jtschichold
-  $modules/network/panos/panos_restart.py: ivanbojer jtschichold
-  $modules/network/panos/panos_security_policy.py: ivanbojer jtschichold
-  $modules/network/panos/panos_service.py: ivanbojer jtschichold
-  $modules/network/routing/net_static_route.py: $team_networking
+  $modules/network/protocol/: $team_networking
+  $modules/network/routing/: $team_networking
   $modules/network/sros/: $team_openswitch
   $modules/network/system/: $team_networking
-  $modules/network/vyos/vyos_banner.py: Qalthos
-  $modules/network/vyos/vyos_command.py: Qalthos qalthos
-  $modules/network/vyos/vyos_config.py: Qalthos qalthos
-  $modules/network/vyos/vyos_facts.py: Qalthos qalthos
-  $modules/network/vyos/vyos_linkagg.py: Qalthos rcarrillocruz
-  $modules/network/vyos/vyos_static_route.py: Qalthos
-  $modules/network/vyos/vyos_system.py: Qalthos qalthos
-  $modules/network/vyos/vyos_user.py: Qalthos
+  $modules/network/vyos/: Qalthos
   $modules/notification/campfire.py: fabulops
   $modules/notification/catapult.py: Jmainguy
   $modules/notification/cisco_spark.py:
@@ -622,7 +580,7 @@ files:
   $modules/source_control/subversion.py: dsummersl
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
-  $modules/storage/purestorage/purefa_host.py: sdodsley
+  $modules/storage/purestorage/: sdodsley
   $modules/storage/zfs/zfs.py: johanwiren
   $modules/storage/zfs/zfs_facts.py: xen0l
   $modules/storage/zfs/zpool_facts.py: xen0l
@@ -875,6 +833,36 @@ files:
     - core inventory
     - inventory
     - inventory parsing
+  $module_utils/a10.py: ericchou1 mischapeters
+  $module_utils/aireos.py: jmighion
+  $module_utils/eos.py: $team_networking
+  $module_utils/aruba.py: jmighion
+  $module_utils/asa.py: ogenstad
+  $module_utils/avi.py: $team_avi
+  $module_utils/bigswitch_utils.py: jayakody tedelhourani vuile
+  $module_utils/cisco_usc.py:   ragupta-git
+  $module_utils/cloudengine.py: QijunPan
+  $module_utils/cnos_devicerules.py: dkasberg
+  $module_utils/cnos_errorcodes.py: dkasberg
+  $module_utils/cnos.py: dkasberg
+  $module_utils/dellos: skg-net
+  $module_utils/eos.py: $team_networking
+  $module_utils/f5_utils.py: caphrim007
+  $module_utils/fortios.py: bjolivot
+  $module_utils/ios.py: $team_networking
+  $module_utils/iosxr.py: $team_networking
+  $module_utils/junos.py: $team_networking
+  $module_utils/netcfg.py: $team_networking
+  $module_utils/netconf.py: $team_networking
+  $module_utils/netcli.py: $team_networking
+  $module_utils/netscaler.py: $team_networking
+  $module_utils/network_common.py: $team_networking
+  $module_utils/network.py: $team_networking
+  $module_utils/nxos.py: $team_networking
+  $module_utils/openswitch.py:
+  $module_utils/ordnance.py: alexanderturner djh00t
+  $module_utils/sros.py: $team_networking
+  $module_utils/vyos: $team_networking
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -894,6 +882,34 @@ files:
     - role dependencies
     - role dep
     - role dependency
+  lib/ansible/plugins/action/asa: ogenstad
+  lib/ansible/plugins/action/aireos: jmighion
+  lib/ansible/plugins/action/aruba: jmighion
+  lib/ansible/plugins/action/dellos: skg-net
+  lib/ansible/plugins/action/eos: $team_networking
+  lib/ansible/plugins/action/ios: $team_networking
+  lib/ansible/plugins/action/iosxr_: $team_networking
+  lib/ansible/plugins/action/junos_: $team_networking
+  lib/ansible/plugins/action/net: $team_networking
+  lib/ansible/plugins/action/nxos: $team_networking
+  lib/ansible/plugins/action/sros: $team_networking
+  lib/ansible/plugins/action/vyos: $team_networking
+  lib/ansible/plugins/cliconf/: $team_networking
+  lib/ansible/plugins/connection/netconf.py: $team_networking
+  lib/ansible/plugins/connection/network_cli.py: $team_networking
+  lib/ansible/plugins/connection/persistent.py: $team_networking
+  lib/ansible/plugins/netconf/: $team_networking
+  lib/ansible/plugins/terminal/aireos.py: jmighion
+  lib/ansible/plugins/terminal/aruba.py: jmighion
+  lib/ansible/plugins/terminal/asa.py: ogenstad
+  lib/ansible/plugins/terminal/dellos10:  skg-net
+  lib/ansible/plugins/terminal/eos.py: $team_networking
+  lib/ansible/plugins/terminal/ios.py: $team_networking
+  lib/ansible/plugins/terminal/iosxr.py: $team_networking
+  lib/ansible/plugins/terminal/junos.py: $team_networking
+  lib/ansible/plugins/terminal/nxos.py: $team_networking
+  lib/ansible/plugins/terminal/sros.py: $team_networking
+  lib/ansible/plugins/terminal/vyos.py: $team_networking
   lib/ansible/template:
     keywords:
     - jinja
