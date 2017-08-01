@@ -50,9 +50,7 @@ junos_argument_spec = {
 }
 
 # Add argument's default value here
-ARGS_DEFAULT_VALUE = {
-    'timeout': 10
-}
+ARGS_DEFAULT_VALUE = {}
 
 
 def get_argspec():

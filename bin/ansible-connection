@@ -178,11 +178,11 @@ class Server():
             display.display('shutdown local socket, connection was active for %s secs' % delta, log_only=True)
 
     def connect_timeout(self, signum, frame):
-        display.display('connect timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
+        display.display('persistent connection idle timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
         self.shutdown()
 
     def command_timeout(self, signum, frame):
-        display.display('commnad timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
+        display.display('command timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
         self.shutdown()
 
     def handler(self, signum, frame):
@@ -214,6 +214,7 @@ class Server():
 
     def do_EXEC(self, data):
         cmd = data.split(b'EXEC: ')[1]
+        display.display('Command executed: %s' % cmd, log_only=True)
         return self.connection.exec_command(cmd)
 
     def do_PUT(self, data):
@@ -352,17 +353,17 @@ def main():
 
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
-        attempts = C.PERSISTENT_CONNECT_RETRIES
-        while bool(attempts):
+        connect_retry_timeout = C.PERSISTENT_CONNECT_RETRY_TIMEOUT
+        while bool(connect_retry_timeout):
             try:
                 sock.connect(socket_path)
                 break
             except socket.error:
-                time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
-                attempts -= 1
+                time.sleep(1)
+                connect_retry_timeout -= 1
         else:
-            display.display('number of connection attempts exceeded, unable to connect to control socket', pc.remote_addr, pc.remote_user, log_only=True)
-            display.display('persistent_connect_interval=%s, persistent_connect_retries=%s' % (C.PERSISTENT_CONNECT_INTERVAL, C.PERSISTENT_CONNECT_RETRIES), pc.remote_addr, pc.remote_user, log_only=True)
+            display.display('connect retry timeout expired, unable to connect to control socket', pc.remote_addr, pc.remote_user, log_only=True)
+            display.display('persistent_connect_retry_timeout is %s secs' % (C.PERSISTENT_CONNECT_RETRY_TIMEOUT), pc.remote_addr, pc.remote_user, log_only=True)
             sys.stderr.write('failed to connect to control socket')
             sys.exit(255)
 
