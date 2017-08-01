@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 
 DOCUMENTATION = '''
 ---
-module: win_disk
+module: win_disk_setup
 version_added: "1.0"
 short_description: A windows disk module
 description:
