@@ -301,7 +301,7 @@
       - 'file19_result.state == "directory"'
 
 - name: create soft link to relative file
-  file: src=../sub1/file1 dest={{output_dir}}/sub2/link1 state=link
+  file: src={{output_dir}}/sub1/file1 dest={{output_dir}}/sub2/link1 state=link
   register: file20_result
 
 - name: verify that the result was marked as changed
@@ -309,8 +309,10 @@
     that:
       - "file20_result.changed == true"
 
+# previous version had 'src=sub1', sub1 did not exist
+# test was incorrectly linking non-existent file without force=yes, updated to correctly link dir
 - name: create soft link to relative directory
-  file: src=sub1 dest={{output_dir}}/sub1-link state=link
+  file: src={{output_dir}}/sub1 dest={{output_dir}}/sub1-link state=link
   register: file21_result
 
 - name: verify that the result was marked as changed
@@ -478,7 +480,7 @@
   copy: dest={{output_dir}}/test_follow content="this is a test file\n" mode=0666
 
 - name: create a symlink to the test file
-  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link
+  file: path={{output_dir}}/test_follow_link src="{{output_dir}}/test_follow" state=link
 
 - name: modify the permissions on the link using follow=yes
   file: path={{output_dir}}/test_follow_link mode=0644 follow=yes
@@ -499,7 +501,7 @@
     - result.stat.mode == '0644'
 
 - name: attempt to modify the permissions of the link itself
-  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link mode=0600 follow=no
+  file: path={{output_dir}}/test_follow_link src="{{output_dir}}/test_follow" state=link mode=0600 follow=no
   register: result
 
 # Whether the link itself changed is platform dependent! (BSD vs Linux?)
@@ -528,10 +530,10 @@
   file: path={{output_dir}}/test_follow_rec_target_dir/foo state=touch mode=0700
 
 - name: create a symlink to the file
-  file: path={{output_dir}}/test_follow_rec/test_link state=link src="../test_follow_rec_target_file"
+  file: path={{output_dir}}/test_follow_rec/test_link state=link src="{{output_dir}}/test_follow_rec_target_file"
 
 - name: create a symlink to the directory
-  file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
+  file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="{{output_dir}}/test_follow_rec_target_dir"
 
 - name: try to change permissions without following symlinks
   file: path={{output_dir}}/test_follow_rec follow=False mode="a-x" recurse=True
