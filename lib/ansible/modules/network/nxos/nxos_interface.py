@@ -266,7 +266,8 @@ def get_interface(intf, module):
             "access": "layer2",
             "trunk": "layer2",
             "routed": "layer3",
-            "layer3": "layer3"
+            "layer3": "layer3",
+            "fex-fabric": "layer2"
         }
     }
 
