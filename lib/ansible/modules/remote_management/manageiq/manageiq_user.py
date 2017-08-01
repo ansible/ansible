@@ -129,7 +129,7 @@ class ManageIQUser(object):
         group = self.manageiq.find_collection_resource_by('groups', description=description)
         if not group:  # group doesn't exist
             self.module.fail_json(
-                msg="group {description} does not exist in manageiq".format(description=description))
+                msg="group %s does not exist in manageiq" % (description))
 
         return group['id']
 
@@ -163,10 +163,10 @@ class ManageIQUser(object):
             a short message describing the operation executed.
         """
         try:
-            url = '{api_url}/users/{id}'.format(api_url=self.api_url, id=user['id'])
+            url = '%s/users/%s' % (self.api_url, user['id'])
             result = self.client.post(url, action='delete')
         except Exception as e:
-            self.module.fail_json(msg="failed to delete user {userid}: {error}".format(userid=user['userid'], error=e))
+            self.module.fail_json(msg="failed to delete user %s: %s" % (user['userid'], str(e)))
 
         return dict(changed=True, msg=result['message'])
 
@@ -177,7 +177,7 @@ class ManageIQUser(object):
             a short message describing the operation executed.
         """
         group_id = None
-        url = '{api_url}/users/{id}'.format(api_url=self.api_url, id=user['id'])
+        url = '%s/users/%s' % (self.api_url, user['id'])
 
         resource = dict(userid=user['userid'])
         if group is not None:
@@ -194,17 +194,17 @@ class ManageIQUser(object):
         if self.compare_user(user, name, group_id, password, email):
             return dict(
                 changed=False,
-                msg="user {userid} is not changed.".format(userid=user['userid']))
+                msg="user %s is not changed." % (user['userid']))
 
         # try to update user
         try:
             result = self.client.post(url, action='edit', resource=resource)
         except Exception as e:
-            self.module.fail_json(msg="failed to update user {userid}: {error}".format(userid=user['userid'], error=e))
+            self.module.fail_json(msg="failed to update user %s: %s" % (user['userid'], str(e)))
 
         return dict(
             changed=True,
-            msg="successfully updated the user {userid}: {user_details}".format(userid=user['userid'], user_details=result))
+            msg="successfully updated the user %s: %s" % (user['userid'], result))
 
     def create_user(self, userid, name, group, password, email):
         """ Creates the user in manageiq.
@@ -216,10 +216,10 @@ class ManageIQUser(object):
         # check for required arguments
         for key, value in dict(name=name, group=group, password=password).items():
             if value in (None, ''):
-                self.module.fail_json(msg="missing required argument: {}".format(key))
+                self.module.fail_json(msg="missing required argument: %s" % (key))
 
         group_id = self.group_id(group)
-        url = '{api_url}/users'.format(api_url=self.api_url)
+        url = '%s/users' % (self.api_url)
 
         resource = {'userid': userid, 'name': name, 'password': password, 'group': {'id': group_id}}
         if email is not None:
@@ -229,11 +229,11 @@ class ManageIQUser(object):
         try:
             result = self.client.post(url, action='create', resource=resource)
         except Exception as e:
-            self.module.fail_json(msg="failed to create user {userid}: {error}".format(userid=userid, error=e))
+            self.module.fail_json(msg="failed to create user %s: %s" % (userid, str(e)))
 
         return dict(
             changed=True,
-            msg="successfully created the user {userid}: {user_details}".format(userid=userid, user_details=result['results']))
+            msg="successfully created the user %s: %s" % (userid, result['results']))
 
 
 def main():
@@ -270,7 +270,7 @@ def main():
         else:
             res_args = dict(
                 changed=False,
-                msg="user {userid}: does not exist in manageiq".format(userid=userid))
+                msg="user %s: does not exist in manageiq" % (userid))
 
     # user shoult exist
     if state == "present":
