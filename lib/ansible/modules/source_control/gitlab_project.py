@@ -22,7 +22,7 @@ description:
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
-    - pyapi-gitlab python module
+    - python-gitlab python module
 options:
     server_url:
         description:
@@ -75,33 +75,56 @@ options:
     issues_enabled:
         description:
             - Whether you want to create issues or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
     merge_requests_enabled:
         description:
             - If merge requests can be made or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
     wiki_enabled:
         description:
             - If an wiki for this project should be available or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
+    builds_enabled:
+        description:
+            - If a build creation for this project should be available or not.
+        choices: ["true", "false"]
+        default: false
+    public_builds:
+        description:
+            - If true, builds can be viewed by non-project-members.
+            - Will only work when C(builds_enabled=True).
+        choices: ["true", "false"]
+        default: false
+    only_allow_merge_if_build_succeeds:
+        description:
+            - Set whether merge requests can only be merged with successful builds.
+            - Will only work when C(builds_enabled=True).
+        choices: ["true", "false"]
+        default: false
+    container_registry_enabled:
+        description:
+            - Enable container registry for this project.
+            - Will only work when C(builds_enabled=True).
+        choices: ["true", "false"]
+        default: false
     snippets_enabled:
         description:
             - If creating snippets should be available or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
     public:
         description:
             - If the project is public available or not.
             - Setting this to true is same as setting visibility_level to 20.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: false
     visibility_level:
         description:
@@ -110,10 +133,11 @@ options:
             - Public. visibility_level is 20. The project can be cloned without any authentication.
             - Possible values are 0, 10 and 20.
         required: false
+        choices: [0, 10, 20]
         default: 0
     import_url:
         description:
-            - Git repository which will me imported into gitlab.
+            - Git repository which will be imported into gitlab.
             - Gitlab server needs read access to this git repository.
         required: false
         default: false
@@ -160,103 +184,96 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 
 class GitLabProject(object):
     def __init__(self, module, git):
         self._module = module
         self._gitlab = git
+        self.projectObject = None
+        self.groupObject = None
 
-    def createOrUpdateProject(self, project_exists, group_name, import_url, arguments):
-        is_user = False
-        group_id = self.getGroupId(group_name)
-        if not group_id:
-            group_id = self.getUserId(group_name)
-            is_user = True
-
-        if project_exists:
-            # Edit project
-            return self.updateProject(group_name, arguments)
+    def createOrUpdateProject(self, arguments):
+        changed = False
+        if self.projectObject is None:
+            try:
+                project = self._gitlab.projects.create(arguments)
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create a project: %s " % e)
         else:
-            # Create project
+            project = self.projectObject
+
+        project_dict = project.as_dict()
+        for arg_key, arg_value in arguments.items():
+            project_data_value = project_dict.get(arg_key)
+            if isinstance(project_data_value, bool) or project_data_value is None:
+                to_bool = self.to_bool(project_data_value)
+                if to_bool != arg_value:
+                    changed = True
+                    continue
+            else:
+                if project_data_value != arg_value:
+                    changed = True
+
+        if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            return self.createProject(is_user, group_id, import_url, arguments)
-
-    def createProject(self, is_user, user_id, import_url, arguments):
-        if is_user:
-            return self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
+                self._module.exit_json(changed=True, result="Project should have updated.")
+            try:
+                project.save()
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create or update a project: %s " % e)
+            return True
         else:
-            group_id = user_id
-            return self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
+            return False
 
-    def deleteProject(self, group_name, project_name):
-        if self.existsGroup(group_name):
-            project_owner = group_name
-        else:
-            project_owner = self._gitlab.currentuser()['username']
+    def deleteProject(self):
+        """Deletes a project."""
+        project = self.projectObject
+        try:
+            project.delete()
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Failed to delete project: %s " % e)
+        return True
 
-        search_results = self._gitlab.searchproject(search=project_name)
-        for result in search_results:
-            owner = result['namespace']['name']
-            if owner == project_owner:
-                return self._gitlab.deleteproject(result['id'])
+    def existsProject(self, group_name, project_name, state):
+        """Validates if a project exists."""
+        if not self.existsGroup(name=group_name):
+            if state == "present":
+                self._module.fail_json(msg="The group " + group_name + " doesnt exists in Gitlab. Please create it first.")
 
-    def existsProject(self, group_name, project_name):
-        if self.existsGroup(group_name):
-            project_owner = group_name
-        else:
-            project_owner = self._gitlab.currentuser()['username']
-
-        search_results = self._gitlab.searchproject(search=project_name)
-        for result in search_results:
-            owner = result['namespace']['name']
-            if owner == project_owner:
+        projects = self._gitlab.projects.search(project_name)
+        for project in projects:
+            if project.namespace.name == group_name and project_name == project.name:
+                self.projectObject = project
                 return True
+
         return False
 
-    def existsGroup(self, group_name):
-        if group_name is not None:
-            # Find the group, if group not exists we try for user
-            for group in self._gitlab.getall(self._gitlab.getgroups):
-                if group['name'] == group_name:
-                    return True
-
-            user_name = group_name
-            user_data = self._gitlab.getusers(search=user_name)
-            for data in user_data:
-                if 'id' in user_data:
-                    return True
+    def existsGroup(self, name):
+        """When group/user exists, object will be stored in self.groupObject."""
+        groups = self._gitlab.groups.search(name)
+        if len(groups) == 1:
+            self.groupObject = groups[0]
+            return True
+        users = self._gitlab.users.list(username=name)
+        if len(users) == 1:
+            self.groupObject = users[0]
+            return True
         return False
 
-    def getGroupId(self, group_name):
-        if group_name is not None:
-            # Find the group, if group not exists we try for user
-            for group in self._gitlab.getall(self._gitlab.getgroups):
-                if group['name'] == group_name:
-                    return group['id']
+    def getGroupId(self):
+        """Returns the id of the groupobject."""
+        return int(self.groupObject.id)
 
-    def getProjectId(self, group_name, project_name):
-        if self.existsGroup(group_name):
-            project_owner = group_name
-        else:
-            project_owner = self._gitlab.currentuser()['username']
-
-        search_results = self._gitlab.searchproject(search=project_name)
-        for result in search_results:
-            owner = result['namespace']['name']
-            if owner == project_owner:
-                return result['id']
-
-    def getUserId(self, user_name):
-        user_data = self._gitlab.getusers(search=user_name)
-
-        for data in user_data:
-            if 'id' in data:
-                return data['id']
-        return self._gitlab.currentuser()['id']
+    def getUserData(self):
+        """Returns the userid and username."""
+        user_data = self._gitlab.user
+        return str(user_data.id), user_data.username
 
     def to_bool(self, value):
         if value:
@@ -264,58 +281,37 @@ class GitLabProject(object):
         else:
             return 0
 
-    def updateProject(self, group_name, arguments):
-        project_changed = False
-        project_name = arguments['name']
-        project_id = self.getProjectId(group_name, project_name)
-        project_data = self._gitlab.getproject(project_id=project_id)
-
-        for arg_key, arg_value in arguments.items():
-            project_data_value = project_data[arg_key]
-
-            if isinstance(project_data_value, bool) or project_data_value is None:
-                to_bool = self.to_bool(project_data_value)
-                if to_bool != arg_value:
-                    project_changed = True
-                    continue
-            else:
-                if project_data_value != arg_value:
-                    project_changed = True
-
-        if project_changed:
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            return self._gitlab.editproject(project_id=project_id, **arguments)
-        else:
-            return False
-
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True),
+            server_url=dict(required=True, type='str'),
             validate_certs=dict(required=False, default=True, type='bool', aliases=['verify_ssl']),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True),
-            group=dict(required=False),
-            name=dict(required=True),
-            path=dict(required=False),
-            description=dict(required=False),
+            login_user=dict(required=False, no_log=True, type='str'),
+            login_password=dict(required=False, no_log=True, type='str'),
+            login_token=dict(required=False, no_log=True, type='str'),
+            group=dict(required=False, type='str'),
+            name=dict(required=True, type='str'),
+            path=dict(required=False, type='str'),
+            description=dict(default='', required=False, type='str'),
             issues_enabled=dict(default=True, type='bool'),
             merge_requests_enabled=dict(default=True, type='bool'),
             wiki_enabled=dict(default=True, type='bool'),
+            builds_enabled=dict(default=False, type='bool'),
+            public_builds=dict(default=False, type='bool'),
+            only_allow_merge_if_build_succeeds=dict(default=False, type='bool'),
+            container_registry_enabled=dict(default=False, type='bool'),
             snippets_enabled=dict(default=True, type='bool'),
             public=dict(default=False, type='bool'),
             visibility_level=dict(default="0", choices=["0", "10", "20"]),
-            import_url=dict(required=False),
+            import_url=dict(required=False, type='str'),
             state=dict(default="present", choices=["present", 'absent']),
         ),
         supports_check_mode=True
     )
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install pyapi-gitlab")
+        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
     server_url = module.params['server_url']
     verify_ssl = module.params['validate_certs']
@@ -329,13 +325,18 @@ def main():
     issues_enabled = module.params['issues_enabled']
     merge_requests_enabled = module.params['merge_requests_enabled']
     wiki_enabled = module.params['wiki_enabled']
+    builds_enabled = module.params['builds_enabled']
+    public_builds = module.params['public_builds']
+    only_allow_merge_if_build_succeeds = module.params['only_allow_merge_if_build_succeeds']
+    container_registry_enabled = module.params['container_registry_enabled']
     snippets_enabled = module.params['snippets_enabled']
     public = module.params['public']
     visibility_level = module.params['visibility_level']
     import_url = module.params['import_url']
     state = module.params['state']
+    use_credentials = None
 
-    # We need both login_user and login_password or login_token, otherwise we fail.
+    # Validate some credentials configuration parameters.
     if login_user is not None and login_password is not None:
         use_credentials = True
     elif login_token is not None:
@@ -343,61 +344,76 @@ def main():
     else:
         module.fail_json(msg="No login credentials are given. Use login_user with login_password, or login_token")
 
-    # Set project_path to project_name if it is empty.
-    if project_path is None:
-        project_path = project_name.replace(" ", "_")
-
-    # Gitlab API makes no difference between upper and lower cases, so we lower them.
-    project_name = project_name.lower()
-    project_path = project_path.lower()
-    if group_name is not None:
-        group_name = group_name.lower()
+    if login_token and login_user:
+        module.fail_json(msg="You can either use 'login_token' or 'login_user' and 'login_password'")
 
     # Lets make an connection to the Gitlab server_url, with either login_user and login_password
     # or with login_token
     try:
         if use_credentials:
-            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
-            git.login(user=login_user, password=login_password)
+            git = gitlab.Gitlab(server_url, email=login_user, password=login_password, ssl_verify=verify_ssl)
+            git.auth()
         else:
-            git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s " % to_native(e))
+            git = gitlab.Gitlab(server_url, private_token=login_token, ssl_verify=verify_ssl)
+            git.auth()
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
 
-    # Check if user is authorized or not before proceeding to any operations
-    # if not, exit from here
-    auth_msg = git.currentuser().get('message', None)
-    if auth_msg is not None and auth_msg == '401 Unauthorized':
-        module.fail_json(msg='User unauthorized',
-                         details="User is not allowed to access Gitlab server "
-                                 "using login_token. Please check login_token")
+    # Set project_path to project_name if it is empty.
+    if project_path is None:
+        project_path = project_name.replace(" ", "_")
+
+    # Gitlab API makes no difference between upper and lower cases, so we lower them.
+    if project_name is not None:
+        project_name = project_name.lower()
+    if project_path is not None:
+        project_path = project_path.lower()
+    if group_name is not None:
+        group_name = group_name.lower()
 
     # Validate if project exists and take action based on "state"
     project = GitLabProject(module, git)
-    project_exists = project.existsProject(group_name, project_name)
+
+    # Gather information if we have a group, or we have to add the project to the current user.
+    if group_name is None:
+        group_id, group_name = project.getUserData()
+        project_exists = project.existsProject(group_name=group_name, project_name=project_name, state=state)
+    else:
+        project_exists = project.existsProject(group_name=group_name, project_name=project_name, state=state)
+        if state == "present":
+            group_id = project.getGroupId()
 
     # Creating the project dict
     arguments = {"name": project_name,
                  "path": project_path,
                  "description": description,
+                 "namespace_id": group_id,
                  "issues_enabled": project.to_bool(issues_enabled),
                  "merge_requests_enabled": project.to_bool(merge_requests_enabled),
                  "wiki_enabled": project.to_bool(wiki_enabled),
+                 "builds_enabled": project.to_bool(builds_enabled),
+                 "public_builds": project.to_bool(public_builds),
+                 "only_allow_merge_if_build_succeeds": project.to_bool(only_allow_merge_if_build_succeeds),
+                 "container_registry_enabled": project.to_bool(container_registry_enabled),
                  "snippets_enabled": project.to_bool(snippets_enabled),
+                 "import_url": import_url,
                  "public": project.to_bool(public),
                  "visibility_level": int(visibility_level)}
 
     if project_exists and state == "absent":
-        project.deleteProject(group_name, project_name)
-        module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
+        if module.check_mode:
+            module.exit_json(changed=True, result="Project should have been deleted.")
+        if project.deleteProject():
+            module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
     else:
         if state == "absent":
             module.exit_json(changed=False, result="Project deleted or does not exists")
         else:
-            if project.createOrUpdateProject(project_exists, group_name, import_url, arguments):
+            if project.createOrUpdateProject(arguments):
                 module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name)
             else:
-                module.exit_json(changed=False)
+                module.exit_json(changed=False, result="No need to update the project %s" % project_name)
 
 
 if __name__ == '__main__':
