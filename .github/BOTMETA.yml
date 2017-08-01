@@ -840,7 +840,7 @@ files:
   $module_utils/asa.py: ogenstad
   $module_utils/avi.py: $team_avi
   $module_utils/bigswitch_utils.py: jayakody tedelhourani vuile
-  $module_utils/cisco_usc.py:   ragupta-git
+  $module_utils/cisco_usc.py: ragupta-git
   $module_utils/cloudengine.py: QijunPan
   $module_utils/cnos_devicerules.py: dkasberg
   $module_utils/cnos_errorcodes.py: dkasberg
@@ -902,7 +902,7 @@ files:
   lib/ansible/plugins/terminal/aireos.py: jmighion
   lib/ansible/plugins/terminal/aruba.py: jmighion
   lib/ansible/plugins/terminal/asa.py: ogenstad
-  lib/ansible/plugins/terminal/dellos10:  skg-net
+  lib/ansible/plugins/terminal/dellos10: skg-net
   lib/ansible/plugins/terminal/eos.py: $team_networking
   lib/ansible/plugins/terminal/ios.py: $team_networking
   lib/ansible/plugins/terminal/iosxr.py: $team_networking
