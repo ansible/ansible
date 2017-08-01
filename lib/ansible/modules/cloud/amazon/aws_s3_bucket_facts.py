@@ -91,6 +91,10 @@ def main():
     # Including ec2 argument spec
     module = AnsibleModule(argument_spec=ec2_argument_spec(), supports_check_mode=True)
 
+    # Verify Boto3 is used
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
+
     # Set up connection
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=HAS_BOTO3)
 
@@ -103,10 +107,6 @@ def main():
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
         module.fail_json(msg="AWS region must be specified (like: us-east-1)")
-
-    # Verify Boto3 is used
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     # Gather results
     result['buckets'] = get_bucket_list(module, connection)
