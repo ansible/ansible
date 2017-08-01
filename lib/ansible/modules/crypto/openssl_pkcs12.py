@@ -215,7 +215,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
                             self.maciter_size
                         )
                     )
-                #module.set_mode_if_different(self.path, this_mode, False)
                 self.changed = True
             except (IOError, OSError) as exc:
                 self.remove()
