@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 import os
 import subprocess
+from subprocess import PIPE,Popen
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -71,7 +72,14 @@ class CyberarkPassword:
                 '-d', self.delimiter]
             allParms.extend(self.extra_parms)
 
-            credential = subprocess.check_output(allParms)
+            credential = ""
+            tmp_output,tmp_error = Popen(allParms, stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate()
+
+            if tmp_output:
+                credential = tmp_output
+
+            if tmp_error:
+                raise AnsibleError("ERROR => %s " % (tmp_error))
 
             if credential and credential.endswith(b'\n'):
                 credential = credential[:-1]
