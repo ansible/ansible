@@ -290,4 +290,4 @@
     that:
       - 'result.changed == false'
 
-- debug: msg="END junos_interface netconf/basic.yaml"
+- debug: msg="END ios_interface cli/basic.yaml"
