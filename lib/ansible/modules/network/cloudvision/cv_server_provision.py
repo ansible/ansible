@@ -288,8 +288,12 @@ taskId:
 
 import re
 import time
-import jinja2
-from jinja2 import meta
+try:
+    import jinja2
+    from jinja2 import meta
+    HAS_JINJA2 = True
+except ImportError:
+    HAS_JINJA2 = False
 from ansible.module_utils.basic import AnsibleModule
 from cvprac.cvp_client import CvpClient
 from cvprac.cvp_client_errors import CvpLoginError, CvpApiError
@@ -582,6 +586,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
+    if not HAS_JINJA2:
+        module.fail_json(msg='The Jinja2 module is required.')
     result = dict(changed=False)
     module.client = connect(module)
 
