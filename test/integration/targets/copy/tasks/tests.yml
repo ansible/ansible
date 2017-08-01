@@ -58,12 +58,12 @@
 - name: verify that the file checksums are correct
   assert:
     that:
-      - "copy_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+      - "copy_result.checksum == ('foo.txt\n'|hash('sha1'))"
 
 - name: verify that the legacy md5sum is correct
   assert:
     that:
-      - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+      - "copy_result.md5sum == ('foo.txt\n'|hash('md5'))"
   when: ansible_fips|bool != True
 
 - name: check the stat results of the file
@@ -80,12 +80,12 @@
       - "stat_results.stat.isfifo == false"
       - "stat_results.stat.isreg == true"
       - "stat_results.stat.issock == false"
-      - "stat_results.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+      - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
 
 - name: verify that the legacy md5sum is correct
   assert:
     that:
-      - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+      - "stat_results.stat.md5 == ('foo.txt\n'|hash('md5'))"
   when: ansible_fips|bool != True
 
 - name: overwrite the file via same means
@@ -112,7 +112,7 @@
      that:
        - "copy_result3|changed"
        - "'content' not in copy_result3"
-       - "stat_results.stat.checksum == '99db324742823c55d975b605e1fc22f4253a9b7d'"
+       - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "stat_results.stat.mode != '0700'"
 
 - name: overwrite the file again using the content system, also passing along file params
@@ -130,7 +130,7 @@
      that:
        - "copy_result3|changed"
        - "'content' not in copy_result3"
-       - "stat_results.stat.checksum == '99db324742823c55d975b605e1fc22f4253a9b7d'"
+       - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "stat_results.stat.mode == '0700'"
 
 - name: try invalid copy input location fails
@@ -167,7 +167,7 @@
   assert:
      that:
        - "copy_results|changed"
-       - "stat_results.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
        - "stat_results.stat.mode == '0500'"
 
 # Test copy with mode=preserve
@@ -195,7 +195,7 @@
      that:
        - "copy_results|changed"
        - "copy_results.mode == '0547'"
-       - "stat_results.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
        - "stat_results.stat.mode == '0547'"
 
 #
@@ -549,10 +549,10 @@
     that:
       - "stat_abs_link.stat.exists"
       - "not stat_abs_link.stat.islnk"
-      - "stat_abs_link.stat.checksum == '0e8a3ad980ec179856012b7eecf4327e99cd44cd'"
+      - "stat_abs_link.stat.checksum == ('target'|hash('sha1'))"
       - "stat_relative_link.stat.exists"
       - "not stat_relative_link.stat.islnk"
-      - "stat_relative_link.stat.checksum == '6eadeac2dade6347e87c0d24fd455feffa7069f0'"
+      - "stat_relative_link.stat.checksum == ('baz\n'|hash('sha1'))"
       - "stat_self_link.stat.exists"
       - "stat_self_link.stat.islnk"
       - "'invalid' in stat_self_link.stat.lnk_target"
@@ -792,7 +792,7 @@
       that:
         - "copy_result7.changed"
         - "copy_result7.dest == '/tmp/worldwritable/file.txt'"
-        - "copy_result7.checksum == 'bbe960a25ea311d21d40669e93df2003ba9b90a2'"
+        - "copy_result7.checksum == ('baz'|hash('sha1'))"
 
   - name: clean up
     file: dest=/tmp/worldwritable state=absent
@@ -849,7 +849,7 @@
      that:
        - "copy_results|changed"
        - "'content' not in copy_results"
-       - "stat_results.stat.checksum == '99db324742823c55d975b605e1fc22f4253a9b7d'"
+       - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "not stat_results.stat.islnk"
 
 #
