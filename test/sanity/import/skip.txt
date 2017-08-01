@@ -107,5 +107,4 @@ lib/ansible/modules/storage/infinidat/infini_fs.py
 lib/ansible/modules/storage/infinidat/infini_host.py
 lib/ansible/modules/storage/infinidat/infini_pool.py
 lib/ansible/modules/storage/infinidat/infini_vol.py
-lib/ansible/modules/utilities/helper/_accelerate.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_wait.py
