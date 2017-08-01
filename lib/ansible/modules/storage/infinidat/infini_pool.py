@@ -150,7 +150,7 @@ def update_pool(module, system, pool):
                 pool.update_virtual_capacity(virtual_capacity)
             changed = True
 
-    if pool.get_ssd_enabled() != ssd_cache:
+    if pool.is_ssd_enabled() != ssd_cache:
         if not module.check_mode:
             pool.update_ssd_enabled(ssd_cache)
         changed = True
