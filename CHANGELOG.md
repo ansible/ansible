@@ -57,6 +57,8 @@ Ansible Changes By Release
 * Fix fact gathering for package and service action plugins
 * make random_choice more error resilient (#27380)
 * ensure prefix in plugin loading to avoid conflicts
+* fix for a small number of modules (tempfile, possibly copy) which could fail
+  if the tempdir on the remote box was a symlink
 
 ## 2.3.1 "Ramble On" - 2017-06-01
 
