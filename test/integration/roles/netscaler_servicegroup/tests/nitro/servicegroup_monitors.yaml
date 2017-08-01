@@ -1,0 +1,113 @@
+---
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/setup.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/setup.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/default_only.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/default_only.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/default_only.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/default_only.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/servicegroup_monitors/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
