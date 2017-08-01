@@ -1,0 +1,8 @@
+[0] fail_json message: Error: interface aggi not found
+options:
+{
+    "iface": "aggi",
+    "option": "up",
+    "state": "present",
+    "value": "route add -net 224.0.0.0 netmask 240.0.0.0 dev aggi"
+}
