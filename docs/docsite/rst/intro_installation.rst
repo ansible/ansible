@@ -104,21 +104,23 @@ Installing the Control Machine
 Latest Release Via Yum
 ++++++++++++++++++++++
 
-RPMs are available from yum for `EPEL
-<http://fedoraproject.org/wiki/EPEL>`_ 6, 7, and currently supported
+.. note:: We’ve changed how the Ansible community packages are distributed. 
+  For users of RHEL/CentOS/Scientific Linux version 7, the Ansible community RPM
+  package will transition from the EPEL repository to the Extras channel.  There will be no
+  change for version 6 of RHEL/CentOS/Scientific Linux since Extras is not a part of version 6.   
+
+RPMs for RHEL7 are available from `the Extras channel <https://access.redhat.com/solutions/912213>`_.
+
+RPMs for RHEL6 are available from yum for `EPEL
+<http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
 Fedora distributions.
+
+Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com/ansible/rpm/`.
 
 Ansible itself can manage earlier operating
 systems that contain Python 2.6 or higher (so also EL6).
 
-Fedora users can install Ansible directly, though if you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
-
-.. code-block:: bash
-
-    # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
-    $ sudo yum install ansible
-
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, ``asciidoc``, ``git``, ``python-setuptools`` and ``python2-devel`` installed.
+You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. 
 
 .. code-block:: bash
 
@@ -262,7 +264,7 @@ Then install Ansible with [1]_::
 
 Or if you are looking for the latest development version::
 
-    pip install git+https://github.com/ansible/ansible.git@devel
+    pip install git+git://github.com/ansible/ansible.git@devel
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
@@ -276,6 +278,9 @@ Tarballs of Tagged Releases
 +++++++++++++++++++++++++++
 
 Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available on the `Ansible downloads <http://releases.ansible.com/ansible>`_ page.
+
+These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
+
 
 .. _from_source:
 
