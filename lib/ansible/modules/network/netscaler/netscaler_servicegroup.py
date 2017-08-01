@@ -33,7 +33,7 @@ description:
     - Manage service group configuration in Netscaler.
     - This module is intended to run either on the ansible  control node or a bastion (jumpserver) with access to the actual netscaler instance.
 
-version_added: "2.4.0"
+version_added: "2.4"
 
 author: George Nikolopoulos (@giorgos-nikolopoulos)
 
