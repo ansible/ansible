@@ -220,14 +220,9 @@ class GalaxyRole(object):
                 if not role_data:
                     raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
 
-                if role_data.get('role_type') == 'CON' and not os.environ.get('ANSIBLE_CONTAINER'):
-                    # Container Enabled, running outside of a container
-                    display.warning("%s is a Container Enabled role and should only be installed using "
-                                    "Ansible Container" % self.name)
-
                 if role_data.get('role_type') == 'APP':
                     # Container Role
-                    display.warning("%s is a Container App role and should only be installed using Ansible "
+                    display.warning("%s is a Container App role, and should only be installed using Ansible "
                                     "Container" % self.name)
 
                 role_versions = api.fetch_role_related('versions', role_data['id'])
