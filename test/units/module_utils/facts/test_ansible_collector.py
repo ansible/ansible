@@ -293,3 +293,21 @@ class TestMinimalCollectedFacts(TestCollectedFacts):
     expected_facts = ['gather_subset',
                       'module_setup']
     not_expected_facts = ['lsb']
+
+
+class TestFacterCollectedFacts(TestCollectedFacts):
+    gather_subset = ['!all', 'facter']
+    min_fact_count = 1
+    max_fact_count = 10
+    expected_facts = ['gather_subset',
+                      'module_setup']
+    not_expected_facts = ['lsb']
+
+
+class TestOhaiCollectedFacts(TestCollectedFacts):
+    gather_subset = ['!all', 'ohai']
+    min_fact_count = 1
+    max_fact_count = 10
+    expected_facts = ['gather_subset',
+                      'module_setup']
+    not_expected_facts = ['lsb']
