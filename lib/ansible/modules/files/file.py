@@ -461,12 +461,10 @@ def main():
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
     if state == 'absent_secure':
         if os.path.isfile(b_path):
-            #module.fail_json(path=b_path, msg='test message here  shred -u '+ b_path)
             os.system("shred -u " + b_path)
-            module.exit_json(dest=path, changed=True, diff=diff)
         else:
             list_files_in_directory(add_delimiter_to_path(b_path))
-            module.exit_json(dest=path, changed=True, diff=diff)  
+        module.exit_json(dest=path, changed=True, diff=diff)  
     elif state == 'absent':   
         try:
 	   os.system("shred -u" + b_path )	
