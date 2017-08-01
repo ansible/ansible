@@ -7,4 +7,7 @@
 - include: "{{ role_path }}/tests/vyos/basic.yaml"
   when: hostvars[inventory_hostname]['ansible_network_os'] == 'vyos'
 
+- include: "{{ role_path }}/tests/iosxr/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'iosxr'
+
 - debug: msg="END cli/contains.yaml"
