@@ -59,6 +59,14 @@ options:
     ip_persistence_profile:
         description:
             - Specifies the client ip persistence profile parameters.
+    is_federated:
+        description:
+            - This field describes the object's replication scope.
+            - If the field is set to false, then the object is visible within the controller-cluster and its associated service-engines.
+            - If the field is set to true, then the object is replicated across the federation.
+            - Field introduced in 17.1.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.4"
     name:
         description:
             - A user-friendly name for the persistence profile.
@@ -135,6 +143,7 @@ def main():
         hdr_persistence_profile=dict(type='dict',),
         http_cookie_persistence_profile=dict(type='dict',),
         ip_persistence_profile=dict(type='dict',),
+        is_federated=dict(type='bool',),
         name=dict(type='str', required=True),
         persistence_type=dict(type='str', required=True),
         server_hm_down_recovery=dict(type='str',),
