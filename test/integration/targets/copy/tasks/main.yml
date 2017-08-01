@@ -1,9 +1,13 @@
 - block:
-    - name: Create a local working directory
-      file:
-        path: '{{ role_path }}/tmp/'
+
+    - name: Create a local temporary directory
+      tempfile:
         state: directory
+      register: tempfile_result
       connection: local
+
+    - set_fact:
+        local_temp_dir: '{{ tempfile_result.path }}'
 
     - name: create remote unprivileged remote user
       user:
@@ -37,7 +41,7 @@
   always:
     - name: Cleaning
       file:
-        path: '{{ role_path }}/tmp/'
+        path: '{{ local_temp_dir }}'
         state: absent
       connection: local
 
