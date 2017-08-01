@@ -343,6 +343,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     state = module.params['state']
     interface = module.params['interface'].lower()
@@ -389,32 +390,19 @@ def main():
         if delta:
             command = get_commands_config_vrrp(delta, group)
             commands.append(command)
-
     elif state == 'absent':
         if existing:
             commands.append(['no vrrp {0}'.format(group)])
 
     if commands:
         commands.insert(0, ['interface {0}'.format(interface)])
-
-    cmds = flatten_list(commands)
-    if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            load_config(module, cmds)
-            changed = True
-            end_state = get_existing_vrrp(interface, group, module, name)
-            if 'configure' in cmds:
-                cmds.pop(0)
-
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['end_state'] = end_state
+        commands = flatten_list(commands)
+        results['commands'] = commands
+        results['changed'] = True
+        if not module.check_mode:
+            load_config(module, commands)
+            if 'configure' in commands:
+                commands.pop(0)
 
     module.exit_json(**results)
 
