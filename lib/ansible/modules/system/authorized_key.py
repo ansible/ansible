@@ -172,7 +172,7 @@ key_option:
   type: string
   sameple: null
 keyfile:
-  description: Path for authorzied key file.
+  description: Path for authorized key file.
   returned: success
   type: string
   sameple: /home/user/.ssh/authorized_keys
