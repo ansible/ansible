@@ -104,7 +104,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-commands
+commands:
     description: commands sent to the device
     returned: always
     type: list
