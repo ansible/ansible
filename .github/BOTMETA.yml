@@ -859,7 +859,6 @@ files:
   $module_utils/network_common.py: $team_networking
   $module_utils/network.py: $team_networking
   $module_utils/nxos.py: $team_networking
-  $module_utils/openswitch.py:
   $module_utils/ordnance.py: alexanderturner djh00t
   $module_utils/sros.py: $team_networking
   $module_utils/vyos: $team_networking
