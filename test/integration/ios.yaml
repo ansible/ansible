@@ -85,6 +85,14 @@
             failed_modules: "{{ failed_modules }} + [ 'ios_logging' ]"
             test_failed: true
 
+    - block:
+      - include_role:
+          name: ios_interface
+        when: "limit_to in ['*', 'ios_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_logging' ]"
+            test_failed: true
 
 ###########
     - debug: var=failed_modules

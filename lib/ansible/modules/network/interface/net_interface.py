@@ -32,10 +32,7 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Configure operational status of the interface link.
-        If value is I(yes) interface is configured in up state,
-        for I(no) interface is configured in down state.
-    default: yes
+      - Interface link status.
   speed:
     description:
       - Interface link speed.
@@ -57,14 +54,15 @@ options:
     description: List of Interfaces definitions.
   purge:
     description:
-      - Purge Interfaces not defined in the aggregates parameter.
+      - Purge Interfaces not defined in the aggregate parameter.
         This applies only for logical interface.
     default: no
   state:
     description:
-      - State of the Interface configuration.
+      - State of the Interface configuration, C(up) means present and
+        operationally up and C(down) means present and operationally C(down)
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'up', 'down']
 """
 
 EXAMPLES = """
@@ -82,15 +80,13 @@ EXAMPLES = """
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: present
-    enabled: True
+    state: up
 
 - name: make interface down
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: present
-    enabled: False
+    state: down
 """
 
 RETURN = """
