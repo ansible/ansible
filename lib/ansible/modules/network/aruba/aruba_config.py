@@ -208,16 +208,11 @@ backup_path:
 """
 
 
-import re
-import time
-
 from ansible.module_utils.aruba import run_commands, get_config, load_config
 from ansible.module_utils.aruba import aruba_argument_spec
 from ansible.module_utils.aruba import check_args as aruba_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems
 
 
 def get_running_config(module, config=None):
