@@ -15,9 +15,9 @@ DOCUMENTATION = '''
 module: openssl_pkcs12
 author: "Guillaume Delpierre (@gdelpierre)"
 version_added: "2.4"
-short_description: Generate OpenSSL pkcs12 archive.
+short_description: Generate OpenSSL PKCS#12 archive.
 description:
-    - "This module allows one to (re-)generate PKCS #12."
+    - "This module allows one to (re-)generate PKCS#12."
 requirements:
     - "python-pyOpenSSL"
 options:
@@ -26,8 +26,8 @@ options:
         default: None
         choices: ['parse', 'export', None]
         description:
-            - Create (export) or parse a PKCS #12.
-              Use None with state 'absent'.
+            - Create (export) or parse a PKCS#12.
+              None is used with absent state.
     ca_certificates:
         required: False
         description:
@@ -62,7 +62,7 @@ options:
         required: False
         default: 0400
         description:
-            - Default mode for the generated PKCS #12 file.
+            - Default mode for the generated PKCS#12 file.
     passphrase:
         required: False
         default: null
@@ -289,9 +289,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
         if not self.check(module, perms_required=False) or module.params['force']:
             try:
                 self.remove()
-            
+
                 p12 = crypto.load_pkcs12(open(self.src, 'rb').read(),
-                                        passphrase=self.passphrase)
+                                         passphrase=self.passphrase)
                 pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
                                               p12.get_privatekey())
                 crt = crypto.dump_certificate(crypto.FILETYPE_PEM,
@@ -309,6 +309,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
         if module.set_fs_attributes_if_different(file_args, False):
             module.set_mode_if_different(self.path, this_mode, False)
             self.changed = True
+
 
 def main():
     argument_spec = dict(
@@ -369,9 +370,9 @@ def main():
 
         try:
             if module.params['action'] == 'export':
-               pkcs12.generate(module)
+                pkcs12.generate(module)
             else:
-               pkcs12.parse(module)
+                pkcs12.parse(module)
         except PkcsError as exc:
             module.fail_json(msg=to_native(exc))
     else:
