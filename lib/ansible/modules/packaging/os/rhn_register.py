@@ -282,7 +282,7 @@ class Rhn(redhat.RegistrationBase):
                 url = "https://%s/rpc/api" % self.hostname
             else:
                 url = "https://xmlrpc.%s/rpc/api" % self.hostname
-            self.server = xmlrpc_client(url)
+            self.server = xmlrpc_client.ServerProxy(url)
             self.session = self.server.auth.login(self.username, self.password)
 
         func = getattr(self.server, method)
