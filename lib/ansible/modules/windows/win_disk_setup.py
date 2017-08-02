@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: win_disk_setup
-version_added: "2.4"
+version_added: '2.4'
 short_description: A windows disk module
 description:
    - Find a disk on the server and set it up. To find the disk and to setup the disk you have several options.
@@ -69,7 +69,7 @@ options:
       default: E
   SetAllocUnitSize:
       description:
-        - Allocation Unit size which should be set for the file system on found disk (possible values per file system: NTFS - 4,8,16,32,64KB; ReFs - 64KB)
+        - Allocation Unit size which should be set for the file system on found disk (possible values per file system: NTFS 4,8,16,32,64KB; ReFs 64KB)
       required: false
       default: 4
       choices:
@@ -114,7 +114,8 @@ options:
       choices:
         - true
         - false
-author: "Marc Tschapek (@marqelme)"
+author:
+    - Marc Tschapek (@marqelme)
 '''
 
 EXAMPLES = r'''
@@ -181,7 +182,7 @@ generallog:
             type: string
             sample: "Successful"
         Check parameters:
-            description: Documents whether all set paramters for the disk passed the checks or not 
+            description: Documents whether all set paramters for the disk passed the checks or not
             returned: success or failed
             type: string
             sample: "Successful"
@@ -224,13 +225,13 @@ log:
             description: Detailed information about found disk
             returned: success or failed
             type: string
-            sample: "Disks found: 1, Disk number: 1, Location: PCIROOT(0)#PCI(1F00)#SCSI(P00T00L00), Serial Number: f74d8c2db7b54ecba562, Unique ID: 31414634313031"
+            sample: "Disks found: 1, Disk number: 1, Location: PCIROOT(0)#PCI(1F00)#SCSI(P00T00L00), Serial Number: f78c2db7b54562, Unique ID: 31414634313031"
         Operational Status:
             description: Detailed information about setting operational status of the disk
             returned: success or failed (only displayed if operational status was set)
             type: string
             sample: "Disk set not online because partition style is RAW"
-       Disk Writeable:
+        Disk Writeable:
             description: Detailed information if disk was set to writeable and if not why it was not set to it
             returned: success or failed (only displayed if writeable status was set
             type: string
