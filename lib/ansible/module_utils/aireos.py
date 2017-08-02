@@ -47,8 +47,9 @@ ARGS_DEFAULT_VALUE = {}
 
 
 def sanitize(resp):
-    # Takes config from device and strips whitespace from all lines
+    # Takes response from device and strips whitespace from all lines
     # Aireos adds in extra preceding whitespace which netcfg parses as children/parents, which Aireos does not do
+    # Aireos also adds in trailing whitespace that is unused
     cleaned = []
     for line in resp.splitlines():
         cleaned.append(line.strip())
@@ -112,7 +113,7 @@ def run_commands(module, commands, check_rc=True):
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
             module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
-        responses.append(to_text(out, errors='surrogate_then_replace'))
+        responses.append(sanitize(to_text(out, errors='surrogate_then_replace')))
     return responses
 
 
