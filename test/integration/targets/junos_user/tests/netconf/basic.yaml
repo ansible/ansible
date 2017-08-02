@@ -27,7 +27,7 @@
       - "result.changed == true"
       - "'<name>test_user</name>' in config.xml"
       - "'<full-name>test_user</full-name>' in config.xml"
-      - "'<class>read-only</class>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
 
 - name: Create user again (idempotent)
   junos_user:
@@ -85,7 +85,7 @@
       - "result.changed == true"
       - "'<name>test_user</name>' in config.xml"
       - "'<full-name>test_user</full-name>' in config.xml"
-      - "'<class>read-only</class>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
 
 - name: Delete user
   junos_user:

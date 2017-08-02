@@ -17,7 +17,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'+    interface ge-0/0/5;' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *interface ge-0/0/5")
 
 - name: lldp interface configuration (idempotent)
   junos_lldp_interface:
@@ -41,7 +41,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'!     inactive: interface ge-0/0/5' in result.diff.prepared"
+      - result.diff.prepared | search("! *inactive[:] interface ge-0/0/5")
 
 - name: Activate lldp interface configuration
   junos_lldp_interface:
@@ -54,7 +54,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'!     active: interface ge-0/0/5' in result.diff.prepared"
+      - result.diff.prepared | search("! *active[:] interface ge-0/0/5")
 
 - name: Disable lldp on particular interface
   junos_lldp_interface:
