@@ -90,9 +90,9 @@ Static Loop Keyword
 
 Vault
 -----
-- Support for multiple vault passwords. PR in ansible/ansible `#22756 <https://github.com/ansible/ansible/pull/22756>`_
+- Support for multiple vault passwords.  **(done)**
 
-  - Each decrypted item should know which secret to request
+  - Each decrypted item should know which secret to request **(done)**
   - Support requesting credentials (password prompt) as callbacks
 
 - Ability to open and edit file with encrypted vars deencrypted, and encrypt/format on save
