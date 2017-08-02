@@ -156,9 +156,9 @@ class GitLabGroup(object):
         group_dict = group.as_dict()
         for arg_key, arg_value in arguments.items():
             group_data_value = group_dict.get(arg_key)
-            if isinstance(group_data_value, bool) or group_data_value is None:
+            if isinstance(group_data_value, bool):
                 to_bool = self.to_bool(group_data_value)
-                if to_bool != arg_value:
+                if to_bool != self.to_bool(arg_value):
                     changed = True
                     continue
             else:

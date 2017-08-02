@@ -208,10 +208,13 @@ class GitLabProject(object):
 
         project_dict = project.as_dict()
         for arg_key, arg_value in arguments.items():
-            project_data_value = project_dict.get(arg_key)
-            if isinstance(project_data_value, bool) or project_data_value is None:
+            if arg_key == 'namespace_id':
+                project_data_value = project_dict.get('namespace').id
+            else:
+                project_data_value = project_dict.get(arg_key)
+            if isinstance(project_data_value, bool):
                 to_bool = self.to_bool(project_data_value)
-                if to_bool != arg_value:
+                if to_bool != self.to_bool(arg_value):
                     changed = True
                     continue
             else:
