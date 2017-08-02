@@ -37,6 +37,12 @@ options:
     - The size of the physical extent in megabytes. Must be a power of 2.
     default: 4
     required: false
+  pv_options:
+    description:
+    - Additional options to pass to C(pvcreate) when creating the volume group.
+    default: null
+    required: false
+    version_added: "2.3"
   vg_options:
     description:
     - Additional options to pass to C(vgcreate) when creating the volume group.
@@ -124,6 +130,7 @@ def main():
             vg=dict(required=True),
             pvs=dict(type='list'),
             pesize=dict(type='int', default=4),
+            pv_options=dict(default=''),
             vg_options=dict(default=''),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
@@ -135,6 +142,7 @@ def main():
     state = module.params['state']
     force = module.boolean(module.params['force'])
     pesize = module.params['pesize']
+    pvoptions = module.params['pv_options'].split()
     vgoptions = module.params['vg_options'].split()
 
     dev_list = []
@@ -191,7 +199,7 @@ def main():
                 ### create PV
                 pvcreate_cmd = module.get_bin_path('pvcreate', True)
                 for current_dev in dev_list:
-                    rc,_,err = module.run_command("%s -f %s" % (pvcreate_cmd,current_dev))
+                    rc,_,err = module.run_command([pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
                     if rc == 0:
                         changed = True
                     else:
@@ -232,7 +240,7 @@ def main():
                     ### create PV
                     pvcreate_cmd = module.get_bin_path('pvcreate', True)
                     for current_dev in devs_to_add:
-                        rc,_,err = module.run_command("%s -f %s" % (pvcreate_cmd, current_dev))
+                        rc,_,err = module.run_command([pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
                         if rc == 0:
                             changed = True
                         else:
