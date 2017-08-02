@@ -198,7 +198,6 @@ EXAMPLES = '''
     remote_as: 30
     description: "just a description"
     update_source: Ethernet1/3
-    shutdown: default
     state: present
 '''
 
@@ -266,13 +265,15 @@ def get_value(arg, config):
     has_command = re.search(r'\s+{0}\s*$'.format(command), config, re.M)
     has_command_value = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
 
-    if arg in BOOL_PARAMS:
-        value = False
-        try:
-            if has_command:
-                value = True
-        except TypeError:
+    if arg == 'dynamic_capability':
+        has_no_command = re.search(r'\s+no\s{0}\s*$'.format(command), config, re.M)
+        value = True
+        if has_no_command:
             value = False
+    elif arg in BOOL_PARAMS:
+        value = False
+        if has_command:
+            value = True
     elif arg == 'log_neighbor_changes':
         value = ''
         if has_command:
@@ -389,10 +390,10 @@ def state_present(module, existing, proposed, candidate):
                 else:
                     command = '{0} {1}'.format(key, value)
                     commands.append(command)
-            elif key.startswith('timers'):
+            elif key == 'timers':
                 command = 'timers {0} {1}'.format(
-                    proposed_commands['timers-keepalive'],
-                    proposed_commands['timers-holdtime'])
+                    proposed['timers_keepalive'],
+                    proposed['timers_holdtime'])
                 if command not in commands:
                     commands.append(command)
             else:
@@ -442,7 +443,7 @@ def main():
         pwd_type=dict(required=False, type='str', choices=['cleartext', '3des', 'cisco_type_7', 'default']),
         remote_as=dict(required=False, type='str'),
         remove_private_as=dict(required=False, type='str', choices=['enable', 'disable', 'all', 'replace-as']),
-        shutdown=dict(required=False, type='str'),
+        shutdown=dict(required=False, type='bool'),
         suppress_4_byte_as=dict(required=False, type='bool'),
         timers_keepalive=dict(required=False, type='str'),
         timers_holdtime=dict(required=False, type='str'),
