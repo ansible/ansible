@@ -111,16 +111,31 @@ def get_collector_names(valid_subsets=None,
     additional_subsets = set()
     exclude_subsets = set()
 
-    for subset in gather_subset:
-        subset_id = subset
+    # total always starts with the min set, then
+    # adds of the additions in gather_subset, then
+    # excludes all of the excludes, then add any explicitly
+    # requested subsets.
+    gather_subset_with_min = ['min']
+    gather_subset_with_min.extend(gather_subset)
 
+    # subsets we mention in gather_subset explicitly, except for 'all'/'min'
+    explicitly_added = set()
+
+    for subset in gather_subset_with_min:
+        subset_id = subset
+        if subset_id == 'min':
+            additional_subsets.update(minimal_gather_subset)
+            continue
         if subset_id == 'all':
             additional_subsets.update(valid_subsets)
             continue
         if subset_id.startswith('!'):
             subset = subset[1:]
+            if subset == 'min':
+                exclude_subsets.update(minimal_gather_subset)
+                continue
             if subset == 'all':
-                exclude_subsets.update(valid_subsets)
+                exclude_subsets.update(valid_subsets - minimal_gather_subset)
                 continue
             exclude = True
         else:
@@ -137,14 +152,13 @@ def get_collector_names(valid_subsets=None,
                 raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" %
                                 (subset, ", ".join(sorted(valid_subsets))))
 
+            explicitly_added.add(subset)
             additional_subsets.add(subset)
 
     if not additional_subsets:
         additional_subsets.update(valid_subsets)
 
-    additional_subsets.difference_update(exclude_subsets)
-
-    additional_subsets.update(minimal_gather_subset)
+    additional_subsets.difference_update(exclude_subsets - explicitly_added)
 
     return additional_subsets
 
