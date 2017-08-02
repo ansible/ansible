@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-module: win_group_member
+module: win_group_membership
 version_added: "2.4"
 short_description: Manage Windows local group membership
 description:
@@ -58,7 +58,7 @@ author:
 
 EXAMPLES = r'''
 - name: Add a local and domain user to a local group
-  win_group_member:
+  win_group_membership:
     name: Remote Desktop Users
     members:
       - NewLocalAdmin
@@ -66,7 +66,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove a domain group and service user from a local group
-  win_group_member:
+  win_group_membership:
     name: Backup Operators
     members:
       - DOMAIN\TestGroup

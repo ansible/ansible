@@ -1,4 +1,4 @@
-# Test code for win_group_member
+# Test code for win_group_membership
 
 # (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
 #
@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: Remove potentially leftover group members
-  win_group_member:
+  win_group_membership:
     name: "{{ win_local_group }}"
     members:
       - Administrator
@@ -29,7 +29,7 @@
 
 
 - name: Add user to fake group
-  win_group_member:
+  win_group_membership:
     name: FakeGroup
     members:
       - Administrator
@@ -39,7 +39,7 @@
 
 
 - name: Add fake local user
-  win_group_member:
+  win_group_membership:
     name: "{{ win_local_group }}"
     members:
       - FakeUser
@@ -49,7 +49,7 @@
 
 
 - name: Add fake FQDN domain user
-  win_group_member:
+  win_group_membership:
     name: "{{ win_local_group }}"
     members:
       - FakeUser@domain.fake
@@ -59,7 +59,7 @@
 
 
 - name: Add users to group
-  win_group_member: &wgm_present
+  win_group_membership: &wgm_present
     name: "{{ win_local_group }}"
     members:
       - Administrator
@@ -86,7 +86,7 @@
 
 
 - name: Add users to group (again)
-  win_group_member: *wgm_present
+  win_group_membership: *wgm_present
   register: add_users_to_group_again
 
 - name: Test add_users_to_group_again (normal mode)
@@ -99,7 +99,7 @@
 
 
 - name: Add different syntax users to group (again)
-  win_group_member:
+  win_group_membership:
     <<: *wgm_present
     members:
       - "{{ ansible_hostname }}\\Administrator"
@@ -124,7 +124,7 @@
 
 
 - name: Add another user to group
-  win_group_member: &wgma_present
+  win_group_membership: &wgma_present
     <<: *wgm_present
     members:
       - NT AUTHORITY\NETWORK SERVICE
@@ -148,7 +148,7 @@
 
 
 - name: Add another user to group (again)
-  win_group_member: *wgma_present
+  win_group_membership: *wgma_present
   register: add_another_user_to_group_again
 
 - name: Test add_another_user_to_group_1_again (normal mode)
@@ -161,7 +161,7 @@
 
 
 - name: Remove users from group
-  win_group_member: &wgm_absent
+  win_group_membership: &wgm_absent
     <<: *wgm_present
     state: absent
   register: remove_users_from_group
@@ -184,7 +184,7 @@
 
 
 - name: Remove users from group (again)
-  win_group_member: *wgm_absent
+  win_group_membership: *wgm_absent
   register: remove_users_from_group_again
 
 - name: Test remove_users_from_group_again (normal mode)
@@ -197,7 +197,7 @@
 
 
 - name: Remove different syntax users from group (again)
-  win_group_member:
+  win_group_membership:
     <<: *wgm_absent
     members:
       - "{{ ansible_hostname }}\\Administrator"
@@ -222,7 +222,7 @@
 
 
 - name: Remove another user from group
-  win_group_member: &wgma_absent
+  win_group_membership: &wgma_absent
     <<: *wgm_absent
     members:
       - NT AUTHORITY\NETWORK SERVICE
@@ -246,7 +246,7 @@
 
 
 - name: Remove another user from group (again)
-  win_group_member: *wgma_absent
+  win_group_membership: *wgma_absent
   register: remove_another_user_from_group_again
 
 - name: Test remove_another_user_from_group_again (normal mode)

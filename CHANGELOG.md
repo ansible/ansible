@@ -276,7 +276,7 @@ Ansible Changes By Release
   * win_domain_group
   * win_dsc
   * win_firewall
-  * win_group_member
+  * win_group_membership
   * win_psmodule
   * win_route
   * win_security_policy
