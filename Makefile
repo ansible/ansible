@@ -93,6 +93,10 @@ RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 100.git$(DATE)$(GITINFO)
 endif
+ifeq ($(PUBLISH),nightly)
+    # https://fedoraproject.org/wiki/Packaging:Versioning#Snapshots
+    RPMRELEASE = $(RELEASE).$(DATE)git.$(GIT_HASH)
+endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 # MOCK build parameters
