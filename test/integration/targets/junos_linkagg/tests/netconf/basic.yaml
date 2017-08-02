@@ -126,17 +126,10 @@
     provider: "{{ netconf }}"
   register: result
 
-- name: Get running configuration
-  junos_rpc:
-    rpc: get-configuration
-    provider: "{{ netconf }}"
-  register: config
-
 - assert:
     that:
       - "result.changed == true"
-      - "'<disable/>' in config.xml"
-      - "'+   disable;' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *disable")
 
 - name: Enable linkagg interface
   junos_linkagg:
@@ -145,16 +138,10 @@
     provider: "{{ netconf }}"
   register: result
 
-- name: Get running configuration
-  junos_rpc:
-    rpc: get-configuration
-    provider: "{{ netconf }}"
-  register: config
-
 - assert:
     that:
       - "result.changed == true"
-      - "'<disable/>' not in config.xml"
+      - result.diff.prepared | search("\- *disable")
 
 - name: Deactivate linkagg
   junos_linkagg:
