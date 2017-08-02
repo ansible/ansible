@@ -26,7 +26,7 @@ version_added: "1.5"
 options:
   pkg:
     description:
-      - name of package to install, upgrade or remove.
+      - Name of package to install, upgrade or remove.
     required: true
     default: null
   state:
@@ -37,10 +37,16 @@ options:
     choices: [ "absent", "present" ]
   update_cache:
     description:
-      - update the package database first C(apt-get update).
+      - Update the package database first C(apt-get update).
     required: false
     default: no
     choices: [ "yes", "no" ]
+  upgrade:
+    description:
+      - Performs dist upgrade like C(apt-get dist-upgrade -y).
+    required: false
+    default: "no"
+    choices: [ "no", "yes" ]
 author: "Evgenii Terechkov (@evgkrsk)"
 notes:  []
 '''
@@ -81,6 +87,7 @@ import sys
 APT_PATH="/usr/bin/apt-get"
 RPM_PATH="/usr/bin/rpm"
 
+
 def query_package(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
@@ -90,11 +97,33 @@ def query_package(module, name):
     else:
         return False
 
+
 def query_package_provides(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
     rc, out, err = module.run_command("%s -q --provides %s" % (RPM_PATH,name))
     return rc == 0
+
+
+def need_upgrade(module):
+    # querry if upgrade is needed
+    cmd = "%s --print-uris -qq dist-upgrade" % APT_PATH
+    rc, out, err = module.run_command(cmd)
+
+    if rc:
+        module.fail_json(msg="'%s' failed: %s" % (cmd, err))
+
+    return bool(out)
+
+
+def update_only(module):
+    cmd = "%s update" % (APT_PATH)
+    rc, out, err = module.run_command(cmd)
+    if rc:
+        module.fail_json(msg="'%s' failed: %s" % (cmd, err))
+    else:
+        module.exit_json(changed=True, msg="Package db updated")
+
 
 def update_package_db(module):
     rc, out, err = module.run_command("%s update" % APT_PATH)
@@ -102,8 +131,8 @@ def update_package_db(module):
     if rc != 0:
         module.fail_json(msg="could not update package db: %s" % err)
 
-def remove_packages(module, packages):
 
+def remove_packages(module, packages):
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
@@ -125,7 +154,6 @@ def remove_packages(module, packages):
 
 
 def install_packages(module, pkgspec):
-
     packages = ""
     for package in pkgspec:
         if not query_package_provides(module, package):
@@ -146,7 +174,36 @@ def install_packages(module, pkgspec):
         else:
             module.exit_json(changed=True, msg="%s present(s)" % packages)
     else:
-        module.exit_json(changed=False)
+        module.exit_json(changed=False, msg="package(s) already present")
+
+
+def parse_upgrade_out(out, start_string):
+    # Out contains lines with fields, separated by colons. Last field is list
+    # of space separated packages. This function return that list of packages
+    # on line starts with start_string.
+
+    raws = out.split('\n')
+    result = [s.split(':')[-1] for s in raws if s.startswith(start_string)]
+
+    # It is empty list or list with one string which contains space separated
+    # package names.
+    return result and result[0].split()
+
+
+def upgrade(module):
+    if need_upgrade(module):
+        cmd = "%s dist-upgrade -y -qq -o simple-output=true" % (APT_PATH)
+        rc, out, err = module.run_command(cmd)
+        if rc:
+            module.fail_json(msg="'%s' failed: %s" % (cmd, err))
+        else:
+            upgraded = parse_upgrade_out(out, 'apt-get:upgrade-list')
+            installed = parse_upgrade_out(out, 'apt-get:install-list')
+            msg="All packages upgraded"
+            module.exit_json(changed=True, msg=msg, upgraded=upgraded, installed = installed)
+    else:
+        msg = "All packages have already been up to date"
+        module.exit_json(changed=False, msg=msg)
 
 
 def main():
@@ -154,24 +211,32 @@ def main():
         argument_spec    = dict(
             state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-            package      = dict(aliases=['pkg', 'name'], required=True)))
-
+            package      = dict(aliases=['pkg', 'name']),
+            upgrade      = dict(default=False, type='bool'),
+        ))
 
     if not os.path.exists(APT_PATH) or not os.path.exists(RPM_PATH):
         module.fail_json(msg="cannot find /usr/bin/apt-get and/or /usr/bin/rpm")
 
     p = module.params
 
-    if p['update_cache']:
-        update_package_db(module)
+    if p['package'] or p['upgrade']:
+        if p['update_cache']:
+            update_package_db(module)
 
-    packages = p['package'].split(',')
+        if p['package']:
+            packages = p['package'].split(',')
 
-    if p['state'] in [ 'installed', 'present' ]:
-        install_packages(module, packages)
+            if p['state'] in [ 'installed', 'present' ]:
+                install_packages(module, packages)
 
-    elif p['state'] in [ 'removed', 'absent' ]:
-        remove_packages(module, packages)
+            elif p['state'] in [ 'removed', 'absent' ]:
+                remove_packages(module, packages)
+        elif p['upgrade']:
+            upgrade(module)
+    elif p['update_cache']:
+            update_only(module)
+
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
