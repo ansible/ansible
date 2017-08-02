@@ -21,7 +21,45 @@ Playbook
 Restructued async to work with action plugins
 ---------------------------------------------
 
+In Ansible 2.2 (and possibly earlier) the `async:` keyword could not be used in conjunction with the action plugins such as `service`. This limitation has been removed in Ansible 2.3
+
+**NEW** In Ansible 2.3:
+
+
+.. code-block:: yaml
+
+    - name: Install nginx asynchronously
+      service:
+        name: nginx
+        state: restarted
+      async: 45
+
+
 TBD: Detail? + fact that this restores the usability of service + async
+
+OpenBSD version facts
+---------------------
+
+The `ansible_distribution_release` and `ansible_distribution_version` facts on OpenBSD hosts were reversed in Ansible 2.2 and earlier. This has been changed so that version has the numeric portion and release has the name of the release.
+
+**OLD** In Ansible 2.2 (and earlier)
+
+
+.. code-block:: yaml
+
+    "ansible_distribution": "OpenBSD"
+    "ansible_distribution_release": "6.0",
+    "ansible_distribution_version": "release",
+
+**NEW** In Ansible 2.3:
+
+
+.. code-block:: yaml
+
+    "ansible_distribution": "OpenBSD",
+    "ansible_distribution_release": "release",
+    "ansible_distribution_version": "6.0",
+
 
 Names Blocks
 ------------
@@ -64,7 +102,6 @@ Other caveats
 
 Here are some rare cases that might be encountered when updating. These are mostly caused by the more stringent parser validation and the capture of errors that were previously ignored.
 
-* The version and release facts for OpenBSD hosts were reversed. This has been changed so that version has the numeric portion and release has the name of the release.
 
 * Made ``any_errors_fatal`` inheritable from play to task and all other objects in between.
 
