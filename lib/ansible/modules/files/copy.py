@@ -143,14 +143,14 @@ EXAMPLES = r'''
 - copy:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: visudo -cf %s
+    validate: /usr/sbin/visudo -cf %s
 
 # Copy a "sudoers" file on the remote machine for editing
 - copy:
     src: /etc/sudoers
     dest: /etc/sudoers.edit
     remote_src: yes
-    validate: visudo -cf %s
+    validate: /usr/sbin/visudo -cf %s
 
 # Create a CSV file from your complete inventory using an inline template
 - hosts: all
