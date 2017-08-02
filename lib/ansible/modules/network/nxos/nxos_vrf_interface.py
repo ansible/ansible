@@ -71,7 +71,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-commands:`
+commands:
     description: commands sent to the device
     returned: always
     type: list
@@ -182,17 +182,12 @@ def main():
     argument_spec = dict(
         vrf=dict(required=True),
         interface=dict(type='str', required=True),
-        state=dict(default='present', choices=['present', 'absent'],
-                       required=False),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(default='present', choices=['present', 'absent'], required=False),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
