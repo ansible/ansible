@@ -18,12 +18,11 @@ To get started, select one of the following topics.
 
    development_process
    reporting_bugs_and_features
-   triage_process
    how_can_I_help
    maintainers
    communication
    special_interest_groups
    other_tools_and_programs
-   
+
 
 
