@@ -147,6 +147,7 @@ class GitLabGroup(object):
         if self.groupObject is None:
             try:
                 group = self._gitlab.groups.create(arguments)
+                changed = True
             except Exception:
                 e = get_exception()
                 self._module.fail_json(msg="Failed to create a group: %s " % e)

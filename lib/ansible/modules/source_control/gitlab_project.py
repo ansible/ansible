@@ -200,6 +200,7 @@ class GitLabProject(object):
         if self.projectObject is None:
             try:
                 project = self._gitlab.projects.create(arguments)
+                changed = True
             except Exception:
                 e = get_exception()
                 self._module.fail_json(msg="Failed to create a project: %s " % e)
