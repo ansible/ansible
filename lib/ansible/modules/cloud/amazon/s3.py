@@ -496,7 +496,7 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url):
         walrus = urlparse(s3_url).hostname
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
     else:
-        params = dict(module=module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=s3_url, **aws_connect_kwargs)
     return boto3_conn(**params)
 
 
@@ -662,7 +662,7 @@ def main():
                 sum_matches = True
                 if overwrite == 'always':
                     # only use valid object acls for the upload_s3file function
-                    module.params['permission'] = obj_acl
+                    module.params['permission'] = object_acl
                     upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
                 else:
                     get_download_url(module, s3, bucket, obj, expiry, changed=False)
@@ -670,7 +670,7 @@ def main():
                 sum_matches = False
                 if overwrite in ('always', 'different'):
                     # only use valid object acls for the upload_s3file function
-                    module.params['permission'] = obj_acl
+                    module.params['permission'] = object_acl
                     upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
                 else:
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
@@ -681,13 +681,13 @@ def main():
             module.params['permission'] = bucket_acl
             create_bucket(module, s3, bucket, location)
             # only use valid object acls for the upload_s3file function
-            module.params['permission'] = obj_acl
+            module.params['permission'] = object_acl
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
         # If bucket exists but key doesn't, just upload.
         if bucketrtn and not keyrtn:
             # only use valid object acls for the upload_s3file function
-            module.params['permission'] = obj_acl
+            module.params['permission'] = object_acl
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
     # Delete an object from a bucket, not the entire bucket
@@ -697,7 +697,7 @@ def main():
         if bucket:
             deletertn = delete_key(module, s3, bucket, obj)
             if deletertn is True:
-                module.exit_json(msg="Object %s deleted from bucket %s." % (obj, bucket), changed=True)
+                module.exit_json(msg="Object deleted from bucket %s." % bucket, changed=True)
         else:
             module.fail_json(msg="Bucket parameter is required.")
 
@@ -744,14 +744,14 @@ def main():
                     module.exit_json(msg="Bucket %s and key %s already exists." % (bucket, obj), changed=False)
                 else:
                     # setting valid object acls for the create_dirkey function
-                    module.params['permission'] = obj_acl
+                    module.params['permission'] = object_acl
                     create_dirkey(module, s3, bucket, dirobj)
             else:
                 # only use valid bucket acls for the create_bucket function
                 module.params['permission'] = bucket_acl
                 created = create_bucket(module, s3, bucket, location)
                 # only use valid object acls for the create_dirkey function
-                module.params['permission'] = obj_acl
+                module.params['permission'] = object_acl
                 create_dirkey(module, s3, bucket, dirobj)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
