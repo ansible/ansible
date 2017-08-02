@@ -33,7 +33,6 @@ import collections
 import json
 import os
 import traceback
-from copy import deepcopy
 
 try:
     from hpOneView.oneview_client import OneViewClient
@@ -56,7 +55,7 @@ def transform_list_to_dict(list_):
 
     :arg list list_: List of values
     :return: dict: dictionary built
-"""
+    """
 
     ret = {}
 
@@ -79,6 +78,7 @@ class OneViewModuleBase(object):
     MSG_DELETED = 'Resource deleted successfully.'
     MSG_ALREADY_PRESENT = 'Resource is already present.'
     MSG_ALREADY_ABSENT = 'Resource is already absent.'
+    MSG_DIFF_AT_KEY = 'Difference found at key \'{0}\'. '
     HPE_ONEVIEW_SDK_REQUIRED = 'HPE OneView Python SDK is required for this module.'
 
     ONEVIEW_COMMON_ARGS = dict(
@@ -100,7 +100,7 @@ class OneViewModuleBase(object):
 
         :arg dict additional_arg_spec: Additional argument spec definition.
         :arg bool validate_etag_support: Enables support to eTag validation.
-"""
+        """
         argument_spec = self._build_argument_spec(additional_arg_spec, validate_etag_support)
 
         self.module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
@@ -151,7 +151,7 @@ class OneViewModuleBase(object):
 
         :return: dict: It must return a dictionary with the attributes for the module result,
             such as ansible_facts, msg and changed.
-"""
+        """
         pass
 
     def run(self):
@@ -162,7 +162,7 @@ class OneViewModuleBase(object):
 
         It handles any HPOneViewException in order to signal a failure to Ansible, with a descriptive error message.
 
-"""
+        """
         try:
             if self.validate_etag_support:
                 if not self.module.params.get('validate_etag'):
@@ -189,7 +189,7 @@ class OneViewModuleBase(object):
         :arg str method: Function of the OneView client that will be called for resource deletion.
             Usually delete or remove.
         :return: A dictionary with the expected arguments for the AnsibleModule.exit_json
-"""
+        """
         if resource:
             getattr(self.resource_client, method)(resource)
 
@@ -204,7 +204,7 @@ class OneViewModuleBase(object):
         :arg str name: Resource name to search for.
 
         :return: The resource found or None.
-"""
+        """
         result = self.resource_client.get_by('name', name)
         return result[0] if result else None
 
@@ -219,7 +219,7 @@ class OneViewModuleBase(object):
         :arg str create_method: Function of the OneView client that will be called for resource creation.
             Usually create or add.
         :return: A dictionary with the expected arguments for the AnsibleModule.exit_json
-"""
+        """
 
         changed = False
         if "newName" in self.data:
@@ -247,24 +247,17 @@ class OneViewModuleBase(object):
             ansible_facts={fact_name: resource}
         )
 
-    MSG_DIFF_AT_KEY = 'Difference found at key \'{0}\'. '
-
     def resource_scopes_set(self, state, fact_name, scope_uris):
         """
         Generic implementation of the scopes update PATCH for the OneView resources.
         It checks if the resource needs to be updated with the current scopes.
         This method is meant to be run after ensuring the present state.
-        Args:
-            state (dict):
-                Dict containing the data from the last state results in the resource.
-                It needs to have the 'msg', 'changed', and 'ansible_facts' entries.
-            fact_name (str):
-                Name of the fact returned to the Ansible.
-            scope_uris (list)
-                List with all the scope URIs to be added to the resource.
-        Returns:
-            A dictionary with the expected arguments for the AnsibleModule.exit_json
-    """
+        :arg dict state: Dict containing the data from the last state results in the resource.
+            It needs to have the 'msg', 'changed', and 'ansible_facts' entries.
+        :arg str fact_name: Name of the fact returned to the Ansible.
+        :arg list scope_uris: List with all the scope URIs to be added to the resource.
+        :return: A dictionary with the expected arguments for the AnsibleModule.exit_json
+        """
         if scope_uris is None:
             scope_uris = []
         resource = state['ansible_facts'][fact_name]
@@ -288,7 +281,7 @@ class OneViewModuleBase(object):
         :arg dict first_resource: first dictionary
         :arg dict second_resource: second dictionary
         :return: bool: True when equal, False when different.
-    """
+        """
         resource1 = first_resource
         resource2 = second_resource
 
@@ -342,7 +335,7 @@ class OneViewModuleBase(object):
         :arg list first_resource: first list
         :arg list second_resource: second list
         :return: True when equal; False when different.
-    """
+        """
 
         resource1 = first_resource
         resource2 = second_resource
@@ -392,7 +385,7 @@ class OneViewModuleBase(object):
         :arg value: Any object type.
 
         :return: str: Converted value.
-    """
+        """
         if isinstance(value, float) and value.is_integer():
             # Workaround to avoid erroneous comparison between int and float
             # Removes zero from integer floats
@@ -416,7 +409,7 @@ class OneViewModuleBase(object):
         :arg list ignore_when_null: list with the keys from the updated items that should be ignored in the merge,
             if its values are null.
         :return: list: Lists merged.
-"""
+        """
         if not original_list:
             return updated_list
 
@@ -430,9 +423,9 @@ class OneViewModuleBase(object):
                 for ignored_key in ignore_when_null:
                     if ignored_key in item and not item[ignored_key]:
                         item.pop(ignored_key)
-                merged_items[item_key] = items_map[item_key].copy()
+                merged_items[item_key] = items_map[item_key]
                 merged_items[item_key].update(item)
             else:
-                merged_items[item_key] = item.copy()
+                merged_items[item_key] = item
 
         return list(merged_items.values())
