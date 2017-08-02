@@ -311,7 +311,7 @@ switches:
             returned: success or failed
             type: string
             sample: "Disabled"
-       LargeFRS:
+        LargeFRS:
             description: Shows whether LargeFRS is activated or not
             returned: success or failed
             type: string
