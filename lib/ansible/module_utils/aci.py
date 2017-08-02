@@ -192,10 +192,10 @@ class ACIModule(object):
     def request_diff(self, path, payload=None):
         ''' Perform a request, including a proper diff output '''
         self.result['diff'] = dict()
-        self.result['diff']['before'] = self.query()
+        self.result['diff']['before'] = self.query(path)
         self.request(path, payload=payload)
         # TODO: Check if we can use the request output for the 'after' diff
-        self.result['diff']['after'] = self.query()
+        self.result['diff']['after'] = self.query(path)
 
         if self.result['diff']['before'] != self.result['diff']['after']:
             self.result['changed'] = True
