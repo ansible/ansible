@@ -500,6 +500,9 @@ def serialize_group_grant(group_id, rule):
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port'],
                   'UserIdGroupPairs': [{'GroupId': group_id}]}
+
+    convert_ports_to_int(permission)
+
     return permission
 
 
@@ -539,7 +542,16 @@ def serialize_ip_grant(rule, thisip, ethertype):
         permission.update({'IpRanges': [{'CidrIp': thisip}]})
     elif ethertype == "ipv6":
         permission.update({'Ipv6Ranges': [{'CidrIpv6': thisip}]})
+
+    convert_ports_to_int(permission)
+
     return permission
+
+
+def convert_ports_to_int(permission):
+    for key in ['FromPort', 'ToPort']:
+        if permission[key] is not None:
+            permission[key] = int(permission[key])
 
 
 def main():
