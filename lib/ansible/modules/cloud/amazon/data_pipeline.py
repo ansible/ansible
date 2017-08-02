@@ -1,20 +1,10 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
+# Copyright (c) 2017 Raghu Udiyar <raghusiddarth@gmail.com>,
+#                    Sloane Hertel <shertel@redhat.com>
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.0'}
@@ -23,7 +13,9 @@ DOCUMENTATION = '''
 ---
 module: data_pipeline
 version_added: "2.4"
-author: Raghu Udiyar <raghusiddarth@gmail.com> (@raags)
+author:
+  - Raghu Udiyar <raghusiddarth@gmail.com> (@raags)
+  - Sloane Hertel <shertel@redhat.com>
 requirements: [ "boto3" ]
 short_description: Create and manage AWS Datapipelines
 extends_documentation_fragment:
@@ -222,10 +214,7 @@ def pipeline_description(client, dp_id):
     try:
         return client.describe_pipelines(pipelineIds=[dp_id])
     except ClientError as e:
-        if re.match(PIPELINE_DOESNT_EXIST.format(dp_id), str(e)):
-            raise DataPipelineNotFound
-        else:
-            module.fail_json(msg="Failed to retrieve pipeline description - " + str(e))
+        raise DataPipelineNotFound
 
 
 def pipeline_field(client, dp_id, field):
