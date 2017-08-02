@@ -140,7 +140,7 @@ def list_ec2_vpc_nacls(connection, module):
         if 'entries' in nacl:
             nacl['egress'] = [nacl_entry_to_list(entry) for entry in nacl['entries']
                               if entry['rule_number'] != 32767 and entry['egress']]
-            nacl['ingress'] = [nacl_entry_to_list(e) for entry in nacl['entries']
+            nacl['ingress'] = [nacl_entry_to_list(entry) for entry in nacl['entries']
                                if entry['rule_number'] != 32767 and not entry['egress']]
             del nacl['entries']
         if 'associations' in nacl:
