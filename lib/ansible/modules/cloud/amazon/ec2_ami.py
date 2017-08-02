@@ -421,7 +421,7 @@ def create_image(module, ec2):
     virtualization_type = module.params.get('virtualization_type')
     no_reboot = module.params.get('no_reboot')
     device_mapping = module.params.get('device_mapping')
-    tags =  module.params.get('tags')
+    tags = module.params.get('tags')
     launch_permissions = module.params.get('launch_permissions')
 
     try:
