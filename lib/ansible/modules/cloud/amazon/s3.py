@@ -32,62 +32,44 @@ options:
   aws_access_key:
     description:
       - AWS access key id. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: null
     aliases: ['ec2_secret_key', 'secret_key']
   bucket:
     description:
       - Bucket name.
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
-    required: false
-    aliases: []
     version_added: "1.3"
   encrypt:
     description:
       - When set for PUT mode, asks for server-side encryption.
-    required: false
-    default: no
+    default: True
     version_added: "2.0"
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
-    required: false
     default: 600
-    aliases: []
   headers:
     description:
       - Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
-    required: false
-    default: null
     version_added: "2.0"
   marker:
     description:
       - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
-    required: false
-    default: null
     version_added: "2.0"
   max_keys:
     description:
       - Max number of results to return in list mode, set this if you want to retrieve fewer than the default 1000 keys.
-    required: false
     default: 1000
     version_added: "2.0"
   metadata:
     description:
       - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
-    required: false
-    default: null
     version_added: "1.6"
   mode:
     description:
@@ -99,35 +81,27 @@ options:
   object:
     description:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
-    required: false
-    default: null
   permission:
     description:
       - This option lets the user set the canned permissions on the object/bucket that are created.
         The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read' for a bucket or
         'private', 'public-read', 'public-read-write', 'aws-exec-read', 'authenticated-read', 'bucket-owner-read',
         'bucket-owner-full-control' for an object. Multiple permissions can be specified as a list.
-    required: false
     default: private
     version_added: "2.0"
   prefix:
     description:
       - Limits the response to keys that begin with the specified prefix for list mode
-    required: false
-    default: null
+    default: ""
     version_added: "2.0"
   version:
     description:
       - Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
-    required: false
-    default: null
-    aliases: []
     version_added: "2.0"
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
         Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
-    required: false
     default: 'always'
     version_added: "1.2"
   region:
@@ -135,19 +109,15 @@ options:
      - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables
        are checked, followed by the aws_region and ec2_region settings in the Boto config file. If none of those are set the
        region defaults to the S3 Location: US Standard. Prior to ansible 1.8 this parameter could be specified but had no effect."
-    required: false
-    default: null
     version_added: "1.8"
   retries:
     description:
      - On recoverable failure, how many times to retry before actually failing.
-    required: false
     default: 0
     version_added: "2.0"
   s3_url:
     description:
       - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc.  Otherwise assumes AWS
-    default: null
     aliases: [ S3_URL ]
   rgw:
     description:
@@ -157,17 +127,12 @@ options:
   src:
     description:
       - The source file path when performing a PUT operation.
-    required: false
-    default: null
-    aliases: []
     version_added: "1.3"
   ignore_nonexistent_bucket:
     description:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
         ignore_nonexistent_bucket: True."
-    default: false
-    aliases: []
     version_added: "2.3"
 
 requirements: [ "boto3", "botocore" ]
