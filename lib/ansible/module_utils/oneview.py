@@ -71,6 +71,67 @@ def transform_list_to_dict(list_):
     return ret
 
 
+def merge_list_by_key(original_list, updated_list, key, ignore_when_null=[]):
+    """
+    Merge two lists by the key. It basically:
+
+    1. Adds the items that are present on updated_list and are absent on original_list.
+
+    2. Removes items that are absent on updated_list and are present on original_list.
+
+    3. For all items that are in both lists, overwrites the values from the original item by the updated item.
+
+    :arg list original_list: original list.
+    :arg list updated_list: list with changes.
+    :arg str key: unique identifier.
+    :arg list ignore_when_null: list with the keys from the updated items that should be ignored in the merge,
+        if its values are null.
+    :return: list: Lists merged.
+    """
+    if not original_list:
+        return updated_list
+
+    items_map = collections.OrderedDict([(i[key], i.copy()) for i in original_list])
+
+    merged_items = collections.OrderedDict()
+
+    for item in updated_list:
+        item_key = item[key]
+        if item_key in items_map:
+            for ignored_key in ignore_when_null:
+                if ignored_key in item and item[ignored_key] is None:
+                    item.pop(ignored_key)
+            merged_items[item_key] = items_map[item_key]
+            merged_items[item_key].update(item)
+        else:
+            merged_items[item_key] = item
+
+    return list(merged_items.values())
+
+
+def _str_sorted(obj):
+    if isinstance(obj, collections.Mapping):
+        return json.dumps(obj, sort_keys=True)
+    else:
+        return str(obj)
+
+
+def _standardize_value(value):
+    """
+    Convert value to string to enhance the comparison.
+
+    :arg value: Any object type.
+
+    :return: str: Converted value.
+    """
+    if isinstance(value, float) and value.is_integer():
+        # Workaround to avoid erroneous comparison between int and float
+        # Removes zero from integer floats
+        value = int(value)
+
+    return str(value)
+
+
 @six.add_metaclass(abc.ABCMeta)
 class OneViewModuleBase(object):
     MSG_CREATED = 'Resource created successfully.'
@@ -312,8 +373,7 @@ class OneViewModuleBase(object):
                 if not self.compare_list(resource1[key], resource2[key]):
                     self.module.log(self.MSG_DIFF_AT_KEY.format(key) + debug_resources)
                     return False
-            elif self._standardize_value(resource1[key]) != self._standardize_value(
-                    resource2[key]):
+            elif _standardize_value(resource1[key]) != _standardize_value(resource2[key]):
                 self.module.log(self.MSG_DIFF_AT_KEY.format(key) + debug_resources)
                 return False
 
@@ -351,8 +411,8 @@ class OneViewModuleBase(object):
             self.module.log("resources have different length. " + debug_resources)
             return False
 
-        resource1 = sorted(resource1, key=self._str_sorted)
-        resource2 = sorted(resource2, key=self._str_sorted)
+        resource1 = sorted(resource1, key=_str_sorted)
+        resource2 = sorted(resource2, key=_str_sorted)
 
         for i, val in enumerate(resource1):
             if isinstance(val, collections.Mapping):
@@ -365,67 +425,9 @@ class OneViewModuleBase(object):
                 if not self.compare_list(val, resource2[i]):
                     self.module.log("lists are different. " + debug_resources)
                     return False
-            elif self._standardize_value(val) != self._standardize_value(resource2[i]):
+            elif _standardize_value(val) != _standardize_value(resource2[i]):
                 self.module.log("values are different. " + debug_resources)
                 return False
 
         # no differences found
         return True
-
-    def _str_sorted(self, obj):
-        if isinstance(obj, collections.Mapping):
-            return json.dumps(obj, sort_keys=True)
-        else:
-            return str(obj)
-
-    def _standardize_value(self, value):
-        """
-        Convert value to string to enhance the comparison.
-
-        :arg value: Any object type.
-
-        :return: str: Converted value.
-        """
-        if isinstance(value, float) and value.is_integer():
-            # Workaround to avoid erroneous comparison between int and float
-            # Removes zero from integer floats
-            value = int(value)
-
-        return str(value)
-
-    def merge_list_by_key(self, original_list, updated_list, key, ignore_when_null=[]):
-        """
-        Merge two lists by the key. It basically:
-
-        1. Adds the items that are present on updated_list and are absent on original_list.
-
-        2. Removes items that are absent on updated_list and are present on original_list.
-
-        3. For all items that are in both lists, overwrites the values from the original item by the updated item.
-
-        :arg list original_list: original list.
-        :arg list updated_list: list with changes.
-        :arg str key: unique identifier.
-        :arg list ignore_when_null: list with the keys from the updated items that should be ignored in the merge,
-            if its values are null.
-        :return: list: Lists merged.
-        """
-        if not original_list:
-            return updated_list
-
-        items_map = collections.OrderedDict([(i[key], i.copy()) for i in original_list])
-
-        merged_items = collections.OrderedDict()
-
-        for item in updated_list:
-            item_key = item[key]
-            if item_key in items_map:
-                for ignored_key in ignore_when_null:
-                    if ignored_key in item and item[ignored_key] is None:
-                        item.pop(ignored_key)
-                merged_items[item_key] = items_map[item_key]
-                merged_items[item_key].update(item)
-            else:
-                merged_items[item_key] = item
-
-        return list(merged_items.values())
