@@ -369,3 +369,6 @@
     that:
         - 'diff_result.stdout == ""'
         - "diff_result.rc == 0"
+
+# aliases file requires root for template tests so this should be safe
+- include: backup_test.yml
