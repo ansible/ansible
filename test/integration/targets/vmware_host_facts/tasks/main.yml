@@ -25,3 +25,15 @@
   register: facts
 
 - debug: var=facts
+
+- name: get host info
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_host_info' }}"
+  register: host_info_result
+
+- name: verify some data,for example: ansible_processor
+  assert:
+    that:
+      - facts['ansible_facts']['ansible_hostname'] in host_info_result['json']
+      - facts['ansible_facts']['ansible_processor'] == host_info_result['json'][facts['ansible_facts']['ansible_hostname']]['Processor type']
+
