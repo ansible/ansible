@@ -82,7 +82,6 @@ class OneViewModuleBase(object):
     MSG_ALREADY_PRESENT = 'Resource is already present.'
     MSG_ALREADY_ABSENT = 'Resource is already absent.'
     HPE_ONEVIEW_SDK_REQUIRED = 'HPE OneView Python SDK is required for this module.'
-    FUTURE_PACKAGE_REQUIRED = 'The Future Python package is required for this module.'
 
     ONEVIEW_COMMON_ARGS = dict(
         config=dict(required=False, type='str')
