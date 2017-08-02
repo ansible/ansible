@@ -431,25 +431,15 @@ def check_mode_changeset(module, stack_params, cfn):
 
         cfn.delete_change_set(ChangeSetName=change_set['Id'])
 
+        reason = description.get('StatusReason')
+
         if description['Status'] == 'FAILED' and "didn't contain changes" in description['StatusReason']:
-            return {'changed': False, 'meta': description['StatusReason']}
-        return {'changed': True, 'meta': description['Changes']}
+            return {'changed': False, 'msg': reason, 'meta': description['StatusReason']}
+        return {'changed': True, 'msg': reason, 'meta': description['Changes']}
 
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         module.fail_json(msg=error_msg, exception=traceback.format_exc())
-
-
-def process_changeset(changeset):
-    """Given the output of boto3 describe_change_set, return a dict
-    suitable for module.exit_json"""
-    # StatusReason can be null
-    reason = changeset.get('StatusReason')
-    if changeset['Status'] == 'FAILED' and "didn't contain changes" in reason:
-        return {'changed': False, 'msg': reason, 'meta': []}
-    else:
-        return {'changed': True, 'msg': reason or 'Would change stack',
-                'meta': changeset['Changes']}
 
 
 def get_stack_facts(cfn, stack_name):
