@@ -85,6 +85,8 @@ import keyring
 
 from ansible.config.manager import ConfigManager
 
+KEYNAME_UNKNOWN_RC = 2
+
 
 def build_arg_parser():
     parser = argparse.ArgumentParser(description='Get a vault password from user keyring')
@@ -101,7 +103,6 @@ def build_arg_parser():
 
 
 def main():
-
     config_manager = ConfigManager()
     username = config_manager.data.get_setting('vault.username')
     if not username:
@@ -113,7 +114,6 @@ def main():
 
     arg_parser = build_arg_parser()
     args = arg_parser.parse_args()
-    # print('args: %s' % args)
 
     username = args.username or username
     keyname = args.vault_id or keyname
@@ -132,6 +132,11 @@ def main():
             sys.exit(1)
     else:
         secret = keyring.get_password(keyname, username)
+        if secret is None:
+            sys.stderr.write('vault-keyring-client could not find key="%s" for user="%s" via backend="%s"\n' %
+                             (keyname, username, keyring.get_keyring().name))
+            sys.exit(KEYNAME_UNKNOWN_RC)
+
         # print('secret: %s' % secret)
         sys.stdout.write('{}\n'.format(secret))
 

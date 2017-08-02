@@ -24,6 +24,14 @@ FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;AES256"
 FORMAT_1_2_HEADER="\$ANSIBLE_VAULT;1.2;AES256"
 
 VAULT_PASSWORD_FILE=vault-password
+# new format, view, using password client script
+ansible-vault view "$@" --vault-id vault-password@test-vault-client.py format_1_1_AES256.yml
+
+# view, using password client script, unknown vault/keyname
+ansible-vault view "$@" --vault-id some_unknown_vault_id@test-vault-client.py format_1_1_AES256.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
 
 # old format
 ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
