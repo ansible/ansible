@@ -26,7 +26,6 @@
       remote_as: 30
       description: "just a description"
       update_source: "{{ intname.capitalize() }}"
-      shutdown: default
       state: present
       provider: "{{ cli }}"
     register: result

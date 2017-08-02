@@ -137,6 +137,7 @@
       feature: nv overlay
       state: disabled
       provider: "{{ nxapi }}"
+    ignore_errors: yes
 
   - name: "Remove nv overlay evpn"
     nxos_config:
