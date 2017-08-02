@@ -250,7 +250,8 @@ class Server():
                 break
             time.sleep(1)
             timeout -= 1
-        return 0, b'\n#SOCKET_PATH#: %s\n' % self.socket_path, ''
+        socket_bytes = to_bytes(self.socket_path, errors='surrogate_or_strict')
+        return 0, b'\n#SOCKET_PATH#: %s\n' % socket_bytes, ''
 
 
 def communicate(sock, data):
