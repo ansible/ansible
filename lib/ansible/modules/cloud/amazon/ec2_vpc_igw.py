@@ -202,7 +202,7 @@ def ensure_igw_present(vpc_conn, vpc_id, tags, check_mode):
         if check_mode:
             check_mode_tags = ensure_tags(vpc_conn, igw.id, tags, False, check_mode)
             igw_info = get_igw_info(igw)
-            igw_info['tags'] = check_mode_tags
+            igw_info.get('tags', {}).update(check_mode_tags.get('tags', {}))
             return {'changed': True, 'gateway': igw_info}
         ensure_tags(vpc_conn, igw.id, tags, False, check_mode)
         igw.tags = tags
