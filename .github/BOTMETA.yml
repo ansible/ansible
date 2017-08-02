@@ -27,7 +27,7 @@
 #           labels - list of GitHub labels to apply
 #
 
-files: 
+files:
   $module_utils/aci.py: dagwieers schunduri
   $modules/cloud/amazon/:
     notify:
@@ -732,6 +732,8 @@ files:
   $modules/windows/win_firewall_rule.py: TimothyVandenbrande ar7z1
   $modules/windows/win_get_url.ps1: angstwad jhawkesworth
   $modules/windows/win_get_url.py: angstwad jhawkesworth
+  $modules/windows/win_group_membership.ps1: andrewsaraceni
+  $modules/windows/win_group_membership.py: andrewsaraceni
   $modules/windows/win_group.ps1: chrishoffman
   $modules/windows/win_group.py: chrishoffman
   $modules/windows/win_iis_virtualdirectory.ps1: $team_ansible
@@ -1029,7 +1031,7 @@ files:
   test/sanity/validate-modules:
     keywords:
     - validate-modules
-macros: 
+macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   team_ansible: []
