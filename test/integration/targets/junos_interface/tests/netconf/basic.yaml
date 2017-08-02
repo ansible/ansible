@@ -79,7 +79,6 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'<interface>' in config.xml"
       - "'<name>ge-0/0/1</name>' in config.xml"
 
 - name: Configure interface attributes
@@ -116,17 +115,10 @@
     provider: "{{ netconf }}"
   register: result
 
-- name: Get running configuration
-  junos_rpc:
-    rpc: get-configuration
-    provider: "{{ netconf }}"
-  register: config
-
 - assert:
     that:
       - "result.changed == true"
-      - "'<disable/>' in config.xml"
-      - "'<name>ge-0/0/1</name>' in config.xml"
+      - result.diff.prepared | search("\+ *disable")
 
 - name: Enable interface
   junos_interface:
@@ -136,17 +128,10 @@
     provider: "{{ netconf }}"
   register: result
 
-- name: Get running configuration
-  junos_rpc:
-    rpc: get-configuration
-    provider: "{{ netconf }}"
-  register: config
-
 - assert:
     that:
       - "result.changed == true"
-      - "'[edit interfaces ge-0/0/1]\n-   disable;' in result.diff.prepared"
-      - "'<name>ge-0/0/1</name>' in config.xml"
+      - result.diff.prepared | search("\- *disable")
 
 - name: Delete interface
   junos_interface:
