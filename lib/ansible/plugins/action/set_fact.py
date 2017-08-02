@@ -35,6 +35,9 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         facts = dict()
+
+        cacheable = bool(self._task.args.pop('cacheable', False))
+
         if self._task.args:
             for (k, v) in iteritems(self._task.args):
                 k = self._templar.template(k)
@@ -51,4 +54,5 @@ class ActionModule(ActionBase):
 
         result['changed'] = False
         result['ansible_facts'] = facts
+        result['ansible_facts_cacheable'] = cacheable
         return result

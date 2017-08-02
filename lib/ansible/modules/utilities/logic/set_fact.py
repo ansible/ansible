@@ -33,11 +33,19 @@ options:
         using the C(args:) statement.
     required: true
     default: null
+  cacheable:
+    description:
+      - This boolean indicates if the facts set will also be added to the
+        fact cache, if fact caching is enabled.
+    required: false
+    default: false
+    version_added: "2.4"
 version_added: "1.2"
 notes:
     - "The `var=value` notation can only create strings or booleans.
       If you want to create lists/arrays or dictionary/hashes use `var: [val1, val2]`"
     - This module is also supported for Windows targets.
+    - Since 'cacheable' is now a module param, 'cacheable' is no longer a valid fact name as of 2.4.
 '''
 
 EXAMPLES = '''
@@ -49,6 +57,12 @@ EXAMPLES = '''
      one_fact: something
      other_fact: "{{ local_var * 2 }}"
      another_fact: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
+
+# Example setting facts so that they will be persisted in the fact cache
+- set_fact:
+    one_fact: something
+    other_fact: "{{ local_var * 2 }}"
+    cacheable: true
 
 # As of 1.8, Ansible will convert boolean strings ('true', 'false', 'yes', 'no')
 # to proper boolean values when using the key=value syntax, however it is still
