@@ -293,7 +293,7 @@ class OneViewModuleBase(object):
             return False
 
         # Checks all keys in first dict against the second dict
-        for key in resource1.keys():
+        for key in resource1:
             if key not in resource2:
                 if resource1[key] is not None:
                     # Inexistent key is equivalent to exist with value None
@@ -421,7 +421,7 @@ class OneViewModuleBase(object):
             item_key = item[key]
             if item_key in items_map:
                 for ignored_key in ignore_when_null:
-                    if ignored_key in item and not item[ignored_key]:
+                    if ignored_key in item and item[ignored_key] is None:
                         item.pop(ignored_key)
                 merged_items[item_key] = items_map[item_key]
                 merged_items[item_key].update(item)
