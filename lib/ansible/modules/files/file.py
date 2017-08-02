@@ -150,7 +150,7 @@ def list_files_in_directory(fileName):
         try:
                 files_list=os.listdir(fileName)
         except Exception:
-                print "Couldn't open directory" + fileName
+                print ("Couldn't open directory" + fileName)
         for file in files_list:
                 path=fileName+file
                 if os.path.isdir(path):
@@ -159,7 +159,7 @@ def list_files_in_directory(fileName):
                         try:
                                 os.system("shred -u " + path )
                         except Exception:
-                                print "Couldn't remove " + path
+                                print ("Couldn't remove " + path)
 
 def get_state(b_path):
     ''' Find out current state '''
@@ -467,9 +467,9 @@ def main():
         module.exit_json(dest=path, changed=True, diff=diff)  
     elif state == 'absent':   
         try:
-	   os.system("shred -u" + b_path )	
+            os.system("shred -u " + b_path)
         except Exception:
-           	print "Error"          
+           	print ("Error" )         
     elif state == 'touch':
         if not module.check_mode:
 
