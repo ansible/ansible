@@ -90,6 +90,12 @@ class RpmKey(object):
         state = module.params['state']
         key = module.params['key']
 
+        self.gpg = self.module.get_bin_path('gpg')
+        if not self.gpg:
+            self.gpg = self.module.get_bin_path('gpg2')
+        if not self.gpg:
+            self.module.fail_json(msg="rpm_key requires a command line gpg or gpg2, none found")
+
         if '://' in key:
             keyfile = self.fetch_key(key)
             keyid = self.getkeyid(keyfile)
@@ -146,15 +152,7 @@ class RpmKey(object):
             return ret
 
     def getkeyid(self, keyfile):
-
-        gpg = self.module.get_bin_path('gpg')
-        if not gpg:
-            gpg = self.module.get_bin_path('gpg2')
-
-        if not gpg:
-            self.module.fail_json(msg="rpm_key requires a command line gpg or gpg2, none found")
-
-        stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
+        stdout, stderr = self.execute_command([self.gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
         for line in stdout.splitlines():
             line = line.strip()
             if line.startswith('pub:'):
@@ -173,7 +171,7 @@ class RpmKey(object):
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        cmd=self.rpm + ' -q  gpg-pubkey --qf "%{description}" | gpg --no-tty --batch --with-colons --fixed-list-mode -'
+        cmd=self.rpm + ' -q  gpg-pubkey --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
             if keyid in line.split(':')[4]:
