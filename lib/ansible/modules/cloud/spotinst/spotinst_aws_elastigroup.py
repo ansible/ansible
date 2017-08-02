@@ -152,6 +152,13 @@ options:
       - Only use iam_role_arn, or iam_role_name
     required: false
 
+  id:
+    description:
+      - (String) The group id if it already exists and you want to update, or delete it.
+        This will not work unless the uniqueness_by field is set to id.
+        When this is set, and the uniqueness_by field is set, the group will either be updated or deleted, but not created.
+    required: false
+
   ignore_changes:
     choices:
       - image_id
@@ -297,6 +304,17 @@ options:
       - (Integer) required if on demand is not set. The percentage of Spot instances to launch (0 - 100).
     required: false
 
+  roll_config:
+    description:
+      - (Object) Roll configuration.;
+        If you would like the group to roll after updating, please use this feature.
+        Accepts the following keys -
+        batch_size_percentage(Integer, Required),
+        grace_period - (Integer, Required),
+        health_check_type(String, Optional),
+        strategy (String, Optional)
+    required: false
+
   scheduled_tasks:
     description:
       - (List of Objects) a list of hash/dictionaries of scheduled tasks to configure in the elastigroup;
@@ -437,6 +455,15 @@ options:
         minimum (String)
     required: false
 
+  uniqueness_by:
+    choices:
+      - id
+      - name
+    description:
+      - (String) If your group names are not unique, you may use this feature to update or delete a specific group.
+        Whenever this property is set, you must set a group_id in order to update or delete a group, otherwise a group will be created.
+    required: false
+
   user_data:
     description:
       - (String) Base64-encoded MIME user data. Encode before setting the value.
@@ -565,12 +592,11 @@ HAS_SPOTINST_SDK = False
 import os
 import time
 from os.path import expanduser
-
 from ansible.module_utils.basic import AnsibleModule
 
 try:
     import spotinst
-
+    from spotinst import SpotinstClientException
     HAS_SPOTINST_SDK = True
 
 except ImportError:
@@ -579,28 +605,30 @@ except ImportError:
 
 def handle_elastigroup(client, module):
     has_changed = False
-    name = module.params.get('name')
-    state = module.params.get('state')
-
-    groups = client.get_elastigroups()
-
-    group_found, group_id = find_group_with_same_name(groups, name)
+    should_create = False
+    group_id = None
     message = 'None'
 
-    if group_found is True:
-        eg = expand_elastigroup(module, is_update=True)
+    name = module.params.get('name')
+    state = module.params.get('state')
+    uniqueness_by = module.params.get('uniqueness_by')
+    external_group_id = module.params.get('id')
 
-        if state == 'present':
-            group = client.update_elastigroup(group_update=eg, group_id=group_id)
-            message = 'Updated group successfully.'
-            has_changed = True
-
-        elif state == 'absent':
-            client.delete_elastigroup(group_id=group_id)
-            message = 'Deleted group successfully.'
-            has_changed = True
-
+    if uniqueness_by == 'id':
+        if external_group_id is None:
+            should_create = True
+        else:
+            should_create = False
+            group_id = external_group_id
     else:
+        groups = client.get_elastigroups()
+        group_found, group_id = find_group_with_same_name(groups, name)
+        if group_found is True:
+            should_create = False
+        else:
+            should_create = True
+
+    if should_create is True:
         if state == 'present':
             eg = expand_elastigroup(module, is_update=False)
 
@@ -612,7 +640,31 @@ def handle_elastigroup(client, module):
         elif state == 'absent':
             message = 'Cannot delete non-existent group.'
             has_changed = False
-            pass
+    else:
+        eg = expand_elastigroup(module, is_update=True)
+
+        if state == 'present':
+            group = client.update_elastigroup(group_update=eg, group_id=group_id)
+            message = 'Updated group successfully.'
+
+            try:
+                roll_config = module.params.get('roll_config')
+                if roll_config:
+                    eg_roll = spotinst.aws_elastigroup.Roll(
+                        batch_size_percentage=roll_config.get('batch_size_percentage'),
+                        grace_period=roll_config.get('grace_period'),
+                        health_check_type=roll_config.get('health_check_type')
+                    )
+                    roll_response = client.roll_group(group_roll=eg_roll, group_id=group_id)
+                    message = 'Updated and started rolling the group successfully.'
+            except SpotinstClientException as exc:
+                message = 'Updated group successfully, but failed to perform roll. Error:' + str(exc)
+            has_changed = True
+
+        elif state == 'absent':
+            client.delete_elastigroup(group_id=group_id)
+            message = 'Deleted group successfully.'
+            has_changed = True
 
     return group_id, message, has_changed
 
@@ -683,10 +735,8 @@ def expand_elastigroup(module, is_update):
     expand_integrations(eg, module)
     # Compute
     expand_compute(eg, module, is_update, do_not_update)
-
     # Multai
     expand_multai(eg, module)
-
     # Scheduling
     expand_scheduled_tasks(eg, module)
 
@@ -1337,64 +1387,67 @@ def main():
         raise Exception("the Spotinst SDK library is required. (pip install spotinst)")
 
     fields = dict(
-        state=dict(default='present', choices=['present', 'absent']),
-        do_not_update=dict(default=[], type='list'),
-        name=dict(type='str'),
-        elastic_ips=dict(type='list'),
-        on_demand_instance_type=dict(type='str'),
-        spot_instance_types=dict(type='list'),
-        ebs_volume_pool=dict(type='list'),
-        availability_zones=dict(type='list'),
-        product=dict(type='str'),
-        user_data=dict(type='str'),
-        key_pair=dict(type='str'),
-        iam_role_name=dict(type='str'),
-        iam_role_arn=dict(type='str'),
-        tenancy=dict(type='str'),
-        shutdown_script=dict(type='str'),
-        monitoring=dict(type='str'),
-        ebs_optimized=dict(type='bool'),
-        image_id=dict(type='str'),
-        health_check_type=dict(type='str'),
-        health_check_grace_period=dict(type='int'),
-        health_check_unhealthy_duration_before_replacement=dict(type='int'),
-        security_group_ids=dict(type='list'),
-        tags=dict(type='list'),
-        load_balancers=dict(type='list'),
-        target_group_arns=dict(type='list'),
-        block_device_mappings=dict(type='list'),
-        network_interfaces=dict(type='list'),
-        scheduled_tasks=dict(type='list'),
-        rancher=dict(type='dict', required=False, default=None),
-        mesosphere=dict(type='dict', required=False, default=None),
-        elastic_beanstalk=dict(type='dict', required=False, default=None),
-        ecs=dict(type='dict', required=False, default=None),
-        kubernetes=dict(type='dict', required=False, default=None),
-        right_scale=dict(type='dict', required=False, default=None),
-        opsworks=dict(type='dict', required=False, default=None),
-        chef=dict(type='dict', required=False, default=None),
-        max_size=dict(type='int'),
-        wait_for_instances=dict(required=False, type='bool', default=False),
-        wait_timeout=dict(type='int', required=False),
-        min_size=dict(type='int'),
-        target=dict(type='int'),
-        unit=dict(type='str'),
-        utilize_reserved_instances=dict(type='bool'),
-        fallback_to_od=dict(type='bool'),
-        risk=dict(type='int'),
-        on_demand_count=dict(type='int'),
+        account_id=dict(type='str'),
         availability_vs_cost=dict(type='str'),
+        availability_zones=dict(type='list'),
+        block_device_mappings=dict(type='list'),
+        chef=dict(type='dict', required=False, default=None),
+        do_not_update=dict(default=[], type='list'),
+        down_scaling_policies=dict(type='list'),
         draining_timeout=dict(type='int'),
-        spin_up_time=dict(type='int'),
+        ebs_optimized=dict(type='bool'),
+        ebs_volume_pool=dict(type='list'),
+        ecs=dict(type='dict', required=False, default=None),
+        elastic_beanstalk=dict(type='dict', required=False, default=None),
+        elastic_ips=dict(type='list'),
+        fallback_to_od=dict(type='bool'),
+        id=dict(type='str', required=False, default=None),
+        health_check_grace_period=dict(type='int'),
+        health_check_type=dict(type='str'),
+        health_check_unhealthy_duration_before_replacement=dict(type='int'),
+        iam_role_arn=dict(type='str'),
+        iam_role_name=dict(type='str'),
+        image_id=dict(type='str'),
+        key_pair=dict(type='str'),
+        kubernetes=dict(type='dict', required=False, default=None),
         lifetime_period=dict(type='int'),
-        terminate_at_end_of_billing_hour=dict(type='bool'),
-        persistence=dict(type='dict', required=False, default=None),
-        signals=dict(type='list'),
+        load_balancers=dict(type='list'),
+        max_size=dict(type='int'),
+        mesosphere=dict(type='dict', required=False, default=None),
+        min_size=dict(type='int'),
+        monitoring=dict(type='str'),
         multai_load_balancers=dict(type='list'),
         multai_token=dict(type='str'),
-        account_id=dict(type='str'),
+        name=dict(type='str'),
+        network_interfaces=dict(type='list'),
+        on_demand_count=dict(type='int'),
+        on_demand_instance_type=dict(type='str'),
+        opsworks=dict(type='dict', required=False, default=None),
+        persistence=dict(type='dict', required=False, default=None),
+        product=dict(type='str'),
+        rancher=dict(type='dict', required=False, default=None),
+        right_scale=dict(type='dict', required=False, default=None),
+        risk=dict(type='int'),
+        roll_config=dict(type='dict', required=False, default=None),
+        scheduled_tasks=dict(type='list'),
+        security_group_ids=dict(type='list'),
+        shutdown_script=dict(type='str'),
+        signals=dict(type='list'),
+        spin_up_time=dict(type='int'),
+        spot_instance_types=dict(type='list'),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(type='list'),
+        target=dict(type='int'),
+        target_group_arns=dict(type='list'),
+        tenancy=dict(type='str'),
+        terminate_at_end_of_billing_hour=dict(type='bool'),
+        unit=dict(type='str'),
+        user_data=dict(type='str'),
+        utilize_reserved_instances=dict(type='bool'),
+        uniqueness_by=dict(default='name', choices=['name', 'id']),
         up_scaling_policies=dict(type='list'),
-        down_scaling_policies=dict(type='list')
+        wait_for_instances=dict(required=False, type='bool', default=False),
+        wait_timeout=dict(type='int', required=False),
     )
 
     module = AnsibleModule(argument_spec=fields)
