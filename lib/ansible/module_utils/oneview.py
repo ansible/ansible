@@ -28,6 +28,7 @@
 
 from __future__ import (absolute_import, division, print_function)
 
+import abc
 import collections
 import json
 import logging
@@ -65,7 +66,7 @@ def transform_list_to_dict(list_):
         return ret
 
     for value in list_:
-        if isinstance(value, dict):
+        if isinstance(value, collections.Mapping):
             ret.update(value)
         else:
             ret[to_native(value, errors='surrogate_or_strict')] = True
@@ -74,6 +75,7 @@ def transform_list_to_dict(list_):
 
 
 class OneViewModuleBase(object):
+    __metaclass__ = abc.ABCMeta
     MSG_CREATED = 'Resource created successfully.'
     MSG_UPDATED = 'Resource updated successfully.'
     MSG_DELETED = 'Resource deleted successfully.'
@@ -143,16 +145,17 @@ class OneViewModuleBase(object):
         else:
             self.oneview_client = OneViewClient.from_json_file(self.module.params['config'])
 
+    @abc.abstractmethod
     def execute_module(self):
         """
-        Abstract function, must be implemented by the inheritor.
+        Abstract method, must be implemented by the inheritor.
 
         This method is called from the run method. It should contains the module logic
 
         :return: dict: It must return a dictionary with the attributes for the module result,
             such as ansible_facts, msg and changed.
 """
-        raise HPOneViewException("execute_module not implemented")
+        pass
 
     def run(self):
         """
@@ -249,6 +252,34 @@ class OneViewModuleBase(object):
 
     MSG_DIFF_AT_KEY = 'Difference found at key \'{0}\'. '
 
+    def resource_scopes_set(self, state, fact_name, scope_uris):
+        """
+        Generic implementation of the scopes update PATCH for the OneView resources.
+        It checks if the resource needs to be updated with the current scopes.
+        This method is meant to be run after ensuring the present state.
+        Args:
+            state (dict):
+                Dict containing the data from the last state results in the resource.
+                It needs to have the 'msg', 'changed', and 'ansible_facts' entries.
+            fact_name (str):
+                Name of the fact returned to the Ansible.
+            scope_uris (list)
+                List with all the scope URIs to be added to the resource.
+        Returns:
+            A dictionary with the expected arguments for the AnsibleModule.exit_json
+    """
+        if scope_uris is None:
+            scope_uris = []
+        resource = state['ansible_facts'][fact_name]
+        operation_data = dict(operation='replace', path='/scopeUris', value=scope_uris)
+
+        if resource['scopeUris'] is None or set(resource['scopeUris']) != set(scope_uris):
+            state['ansible_facts'][fact_name] = self.resource_client.patch(resource['uri'], **operation_data)
+            state['changed'] = True
+            state['msg'] = self.MSG_UPDATED
+
+        return state
+
     def compare(self, first_resource, second_resource):
         """
         Recursively compares dictionary contents equivalence, ignoring types and elements order.
@@ -261,8 +292,8 @@ class OneViewModuleBase(object):
         :arg dict second_resource: second dictionary
         :return: bool: True when equal, False when different.
     """
-        resource1 = deepcopy(first_resource)
-        resource2 = deepcopy(second_resource)
+        resource1 = first_resource
+        resource2 = second_resource
 
         debug_resources = "resource1 = {0}, resource2 = {1}".format(resource1, resource2)
 
@@ -316,8 +347,8 @@ class OneViewModuleBase(object):
         :return: True when equal; False when different.
     """
 
-        resource1 = deepcopy(first_resource)
-        resource2 = deepcopy(second_resource)
+        resource1 = first_resource
+        resource2 = second_resource
 
         debug_resources = "resource1 = {0}, resource2 = {1}".format(resource1, resource2)
 

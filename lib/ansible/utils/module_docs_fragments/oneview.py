@@ -29,6 +29,9 @@ options:
           For links to example configuration files or how to use the environment variables verify the notes section.
       required: false
 
+requirements:
+  - "python >= 2.7.9"
+
 notes:
     - "A sample configuration file for the config parameter can be found at:
        U(https://github.com/HewlettPackard/oneview-ansible/blob/master/examples/oneview_config-rename.json)"
