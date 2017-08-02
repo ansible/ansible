@@ -9,7 +9,7 @@ ITERKEYS_USERS=$(grep -r -I iterkeys . \
     | grep -v \
     -e 'metadata-.*.json:' \
     -e lib/ansible.egg-info/ \
-    -e lib/ansible/module_utils/six/_six.py \
+    -e lib/ansible/module_utils/six/__init__.py \
     -e docs/docsite/rst/dev_guide/testing/sanity/ \
     -e test/sanity/code-smell/no-dict-iterkeys.sh \
     -e '^[^:]*:#'

@@ -11,3 +11,6 @@
 
 - include: "{{ role_path }}/tests/iosxr/basic.yaml"
   when: hostvars[inventory_hostname]['ansible_network_os'] == 'iosxr'
+
+- include: "{{ role_path }}/tests/nxos/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'nxos'

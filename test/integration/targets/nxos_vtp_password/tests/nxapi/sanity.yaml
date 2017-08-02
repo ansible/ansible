@@ -1,0 +1,30 @@
+---
+- debug: msg="START TRANSPORT:NXAPI nxos_vtp_password sanity test"
+
+- block:
+  - name: enable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: enabled
+      provider: "{{ nxapi }}"
+
+  - name: configure vtp password
+    nxos_vtp_password:
+      password: ntc
+      state: present
+      provider: "{{ nxapi }}"
+
+  - name: remove vtp password
+    nxos_vtp_password:
+      password: ntc
+      state: absent
+      provider: "{{ nxapi }}"
+
+  always:
+  - name: disable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: disabled
+      provider: "{{ nxapi }}"
+
+- debug: msg="END TRANSPORT:NXAPI nxos_vtp_password sanity test"

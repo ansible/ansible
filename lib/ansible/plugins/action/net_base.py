@@ -20,6 +20,7 @@ __metaclass__ = type
 import sys
 import copy
 
+from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.six import iteritems
@@ -59,7 +60,7 @@ class ActionModule(ActionBase):
         play_context.remote_user = self.provider['username'] or self._play_context.connection_user
         play_context.password = self.provider['password'] or self._play_context.password
         play_context.private_key_file = self.provider['ssh_keyfile'] or self._play_context.private_key_file
-        play_context.timeout = self.provider['timeout'] or self._play_context.timeout
+        play_context.timeout = self.provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
         if 'authorize' in self.provider.keys():
             play_context.become = self.provider['authorize'] or False
             play_context.become_pass = self.provider['auth_pass']

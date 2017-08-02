@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -43,10 +32,7 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Configure operational status of the interface link.
-        If value is I(yes) interface is configured in up state,
-        for I(no) interface is configured in down state.
-    default: yes
+      - Interface link status.
   speed:
     description:
       - Interface link speed.
@@ -64,18 +50,19 @@ options:
   rx_rate:
     description:
       - Receiver rate
-  collection:
+  aggregate:
     description: List of Interfaces definitions.
   purge:
     description:
-      - Purge Interfaces not defined in the collections parameter.
+      - Purge Interfaces not defined in the aggregate parameter.
         This applies only for logical interface.
     default: no
   state:
     description:
-      - State of the Interface configuration.
+      - State of the Interface configuration, C(up) means present and
+        operationally up and C(down) means present and operationally C(down)
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'up', 'down']
 """
 
 EXAMPLES = """
@@ -93,15 +80,13 @@ EXAMPLES = """
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: present
-    enabled: True
+    state: up
 
 - name: make interface down
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: present
-    enabled: False
+    state: down
 """
 
 RETURN = """

@@ -30,6 +30,7 @@ import os
 import re
 from time import sleep
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.cloud import CloudRetry
 
 try:
@@ -45,12 +46,6 @@ try:
     HAS_BOTO3 = True
 except:
     HAS_BOTO3 = False
-
-try:
-    from distutils.version import LooseVersion
-    HAS_LOOSE_VERSION = True
-except:
-    HAS_LOOSE_VERSION = False
 
 from ansible.module_utils.six import string_types, binary_type, text_type
 
@@ -317,7 +312,7 @@ def ec2_connect(module):
     return ec2
 
 
-def paging(pause=0, marker_property='marker'):
+def paging(pause=0, marker_property='marker', result_key=None):
     """ Adds paging to boto retrieval functions that support a 'marker'
         this is configurable as not all boto functions seem to use the
         same name.
@@ -328,8 +323,12 @@ def paging(pause=0, marker_property='marker'):
             marker = None
             while True:
                 try:
-                    new = f(*args, marker=marker, **kwargs)
-                    marker = getattr(new, marker_property)
+                    if marker:
+                        kwargs[marker_property] = marker
+                    new = f(*args, **kwargs)
+                    marker = new.get(marker_property)
+                    if result_key:
+                        new = new[result_key]
                     results.extend(new)
                     if not marker:
                         break
@@ -344,17 +343,27 @@ def paging(pause=0, marker_property='marker'):
     return wrapper
 
 
+def _camel_to_snake(name):
+
+    def prepend_underscore_and_lower(m):
+        return '_' + m.group(0).lower()
+
+    import re
+    # Cope with pluralized abbreviations such as TargetGroupARNs
+    # that would otherwise be rendered target_group_ar_ns
+    plural_pattern = r'[A-Z]{3,}s$'
+    s1 = re.sub(plural_pattern, prepend_underscore_and_lower, name)
+    # Handle when there was nothing before the plural_pattern
+    if s1.startswith("_") and not name.startswith("_"):
+        s1 = s1[1:]
+    # Remainder of solution seems to be https://stackoverflow.com/a/1176023
+    first_cap_pattern = r'(.)([A-Z][a-z]+)'
+    all_cap_pattern = r'([a-z0-9])([A-Z]+)'
+    s2 = re.sub(first_cap_pattern, r'\1_\2', s1)
+    return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
+
+
 def camel_dict_to_snake_dict(camel_dict):
-
-    def camel_to_snake(name):
-
-        import re
-
-        first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-        all_cap_re = re.compile('([a-z0-9])([A-Z])')
-        s1 = first_cap_re.sub(r'\1_\2', name)
-
-        return all_cap_re.sub(r'\1_\2', s1).lower()
 
     def value_is_list(camel_list):
 
@@ -372,11 +381,11 @@ def camel_dict_to_snake_dict(camel_dict):
     snake_dict = {}
     for k, v in camel_dict.items():
         if isinstance(v, dict):
-            snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
+            snake_dict[_camel_to_snake(k)] = camel_dict_to_snake_dict(v)
         elif isinstance(v, list):
-            snake_dict[camel_to_snake(k)] = value_is_list(v)
+            snake_dict[_camel_to_snake(k)] = value_is_list(v)
         else:
-            snake_dict[camel_to_snake(k)] = v
+            snake_dict[_camel_to_snake(k)] = v
 
     return snake_dict
 
@@ -495,7 +504,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value
 
     tags_list = []
     for k, v in tags_dict.items():
-        tags_list.append({tag_name_key_name: k, tag_value_key_name: v})
+        tags_list.append({tag_name_key_name: k, tag_value_key_name: to_native(v)})
 
     return tags_list
 

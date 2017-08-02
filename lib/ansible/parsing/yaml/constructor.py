@@ -23,9 +23,10 @@ from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
-from ansible.parsing.vault import VaultLib
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
+from ansible.parsing.vault import VaultLib, parse_vaulttext_envelope
 
 
 try:
@@ -36,12 +37,12 @@ except ImportError:
 
 
 class AnsibleConstructor(SafeConstructor):
-    def __init__(self, file_name=None, b_vault_password=None):
-        self._b_vault_password = b_vault_password
+    def __init__(self, file_name=None, vault_secrets=None):
         self._ansible_file_name = file_name
         super(AnsibleConstructor, self).__init__()
         self._vaults = {}
-        self._vaults['default'] = VaultLib(b_password=self._b_vault_password)
+        self.vault_secrets = vault_secrets or []
+        self._vaults['default'] = VaultLib(secrets=self.vault_secrets)
 
     def construct_yaml_map(self, node):
         data = AnsibleMapping()
@@ -96,17 +97,16 @@ class AnsibleConstructor(SafeConstructor):
 
     def construct_vault_encrypted_unicode(self, node):
         value = self.construct_scalar(node)
-        ciphertext_data = to_bytes(value)
-
-        if self._b_vault_password is None:
+        b_ciphertext_data = to_bytes(value)
+        # could pass in a key id here to choose the vault to associate with
+        # TODO/FIXME: plugin vault selector
+        vault = self._vaults['default']
+        if vault.secrets is None:
             raise ConstructorError(context=None, context_mark=None,
                                    problem="found !vault but no vault password provided",
                                    problem_mark=node.start_mark,
                                    note=None)
-
-        # could pass in a key id here to choose the vault to associate with
-        vault = self._vaults['default']
-        ret = AnsibleVaultEncryptedUnicode(ciphertext_data)
+        ret = AnsibleVaultEncryptedUnicode(b_ciphertext_data)
         ret.vault = vault
         return ret
 

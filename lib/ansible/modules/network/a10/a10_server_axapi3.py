@@ -1,25 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to manage A10 Networks slb server objects
-(c) 2014, Mischa Peters <mpeters@a10networks.com>, 2016, Eric Chou <ericc@a10networks.com>
+# (c) 2014, Mischa Peters <mpeters@a10networks.com>
+# (c) 2016, Eric Chou <ericc@a10networks.com>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -102,12 +91,14 @@ EXAMPLES = '''
 '''
 import json
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
 from ansible.module_utils.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
 from ansible.module_utils.a10 import AXAPI_PORT_PROTOCOLS
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+
 
 VALID_PORT_FIELDS = ['port-number', 'protocol', 'action']
+
 
 def validate_ports(module, ports):
     for item in ports:
@@ -250,6 +241,7 @@ def main():
     # log out gracefully and exit
     axapi_call_v3(module, axapi_base_url + 'logoff/', method='POST', body='', signature=signature)
     module.exit_json(changed=changed, content=result)
+
 
 if __name__ == '__main__':
     main()

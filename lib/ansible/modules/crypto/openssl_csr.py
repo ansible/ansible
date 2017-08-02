@@ -2,19 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2017, Yanis Guenane <yanis+ansible@guenane.org>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -50,6 +42,11 @@ options:
         required: true
         description:
             - Path to the privatekey to use when signing the certificate signing request
+    privatekey_passphrase:
+        required: false
+        description:
+            - The passphrase for the privatekey.
+        version_added: "2.4"
     version:
         required: false
         default: 3
@@ -114,6 +111,14 @@ EXAMPLES = '''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     commonName: www.ansible.com
 
+# Generate an OpenSSL Certificate Signing Request with a
+# passphrase protected private key
+- openssl_csr:
+    path: /etc/ssl/csr/www.ansible.com.csr
+    privatekey_path: /etc/ssl/private/ansible.com.pem
+    privatekey_passphrase: ansible
+    commonName: www.ansible.com
+
 # Generate an OpenSSL Certificate Signing Request with Subject information
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
@@ -166,6 +171,7 @@ except ImportError:
 else:
     pyopenssl_found = True
 
+from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -183,6 +189,7 @@ class CertificateSigningRequest(object):
         self.subjectAltName = module.params['subjectAltName']
         self.path = module.params['path']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.version = module.params['version']
         self.changed = True
         self.request = None
@@ -217,8 +224,10 @@ class CertificateSigningRequest(object):
             if self.subjectAltName is not None:
                 req.add_extensions([crypto.X509Extension(b"subjectAltName", False, self.subjectAltName.encode('ascii'))])
 
-            privatekey_content = open(self.privatekey_path).read()
-            self.privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
+            self.privatekey = crypto_utils.load_privatekey(
+                self.privatekey_path,
+                self.privatekey_passphrase
+            )
 
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
@@ -267,6 +276,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             digest=dict(default='sha256', type='str'),
             privatekey_path=dict(require=True, type='path'),
+            privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(default='3', type='int'),
             force=dict(default=False, type='bool'),
             subjectAltName=dict(aliases=['subjectAltName'], type='str'),

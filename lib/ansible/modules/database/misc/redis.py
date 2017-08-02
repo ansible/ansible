@@ -1,20 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -141,6 +133,7 @@ EXAMPLES = '''
     name: lua-time-limit
     value: 100
 '''
+import traceback
 
 try:
     import redis
@@ -148,6 +141,9 @@ except ImportError:
     redis_found = False
 else:
     redis_found = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 # ===========================================
@@ -231,9 +227,9 @@ def main():
                               password=login_password)
         try:
             r.ping()
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="unable to connect to database: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e),
+                             exception=traceback.format_exc())
 
         #Check if we are already in the mode that we want
         info = r.info()
@@ -291,9 +287,9 @@ def main():
                               db=db)
         try:
             r.ping()
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="unable to connect to database: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e),
+                             exception=traceback.format_exc())
 
         # Do the stuff
         # (Check Check_mode before commands so the commands aren't evaluated
@@ -319,16 +315,16 @@ def main():
 
         try:
             r.ping()
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="unable to connect to database: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e),
+                             exception=traceback.format_exc())
 
 
         try:
             old_value = r.config_get(name)[name]
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="unable to read config: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="unable to read config: %s" % to_native(e),
+                             exception=traceback.format_exc())
         changed = old_value != value
 
         if module.check_mode or not changed:
@@ -336,16 +332,13 @@ def main():
         else:
             try:
                 r.config_set(name, value)
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="unable to write config: %s" % e)
+            except Exception as e:
+                module.fail_json(msg="unable to write config: %s" % to_native(e),
+                                 exception=traceback.format_exc())
             module.exit_json(changed=changed, name=name, value=value)
     else:
         module.fail_json(msg='A valid command must be provided')
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

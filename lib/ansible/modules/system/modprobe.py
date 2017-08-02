@@ -2,21 +2,10 @@
 #coding: utf-8 -*-
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -68,9 +57,11 @@ EXAMPLES = '''
     params: 'numdummies=2'
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 import shlex
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -100,9 +91,8 @@ def main():
                 present = True
                 break
         modules.close()
-    except IOError:
-        e = get_exception()
-        module.fail_json(msg=str(e), **args)
+    except IOError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **args)
 
     # Check only; don't modify
     if module.check_mode:
@@ -131,6 +121,7 @@ def main():
             args['changed'] = True
 
     module.exit_json(**args)
+
 
 if __name__ == '__main__':
     main()

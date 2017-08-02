@@ -1,0 +1,4 @@
+---
+- set_fact: connection="{{ cli }}"
+
+- import_tasks: targets/nxos_vxlan_vtep/tests/common/sanity.yaml

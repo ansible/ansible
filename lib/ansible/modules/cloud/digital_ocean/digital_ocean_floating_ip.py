@@ -2,21 +2,12 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, Patrick F. Marques <patrickfmarques@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.0'}
@@ -124,11 +115,10 @@ data:
 '''
 
 import json
-import os
 import time
 
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
 
 
@@ -216,28 +206,27 @@ def core(module):
     state = module.params['state']
     ip = module.params['ip']
     droplet_id = module.params['droplet_id']
-    region = module.params['region']
 
     rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
                          'Content-type': 'application/json'})
 
     if state in ('present'):
-        if module.params['droplet_id'] is not None and module.params['ip'] is not None:
+        if droplet_id is not None and module.params['ip'] is not None:
             # Lets try to associate the ip to the specified droplet
-            result = associate_floating_ips(module, rest)
+            associate_floating_ips(module, rest)
         else:
-            result = create_floating_ips(module, rest)
+            create_floating_ips(module, rest)
 
     elif state in ('absent'):
         response = rest.delete("floating_ips/{0}".format(ip))
         status_code = response.status_code
-        json = response.json
+        json_data = response.json
         if status_code == 204:
             module.exit_json(changed=True)
         elif status_code == 404:
             module.exit_json(changed=False)
         else:
-            module.exit_json(changed=False, data=json)
+            module.exit_json(changed=False, data=json_data)
 
 
 def get_floating_ip_details(module, rest):
@@ -245,12 +234,12 @@ def get_floating_ip_details(module, rest):
 
     response = rest.get("floating_ips/{0}".format(ip))
     status_code = response.status_code
-    json = response.json
+    json_data = response.json
     if status_code == 200:
-        return response.json['floating_ip']
+        return json_data['floating_ip']
     else:
         module.fail_json(msg="Error assigning floating ip [{0}: {1}]".format(
-            status_code, response.json["message"]), region=module.params['region'])
+            status_code, json_data["message"]), region=module.params['region'])
 
 
 def assign_floating_id_to_droplet(module, rest):
@@ -263,14 +252,14 @@ def assign_floating_id_to_droplet(module, rest):
 
     response = rest.post("floating_ips/{0}/actions".format(ip), data=payload)
     status_code = response.status_code
-    json = response.json
+    json_data = response.json
     if status_code == 201:
-        wait_action(module, rest, ip, json['action']['id'])
+        wait_action(module, rest, ip, json_data['action']['id'])
 
-        module.exit_json(changed=True, data=response.json)
+        module.exit_json(changed=True, data=json_data)
     else:
         module.fail_json(msg="Error creating floating ip [{0}: {1}]".format(
-            status_code, response.json["message"]), region=module.params['region'])
+            status_code, json_data["message"]), region=module.params['region'])
 
 
 def associate_floating_ips(module, rest):
@@ -295,12 +284,12 @@ def create_floating_ips(module, rest):
 
     response = rest.post("floating_ips", data=payload)
     status_code = response.status_code
-    json = response.json
+    json_data = response.json
     if status_code == 202:
-        module.exit_json(changed=True, data=response.json)
+        module.exit_json(changed=True, data=json_data)
     else:
         module.fail_json(msg="Error creating floating ip [{0}: {1}]".format(
-            status_code, response.json["message"]), region=module.params['region'])
+            status_code, json_data["message"]), region=module.params['region'])
 
 
 def main():
@@ -328,6 +317,7 @@ def main():
     )
 
     core(module)
+
 
 if __name__ == '__main__':
     main()

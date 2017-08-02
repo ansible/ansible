@@ -43,9 +43,17 @@ aireos_argument_spec = {
 }
 
 # Add argument's default value here
-ARGS_DEFAULT_VALUE = {
-    'timeout': 10
-}
+ARGS_DEFAULT_VALUE = {}
+
+
+def sanitize(resp):
+    # Takes response from device and strips whitespace from all lines
+    # Aireos adds in extra preceding whitespace which netcfg parses as children/parents, which Aireos does not do
+    # Aireos also adds in trailing whitespace that is unused
+    cleaned = []
+    for line in resp.splitlines():
+        cleaned.append(line.strip())
+    return '\n'.join(cleaned).strip()
 
 
 def get_argspec():
@@ -82,7 +90,7 @@ def get_config(module, flags=[]):
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
             module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_then_replace'))
-        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        cfg = sanitize(to_text(out, errors='surrogate_then_replace').strip())
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
@@ -105,7 +113,7 @@ def run_commands(module, commands, check_rc=True):
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
             module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
-        responses.append(to_text(out, errors='surrogate_then_replace'))
+        responses.append(sanitize(to_text(out, errors='surrogate_then_replace')))
     return responses
 
 

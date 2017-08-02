@@ -1,22 +1,12 @@
 #!/usr/bin/python
 
 # (c) 2017, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -119,9 +109,10 @@ EXAMPLES = """
 RETURN = """
 
 """
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
@@ -273,10 +264,9 @@ class NetAppCDOTLUN(object):
 
         try:
             self.server.invoke_successfully(lun_create, enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg="Error provisioning lun %s of size %s" % (self.name, self.size),
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg="Error provisioning lun %s of size %s: %s" % (self.name, self.size, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def delete_lun(self):
         """
@@ -292,10 +282,9 @@ class NetAppCDOTLUN(object):
 
         try:
             self.server.invoke_successfully(lun_delete, enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg="Error deleting lun %s" % path,
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg="Error deleting lun %s: %s" % (path, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def resize_lun(self):
         """
@@ -312,9 +301,8 @@ class NetAppCDOTLUN(object):
                              'force': str(self.force_resize)})
         try:
             self.server.invoke_successfully(lun_resize, enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            if str(e.code) == "9042":
+        except netapp_utils.zapi.NaApiError as e:
+            if to_native(e.code) == "9042":
                 # Error 9042 denotes the new LUN size being the same as the
                 # old LUN size. This happens when there's barely any difference
                 # in the two sizes. For example, from 8388608 bytes to
@@ -323,9 +311,8 @@ class NetAppCDOTLUN(object):
                 # larger unit (MB/GB/TB).
                 return False
             else:
-                err = get_exception()
-                self.module.fail_json(msg="Error resizing lun %s" % path,
-                                      exception=str(err))
+                self.module.fail_json(msg="Error resizing lun %s: %s" % (path, to_native(e)),
+                                      exception=traceback.format_exc())
 
         return True
 
@@ -380,6 +367,7 @@ class NetAppCDOTLUN(object):
 def main():
     v = NetAppCDOTLUN()
     v.apply()
+
 
 if __name__ == '__main__':
     main()

@@ -25,8 +25,13 @@ Python 2.4 and 2.5 support discontinuation
 Python 3
 --------
 - Ansible Core Engine and Core modules will be tested on Python 3
+
+  - All Core modules now have at least a smoketest integration test.
+    Additional coverage is welcomed to find more bugs and prevent regressions.
+
 - Communicate with Linux distros to provide Ansible running on Python 3
-- Check for Python 3 tests on core modules and create any missing
+
+  - Python3 based Ansible packages are now available to run on Fedora Linux
 
 Ansible-Config
 --------------
@@ -49,11 +54,11 @@ Inventory
 
 Facts
 -----
-- Configurable list of ‘fact modules’ for ``gather_facts``
-- Fact gathering policy finer grained
-- Make ``setup.py``/``facts`` more pluggable
-- Improve testing of ``setup.py``/``facts.py``
-- Namespacing fact variables (via a config option) implemented in ansible/ansible PR `#18445 <https://github.com/ansible/ansible/pull/18445>`_.
+- Configurable list of ‘fact modules’ for ``gather_facts`` **(done)**
+- Fact gathering policy finer grained **(done)**
+- Make ``setup.py``/``facts`` more pluggable **(done)**
+- Improve testing of ``setup.py``/``facts.py`` **(done)**
+- Namespacing fact variables (via a config option) implemented in ansible/ansible PR `#18445 <https://github.com/ansible/ansible/pull/18445>`_. **(done)**
   Proposal found in ansible/proposals issue `#17 <https://github.com/ansible/proposals/issues/17>`_.
 
 PluginLoader
@@ -85,9 +90,9 @@ Static Loop Keyword
 
 Vault
 -----
-- Support for multiple vault passwords
+- Support for multiple vault passwords.  **(done)**
 
-  - Each decrypted item should know which secret to request
+  - Each decrypted item should know which secret to request **(done)**
   - Support requesting credentials (password prompt) as callbacks
 
 - Ability to open and edit file with encrypted vars deencrypted, and encrypt/format on save
@@ -130,22 +135,22 @@ Disambiguate Includes
 
 Windows
 -------
-- New PS/.NET module API
+- New PS/.NET module API **(in progress)**
 - Windows Nano Server support
-- Windows module_utils pluginloader
-- Refactor duplicated module code into new module_utils files
+- Windows module_utils pluginloader **(done)**
+- Refactor duplicated module code into new module_utils files **(in progress)**
 - Evaluate #Requires directives (existing and new: PS version, OS version, etc)
-- Improve module debug support/persistence
-- Explore official DSC support
+- Improve module debug support/persistence **(done)**
+- Explore official DSC support **(done)**
 - Explore module intermediate output
-- Explore Powershell module unit testing
+- Explore Powershell module unit testing **(in progress)**
 - Explore JEA support (stretch)
 - Extended become support with network/service/batch logon types
 - Module updates
 
   - Split "Windows" category into multiple subs
-  - Domain user/group management modules
-  - win_mapped_drive module
+  - Domain user/group management modules **(in progress)**
+  - win_mapped_drive module **(in progress)**
   - win_hotfix
   - win_updates rewrite to require become
   - win_package changes required to deprecate win_msi
@@ -157,19 +162,19 @@ AWS
 - Triage existing merges for modules
 - Module work
 
-  - elb-target-groups
-  - alb*
-  - ecs
-  - Data Pipelines
-  - VPN
-  - DirectConnect
+  - elb-target-groups `#19492 <https://github.com/ansible/ansible/pull/19492>`_, `#24583 <https://github.com/ansible/ansible/pull/24583>`_. **(done)**
+  - alb* `#19491 <https://github.com/ansible/ansible/pull/19491>`_, `#24584 <https://github.com/ansible/ansible/pull/24584>`_. **(done)**
+  - ecs `#20618 <https://github.com/ansible/ansible/pull/20618>`_. **(in review process)**
+  - Data Pipelines `#22878 <https://github.com/ansible/ansible/pull/22878>`_. **(in review process)**
+  - VPN `#24385 <https://github.com/ansible/ansible/pull/24385>`_. **(in review process)**
+  - DirectConnect `#26152 <https://github.com/ansible/ansible/pull/26152>`_. **(connection module in review process, several more to come)**
 
 Azure
 -----
-- Expose endpoint overrides
+- Expose endpoint overrides **(in progress)**
 - Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks)
-- Add load balancer module
-- Add Azure Functions module
+- Add load balancer module **(in progress)**
+- Add Azure Functions module **(in progress)**
 
 Google Cloud Platform
 ---------------------
@@ -180,23 +185,27 @@ Google Cloud Platform
 Network Roadmap
 ---------------
 - Removal of ``*_template`` modules
-- Session Tracing
-- Refactor ansible-connection to cli
+- Distributed Continuous Integration Infrastructure
+- RPC Connection Plugin
 - Module Work
 
   - Declarative intent modules
   - OpenVSwitch
+  - Minimal Viable Platform Agnostic Modules
 
 Contributor Quality of Life
 ---------------------------
-- All Core and Curated modules will work towards having unit testing.
+- All Core and Curated modules will work towards having unit testing. **(edit: integration and/or unit tests)**
 - More bot improvements!
+
+  - Bot comments on PRs with details of test failures. **(done)**
+
 - Test Infrastructure changes
 
   - Shippable + Bot Integration
 
-    - Provide verified test results to the bot from Shippable so the bot can comment on PRs with CI failures.
-    - Enable the bot to mark PRs with ``ci_verified`` if all CI failures are verified.
+    - Provide verified test results to the bot from Shippable so the bot can comment on PRs with CI failures. **(done, compile and sanity tests only)**
+    - Enable the bot to mark PRs with ``ci_verified`` if all CI failures are verified. **(done)**
 
   - Windows Server 2016 Integration Tests
 
@@ -213,20 +222,25 @@ Contributor Quality of Life
 
   - Windows + Python 3 Tests
 
-    - Run basic Windows tests using Python 3 as the controller.
+    - Run basic Windows tests using Python 3 as the controller. **(partially done, not all planned tests running yet)**
     - Depends on resolution of WinRM Python 3 issues.
 
   - Cloud Integration Tests
 
-    - Run existing cloud integration tests for AWS, Azure and GCP as part of CI.
-    - Tests to be run only on cloud module (and module_utils) PRs and merges for the relevant cloud provider.
+    - Run existing cloud integration tests as part of CI for:
+
+      - AWS **(done, some tests excluded due to test duration)**
+      - Azure **(in progress)**
+      - GCP as part of CI. **(possibly pushed to future roadmap)**
+
+    - Tests to be run only on cloud module (and module_utils) PRs and merges for the relevant cloud provider. **(done)**
 
   - Test Reliability
 
-    - Further improve test reliability to reduce false positives on Shippable.
+    - Further improve test reliability to reduce false positives on Shippable. **(ongoing)**
     - This continues work from the 2.3 release cycle.
 
   - Static Code Analysis
 
-    - Further expand the scope and coverage of static analysis.
+    - Further expand the scope and coverage of static analysis. **(ongoing)**
     - This continues work from the 2.3 release cycle.

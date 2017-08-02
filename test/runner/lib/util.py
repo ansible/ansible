@@ -81,7 +81,7 @@ def find_executable(executable, cwd=None, path=None, required=True):
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
-                cmd_verbosity=1):
+                cmd_verbosity=1, str_errors='strict'):
     """
     :type args: CommonConfig
     :type cmd: collections.Iterable[str]
@@ -93,15 +93,16 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
+    :type str_errors: str
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
-                       cmd_verbosity=cmd_verbosity)
+                       cmd_verbosity=cmd_verbosity, str_errors=str_errors)
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
-                cmd_verbosity=1):
+                cmd_verbosity=1, str_errors='strict'):
     """
     :type cmd: collections.Iterable[str]
     :type capture: bool
@@ -112,6 +113,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
+    :type str_errors: str
     :rtype: str | None, str | None
     """
     if not cwd:
@@ -170,8 +172,8 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         encoding = 'utf-8'
         data_bytes = data.encode(encoding) if data else None
         stdout_bytes, stderr_bytes = process.communicate(data_bytes)
-        stdout_text = stdout_bytes.decode(encoding) if stdout_bytes else u''
-        stderr_text = stderr_bytes.decode(encoding) if stderr_bytes else u''
+        stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
+        stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
     else:
         process.wait()
         stdout_text, stderr_text = None, None

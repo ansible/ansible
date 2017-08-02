@@ -1,0 +1,25 @@
+- name: Incluse OS-specific variables
+  include_vars: '{{ ansible_os_family }}.yml'
+  when: not ansible_os_family == "Darwin"
+
+- name: Install pyOpenSSL
+  become: True
+  package:
+    name: '{{ pyopenssl_package_name_python3 }}'
+  when: not ansible_os_family == 'Darwin' and  ansible_python_version|version_compare('3.0', '>=')
+
+- name: Install pyOpenSSL
+  become: True
+  package:
+    name: '{{ pyopenssl_package_name }}'
+  when: not ansible_os_family == 'Darwin' and ansible_python_version|version_compare('3.0', '<')
+
+- name: Install pyOpenSSL
+  become: True
+  pip:
+    name: pyOpenSSL
+  when:  ansible_os_family == 'Darwin'
+
+- name: register openssl version
+  command: python -c 'import OpenSSL; print(OpenSSL.__version__)'
+  register: pyopenssl_version

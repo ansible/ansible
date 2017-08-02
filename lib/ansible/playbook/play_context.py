@@ -319,6 +319,10 @@ class PlayContext(Base):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
+
+        :arg task: the task object with the parameters that were set on it
+        :arg variables: variables from inventory
+        :arg templar: templar instance if templating variables is needed
         '''
 
         new_info = self.copy()
@@ -403,9 +407,9 @@ class PlayContext(Base):
         # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
-                setattr(new_info, 'become_pass', new_info.sudo_pass)
+                new_info.become_pass = new_info.sudo_pass
             elif new_info.become_method == 'su' and new_info.su_pass:
-                setattr(new_info, 'become_pass', new_info.su_pass)
+                new_info.become_pass = new_info.su_pass
 
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
@@ -418,7 +422,7 @@ class PlayContext(Base):
                     if sudo_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[sudo_pass_name])
                         break
-            if new_info.become_method == 'sudo':
+            elif new_info.become_method == 'su':
                 for su_pass_name in MAGIC_VARIABLE_MAPPING.get('su_pass'):
                     if su_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[su_pass_name])
@@ -454,9 +458,6 @@ class PlayContext(Base):
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
-
-        # set become defaults if not previouslly set
-        task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
         if task.always_run:
             display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)

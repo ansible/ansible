@@ -26,12 +26,13 @@ import re
 import tempfile
 from yaml import YAMLError
 
+from ansible.module_utils.six import text_type, string_types
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
-from ansible.module_utils.six import text_type, string_types
+from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file
+from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
@@ -73,11 +74,16 @@ class DataLoader:
         self._tempfiles = set()
 
         # initialize the vault stuff with an empty password
-        self.set_vault_password(None)
+        # TODO: replace with a ref to something that can get the password
+        #       a creds/auth provider
+        # self.set_vault_password(None)
+        self._vaults = {}
+        self._vault = VaultLib()
+        self.set_vault_secrets(None)
 
-    def set_vault_password(self, b_vault_password):
-        self._b_vault_password = b_vault_password
-        self._vault = VaultLib(b_password=b_vault_password)
+    # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
+    def set_vault_secrets(self, vault_secrets):
+        self._vault.secrets = vault_secrets
 
     def load(self, data, file_name='<string>', show_content=True):
         '''
@@ -170,7 +176,7 @@ class DataLoader:
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
 
-        loader = AnsibleLoader(stream, file_name, self._b_vault_password)
+        loader = AnsibleLoader(stream, file_name, self._vault.secrets)
         try:
             return loader.get_single_data()
         finally:
@@ -181,13 +187,23 @@ class DataLoader:
 
     def _get_file_contents(self, file_name):
         '''
-        Reads the file contents from the given file name, and will decrypt them
-        if they are found to be vault-encrypted.
+        Reads the file contents from the given file name
+
+        If the contents are vault-encrypted, it will decrypt them and return
+        the decrypted data
+
+        :arg file_name: The name of the file to read.  If this is a relative
+            path, it will be expanded relative to the basedir
+        :raises AnsibleFileNotFOund: if the file_name does not refer to a file
+        :raises AnsibleParserError: if we were unable to read the file
+        :return: Returns a byte string of the file contents
         '''
-        if not file_name or not isinstance(file_name, string_types):
+        if not file_name or not isinstance(file_name, (binary_type, text_type)):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
-        b_file_name = to_bytes(file_name)
+        b_file_name = to_bytes(self.path_dwim(file_name))
+        # This is what we really want but have to fix unittests to make it pass
+        # if not os.path.exists(b_file_name) or not os.path.isfile(b_file_name):
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
@@ -196,6 +212,8 @@ class DataLoader:
             with open(b_file_name, 'rb') as f:
                 data = f.read()
                 if is_encrypted(data):
+                    # FIXME: plugin vault selector
+                    b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(data)
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
@@ -305,9 +323,14 @@ class DataLoader:
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
             search.append(unfrackpath(os.path.join(dirname, source), follow=False))
+
+            # try to create absolute path for loader basedir
+            search.append(unfrackpath(os.path.join(basedir, source), follow=False))
+
+            # try to create absolute path for  dirname + filename
             search.append(self.path_dwim(os.path.join(dirname, source)))
 
-            # try to create absolute path for loader basedir + filename
+            # try to create absolute path for filename
             search.append(self.path_dwim(source))
 
         for candidate in search:
@@ -347,7 +370,6 @@ class DataLoader:
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
                 b_mydir = os.path.dirname(b_upath)
 
-                # FIXME: this detection fails with non main.yml roles
                 # if path is in role and 'tasks' not there already, add it into the search
                 if is_role or self._is_role(path):
                     if b_mydir.endswith(b'tasks'):
@@ -379,7 +401,7 @@ class DataLoader:
                     break
 
         if result is None:
-            raise AnsibleFileNotFound(file_name=source, paths=search)
+            raise AnsibleFileNotFound(file_name=source, paths=[to_text(p) for p in search])
 
         return result
 
@@ -404,15 +426,12 @@ class DataLoader:
         Temporary files are cleanup in the destructor
         """
 
-        if not file_path or not isinstance(file_path, string_types):
+        if not file_path or not isinstance(file_path, (binary_type, text_type)):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_path))
 
         b_file_path = to_bytes(file_path, errors='surrogate_or_strict')
         if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
             raise AnsibleFileNotFound(file_name=file_path)
-
-        if not self._vault:
-            self._vault = VaultLib(b_password="")
 
         real_path = self.path_dwim(file_path)
 
@@ -427,8 +446,8 @@ class DataLoader:
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name
                         data = f.read()
-                        if not self._b_vault_password:
-                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % to_native(file_path))
+                        if not self._vault.secrets:
+                            raise AnsibleParserError("A vault password or secret must be specified to decrypt %s" % to_native(file_path))
 
                         data = self._vault.decrypt(data, filename=real_path)
                         # Make a temp file

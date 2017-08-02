@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six import iteritems
 import atexit
 import os
 import ssl
@@ -32,6 +30,9 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six import integer_types, iteritems, string_types
 
 
 class TaskError(Exception):
@@ -170,17 +171,13 @@ def find_hostsystem_by_name(content, hostname):
     return None
 
 
-def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None):
+def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
     """ UUID is unique to a VM, every other id returns the first match. """
     si = content.searchIndex
     vm = None
 
     if vm_id_type == 'dns_name':
         vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
-    elif vm_id_type == 'inventory_path':
-        vm = si.FindByInventoryPath(inventoryPath=vm_id)
-        if isinstance(vm, vim.VirtualMachine):
-            vm = None
     elif vm_id_type == 'uuid':
         # Search By BIOS UUID rather than instance UUID
         vm = si.FindByUuid(datacenter=datacenter, instanceUuid=False, uuid=vm_id, vmSearch=True)
@@ -193,7 +190,20 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
         elif datacenter:
             folder = datacenter.hostFolder
         vm = find_vm_by_name(content, vm_id, folder)
-
+    elif vm_id_type == 'inventory_path':
+        searchpath = folder
+        # get all objects for this path
+        f_obj = si.FindByInventoryPath(searchpath)
+        if f_obj:
+            if isinstance(f_obj, vim.Datacenter):
+                f_obj = f_obj.vmFolder
+            for c_obj in f_obj.childEntity:
+                if not isinstance(c_obj, vim.VirtualMachine):
+                    continue
+                if c_obj.name == vm_id:
+                    vm = c_obj
+                    if match_first:
+                        break
     return vm
 
 
@@ -586,17 +596,7 @@ def serialize_spec(clonespec):
             data[x] = []
             for xe in xo:
                 data[x].append(serialize_spec(xe))
-        elif issubclass(xt, str):
-            data[x] = xo
-        elif issubclass(xt, unicode):
-            data[x] = xo
-        elif issubclass(xt, int):
-            data[x] = xo
-        elif issubclass(xt, float):
-            data[x] = xo
-        elif issubclass(xt, long):
-            data[x] = xo
-        elif issubclass(xt, bool):
+        elif issubclass(xt, string_types + integer_types + (float, bool)):
             data[x] = xo
         elif issubclass(xt, dict):
             data[x] = {}

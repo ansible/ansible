@@ -636,10 +636,10 @@ except ImportError:
     HAS_BOTO = False
 
 
-def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
+def find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone=None):
 
     # get reservations for instances that match tag(s) and are running
-    reservations = get_reservations(module, ec2, tags=count_tag, state="running", zone=zone)
+    reservations = get_reservations(module, ec2, vpc, tags=count_tag, state="running", zone=zone)
 
     instances = []
     for res in reservations:
@@ -660,10 +660,19 @@ def _set_none_to_blank(dictionary):
     return result
 
 
-def get_reservations(module, ec2, tags=None, state=None, zone=None):
-
+def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
     # TODO: filters do not work with tags that have underscores
     filters = dict()
+
+    vpc_subnet_id = module.params.get('vpc_subnet_id')
+    vpc_id = None
+    if vpc_subnet_id:
+        filters.update({"subnet-id": vpc_subnet_id})
+        if vpc:
+            vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
+
+    if vpc_id:
+        filters.update({"vpc-id": vpc_id})
 
     if tags is not None:
 
@@ -933,7 +942,7 @@ def enforce_count(module, ec2, vpc):
     if exact_count and count_tag is None:
         module.fail_json(msg="you must use the 'count_tag' option with exact_count")
 
-    reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag, zone)
+    reservations, instances = find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone)
 
     changed = None
     checkmode = False

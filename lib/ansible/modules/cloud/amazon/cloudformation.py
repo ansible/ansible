@@ -1,18 +1,9 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 # upcoming features:
 # - Ted's multifile YAML concatenation
@@ -242,9 +233,8 @@ stack_outputs:
 
 import json
 import time
-import sys
 import traceback
-
+from hashlib import sha1
 
 try:
     import boto3
@@ -253,11 +243,12 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+import ansible.module_utils.ec2
 # import a class, otherwise we'll use a fully qualified path
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.basic import AnsibleModule
-from ansible.utils.hashing import secure_hash_s
-import ansible.module_utils.ec2
+from ansible.module_utils._text import to_bytes
+
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -309,7 +300,7 @@ def create_stack(module, stack_params, cfn):
         result = stack_operation(cfn, stack_params['StackName'], 'CREATE')
     except Exception as err:
         error_msg = boto_exception(err)
-        module.fail_json(msg=error_msg)
+        module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
     if not result:
         module.fail_json(msg="empty result")
     return result
@@ -329,7 +320,9 @@ def create_changeset(module, stack_params, cfn):
     try:
         if not 'ChangeSetName' in stack_params:
             # Determine ChangeSetName using hash of parameters.
-            changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + secure_hash_s(json.dumps(stack_params, sort_keys=True))
+            json_params = json.dumps(stack_params, sort_keys=True)
+
+            changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + sha1(to_bytes(json_params, errors='surrogate_or_strict')).hexdigest()
             stack_params['ChangeSetName'] = changeset_name
         # Determine if this changeset already exists
         pending_changesets = list_changesets(cfn, stack_params['StackName'])
@@ -347,7 +340,7 @@ def create_changeset(module, stack_params, cfn):
         if 'No updates are to be performed.' in error_msg:
             result = dict(changed=False, output='Stack is already up-to-date.')
         else:
-            module.fail_json(msg=error_msg)
+            module.fail_json(msg="Failed to create change set: {0}".format(error_msg), exception=traceback.format_exc())
 
     if not result:
         module.fail_json(msg="empty result")
@@ -369,7 +362,7 @@ def update_stack(module, stack_params, cfn):
         if 'No updates are to be performed.' in error_msg:
             result = dict(changed=False, output='Stack is already up-to-date.')
         else:
-            module.fail_json(msg=error_msg)
+            module.fail_json(msg="Failed to update stack {0}: {1}".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
     if not result:
         module.fail_json(msg="empty result")
     return result

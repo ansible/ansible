@@ -75,15 +75,8 @@ except ImportError:
     HAS_FLATDICT = False
 
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
-
-
-def is_unicode(ch):
-    return isinstance(ch, unicode)
-
-
-def create_unicode(ch):
-    return unicode(ch, 'utf-8')
 
 
 class PlainTextSocketAppender(object):
@@ -141,15 +134,13 @@ class PlainTextSocketAppender(object):
     def put(self, data):
         # Replace newlines with Unicode line separator
         # for multi-line events
-        if not is_unicode(data):
-            multiline = create_unicode(data).replace('\n', self.LINE_SEP)
-        else:
-            multiline = data.replace('\n', self.LINE_SEP)
-        multiline += "\n"
+        data = to_text(data, errors='surrogate_or_strict')
+        multiline = data.replace(u'\n', self.LINE_SEP)
+        multiline += u"\n"
         # Send data, reconnect if needed
         while True:
             try:
-                self._conn.send(multiline.encode('utf-8'))
+                self._conn.send(to_bytes(multiline, errors='surrogate_or_strict'))
             except socket.error:
                 self.reopen_connection()
                 continue

@@ -121,11 +121,11 @@ import __main__
 # stdlib module
 scriptdir = None
 try:
-    scriptdir = os.path.dirname(os.path.abspath(__main__.__file__))
+    scriptdir = os.path.dirname(os.path.realpath(__main__.__file__))
 except (AttributeError, OSError):
     # Some platforms don't set __file__ when reading from stdin
     # OSX raises OSError if using abspath() in a directory we don't have
-    # permission to read.
+    # permission to read (realpath calls abspath)
     pass
 if scriptdir is not None:
     sys.path = [p for p in sys.path if p != scriptdir]
@@ -791,7 +791,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         for line in lines:
             # legacy, equivalent to #Requires -Modules powershell
             if REPLACER_WINDOWS in line:
-                module_names.add(b'Ansible.ModuleUtils.PowerShellLegacy')
+                module_names.add(b'Ansible.ModuleUtils.Legacy')
             line_match = requires_module_list.match(line)
             if line_match:
                 module_names.add(line_match.group(1))

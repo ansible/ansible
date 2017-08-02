@@ -72,6 +72,13 @@ options:
       - Timezone of the user.
     required: false
     default: null
+  keys_registered:
+    description:
+      - If API keys of the user should be generated.
+      - "Note: Keys can not be removed by the API again."
+    required: false
+    default: null
+    version_added: "2.4"
   domain:
     description:
       - Domain the user is related to.
@@ -160,12 +167,12 @@ email:
   returned: success
   type: string
   sample: john.doe@example.com
-api_key:
+user_api_key:
   description: API key of the user.
   returned: success
   type: string
   sample: JLhcg8VWi8DoFqL2sSLZMXmGojcLnFrOBTipvBHJjySODcV4mCOo29W2duzPv5cALaZnXj5QxDx3xQfaQt3DKg
-api_secret:
+user_api_secret:
   description: API secret of the user.
   returned: success
   type: string
@@ -219,8 +226,8 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
             'firstname': 'first_name',
             'lastname': 'last_name',
             'email': 'email',
-            'secretkey': 'api_secret',
-            'apikey': 'api_key',
+            'secretkey': 'user_api_secret',
+            'apikey': 'user_api_key',
             'timezone': 'timezone',
         }
         self.account_types = {
@@ -346,8 +353,9 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
             user = res['user']
 
             # register user api keys
-            res = self.query_api('registerUserKeys', id=user['id'])
-            user.update(res['userkeys'])
+            if self.module.params.get('keys_registered'):
+                res = self.query_api('registerUserKeys', id=user['id'])
+                user.update(res['userkeys'])
 
         return user
 
@@ -366,13 +374,12 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
                 user = res['user']
 
         # register user api keys
-        if 'apikey' not in user:
+        if 'apikey' not in user and self.module.params.get('keys_registered'):
             self.result['changed'] = True
 
             if not self.module.check_mode:
                 res = self.query_api('registerUserKeys', id=user['id'])
                 user.update(res['userkeys'])
-
         return user
 
     def absent_user(self):
@@ -408,6 +415,7 @@ def main():
         last_name=dict(),
         password=dict(no_log=True),
         timezone=dict(),
+        keys_registered=dict(type='bool'),
         poll_async=dict(type='bool', default=True),
     ))
 

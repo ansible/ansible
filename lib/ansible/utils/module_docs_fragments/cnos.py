@@ -78,11 +78,11 @@ options:
     deviceType:
         description:
             - This specifies the type of device where the method is executed.
-             The choices NE1072T_cnos,NE1032_cnos,NE1032T_cnos,NE10032_cnos,
-             NE2572_cnos are added since version 2.4
+             The choices NE1072T,NE1032,NE1032T,NE10032,
+             NE2572 are added since version 2.4
         required: Yes
         default: null
-        choices: [g8272_cnos,g8296_cnos,g8332_cnos,NE1072T_cnos,NE1032_cnos,
-         NE1032T_cnos,NE10032_cnos,NE2572_cnos]
+        choices: [g8272_cnos,g8296_cnos,g8332_cnos,NE1072T,NE1032,
+         NE1032T,NE10032,NE2572]
         version_added: 2.3
 '''

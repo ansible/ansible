@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # This module is also sponsored by E.T.A.I. (www.etai.fr)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -41,6 +31,7 @@ options:
    name:
         description:
             - Name of the VM to work with
+            - This is required if UUID is not supplied.
    name_match:
         description:
             - If multiple VMs matching the name, use the first or last found
@@ -66,7 +57,7 @@ options:
             - '   folder: folder1/datacenter1/vm'
             - '   folder: /folder1/datacenter1/vm/folder2'
             - '   folder: vm/folder2'
-            - '   fodler: folder2'
+            - '   folder: folder2'
         default: /vm
    datacenter:
         description:
@@ -95,17 +86,6 @@ instance:
     sample: None
 """
 
-import os
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts
-from ansible.module_utils._text import to_text
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-
 try:
     import pyVmomi
     from pyVmomi import vim
@@ -113,6 +93,10 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
+from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts, vmware_argument_spec
 
 
 class PyVmomiHelper(object):
@@ -126,25 +110,13 @@ class PyVmomiHelper(object):
 
     def getvm(self, name=None, uuid=None, folder=None):
         vm = None
-
+        match_first = False
         if uuid:
             vm = find_vm_by_id(self.content, vm_id=uuid, vm_id_type="uuid")
-        elif folder:
-            searchpath = self.params['folder']
-
-            # get all objects for this path ...
-            f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
-            if f_obj:
-                if isinstance(f_obj, vim.Datacenter):
-                    f_obj = f_obj.vmFolder
-                for c_obj in f_obj.childEntity:
-                    if not isinstance(c_obj, vim.VirtualMachine):
-                        continue
-                    if c_obj.name == name:
-                        vm = c_obj
-                        if self.params['name_match'] == 'first':
-                            break
-
+        elif folder and name:
+            if self.params['name_match'] == 'first':
+                match_first = True
+            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", folder=folder, match_first=match_first)
         return vm
 
     def gather_facts(self, vm):
@@ -152,29 +124,16 @@ class PyVmomiHelper(object):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=False, type='str'),
-            name_match=dict(required=False, type='str', default='first'),
-            uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default='/vm'),
-            datacenter=dict(required=True, type='str'),
-        ),
-        required_one_of=[['name', 'uuid']],
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        name=dict(type='str'),
+        name_match=dict(type='str', choices=['first', 'last'], default='first'),
+        uuid=dict(type='str'),
+        folder=dict(type='str', default='/vm'),
+        datacenter=dict(type='str', required=True),
     )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=[['name', 'uuid']])
 
     # FindByInventoryPath() does not require an absolute path
     # so we should leave the input folder path unmodified
@@ -199,6 +158,7 @@ def main():
         elif module.params['uuid']:
             msg += "%(uuid)s" % module.params
         module.fail_json(msg=msg)
+
 
 if __name__ == '__main__':
     main()

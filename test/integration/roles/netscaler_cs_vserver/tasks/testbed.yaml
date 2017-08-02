@@ -1,0 +1,67 @@
+---
+
+- name: setup push lb vserver
+  delegate_to: localhost
+  netscaler_lb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: "{{ state }}"
+
+    name: push_lb_vserver
+    servicetype: PUSH
+
+
+- name: setup http lb vserver
+  delegate_to: localhost
+  netscaler_lb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: "{{ state }}"
+
+    name: lb-vserver-1
+    servicetype: HTTP
+    ipv46: 10.60.60.60
+    port: 80
+
+- name: setup http lb vserver
+  delegate_to: localhost
+  netscaler_lb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: "{{ state }}"
+
+    name: lb-vserver-2
+    servicetype: HTTP
+    ipv46: 10.60.60.62
+    port: 80
+
+
+- name: setup cs policy
+  delegate_to: localhost
+  netscaler_cs_policy:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: "{{ state }}"
+
+    policyname: policy-1
+    url: /example.com/basket
+
+- name: setup cs policy
+  delegate_to: localhost
+  netscaler_cs_policy:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: "{{ state }}"
+
+    policyname: policy-2
+    url: /example.com/basket2

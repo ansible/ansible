@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, James Cammarata <jcammarata@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['deprecated'],
@@ -102,14 +92,14 @@ import tempfile
 import time
 import traceback
 
-import SocketServer
 
 import datetime
 from threading import Thread, Lock
 
 # import module snippets
 # we must import this here at the top so we can use get_module_path()
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule, get_module_path
+from ansible.module_utils.six.moves import socketserver
 
 # the chunk size to read and send, assuming mtu 1500 and
 # leaving room for base64 (+33%) encoding and header (100 bytes)
@@ -172,8 +162,7 @@ def daemonize_self(module, password, port, minutes, pid_file):
             vvv("exiting pid %s" % pid)
             # exit first parent
             module.exit_json(msg="daemonized accelerate on port %s for %s minutes with pid %s" % (port, minutes, str(pid)))
-    except OSError:
-        e       = get_exception()
+    except OSError as e:
         message = "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
         module.fail_json(msg=message)
 
@@ -192,12 +181,11 @@ def daemonize_self(module, password, port, minutes, pid_file):
             pid_file.close()
             vvv("pid file written")
             sys.exit(0)
-    except OSError:
-        e       = get_exception()
+    except OSError as e:
         log('fork #2 failed: %d (%s)' % (e.errno, e.strerror))
         sys.exit(1)
 
-    dev_null = file('/dev/null','rw')
+    dev_null = open('/dev/null','rw')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
@@ -266,8 +254,7 @@ class LocalSocketThread(Thread):
                             self.server.last_event = datetime.datetime.now()
                         finally:
                             self.server.last_event_lock.release()
-                    except Exception:
-                        e = get_exception()
+                    except Exception as e:
                         vv("key loaded locally was invalid, ignoring (%s)" % e)
                         conn.sendall("BADKEY\n")
                 finally:
@@ -298,7 +285,7 @@ class ThreadWithReturnValue(Thread):
         Thread.join(self, timeout=timeout)
         return self._return
 
-class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
+class ThreadedTCPServer(socketserver.ThreadingTCPServer):
     key_list = []
     last_event = datetime.datetime.now()
     last_event_lock = Lock()
@@ -316,13 +303,13 @@ class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
             self.local_thread = LocalSocketThread(kwargs=dict(server=self))
             self.local_thread.start()
 
-        SocketServer.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
+        socketserver.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
 
     def shutdown(self):
         self.running = False
-        SocketServer.ThreadingTCPServer.shutdown(self)
+        socketserver.ThreadingTCPServer.shutdown(self)
 
-class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
+class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     # the key to use for this connection
     active_key = None
 
@@ -502,7 +489,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             return dict(failed=True, msg='internal error: in_path is required')
 
         try:
-            fd = file(data['in_path'], 'rb')
+            fd = open(data['in_path'], 'rb')
             fstat = os.stat(data['in_path'])
             vvv("FETCH file is %d bytes" % fstat.st_size)
             while fd.tell() < fstat.st_size:
@@ -527,12 +514,11 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 if response.get('failed',False):
                     log("got a failed response from the master")
                     return dict(failed=True, stderr="Master reported failure, aborting transfer")
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             fd.close()
             tb = traceback.format_exc()
             log("failed to fetch the file: %s" % tb)
-            return dict(failed=True, stderr="Could not fetch the file: %s" % str(e))
+            return dict(failed=True, stderr="Could not fetch the file: %s" % e)
 
         fd.close()
         return dict()
@@ -626,8 +612,7 @@ def daemonize(module, password, port, timeout, minutes, use_ipv6, pid_file):
                 server = ThreadedTCPServer(address, ThreadedTCPRequestHandler, module, password, timeout, use_ipv6=use_ipv6)
                 server.allow_reuse_address = True
                 break
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 vv("Failed to create the TCP server (tries left = %d) (error: %s) " % (tries,e))
             tries -= 1
             time.sleep(0.2)
@@ -650,8 +635,7 @@ def daemonize(module, password, port, timeout, minutes, use_ipv6, pid_file):
 
         v("server thread terminated, exiting!")
         sys.exit(0)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         tb = traceback.format_exc()
         log("exception caught, exiting accelerated mode: %s\n%s" % (e, tb))
         sys.exit(0)
@@ -697,8 +681,7 @@ def main():
                 # process, other than tell the calling program
                 # whether other signals can be sent
                 os.kill(daemon_pid, 0)
-            except OSError:
-                e        = get_exception()
+            except OSError as e:
                 message  = 'the accelerate daemon appears to be running'
                 message += 'as a different user that this user cannot access'
                 message += 'pid=%s' % daemon_pid

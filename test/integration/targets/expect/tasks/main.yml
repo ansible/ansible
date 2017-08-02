@@ -61,7 +61,7 @@
 
 - name: test chdir
   expect:
-    command: "pwd"
+    command: "/bin/sh -c 'pwd && sleep 1'"
     chdir: "{{output_dir}}"
     responses:
       foo: bar
@@ -70,7 +70,7 @@
 - name: assert chdir works
   assert:
     that:
-    - "chdir_result.stdout == '{{output_dir | expanduser | realpath}}'"
+    - "'{{chdir_result.stdout |expanduser | realpath }}' == '{{output_dir | expanduser | realpath}}'"
 
 - name: test timeout option
   expect:

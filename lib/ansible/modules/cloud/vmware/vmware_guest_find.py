@@ -1,20 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -77,12 +68,6 @@ RETURN = """
 
 import os
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import connect_to_api, gather_vm_facts, get_all_objs, compile_folder_path_for_object
-
-
 HAS_PYVMOMI = False
 try:
     import pyVmomi
@@ -91,6 +76,11 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.vmware import (connect_to_api, gather_vm_facts, get_all_objs,
+                                         compile_folder_path_for_object, vmware_argument_spec)
 
 
 class PyVmomiHelper(object):
@@ -230,27 +220,15 @@ def get_obj(content, vimtype, name):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=False, type='str'),
-            uuid=dict(required=False, type='str'),
-            datacenter=dict(required=True, type='str'),
-        ),
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        name=dict(type='str'),
+        uuid=dict(type='str'),
+        datacenter=dict(type='str', required=True)
     )
 
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=[['name', 'uuid']])
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
     folders = pyv.getvm_folder_paths(
@@ -271,6 +249,7 @@ def main():
         elif module.params['uuid']:
             msg += "%(uuid)s" % module.params
         module.fail_json(msg=msg)
+
 
 if __name__ == '__main__':
     main()

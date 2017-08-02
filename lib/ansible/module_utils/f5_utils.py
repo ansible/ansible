@@ -152,7 +152,7 @@ except ImportError:
     HAS_F5SDK = False
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems, with_metaclass
 
 

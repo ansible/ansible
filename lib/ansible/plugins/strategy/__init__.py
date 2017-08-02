@@ -511,11 +511,13 @@ class StrategyBase:
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
+                            cacheable = result_item.pop('ansible_facts_cacheable', True)
                             for target_host in host_list:
-                                if original_task.action == 'set_fact':
-                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
-                                else:
+                                if cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
+
+                                # If we are setting a fact, it should populate non_persistent_facts as well
+                                self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 
@@ -632,12 +634,17 @@ class StrategyBase:
         # host object from the master inventory
         real_host = self._inventory.hosts[host.name]
         group_name = result_item.get('add_group')
+        parent_group_names = result_item.get('parent_groups', [])
 
-        if group_name not in self._inventory.groups:
-            # create the new group and add it to inventory
-            self._inventory.add_group(group_name)
-            changed = True
+        for name in [group_name] + parent_group_names:
+            if name not in self._inventory.groups:
+                # create the new group and add it to inventory
+                self._inventory.add_group(name)
+                changed = True
         group = self._inventory.groups[group_name]
+        for parent_group_name in parent_group_names:
+            parent_group = self._inventory.groups[parent_group_name]
+            parent_group.add_child_group(group)
 
         if real_host.name not in group.get_hosts():
             group.add_host(real_host)

@@ -28,7 +28,7 @@
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, EntityCollection
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, exec_command
 
 _DEVICE_CONFIGS = {}
 _CONNECTION = None

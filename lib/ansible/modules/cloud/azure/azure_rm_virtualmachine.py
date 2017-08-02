@@ -3,21 +3,11 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -56,7 +46,6 @@ options:
               state.
             - State 'absent' will remove the virtual machine.
         default: present
-        required: false
         choices:
             - absent
             - present
@@ -64,28 +53,21 @@ options:
         description:
             - Use with state 'present' to start the machine. Set to false to have the machine be 'stopped'.
         default: true
-        required: false
     allocated:
         description:
             - Toggle that controls if the machine is allocated/deallocated, only useful with state='present'.
         default: True
-        required: false
     restarted:
         description:
             - Use with state 'present' to restart a running VM.
         default: false
-        required: false
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
-        default: null
-        required: false
     short_hostname:
         description:
             - Name assigned internally to the host. On a linux VM this is the name returned by the `hostname` command.
               When creating a virtual machine, short_hostname defaults to name.
-        default: null
-        required: false
     vm_size:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
@@ -94,28 +76,21 @@ options:
     admin_username:
         description:
             - Admin username used to access the host after it is created. Required when creating a VM.
-        default: null
-        required: false
     admin_password:
         description:
             - Password for the admin username. Not required if the os_type is Linux and SSH password authentication
               is disabled by setting ssh_password_enabled to false.
-        default: null
-        required: false
     ssh_password_enabled:
         description:
             - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
               and require use of SSH keys.
         default: true
-        required: false
     ssh_public_keys:
         description:
             - "For os_type Linux provide a list of SSH keys. Each item in the list should be a dictionary where the
               dictionary contains two keys: path and key_data. Set the path to the default location of the
               authorized_keys files. On an Enterprise Linux host, for example, the path will be
               /home/<admin username>/.ssh/authorized_keys. Set key_data to the actual value of the public key."
-        default: null
-        required: false
     image:
         description:
             - "A dictionary describing the Marketplace image used to build the VM. Will contain keys: publisher,
@@ -126,22 +101,17 @@ options:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
               a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
-        default: null
-        required: false
     storage_container_name:
         description:
             - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
               default container will created.
         default: vhds
-        required: false
     storage_blob_name:
         description:
             - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
               the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
         aliases:
             - storage_blob
-        default: null
-        required: false
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -151,7 +121,6 @@ options:
         default: ReadOnly
         aliases:
             - disk_caching
-        required: false
     os_type:
         description:
             - Base type of operating system.
@@ -160,7 +129,6 @@ options:
             - Linux
         default:
             - Linux
-        required: false
     public_ip_allocation_method:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
@@ -173,22 +141,22 @@ options:
             - Static
         aliases:
             - public_ip_allocation
-        required: false
     open_ports:
         description:
             - If a network interface is created when creating the VM, a security group will be created as well. For
               Linux hosts a rule will be added to the security group allowing inbound TCP connections to the default
               SSH port 22, and for Windows hosts ports 3389 and 5986 will be opened. Override the default open ports by
               providing a list of ports.
-        default: null
-        required: false
     network_interface_names:
         description:
             - List of existing network interface names to add to the VM. If a network interface name is not provided
               when the VM is created, a default network interface will be created. In order for the module to create
               a network interface, at least one Virtual Network with one Subnet must exist.
-        default: null
-        required: false
+    virtual_network_resource_group:
+        description:
+            - When creating a virtual machine, if a specific virtual network from another resource group should be
+              used, use this parameter to specify the resource group to use.
+        version_added: "2.4"
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
@@ -196,8 +164,6 @@ options:
               Use this parameter to provide a specific virtual network instead.
         aliases:
             - virtual_network
-        default: null
-        required: false
     subnet_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
@@ -205,15 +171,12 @@ options:
               Use this parameter to provide a specific subnet instead.
         aliases:
             - virtual_network
-        default: null
-        required: false
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources
             - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
         default: ['all']
-        required: false
 
 extends_documentation_fragment:
     - azure
@@ -440,9 +403,7 @@ azure_vm:
 '''  # NOQA
 
 import random
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
+import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -460,6 +421,9 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
 
@@ -503,6 +467,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
             remove_on_absent=dict(type='list', default=['all']),
+            virtual_network_resource_group=dict(type = 'str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             subnet_name=dict(type='str', aliases=['subnet']),
             allocated=dict(type='bool', default=True),
@@ -532,6 +497,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.force = None
         self.public_ip_allocation_method = None
         self.open_ports = None
+        self.virtual_network_resource_group = None
         self.virtual_network_name = None
         self.subnet_name = None
         self.allocated = None
@@ -1209,12 +1175,19 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         self.log("NIC {0} does not exist.".format(network_interface_name))
 
+        virtual_network_resource_group = None
+        if self.virtual_network_resource_group:
+            virtual_network_resource_group = self.virtual_network_resource_group
+        else:
+            virtual_network_resource_group = self.resource_group
+
         if self.virtual_network_name:
             try:
-                self.network_client.virtual_networks.list(self.resource_group, self.virtual_network_name)
+                self.network_client.virtual_networks.list(virtual_network_resource_group, self.virtual_network_name)
                 virtual_network_name = self.virtual_network_name
-            except Exception as exc:
+            except CloudError:
                 self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
+
         else:
             # Find a virtual network
             no_vnets_msg = "Error: unable to find virtual network in resource group {0}. A virtual network " \
@@ -1249,7 +1222,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
             subnet_id = None
             try:
-                subnets = self.network_client.subnets.list(self.resource_group, virtual_network_name)
+                subnets = self.network_client.subnets.list(virtual_network_resource_group, virtual_network_name)
             except CloudError:
                 self.fail(no_subnets_msg)
 
@@ -1303,4 +1276,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

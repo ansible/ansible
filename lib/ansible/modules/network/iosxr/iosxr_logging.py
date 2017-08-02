@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -55,11 +44,11 @@ options:
     description:
       - Set logging severity levels.
     default: debugging
-  collection:
+  aggregate:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the collections parameter.
+      - Purge logging not defined in the aggregates parameter.
     default: no
   state:
     description:
@@ -122,7 +111,6 @@ def validate_size(value, module):
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
-
     for w in want:
         dest = w['dest']
         name = w['name']
@@ -162,7 +150,6 @@ def map_obj_to_commands(updates, module):
                     dest_cmd += ' {}'.format(level)
 
                 commands.append(dest_cmd)
-
     return commands
 
 
@@ -208,7 +195,7 @@ def parse_name(line, dest):
 
 
 def parse_level(line, dest):
-    level_group = ('emergencies', 'alerts', 'critical', 'errors', 'warnings',
+    level_group = ('emergencies', 'alerts', 'critical', 'errors', 'warning',
                    'notifications', 'informational', 'debugging')
 
     if dest == 'hostnameprefix':
@@ -228,25 +215,25 @@ def parse_level(line, dest):
 
 
 def map_config_to_obj(module):
+
     obj = []
     dest_group = ('console', 'hostnameprefix', 'monitor', 'buffered', 'on')
 
     data = get_config(module, flags=['logging'])
+    lines = data.split("\n")
 
-    for line in data.split('\n'):
-
+    for line in lines:
         match = re.search(r'logging (\S+)', line, re.M)
-
-        if match.group(1) in dest_group:
-            dest = match.group(1)
-        else:
-            pass
-
-        obj.append({'dest': dest,
+        if match:
+            if match.group(1) in dest_group:
+                dest = match.group(1)
+                obj.append({
+                    'dest': dest,
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
                     'facility': parse_facility(line),
-                    'level': parse_level(line, dest)})
+                    'level': parse_level(line, dest)
+                })
 
     return obj
 
