@@ -118,11 +118,11 @@ class FcNetworkModule(OneViewModuleBase):
         resource = self.get_by_name(self.data['name'])
 
         if self.state == 'present':
-            return self.__present(resource)
+            return self._present(resource)
         else:
             return self.resource_absent(resource)
 
-    def __present(self, resource):
+    def _present(self, resource):
         scope_uris = self.data.pop('scopeUris', None)
         result = self.resource_present(resource, self.RESOURCE_FACT_NAME)
         if scope_uris is not None:
