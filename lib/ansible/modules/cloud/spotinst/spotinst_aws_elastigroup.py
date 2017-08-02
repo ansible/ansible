@@ -312,7 +312,6 @@ options:
         batch_size_percentage(Integer, Required),
         grace_period - (Integer, Required),
         health_check_type(String, Optional),
-        strategy (String, Optional)
     required: false
 
   scheduled_tasks:
