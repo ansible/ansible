@@ -69,7 +69,7 @@ options:
       default: E
   SetAllocUnitSize:
       description:
-        - Allocation Unit size which should be set for the file system on found disk (possible values per file system: NTFS 4,8,16,32,64KB; ReFs 64KB)
+        - Allocation Unit size which should be set for the file system on found disk (possible values for file system NTFS 4,8,16,32,64KB; ReFs 64KB)
       required: false
       default: 4
       choices:
@@ -239,7 +239,7 @@ log:
         Existing volumes:
             description: Detailed information about found volumes on the searched disk
             returned: success or failed
-           type: string
+            type: string
             sample: "Volumes found: 1"
         Existing partitions:
             description: Detailed information about found partitions on the searched disk
