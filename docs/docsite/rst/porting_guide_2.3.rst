@@ -35,8 +35,6 @@ In Ansible 2.2 (and possibly earlier) the `async:` keyword could not be used in 
       async: 45
 
 
-TBD: Detail? + fact that this restores the usability of service + async
-
 OpenBSD version facts
 ---------------------
 
