@@ -199,6 +199,7 @@ class VaultCLI(CLI):
 
             encrypt_secret = match_encrypt_secret(vault_secrets,
                                                   encrypt_vault_id=self.options.encrypt_vault_id)
+
             # only one secret for encrypt for now, use the first vault_id and use its first secret
             self.encrypt_vault_id = encrypt_secret[0]
             self.encrypt_secret = encrypt_secret[1]

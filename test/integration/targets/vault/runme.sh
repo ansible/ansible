@@ -118,6 +118,13 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
+# try specifying a --encrypt-vault-id that doesnt exist, should exit with an error indicating
+# that --encrypt-vault-id and the known vault-ids
+ansible-vault encrypt "$@" --vault-password-file vault-password --encrypt-vault-id doesnt_exist "${TEST_FILE}" && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
 # encrypt it
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
