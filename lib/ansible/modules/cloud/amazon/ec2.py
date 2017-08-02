@@ -636,10 +636,10 @@ except ImportError:
     HAS_BOTO = False
 
 
-def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
+def find_instances_by_count_tag(module, ec2, count_tag, zone=None):
 
-    # get reservations for instances that match tag(s) and are running
-    reservations = get_reservations(module, ec2, tags=count_tag, state="running", zone=zone)
+    # get reservations for instances that match tag(s)
+    reservations = get_reservations(module, ec2, tags=count_tag, zone=zone)
 
     instances = []
     for res in reservations:
@@ -933,7 +933,7 @@ def enforce_count(module, ec2, vpc):
     if exact_count and count_tag is None:
         module.fail_json(msg="you must use the 'count_tag' option with exact_count")
 
-    reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag, zone)
+    reservations, instances = find_instances_by_count_tag(module, ec2, count_tag, zone)
 
     changed = None
     checkmode = False
