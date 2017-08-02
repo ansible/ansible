@@ -19,21 +19,14 @@ Playbook
 ========
 
 Restructued async to work with action plugins
---------------------------------------------
+---------------------------------------------
 
 TBD: Detail? + fact that this restores the usability of service + async
 
 Names Blocks
 ------------
 
-,Blocks can now have names, this allows you to avoid the ugly `# this block is for...` comments.
-
-**OLD** In Ansible 2.2:
-
-.. code-block:: yaml
-
-    FIXME
-
+Blocks can now have names, this allows you to avoid the ugly `# this block is for...` comments.
 
 
 **NEW** In Ansible 2.3:
@@ -41,7 +34,21 @@ Names Blocks
 
 .. code-block:: yaml
 
-   FIXME
+    - name: Block test case
+      hosts: localhost
+      tasks:
+       - name: Attempt to setup foo
+         block:
+           - debug: msg='I execute normally'
+           - command: /bin/false
+           - debug: msg='I never execute, cause ERROR!'
+         rescue:
+           - debug: msg='I caught an error'
+           - command: /bin/false
+           - debug: msg='I also never execute :-('
+         always:
+           - debug: msg="this always executes"
+
 
 Use of multiple tags
 --------------------
