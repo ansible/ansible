@@ -36,6 +36,16 @@ except ImportError:
     HAS_CLIENT = False
 
 
+def manageiq_argument_spec():
+    return dict(
+        url=dict(default=os.environ.get('MIQ_URL', None)),
+        username=dict(default=os.environ.get('MIQ_USERNAME', None)),
+        password=dict(default=os.environ.get('MIQ_PASSWORD', None), no_log=True),
+        verify_ssl=dict(default=True, type='bool'),
+        ca_bundle_path=dict(required=False, default=None),
+    )
+
+
 def check_client(module):
     if not HAS_CLIENT:
         module.fail_json(msg='manageiq_client.api is required for this module')
@@ -50,15 +60,7 @@ class ManageIQ(object):
         # handle import errors
         check_client(module)
 
-        # set defaults
-        params = dict(
-            url=os.environ.get('MIQ_URL', None),
-            username=os.environ.get('MIQ_USERNAME', None),
-            password=os.environ.get('MIQ_PASSWORD', None),
-            verify_ssl=True,
-            ca_bundle_path=None,
-        )
-        params.update(module.params['manageiq_connection'])
+        params = module.params['manageiq_connection']
 
         # check for required arguments
         for arg in ['url', 'username', 'password']:

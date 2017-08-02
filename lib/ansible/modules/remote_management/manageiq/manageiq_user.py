@@ -109,7 +109,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.manageiq import ManageIQ
+from ansible.module_utils.manageiq import ManageIQ, manageiq_argument_spec
 
 
 class ManageIQUser(object):
@@ -243,7 +243,8 @@ class ManageIQUser(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict', no_log=True),
+            manageiq_connection=dict(required=True, type='dict',
+                                     options=manageiq_argument_spec()),
             userid=dict(required=True, type='str'),
             name=dict(),
             password=dict(no_log=True),
