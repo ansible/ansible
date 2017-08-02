@@ -210,7 +210,7 @@ def hashable_policy(policy, policy_list):
 
 
 def py3cmp(a, b):
-    ''' Python 2 can sort lists of mixed types. Strings < tuples. Without this function this fails on Python 3.'''
+    """ Python 2 can sort lists of mixed types. Strings < tuples. Without this function this fails on Python 3."""
     try:
         if a > b:
             return 1
@@ -221,10 +221,13 @@ def py3cmp(a, b):
     except TypeError as e:
         # check to see if they're tuple-string
         # always say strings are less than tuples (to maintain compatibility with python2)
-        if 'unorderable types: str() > tuple()' == to_text(e):
-            return -1
-        elif 'unorderable types: tuple() > str()' == to_text(e):
-            return 1
+        str_ind = to_text(e).find('str')
+        tup_ind = to_text(e).find('tuple')
+        if -1 not in (str_ind, tup_ind):
+            if str_ind < tup_ind:
+                return -1
+            elif tup_ind < str_ind:
+                return 1
         raise
 
 
