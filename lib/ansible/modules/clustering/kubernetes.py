@@ -210,7 +210,12 @@ KIND_URL = {
     "resourcequota": "/api/v1/namespaces/{namespace}/resourcequotas",
     "secret": "/api/v1/namespaces/{namespace}/secrets",
     "service": "/api/v1/namespaces/{namespace}/services",
-    "serviceaccount": "/api/v1/namespaces/{namespace}/serviceaccounts"
+    "serviceaccount": "/api/v1/namespaces/{namespace}/serviceaccounts",
+    "daemonset": "/apis/extensions/v1beta1/namespaces/{namespace}/daemonsets",
+    "deployment": "/apis/extensions/v1beta1/namespaces/{namespace}/deployments",
+    "horizontalpodautoscaler": "/apis/extensions/v1beta1/namespaces/{namespace}/horizontalpodautoscalers",  # NOQA
+    "ingress": "/apis/extensions/v1beta1/namespaces/{namespace}/ingresses",
+    "job": "/apis/extensions/v1beta1/namespaces/{namespace}/jobs",
 }
 USER_AGENT = "ansible-k8s-module/0.0.1"
 
