@@ -184,7 +184,7 @@ EXAMPLES = r"""
     state: present
     regexp: '^%ADMIN ALL='
     line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
-    validate: 'visudo -cf %s'
+    validate: '/usr/sbin/visudo -cf %s'
 """
 
 import re

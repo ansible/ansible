@@ -137,7 +137,7 @@ EXAMPLES = r'''
 - template:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: 'visudo -cf %s'
+    validate: '/usr/sbin/visudo -cf %s'
 
 # Update sshd configuration safely, avoid locking yourself out
 - template:
