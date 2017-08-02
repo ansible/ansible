@@ -251,7 +251,7 @@ log:
             returned: success or failed (only displayed if disk was initialized)
             type: string
             sample: "Disk initialization successful - Partition style RAW (FindPartitionStyle) was initalized to GPT (SetPartitionStyle)"
-        Convert disk (no initialization needed)
+        Convert disk (no initialization needed):
             description: Detailed information about converting the partition style of the disk
             returned: success or failed (only displayed if partition style was converted)
             type: string
