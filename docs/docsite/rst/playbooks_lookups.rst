@@ -556,6 +556,9 @@ Here are some examples::
 
          - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
+         # Since 2.4, you can pass in variables during evaluation
+         - debug: msg="{{ lookup('template', './some_template.j2', template_vars=dict(x=42)) }} is evaluated with x=42"
+
          - name: loading a json file from a template as a string
            debug: msg="{{ lookup('template', './some_json.json.j2', convert_data=False) }} is a value from evaluation of this template"
 
