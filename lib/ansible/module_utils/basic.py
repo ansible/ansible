@@ -2355,7 +2355,7 @@ class AnsibleModule(object):
             backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
             try:
-                shutil.copy2(fn, backupdest)
+                self.preserved_copy(fn, backupdest)
             except (shutil.Error, IOError):
                 e = get_exception()
                 self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
@@ -2369,6 +2369,42 @@ class AnsibleModule(object):
             except OSError:
                 e = get_exception()
                 sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
+
+    def preserved_copy(self, src, dest):
+        """Copy a file with preserved ownership, permissions and context"""
+
+        # shutil.copy2(src, dst)
+        #   Similar to shutil.copy(), but metadata is copied as well - in fact,
+        #   this is just shutil.copy() followed by copystat(). This is similar
+        #   to the Unix command cp -p.
+        #
+        # shutil.copystat(src, dst)
+        #   Copy the permission bits, last access time, last modification time,
+        #   and flags from src to dst. The file contents, owner, and group are
+        #   unaffected. src and dst are path names given as strings.
+
+        shutil.copy2(src, dest)
+
+        # Set the context
+        if self.selinux_enabled():
+            context = self.selinux_context(src)
+            self.set_context_if_different(dest, context, False)
+
+        # chown it
+        try:
+            dest_stat = os.stat(src)
+            tmp_stat = os.stat(dest)
+            if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                os.chown(dest, dest_stat.st_uid, dest_stat.st_gid)
+        except OSError as e:
+            if e.errno != errno.EPERM:
+                raise
+
+        # Set the attributes
+        current_attribs = self.get_file_attributes(src)
+        current_attribs = current_attribs.get('attr_flags', [])
+        current_attribs = ''.join(current_attribs)
+        self.set_attributes_if_different(dest, current_attribs, True)
 
     def atomic_move(self, src, dest, unsafe_writes=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success

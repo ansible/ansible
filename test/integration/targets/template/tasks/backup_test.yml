@@ -1,0 +1,60 @@
+# https://github.com/ansible/ansible/issues/24408
+
+- set_fact:
+    t_username: templateuser1
+    t_groupname: templateuser1
+
+- name: create the test group
+  group:
+    name: "{{ t_groupname }}"
+
+- name: create the test user
+  user:
+    name: "{{ t_username }}"
+    group: "{{ t_groupname }}"
+    createhome: no
+
+- name: set the dest file
+  set_fact:
+      t_dest: "{{ output_dir + '/tfile_dest.txt' }}"
+
+- name: create the old file
+  file:
+    path: "{{ t_dest }}"
+    state: touch
+    mode: 0777
+    owner: "{{ t_username }}"
+    group: "{{ t_groupname }}"
+
+- name: failsafe attr change incase underlying system does not support it
+  shell: chattr =j "{{ t_dest }}"
+  ignore_errors: True
+
+- name: run the template
+  template:
+    src: foo.j2
+    dest: "{{ t_dest }}"
+    backup: True
+  register: t_backup_res
+
+- name: check the data for the backup
+  stat:
+    path: "{{ t_backup_res.backup_file }}"
+  register: t_backup_stats
+
+- name: validate result of preserved backup
+  assert:
+      that:
+          - 't_backup_stats.stat.mode == "0777"'
+          - 't_backup_stats.stat.pw_name == t_username'
+          - 't_backup_stats.stat.gr_name == t_groupname'
+
+- name: cleanup the user
+  user:
+    name: "{{ t_username }}"
+    state: absent
+
+- name: cleanup the group
+  user:
+    name: "{{ t_groupname }}"
+    state: absent
