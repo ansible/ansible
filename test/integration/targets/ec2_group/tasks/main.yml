@@ -409,6 +409,33 @@
 
 
     # ============================================================
+
+    - name: test adding a range of ports and ports given as strings (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8183-8190
+            - '8192'
+          cidr_ip: 1.1.1.1/32
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
     - name: test state=absent (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
