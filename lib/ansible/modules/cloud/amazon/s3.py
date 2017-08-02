@@ -253,7 +253,7 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
     exists = True
     try:
         if version:
-            s3.head_object(Bucket=bucket, Key=obj, VersionId=verion)
+            s3.head_object(Bucket=bucket, Key=obj, VersionId=version)
         else:
             s3.head_object(Bucket=bucket, Key=obj)
     except botocore.exceptions.ClientError as e:
