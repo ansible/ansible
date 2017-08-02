@@ -283,7 +283,7 @@ def get_running_config(module, config=None):
         else:
             flags = ['all']
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=3, contents=contents)
+    return NetworkConfig(indent=2, contents=contents)
 
 
 def get_candidate(module):
