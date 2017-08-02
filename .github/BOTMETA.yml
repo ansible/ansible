@@ -832,6 +832,11 @@ files:
   contrib/inventory/openstack.py:
     keywords:
     - openstack dynamic inventory script
+  contrib/inventory/linode.py:
+    keywords:
+    - linode dynamic inventory script
+    maintainers:
+    - intheclouddan rwaweber zbal
   lib/ansible/inventory:
     keywords:
     - core inventory
