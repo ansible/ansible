@@ -89,7 +89,7 @@ Blocks can now have names, this allows you to avoid the ugly `# this block is fo
 Use of multiple tags
 --------------------
 
-Specifying ``--tags`` (or ``--skip-tags``) multiple times on the command line currently leads to the last one overriding all the previous ones. This behaviour is deprecated. In the future, if you specify --tags multiple times the tags will be merged together. From now on, using ``--tags`` multiple times on one command line will emit a deprecation warning. Setting the ``merge_multiple_cli_tags`` option to True in the ``ansible.cfg`` file will enable the new behaviour.
+Specifying ``--tags`` (or ``--skip-tags``) multiple times on the command line currently leads to the last specified tag overriding all the other specified tags. This behaviour is deprecated. In the future, if you specify --tags multiple times the tags will be merged together. From now on, using ``--tags`` multiple times on one command line will emit a deprecation warning. Setting the ``merge_multiple_cli_tags`` option to True in the ``ansible.cfg`` file will enable the new behaviour.
 
 In 2.4, the default will be to merge the tags. You can enable the old overwriting behavior via the config option.
 In 2.5, multiple ``--tags`` options will be merged with no way to go back to the old behaviour.

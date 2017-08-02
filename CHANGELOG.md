@@ -2818,7 +2818,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * added basename and dirname as Jinja2 filters available to all templates
 * pip works better when sudoing from unprivileged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
-* fix for some unicode encoding errors in outputing some data in verbose mode
+* fix for some unicode encoding errors in outputting some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
 * debug module always outputs data without having to specify -v
 * fix for sysctl module creating new keys (must specify checks=none)
@@ -3192,7 +3192,7 @@ New Modules:
 * new LSB facts (release, distro, etc)
 * pause module -- (pause seconds=10) (pause minutes=1) (pause prompt=foo) -- it's an action plugin
 * a module for adding entries to the main crontab (though you may still wish to just drop template files into cron.d)
-* debug module can be used for outputing messages without using 'shell echo'
+* debug module can be used for outputting messages without using 'shell echo'
 * a fail module is now available for causing errors, you might want to use it with only_if to fail in certain conditions
 
 Other module Changes, Upgrades, and Fixes:
