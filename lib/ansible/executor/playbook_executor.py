@@ -27,6 +27,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
 
@@ -107,8 +108,8 @@ class PlaybookExecutor:
                             vname = var['name']
                             prompt = var.get("prompt", vname)
                             default = var.get("default", None)
-                            private = var.get("private", True)
-                            confirm = var.get("confirm", False)
+                            private = boolean(var.get("private", True))
+                            confirm = boolean(var.get("confirm", False))
                             encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
