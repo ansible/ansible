@@ -170,120 +170,12 @@ Ansible Changes By Release
   * avi_networksecuritypolicy
   * avi_seproperties
   * avi_serviceenginegroup
-  * avi_stringgroup
-  * avi_useraccountprofile
-  * avi_vsdatascriptset
-  * avi_vsvip
-- awall
-- catapult
-- cloudengine
-  * ce_aaa_server
-  * ce_aaa_server_host
-  * ce_acl
-  * ce_acl_advance
-  * ce_acl_interface
-  * ce_bgp
-  * ce_bgp_af
-  * ce_bgp_neighbor
-  * ce_bgp_neighbor_af
-  * ce_config
-  * ce_dldp
-  * ce_dldp_interface
-  * ce_eth_trunk
-  * ce_evpn_bd_vni
-  * ce_evpn_bgp
-  * ce_evpn_bgp_rr
-  * ce_facts
-  * ce_file_copy
-  * ce_info_center_debug
-  * ce_info_center_global
-  * ce_info_center_log
-  * ce_info_center_trap
-  * ce_interface
-  * ce_interface_ospf
-  * ce_ip_interface
-  * ce_link_status
-  * ce_mlag_config
-  * ce_mlag_interface
-  * ce_mtu
-  * ce_netconf
-  * ce_netstream_aging
-  * ce_netstream_export
-  * ce_netstream_global
-  * ce_netstream_template
-  * ce_ntp
-  * ce_ntp_auth
-  * ce_ospf
-  * ce_ospf_vrf
-  * ce_reboot
-  * ce_rollback
-  * ce_sflow
-  * ce_snmp_community
-  * ce_snmp_contact
-  * ce_snmp_location
-  * ce_snmp_target_host
-  * ce_snmp_traps
-  * ce_snmp_user
-  * ce_startup
-  * ce_static_route
-  * ce_stp
-  * ce_switchport
-  * ce_vlan
-  * ce_vrf
-  * ce_vrf_af
-  * ce_vrf_interface
-  * ce_vxlan_arp
-  * ce_vxlan_gateway
-  * ce_vxlan_global
-  * ce_vxlan_tunnel
-  * ce_vxlan_vap
-- cloudstack
-  * cs_network_acl
-  * cs_network_acl_rule
-  * cs_vpn_gateway
-- crypto
-  * openssl_csr
-- digital_ocean_floating_ip
-- f5
-  * bigip_command
-  * bigip_switchport
-  * bigip_user
-- github_issue
-- google
-  * gcp_backend_service
-  * gcp_forwarding_rule
-  * gcp_healthcheck
-  * gcp_target_proxy
-  * gcp_url_map
-- gunicorn
-- nuage
-  * nuage_vpsk
-- purestorage
-  * purefa_hg
-  * purefa_host
-  * purefa_pg
-  * purefa_volume
-- imc
-  * imc_xml
-- rundeck
-  * rundeck_acl_policy
-  * rundeck_project
-- sensu_silence
-- vmware
-  * vmware_guest_find
-- windows
-  * win_defrag
-  * win_domain_group
-  * win_dsc
-  * win_firewall
-  * win_group_membership
-  * win_psmodule
-  * win_route
-  * win_security_policy
-  * win_wakeonlan
 
+<a id="2.3"></a>
 
 ## 2.3 "Ramble On" - 2017-04-12
+
+Moving to Ansible 2.3 guide http://docs.ansible.com/ansible/porting_guide_2.3.html
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
@@ -598,6 +490,7 @@ Ansible Changes By Release
   * zfs_facts
   * zpool_facts
 
+<a id="2.2.1"></a>
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
 
@@ -624,10 +517,11 @@ Ansible Changes By Release
 * Improvements and fixes to OpenBSD fact gathering.
 * Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
 * Fixed Windows async to avoid blocking due to handle inheritance.
-* Fixed bugs in the mount module on older Linux kernels and *BSDs
+* Fixed bugs in the mount module on older Linux kernels and BSDs
 * Various minor fixes for Python 3
 * Inserted some checks for jinja2-2.9, which can cause some issues with Ansible currently.
 
+<a id="2.2"></a>
 
 ## 2.2 "The Battle of Evermore" - 2016-11-01
 
@@ -942,11 +836,15 @@ Notice given that the following will be removed in Ansible 2.4:
   * nxos_template
   * ops_template
 
+<a id="2.1.4"></a>
+
 ## 2.1.4 "The Song Remains the Same" - 2017-01-16
 
 * Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
 * Fixed a bug with conditionals in loops, where undefined variables and other errors will defer raising the error until the conditional has been evaluated.
 * Added a version check for jinja2-2.9, which does not fully work with Ansible currently.
+
+<a id="2.1.3"></a>
 
 ## 2.1.3 "The Song Remains the Same" - 2016-11-04
 
@@ -960,10 +858,12 @@ Notice given that the following will be removed in Ansible 2.4:
   login_password as no_log so the password is obscured when logging.
 * Fixed several bugs related to locating files relative to role/playbook directories.
 * Fixed a bug in the way hosts were tested for failed states, resulting in incorrectly skipped block sessions.
-* Fixed a bug in the way our custom JSON encoder is used for the to_json* filters.
+* Fixed a bug in the way our custom JSON encoder is used for the `to_json*` filters.
 * Fixed some bugs related to the use of non-ascii characters in become passwords.
 * Fixed a bug with Azure modules which may be using the latest rc6 library.
 * Backported some docker_common fixes.
+
+<a id="2.1.2"></a>
 
 ## 2.1.2 "The Song Remains the Same" - 2016-09-29
 
@@ -1026,6 +926,8 @@ Module fixes:
   Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
   Use `_fixup_perms2` if support for previous releases is not required.
   Otherwise use `_fixup_perms` with `recursive=False`.
+
+<a id="2.1"></a>
 
 ## 2.1 "The Song Remains the Same"
 
@@ -1214,6 +1116,8 @@ Module fixes:
   completely in 2.3, after which time it will be an error.
 * play_hosts magic variable, use ansible_play_batch or ansible_play_hosts instead.
 
+<a id="2.0.2"></a>
+
 ## 2.0.2 "Over the Hills and Far Away"
 
 * Backport of the 2.1 feature to ensure per-item callbacks are sent as they occur,
@@ -1255,9 +1159,11 @@ Module fixes:
   permissions on the temporary file too leniently on a temporary file that was
   executed as a script.  Addresses CVE-2016-3096
 * Fix a bug in the uri module where setting headers via module params that
-  start with HEADER_ were causing a traceback.
+  start with `HEADER_` were causing a traceback.
 * Fix bug in the free strategy that was causing it to synchronize its workers
   after every task (making it a lot more like linear than it should have been).
+
+<a id="2.0.1"></a>
 
 ## 2.0.1 "Over the Hills and Far Away"
 
@@ -1266,7 +1172,7 @@ Module fixes:
   running rsync.  In 1.9.x and previous, sudo was run on the host that rsync
   connected to.  2.0.1 restores the 1.9.x behaviour.
 * Additionally, several other problems with where synchronize chose to run when
-  combined with delegate_to were fixed.  In particular, if a playbook targeted
+  combined with delegate_to were fixed.  In particular, if a playbook targetted
   localhost and then delegated_to a remote host the prior behavior (in 1.9.x
   and 2.0.0.x) was to copy files between the src and destination directories on
   the delegated host.  This has now been fixed to copy between localhost and
@@ -1299,6 +1205,8 @@ Module fixes:
 * Fix to make implicit fact gathering task correctly inherit settings from play,
   this might cause an error if settings environment on play depending on 'ansible_env'
   which was previouslly ignored
+
+<a id="2.0"></a>
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
@@ -2799,7 +2707,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * added basename and dirname as Jinja2 filters available to all templates
 * pip works better when sudoing from unprivileged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
-* fix for some unicode encoding errors in outputting some data in verbose mode
+* fix for some unicode encoding errors in outputing some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
 * debug module always outputs data without having to specify -v
 * fix for sysctl module creating new keys (must specify checks=none)
@@ -3173,7 +3081,7 @@ New Modules:
 * new LSB facts (release, distro, etc)
 * pause module -- (pause seconds=10) (pause minutes=1) (pause prompt=foo) -- it's an action plugin
 * a module for adding entries to the main crontab (though you may still wish to just drop template files into cron.d)
-* debug module can be used for outputting messages without using 'shell echo'
+* debug module can be used for outputing messages without using 'shell echo'
 * a fail module is now available for causing errors, you might want to use it with only_if to fail in certain conditions
 
 Other module Changes, Upgrades, and Fixes:
