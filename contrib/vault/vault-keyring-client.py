@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2014, Matt Martz <matt@sivel.net>
 # (c) 2016, Justin Mayer <https://justinmayer.com/>
-#
 # This file is part of Ansible.
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -20,7 +19,7 @@
 #
 # =============================================================================
 #
-# This script is to be used with vault_password_file or --vault-password-file
+# This script is to be used with ansible-vault's --vault-id arg
 # to retrieve the vault password via your OS's native keyring application.
 #
 # This file *MUST* be saved with executable permissions. Otherwise, Ansible
@@ -35,27 +34,45 @@
 # [vault]
 # username = 'ansible-vault'
 #
-# Another optional setting is for the key name, which allows you to use this
-# script to handle multiple project vaults with different passwords:
+# In useage like:
 #
-# [vault]
-# keyname = 'ansible-vault-yourproject'
+#    ansible-vault --vault-id keyring_id@contrib/vault/vault-keyring-client.py view some_encrypted_file
+#
+#  --vault-id will call this script like:
+#
+#     contrib/vault/vault-keyring-client.py --vault-id keyring_id
+#
+# That will retrieve the password from users keyring for the
+# keyring service 'keyring_id'. The equilivent of:
+#
+#      keyring get keyring_id $USER
+#
+# If no vault-id name is specified to ansible command line, the vault-keyring-client.py
+# script will be called without a '--vault-id' and will default to the keyring service 'ansible'
+# This is equilivent to:
+#
+#    keyring get ansible $USER
 #
 # You can configure the `vault_password_file` option in ansible.cfg:
 #
 # [defaults]
 # ...
-# vault_password_file = /path/to/vault-keyring.py
+# vault_password_file = /path/to/vault-keyring-client.py
 # ...
 #
 # To set your password, `cd` to your project directory and run:
 #
-# python /path/to/vault-keyring.py set
+#   # will use default keyring service / vault-id of 'ansible'
+#   /path/to/vault-keyring-client.py --set
+#
+# or to specify the keyring service / vault-id of 'my_ansible_secret':
+#
+#  /path/to/vault-keyring-client.py --vault-id my_ansible_secret --set
 #
 # If you choose not to configure the path to `vault_password_file` in
 # ansible.cfg, your `ansible-playbook` command might look like:
 #
-# ansible-playbook --vault-password-file=/path/to/vault-keyring.py site.yml
+# ansible-playbook --vault-id=keyring_id@/path/to/vault-keyring-client.py site.yml
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -66,7 +83,6 @@ import sys
 import getpass
 import keyring
 
-import ansible.constants as C
 from ansible.config.manager import ConfigManager
 
 
@@ -78,20 +94,20 @@ def build_arg_parser():
                         help='name of the vault secret to get from keyring')
     parser.add_argument('--username', action='store', default=None,
                         help='the username whose keyring is queried')
+    parser.add_argument('--set', action='store_true', default=False,
+                        dest='set_password',
+                        help='set the password instead of getting it')
     return parser
 
 
 def main():
 
     config_manager = ConfigManager()
-    # (parser, config_path) = C.load_config_file()
     username = config_manager.data.get_setting('vault.username')
-    # print('u: %s' % username)
     if not username:
         username = getpass.getuser()
 
     keyname = config_manager.data.get_setting('vault.keyname')
-    # print('k: %s' % keyname)
     if not keyname:
         keyname = 'ansible'
 
@@ -104,7 +120,7 @@ def main():
 
     # print('username: %s keyname: %s' % (username, keyname))
 
-    if len(sys.argv) == 2 and sys.argv[1] == 'set':
+    if args.set_password:
         intro = 'Storing password in "{}" user keyring using key name: {}\n'
         sys.stdout.write(intro.format(username, keyname))
         password = getpass.getpass()
