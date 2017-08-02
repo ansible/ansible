@@ -167,7 +167,7 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/aireos_config.2016-07-16@22:28:34
 """
-from ansible.module_utils.aireos import run_commands, get_config, load_config, sanitize
+from ansible.module_utils.aireos import run_commands, get_config, load_config
 from ansible.module_utils.aireos import aireos_argument_spec
 from ansible.module_utils.aireos import check_args as aireos_check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -281,7 +281,7 @@ def main():
 
     if module._diff:
         output = run_commands(module, 'show run-config commands')
-        contents = sanitize(output[0])
+        contents = output[0]
 
         # recreate the object in order to process diff_ignore_lines
         running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
