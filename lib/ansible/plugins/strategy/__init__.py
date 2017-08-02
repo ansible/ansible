@@ -491,6 +491,12 @@ class StrategyBase:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
                         self._add_host(new_host_info, iterator)
+          
+                    elif 'add_hosts' in result_item:
+                        host_data = result_item.get('add_hosts', list())
+                        if isinstance(host_data, list):
+                            for new_host_info in host_data:
+                                self._add_host(new_host_info, iterator)
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
