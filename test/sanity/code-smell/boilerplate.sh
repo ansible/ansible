@@ -19,7 +19,6 @@ future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
 
 # Eventually we want metaclass3 and future3 to get down to 0
 metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
-        -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
         -o -path ./lib/ansible/modules/database/proxysql -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
@@ -42,7 +41,6 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
         -o -name '*.py' -type f -size +0c -exec grep -HL '__metaclass__ = type' '{}' '+')
 
 future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
-        -o -path ./lib/ansible/modules/identity -prune \
         -o -path ./lib/ansible/modules/files -prune \
         -o -path ./lib/ansible/modules/database/proxysql -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
@@ -78,7 +76,6 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
 # network/netvisor
 # network/aos [!]
 # network/vyos [i]
-# identity [!]
 # network/lenovo
 # network/panos [!]
 # network/junos [i]
