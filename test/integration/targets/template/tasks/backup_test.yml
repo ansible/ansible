@@ -25,7 +25,10 @@
     mode: 0777
     owner: "{{ t_username }}"
     group: "{{ t_groupname }}"
-    attributes: j
+
+- name: failsafe attr change incase underlying system does not support it
+  shell: chattr =j "{{ t_dest }}"
+  ignore_errors: True
 
 - name: run the template
   template:
