@@ -105,6 +105,7 @@ options:
     required: false
     default: null
   tcp_flags:
+    version_added: "2.4"
     description:
       - TCP flags specification. tcp_flags expects a dict with the two keys
         "flags" and "flags_set". The "flags" list is the mask, a list of
