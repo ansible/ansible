@@ -6,7 +6,6 @@ This section discusses how the Ansible development and triage process works.
 The Triage Bot
 ==============
 
-(last updated 21 April 2016)
 
 Overview
 --------
