@@ -42,7 +42,7 @@ options:
     - Additional options to pass to C(pvcreate) when creating the volume group.
     default: null
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
   vg_options:
     description:
     - Additional options to pass to C(vgcreate) when creating the volume group.
