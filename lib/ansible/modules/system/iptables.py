@@ -104,6 +104,15 @@ options:
         inverts the sense of the address.
     required: false
     default: null
+  tcp_flags:
+    description:
+      - TCP flags specification. tcp_flags expects a dict with the two keys
+        "flags" and "flags_set". The "flags" list is the mask, a list of
+        flags you want to examine. The "flags_set" list tells which one(s)
+        should be set. If one of the two values is missing, the --tcp-flags option
+        will be ignored.
+    required: false
+    default: {}
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -357,6 +366,10 @@ def append_param(rule, param, flag, is_list):
         if param is not None:
             rule.extend([flag, param])
 
+def append_tcp_flags(rule, param, flag):
+    if param:
+        if 'flags' in param and 'flags_set' in param:
+            rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
 def append_csv(rule, param, flag):
     if param:
@@ -379,6 +392,7 @@ def construct_rule(params):
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
+    append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
     append_param(rule, params['jump'], '-j', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
     append_param(rule, params['to_source'], '--to-source', False)
@@ -499,6 +513,7 @@ def main():
             destination=dict(required=False, default=None, type='str'),
             to_destination=dict(required=False, default=None, type='str'),
             match=dict(required=False, default=[], type='list'),
+            tcp_flags=dict(required=False, default={}, type='dict'),
             jump=dict(required=False, default=None, type='str'),
             goto=dict(required=False, default=None, type='str'),
             in_interface=dict(required=False, default=None, type='str'),
