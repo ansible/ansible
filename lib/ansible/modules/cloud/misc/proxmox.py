@@ -344,7 +344,7 @@ def get_nextvmid(module, proxmox):
 
 
 def get_vmid(proxmox, hostname):
-    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == hostname]
+    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if 'name' in vm and vm['name'] == hostname]
 
 
 def get_instance(proxmox, vmid):
@@ -517,7 +517,10 @@ def main():
     if not vmid and state == 'present':
         vmid = get_nextvmid(module, proxmox)
     elif not vmid and hostname:
-        vmid = get_vmid(proxmox, hostname)[0]
+        hosts = get_vmid(proxmox, hostname)
+        if len(hosts) == 0:
+            module.fail_json(msg="Vmid could not be fetched => Hostname doesn't exist (action: %s)" % state)
+        vmid = hosts[0]
     elif not vmid:
         module.exit_json(changed=False, msg="Vmid could not be fetched for the following action: %s" % state)
 
