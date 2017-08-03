@@ -85,8 +85,8 @@ options:
 
     expirymonitor:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Issue an alert when the certificate is about to expire."
 
@@ -116,7 +116,7 @@ EXAMPLES = '''
     certkey: certirificate_1
     cert: server.crt
     key: server.key
-    expirymonitor: ENABLED
+    expirymonitor: enabled
     notificationperiod: 30
     inform: PEM
     password: False
@@ -206,8 +206,8 @@ def main():
         expirymonitor=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         notificationperiod=dict(type='float'),
@@ -288,6 +288,10 @@ def main():
         'passplain',
     ]
 
+    transforms = {
+        'expirymonitor': [lambda v: v.upper()],
+    }
+
     # Instantiate config proxy
     sslcertkey_proxy = ConfigProxy(
         actual=sslcertkey(),
@@ -296,6 +300,7 @@ def main():
         readwrite_attrs=readwrite_attrs,
         readonly_attrs=readonly_attrs,
         immutable_attrs=immutable_attrs,
+        transforms=transforms,
     )
 
     try:

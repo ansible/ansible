@@ -15,7 +15,7 @@
     certkey: certirificate_1
     cert: server.crt
     key: server.key
-    expirymonitor: ENABLED
+    expirymonitor: enabled
     notificationperiod: 30
     inform: PEM
     password: False
