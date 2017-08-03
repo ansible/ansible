@@ -1,25 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-# (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
-# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-# (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
+# Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2016, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -142,7 +132,6 @@ import time
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -227,8 +216,7 @@ class ZipArchive(object):
 
         try:
             archive = ZipFile(self.src)
-        except BadZipfile:
-            e = get_exception()
+        except BadZipfile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -253,8 +241,7 @@ class ZipArchive(object):
         self._files_in_archive = []
         try:
             archive = ZipFile(self.src)
-        except BadZipfile:
-            e = get_exception()
+        except BadZipfile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -491,9 +478,8 @@ class ZipArchive(object):
                     else:
                         try:
                             mode = int(self.file_args['mode'], 8)
-                        except Exception:
-                            e = get_exception()
-                            self.module.fail_json(path=path, msg="mode %(mode)s must be in octal form" % self.file_args, details=str(e))
+                        except Exception as e:
+                            self.module.fail_json(path=path, msg="mode %(mode)s must be in octal form" % self.file_args, details=to_native(e))
                 # Only special files require no umask-handling
                 elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)
@@ -812,9 +798,8 @@ def main():
                     f.write(data)
                 f.close()
                 src = package
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failure downloading %s, %s" % (src, e))
+            except Exception as e:
+                module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
@@ -824,9 +809,8 @@ def main():
     try:
         if os.path.getsize(src) == 0:
             module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Source '%s' not readable" % src)
+    except Exception as e:
+        module.fail_json(msg="Source '%s' not readable, %s" % (src, to_native(e)))
 
     # is dest OK to receive tar file?
     if not os.path.isdir(dest):
@@ -868,9 +852,8 @@ def main():
             file_args['path'] = os.path.join(dest, filename)
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-            except (IOError, OSError):
-                e = get_exception()
-                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % e, **res_args)
+            except (IOError, OSError) as e:
+                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
