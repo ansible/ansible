@@ -312,7 +312,8 @@ class DocCLI(CLI):
 
             aliases = ''
             if 'aliases' in opt:
-                choices = "(Aliases: " + ", ".join(str(i) for i in opt['aliases']) + ")"
+                if len(opt['aliases']) > 0:
+                    aliases = "(Aliases: " + ", ".join(str(i) for i in opt['aliases']) + ")"
                 del opt['aliases']
             choices = ''
             if 'choices' in opt:
