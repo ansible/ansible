@@ -1,6 +1,9 @@
 ---
 - debug: msg="START TRANSPORT:NXAPI nxos_bgp sanity test"
 
+- set_fact: suppress_fib_pending="true"
+  when: (titanium | search('true')) != 'true'
+
 - name: "Enable feature BGP"
   nxos_feature: 
     feature: bgp
@@ -82,7 +85,7 @@
       event_history_detail: size_large
       event_history_events: size_medium
       event_history_periodic: size_small
-      suppress_fib_pending: true
+      suppress_fib_pending: "{{suppress_fib_pending|default(omit)}}"
       state: present
       provider: "{{ nxapi }}"
     register: result

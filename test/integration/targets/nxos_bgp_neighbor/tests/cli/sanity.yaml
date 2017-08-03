@@ -3,6 +3,12 @@
 
 - set_fact: intname="{{ nxos_int1 }}"
 
+- set_fact: log_neighbor_changes="enable"
+  when: (titanium | search('true')) != 'true'
+
+- set_fact: remove_private_as="all"
+  when: (titanium | search('true')) != 'true'
+
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
@@ -63,10 +69,10 @@
       capability_negotiation: true
       dynamic_capability: true
       ebgp_multihop: 2
-      log_neighbor_changes: enable
+      log_neighbor_changes: "{{log_neighbor_changes|default(omit)}}"
       low_memory_exempt: true
       remote_as: 12.1
-      remove_private_as: all
+      remove_private_as: "{{remove_private_as|default(omit)}}"
       shutdown: true
       suppress_4_byte_as: true
       timers_keepalive: 90
