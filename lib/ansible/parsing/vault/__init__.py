@@ -75,7 +75,7 @@ except ImportError:
 from ansible.errors import AnsibleError
 from ansible import constants as C
 from ansible.module_utils.six import PY3, binary_type
-from ansible.module_utils.six.moves import zip
+from ansible.module_utils.six.moves import zip as _zip
 from ansible.module_utils._text import to_bytes, to_text
 
 try:
@@ -1184,7 +1184,7 @@ class VaultAES256:
             return False
 
         result = 0
-        for b_x, b_y in zip(b_a, b_b):
+        for b_x, b_y in _zip(b_a, b_b):
             if PY3:
                 result |= b_x ^ b_y
             else:
