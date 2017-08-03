@@ -25,7 +25,7 @@
     that:
       - "result.changed == true"
       - "'<name>test_user</name>' in config.xml"
-      - "'<class>read-only</class>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
 
 - name: Create user again (idempotent)
   net_user:

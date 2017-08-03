@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -62,12 +51,6 @@ options:
   description:
     description:
       - Description of Interface.
-  collection:
-    description: List of link aggregation definitions.
-  purge:
-    description:
-      - Purge link aggregation groups not defined in the collections parameter.
-    default: no
   state:
     description:
       - State of the link aggregation group.
@@ -281,8 +264,6 @@ def main():
         min_links=dict(type='int'),
         device_count=dict(type='int'),
         description=dict(default=DEFAULT_COMMENT),
-        collection=dict(type='list'),
-        purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
     )

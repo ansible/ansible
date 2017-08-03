@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -53,7 +42,7 @@ options:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the aggregates parameter.
+      - Purge logging not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -108,6 +97,18 @@ EXAMPLES = """
     files: 30
     size: 65536
     rotate_frequency: 10
+
+  - name: Configure file logging using aggregate
+    junos_logging:
+      aggregate:
+      - {dest: file, name: test-1,  facility: pfe, level: critical, active: True}
+      - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True}
+
+  - name: Delete file logging using aggregate
+    junos_logging:
+      aggregate:
+      - {dest: file, name: test-1,  facility: pfe, level: critical, active: True, state: absent}
+      - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True, state: absent}
 """
 
 RETURN = """
@@ -125,9 +126,11 @@ diff.prepared:
 """
 import collections
 
+from copy import copy
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
@@ -153,18 +156,20 @@ def validate_rotate_frequency(value, module):
         module.fail_json(msg='rotate_frequency must be between 1 and 59')
 
 
-def validate_param_values(module, obj):
+def validate_param_values(module, obj, param=None):
+    if not param:
+        param = module.params
     for key in obj:
         # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
         if callable(validator):
-            validator(module.params.get(key), module)
+            validator(param.get(key), module)
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         dest=dict(choices=['console', 'host', 'file', 'user']),
         name=dict(),
         facility=dict(),
@@ -173,13 +178,27 @@ def main():
         size=dict(type='int'),
         files=dict(type='int'),
         src_addr=dict(),
-        aggregate=dict(),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
 
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=element_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
+
+    mutually_exclusive = [['dest', 'aggregate'],
+                          ['name', 'aggregate'],
+                          ['facility', 'aggregate'],
+                          ['rotate_frequency', 'aggregate'],
+                          ['size', 'aggregate'],
+                          ['files', 'aggregate'],
+                          ['src_addr', 'aggregate'],
+                          ['state', 'aggregate'],
+                          ['active', 'aggregate']]
 
     required_if = [('dest', 'host', ['name', 'facility', 'level']),
                    ('dest', 'file', ['name', 'facility', 'level']),
@@ -188,6 +207,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -198,40 +218,47 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    dest = module.params.get('dest')
-    if dest == 'console' and module.params.get('name'):
-        module.fail_json(msg="%s and %s are mutually exclusive" % ('console', 'name'))
+    params = to_param_list(module)
 
-    top = 'system/syslog'
-    is_facility_key = False
-    field_top = None
-    if dest:
-        if dest == 'console':
-            field_top = dest
-            is_facility_key = True
-        else:
-            field_top = dest + '/contents'
-            is_facility_key = False
+    requests = list()
+    for param in params:
+        item = copy(param)
+        dest = item.get('dest')
+        if dest == 'console' and item.get('name'):
+            module.fail_json(msg="%s and %s are mutually exclusive" % ('console', 'name'))
 
-    param_to_xpath_map = collections.OrderedDict()
-    param_to_xpath_map.update([
-        ('name', {'xpath': 'name', 'is_key': True, 'top': dest}),
-        ('facility', {'xpath': 'name', 'is_key': is_facility_key, 'top': field_top}),
-        ('size', {'xpath': 'size', 'leaf_only': True, 'is_key': True, 'top': 'archive'}),
-        ('files', {'xpath': 'files', 'leaf_only': True, 'is_key': True, 'top': 'archive'}),
-        ('rotate_frequency', {'xpath': 'log-rotate-frequency', 'leaf_only': True}),
-    ])
+        top = 'system/syslog'
+        is_facility_key = False
+        field_top = None
+        if dest:
+            if dest == 'console':
+                field_top = dest
+                is_facility_key = True
+            else:
+                field_top = dest + '/contents'
+                is_facility_key = False
 
-    if module.params.get('level'):
-        param_to_xpath_map['level'] = {'xpath': module.params.get('level'), 'tag_only': True, 'top': field_top}
+        param_to_xpath_map = collections.OrderedDict()
+        param_to_xpath_map.update([
+            ('name', {'xpath': 'name', 'is_key': True, 'top': dest}),
+            ('facility', {'xpath': 'name', 'is_key': is_facility_key, 'top': field_top}),
+            ('size', {'xpath': 'size', 'leaf_only': True, 'is_key': True, 'top': 'archive'}),
+            ('files', {'xpath': 'files', 'leaf_only': True, 'is_key': True, 'top': 'archive'}),
+            ('rotate_frequency', {'xpath': 'log-rotate-frequency', 'leaf_only': True}),
+        ])
 
-    validate_param_values(module, param_to_xpath_map)
+        if item.get('level'):
+            param_to_xpath_map['level'] = {'xpath': item.get('level'), 'tag_only': True, 'top': field_top}
 
-    want = map_params_to_obj(module, param_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+        validate_param_values(module, param_to_xpath_map, param=item)
 
+        want = map_params_to_obj(module, param_to_xpath_map, param=item)
+        requests.append(map_obj_to_ele(module, want, top, param=item))
+
+    diff = None
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='replace')
 
         commit = not module.check_mode
         if diff:
