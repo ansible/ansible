@@ -135,7 +135,7 @@ except ImportError:
     HAS_BOTO = False
 
 try:
-    # Although this is to allow Python 3 the ability to use the custom cmp as a key, Python 2.7 also
+    # Although this is to allow Python 3 the ability to use the custom comparison as a key, Python 2.7 also
     # uses this (and it works as expected). Python 2.6 will trigger the ImportError.
     from functools import cmp_to_key
     PY3_COMPARISON = True
