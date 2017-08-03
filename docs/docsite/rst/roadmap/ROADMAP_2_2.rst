@@ -117,7 +117,7 @@ Lead by Nate C, Peter S
 
 Role revamp
 -----------
-- **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
+- Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian)
 
   - **https://github.com/ansible/proposals/blob/master/roles_revamp.md**
 
