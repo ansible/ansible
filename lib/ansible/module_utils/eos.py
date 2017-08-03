@@ -222,7 +222,7 @@ class Cli:
             pass
 
         if not all((bool(use_session), self.supports_sessions)):
-            return configure(self, commands)
+            return self.configure(self, commands)
 
         conn = get_connection(self)
         session = 'ansible_%s' % int(time.time())
@@ -395,7 +395,7 @@ class Eapi:
         there will be no returned diff or session values
         """
         if not self.supports_sessions:
-            return configure(self, commands)
+            return self.configure(self, commands)
 
         session = 'ansible_%s' % int(time.time())
         result = {'session': session}
