@@ -133,7 +133,7 @@ EXAMPLES = '''
 import re
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info, compare_aws_tags
 
 try:
     import boto.ec2
@@ -260,37 +260,35 @@ def tags_match(match_tags, candidate_tags):
 
 def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
     changed = False
+
+    # The resource may have yet to be created if running in check mode
     if not resource_id and check_mode:
         return {'changed': True, 'tags': tags}
-    try:
-        cur_tags = get_resource_tags(vpc_conn, resource_id)
-        if tags == cur_tags:
-            return {'changed': changed, 'tags': cur_tags}
-        else:
-            changed = True
 
-        to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
-        if to_delete and not add_only:
-            changed = True
-            if not check_mode:
-                vpc_conn.delete_tags(resource_id, to_delete)
+    cur_tags = get_resource_tags(vpc_conn, resource_id)
+    tags_to_add, tags_to_remove = compare_aws_tags(cur_tags, tags, purge_tags=not(add_only))
 
-        to_add = dict((k, tags[k]) for k in tags if k not in cur_tags)
-        if to_add:
+    if check_mode:
+        latest_tags = dict((key, value) for key, value in cur_tags if key not in tags_to_remove)
+        latest_tags.update(tags_to_add)
+        if latest_tags != cur_tags:
             changed = True
-            if not check_mode:
-                vpc_conn.create_tags(resource_id, to_add)
-
-        if check_mode:
-            latest_tags = dict((k, cur_tags[k]) for k in cur_tags if k not in to_delete)
-            latest_tags.update(to_add)
-        else:
-            latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': changed, 'tags': latest_tags}
+
+    try:
+        if tags_to_add:
+            changed = True
+            vpc_conn.create_tags(resource_id, tags_to_add)
+        if tags_to_remove:
+            to_delete = dict((key, value) for key, value in cur_tags if key in tags_to_remove)
+            changed = True
+            vpc_conn.delete_tags(resource_id, to_delete)
     except EC2ResponseError as e:
-        raise AnsibleTagCreationException(
-            message='Unable to update tags for {0}, error: {1}'.format(resource_id, e),
-            error_traceback=traceback.format_exc())
+        raise AnsibleTagCreationException(message='Unable to update tags for {0}, error: {1}'.format(resource_id, e),
+                                          error_traceback=traceback.format_exc())
+
+    latest_tags = get_resource_tags(vpc_conn, resource_id)
+    return {'changed': changed, 'tags': latest_tags}
 
 
 def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
