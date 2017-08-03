@@ -294,8 +294,8 @@ def get_file_vault_secret(filename=None, vault_id_name=None, encoding=None, load
     if loader.is_executable(this_path):
         # TODO: pass vault_id_name to script via cli
         return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
-    else:
-        return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+
+    return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
 
 # TODO: mv these classes to a seperate file so we don't pollute vault with 'subprocess' etc
