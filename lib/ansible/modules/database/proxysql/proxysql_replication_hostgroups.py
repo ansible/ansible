@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 DOCUMENTATION = '''
 ---
@@ -133,7 +123,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import MySQLdb
@@ -366,10 +356,9 @@ def main():
                                login_password,
                                config_file,
                                cursor_class=MySQLdb.cursors.DictCursor)
-    except MySQLdb.Error:
-        e = get_exception()
+    except MySQLdb.Error as e:
         module.fail_json(
-            msg="unable to connect to ProxySQL Admin Module.. %s" % e
+            msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
 
     proxysql_repl_group = ProxySQLReplicationHostgroup(module)
@@ -398,10 +387,9 @@ def main():
                     result['repl_group'] = \
                         proxysql_repl_group.get_repl_group_config(cursor)
 
-        except MySQLdb.Error:
-            e = get_exception()
+        except MySQLdb.Error as e:
             module.fail_json(
-                msg="unable to modify replication hostgroup.. %s" % e
+                msg="unable to modify replication hostgroup.. %s" % to_native(e)
             )
 
     elif proxysql_repl_group.state == "absent":
@@ -417,10 +405,9 @@ def main():
                                  " mysql_replication_hostgroups memory" +
                                  " configuration")
 
-        except MySQLdb.Error:
-            e = get_exception()
+        except MySQLdb.Error as e:
             module.fail_json(
-                msg="unable to delete replication hostgroup.. %s" % e
+                msg="unable to delete replication hostgroup.. %s" % to_native(e)
             )
 
     module.exit_json(**result)
