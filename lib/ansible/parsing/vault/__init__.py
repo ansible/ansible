@@ -352,9 +352,9 @@ class ScriptVaultSecret(FileVaultSecret):
             # STDERR not captured to make it easier for users to prompt for input in their scripts
             p = subprocess.Popen(filename, stdout=subprocess.PIPE)
         except OSError as e:
-            msg_format = "Problem running vault password script %s (%s)."
-            "If this is not a script, remove the executable bit from the file."
-            msg = msg_format % (' '.join(filename), e)
+            msg_format = "Problem running vault password script %s (%s)." \
+                " If this is not a script, remove the executable bit from the file."
+            msg = msg_format % (filename, e)
 
             raise AnsibleError(msg)
 
