@@ -216,7 +216,7 @@ FIXME: Q: What would this look like
 *
 
 Configuration, cabling, check
----------------------------
+-----------------------------
 
 FIXME: Q: What would this look like
 
