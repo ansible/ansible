@@ -67,7 +67,7 @@ class VarsModule(BaseVarsPlugin):
                 found_files = []
                 # load vars
                 opath = os.path.realpath(os.path.join(self._basedir, subdir))
-                key = '%s.%s' % (entity.name, opath)
+                key = '%s.%s' % (to_bytes(entity.name), opath)
                 if cache and key in FOUND:
                     found_files = FOUND[key]
                 else:
