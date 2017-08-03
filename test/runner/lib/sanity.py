@@ -18,6 +18,8 @@ from lib.util import (
     display,
     run_command,
     deepest_path,
+    parse_to_dict,
+    remove_tree,
 )
 
 from lib.ansible_util import (
@@ -37,6 +39,10 @@ from lib.executor import (
     install_command_requirements,
     SUPPORTED_PYTHON_VERSIONS,
     intercept_command,
+    generate_pip_install,
+)
+
+from lib.config import (
     SanityConfig,
 )
 
@@ -315,7 +321,7 @@ def command_sanity_pep8(args, targets):
         return SanitySkipped(test)
 
     cmd = [
-        'pep8',
+        'pycodestyle',
         '--max-line-length', '160',
         '--config', '/dev/null',
         '--ignore', ','.join(sorted(current_ignore)),
@@ -445,7 +451,10 @@ def command_sanity_pylint(args, targets):
         skip_paths = skip_fd.read().splitlines()
 
     with open('test/sanity/pylint/disable.txt', 'r') as disable_fd:
-        disable = set(disable_fd.read().splitlines())
+        disable = set(c for c in disable_fd.read().splitlines() if not c.strip().startswith('#'))
+
+    with open('test/sanity/pylint/enable.txt', 'r') as enable_fd:
+        enable = set(c for c in enable_fd.read().splitlines() if not c.strip().startswith('#'))
 
     skip_paths_set = set(skip_paths)
 
@@ -460,8 +469,10 @@ def command_sanity_pylint(args, targets):
         '--reports', 'n',
         '--max-line-length', '160',
         '--rcfile', '/dev/null',
+        '--ignored-modules', '_MovedItems',
         '--output-format', 'json',
         '--disable', ','.join(sorted(disable)),
+        '--enable', ','.join(sorted(enable)),
     ] + paths
 
     env = ansible_environment(args)
@@ -566,6 +577,88 @@ def command_sanity_yamllint(args, targets):
     return SanitySuccess(test)
 
 
+def command_sanity_rstcheck(args, targets):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :rtype: SanityResult
+    """
+    test = 'rstcheck'
+
+    with open('test/sanity/rstcheck/ignore-substitutions.txt', 'r') as ignore_fd:
+        ignore_substitutions = sorted(set(ignore_fd.read().splitlines()))
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))
+
+    if not paths:
+        return SanitySkipped(test)
+
+    cmd = [
+        'rstcheck',
+        '--report', 'warning',
+        '--ignore-substitutions', ','.join(ignore_substitutions),
+    ] + paths
+
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stdout:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.explain:
+        return SanitySkipped(test)
+
+    pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$'
+
+    results = [parse_to_dict(pattern, line) for line in stderr.splitlines()]
+
+    results = [SanityMessage(
+        message=r['message'],
+        path=r['path'],
+        line=int(r['line']),
+        column=0,
+        level=r['level'],
+    ) for r in results]
+
+    if results:
+        return SanityFailure(test, messages=results)
+
+    return SanitySuccess(test)
+
+
+# noinspection PyUnusedLocal
+def command_sanity_sanity_docs(args, targets):  # pylint: disable=locally-disabled, unused-argument
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :rtype: SanityResult
+    """
+    test = 'sanity-docs'
+
+    sanity_dir = 'docs/docsite/rst/dev_guide/testing/sanity'
+    sanity_docs = set(part[0] for part in (os.path.splitext(name) for name in os.listdir(sanity_dir)) if part[1] == '.rst')
+    sanity_tests = set(sanity_test.name for sanity_test in sanity_get_tests())
+
+    missing = sanity_tests - sanity_docs
+
+    results = []
+
+    results += [SanityMessage(
+        message='missing docs for ansible-test sanity --test %s' % r,
+        path=os.path.join(sanity_dir, '%s.rst' % r),
+    ) for r in sorted(missing)]
+
+    if results:
+        return SanityFailure(test, messages=results)
+
+    return SanitySuccess(test)
+
+
 def command_sanity_ansible_doc(args, targets, python_version):
     """
     :type args: SanityConfig
@@ -589,7 +682,7 @@ def command_sanity_ansible_doc(args, targets, python_version):
     cmd = ['ansible-doc'] + modules
 
     try:
-        stdout, stderr = intercept_command(args, cmd, env=env, capture=True, python_version=python_version)
+        stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
         status = 0
     except SubprocessError as ex:
         stdout = ex.stdout
@@ -610,6 +703,91 @@ def command_sanity_ansible_doc(args, targets, python_version):
     return SanitySuccess(test, python_version=python_version)
 
 
+def command_sanity_import(args, targets, python_version):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :type python_version: str
+    :rtype: SanityResult
+    """
+    test = 'import'
+
+    with open('test/sanity/import/skip.txt', 'r') as skip_fd:
+        skip_paths = skip_fd.read().splitlines()
+
+    skip_paths_set = set(skip_paths)
+
+    paths = sorted(
+        i.path
+        for i in targets.include
+        if os.path.splitext(i.path)[1] == '.py' and
+        (i.path.startswith('lib/ansible/modules/') or i.path.startswith('lib/ansible/module_utils/')) and
+        i.path not in skip_paths_set
+    )
+
+    if not paths:
+        return SanitySkipped(test, python_version=python_version)
+
+    env = ansible_environment(args, color=False)
+
+    # create a clean virtual environment to minimize the available imports beyond the python standard library
+    virtual_environment_path = os.path.abspath('test/runner/.tox/minimal-py%s' % python_version.replace('.', ''))
+    virtual_environment_bin = os.path.join(virtual_environment_path, 'bin')
+
+    remove_tree(virtual_environment_path)
+
+    cmd = ['virtualenv', virtual_environment_path, '--python', 'python%s' % python_version, '--no-setuptools', '--no-wheel']
+
+    if not args.coverage:
+        cmd.append('--no-pip')
+
+    run_command(args, cmd, capture=True)
+
+    # add the importer to our virtual environment so it can be accessed through the coverage injector
+    importer_path = os.path.join(virtual_environment_bin, 'importer.py')
+    os.symlink(os.path.abspath('test/runner/importer.py'), importer_path)
+
+    # activate the virtual environment
+    env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
+    env['PYTHONPATH'] = os.path.abspath('test/runner/import/lib')
+
+    # make sure coverage is available in the virtual environment if needed
+    if args.coverage:
+        run_command(args, generate_pip_install('sanity.import', packages=['coverage']), env=env)
+        run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
+
+    cmd = ['importer.py'] + paths
+
+    results = []
+
+    try:
+        stdout, stderr = intercept_command(args, cmd, target_name=test, env=env, capture=True, python_version=python_version, path=env['PATH'])
+
+        if stdout or stderr:
+            raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
+    except SubprocessError as ex:
+        if ex.status != 10 or ex.stderr or not ex.stdout:
+            raise
+
+        pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+
+        results = [re.search(pattern, line).groupdict() for line in ex.stdout.splitlines()]
+
+        results = [SanityMessage(
+            message=r['message'],
+            path=r['path'],
+            line=int(r['line']),
+            column=int(r['column']),
+        ) for r in results]
+
+        results = [result for result in results if result.path not in skip_paths]
+
+    if results:
+        return SanityFailure(test, messages=results, python_version=python_version)
+
+    return SanitySuccess(test, python_version=python_version)
+
+
 def collect_code_smell_tests():
     """
     :rtype: tuple(SanityFunc)
@@ -618,20 +796,11 @@ def collect_code_smell_tests():
         skip_tests = skip_fd.read().splitlines()
 
     paths = glob.glob('test/sanity/code-smell/*')
-    paths = sorted(p for p in paths
-                   if os.access(p, os.X_OK)
-                   and os.path.isfile(p)
-                   and os.path.basename(p) not in skip_tests)
+    paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
     tests = tuple(SanityFunc(os.path.splitext(os.path.basename(p))[0], command_sanity_code_smell, script=p, intercept=False) for p in paths)
 
     return tests
-
-
-def sanity_init():
-    """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
-    global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement
-    SANITY_TESTS = tuple(sorted(SANITY_TESTS + collect_code_smell_tests(), key=lambda k: k.name))
 
 
 def sanity_get_tests():
@@ -675,17 +844,7 @@ class SanityFailure(TestFailure):
 
 class SanityMessage(TestMessage):
     """Single sanity test message for one file."""
-    def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
-        """
-        :type message: str
-        :type path: str
-        :type line: int
-        :type column: int
-        :type level: str
-        :type code: str | None
-        :type confidence: int | None
-        """
-        super(SanityMessage, self).__init__(message, path, line, column, level, code, confidence)
+    pass
 
 
 class SanityTargets(object):
@@ -729,6 +888,15 @@ SANITY_TESTS = (
     SanityFunc('pep8', command_sanity_pep8, intercept=False),
     SanityFunc('pylint', command_sanity_pylint, intercept=False),
     SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
+    SanityFunc('rstcheck', command_sanity_rstcheck, intercept=False),
+    SanityFunc('sanity-docs', command_sanity_sanity_docs, intercept=False),
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),
+    SanityFunc('import', command_sanity_import),
 )
+
+
+def sanity_init():
+    """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
+    global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement
+    SANITY_TESTS = tuple(sorted(SANITY_TESTS + collect_code_smell_tests(), key=lambda k: k.name))

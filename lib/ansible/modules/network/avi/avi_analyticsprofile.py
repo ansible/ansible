@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -26,7 +26,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -50,20 +49,24 @@ options:
             - If a client receives an http response in less than the satisfactory latency threshold, the request is considered satisfied.
             - It is considered tolerated if it is not satisfied and less than tolerated latency factor multiplied by the satisfactory latency threshold.
             - Greater than this number and the client's request is considered frustrated.
+            - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 500.
     apdex_response_tolerated_factor:
         description:
             - Client tolerated response latency factor.
             - Client must receive a response within this factor times the satisfactory threshold (apdex_response_threshold) to be considered tolerated.
+            - Allowed values are 1-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.0.
     apdex_rtt_threshold:
         description:
             - Satisfactory client to avi round trip time(rtt).
+            - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 250.
     apdex_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
             - It is a multiple of apdex_rtt_tolerated_factor.
+            - Allowed values are 1-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.0.
     apdex_rum_threshold:
         description:
@@ -71,65 +74,84 @@ options:
             - It is considered tolerated if it is greater than satisfied but less than the tolerated latency multiplied by satisifed latency.
             - Greater than this number and the client's request is considered frustrated.
             - A pageload includes the time for dns lookup, download of all http objects, and page render time.
+            - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5000.
     apdex_rum_tolerated_factor:
         description:
             - Virtual service threshold factor for tolerated page load time (plt) as multiple of apdex_rum_threshold.
+            - Allowed values are 1-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.0.
     apdex_server_response_threshold:
         description:
             - A server http response is considered satisfied if latency is less than the satisfactory latency threshold.
             - The response is considered tolerated when it is greater than satisfied but less than the tolerated latency factor * s_latency.
             - Greater than this number and the server response is considered frustrated.
+            - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 400.
     apdex_server_response_tolerated_factor:
         description:
             - Server tolerated response latency factor.
             - Servermust response within this factor times the satisfactory threshold (apdex_server_response_threshold) to be considered tolerated.
+            - Allowed values are 1-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.0.
     apdex_server_rtt_threshold:
         description:
             - Satisfactory client to avi round trip time(rtt).
+            - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 125.
     apdex_server_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
             - It is a multiple of apdex_rtt_tolerated_factor.
+            - Allowed values are 1-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.0.
     client_log_config:
         description:
-            - Clientlogconfiguration settings for analyticsprofile.
+            - Configure which logs are sent to the avi controller from ses and how they are processed.
+    client_log_streaming_config:
+        description:
+            - Configure to stream logs to an external server.
+            - Field introduced in 17.1.1.
+        version_added: "2.4"
     conn_lossy_ooo_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of out of order packets are received.
+            - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
     conn_lossy_timeo_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted due to timeout.
+            - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
     conn_lossy_total_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted.
+            - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
     conn_lossy_zero_win_size_event_threshold:
         description:
             - A client connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
+            - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     conn_server_lossy_ooo_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of out of order packets are received.
+            - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
     conn_server_lossy_timeo_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted due to timeout.
+            - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
     conn_server_lossy_total_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted.
+            - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
     conn_server_lossy_zero_win_size_event_threshold:
         description:
             - A server connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
+            - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     description:
         description:
@@ -203,14 +225,17 @@ options:
     hs_max_anomaly_penalty:
         description:
             - Maximum penalty that may be deducted from health score for anomalies.
+            - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     hs_max_resources_penalty:
         description:
             - Maximum penalty that may be deducted from health score for high resource utilization.
+            - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 25.
     hs_max_security_penalty:
         description:
             - Maximum penalty that may be deducted from health score based on security assessment.
+            - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
     hs_min_dos_rate:
         description:
@@ -220,6 +245,7 @@ options:
         description:
             - Adds free performance score credits to health score.
             - It can be used for compensating health score for known slow applications.
+            - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     hs_pscore_traffic_threshold_l4_client:
         description:
@@ -232,74 +258,92 @@ options:
     hs_security_certscore_expired:
         description:
             - Score assigned when the certificate has expired.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.0.
     hs_security_certscore_gt30d:
         description:
             - Score assigned when the certificate expires in more than 30 days.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5.0.
     hs_security_certscore_le07d:
         description:
             - Score assigned when the certificate expires in less than or equal to 7 days.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.0.
     hs_security_certscore_le30d:
         description:
             - Score assigned when the certificate expires in less than or equal to 30 days.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.0.
     hs_security_chain_invalidity_penalty:
         description:
             - Penalty for allowing certificates with invalid chain.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.0.
     hs_security_cipherscore_eq000b:
         description:
             - Score assigned when the minimum cipher strength is 0 bits.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.0.
     hs_security_cipherscore_ge128b:
         description:
             - Score assigned when the minimum cipher strength is greater than equal to 128 bits.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5.0.
     hs_security_cipherscore_lt128b:
         description:
             - Score assigned when the minimum cipher strength is less than 128 bits.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 3.5.
     hs_security_encalgo_score_none:
         description:
             - Score assigned when no algorithm is used for encryption.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.0.
     hs_security_encalgo_score_rc4:
         description:
             - Score assigned when rc4 algorithm is used for encryption.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.5.
     hs_security_hsts_penalty:
         description:
             - Penalty for not enabling hsts.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.0.
     hs_security_nonpfs_penalty:
         description:
             - Penalty for allowing non-pfs handshakes.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.0.
     hs_security_selfsignedcert_penalty:
         description:
             - Deprecated.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.0.
     hs_security_ssl30_score:
         description:
             - Score assigned when supporting ssl3.0 encryption protocol.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 3.5.
     hs_security_tls10_score:
         description:
             - Score assigned when supporting tls1.0 encryption protocol.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5.0.
     hs_security_tls11_score:
         description:
             - Score assigned when supporting tls1.1 encryption protocol.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5.0.
     hs_security_tls12_score:
         description:
             - Score assigned when supporting tls1.2 encryption protocol.
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5.0.
     hs_security_weak_signature_algo_penalty:
         description:
             - Penalty for allowing weak signature algorithm(s).
+            - Allowed values are 0-5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.0.
     name:
         description:
@@ -311,6 +355,7 @@ options:
     resp_code_block:
         description:
             - Block of http response codes to be excluded from being classified as an error.
+            - Enum options - AP_HTTP_RSP_4XX, AP_HTTP_RSP_5XX.
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -393,7 +438,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -416,6 +460,7 @@ def main():
         apdex_server_rtt_threshold=dict(type='int',),
         apdex_server_rtt_tolerated_factor=dict(type='float',),
         client_log_config=dict(type='dict',),
+        client_log_streaming_config=dict(type='dict',),
         conn_lossy_ooo_threshold=dict(type='int',),
         conn_lossy_timeo_rexmt_threshold=dict(type='int',),
         conn_lossy_total_rexmt_threshold=dict(type='int',),
@@ -478,11 +523,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'analyticsprofile',
                            set([]))
-
 
 if __name__ == '__main__':
     main()

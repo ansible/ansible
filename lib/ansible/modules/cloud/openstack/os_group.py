@@ -52,7 +52,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements:
     - "python >= 2.6"
@@ -87,7 +87,7 @@ RETURN = '''
 group:
     description: Dictionary describing the group.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique group ID

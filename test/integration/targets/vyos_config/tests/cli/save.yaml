@@ -1,0 +1,60 @@
+---
+- debug: msg="START cli/save.yaml"
+
+- name: setup
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure hostaname and save
+  vyos_config:
+    lines: set system host-name foo
+    provider: "{{ cli }}"
+    save: true
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name foo' in result.commands"
+
+- name: configure hostaname and don't save
+  vyos_config:
+    lines: set system host-name bar
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name bar' in result.commands"
+
+- name: save config
+  vyos_config:
+    save: true
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: save config again
+  vyos_config:
+    save: true
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    provider: "{{ cli }}"
+    match: none
+    save: true
+
+- debug: msg="END cli/simple.yaml"

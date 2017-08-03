@@ -14,15 +14,15 @@ Language
   * While not all components of Ansible must be in Python, core contributions to the Ansible repo must be written in Python.  This is to maximize the ability of everyone to contribute.
   * If you want to write non-Python ansible modules or inventory scripts, that's fine, but they are not going to get merged in most likely.  Sorry!!  
 
-PEP8 and basic style checks
+PEP 8 and basic style checks
 ===========================
 
-  * PEP8 is a great Python style guide, which you should read.
-  * PEP8 must not be strictly followed in all aspects, but most of it is good advice
+  * [PEP 8](https://www.python.org/dev/peps/pep-0008/) is a great Python style guide, which you should read.
+  * PEP 8 must not be strictly followed in all aspects, but most of it is good advice
   * In particular, we don't really care about line lengths.  Buy a bigger monitor!
-  * To run checks for things we care about, run "make pep8"
+  * To run checks for things we care about, use [ansible-test](http://docs.ansible.com/ansible/dev_guide/testing_pep8.html#running-locally).
   * Similarly, additional checks can be made with "make pyflakes"
-  * There is no need to submit code changes for pep8 and pyflake fixes, as these break attribution history.  Project leadership will make these periodically.
+  * There is no need to submit code changes for PEP 8 and pyflakes fixes, as these break attribution history.  Project leadership will make these periodically.
   * Do not submit pull requests that simply adjust whitespace in the code
 
 Testing
@@ -101,21 +101,21 @@ Use the dict constructor where possible when allocating dictionaries:
 
     # this:
     foo = dict(
-       a = 12,
-       b = 34
+       a=12,
+       b=34,
     )
 
-Line up variables
+Do not line up variables
 
     # not this
-    a  = 12
-    foosball = 34
-    xyz = 'dog'
-
-    # this
     a        = 12
     foosball = 34
     xyz      = 'dog'
+
+    # this
+    a = 12
+    foosball = 34
+    xyz = 'dog'
 
 Don't use line continuations:
 
@@ -131,13 +131,13 @@ Don't use line continuations:
 Spacing:
 
     # no
-    x=[1,2,3]
-
-    # no
     x = [1,2,3]
 
-    # yes
+    # no
     x = [ 1, 2, 3 ]
+
+    # yes
+    x = [1, 2, 3]
 
 Spacing continued:
 
@@ -314,7 +314,3 @@ This was not meant to be a scary document, so we hope it wasn't, but we also hop
 If you have questions about this document, please ask on the ansible-devel mailing list.
 
 Thank you!
-
-
-
-

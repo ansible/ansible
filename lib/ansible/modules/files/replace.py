@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Evan Kaufman <evan@digitalflophouse.com
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2013, Evan Kaufman <evan@digitalflophouse.com
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -96,6 +86,12 @@ options:
     version_added: "1.9"
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+  encoding:
+    required: false
+    default: "utf-8"
+    version_added: "2.4"
+    description:
+      - "The character encoding for reading and writing the file."
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
@@ -168,7 +164,7 @@ def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd,'wb')
-    f.write(to_bytes(contents))
+    f.write(contents)
     f.close()
 
     validate = module.params.get('validate', None)
@@ -208,6 +204,7 @@ def main():
             before=dict(required=False),
             backup=dict(default=False, type='bool'),
             validate=dict(default=None, type='str'),
+            encoding=dict(default='utf-8', type='str'),
         ),
         add_file_common_args=True,
         supports_check_mode=True
@@ -215,7 +212,13 @@ def main():
 
     params = module.params
     path = params['path']
+    encoding = params['encoding']
     res_args = dict()
+
+    params['after'] = to_text(params['after'], errors='surrogate_or_strict', nonstring='passthru')
+    params['before'] = to_text(params['before'], errors='surrogate_or_strict', nonstring='passthru')
+    params['regexp'] = to_text(params['regexp'], errors='surrogate_or_strict', nonstring='passthru')
+    params['replace'] = to_text(params['replace'], errors='surrogate_or_strict', nonstring='passthru')
 
     if os.path.isdir(path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
@@ -224,33 +227,35 @@ def main():
         module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
         f = open(path, 'rb')
-        contents = to_text(f.read(), errors='surrogate_or_strict')
+        contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
         f.close()
 
-    pattern = ''
-    if params['after']:
-        pattern = '%s(.*)' % params['after']
+    pattern = u''
+    if params['after'] and params['before']:
+        pattern = u'%s(?P<subsection>.*?)%s' % (params['before'], params['after'])
+    elif params['after']:
+        pattern = u'%s(?P<subsection>.*)' % params['after']
     elif params['before']:
-        pattern = '(.*)%s' % params['before']
-    elif params['after'] and params['before']:
-        pattern = '%s(.*?)%s' % (params['before'], params['after'])
+        pattern = u'(?P<subsection>.*)%s' % params['before']
 
     if pattern:
         section_re = re.compile(pattern, re.DOTALL)
         match = re.search(section_re, contents)
         if match:
-            section = match.group(0)
-
-        mre = re.compile(params['regexp'], re.MULTILINE)
-        result = re.subn(mre, params['replace'], section, 0)
-        if result[1] > 0 and section != result[0]:
-            result = (contents.replace(section, result[0]), result[1])
-
+            section = match.group('subsection')
+        else:
+            res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
+            res_args['changed'] = False
+            module.exit_json(**res_args)
     else:
-        mre = re.compile(params['regexp'], re.MULTILINE)
-        result = re.subn(mre, params['replace'], contents, 0)
+        section = contents
 
-    if result[1] > 0 and contents != result[0]:
+    mre = re.compile(params['regexp'], re.MULTILINE)
+    result = re.subn(mre, params['replace'], section, 0)
+
+    if result[1] > 0 and section != result[0]:
+        if pattern:
+            result = (contents.replace(section, result[0]), result[1])
         msg = '%s replacements made' % result[1]
         changed = True
         if module._diff:
@@ -269,7 +274,7 @@ def main():
             res_args['backup_file'] = module.backup_local(path)
         if params['follow'] and os.path.islink(path):
             path = os.path.realpath(path)
-        write_changes(module, result[0], path)
+        write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)

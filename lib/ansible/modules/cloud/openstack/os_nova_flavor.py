@@ -85,7 +85,7 @@ options:
      default: "auto"
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
    extra_specs:
      description:
@@ -130,7 +130,7 @@ RETURN = '''
 flavor:
     description: Dictionary describing the flavor.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Flavor ID.

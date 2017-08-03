@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Matt Wright <matt@nobien.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -84,7 +73,9 @@ options:
     description:
       - The Python executable used for creating the virtual environment.
         For example C(python3.5), C(python2.7). When not specified, the
-        Python version used to run the ansible module is used.
+        Python version used to run the ansible module is used. This parameter
+        should not be used when C(virtualenv_command) is using C(pyvenv) or
+        the C(-m venv) module.
     required: false
     default: null
   state:
@@ -102,9 +93,9 @@ options:
     version_added: "1.0"
   editable:
     description:
-      - Pass the editable flag for versioning URLs.
+      - Pass the editable flag.
     required: false
-    default: yes
+    default: false
     version_added: "2.0"
   chdir:
     description:
@@ -159,10 +150,9 @@ EXAMPLES = '''
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
-# Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
+# Install MyApp using one of the remote protocols (bzr+,hg+,git+).
 - pip:
     name: git+http://myrepo/app/MyApp
-    editable: false
 
 # Install (MyApp) from local tarball
 - pip:
@@ -184,6 +174,11 @@ EXAMPLES = '''
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_command: virtualenv-2.7
+
+# Install (Bottle) within a user home directory.
+- pip:
+    name: bottle
+    extra_args: --user
 
 # Install specified python requirements.
 - pip:
@@ -216,14 +211,15 @@ EXAMPLES = '''
   become: True
 '''
 
-import tempfile
-import re
 import os
+import re
 import sys
+import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
+
 
 #: Python one-liners to be run at the command line that will determine the
 # installed version for these special libraries.  These are libraries that
@@ -392,17 +388,17 @@ def main():
             state=dict(default='present', choices=state_map.keys()),
             name=dict(type='list'),
             version=dict(type='str'),
-            requirements=dict(),
+            requirements=dict(type='str'),
             virtualenv=dict(type='path'),
             virtualenv_site_packages=dict(default=False, type='bool'),
             virtualenv_command=dict(default='virtualenv', type='path'),
             virtualenv_python=dict(type='str'),
             use_mirrors=dict(default=True, type='bool'),
-            extra_args=dict(),
-            editable=dict(default=True, type='bool'),
+            extra_args=dict(type='str'),
+            editable=dict(default=False, type='bool'),
             chdir=dict(type='path'),
             executable=dict(type='path'),
-            umask=dict(),
+            umask=dict(type='str'),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
@@ -457,16 +453,27 @@ def main():
                     if '--no-site-packages' in cmd_opts:
                         cmd += ' --no-site-packages'
 
-                if virtualenv_python:
-                    cmd += ' -p%s' % virtualenv_python
-                elif PY3:
-                    # Ubuntu currently has a patch making virtualenv always
-                    # try to use python2.  Since Ubuntu16 works without
-                    # python2 installed, this is a problem.  This code mimics
-                    # the upstream behaviour of using the python which invoked
-                    # virtualenv to determine which python is used inside of
-                    # the virtualenv (when none are specified).
-                    cmd += ' -p%s' % sys.executable
+                # -p is a virtualenv option, not compatible with pyenv or venv
+                # this if validates if the command being used is not any of them
+                if not any(ex in module.params['virtualenv_command'] for ex in ('pyvenv', '-m venv')):
+                    if virtualenv_python:
+                        cmd += ' -p%s' % virtualenv_python
+                    elif PY3:
+                        # Ubuntu currently has a patch making virtualenv always
+                        # try to use python2.  Since Ubuntu16 works without
+                        # python2 installed, this is a problem.  This code mimics
+                        # the upstream behaviour of using the python which invoked
+                        # virtualenv to determine which python is used inside of
+                        # the virtualenv (when none are specified).
+                        cmd += ' -p%s' % sys.executable
+
+                # if venv or pyvenv are used and virtualenv_python is defined, then
+                # virtualenv_python is ignored, this has to be acknowledged
+                elif module.params['virtualenv_python']:
+                    module.fail_json(
+                        msg='virtualenv_python should not be used when'
+                            ' using the venv module or pyvenv as virtualenv_command'
+                    )
 
                 cmd = "%s %s" % (cmd, env)
                 rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
@@ -498,7 +505,7 @@ def main():
                     has_vcs = True
                     break
 
-        if has_vcs and module.params['editable']:
+        if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
                 args_list = extra_args.split(' ')
@@ -519,8 +526,6 @@ def main():
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
-                module.exit_json(changed=True)
-            elif has_vcs:
                 module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
@@ -550,10 +555,9 @@ def main():
                         break
             module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
+        out_freeze_before = None
         if requirements or has_vcs:
             _, out_freeze_before, _ = _get_packages(module, pip, chdir)
-        else:
-            out_freeze_before = None
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -570,11 +574,8 @@ def main():
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
             else:
-                if out_freeze_before is None:
-                    changed = 'Successfully installed' in out_pip
-                else:
-                    _, out_freeze_after, _ = _get_packages(module, pip, chdir)
-                    changed = out_freeze_before != out_freeze_after
+                _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                changed = out_freeze_before != out_freeze_after
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                          state=state, requirements=requirements, virtualenv=env,
@@ -582,6 +583,7 @@ def main():
     finally:
         if old_umask is not None:
             os.umask(old_umask)
+
 
 if __name__ == '__main__':
     main()

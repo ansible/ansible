@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 DOCUMENTATION = '''
 ---
@@ -148,26 +138,24 @@ stdout:
     returned: On create/update will return the newly modified user, on delete
               it will return the deleted record.
     type: dict
-    sample": {
-        "changed": true,
-        "msg": "Added user to mysql_users",
-        "state": "present",
-        "user": {
-            "active": "1",
-            "backend": "1",
-            "default_hostgroup": "1",
-            "default_schema": null,
-            "fast_forward": "0",
-            "frontend": "1",
-            "max_connections": "10000",
-            "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
-            "schema_locked": "0",
-            "transaction_persistent": "0",
-            "use_ssl": "0",
-            "username": "guest_ro"
-        },
-        "username": "guest_ro"
-    }
+    sample:
+        changed: true
+        msg: Added user to mysql_users
+        state: present
+        user:
+            active: 1
+            backend: 1
+            default_hostgroup: 1
+            default_schema: null
+            fast_forward: 0
+            frontend: 1
+            max_connections: 10000
+            password: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
+            schema_locked: 0
+            transaction_persistent: 0
+            use_ssl: 0
+            username: guest_ro
+        username: guest_ro
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -177,8 +165,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 try:
     import MySQLdb
@@ -464,10 +452,9 @@ def main():
                                login_password,
                                config_file,
                                cursor_class=MySQLdb.cursors.DictCursor)
-    except MySQLdb.Error:
-        e = get_exception()
+    except MySQLdb.Error as e:
         module.fail_json(
-            msg="unable to connect to ProxySQL Admin Module.. %s" % e
+            msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
 
     proxysql_user = ProxySQLUser(module)
@@ -494,10 +481,9 @@ def main():
                                  " and doesn't need to be updated.")
                 result['user'] = \
                     proxysql_user.get_user_config(cursor)
-        except MySQLdb.Error:
-            e = get_exception()
+        except MySQLdb.Error as e:
             module.fail_json(
-                msg="unable to modify user.. %s" % e
+                msg="unable to modify user.. %s" % to_native(e)
             )
 
     elif proxysql_user.state == "absent":
@@ -510,10 +496,9 @@ def main():
                 result['changed'] = False
                 result['msg'] = ("The user is already absent from the" +
                                  " mysql_users memory configuration")
-        except MySQLdb.Error:
-            e = get_exception()
+        except MySQLdb.Error as e:
             module.fail_json(
-                msg="unable to remove user.. %s" % e
+                msg="unable to remove user.. %s" % to_native(e)
             )
 
     module.exit_json(**result)

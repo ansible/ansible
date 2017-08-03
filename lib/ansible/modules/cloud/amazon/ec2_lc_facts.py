@@ -83,7 +83,8 @@ EXAMPLES = '''
 RETURN = '''
 block_device_mapping:
     description: Block device mapping for the instances of launch configuration
-    type: list of block devices
+    type: list
+    returned: always
     sample: "[{
         'device_name': '/dev/xvda':,
         'ebs': {
@@ -94,58 +95,71 @@ block_device_mapping:
 classic_link_vpc_security_groups:
     description: IDs of one or more security groups for the VPC specified in classic_link_vpc_id
     type: string
+    returned: always
     sample:
 created_time:
     description: The creation date and time for the launch configuration
     type: string
+    returned: always
     sample: "2016-05-27T13:47:44.216000+00:00"
 ebs_optimized:
     description: EBS I/O optimized (true ) or not (false )
     type: bool
+    returned: always
     sample: true,
 image_id:
     description: ID of the Amazon Machine Image (AMI)
     type: string
+    returned: always
     sample: "ami-12345678"
 instance_monitoring:
     description: Launched with detailed monitoring or not
     type: dict
+    returned: always
     sample: "{
         'enabled': true
     }"
 instance_type:
     description: Instance type
     type: string
+    returned: always
     sample: "t2.micro"
 kernel_id:
     description: ID of the kernel associated with the AMI
     type: string
+    returned: always
     sample:
 key_name:
     description: Name of the key pair
     type: string
+    returned: always
     sample: "user_app"
 launch_configuration_arn:
     description: Amazon Resource Name (ARN) of the launch configuration
     type: string
+    returned: always
     sample: "arn:aws:autoscaling:us-east-1:666612345678:launchConfiguration:ba785e3a-dd42-6f02-4585-ea1a2b458b3d:launchConfigurationName/lc-app"
 launch_configuration_name:
     description: Name of the launch configuration
     type: string
+    returned: always
     sample: "lc-app"
 ramdisk_id:
     description: ID of the RAM disk associated with the AMI
     type: string
+    returned: always
     sample:
 security_groups:
     description: Security groups to associated
     type: list
+    returned: always
     sample: "[
         'web'
     ]"
 user_data:
     description: User data available
     type: string
+    returned: always
     sample:
 '''
 
@@ -155,6 +169,8 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.ec2 import paging
 
 
 def list_launch_configs(connection, module):
@@ -166,7 +182,8 @@ def list_launch_configs(connection, module):
     sort_end = module.params.get('sort_end')
 
     try:
-        launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=launch_config_name)
+        launch_configs = {'LaunchConfigurations': paging(pause=0, marker_property='NextToken', result_key='LaunchConfigurations')
+                                                        (connection.describe_launch_configurations)(LaunchConfigurationNames=launch_config_name)}
     except ClientError as e:
         module.fail_json(msg=e.message)
 

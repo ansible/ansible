@@ -122,5 +122,3 @@ class TestIosVrfModule(TestIosModule):
         commands = ['no vrf definition test_1', 'vrf definition test_2',
                     'description test string']
         self.execute_module(changed=True, commands=commands, sort=False)
-
-

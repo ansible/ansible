@@ -35,9 +35,10 @@ short_description: Installs/Uninstalls an installable package, either from local
 description:
      - Installs or uninstalls a package.
      - >
-       Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry
+       Use a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry
        either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs
        C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
+     - For non-Windows targets, use the M(package) module instead.
 options:
   path:
     description:
@@ -88,6 +89,8 @@ options:
       - If not provided, defaults to 0
     required: no
     default: 0
+notes:
+     - For non-Windows targets, use the M(package) module instead.
 '''
 
 EXAMPLES = r'''

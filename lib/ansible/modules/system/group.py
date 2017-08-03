@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -32,6 +22,7 @@ short_description: Add or remove groups
 requirements: [ groupadd, groupdel, groupmod ]
 description:
     - Manage presence of groups on a host.
+    - For Windows targets, use the M(win_group) module instead.
 options:
     name:
         required: true
@@ -53,7 +44,8 @@ options:
         choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
-
+notes:
+    - For Windows targets, use the M(win_group) module instead.
 '''
 
 EXAMPLES = '''
@@ -64,7 +56,9 @@ EXAMPLES = '''
 '''
 
 import grp
-import platform
+
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+
 
 class Group(object):
     """
@@ -353,7 +347,6 @@ class OpenBsdGroup(Group):
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
-        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
@@ -395,7 +388,6 @@ class NetBsdGroup(Group):
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
-        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
@@ -469,8 +461,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -79,6 +79,7 @@ options:
     choices: ['true', 'false']
 requirements:
   - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed
@@ -98,8 +99,8 @@ EXAMPLES = """
     reboot: no
 """
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, get_param
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.junos import junos_argument_spec
 
 try:
     from jnpr.junos import Device
@@ -109,8 +110,6 @@ try:
 except ImportError:
     HAS_PYEZ = False
 
-
-get_param = lambda x, y: x.params[y] or x.params['provider'].get(y)
 
 def connect(module):
     host = get_param(module, 'host')
@@ -134,16 +133,18 @@ def connect(module):
         device.timeout = get_param(module, 'timeout') or 10
     except ConnectError:
         exc = get_exception()
-        self.raise_exc('unable to connect to %s: %s' % (host, str(exc)))
+        module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
 
     return device
+
 
 def install_package(module, device):
     junos = SW(device)
     package = module.params['src']
     no_copy = module.params['no_copy']
 
-    progress_log = lambda x, y: module.log(y)
+    def progress_log(dev, report):
+        module.log(report)
 
     module.log('installing package')
     result = junos.install(package, progress=progress_log, no_copy=no_copy)

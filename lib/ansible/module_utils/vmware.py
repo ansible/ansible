@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.six import iteritems
 import atexit
+import os
 import ssl
 import time
 
@@ -30,6 +30,9 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six import integer_types, iteritems, string_types
 
 
 class TaskError(Exception):
@@ -52,6 +55,30 @@ def wait_for_task(task):
             time.sleep(15)
 
 
+def find_obj(content, vimtype, name, first=True):
+    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
+    obj_list = container.view
+    container.Destroy()
+
+    # Backward compatible with former get_obj() function
+    if name is None:
+        if obj_list:
+            return obj_list[0]
+        return None
+
+    # Select the first match
+    if first is True:
+        for obj in obj_list:
+            if obj.name == name:
+                return obj
+
+        # If no object found, return None
+        return None
+
+    # Return all matching objects if needed
+    return [obj for obj in obj_list if obj.name == name]
+
+
 def find_dvspg_by_name(dv_switch, portgroup_name):
 
     portgroups = dv_switch.portgroup
@@ -70,7 +97,7 @@ def find_entity_child_by_path(content, entityRootFolder, path):
     paths = path.split("/")
     try:
         for path in paths:
-            entity = searchIndex.FindChild (entity, path)
+            entity = searchIndex.FindChild(entity, path)
 
         if entity.name == paths[-1]:
             return entity
@@ -115,6 +142,7 @@ def find_datacenter_by_name(content, datacenter_name):
 
     return None
 
+
 def find_datastore_by_name(content, datastore_name):
 
     datastores = get_all_objs(content, [vim.Datastore])
@@ -143,19 +171,16 @@ def find_hostsystem_by_name(content, hostname):
     return None
 
 
-def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None):
+def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
     """ UUID is unique to a VM, every other id returns the first match. """
     si = content.searchIndex
     vm = None
 
     if vm_id_type == 'dns_name':
         vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
-    elif vm_id_type == 'inventory_path':
-        vm = si.FindByInventoryPath(inventoryPath=vm_id)
-        if isinstance(vm, vim.VirtualMachine):
-            vm = None
     elif vm_id_type == 'uuid':
-        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=vm_id, vmSearch=True)
+        # Search By BIOS UUID rather than instance UUID
+        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=False, uuid=vm_id, vmSearch=True)
     elif vm_id_type == 'ip':
         vm = si.FindByIp(datacenter=datacenter, ip=vm_id, vmSearch=True)
     elif vm_id_type == 'vm_name':
@@ -165,7 +190,20 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
         elif datacenter:
             folder = datacenter.hostFolder
         vm = find_vm_by_name(content, vm_id, folder)
-
+    elif vm_id_type == 'inventory_path':
+        searchpath = folder
+        # get all objects for this path
+        f_obj = si.FindByInventoryPath(searchpath)
+        if f_obj:
+            if isinstance(f_obj, vim.Datacenter):
+                f_obj = f_obj.vmFolder
+            for c_obj in f_obj.childEntity:
+                if not isinstance(c_obj, vim.VirtualMachine):
+                    continue
+                if c_obj.name == vm_id:
+                    vm = c_obj
+                    if match_first:
+                        break
     return vm
 
 
@@ -186,6 +224,35 @@ def find_host_portgroup_by_name(host, portgroup_name):
     return None
 
 
+def compile_folder_path_for_object(vobj):
+    """ make a /vm/foo/bar/baz like folder path for an object """
+
+    paths = []
+    if isinstance(vobj, vim.Folder):
+        paths.append(vobj.name)
+
+    thisobj = vobj
+    while hasattr(thisobj, 'parent'):
+        thisobj = thisobj.parent
+        if isinstance(thisobj, vim.Folder):
+            paths.append(thisobj.name)
+    paths.reverse()
+    if paths[0] == 'Datacenters':
+        paths.remove('Datacenters')
+    return '/' + '/'.join(paths)
+
+
+def _get_vm_prop(vm, attributes):
+    """Safely get a property or return None"""
+    result = vm
+    for attribute in attributes:
+        try:
+            result = getattr(result, attribute)
+        except (AttributeError, IndexError):
+            return None
+    return result
+
+
 def gather_vm_facts(content, vm):
     """ Gather facts from vim.VirtualMachine object. """
     facts = {
@@ -198,8 +265,8 @@ def gather_vm_facts(content, vm):
         'hw_processor_count': vm.config.hardware.numCPU,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
-        'guest_tools_status': vm.guest.toolsRunningStatus,
-        'guest_tools_version': vm.guest.toolsVersion,
+        'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
+        'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
         'ipv4': None,
         'ipv6': None,
         'annotation': vm.config.annotation,
@@ -222,8 +289,10 @@ def gather_vm_facts(content, vm):
         facts['customvalues'][kn] = value_obj.value
 
     net_dict = {}
-    for device in vm.guest.net:
-        net_dict[device.macAddress] = list(device.ipAddress)
+    vmnet = _get_vm_prop(vm, ('guest', 'net'))
+    if vmnet:
+        for device in vmnet:
+            net_dict[device.macAddress] = list(device.ipAddress)
 
     for k, v in iteritems(net_dict):
         for ipaddress in v:
@@ -238,13 +307,19 @@ def gather_vm_facts(content, vm):
         if not hasattr(entry, 'macAddress'):
             continue
 
+        if entry.macAddress:
+            mac_addr = entry.macAddress
+            mac_addr_dash = mac_addr.replace(':', '-')
+        else:
+            mac_addr = mac_addr_dash = None
+
         factname = 'hw_eth' + str(ethernet_idx)
         facts[factname] = {
             'addresstype': entry.addressType,
             'label': entry.deviceInfo.label,
-            'macaddress': entry.macAddress,
+            'macaddress': mac_addr,
             'ipaddresses': net_dict.get(entry.macAddress, None),
-            'macaddress_dash': entry.macAddress.replace(':', '-'),
+            'macaddress_dash': mac_addr_dash,
             'summary': entry.deviceInfo.summary,
         }
         facts['hw_interfaces'].append('eth' + str(ethernet_idx))
@@ -284,6 +359,9 @@ def get_current_snap_obj(snapshots, snapob):
 
 def list_snapshots(vm):
     result = {}
+    snapshot = _get_vm_prop(vm, ('vm', 'snapshot'))
+    if not snapshot:
+        return result
     if vm.snapshot is None:
         return result
 
@@ -327,7 +405,7 @@ def connect_to_api(module, disconnect_atexit=True):
             service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
         else:
             module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
-    except Exception as e:
+    except:
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         context.verify_mode = ssl.CERT_NONE
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
@@ -351,8 +429,7 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     return obj
 
 
-def fetch_file_from_guest(content, vm, username, password, src, dest):
-
+def fetch_file_from_guest(module, content, vm, username, password, src, dest):
     """ Use VMWare's filemanager api to fetch a file over http """
 
     result = {'failed': False}
@@ -376,7 +453,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     result['url'] = fti.url
 
     # Use module_utils to fetch the remote url returned from the api
-    rsp, info = fetch_url(self.module, fti.url, use_proxy=False,
+    rsp, info = fetch_url(module, fti.url, use_proxy=False,
                           force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -400,8 +477,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     return result
 
 
-def push_file_to_guest(content, vm, username, password, src, dest, overwrite=True):
-
+def push_file_to_guest(module, content, vm, username, password, src, dest, overwrite=True):
     """ Use VMWare's filemanager api to fetch a file over http """
 
     result = {'failed': False}
@@ -437,7 +513,7 @@ def push_file_to_guest(content, vm, username, password, src, dest, overwrite=Tru
                                     filesize, overwrite)
 
     # PUT the filedata to the url ...
-    rsp, info = fetch_url(self.module, url, method="put", data=fdata,
+    rsp, info = fetch_url(module, url, method="put", data=fdata,
                           use_proxy=False, force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -456,7 +532,7 @@ def run_command_in_guest(content, vm, username, password, program_path, program_
 
     tools_status = vm.guest.toolsStatus
     if (tools_status == 'toolsNotInstalled' or
-                tools_status == 'toolsNotRunning'):
+            tools_status == 'toolsNotRunning'):
         result['failed'] = True
         result['msg'] = "VMwareTools is not installed or is not running in the guest"
         return result
@@ -502,3 +578,48 @@ def run_command_in_guest(content, vm, username, password, program_path, program_
         result['failed'] = True
 
     return result
+
+
+def serialize_spec(clonespec):
+    """Serialize a clonespec or a relocation spec"""
+    data = {}
+    attrs = dir(clonespec)
+    attrs = [x for x in attrs if not x.startswith('_')]
+    for x in attrs:
+        xo = getattr(clonespec, x)
+        if callable(xo):
+            continue
+        xt = type(xo)
+        if xo is None:
+            data[x] = None
+        elif issubclass(xt, list):
+            data[x] = []
+            for xe in xo:
+                data[x].append(serialize_spec(xe))
+        elif issubclass(xt, string_types + integer_types + (float, bool)):
+            data[x] = xo
+        elif issubclass(xt, dict):
+            data[x] = {}
+            for k, v in xo.items():
+                data[x][k] = serialize_spec(v)
+        elif isinstance(xo, vim.vm.ConfigSpec):
+            data[x] = serialize_spec(xo)
+        elif isinstance(xo, vim.vm.RelocateSpec):
+            data[x] = serialize_spec(xo)
+        elif isinstance(xo, vim.vm.device.VirtualDisk):
+            data[x] = serialize_spec(xo)
+        elif isinstance(xo, vim.Description):
+            data[x] = {
+                'dynamicProperty': serialize_spec(xo.dynamicProperty),
+                'dynamicType': serialize_spec(xo.dynamicType),
+                'label': serialize_spec(xo.label),
+                'summary': serialize_spec(xo.summary),
+            }
+        elif hasattr(xo, 'name'):
+            data[x] = str(xo) + ':' + xo.name
+        elif isinstance(xo, vim.vm.ProfileSpec):
+            pass
+        else:
+            data[x] = str(xt)
+
+    return data

@@ -7,11 +7,109 @@
     limit_to: "*"
     debug: false
 
-  roles:
-    - { role: eos_banner, when: "limit_to in ['*', 'eos_banner']" }
-    - { role: eos_command, when: "limit_to in ['*', 'eos_command']" }
-    - { role: eos_config, when: "limit_to in ['*', 'eos_config']" }
-    - { role: eos_template, when: "limit_to in ['*', 'eos_template']" }
-    - { role: eos_facts, when: "limit_to in ['*', 'eos_facts']" }
-    - { role: eos_eapi, debug: yes, when: "limit_to in ['*', 'eos_eapi']" }
-    - { role: eos_system, debug: yes, when: "limit_to in ['*', 'eos_system']" }
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
+
+
+  tasks:
+    - set_fact:
+        test_failed: false
+        failed_modules: []
+    - block:
+      - include_role:
+          name: eos_banner
+        when: "limit_to in ['*', 'eos_banner']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_banner' ]"
+            test_failed: true
+    - block:
+      - include_role:
+          name: eos_command
+        when: "limit_to in ['*', 'eos_command']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_command' ]"
+            test_failed: true
+    - block:
+      - include_role:
+          name: eos_config
+        when: "limit_to in ['*', 'eos_config']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_config' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_facts
+        when: "limit_to in ['*', 'eos_facts']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_facts' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_eapi
+        when: "limit_to in ['*', 'eos_eapi']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_eapi' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_system
+        when: "limit_to in ['*', 'eos_system']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_system' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_user
+        when: "limit_to in ['*', 'eos_user']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_user' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_vlan
+        when: "limit_to in ['*', 'eos_vlan']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_vlan' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_vrf
+        when: "limit_to in ['*', 'eos_vrf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_vrf' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_logging
+        when: "limit_to in ['*', 'eos_logging']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_logging' ]"
+            test_failed: true
+
+
+
+###########
+    - debug: var=failed_modules
+      when: test_failed
+
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed

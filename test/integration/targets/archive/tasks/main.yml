@@ -1,0 +1,228 @@
+# Test code for the archive module.
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Make sure we start fresh
+
+- name: Ensure zip is present to create test archive (yum)
+  yum: name=zip state=latest
+  when: ansible_pkg_mgr == 'yum'
+
+- name: Ensure zip is present to create test archive (apt)
+  apt: name=zip state=latest
+  when: ansible_pkg_mgr == 'apt'
+
+- name: prep our file
+  copy: src={{ item }} dest={{output_dir}}/{{ item }}
+  with_items:
+    - foo.txt
+    - bar.txt
+
+- name: archive using gz
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/archive_01.gz"
+    format: gz
+  register: archive_gz_result_01
+
+- debug: msg="{{ archive_gz_result_01 }}"
+
+- name: verify that the files archived
+  file: path={{output_dir}}/archive_01.gz state=file
+
+- name: check if gz file exists
+  assert:
+    that:
+      - "{{ archive_gz_result_01.changed }}"
+      - "{{ 'archived' in archive_gz_result_01 }}"
+      - "{{ archive_gz_result_01['archived'] | length }} == 2"
+
+- name: archive using zip
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/archive_01.zip"
+    format: zip
+  register: archive_zip_result_01
+
+- debug: msg="{{ archive_zip_result_01 }}"
+
+- name: verify that the files archived
+  file: path={{output_dir}}/archive_01.zip state=file
+
+- name: check if zip file exists
+  assert:
+    that:
+      - "{{ archive_zip_result_01.changed }}"
+      - "{{ 'archived' in archive_zip_result_01 }}"
+      - "{{ archive_zip_result_01['archived'] | length }} == 2"
+
+- name: archive using bz2
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/archive_01.bz2"
+    format: bz2
+  register: archive_bz2_result_01
+
+- debug: msg="{{ archive_bz2_result_01 }}"
+
+- name: verify that the files archived
+  file: path={{output_dir}}/archive_01.bz2 state=file
+
+- name: check if zip file exists
+  assert:
+    that:
+      - "{{ archive_bz2_result_01.changed }}"
+      - "{{ 'archived' in archive_bz2_result_01 }}"
+      - "{{ archive_bz2_result_01['archived'] | length }} == 2"
+
+- name: archive and set mode to 0600
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/archive_02.gz"
+    format: gz
+    mode: "u+rwX,g-rwx,o-rwx"
+  register: archive_bz2_result_02
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ output_dir }}/archive_02.gz"
+  register: archive_02_gz_stat
+
+- debug: msg="{{ archive_02_gz_stat}}"
+
+- name: Test that the file modes were changed
+  assert:
+    that:
+      - "archive_02_gz_stat.changed == False "
+      - "archive_02_gz_stat.stat.mode == '0600'"
+      - "'archived' in archive_bz2_result_02"
+      - "{{ archive_bz2_result_02['archived']| length}} == 2"
+
+- name: remove our gz
+  file: path="{{ output_dir }}/archive_02.gz" state=absent
+
+
+- name: archive and set mode to 0600
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/archive_02.zip"
+    format: zip
+    mode: "u+rwX,g-rwx,o-rwx"
+  register: archive_zip_result_02
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ output_dir }}/archive_02.zip"
+  register: archive_02_zip_stat
+
+- name: Test that the file modes were changed
+  assert:
+    that:
+      - "archive_02_zip_stat.changed == False"
+      - "archive_02_zip_stat.stat.mode == '0600'"
+      - "'archived' in archive_zip_result_02"
+      - "{{ archive_zip_result_02['archived']| length}} == 2"
+
+- name: remove our zip
+  file: path="{{ output_dir }}/archive_02.zip" state=absent
+
+
+- name: archive and set mode to 0600
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/archive_02.bz2"
+    format: bz2
+    mode: "u+rwX,g-rwx,o-rwx"
+  register: archive_bz2_result_02
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ output_dir }}/archive_02.bz2"
+  register: archive_02_bz2_stat
+
+- name: Test that the file modes were changed
+  assert:
+    that:
+      - "archive_02_bz2_stat.changed == False"
+      - "archive_02_bz2_stat.stat.mode == '0600'"
+      - "'archived' in archive_bz2_result_02"
+      - "{{ archive_bz2_result_02['archived']| length}} == 2"
+
+- name: remove our bz2
+  file: path="{{ output_dir }}/archive_02.bz2" state=absent
+
+- name: test that gz archive that contains non-ascii filenames
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/test-archive-nonascii-くらとみ.tar.gz"
+    format: gz
+  register: nonascii_result_0
+
+- name: Check that file is really there
+  stat:
+    path: "{{ output_dir }}/test-archive-nonascii-くらとみ.tar.gz"
+  register: nonascii_stat0
+
+- name: Assert that nonascii tests succeeded
+  assert:
+    that:
+      - "nonascii_result_0.changed == true"
+      - "nonascii_stat0.stat.exists == true"
+
+- name: remove nonascii test
+  file: path="{{ output_dir }}/test-archive-nonascii-くらとみ.tar.gz" state=absent
+
+- name: test that bz2 archive that contains non-ascii filenames
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/test-archive-nonascii-くらとみ.bz2"
+    format: bz2
+  register: nonascii_result_1
+
+- name: Check that file is really there
+  stat:
+    path: "{{ output_dir }}/test-archive-nonascii-くらとみ.bz2"
+  register: nonascii_stat_1
+
+- name: Assert that nonascii tests succeeded
+  assert:
+    that:
+      - "nonascii_result_1.changed == true"
+      - "nonascii_stat_1.stat.exists == true"
+
+- name: remove nonascii test
+  file: path="{{ output_dir }}/test-archive-nonascii-くらとみ.bz2" state=absent
+
+- name: test that zip archive that contains non-ascii filenames
+  archive:
+    path: "{{ output_dir }}/*.txt"
+    dest: "{{ output_dir }}/test-archive-nonascii-くらとみ.zip"
+    format: zip
+  register: nonascii_result_2
+
+- name: Check that file is really there
+  stat:
+    path: "{{ output_dir }}/test-archive-nonascii-くらとみ.zip"
+  register: nonascii_stat_2
+
+- name: Assert that nonascii tests succeeded
+  assert:
+    that:
+      - "nonascii_result_2.changed == true"
+      - "nonascii_stat_2.stat.exists == true"
+
+- name: remove nonascii test
+  file: path="{{ output_dir }}/test-archive-nonascii-くらとみ.zip" state=absent

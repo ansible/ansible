@@ -1,20 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -39,7 +32,7 @@ options:
     - The ID of the resource to operate on.
   resource_type:
     description:
-    - The type of resource to operate on. Currently only tagging of
+    - The type of resource to operate on. Currently, only tagging of
       droplets is supported.
     default: droplet
     choices: ['droplet']
@@ -115,6 +108,7 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 
 class Response(object):
@@ -129,10 +123,10 @@ class Response(object):
     def json(self):
         if not self.body:
             if "body" in self.info:
-                return json.loads(self.info["body"])
+                return json.loads(to_text(self.info["body"], errors='surrogate_or_strict'))
             return None
         try:
-            return json.loads(self.body)
+            return json.loads(to_text(self.body, errors='surrogate_or_strict'))
         except ValueError:
             return None
 
@@ -153,7 +147,7 @@ class Rest(object):
             path = path[1:]
         return '%s/%s' % (self.baseurl, path)
 
-    def send(self, method, path, data=None, headers=None):
+    def send(self, method, path, data=None):
         url = self._url_builder(path)
         data = self.module.jsonify(data)
 
@@ -161,17 +155,17 @@ class Rest(object):
 
         return Response(resp, info)
 
-    def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
+    def get(self, path, data=None):
+        return self.send('GET', path, data)
 
-    def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
+    def put(self, path, data=None):
+        return self.send('PUT', path, data)
 
-    def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
+    def post(self, path, data=None):
+        return self.send('POST', path, data)
 
-    def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
+    def delete(self, path, data=None):
+        return self.send('DELETE', path, data)
 
 
 def core(module):
@@ -186,57 +180,79 @@ def core(module):
     resource_id = module.params['resource_id']
     resource_type = module.params['resource_type']
 
-    rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
+    rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
                          'Content-type': 'application/json'})
 
-    if state in ('present'):
-        if name is None:
-            module.fail_json(msg='parameter `name` is missing')
-
-        # Ensure Tag exists
-        response = rest.post("tags", data={'name': name})
+    # Check if api_token is valid or not
+    response = rest.get('account')
+    if response.status_code == 401:
+        module.fail_json(msg='Failed to login using api_token, please verify '
+                             'validity of api_token')
+    if state == 'present':
+        response = rest.get('tags/{0}'.format(name))
         status_code = response.status_code
-        json = response.json
-        if status_code == 201:
-            changed = True
-        elif status_code == 422:
+        resp_json = response.json
+        changed = False
+        if status_code == 200 and resp_json['tag']['name'] == name:
             changed = False
         else:
-            module.exit_json(changed=False, data=json)
+            # Ensure Tag exists
+            response = rest.post("tags", data={'name': name})
+            status_code = response.status_code
+            resp_json = response.json
+            if status_code == 201:
+                changed = True
+            elif status_code == 422:
+                changed = False
+            else:
+                module.exit_json(changed=False, data=resp_json)
 
         if resource_id is None:
             # No resource defined, we're done.
-            if json is None:
-                module.exit_json(changed=changed, data=json)
-            else:
-                module.exit_json(changed=changed, data=json)
+            module.exit_json(changed=changed, data=resp_json)
         else:
-            # Tag a resource
-            url = "tags/{}/resources".format(name)
-            payload = {
-                'resources': [{
-                    'resource_id': resource_id,
-                    'resource_type': resource_type}]}
-            response = rest.post(url, data=payload)
-            if response.status_code == 204:
-                module.exit_json(changed=True)
+            # Check if resource is already tagged or not
+            found = False
+            url = "{0}?tag_name={1}".format(resource_type, name)
+            if resource_type == 'droplet':
+                url = "droplets?tag_name={0}".format(name)
+            response = rest.get(url)
+            status_code = response.status_code
+            resp_json = response.json
+            if status_code == 200:
+                for resource in resp_json['droplets']:
+                    if not found and resource['id'] == int(resource_id):
+                        found = True
+                        break
+                if not found:
+                    # If resource is not tagged, tag a resource
+                    url = "tags/{0}/resources".format(name)
+                    payload = {
+                        'resources': [{
+                            'resource_id': resource_id,
+                            'resource_type': resource_type}]}
+                    response = rest.post(url, data=payload)
+                    if response.status_code == 204:
+                        module.exit_json(changed=True)
+                    else:
+                        module.fail_json(msg="error tagging resource '{0}': {1}".format(resource_id, response.json["message"]))
+                else:
+                    # Already tagged resource
+                    module.exit_json(changed=False)
             else:
-                module.fail_json(msg="error tagging resource '{}': {}".format(
-                    resource_id, response.json["message"]))
+                # Unable to find resource specified by user
+                module.fail_json(msg=resp_json['message'])
 
-    elif state in ('absent'):
-        if name is None:
-            module.fail_json(msg='parameter `name` is missing')
-
+    elif state == 'absent':
         if resource_id:
-            url = "tags/{}/resources".format(name)
+            url = "tags/{0}/resources".format(name)
             payload = {
                 'resources': [{
                     'resource_id': resource_id,
                     'resource_type': resource_type}]}
             response = rest.delete(url, data=payload)
         else:
-            url = "tags/{}".format(name)
+            url = "tags/{0}".format(name)
             response = rest.delete(url)
         if response.status_code == 204:
             module.exit_json(changed=True)
@@ -259,6 +275,7 @@ def main():
         core(module)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,69 @@
+---
+- debug: msg="START net_vlan eos/basic.yaml"
+
+- name: setup - remove vlan
+  eos_vlan:
+    vlan_id: 4000
+    name: test-vlan
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: Create vlan
+  net_vlan:
+    vlan_id: 4000
+    name: test-vlan
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vlan 4000' in result.commands"
+      - "'name test-vlan' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Create vlan again (idempotent)
+  net_vlan:
+    vlan_id: 4000
+    name: test-vlan
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
+
+- name: Change vlan name and state
+  net_vlan:
+    vlan_id: 4000
+    name: test-vlan2
+    state: suspend
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vlan 4000' in result.commands"
+      - "'name test-vlan2' in result.commands"
+      - "'state suspend' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

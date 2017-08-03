@@ -164,7 +164,7 @@ options:
       - True if the template type is routing i.e., if template is used to deploy router.
       - Only considered if C(url) is used.
     required: false
-    default: false
+    default: null
   format:
     description:
       - The format for the template.
@@ -622,7 +622,7 @@ def main():
         is_featured = dict(type='bool', default=False),
         is_dynamically_scalable = dict(type='bool', default=False),
         is_extractable = dict(type='bool', default=False),
-        is_routing = dict(type='bool', default=False),
+        is_routing = dict(type='bool', default=None),
         checksum = dict(default=None),
         template_filter = dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         hypervisor = dict(choices=CS_HYPERVISORS, default=None),

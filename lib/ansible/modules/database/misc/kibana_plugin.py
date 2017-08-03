@@ -1,23 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Ansible module to manage elasticsearch shield role
 # (c) 2016, Thierno IB. BARRY @barryib
 # Sponsored by Polyconseil http://polyconseil.fr.
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -110,7 +101,7 @@ url:
     returned: success
     type: string
 timeout:
-    description: the timout for plugin download
+    description: the timeout for plugin download
     returned: success
     type: string
 stdout:
@@ -129,10 +120,14 @@ state:
 
 import os
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 PACKAGE_STATE_MAP = dict(
     present="--install",
     absent="--remove"
 )
+
 
 def parse_plugin_repo(string):
     elements = string.split("/")
@@ -241,7 +236,6 @@ def main():
 
     module.exit_json(changed=changed, cmd=cmd, name=name, state=state, url=url, timeout=timeout, stdout=out, stderr=err)
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

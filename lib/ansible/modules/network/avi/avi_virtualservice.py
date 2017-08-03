@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -26,7 +26,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -53,6 +52,7 @@ options:
             - If one of the serviceengine's in the serviceenginegroup fails, all virtualservices will end up using the same active serviceengine.
             - Redistribution of the virtualservices can be either manual or automated when the failed serviceengine recovers.
             - Redistribution is based on the auto redistribute property of the serviceenginegroup.
+            - Enum options - ACTIVE_STANDBY_SE_1, ACTIVE_STANDBY_SE_2.
             - Default value when not specified in API or module is interpreted by Avi Controller as ACTIVE_STANDBY_SE_1.
     analytics_policy:
         description:
@@ -68,21 +68,26 @@ options:
     auto_allocate_floating_ip:
         description:
             - Auto-allocate floating/elastic ip from the cloud infrastructure.
+            - Field deprecated in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
     auto_allocate_ip:
         description:
             - Auto-allocate vip from the provided subnet.
+            - Field deprecated in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
     availability_zone:
         description:
             - Availability-zone to place the virtual service.
+            - Field deprecated in 17.1.1.
     avi_allocated_fip:
         description:
             - (internal-use) fip allocated by avi in the cloud infrastructure.
+            - Field deprecated in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
     avi_allocated_vip:
         description:
             - (internal-use) vip allocated by avi in the cloud infrastructure.
+            - Field deprecated in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
     client_auth:
         description:
@@ -96,7 +101,8 @@ options:
             - It is a reference to an object of type cloud.
     cloud_type:
         description:
-            - Cloud_type of virtualservice.
+            - Enum options - cloud_none, cloud_vcenter, cloud_openstack, cloud_aws, cloud_vca, cloud_apic, cloud_mesos, cloud_linuxserver, cloud_docker_ucp,
+            - cloud_rancher, cloud_oshift_k8s.
             - Default value when not specified in API or module is interpreted by Avi Controller as CLOUD_NONE.
     connections_rate_limit:
         description:
@@ -120,18 +126,26 @@ options:
             - (internal-use) discovered networks providing reachability for client facing virtual service ip.
             - This field is deprecated.
             - It is a reference to an object of type network.
+            - Field deprecated in 17.1.1.
     discovered_networks:
         description:
             - (internal-use) discovered networks providing reachability for client facing virtual service ip.
             - This field is used internally by avi, not editable by the user.
+            - Field deprecated in 17.1.1.
     discovered_subnet:
         description:
             - (internal-use) discovered subnets providing reachability for client facing virtual service ip.
             - This field is deprecated.
+            - Field deprecated in 17.1.1.
     dns_info:
         description:
             - Service discovery specific data including fully qualified domain name, type and time-to-live of the dns record.
             - Note that only one of fqdn and dns_info setting is allowed.
+    dns_policies:
+        description:
+            - Dns policies applied on the dns traffic of the virtual service.
+            - Field introduced in 17.1.1.
+        version_added: "2.4"
     east_west_placement:
         description:
             - Force placement on all se's in service group (mesos mode only).
@@ -153,18 +167,22 @@ options:
     floating_ip:
         description:
             - Floating ip to associate with this virtual service.
+            - Field deprecated in 17.1.1.
     floating_subnet_uuid:
         description:
             - If auto_allocate_floating_ip is true and more than one floating-ip subnets exist, then the subnet for the floating ip address allocation.
             - This field is applicable only if the virtualservice belongs to an openstack or aws cloud.
             - In openstack or aws cloud it is required when auto_allocate_floating_ip is selected.
+            - Field deprecated in 17.1.1.
     flow_dist:
         description:
             - Criteria for flow distribution among ses.
+            - Enum options - LOAD_AWARE, CONSISTENT_HASH_SOURCE_IP_ADDRESS, CONSISTENT_HASH_SOURCE_IP_ADDRESS_AND_PORT.
             - Default value when not specified in API or module is interpreted by Avi Controller as LOAD_AWARE.
     flow_label_type:
         description:
             - Criteria for flow labelling.
+            - Enum options - NO_LABEL, SERVICE_LABEL.
             - Default value when not specified in API or module is interpreted by Avi Controller as NO_LABEL.
     fqdn:
         description:
@@ -184,6 +202,7 @@ options:
     ip_address:
         description:
             - Ip address of the virtual service.
+            - Field deprecated in 17.1.1.
     ipam_network_subnet:
         description:
             - Subnet and/or network for allocating virtualservice ip by ipam provider module.
@@ -194,6 +213,8 @@ options:
     max_cps_per_client:
         description:
             - Maximum connections per second per client ip.
+            - Allowed values are 10-1000.
+            - Special values are 0- 'unlimited'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     microservice_ref:
         description:
@@ -211,10 +232,16 @@ options:
         description:
             - Manually override the network on which the virtual service is placed.
             - It is a reference to an object of type network.
+            - Field deprecated in 17.1.1.
     network_security_policy_ref:
         description:
             - Network security policies for the virtual service.
             - It is a reference to an object of type networksecuritypolicy.
+    nsx_securitygroup:
+        description:
+            - A list of nsx service groups representing the clients which can access the virtual ip of the virtual service.
+            - Field introduced in 17.1.1.
+        version_added: "2.4"
     performance_limits:
         description:
             - Optional settings that determine performance limits like max connections or bandwdith etc.
@@ -229,6 +256,7 @@ options:
     port_uuid:
         description:
             - (internal-use) network port assigned to the virtual service ip address.
+            - Field deprecated in 17.1.1.
     remove_listening_port_on_vs_down:
         description:
             - Remove listening port if virtualservice is down.
@@ -251,12 +279,22 @@ options:
             - Determines the network settings profile for the server side of tcp proxied connections.
             - Leave blank to use the same settings as the client to vs side of the connection.
             - It is a reference to an object of type networkprofile.
+    service_metadata:
+        description:
+            - Metadata pertaining to the service provided by this virtual service.
+            - In openshift/kubernetes environments, egress pod info is stored.
+            - Any user input to this field will be overwritten by avi vantage.
+        version_added: "2.4"
     service_pool_select:
         description:
             - Select pool based on destination port.
     services:
         description:
             - List of services defined for this virtual service.
+    sideband_profile:
+        description:
+            - Sideband configuration to be used for this virtualservice.it can be used for sending traffic to sideband vips for external inspection etc.
+        version_added: "2.4"
     snat_ip:
         description:
             - Nat'ted floating source ip address(es) for upstream connection to servers.
@@ -271,6 +309,7 @@ options:
     ssl_sess_cache_avg_size:
         description:
             - Expected number of ssl session cache entries (may be exceeded).
+            - Allowed values are 1024-16383.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1024.
     static_dns_records:
         description:
@@ -279,16 +318,25 @@ options:
     subnet:
         description:
             - Subnet providing reachability for client facing virtual service ip.
+            - Field deprecated in 17.1.1.
     subnet_uuid:
         description:
             - It represents subnet for the virtual service ip address allocation when auto_allocate_ip is true.it is only applicable in openstack or aws cloud.
             - This field is required if auto_allocate_ip is true.
+            - Field deprecated in 17.1.1.
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+    traffic_clone_profile_ref:
+        description:
+            - Server network or list of servers for cloning traffic.
+            - It is a reference to an object of type trafficcloneprofile.
+            - Field introduced in 17.1.1.
+        version_added: "2.4"
     type:
         description:
             - Specify if this is a normal virtual service, or if it is the parent or child of an sni-enabled virtual hosted virtual service.
+            - Enum options - VS_TYPE_NORMAL, VS_TYPE_VH_PARENT, VS_TYPE_VH_CHILD.
             - Default value when not specified in API or module is interpreted by Avi Controller as VS_TYPE_NORMAL.
     url:
         description:
@@ -307,6 +355,12 @@ options:
     vh_parent_vs_uuid:
         description:
             - Specifies the virtual service acting as virtual hosting (sni) parent.
+    vip:
+        description:
+            - List of virtual service ips.
+            - While creating a 'shared vs',please use vsvip_ref to point to the shared entities.
+            - Field introduced in 17.1.1.
+        version_added: "2.4"
     vrf_context_ref:
         description:
             - Virtual routing context that the virtual service is bound to.
@@ -315,6 +369,12 @@ options:
     vs_datascripts:
         description:
             - Datascripts applied on the data traffic of the virtual service.
+    vsvip_ref:
+        description:
+            - Mostly used during the creation of shared vs, this fieldrefers to entities that can be shared across virtual services.
+            - It is a reference to an object of type vsvip.
+            - Field introduced in 17.1.1.
+        version_added: "2.4"
     weight:
         description:
             - The quality of service weight to assign to traffic transmitted from this virtual service.
@@ -356,7 +416,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -390,6 +449,7 @@ def main():
         discovered_networks=dict(type='list',),
         discovered_subnet=dict(type='list',),
         dns_info=dict(type='list',),
+        dns_policies=dict(type='list',),
         east_west_placement=dict(type='bool',),
         enable_autogw=dict(type='bool',),
         enable_rhi=dict(type='bool',),
@@ -412,6 +472,7 @@ def main():
         network_profile_ref=dict(type='str',),
         network_ref=dict(type='str',),
         network_security_policy_ref=dict(type='str',),
+        nsx_securitygroup=dict(type='list',),
         performance_limits=dict(type='dict',),
         pool_group_ref=dict(type='str',),
         pool_ref=dict(type='str',),
@@ -421,8 +482,10 @@ def main():
         scaleout_ecmp=dict(type='bool',),
         se_group_ref=dict(type='str',),
         server_network_profile_ref=dict(type='str',),
+        service_metadata=dict(type='str',),
         service_pool_select=dict(type='list',),
         services=dict(type='list',),
+        sideband_profile=dict(type='dict',),
         snat_ip=dict(type='list',),
         ssl_key_and_certificate_refs=dict(type='list',),
         ssl_profile_ref=dict(type='str',),
@@ -431,14 +494,17 @@ def main():
         subnet=dict(type='dict',),
         subnet_uuid=dict(type='str',),
         tenant_ref=dict(type='str',),
+        traffic_clone_profile_ref=dict(type='str',),
         type=dict(type='str',),
         url=dict(type='str',),
         use_bridge_ip_as_vip=dict(type='bool',),
         uuid=dict(type='str',),
         vh_domain_name=dict(type='list',),
         vh_parent_vs_uuid=dict(type='str',),
+        vip=dict(type='list',),
         vrf_context_ref=dict(type='str',),
         vs_datascripts=dict(type='list',),
+        vsvip_ref=dict(type='str',),
         weight=dict(type='int',),
     )
     argument_specs.update(avi_common_argument_spec())
@@ -446,11 +512,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'virtualservice',
                            set([]))
-
 
 if __name__ == '__main__':
     main()

@@ -2,20 +2,12 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2013, Peter Sprygada <sprygada@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -78,12 +70,14 @@ EXAMPLES = '''
 '''
 
 import syslog
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class EjabberdUserException(Exception):
     """ Base exception for EjabberdUser class object """
     pass
+
 
 class EjabberdUser(object):
     """ This object represents a user resource for an ejabberd server.   The
@@ -111,7 +105,6 @@ class EjabberdUser(object):
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('check_password', options)
         except EjabberdUserException:
-            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return rc
 
@@ -125,7 +118,6 @@ class EjabberdUser(object):
             options = [self.user, self.host]
             (rc, out, err) = self.run_command('check_account', options)
         except EjabberdUserException:
-            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return not bool(int(rc))
 
@@ -154,7 +146,6 @@ class EjabberdUser(object):
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('change_password', options)
         except EjabberdUserException:
-            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
@@ -166,7 +157,6 @@ class EjabberdUser(object):
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('register', options)
         except EjabberdUserException:
-            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
@@ -177,26 +167,26 @@ class EjabberdUser(object):
             options = [self.user, self.host]
             (rc, out, err) = self.run_command('unregister', options)
         except EjabberdUserException:
-            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             host=dict(default=None, type='str'),
             username=dict(default=None, type='str'),
             password=dict(default=None, type='str', no_log=True),
             state=dict(default='present', choices=['present', 'absent']),
             logging=dict(default=False, type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     obj = EjabberdUser(module)
 
     rc = None
-    result = dict()
+    result = dict(changed=False)
 
     if obj.state == 'absent':
         if obj.exists:

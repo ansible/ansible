@@ -1,6 +1,54 @@
+---
+# NXAPI is enabled differently on NX-OS platforms.
+# Try both commands to enable NXAPI and ignore any errors.
 - name: enable nxapi on remote device
-  nxos_nxapi:
-    http: yes
-    sandbox: yes
-    state: present
+  nxos_feature:
+    feature: nxapi
+    state: enabled
     provider: "{{ cli }}"
+  ignore_errors: yes
+
+# Gather the list of interfaces on this device and make the list
+# available for integration tests that need them.
+#
+# Usage in integration test playbook:
+#
+#   - set_fact: testint="{{ nxos_int1 }}"
+#
+#   - name: "Interface selected for this test"
+#     debug: msg="{{ testint }}"
+#
+- name: "Collect interface list"
+  nxos_command:
+    commands: ['show interface brief | json']
+    provider: "{{ nxapi }}"
+    timeout: 60
+  register: intout
+
+- set_fact: intdataraw="{{ intout.stdout_lines[0]['TABLE_interface']['ROW_interface'] }}"
+- set_fact: nxos_int1="{{ intdataraw[1].interface }}"
+- set_fact: nxos_int2="{{ intdataraw[2].interface }}"
+- set_fact: nxos_int3="{{ intdataraw[3].interface }}"
+
+# Get platform information for this device
+#
+# Usage in integration test playbook:
+#
+#   - name: "nxos platform "
+#     debug: msg="{{ platform }}"
+#
+- name: "Gather platform info"
+  nxos_command:
+    commands: ['sh inventory | json']
+    provider: "{{ cli }}"
+  register: nxos_inventory_output
+
+- set_fact: platform="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[0] }}"
+
+# Check if platform is fretta
+- set_fact: fretta={% for row in nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'] if 'FM-R' in row['productid'] %}"true"{% endfor %}
+  when: platform | match("N9K")
+
+# Set platform to N9K-F for fretta
+- set_fact: platform="N9K-F"
+  when: (platform | match("N9K")) and (fretta | search("true"))

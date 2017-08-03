@@ -121,7 +121,7 @@ console_timeout:
       The new number of seconds of inactivity before the system
       logs off a user that is logged on.
     returned: changed
-    type: integer
+    type: int
     sample: 600
 gui_setup:
     description: The new setting for the Setup utility.

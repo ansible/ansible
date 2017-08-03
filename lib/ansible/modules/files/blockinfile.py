@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, 2015 YAEGASHI Takeshi <yaegashi@debian.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, 2015 YAEGASHI Takeshi <yaegashi@debian.org>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -71,7 +61,7 @@ options:
       - If specified, the block will be inserted after the last match of
         specified regular expression. A special value is available; C(EOF) for
         inserting the block at the end of the file.  If specified regular
-        expresion has no matches, C(EOF) will be used instead.
+        expression has no matches, C(EOF) will be used instead.
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -80,7 +70,7 @@ options:
       - If specified, the block will be inserted before the last match of
         specified regular expression. A special value is available; C(BOF) for
         inserting the block at the beginning of the file.  If specified regular
-        expresion has no matches, the block will be inserted at the end of the
+        expression has no matches, the block will be inserted at the end of the
         file.
     choices: [ 'BOF', '*regex*' ]
   create:
@@ -166,6 +156,7 @@ import tempfile
 from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
+
 
 def write_changes(module, contents, path):
 

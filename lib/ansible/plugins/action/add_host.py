@@ -45,11 +45,8 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if result.get('skipped', False):
-            return result
-
         # Parse out any hostname:port patterns
-        new_name = self._task.args.get('name', self._task.args.get('hostname', None))
+        new_name = self._task.args.get('name', self._task.args.get('hostname', self._task.args.get('host', None)))
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
         try:
@@ -71,7 +68,7 @@ class ActionModule(ActionBase):
             elif isinstance(groups, string_types):
                 group_list = groups.split(",")
             else:
-                raise AnsibleError("Groups must be specfied as a list.", obj=self._task)
+                raise AnsibleError("Groups must be specified as a list.", obj=self._task)
 
             for group_name in group_list:
                 if group_name not in new_groups:

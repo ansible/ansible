@@ -2,7 +2,17 @@
   vars:
     - test1:
         key1: val1
+  environment:
+    PATH: '{{ansible_env.PATH + ":/lola"}}'
+    lola: 'ido'
   tasks:
+    - name: ensure special case with ansible_env is skipped but others still work
+      assert:
+        that:
+            - lookup('env', 'PATH') == ansible_env.PATH
+            - "'/lola' not in ansible_env.PATH"
+            - ansible_env.lola == 'ido'
+
     - name: check that envvar does not exist
       shell: echo $key1
       register: test_env

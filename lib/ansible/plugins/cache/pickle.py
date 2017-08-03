@@ -17,9 +17,9 @@
 '''
 DOCUMENTATION:
     cache: yaml
-    short_description: File backed, using Python's pickle.
+    short_description: Pickle formatted files.
     description:
-        - File backed cache that uses Python's pickle serialization as a format, the files are per host.
+        - This cache uses Python's pickle serialization format, in per host files, saved to the filesystem.
     version_added: "2.3"
     author: Brian Coca (@bcoca)
 '''
@@ -33,7 +33,9 @@ try:
 except ImportError:
     import pickle
 
+from ansible.module_utils.six import PY3
 from ansible.plugins.cache import BaseFileCacheModule
+
 
 class CacheModule(BaseFileCacheModule):
     """
@@ -43,7 +45,10 @@ class CacheModule(BaseFileCacheModule):
     def _load(self, filepath):
         # Pickle is a binary format
         with open(filepath, 'rb') as f:
-            return pickle.load(f)
+            if PY3:
+                return pickle.load(f, encoding='bytes')
+            else:
+                return pickle.load(f)
 
     def _dump(self, value, filepath):
         with open(filepath, 'wb') as f:

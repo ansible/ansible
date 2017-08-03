@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -115,9 +104,16 @@ EXAMPLES = '''
     vhost: myVhost
 '''
 
-import requests
-import urllib
 import json
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError as e:
+    HAS_REQUESTS = False
+import urllib
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
@@ -144,6 +140,9 @@ def main():
         urllib.quote(module.params['vhost'],''),
         urllib.quote(module.params['name'],'')
     )
+
+    if not HAS_REQUESTS:
+        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
 
     # Check if exchange already exists
     r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
@@ -204,7 +203,8 @@ def main():
         elif module.params['state'] == 'absent':
             r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
 
-        if r.status_code == 204:
+        # RabbitMQ 3.6.7 changed this response code from 204 to 201
+        if r.status_code == 204 or r.status_code == 201:
             module.exit_json(
                 changed = True,
                 name = module.params['name']
@@ -222,8 +222,6 @@ def main():
             name = module.params['name']
         )
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

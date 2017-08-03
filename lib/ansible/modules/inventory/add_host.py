@@ -1,19 +1,11 @@
 # -*- mode: python -*-
+#
+# Copyright: Ansible Team
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -27,6 +19,7 @@ short_description: add a host (and alternatively a group) to the ansible-playboo
 description:
   - Use variables to create new hosts and groups in inventory for use in later plays of the same playbook.
     Takes variables so you can define the new hosts more fully.
+  - This module is also supported for Windows targets.
 version_added: "0.9"
 options:
   name:
@@ -42,6 +35,8 @@ options:
 notes:
     - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
       to iterate use a with\_ directive.
+    - This module is also supported for Windows targets.
+    - The alias 'host' of the parameter 'name' is only available on >=2.4
 author:
     - "Ansible Core Team"
     - "Seth Vidal"

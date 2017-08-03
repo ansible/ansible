@@ -74,12 +74,13 @@ ANSIBLE_ETCD_VERSION = 'v1'
 if os.getenv('ANSIBLE_ETCD_VERSION') is not None:
     ANSIBLE_ETCD_VERSION = os.environ['ANSIBLE_ETCD_VERSION']
 
+
 class Etcd:
     def __init__(self, url=ANSIBLE_ETCD_URL, version=ANSIBLE_ETCD_VERSION,
                  validate_certs=True):
         self.url = url
         self.version = version
-        self.baseurl = '%s/%s/keys' % (self.url,self.version)
+        self.baseurl = '%s/%s/keys' % (self.url, self.version)
         self.validate_certs = validate_certs
 
     def get(self, key):
@@ -110,6 +111,7 @@ class Etcd:
             pass
 
         return value
+
 
 class LookupModule(LookupBase):
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Michael Perzel
+# Copyright 2017 F5 Networks Inc.
 #
 # This file is part of Ansible
 #
@@ -18,150 +18,540 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'metadata_version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
 module: bigip_gtm_wide_ip
-short_description: "Manages F5 BIG-IP GTM wide ip"
+short_description: Manages F5 BIG-IP GTM wide ip.
 description:
-    - "Manages F5 BIG-IP GTM wide ip"
+  - Manages F5 BIG-IP GTM wide ip.
 version_added: "2.0"
-author:
-    - Michael Perzel (@perzizzle)
-    - Tim Rupp (@caphrim007)
-notes:
-    - "Requires BIG-IP software version >= 11.4"
-    - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
-    - "Best run as a local_action in your playbook"
-    - "Tested with manager and above account privilege level"
-
-requirements:
-    - bigsuds
 options:
-    lb_method:
-        description:
-            - LB method of wide ip
-        required: true
-        choices: ['return_to_dns', 'null', 'round_robin',
-                      'ratio', 'topology', 'static_persist', 'global_availability',
-                      'vs_capacity', 'least_conn', 'lowest_rtt', 'lowest_hops',
-                      'packet_rate', 'cpu', 'hit_ratio', 'qos', 'bps',
-                      'drop_packet', 'explicit_ip', 'connection_rate', 'vs_score']
-    wide_ip:
-        description:
-            - Wide IP name
-        required: true
+  lb_method:
+    description:
+      - Specifies the load balancing method used to select a pool in this wide
+        IP. This setting is relevant only when multiple pools are configured
+        for a wide IP.
+    required: True
+    choices:
+      - round-robin
+      - ratio
+      - topology
+      - global-availability
+  name:
+    description:
+      - Wide IP name. This name must be formatted as a fully qualified
+        domain name (FQDN). You can also use the alias C(wide_ip) but this
+        is deprecated and will be removed in a future Ansible version.
+    required: True
+    aliases:
+      - wide_ip
+  type:
+    description:
+      - Specifies the type of wide IP. GTM wide IPs need to be keyed by query
+        type in addition to name, since pool members need different attributes
+        depending on the response RDATA they are meant to supply. This value
+        is required if you are using BIG-IP versions >= 12.0.0.
+    choices:
+      - a
+      - aaaa
+      - cname
+      - mx
+      - naptr
+      - srv
+    version_added: 2.4
+  state:
+    description:
+      - When C(present) or C(enabled), ensures that the Wide IP exists and
+        is enabled. When C(absent), ensures that the Wide IP has been
+        removed. When C(disabled), ensures that the Wide IP exists and is
+        disabled.
+    default: present
+    choices:
+      - present
+      - absent
+      - disabled
+      - enabled
+    version_added: 2.4
+notes:
+  - Requires the f5-sdk Python package on the host. This is as easy as pip
+    install f5-sdk.
 extends_documentation_fragment: f5
+requirements:
+  - f5-sdk
+author:
+  - Tim Rupp (@caphrim007)
 '''
 
 EXAMPLES = '''
-  - name: Set lb method
-    local_action: >
-      bigip_gtm_wide_ip
-      server=192.0.2.1
-      user=admin
-      password=mysecret
-      lb_method=round_robin
-      wide_ip=my-wide-ip.example.com
+- name: Set lb method
+  bigip_gtm_wide_ip:
+      server: "lb.mydomain.com"
+      user: "admin"
+      password: "secret"
+      lb_method: "round-robin"
+      name: "my-wide-ip.example.com"
+  delegate_to: localhost
 '''
 
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
+RETURN = '''
+lb_method:
+    description: The new load balancing method used by the wide IP.
+    returned: changed
+    type: string
+    sample: "topology"
+state:
+    description: The new state of the wide IP.
+    returned: changed
+    type: string
+    sample: "disabled"
+'''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.f5_utils import bigip_api, f5_argument_spec
+import re
+
+from ansible.module_utils.f5_utils import (
+    AnsibleF5Client,
+    AnsibleF5Parameters,
+    HAS_F5SDK,
+    F5ModuleError,
+    iControlUnexpectedHTTPError
+)
+from distutils.version import LooseVersion
 
 
-def get_wide_ip_lb_method(api, wide_ip):
-    lb_method = api.GlobalLB.WideIP.get_lb_method(wide_ips=[wide_ip])[0]
-    lb_method = lb_method.strip().replace('LB_METHOD_', '').lower()
-    return lb_method
+class Parameters(AnsibleF5Parameters):
+    updatables = ['lb_method']
+    returnables = ['name', 'lb_method', 'state']
+    api_attributes = ['poolLbMode', 'enabled', 'disabled']
 
-def get_wide_ip_pools(api, wide_ip):
-    try:
-        return api.GlobalLB.WideIP.get_wideip_pool([wide_ip])
-    except Exception:
-        e = get_exception()
-        print(e)
+    def to_return(self):
+        result = {}
+        for returnable in self.returnables:
+            result[returnable] = getattr(self, returnable)
+        result = self._filter_params(result)
+        return result
 
-def wide_ip_exists(api, wide_ip):
-    # hack to determine if wide_ip exists
-    result = False
-    try:
-        api.GlobalLB.WideIP.get_object_status(wide_ips=[wide_ip])
-        result = True
-    except bigsuds.OperationFailed:
-        e = get_exception()
-        if "was not found" in str(e):
-            result = False
+    def api_params(self):
+        result = {}
+        for api_attribute in self.api_attributes:
+            if self.api_map is not None and api_attribute in self.api_map:
+                result[api_attribute] = getattr(self, self.api_map[api_attribute])
+            else:
+                result[api_attribute] = getattr(self, api_attribute)
+        result = self._filter_params(result)
+        return result
+
+    @property
+    def lb_method(self):
+        deprecated = [
+            'return_to_dns', 'null', 'static_persist', 'vs_capacity',
+            'least_conn', 'lowest_rtt', 'lowest_hops', 'packet_rate', 'cpu',
+            'hit_ratio', 'qos', 'bps', 'drop_packet', 'explicit_ip',
+            'connection_rate', 'vs_score'
+        ]
+        if self._values['lb_method'] is None:
+            return None
+        lb_method = str(self._values['lb_method'])
+        if lb_method in deprecated:
+            raise F5ModuleError(
+                "The provided lb_method is not supported"
+            )
+        elif lb_method == 'global_availability':
+            if self._values['__warnings'] is None:
+                self._values['__warnings'] = []
+            self._values['__warnings'].append(
+                dict(
+                    msg='The provided lb_method is deprecated',
+                    version='2.4'
+                )
+            )
+            lb_method = 'global-availability'
+        elif lb_method == 'round_robin':
+            if self._values['__warnings'] is None:
+                self._values['__warnings'] = []
+            self._values['__warnings'].append(
+                dict(
+                    msg='The provided lb_method is deprecated',
+                    version='2.4'
+                )
+            )
+            lb_method = 'round-robin'
+        return lb_method
+
+    @lb_method.setter
+    def lb_method(self, value):
+        self._values['lb_method'] = value
+
+    @property
+    def collection(self):
+        type_map = dict(
+            a='a_s',
+            aaaa='aaaas',
+            cname='cnames',
+            mx='mxs',
+            naptr='naptrs',
+            srv='srvs'
+        )
+        if self._values['type'] is None:
+            return None
+        wideip_type = self._values['type']
+        return type_map[wideip_type]
+
+    @property
+    def type(self):
+        if self._values['type'] is None:
+            return None
+        return str(self._values['type'])
+
+    @property
+    def name(self):
+        if self._values['name'] is None:
+            return None
+        if not re.search(r'.*\..*\..*', self._values['name']):
+            raise F5ModuleError(
+                "The provided name must be a valid FQDN"
+            )
+        return self._values['name']
+
+    @property
+    def poolLbMode(self):
+        return self.lb_method
+
+    @poolLbMode.setter
+    def poolLbMode(self, value):
+        self.lb_method = value
+
+    @property
+    def state(self):
+        if self._values['state'] == 'enabled':
+            return 'present'
+        return self._values['state']
+
+    @property
+    def enabled(self):
+        if self._values['state'] == 'disabled':
+            return False
+        elif self._values['state'] in ['present', 'enabled']:
+            return True
+        elif self._values['enabled'] is True:
+            return True
         else:
-            # genuine exception
-            raise
-    return result
+            return None
 
-def set_wide_ip_lb_method(api, wide_ip, lb_method):
-    lb_method = "LB_METHOD_%s" % lb_method.strip().upper()
-    api.GlobalLB.WideIP.set_lb_method(wide_ips=[wide_ip], lb_methods=[lb_method])
+    @property
+    def disabled(self):
+        if self._values['state'] == 'disabled':
+            return True
+        elif self._values['state'] in ['present', 'enabled']:
+            return False
+        elif self._values['disabled'] is True:
+            return True
+        else:
+            return None
+
+
+class ModuleManager(object):
+    def __init__(self, client):
+        self.client = client
+
+    def exec_module(self):
+        if self.version_is_less_than_12():
+            manager = self.get_manager('untyped')
+        else:
+            manager = self.get_manager('typed')
+        return manager.exec_module()
+
+    def get_manager(self, type):
+        if type == 'typed':
+            return TypedManager(self.client)
+        elif type == 'untyped':
+            return UntypedManager(self.client)
+
+    def version_is_less_than_12(self):
+        version = self.client.api.tmos_version
+        if LooseVersion(version) < LooseVersion('12.0.0'):
+            return True
+        else:
+            return False
+
+
+class BaseManager(object):
+    def __init__(self, client):
+        self.client = client
+        self.have = None
+        self.want = Parameters(self.client.module.params)
+        self.changes = Parameters()
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = Parameters(changed)
+
+    def _update_changed_options(self):
+        changed = {}
+        for key in Parameters.updatables:
+            if getattr(self.want, key) is not None:
+                attr1 = getattr(self.want, key)
+                attr2 = getattr(self.have, key)
+                if attr1 != attr2:
+                    changed[key] = attr1
+
+        if self.want.state == 'disabled' and self.have.enabled:
+            changed['state'] = self.want.state
+        elif self.want.state in ['present', 'enabled'] and self.have.disabled:
+            changed['state'] = self.want.state
+
+        if changed:
+            self.changes = Parameters(changed)
+            return True
+        return False
+
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        try:
+            if state in ["present", "disabled"]:
+                changed = self.present()
+            elif state == "absent":
+                changed = self.absent()
+        except iControlUnexpectedHTTPError as e:
+            raise F5ModuleError(str(e))
+
+        changes = self.changes.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations()
+        return result
+
+    def _announce_deprecations(self):
+        warnings = []
+        if self.want:
+            warnings += self.want._values.get('__warnings', [])
+        if self.have:
+            warnings += self.have._values.get('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def present(self):
+        if self.want.lb_method is None:
+            raise F5ModuleError(
+                "The 'lb_method' option is required when state is 'present'"
+            )
+        if self.exists():
+            return self.update()
+        else:
+            return self.create()
+
+    def create(self):
+        self._set_changed_options()
+        if self.client.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.client.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def remove(self):
+        if self.client.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the Wide IP")
+        return True
+
+
+class UntypedManager(BaseManager):
+    def exists(self):
+        return self.client.api.tm.gtm.wideips.wideip.exists(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+
+    def update_on_device(self):
+        params = self.want.api_params()
+        result = self.client.api.tm.gtm.wideips.wipeip.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result.modify(**params)
+
+    def read_current_from_device(self):
+        resource = self.client.api.tm.gtm.wideips.wideip.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result = resource.attrs
+        return Parameters(result)
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        self.client.api.tm.gtm.wideips.wideip.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+
+    def remove_from_device(self):
+        result = self.client.api.tm.gtm.wideips.wideip.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        if result:
+            result.delete()
+
+
+class TypedManager(BaseManager):
+    def __init__(self, client):
+        super(TypedManager, self).__init__(client)
+        if self.want.type is None:
+            raise F5ModuleError(
+                "The 'type' option is required for BIG-IP instances "
+                "greater than or equal to 12.x"
+            )
+
+    def exists(self):
+        wideips = self.client.api.tm.gtm.wideips
+        collection = getattr(wideips, self.want.collection)
+        resource = getattr(collection, self.want.type)
+        result = resource.exists(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        return result
+
+    def update_on_device(self):
+        params = self.want.api_params()
+        wideips = self.client.api.tm.gtm.wideips
+        collection = getattr(wideips, self.want.collection)
+        resource = getattr(collection, self.want.type)
+        result = resource.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result.modify(**params)
+
+    def read_current_from_device(self):
+        wideips = self.client.api.tm.gtm.wideips
+        collection = getattr(wideips, self.want.collection)
+        resource = getattr(collection, self.want.type)
+        result = resource.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result = result.attrs
+        return Parameters(result)
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        wideips = self.client.api.tm.gtm.wideips
+        collection = getattr(wideips, self.want.collection)
+        resource = getattr(collection, self.want.type)
+        resource.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+
+    def remove_from_device(self):
+        wideips = self.client.api.tm.gtm.wideips
+        collection = getattr(wideips, self.want.collection)
+        resource = getattr(collection, self.want.type)
+        result = resource.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        if result:
+            result.delete()
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        deprecated = [
+            'return_to_dns', 'null', 'round_robin', 'static_persist',
+            'global_availability', 'vs_capacity', 'least_conn', 'lowest_rtt',
+            'lowest_hops', 'packet_rate', 'cpu', 'hit_ratio', 'qos', 'bps',
+            'drop_packet', 'explicit_ip', 'connection_rate', 'vs_score'
+        ]
+        supported = [
+            'round-robin', 'topology', 'ratio', 'global-availability'
+        ]
+        lb_method_choices = deprecated + supported
+        self.supports_check_mode = True
+        self.argument_spec = dict(
+            lb_method=dict(
+                required=False,
+                choices=lb_method_choices,
+                default=None
+            ),
+            name=dict(
+                required=True,
+                aliases=['wide_ip']
+            ),
+            type=dict(
+                required=False,
+                default=None,
+                choices=[
+                    'a', 'aaaa', 'cname', 'mx', 'naptr', 'srv'
+                ]
+            ),
+            state=dict(
+                required=False,
+                default='present',
+                choices=['absent', 'present', 'enabled', 'disabled']
+            )
+        )
+        self.f5_product_name = 'bigip'
+
 
 def main():
-    argument_spec = f5_argument_spec()
+    if not HAS_F5SDK:
+        raise F5ModuleError("The python f5-sdk module is required")
 
-    lb_method_choices = ['return_to_dns', 'null', 'round_robin',
-                                    'ratio', 'topology', 'static_persist', 'global_availability',
-                                    'vs_capacity', 'least_conn', 'lowest_rtt', 'lowest_hops',
-                                    'packet_rate', 'cpu', 'hit_ratio', 'qos', 'bps',
-                                    'drop_packet', 'explicit_ip', 'connection_rate', 'vs_score']
-    meta_args = dict(
-        lb_method = dict(type='str', required=True, choices=lb_method_choices),
-        wide_ip = dict(type='str', required=True)
+    spec = ArgumentSpec()
+
+    client = AnsibleF5Client(
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode,
+        f5_product_name=spec.f5_product_name
     )
-    argument_spec.update(meta_args)
-
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
-    )
-
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
-
-    server = module.params['server']
-    server_port = module.params['server_port']
-    user = module.params['user']
-    password = module.params['password']
-    wide_ip = module.params['wide_ip']
-    lb_method = module.params['lb_method']
-    validate_certs = module.params['validate_certs']
-
-    result = {'changed': False}  # default
 
     try:
-        api = bigip_api(server, user, password, validate_certs, port=server_port)
-
-        if not wide_ip_exists(api, wide_ip):
-            module.fail_json(msg="wide ip %s does not exist" % wide_ip)
-
-        if lb_method is not None and lb_method != get_wide_ip_lb_method(api, wide_ip):
-            if not module.check_mode:
-                set_wide_ip_lb_method(api, wide_ip, lb_method)
-                result = {'changed': True}
-            else:
-                result = {'changed': True}
-
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="received exception: %s" % e)
-
-    module.exit_json(**result)
+        mm = ModuleManager(client)
+        results = mm.exec_module()
+        client.module.exit_json(**results)
+    except F5ModuleError as e:
+        client.module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':

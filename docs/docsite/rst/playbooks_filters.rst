@@ -588,6 +588,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost, 80" using named groups
     {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
+    
+    # convert "localhost:80" to "localhost"
+    {{ 'localhost:80' | regex_replace(':80') }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
@@ -644,6 +647,25 @@ To always exhaust all list use ``zip_longest``::
       debug: msg="{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
 
 
+.. versionadded:: 2.4
+
+To format a date using a string (like with the shell date command), use the "strftime" filter::
+
+    # Display year-month-day
+    {{ '%Y-%m-%d' | strftime }}
+
+    # Display hour:min:sec
+    {{ '%H:%M:%S' | strftime }}
+
+    # Use ansible_date_time.epoch fact
+    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
+
+    # Use arbitrary epoch value
+    {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
+    {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+
+.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
+
 Debugging Filters
 `````````````````
 
@@ -674,7 +696,7 @@ to be added to core so everyone can make use of them.
        All about variables
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

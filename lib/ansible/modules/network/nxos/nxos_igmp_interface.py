@@ -183,6 +183,7 @@ proposed:
     sample: {"asn": "65535", "router_id": "1.1.1.1", "vrf": "test"}
 existing:
     description: k/v pairs of existing BGP configuration
+    returned: always
     type: dict
     sample: {"asn": "65535", "bestpath_always_compare_med": false,
             "bestpath_aspath_multipath_relax": false,
@@ -237,7 +238,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 import re
 

@@ -80,12 +80,13 @@ proposed:
     sample: {"group": "network-operator"}
 existing:
     description: k/v pairs of existing snmp community
+    returned: always
     type: dict
     sample:  {}
 end_state:
     description: k/v pairs of snmp community after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample:  {"acl": "None", "group": "network-operator"}
 updates:
     description: commands sent to the device
@@ -102,7 +103,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 import re

@@ -1,23 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2016, Werner Dijkerman (ikben@werner-dijkerman.nl)
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# (c) 2016, Werner Dijkerman (ikben@werner-dijkerman.nl)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -97,10 +85,11 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import subprocess
+from ansible.module_utils.basic import AnsibleModule
 
 
 class BackendProp(object):
+
     def __init__(self, module):
         self._module = module
 
@@ -114,14 +103,13 @@ class BackendProp(object):
             '--backend-name', backend_name,
             '-n', '-X', '-s'
         ] + password_method
-        process = subprocess.Popen(my_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode == 0:
+        rc, stdout, stderr = self._module.run_command(my_command)
+        if rc == 0:
             return stdout
         else:
             self._module.fail_json(msg="Error message: " + str(stderr))
 
-    def set_property(self, opendj_bindir, hostname, port, username, password_method, backend_name,name, value):
+    def set_property(self, opendj_bindir, hostname, port, username, password_method, backend_name, name, value):
         my_command = [
             opendj_bindir + '/dsconfig',
             'set-backend-prop',
@@ -132,9 +120,8 @@ class BackendProp(object):
             '--set', name + ":" + value,
             '-n', '-X'
         ] + password_method
-        process = subprocess.Popen(my_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode == 0:
+        rc, stdout, stderr = self._module.run_command(my_command)
+        if rc == 0:
             return True
         else:
             self._module.fail_json(msg="Error message: " + stderr)
@@ -163,7 +150,9 @@ def main():
             value=dict(required=True),
             state=dict(default="present"),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        mutually_exclusive=[['password', 'passwordfile']],
+        required_one_of=[['password', 'passwordfile']]
     )
 
     opendj_bindir = module.params['opendj_bindir']
@@ -181,11 +170,6 @@ def main():
         password_method = ['-w', password]
     elif module.params["passwordfile"] is not None:
         password_method = ['-j', passwordfile]
-    else:
-        module.fail_json(msg="No credentials are given. Use either 'password' or 'passwordfile'")
-
-    if module.params["passwordfile"] and module.params["password"]:
-        module.fail_json(msg="only one of 'password' or 'passwordfile' can be set")
 
     opendj = BackendProp(module)
     validate = opendj.get_property(opendj_bindir=opendj_bindir,
@@ -214,9 +198,6 @@ def main():
             module.exit_json(changed=False)
     else:
         module.exit_json(changed=False)
-
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

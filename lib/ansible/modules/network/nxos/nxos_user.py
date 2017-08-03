@@ -35,19 +35,20 @@ description:
     current running config.  It also supports purging usernames from the
     configuration that are not explicitly defined.
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         Cisco Nexus device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
         exclusive with the C(name) argument.
+    version_added: "2.4"
     required: false
     default: null
   name:
     description:
       - The username to be configured on the remote Cisco Nexus
         device.  This argument accepts a stringv value and is mutually
-        exclusive with the C(users) argument.
+        exclusive with the C(aggregate) argument.
     required: false
     default: null
   update_password:
@@ -106,7 +107,7 @@ EXAMPLES = """
     purge: yes
 
 - name: set multiple users role
-  users:
+  aggregate:
     - name: netop
     - name: netend
   role: network-operator
@@ -242,8 +243,8 @@ def get_param_value(key, item, module):
     return value
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
         elif not module.params['name']:
@@ -252,7 +253,7 @@ def map_params_to_obj(module):
             collection = [{'name': module.params['name']}]
     else:
         collection = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'name': item})
             elif 'name' not in item:
@@ -298,13 +299,13 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', no_log=True),
+        aggregate=dict(type='list', no_log=True, aliases=['collection', 'users']),
         name=dict(),
 
         password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
-        roles=dict(type='list'),
+        roles=dict(type='list', aliases=['role']),
 
         sshkey=dict(),
 
@@ -314,7 +315,7 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    mutually_exclusive = [('name', 'users')]
+    mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,

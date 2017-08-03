@@ -24,40 +24,39 @@ $stopwatch = [system.diagnostics.stopwatch]::startNew()
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$display_seconds = Get-AnsibleParam -obj $params -name display_seconds -default "10" -failifempty $False -resultobj $result
-$msg = Get-AnsibleParam -obj $params -name msg -default "Hello world!" -resultobj $result
-$to = Get-AnsibleParam -obj $params -name to -default "*" -failifempty $False -resultobj $result
-$wait = Get-AnsibleParam -obj $params -name wait -default $False -failifempty $False -resultobj $result
+$display_seconds = Get-AnsibleParam -obj $params -name "display_seconds" -type "int" -default "10"
+$msg = Get-AnsibleParam -obj $params -name "msg" -type "str" -default "Hello world!"
+$to = Get-AnsibleParam -obj $params -name "to" -type "str" -default "*"
+$wait = Get-AnsibleParam -obj $params -name "wait" -type "bool" -default $false
 
 $result = @{
     changed = $false
+    display_seconds = $display_seconds
+    msg = $msg
+    wait = $wait
 }
-
 
 $msg_args = @($to, "/TIME:$display_seconds")
 
-If ($wait) {
-  $msg_args += "/W"
+if ($wait) {
+    $msg_args += "/W"
 }
 
 $msg_args += $msg
 if (-not $check_mode) {
-  $ret = & msg.exe $msg_args 2>&1
-  $result.rc = $LASTEXITCODE
+    $output = & msg.exe $msg_args 2>&1
+    $result.rc = $LASTEXITCODE
 }
 
 $endsend_at = Get-Date| Out-String
 $stopwatch.Stop()
 
-$result.changed = $True
-$result.display_seconds = $display_seconds
-$result.msg = $msg
+$result.changed = $true
 $result.runtime_seconds = $stopwatch.Elapsed.TotalSeconds
 $result.sent_localtime = $endsend_at.Trim()
-$result.wait = $wait
 
-If (-not $result.rc -eq 0 ) {
-    Fail-Json $result "$ret"
+if ($result.rc -ne 0 ) {
+    Fail-Json -obj $result -message "$output"
 }
   
 Exit-Json $result

@@ -55,7 +55,7 @@ notes:
 
 """
 
-# Documentation fragment for SolidFire
+    # Documentation fragment for SolidFire
     SOLIDFIRE = """
 options:
   hostname:
@@ -79,8 +79,7 @@ notes:
 
 """
 
-
-# Documentation fragment for E-Series
+    # Documentation fragment for E-Series
     ESERIES = """
 options:
   api_username:

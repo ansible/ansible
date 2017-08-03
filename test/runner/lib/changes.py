@@ -39,11 +39,7 @@ class InvalidBranch(ApplicationError):
 
 class ChangeDetectionNotSupported(ApplicationError):
     """Exception for cases where change detection is not supported."""
-    def __init__(self, message):
-        """
-        :type message: str
-        """
-        super(ChangeDetectionNotSupported, self).__init__(message)
+    pass
 
 
 class ShippableChanges(object):
@@ -80,7 +76,7 @@ class ShippableChanges(object):
             else:
                 # tracked files (including unchanged)
                 self.paths = sorted(git.get_file_names(['--cached']))
-                self.diff = None
+                self.diff = []
 
     def get_merge_runs(self, project_id, branch):
         """

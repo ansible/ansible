@@ -106,7 +106,7 @@ class CallbackModule(CallbackBase):
         lines = text.splitlines()
         result_lines = []
         for l in lines:
-            result_lines.append("{}{}".format(' '*indent_level, l))
+            result_lines.append("{}{}".format(' ' * indent_level, l))
         return '\n'.join(result_lines)
 
     def _print_diff(self, diff, indent_level):
@@ -121,7 +121,7 @@ class CallbackModule(CallbackBase):
                 diff = dict_diff(diff['before'], diff['after'])
         if diff:
             diff = colorize(str(diff), 'changed')
-            print(self._indent_text(diff, indent_level+4))
+            print(self._indent_text(diff, indent_level + 4))
 
     def _print_host_or_item(self, host_or_item, changed, msg, diff, is_host, error, stdout, stderr):
         if is_host:
@@ -144,7 +144,7 @@ class CallbackModule(CallbackBase):
         msg = colorize(msg, color)
 
         line_length = 120
-        spaces = ' ' * (40-len(name)-indent_level)
+        spaces = ' ' * (40 - len(name) - indent_level)
         line = "{}  * {}{}- {}".format(' ' * indent_level, name, spaces, change_string)
 
         if len(msg) < 50:
@@ -152,16 +152,16 @@ class CallbackModule(CallbackBase):
             print("{} {}---------".format(line, '-' * (line_length - len(line))))
         else:
             print("{} {}".format(line, '-' * (line_length - len(line))))
-            print(self._indent_text(msg, indent_level+4))
+            print(self._indent_text(msg, indent_level + 4))
 
         if diff is not None:
             self._print_diff(diff, indent_level)
         if stdout is not None:
             stdout = colorize(stdout, 'failed')
-            print(self._indent_text(stdout, indent_level+4))
+            print(self._indent_text(stdout, indent_level + 4))
         if stderr is not None:
             stderr = colorize(stderr, 'failed')
-            print(self._indent_text(stderr, indent_level+4))
+            print(self._indent_text(stderr, indent_level + 4))
 
     def v2_playbook_on_play_start(self, play):
         """Run on start of the play."""
@@ -236,7 +236,7 @@ class CallbackModule(CallbackBase):
             self.last_skipped = False
 
             line_length = 120
-            spaces = ' ' * (31-len(result._host.name)-4)
+            spaces = ' ' * (31 - len(result._host.name) - 4)
 
             line = "  * {}{}- {}".format(colorize(result._host.name, 'not_so_bold'),
                                          spaces,
@@ -255,4 +255,3 @@ class CallbackModule(CallbackBase):
     v2_playbook_on_handler_task_start = v2_playbook_on_task_start
     v2_runner_on_failed = v2_runner_on_ok
     v2_runner_on_unreachable = v2_runner_on_ok
-

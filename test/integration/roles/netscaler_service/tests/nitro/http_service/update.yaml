@@ -1,0 +1,49 @@
+---
+
+- name: Update http service
+  netscaler_service:
+
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: present
+
+    name: service-http
+    ip: 192.168.1.1
+    ipaddress: 192.168.1.1
+    port: 80
+    servicetype: HTTP
+    cachetype: TRANSPARENT
+    maxclient: 100
+    healthmonitor: no
+    maxreq: 200
+    cacheable: no
+    cip: ENABLED
+    cipheader: client-ip
+    usip: yes
+    useproxyport: yes
+    sp: off
+    rtspsessionidremap: off
+    clttimeout: 100
+    svrtimeout: 100
+    customserverid: 476
+    cka: yes
+    tcpb: yes
+    cmp: no
+    maxbandwidth: 20000
+    accessdown: "NO"
+    monthreshold: 100
+    downstateflush: ENABLED
+    hashid: 10
+    comment: some comment
+    appflowlog: ENABLED
+    processlocal: ENABLED
+
+    monitor_bindings:
+      - monitorname: http
+        weight: 100
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"

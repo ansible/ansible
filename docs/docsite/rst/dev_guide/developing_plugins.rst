@@ -84,6 +84,7 @@ Callback plugins are created by creating a new class with the Base(Callbacks) cl
   from ansible import constants as C
 
   class CallbackModule(CallbackBase):
+      pass
 
 From there, override the specific methods from the CallbackBase that you want to provide a callback for. For plugins intended for use with Ansible version 2.0 and later, you should only override methods that start with `v2`. For a complete list of methods that you can override, please see ``__init__.py`` in the `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_ directory.
 
@@ -218,7 +219,7 @@ Playbook constructs like 'host_vars' and 'group_vars' work via 'vars' plugins.  
 data into ansible runs that did not come from an inventory, playbook, or command line.  Note that variables
 can also be returned from inventory, so in most cases, you won't need to write or understand vars_plugins.
 
-More documentation on writing vars plugins is pending, though you can jump into `lib/ansible/inventory/vars_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/inventory/vars_plugins>`_ and figure
+More documentation on writing vars plugins is pending, though you can jump into `lib/ansible/plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/>`_ and figure
 things out pretty easily.
 
 If you find yourself wanting to write a vars_plugin, it's more likely you should write an inventory script instead.

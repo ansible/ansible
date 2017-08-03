@@ -123,3 +123,212 @@
     that:
     - remove_scheduled_task_again.changed == false
     - remove_scheduled_task_again.exists == false
+
+
+# Test scheduled task path creation and removal
+
+- name: Remove potentially leftover new path task 1
+  win_scheduled_task: &wstp1_absent
+    name: Ansible Test New Path 1
+    path: \non_existent_path\
+    state: absent
+
+- name: Remove potentially leftover new path task 2
+  win_scheduled_task: &wstp2_absent
+    name: Ansible Test New Path 2
+    path: \non_existent_path\
+    state: absent
+
+
+- name: Add scheduled task new path 1
+  win_scheduled_task: &wstp1_present
+    name: Ansible Test New Path 1
+    description: A test of functionality
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\TestDir\Test.ps1
+    time: "9:45pm"
+    path: \non_existent_path\
+    frequency: once
+    state: present
+    enabled: yes
+    user: SYSTEM
+  register: add_scheduled_task_new_path_1
+
+- name: Test add_scheduled_task_new_path_1
+  assert:
+    that:
+    - add_scheduled_task_new_path_1.msg == 'Added new task Ansible Test New Path 1 and task path \\non_existent_path\\ created'
+
+
+- name: Add scheduled task new path 2
+  win_scheduled_task: &wstp2_present
+    <<: *wstp1_present
+    name: Ansible Test New Path 2
+  register: add_scheduled_task_new_path_2
+
+- name: Test add_scheduled_task_new_path_2 (normal mode)
+  assert:
+    that:
+    - add_scheduled_task_new_path_2.msg == 'Added new task Ansible Test New Path 2'
+  when: not in_check_mode
+
+- name: Test add_scheduled_task_new_path_2 (check-mode)
+  assert:
+    that:
+    - add_scheduled_task_new_path_2.msg == 'Added new task Ansible Test New Path 2 and task path \\non_existent_path\\ created'
+  when: in_check_mode
+
+
+- name: Remove scheduled task new path 2
+  win_scheduled_task: *wstp2_absent
+  register: remove_scheduled_task_new_path_2
+
+- name: Test remove_scheduled_task_new_path_2 (normal mode)
+  assert:
+    that:
+    - remove_scheduled_task_new_path_2.msg == 'Deleted task Ansible Test New Path 2'
+  when: not in_check_mode
+
+- name: Test remove_scheduled_task_new_path_2 (check-mode)
+  assert:
+    that:
+    - remove_scheduled_task_new_path_2.msg == 'Task does not exist'
+  when: in_check_mode
+
+
+- name: Remove scheduled task new path 1
+  win_scheduled_task: *wstp1_absent
+  register: remove_scheduled_task_new_path_1
+
+- name: Test remove_scheduled_task_new_path_1 (normal mode)
+  assert:
+    that:
+    - remove_scheduled_task_new_path_1.msg == 'Deleted task Ansible Test New Path 1 and task path \\non_existent_path\\ removed'
+  when: not in_check_mode
+
+- name: Test remove_scheduled_task_new_path_1 (check-mode)
+  assert:
+    that:
+    - remove_scheduled_task_new_path_1.msg == 'Task does not exist'
+  when: in_check_mode
+
+
+# Test scheduled task RunAs and RunLevel options
+
+- name: Remove potentially leftover run options task 1
+  win_scheduled_task: &wstr1_absent
+    name: Ansible Test Run Options 1
+    state: absent
+
+
+- name: Add scheduled task run options 1
+  win_scheduled_task: &wstr1_present
+    name: Ansible Test Run Options 1
+    description: A test of run options functionality
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\TestDir\Test.ps1
+    time: "6pm"
+    frequency: once
+    state: present
+    enabled: yes
+    user: SYSTEM
+  register: add_scheduled_task_run_options_1
+
+- name: Test add_scheduled_task_run_options_1
+  assert:
+    that:
+    - add_scheduled_task_run_options_1.changed == true
+    - add_scheduled_task_run_options_1.exists == false
+
+
+- name: Execute run options tests for normal mode only (expects scheduled task)
+  when: not in_check_mode
+  block:
+
+  - name: Change scheduled task run options user
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+    register: change_scheduled_task_run_options_user
+
+  - name: Test change_scheduled_task_run_options_user
+    assert:
+      that:
+      - change_scheduled_task_run_options_user.changed == true
+      - change_scheduled_task_run_options_user.exists == true
+
+
+  - name: Change scheduled task run options user (again)
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+    register: change_scheduled_task_run_options_user_again
+
+  - name: Test change_scheduled_task_run_options_user_again
+    assert:
+      that:
+      - change_scheduled_task_run_options_user_again.changed == false
+      - change_scheduled_task_run_options_user_again.exists == true
+
+
+  - name: Change scheduled task run options run level
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+      runlevel: highest
+    register: change_scheduled_task_run_options_runlevel
+
+  - name: Test change_scheduled_task_run_options_runlevel
+    assert:
+      that:
+      - change_scheduled_task_run_options_runlevel.changed == true
+      - change_scheduled_task_run_options_runlevel.exists == true
+
+
+  - name: Change scheduled task run options run level (again)
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+      runlevel: highest
+    register: change_scheduled_task_run_options_runlevel_again
+
+  - name: Test change_scheduled_task_run_options_runlevel_again
+    assert:
+      that:
+      - change_scheduled_task_run_options_runlevel_again.changed == false
+      - change_scheduled_task_run_options_runlevel_again.exists == true
+
+
+  # Should ignore change as account being tested is a built-in service account
+  - name: Change scheduled task run options store password
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+      runlevel: highest
+      store_password: no
+    register: change_scheduled_task_run_options_store_password
+
+  - name: Test change_scheduled_task_run_options_store_password
+    assert:
+      that:
+      - change_scheduled_task_run_options_store_password.changed == false
+      - change_scheduled_task_run_options_store_password.exists == true
+
+
+- name: Remove scheduled task run options 1
+  win_scheduled_task: *wstr1_absent
+  register: remove_scheduled_task_run_options_1
+
+- name: Test remove_scheduled_task_run_options_1 (normal mode)
+  assert:
+    that:
+    - remove_scheduled_task_run_options_1.changed == true
+    - remove_scheduled_task_run_options_1.exists == true
+  when: not in_check_mode
+
+- name: Test remove_scheduled_task_run_options_1 (check-mode)
+  assert:
+    that:
+    - remove_scheduled_task_run_options_1.changed == false
+    - remove_scheduled_task_run_options_1.exists == false
+  when: in_check_mode

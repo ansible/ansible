@@ -1,18 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Copyright: Ansible Project
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -145,9 +139,13 @@ try:
 except ImportError:
     HAS_PROXMOXER = False
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def get_template(proxmox, node, storage, content_type, template):
-    return [ True for tmpl in proxmox.nodes(node).storage(storage).content.get()
-            if tmpl['volid'] == '%s:%s/%s' % (storage, content_type, template) ]
+    return [True for tmpl in proxmox.nodes(node).storage(storage).content.get()
+            if tmpl['volid'] == '%s:%s/%s' % (storage, content_type, template)]
+
 
 def upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
     taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath))
@@ -163,6 +161,7 @@ def upload_template(module, proxmox, api_host, node, storage, content_type, real
         time.sleep(1)
     return False
 
+
 def delete_template(module, proxmox, node, storage, content_type, template, timeout):
     volid = '%s:%s/%s' % (storage, content_type, template)
     proxmox.nodes(node).storage(storage).content.delete(volid)
@@ -176,22 +175,23 @@ def delete_template(module, proxmox, node, storage, content_type, template, time
         time.sleep(1)
     return False
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            api_host = dict(required=True),
-            api_user = dict(required=True),
-            api_password = dict(no_log=True),
-            validate_certs = dict(type='bool', default='no'),
-            node = dict(),
-            src = dict(),
-            template = dict(),
-            content_type = dict(default='vztmpl', choices=['vztmpl','iso']),
-            storage = dict(default='local'),
-            timeout = dict(type='int', default=30),
-            force = dict(type='bool', default='no'),
-            state = dict(default='present', choices=['present', 'absent']),
-            )
+        argument_spec=dict(
+            api_host=dict(required=True),
+            api_user=dict(required=True),
+            api_password=dict(no_log=True),
+            validate_certs=dict(type='bool', default='no'),
+            node=dict(),
+            src=dict(),
+            template=dict(),
+            content_type=dict(default='vztmpl', choices=['vztmpl', 'iso']),
+            storage=dict(default='local'),
+            timeout=dict(type='int', default=30),
+            force=dict(type='bool', default='no'),
+            state=dict(default='present', choices=['present', 'absent']),
+        )
     )
 
     if not HAS_PROXMOXER:
@@ -236,7 +236,7 @@ def main():
             if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
                 module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
         except Exception as e:
-            module.fail_json(msg="uploading of template %s failed with exception: %s" % ( template, e ))
+            module.fail_json(msg="uploading of template %s failed with exception: %s" % (template, e))
 
     elif state == 'absent':
         try:
@@ -251,10 +251,8 @@ def main():
             if delete_template(module, proxmox, node, storage, content_type, template, timeout):
                 module.exit_json(changed=True, msg='template with volid=%s:%s/%s deleted' % (storage, content_type, template))
         except Exception as e:
-            module.fail_json(msg="deleting of template %s failed with exception: %s" % ( template, e ))
+            module.fail_json(msg="deleting of template %s failed with exception: %s" % (template, e))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

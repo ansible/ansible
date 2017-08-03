@@ -56,9 +56,10 @@ options:
   next_marker:
     description:
       - "Some requests such as list_command: hosted_zones will return a maximum
-        number of entries - EG 100. If the number of entries exceeds this maximum
-        another request can be sent using the NextMarker entry from the first response
-        to get the next page of results"
+        number of entries - EG 100 or the number specified by max_items.
+        If the number of entries exceeds this maximum another request can be sent
+        using the NextMarker entry from the first response to get the next page
+        of results"
     required: false
   delegation_set_id:
     description:
@@ -163,6 +164,17 @@ EXAMPLES = '''
     delegation_set_id: delegation id
   register: delegation_sets
 
+- name: setup of example for using next_marker
+  route53_facts:
+    query: hosted_zone
+    max_items: 1
+  register: first_facts
+- name: example for using next_marker
+  route53_facts:
+    query: hosted_zone
+    next_marker: "{{ first_facts.NextMarker }}"
+    max_items: 1
+  when: "{{ 'NextMarker' in first_facts }}"
 '''
 try:
     import boto
@@ -404,7 +416,7 @@ def main():
             'count',
             'tags',
         ], default='list'),
-        )
+    )
     )
 
     module = AnsibleModule(

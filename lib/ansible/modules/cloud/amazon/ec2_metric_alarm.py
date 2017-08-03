@@ -225,7 +225,9 @@ def create_metric_alarm(connection, module):
 
         for attr in ('alarm_actions','insufficient_data_actions','ok_actions'):
             action = module.params.get(attr) or []
-            if getattr(alarm, attr) != action:
+            # Boto and/or ansible may provide same elements in lists but in different order.
+            # Compare on sets since they do not need any order.
+            if set(getattr(alarm, attr)) != set(action):
                 changed = True
                 setattr(alarm, attr, module.params.get(attr))
 

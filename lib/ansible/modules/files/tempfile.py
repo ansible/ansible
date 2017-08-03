@@ -1,22 +1,11 @@
 #!/usr/bin/python
 #coding: utf-8 -*-
+# Copyright: (c) 2016 Krzysztof Magosa <krzysztof@magosa.pl>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# (c) 2016 Krzysztof Magosa <krzysztof@magosa.pl>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -34,6 +23,7 @@ description:
   - The C(tempfile) module creates temporary files and directories. C(mktemp) command takes different parameters on various systems, this module helps
     to avoid troubles related to that. Files/directories created by module are accessible only by creator. In case you need to make them world-accessible
     you need to use M(file) module.
+  - For Windows targets, use the M(win_tempfile) module instead.
 options:
   state:
     description:
@@ -56,6 +46,8 @@ options:
       - Suffix of file/directory name created by module.
     required: false
     default: ""
+notes:
+  - For Windows targets, use the M(win_tempfile) module instead.
 '''
 
 EXAMPLES = """
@@ -78,10 +70,11 @@ path:
   sample: "/tmp/ansible.bMlvdk"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from tempfile import mkstemp, mkdtemp
 from os import close
+from tempfile import mkstemp, mkdtemp
+from traceback import format_exc
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 def main():
     module = AnsibleModule(
@@ -109,9 +102,8 @@ def main():
             )
 
         module.exit_json(changed=True, path=path)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=format_exc())
 
 if __name__ == '__main__':
     main()

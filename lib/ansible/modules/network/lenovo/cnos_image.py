@@ -117,11 +117,13 @@ Tasks : The following are examples of using the module cnos_image. These are wri
       serverpassword: "root123"
 '''
 RETURN = '''
-  return value: |
-    On successful execution, the method returns a message in JSON format
-    [Image file tranferred to device]
-    Upon any failure, the method returns an error display string.
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "Image file tranferred to device"
 '''
+
 import sys
 import paramiko
 import time

@@ -4,6 +4,7 @@ import unittest
 
 from ansible.modules.cloud.docker._docker import get_split_image_tag
 
+
 class DockerSplitImageTagTestCase(unittest.TestCase):
 
     def test_trivial(self):

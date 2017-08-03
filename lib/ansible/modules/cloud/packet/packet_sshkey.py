@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # Copyright 2016 Tomas Karasek <tom.to.the.k@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -94,7 +84,7 @@ changed:
     returned: always
 sshkeys:
     description: Information about sshkeys that were createe/removed.
-    type: array
+    type: list
     sample: [
         {
             "fingerprint": "5c:93:74:7c:ed:07:17:62:28:75:79:23:d6:08:93:46",
@@ -112,8 +102,6 @@ import uuid
 from ansible.module_utils.basic import AnsibleModule
 
 HAS_PACKET_SDK = True
-
-
 try:
     import packet
 except ImportError:

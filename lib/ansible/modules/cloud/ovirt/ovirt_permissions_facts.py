@@ -27,24 +27,24 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_permissions_facts
-short_description: Retrieve facts about one or more oVirt permissions
+short_description: Retrieve facts about one or more oVirt/RHV permissions
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt permissions."
+    - "Retrieve facts about one or more oVirt/RHV permissions."
 notes:
     - "This module creates a new top-level C(ovirt_permissions) fact, which
        contains a list of permissions."
 options:
     user_name:
         description:
-            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+            - "Username of the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
     group_name:
         description:
-            - "Name of the the group to manage."
+            - "Name of the group to manage."
     authz_name:
         description:
-            - "Authorization provider of the user/group. In previous versions of oVirt known as domain."
+            - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."
         required: true
         aliases: ['domain']
     namespace:
@@ -69,7 +69,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_permissions:
     description: "List of dictionaries describing the permissions. Permission attribues are mapped to dictionary keys,
-                  all permissions attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
+                  all permissions attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/permission."
     returned: On success.
     type: list
 '''

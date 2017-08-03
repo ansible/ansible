@@ -85,7 +85,7 @@ options:
      version_added: "2.1"
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -103,7 +103,7 @@ RETURN = '''
 network:
     description: Dictionary describing the network.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Network ID.

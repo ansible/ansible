@@ -181,10 +181,11 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 
 '''
 RETURN = '''
-return value: |
-    On successful execution, the method returns a message in JSON format
-    [VLAN configurations are successful]
-    Upon any failure, the method returns an error display string.
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "VLAN configuration is accomplished"
 '''
 
 import sys

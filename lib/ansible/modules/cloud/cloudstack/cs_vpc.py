@@ -161,7 +161,7 @@ region_level_vpc:
   type: boolean
   sample: true
 restart_required:
-  description: "Wheter the VPC router needs a restart or not."
+  description: "Whether the VPC router needs a restart or not."
   returned: success
   type: boolean
   sample: true
@@ -210,7 +210,6 @@ tags:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -242,7 +241,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
         else:
             args['isdefault'] = True
 
-        vpc_offerings = self.cs.listVPCOfferings(**args)
+        vpc_offerings = self.query_api('listVPCOfferings', **args)
         if vpc_offerings:
             self.vpc_offering = vpc_offerings['vpcoffering'][0]
             return self._get_by_key(key, self.vpc_offering)
@@ -257,7 +256,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
         }
-        vpcs = self.cs.listVPCs(**args)
+        vpcs = self.query_api('listVPCs', **args)
         if vpcs:
             vpc_name = self.module.params.get('name')
             for v in vpcs['vpc']:
@@ -276,9 +275,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             args = {
                 'id': vpc['id'],
             }
-            res = self.cs.restartVPC(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('restartVPC', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -310,9 +307,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
         }
         self.result['diff']['after'] = args
         if not self.module.check_mode:
-            res = self.cs.createVPC(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createVPC', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -327,9 +322,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
         if self.has_changed(args, vpc):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateVPC(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateVPC', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -342,9 +335,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             self.result['changed'] = True
             self.result['diff']['before'] = vpc
             if not self.module.check_mode:
-                res = self.cs.deleteVPC(id=vpc['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteVPC', id=vpc['id'])
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -378,21 +369,17 @@ def main():
         supports_check_mode=True,
     )
 
-    try:
-        acs_vpc = AnsibleCloudStackVpc(module)
+    acs_vpc = AnsibleCloudStackVpc(module)
 
-        state = module.params.get('state')
-        if state == 'absent':
-            vpc = acs_vpc.absent_vpc()
-        elif state == 'restarted':
-            vpc = acs_vpc.restart_vpc()
-        else:
-            vpc = acs_vpc.present_vpc()
+    state = module.params.get('state')
+    if state == 'absent':
+        vpc = acs_vpc.absent_vpc()
+    elif state == 'restarted':
+        vpc = acs_vpc.restart_vpc()
+    else:
+        vpc = acs_vpc.present_vpc()
 
-        result = acs_vpc.get_result(vpc)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_vpc.get_result(vpc)
 
     module.exit_json(**result)
 

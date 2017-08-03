@@ -1,0 +1,53 @@
+---
+- name: setup zone is present
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    network_type: basic
+  register: zone
+- name: verify setup zone is present
+  assert:
+    that:
+      - zone|success
+
+- name: get facts from zone in check mode
+  cs_zone_facts:
+    name: "{{ cs_resource_prefix }}-zone"
+  register: zone
+  check_mode: true
+- name: verify  get facts from zone in check mode
+  assert:
+    that:
+      - zone|success
+      - not zone|changed
+      - ansible_facts.cloudstack_zone.dns1 == "8.8.8.8"
+      - ansible_facts.cloudstack_zone.dns2 == "8.8.4.4"
+      - ansible_facts.cloudstack_zone.internal_dns1 == "8.8.8.8"
+      - ansible_facts.cloudstack_zone.internal_dns2 == "8.8.4.4"
+      - ansible_facts.cloudstack_zone.local_storage_enabled == false
+      - ansible_facts.cloudstack_zone.network_type == "Basic"
+      - ansible_facts.cloudstack_zone.zone_token != ""
+      - ansible_facts.cloudstack_zone.securitygroups_enabled == true
+      - ansible_facts.cloudstack_zone.dhcp_provider == "VirtualRouter"
+      - ansible_facts.cloudstack_zone.local_storage_enabled == false
+
+- name: get facts from zone
+  cs_zone_facts:
+    name: "{{ cs_resource_prefix }}-zone"
+  register: zone
+- name: verify get facts from zone
+  assert:
+    that:
+      - zone|success
+      - not zone|changed
+      - ansible_facts.cloudstack_zone.dns1 == "8.8.8.8"
+      - ansible_facts.cloudstack_zone.dns2 == "8.8.4.4"
+      - ansible_facts.cloudstack_zone.internal_dns1 == "8.8.8.8"
+      - ansible_facts.cloudstack_zone.internal_dns2 == "8.8.4.4"
+      - ansible_facts.cloudstack_zone.local_storage_enabled == false
+      - ansible_facts.cloudstack_zone.network_type == "Basic"
+      - ansible_facts.cloudstack_zone.zone_token != ""
+      - ansible_facts.cloudstack_zone.securitygroups_enabled == true
+      - ansible_facts.cloudstack_zone.dhcp_provider == "VirtualRouter"
+      - ansible_facts.cloudstack_zone.local_storage_enabled == false

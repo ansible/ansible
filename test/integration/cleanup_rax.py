@@ -11,6 +11,8 @@ try:
 except ImportError:
     HAS_PYRAX = False
 
+from ansible.module_utils.six.moves import input
+
 
 def rax_list_iterator(svc, *args, **kwargs):
     method = kwargs.pop('method', 'list')
@@ -53,21 +55,21 @@ def authenticate():
 
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
-        assumeyes = raw_input(prompt).lower() == 'y'
+        assumeyes = input(prompt).lower() == 'y'
     assert hasattr(item, 'delete') or hasattr(item, 'terminate'), \
-            "Class <%s> has no delete or terminate attribute" % item.__class__
+        "Class <%s> has no delete or terminate attribute" % item.__class__
     if assumeyes:
         if hasattr(item, 'delete'):
             item.delete()
-            print ("Deleted %s" % item)
+            print("Deleted %s" % item)
         if hasattr(item, 'terminate'):
             item.terminate()
-            print ("Terminated %s" % item)
+            print("Terminated %s" % item)
 
 
 def delete_rax(args):
     """Function for deleting CloudServers"""
-    print ("--- Cleaning CloudServers matching '%s'" % args.match_re)
+    print("--- Cleaning CloudServers matching '%s'" % args.match_re)
     search_opts = dict(name='^%s' % args.match_re)
     for region in pyrax.identity.services.compute.regions:
         cs = pyrax.connect_to_cloudservers(region=region)
@@ -80,7 +82,7 @@ def delete_rax(args):
 
 def delete_rax_clb(args):
     """Function for deleting Cloud Load Balancers"""
-    print ("--- Cleaning Cloud Load Balancers matching '%s'" % args.match_re)
+    print("--- Cleaning Cloud Load Balancers matching '%s'" % args.match_re)
     for region in pyrax.identity.services.load_balancer.regions:
         clb = pyrax.connect_to_cloud_loadbalancers(region=region)
         for lb in rax_list_iterator(clb):
@@ -92,7 +94,7 @@ def delete_rax_clb(args):
 
 def delete_rax_keypair(args):
     """Function for deleting Rackspace Key pairs"""
-    print ("--- Cleaning Key Pairs matching '%s'" % args.match_re)
+    print("--- Cleaning Key Pairs matching '%s'" % args.match_re)
     for region in pyrax.identity.services.compute.regions:
         cs = pyrax.connect_to_cloudservers(region=region)
         for keypair in cs.keypairs.list():
@@ -104,7 +106,7 @@ def delete_rax_keypair(args):
 
 def delete_rax_network(args):
     """Function for deleting Cloud Networks"""
-    print ("--- Cleaning Cloud Networks matching '%s'" % args.match_re)
+    print("--- Cleaning Cloud Networks matching '%s'" % args.match_re)
     for region in pyrax.identity.services.network.regions:
         cnw = pyrax.connect_to_cloud_networks(region=region)
         for network in cnw.list():
@@ -116,7 +118,7 @@ def delete_rax_network(args):
 
 def delete_rax_cbs(args):
     """Function for deleting Cloud Networks"""
-    print ("--- Cleaning Cloud Block Storage matching '%s'" % args.match_re)
+    print("--- Cleaning Cloud Block Storage matching '%s'" % args.match_re)
     for region in pyrax.identity.services.network.regions:
         cbs = pyrax.connect_to_cloud_blockstorage(region=region)
         for volume in cbs.list():
@@ -128,7 +130,7 @@ def delete_rax_cbs(args):
 
 def delete_rax_cdb(args):
     """Function for deleting Cloud Databases"""
-    print ("--- Cleaning Cloud Databases matching '%s'" % args.match_re)
+    print("--- Cleaning Cloud Databases matching '%s'" % args.match_re)
     for region in pyrax.identity.services.database.regions:
         cdb = pyrax.connect_to_cloud_databases(region=region)
         for db in rax_list_iterator(cdb):
@@ -146,7 +148,7 @@ def _force_delete_rax_scaling_group(manager):
 
 def delete_rax_scaling_group(args):
     """Function for deleting Autoscale Groups"""
-    print ("--- Cleaning Autoscale Groups matching '%s'" % args.match_re)
+    print("--- Cleaning Autoscale Groups matching '%s'" % args.match_re)
     for region in pyrax.identity.services.autoscale.regions:
         asg = pyrax.connect_to_autoscale(region=region)
         for group in rax_list_iterator(asg):
@@ -170,11 +172,11 @@ def main():
         try:
             func(args)
         except Exception as e:
-            print ("---- %s failed (%s)" % (func.__name__, e.message))
+            print("---- %s failed (%s)" % (func.__name__, e.message))
 
 
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        print ('\nExiting...')
+        print('\nExiting...')

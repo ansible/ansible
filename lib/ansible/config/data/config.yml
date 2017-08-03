@@ -1,0 +1,1433 @@
+ACCELERATE_CONNECT_TIMEOUT:
+  default: 1.0
+  desc:
+    - This setting controls the timeout for the socket connect call, and should be kept relatively low.
+      The connection to the accelerate_port will be attempted 3 times before Ansible will fall back to ssh or paramiko
+      (depending on your default connection setting) to try and start the accelerate daemon remotely.
+    - Note, this value can be set to less than one second, however it is probably not a good idea to do so
+      unless you’re on a very fast and reliable LAN. If you’re connecting to systems over the internet, it may be necessary to increase this timeout.
+  env: [{name: ACCELERATE_CONNECT_TIMEOUT }]
+  ini:
+  - {key: accelerate_connect_timeout, section: accelerate}
+  value_type: float
+  deprecated: True
+  vars: []
+  yaml: {key: accelerate.accelerate_connect_timeout}
+  version_added: "1.4"
+ACCELERATE_DAEMON_TIMEOUT:
+  default: 30
+  desc:
+    - This setting controls the timeout for the accelerated daemon, as measured in minutes. The default daemon timeout is 30 minutes.
+    - Prior to 1.6, the timeout was hard-coded from the time of the daemon’s launch.
+    - For version 1.6+, the timeout is now based on the last activity to the daemon and is configurable via this option.
+  env: [{name: ACCELERATE_DAEMON_TIMEOUT}]
+  ini:
+  - {key: accelerate_daemon_timeout, section: accelerate}
+  value_type: integer
+  deprecated: True
+  vars: []
+  yaml: {key: accelerate.accelerate_daemon_timeout}
+  version_added: "1.6"
+ACCELERATE_KEYS_DIR:
+  default: ~/.fireball.keys
+  desc: ''
+  deprecated: True
+  env: [{name: ACCELERATE_KEYS_DIR}]
+  ini:
+  - {key: accelerate_keys_dir, section: accelerate}
+  vars: []
+  yaml: {key: accelerate.accelerate_keys_dir}
+ACCELERATE_KEYS_DIR_PERMS:
+  default: '700'
+  desc: 'TODO: write it'
+  env: [{name: ACCELERATE_KEYS_DIR_PERMS}]
+  ini:
+  - {key: accelerate_keys_dir_perms, section: accelerate}
+  deprecated: True
+  vars: []
+  yaml: {key: accelerate.accelerate_keys_dir_perms}
+ACCELERATE_KEYS_FILE_PERMS:
+  default: '600'
+  desc: 'TODO: write it'
+  env: [{name: ACCELERATE_KEYS_FILE_PERMS}]
+  ini:
+  - {key: accelerate_keys_file_perms, section: accelerate}
+  deprecated: True
+  vars: []
+  yaml: {key: accelerate.accelerate_keys_file_perms}
+ACCELERATE_MULTI_KEY:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ACCELERATE_MULTI_KEY}]
+  ini:
+  - {key: accelerate_multi_key, section: accelerate}
+  value_type: boolean
+  deprecated: True
+  vars: []
+  yaml: {key: accelerate.accelerate_multi_key}
+ACCELERATE_PORT:
+  default: 5099
+  desc: 'TODO: write it'
+  env: [{name: ACCELERATE_PORT}]
+  ini:
+  - {key: accelerate_port, section: accelerate}
+  value_type: integer
+  deprecated: True
+  vars: []
+  yaml: {key: accelerate.accelerate_port}
+ACCELERATE_TIMEOUT:
+  default: 30
+  desc: 'TODO: write it'
+  env: [{name: ACCELERATE_TIMEOUT}]
+  ini:
+  - {key: accelerate_timeout, section: accelerate}
+  value_type: integer
+  deprecated: True
+  vars: []
+  yaml: {key: accelerate.accelerate_timeout}
+ALLOW_WORLD_READABLE_TMPFILES:
+  default: False
+  desc:
+    - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
+    - It is useful when becoming an unprivileged user.
+  env: []
+  ini:
+  - {key: allow_world_readable_tmpfiles, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.allow_world_readable_tmpfiles}
+  version_added: "2.1"
+ANSIBLE_COW_SELECTION:
+  default: default
+  desc: This allows you to chose a specific cowsay stencil for the banners or use 'random' to cycle through them.
+  env: [{name: ANSIBLE_COW_SELECTION}]
+  ini:
+  - {key: cow_selection, section: defaults}
+  vars: []
+  yaml: {key: defaults.cow_selection}
+ANSIBLE_COW_WHITELIST:
+  default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
+  desc: White list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
+  env: [{name: ANSIBLE_COW_WHITELIST}]
+  ini:
+  - {key: cow_whitelist, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.cow_whitelist}
+ANSIBLE_FORCE_COLOR:
+  default: False
+  desc: This options forces color mode even when running without a TTY
+  env: [{name: ANSIBLE_FORCE_COLOR}]
+  ini:
+  - {key: force_color, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.force_color}
+ANSIBLE_NOCOLOR:
+  default: False
+  desc: This setting allows suppressing colorizing output, which is used to give a better indication of failure and status information.
+  env: [{name: ANSIBLE_NOCOLOR}]
+  ini:
+  - {key: nocolor, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.nocolor}
+ANSIBLE_NOCOWS:
+  default: False
+  desc: If you have cowsay installed but want to avoid the 'cows' (why????), use this.
+  env: [{name: ANSIBLE_NOCOWS}]
+  ini:
+  - {key: nocows, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.nocows}
+ANSIBLE_SSH_ARGS:
+  default: -C -o ControlMaster=auto -o ControlPersist=60s
+  desc:
+    - If set, this will override the Ansible default ssh arguments.
+    - In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may be appropriate.
+    - Be aware that if `-o ControlPath` is set in ssh_args, the control path setting is not used.
+  env: [{name: ANSIBLE_SSH_ARGS}]
+  ini:
+  - {key: ssh_args, section: ssh_connection}
+  vars: []
+  yaml: {key: ssh_connection.ssh_args}
+ANSIBLE_SSH_CONTROL_PATH:
+  default: null
+  desc:
+    - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
+    - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
+    - Before 2.3 it defaulted to `control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r`.
+    - Be aware that this setting is ignored if `-o ControlPath` is set in ssh args.
+  env: [{name: ANSIBLE_SSH_CONTROL_PATH}]
+  ini:
+  - {key: control_path, section: ssh_connection}
+  vars: []
+  yaml: {key: ssh_connection.control_path}
+ANSIBLE_SSH_CONTROL_PATH_DIR:
+  default: ~/.ansible/cp
+  desc:
+    - This sets the directory to use for ssh control path if the control path setting is null.
+    - Also, provides the `%(directory)s` variable for the control path setting.
+  env: [{name: ANSIBLE_SSH_CONTROL_PATH_DIR}]
+  ini:
+  - {key: control_path_dir, section: ssh_connection}
+  vars: []
+  yaml: {key: ssh_connection.control_path_dir}
+ANSIBLE_SSH_EXECUTABLE:
+  default: ssh
+  desc:
+    - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
+    - This option is usually not required, it might be useful when access to system ssh is restricted,
+      or when using ssh wrappers to connect to remote hosts.
+  env: [{name: ANSIBLE_SSH_EXECUTABLE}]
+  ini:
+  - {key: ssh_executable, section: ssh_connection}
+  vars: []
+  yaml: {key: ssh_connection.ssh_executable}
+  version_added: "2.2"
+ANSIBLE_SSH_PIPELINING:
+  default: False
+  desc:
+    - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
+      by executing many Ansible modules without actual file transfer.
+    - This can result in a very significant performance improvement when enabled.
+    - However this conflicts with privilege escalation (become). For example, when using “sudo:” operations you must first disable ‘requiretty’ in /etc/sudoers on all managed hosts, which is why it is disabled by default.
+  env: [{name: ANSIBLE_SSH_PIPELINING}]
+  ini:
+  - {key: pipelining, section: ssh_connection}
+  value_type: boolean
+  vars: []
+  yaml: {key: ssh_connection.pipelining}
+ANSIBLE_SSH_RETRIES:
+  default: 0
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SSH_RETRIES}]
+  ini:
+  - {key: retries, section: ssh_connection}
+  value_type: integer
+  vars: []
+  yaml: {key: ssh_connection.retries}
+ANY_ERRORS_FATAL:
+  default: False
+  desc: Sets the default value for the any_errors_fatal keyword
+  env:
+    - name: ANSIBLE_ANY_ERRORS_FATAL
+  ini:
+    - section:  defaults
+      key: any_errors_fatal
+  value_type: boolean
+  vars: []
+  yaml: {key: errors.anyerrors_fatal}
+  version_added: "2.4"
+BECOME_ALLOW_SAME_USER:
+  default: False
+  desc: This setting controls if become is skipped when remote user and become user are the same.
+  env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
+  ini:
+  - {key: become_allow_same_user, section: privilege_escalation}
+  value_type: boolean
+  vars: []
+  yaml: {key: privilege_escalation.become_allow_same_user}
+CACHE_PLUGIN:
+  default: memory
+  desc: Chooses which cache plugin to use
+  env: [{name: ANSIBLE_CACHE_PLUGIN}]
+  ini:
+  - {key: fact_caching, section: defaults}
+  vars: []
+  yaml: {key: defaults.fact_caching}
+CACHE_PLUGIN_CONNECTION:
+  default:
+  desc: Defines connection or path information for the cache plugin
+  env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
+  ini:
+  - {key: fact_caching_connection, section: defaults}
+  vars: []
+  yaml: {key: defaults.fact_caching_connection}
+CACHE_PLUGIN_PREFIX:
+  default: ansible_facts
+  desc: Prefix to use for cache plugin files/tables
+  env: [{name: ANSIBLE_CACHE_PLUGIN_PREFIX}]
+  ini:
+  - {key: fact_caching_prefix, section: defaults}
+  vars: []
+  yaml: {key: defaults.fact_caching_prefix}
+CACHE_PLUGIN_TIMEOUT:
+  default: 86400
+  desc: Expiration timeout for the cache plugin data
+  env: [{name: ANSIBLE_CACHE_PLUGIN_TIMEOUT}]
+  ini:
+  - {key: fact_caching_timeout, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.fact_caching_timeout}
+COLOR_CHANGED:
+  default: yellow
+  desc: Defines the color to use on 'Changed' status
+  env: [{name: ANSIBLE_COLOR_CHANGED}]
+  ini:
+  - {key: changed, section: colors}
+  vars: []
+  yaml: {key: display.colors.changed}
+COLOR_DEBUG:
+  default: dark gray
+  desc: Defines the color to use when emitting debug messages
+  env: [{name: ANSIBLE_COLOR_DEBUG}]
+  ini:
+  - {key: debug, section: colors}
+  vars: []
+  yaml: {key: colors.debug}
+COLOR_DEPRECATE:
+  default: purple
+  desc: Defines the color to use when emitting deprecation messages
+  env: [{name: ANSIBLE_COLOR_DEPRECATE}]
+  ini:
+  - {key: deprecate, section: colors}
+  vars: []
+  yaml: {key: colors.deprecate}
+COLOR_DIFF_ADD:
+  default: green
+  desc: Defines the color to use when showing added lines in diffs
+  env: [{name: ANSIBLE_COLOR_DIFF_ADD}]
+  ini:
+  - {key: diff_add, section: colors}
+  vars: []
+  yaml: {key: colors.diff_add}
+COLOR_DIFF_LINES:
+  default: cyan
+  desc: Defines the color to use when showing diffs
+  env: [{name: ANSIBLE_COLOR_DIFF_LINES}]
+  ini:
+  - {key: diff_lines, section: colors}
+  vars: []
+  yaml: {key: colors.diff_lines}
+COLOR_DIFF_REMOVE:
+  default: red
+  desc: Defines the color to use when showing removed lines in diffs
+  env: [{name: ANSIBLE_COLOR_DIFF_REMOVE}]
+  ini:
+  - {key: diff_remove, section: colors}
+  vars: []
+  yaml: {key: colors.diff_remove}
+COLOR_ERROR:
+  default: red
+  desc: Defines the color to use when emitting error messages
+  env: [{name: ANSIBLE_COLOR_ERROR}]
+  ini:
+  - {key: error, section: colors}
+  vars: []
+  yaml: {key: colors.error}
+COLOR_HIGHLIGHT:
+  default: white
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
+  ini:
+  - {key: highlight, section: colors}
+  vars: []
+  yaml: {key: colors.highlight}
+COLOR_OK:
+  default: green
+  desc: Defines the color to use when showing 'OK' status
+  env: [{name: ANSIBLE_COLOR_OK}]
+  ini:
+  - {key: ok, section: colors}
+  vars: []
+  yaml: {key: colors.ok}
+COLOR_SKIP:
+  default: cyan
+  desc: Defines the color to use when showing 'Skipped' status
+  env: [{name: ANSIBLE_COLOR_SKIP}]
+  ini:
+  - {key: skip, section: colors}
+  vars: []
+  yaml: {key: colors.skip}
+COLOR_UNREACHABLE:
+  default: bright red
+  desc: Defines the color to use on 'Unreachable' status
+  env: [{name: ANSIBLE_COLOR_UNREACHABLE}]
+  ini:
+  - {key: unreachable, section: colors}
+  vars: []
+  yaml: {key: colors.unreachable}
+COLOR_VERBOSE:
+  default: blue
+  desc: Defines the color to use when emitting verbose messages
+  env: [{name: ANSIBLE_COLOR_VERBOSE}]
+  ini:
+  - {key: verbose, section: colors}
+  vars: []
+  yaml: {key: colors.verbose}
+COLOR_WARN:
+  default: bright purple
+  desc: Defines the color to use when emitting warning messages
+  env: [{name: ANSIBLE_COLOR_WARN}]
+  ini:
+  - {key: warn, section: colors}
+  vars: []
+  yaml: {key: colors.warn}
+COMMAND_WARNINGS:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_COMMAND_WARNINGS}]
+  ini:
+  - {key: command_warnings, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.command_warnings}
+DEFAULT_ACTION_PLUGIN_PATH:
+  default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ACTION_PLUGINS}]
+  ini:
+  - {key: action_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.action_plugins}
+DEFAULT_ALLOW_UNSAFE_LOOKUPS:
+  default: False
+  desc: 'TODO: write it'
+  env: []
+  ini:
+  - {key: allow_unsafe_lookups, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.allow_unsafe_lookups}
+DEFAULT_ASK_PASS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ASK_PASS}]
+  ini:
+  - {key: ask_pass, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.ask_pass}
+DEFAULT_ASK_SUDO_PASS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ASK_SUDO_PASS}]
+  ini:
+  - {key: ask_sudo_pass, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.ask_sudo_pass}
+DEFAULT_ASK_SU_PASS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ASK_SU_PASS}]
+  ini:
+  - {key: ask_su_pass, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.ask_su_pass}
+DEFAULT_ASK_VAULT_PASS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ASK_VAULT_PASS}]
+  ini:
+  - {key: ask_vault_pass, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.ask_vault_pass}
+DEFAULT_BECOME:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_BECOME}]
+  ini:
+  - {key: become, section: privilege_escalation}
+  value_type: boolean
+  vars: []
+  yaml: {key: privilege_escalation.become}
+DEFAULT_BECOME_ASK_PASS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_BECOME_ASK_PASS}]
+  ini:
+  - {key: become_ask_pass, section: privilege_escalation}
+  value_type: boolean
+  vars: []
+  yaml: {key: privilege_escalation.become_ask_pass}
+DEFAULT_BECOME_EXE:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_BECOME_EXE}]
+  ini:
+  - {key: become_exe, section: privilege_escalation}
+  vars: []
+  yaml: {key: privilege_escalation.become_exe}
+DEFAULT_BECOME_FLAGS:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_BECOME_FLAGS}]
+  ini:
+  - {key: become_flags, section: privilege_escalation}
+  vars: []
+  yaml: {key: privilege_escalation.become_flags}
+DEFAULT_BECOME_METHOD:
+  default: 'sudo'
+  desc:
+  env: [{name: ANSIBLE_BECOME_METHOD}]
+  ini:
+    - {section: privilege_escalation, key: become_method}
+  vars: []
+  yaml: {key: privilege_escalation.become_method}
+DEFAULT_BECOME_USER:
+  default: root
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_BECOME_USER}]
+  ini:
+  - {key: become_user, section: privilege_escalation}
+  vars: []
+  yaml: {key: privilege_escalation.become_user}
+DEFAULT_CACHE_PLUGIN_PATH:
+  default: ~/.ansible/plugins/cache:/usr/share/ansible/plugins/cache
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_CACHE_PLUGINS}]
+  ini:
+  - {key: cache_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.cache_plugins}
+DEFAULT_CALLABLE_WHITELIST:
+  default: []
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_CALLABLE_WHITELIST}]
+  ini:
+  - {key: callable_whitelist, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.callable_whitelist}
+DEFAULT_CALLBACK_PLUGIN_PATH:
+  default: ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_CALLBACK_PLUGINS}]
+  ini:
+  - {key: callback_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.callback_plugins}
+DEFAULT_CALLBACK_WHITELIST:
+  default: []
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_CALLBACK_WHITELIST}]
+  ini:
+  - {key: callback_whitelist, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.callback_whitelist}
+DEFAULT_CONNECTION_PLUGIN_PATH:
+  default: ~/.ansible/plugins/connection:/usr/share/ansible/plugins/connection
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_CONNECTION_PLUGINS}]
+  ini:
+  - {key: connection_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.connection_plugins}
+DEFAULT_DEBUG:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_DEBUG}]
+  ini:
+  - {key: debug, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.debug}
+DEFAULT_EXECUTABLE:
+  default: /bin/sh
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_EXECUTABLE}]
+  ini:
+  - {key: executable, section: defaults}
+  vars: []
+  yaml: {key: defaults.executable}
+DEFAULT_FACT_PATH:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_FACT_PATH}]
+  ini:
+  - {key: fact_path, section: defaults}
+  value_type: path
+  vars: []
+  yaml: {key: defaults.fact_path}
+DEFAULT_FILTER_PLUGIN_PATH:
+  default: ~/.ansible/plugins/filter:/usr/share/ansible/plugins/filter
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_FILTER_PLUGINS}]
+  ini:
+  - {key: filter_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.filter_plugins}
+DEFAULT_FORCE_HANDLERS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_FORCE_HANDLERS}]
+  ini:
+  - {key: force_handlers, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.force_handlers}
+DEFAULT_FORKS:
+  default: 5
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_FORKS}]
+  ini:
+  - {key: forks, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.forks}
+DEFAULT_GATHERING:
+    default: 'implicit'
+    desc: 'TODO: write it'
+    env: [{name: ANSIBLE_GATHERING}]
+    ini:
+      - key: gathering
+        section: defaults
+    vars: []
+    yaml: {key: defaults.gathering}
+DEFAULT_GATHER_SUBSET:
+    default: 'all'
+    desc: 'TODO: write it'
+    env: [{name: ANSIBLE_GATHER_SUBSET}]
+    ini:
+      - key: gather_subset
+        section: defaults
+    vars: []
+    yaml: {key: defaults.gather_subset}
+DEFAULT_GATHER_TIMEOUT:
+  default: 10
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_GATHER_TIMEOUT}]
+  ini:
+  - {key: gather_timeout, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.gather_timeout}
+DEFAULT_HANDLER_INCLUDES_STATIC:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_HANDLER_INCLUDES_STATIC}]
+  ini:
+  - {key: handler_includes_static, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.handler_includes_static}
+DEFAULT_HASH_BEHAVIOUR:
+  default: replace
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
+  ini:
+  - {key: hash_behaviour, section: defaults}
+  vars: []
+  yaml: {key: defaults.hash_behaviour}
+DEFAULT_HOST_LIST:
+  default: /etc/ansible/hosts
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_INVENTORY}]
+  expand_relative_paths: True
+  ini:
+  - {key: inventory, section: defaults}
+  value_type: path
+  vars: []
+  yaml: {key: defaults.inventory}
+DEFAULT_INTERNAL_POLL_INTERVAL:
+  default: 0.001
+  desc: 'TODO: write it'
+  env: []
+  ini:
+  - {key: internal_poll_interval, section: defaults}
+  value_type: float
+  vars: []
+  yaml: {key: defaults.internal_poll_interval}
+DEFAULT_INVENTORY_PLUGIN_PATH:
+  default: ~/.ansible/plugins/inventory:/usr/share/ansible/plugins/inventory
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_INVENTORY_PLUGINS}]
+  ini:
+  - {key: inventory_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.inventory_plugins}
+DEFAULT_JINJA2_EXTENSIONS:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
+  ini:
+  - {key: jinja2_extensions, section: defaults}
+  vars: []
+  yaml: {key: defaults.jinja2_extensions}
+DEFAULT_KEEP_REMOTE_FILES:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_KEEP_REMOTE_FILES}]
+  ini:
+  - {key: keep_remote_files, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.keep_remote_files}
+DEFAULT_LIBVIRT_LXC_NOSECLABEL:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: LIBVIRT_LXC_NOSECLABEL}]
+  ini:
+  - {key: libvirt_lxc_noseclabel, section: selinux}
+  value_type: boolean
+  vars: []
+  yaml: {key: selinux.libvirt_lxc_noseclabel}
+DEFAULT_LOAD_CALLBACK_PLUGINS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_LOAD_CALLBACK_PLUGINS}]
+  ini:
+  - {key: bin_ansible_callbacks, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.bin_ansible_callbacks}
+DEFAULT_LOCAL_TMP:
+  default: ~/.ansible/tmp
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_LOCAL_TEMP}]
+  ini:
+  - {key: local_tmp, section: defaults}
+  value_type: tmppath
+  vars: []
+  yaml: {key: defaults.local_tmp}
+DEFAULT_LOG_PATH:
+  default: ''
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_LOG_PATH}]
+  ini:
+  - {key: log_path, section: defaults}
+  value_type: path
+  vars: []
+  yaml: {key: defaults.log_path}
+DEFAULT_LOOKUP_PLUGIN_PATH:
+  default: ~/.ansible/plugins/lookup:/usr/share/ansible/plugins/lookup
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_LOOKUP_PLUGINS}]
+  ini:
+  - {key: lookup_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.lookup_plugins}
+DEFAULT_MANAGED_STR:
+  default: Ansible managed
+  desc: 'TODO: write it'
+  env: []
+  ini:
+  - {key: ansible_managed, section: defaults}
+  vars: []
+  yaml: {key: defaults.ansible_managed}
+DEFAULT_MODULE_ARGS:
+  default: ''
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_MODULE_ARGS}]
+  ini:
+  - {key: module_args, section: defaults}
+  vars: []
+  yaml: {key: defaults.module_args}
+DEFAULT_MODULE_COMPRESSION:
+  default: ZIP_DEFLATED
+  desc: 'TODO: write it'
+  env: []
+  ini:
+  - {key: module_compression, section: defaults}
+  vars: []
+  yaml: {key: defaults.module_compression}
+DEFAULT_MODULE_LANG:
+  default: os.getenv('LANG', 'en_US.UTF-8')
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_MODULE_LANG}]
+  ini:
+  - {key: module_lang, section: defaults}
+  vars: []
+  yaml: {key: defaults.module_lang}
+DEFAULT_MODULE_NAME:
+  default: command
+  desc: 'TODO: write it'
+  env: []
+  ini:
+  - {key: module_name, section: defaults}
+  vars: []
+  yaml: {key: defaults.module_name}
+DEFAULT_MODULE_PATH:
+  default: ~/.ansible/plugins/modules:/usr/share/ansible/plugins/modules
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_LIBRARY}]
+  ini:
+  - {key: library, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.library}
+DEFAULT_MODULE_SET_LOCALE:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_MODULE_SET_LOCALE}]
+  ini:
+  - {key: module_set_locale, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.module_set_locale}
+DEFAULT_MODULE_UTILS_PATH:
+  default: ~/.ansible/plugins/module_utils:/usr/share/ansible/plugins/module_utils
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_MODULE_UTILS}]
+  ini:
+  - {key: module_utils, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.module_utils}
+DEFAULT_NO_LOG:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_NO_LOG}]
+  ini:
+  - {key: no_log, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.no_log}
+DEFAULT_NO_TARGET_SYSLOG:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_NO_TARGET_SYSLOG}]
+  ini:
+  - {key: no_target_syslog, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.no_target_syslog}
+DEFAULT_NULL_REPRESENTATION:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_NULL_REPRESENTATION}]
+  ini:
+  - {key: null_representation, section: defaults}
+  value_type: none
+  vars: []
+  yaml: {key: defaults.null_representation}
+DEFAULT_POLL_INTERVAL:
+  default: 15
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_POLL_INTERVAL}]
+  ini:
+  - {key: poll_interval, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.poll_interval}
+DEFAULT_PRIVATE_KEY_FILE:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PRIVATE_KEY_FILE}]
+  ini:
+  - {key: private_key_file, section: defaults}
+  value_type: path
+  vars: []
+  yaml: {key: defaults.private_key_file}
+DEFAULT_PRIVATE_ROLE_VARS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
+  ini:
+  - {key: private_role_vars, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.private_role_vars}
+DEFAULT_REMOTE_PORT:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_REMOTE_PORT}]
+  ini:
+  - {key: remote_port, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.remote_port}
+DEFAULT_REMOTE_TMP:
+  default: ~/.ansible/tmp
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_REMOTE_TEMP}]
+  ini:
+  - {key: remote_tmp, section: defaults}
+  vars:
+    - name: ansible_remote_tmp
+  yaml: {key: defaults.remote_tmp}
+DEFAULT_REMOTE_USER:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_REMOTE_USER}]
+  ini:
+  - {key: remote_user, section: defaults}
+  vars: []
+  yaml: {key: defaults.remote_user}
+DEFAULT_ROLES_PATH:
+  default: ~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ROLES_PATH}]
+  expand_relative_paths: True
+  ini:
+  - {key: roles_path, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.roles_path}
+DEFAULT_SCP_IF_SSH:
+  default: smart
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SCP_IF_SSH}]
+  ini:
+  - {key: scp_if_ssh, section: ssh_connection}
+  vars: []
+  yaml: {key: ssh_connection.scp_if_ssh}
+DEFAULT_SELINUX_SPECIAL_FS:
+  default: fuse, nfs, vboxsf, ramfs, 9p
+  desc: 'TODO: write it'
+  env: []
+  ini:
+  - {key: special_context_filesystems, section: selinux}
+  value_type: list
+  vars: []
+  yaml: {key: selinux.special_context_filesystems}
+DEFAULT_SFTP_BATCH_MODE:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
+  ini:
+  - {key: sftp_batch_mode, section: ssh_connection}
+  value_type: boolean
+  vars: []
+  yaml: {key: ssh_connection.sftp_batch_mode}
+DEFAULT_SQUASH_ACTIONS:
+  default: apk, apt, dnf, homebrew, openbsd_pkg, pacman, pkgng, yum, zypper
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SQUASH_ACTIONS}]
+  ini:
+  - {key: squash_actions, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.squash_actions}
+DEFAULT_SSH_TRANSFER_METHOD:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
+  ini:
+  - {key: transfer_method, section: ssh_connection}
+  vars: []
+  yaml: {key: ssh_connection.transfer_method}
+DEFAULT_STDOUT_CALLBACK:
+  default: default
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_STDOUT_CALLBACK}]
+  ini:
+  - {key: stdout_callback, section: defaults}
+  vars: []
+  yaml: {key: defaults.stdout_callback}
+DEFAULT_STRATEGY:
+  default: linear
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_STRATEGY}]
+  ini:
+  - {key: strategy, section: defaults}
+  vars: []
+  yaml: {key: defaults.strategy}
+DEFAULT_STRATEGY_PLUGIN_PATH:
+  default: ~/.ansible/plugins/strategy:/usr/share/ansible/plugins/strategy
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_STRATEGY_PLUGINS}]
+  ini:
+  - {key: strategy_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.strategy_plugins}
+DEFAULT_SU:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SU}]
+  ini:
+  - {key: su, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.su}
+DEFAULT_SUDO:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SUDO}]
+  ini:
+  - {key: sudo, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.sudo}
+DEFAULT_SUDO_EXE:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SUDO_EXE}]
+  ini:
+  - {key: sudo_exe, section: defaults}
+  vars: []
+  yaml: {key: defaults.sudo_exe}
+DEFAULT_SUDO_FLAGS:
+  default: -H -S -n
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SUDO_FLAGS}]
+  ini:
+  - {key: sudo_flags, section: defaults}
+  vars: []
+  yaml: {key: defaults.sudo_flags}
+DEFAULT_SUDO_USER:
+  default: root
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SUDO_USER}]
+  ini:
+  - {key: sudo_user, section: defaults}
+  vars: []
+  yaml: {key: defaults.sudo_user}
+DEFAULT_SU_EXE:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SU_EXE}]
+  ini:
+  - {key: su_exe, section: defaults}
+  vars: []
+  yaml: {key: defaults.su_exe}
+DEFAULT_SU_FLAGS:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SU_FLAGS}]
+  ini:
+  - {key: su_flags, section: defaults}
+  vars: []
+  yaml: {key: defaults.su_flags}
+DEFAULT_SU_USER:
+  default: root
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SU_USER}]
+  ini:
+  - {key: su_user, section: defaults}
+  vars: []
+  yaml: {key: defaults.su_user}
+DEFAULT_SYSLOG_FACILITY:
+  default: LOG_USER
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SYSLOG_FACILITY}]
+  ini:
+  - {key: syslog_facility, section: defaults}
+  vars: []
+  yaml: {key: defaults.syslog_facility}
+DEFAULT_TASK_INCLUDES_STATIC:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_TASK_INCLUDES_STATIC}]
+  ini:
+  - {key: task_includes_static, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.task_includes_static}
+DEFAULT_TEST_PLUGIN_PATH:
+  default: ~/.ansible/plugins/test:/usr/share/ansible/plugins/test
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_TEST_PLUGINS}]
+  ini:
+  - {key: test_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.test_plugins}
+DEFAULT_TIMEOUT:
+  default: 10
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_TIMEOUT}]
+  ini:
+  - {key: timeout, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.timeout}
+DEFAULT_TRANSPORT:
+  default: smart
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_TRANSPORT}]
+  ini:
+  - {key: transport, section: defaults}
+  vars: []
+  yaml: {key: defaults.transport}
+DEFAULT_UNDEFINED_VAR_BEHAVIOR:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ERROR_ON_UNDEFINED_VARS}]
+  ini:
+  - {key: error_on_undefined_vars, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.error_on_undefined_vars}
+DEFAULT_VARS_PLUGIN_PATH:
+  default: ~/.ansible/plugins/vars:/usr/share/ansible/plugins/vars
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_VARS_PLUGINS}]
+  ini:
+  - {key: vars_plugins, section: defaults}
+  value_type: pathlist
+  vars: []
+  yaml: {key: defaults.vars_plugins}
+DEFAULT_VAR_COMPRESSION_LEVEL:
+  default: 0
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_VAR_COMPRESSION_LEVEL}]
+  ini:
+  - {key: var_compression_level, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.var_compression_level}
+DEFAULT_VAULT_ID_MATCH:
+  default: False
+  desc: 'If true, decrypting vaults with a vault id will only try the password from the matching vault-id'
+  env: [{name: ANSIBLE_VAULT_ID_MATCH}]
+  ini:
+  - {key: vault_id_match, section: defaults}
+  vars: []
+  yaml: {key: defaults.vault_id_match}
+DEFAULT_VAULT_IDENTITY:
+  default: default
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_VAULT_IDENTITY}]
+  ini:
+  - {key: vault_identity, section: defaults}
+  vars: []
+  yaml: {key: defaults.vault_identity}
+DEFAULT_VAULT_PASSWORD_FILE:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_VAULT_PASSWORD_FILE}]
+  ini:
+  - {key: vault_password_file, section: defaults}
+  value_type: path
+  vars: []
+  yaml: {key: defaults.vault_password_file}
+DEFAULT_VERBOSITY:
+  default: 0
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_VERBOSITY}]
+  ini:
+  - {key: verbosity, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.verbosity}
+DEPRECATION_WARNINGS:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_DEPRECATION_WARNINGS}]
+  ini:
+  - {key: deprecation_warnings, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.deprecation_warnings}
+DIFF_ALWAYS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_DIFF_ALWAYS}]
+  ini:
+  - {key: always, section: diff}
+  value_type: bool
+  vars: []
+  yaml: {key: diff.always}
+DIFF_CONTEXT:
+  default: 3
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_DIFF_CONTEXT}]
+  ini:
+  - {key: context, section: diff}
+  value_type: integer
+  vars: []
+  yaml: {key: diff.context}
+DISPLAY_ARGS_TO_STDOUT:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_DISPLAY_ARGS_TO_STDOUT}]
+  ini:
+  - {key: display_args_to_stdout, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.display_args_to_stdout}
+DISPLAY_SKIPPED_HOSTS:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: DISPLAY_SKIPPED_HOSTS}]
+  ini:
+  - {key: display_skipped_hosts, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.display_skipped_hosts}
+ERROR_ON_MISSING_HANDLER:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_ERROR_ON_MISSING_HANDLER}]
+  ini:
+  - {key: error_on_missing_handler, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.error_on_missing_handler}
+GALAXY_IGNORE_CERTS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_GALAXY_IGNORE}]
+  ini:
+  - {key: ignore_certs, section: galaxy}
+  value_type: boolean
+  vars: []
+  yaml: {key: galaxy.ignore_certs}
+GALAXY_ROLE_SKELETON:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
+  ini:
+  - {key: role_skeleton, section: galaxy}
+  value_type: path
+  vars: []
+  yaml: {key: galaxy.role_skeleton}
+GALAXY_ROLE_SKELETON_IGNORE:
+  default: [^.git$, ^.*/.git_keep$]
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE}]
+  ini:
+  - {key: role_skeleton_ignore, section: galaxy}
+  value_type: list
+  vars: []
+  yaml: {key: galaxy.role_skeleton_ignore}
+GALAXY_SCMS:
+  default: git, hg
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_GALAXY_SCMS}]
+  ini:
+  - {key: scms, section: galaxy}
+  value_type: list
+  vars: []
+  yaml: {key: galaxy.scms}
+GALAXY_SERVER:
+  default: https://galaxy.ansible.com
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_GALAXY_SERVER}]
+  ini:
+  - {key: server, section: galaxy}
+  vars: []
+  yaml: {key: galaxy.server}
+HOST_KEY_CHECKING:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_HOST_KEY_CHECKING}]
+  ini:
+  - {key: host_key_checking, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.host_key_checking}
+INVENTORY_ENABLED:
+  default: [host_list, script, yaml, ini]
+  desc: List of enabled inventory plugins, it also determines the order in which they are used.
+  env: [{name: ANSIBLE_INVENTORY_ENABLED}]
+  ini:
+  - {key: inventory_enabled, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: inventory.enabled_plugins}
+INVENTORY_IGNORE_EXTS:
+  default: BLACKLIST_EXTS + [ '~', '.orig', '.ini', '.cfg', '.retry']
+  desc: List of extensions to ignore when using a directory as an inventory source
+  env: [{name: ANSIBLE_INVENTORY_IGNORE}]
+  ini:
+  - {key: inventory_ignore_extensions, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: inventory.ignore_extensions}
+INVENTORY_IGNORE_PATTERNS:
+  default: []
+  desc: List of patterns to ignore when using a directory as an inventory source
+  env: [{name: ANSIBLE_INVENTORY_IGNORE_REGEX}]
+  ini:
+  - {key: inventory_ignore_patterns, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: inventory.ignore_patterns}
+MAX_FILE_SIZE_FOR_DIFF:
+  default: 104448
+  desc: Maximum size of files to be considered for diff display
+  env: [{name: ANSIBLE_MAX_DIFF_SIZE}]
+  ini:
+  - {key: max_diff_size, section: defaults}
+  value_type: integer
+  vars: []
+  yaml: {key: defaults.max_diff_size}
+MERGE_MULTIPLE_CLI_TAGS:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_MERGE_MULTIPLE_CLI_TAGS}]
+  ini:
+  - {key: merge_multiple_cli_tags, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.merge_multiple_cli_tags}
+NETWORK_GROUP_MODULES:
+  default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos]
+  desc: 'TODO: write it'
+  env: [{name: NETWORK_GROUP_MODULES}]
+  ini:
+  - {key: network_group_modules, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.network_group_modules}
+ONLY_NAMESPACE_FACTS:
+  default: False
+  desc:
+    - Facts normally get injected as top level variables, this setting prevents that.
+    - Facts are still available in the `ansible_facts` variable w/o the `ansible_` prefix.
+  env: [{name: ANSIBLE_RESTRICT_FACTS}]
+  ini:
+  - {key: restrict_facts_namespace, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.restrict_facts_namespace}
+  version_added: "2.4"
+PARAMIKO_HOST_KEY_AUTO_ADD:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD}]
+  ini:
+  - {key: host_key_auto_add, section: paramiko_connection}
+  value_type: boolean
+  vars: []
+  yaml: {key: paramiko_connection.host_key_auto_add}
+PARAMIKO_LOOK_FOR_KEYS:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
+  ini:
+  - {key: look_for_keys, section: paramiko_connection}
+  value_type: boolean
+  vars: []
+  yaml: {key: paramiko_connection.look_for_keys}
+PARAMIKO_PROXY_COMMAND:
+  default:
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
+  ini:
+  - {key: proxy_command, section: paramiko_connection}
+  vars: []
+  yaml: {key: paramiko_connection.proxy_command}
+PARAMIKO_PTY:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PARAMIKO_PTY}]
+  ini:
+  - {key: pty, section: paramiko_connection}
+  value_type: boolean
+  vars: []
+  yaml: {key: paramiko_connection.pty}
+PARAMIKO_RECORD_HOST_KEYS:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PARAMIKO_RECORD_HOST_KEYS}]
+  ini:
+  - {key: record_host_keys, section: paramiko_connection}
+  value_type: boolean
+  vars: []
+  yaml: {key: paramiko_connection.record_host_keys}
+PERSISTENT_CONTROL_PATH_DIR:
+  default: ~/.ansible/pc
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PERSISTENT_CONTROL_PATH_DIR}]
+  ini:
+  - {key: control_path_dir, section: persistent_connection}
+  vars: []
+  yaml: {key: persistent_connection.control_path_dir}
+PERSISTENT_CONNECT_TIMEOUT:
+  default: 30
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT}]
+  ini:
+  - {key: connect_timeout, section: persistent_connection}
+  value_type: integer
+  vars: []
+  yaml: {key: persistent_connection.connect_timeout}
+PERSISTENT_CONNECT_RETRY_TIMEOUT:
+  default: 15
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
+  ini:
+  - {key: connect_retry_timeout, section: persistent_connection}
+  value_type: integer
+  vars: []
+  yaml: {key: persistent_connection.connect_retry_timeout}
+PERSISTENT_COMMAND_TIMEOUT:
+  default: 10
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
+  ini:
+  - {key: command_timeout, section: persistent_connection}
+  value_type: integer
+  vars: []
+  yaml: {key: persistent_connection.command_timeout}
+RETRY_FILES_ENABLED:
+  default: True
+  desc: This controls whether a failed Ansible playbook should create a .retry file.
+  env: [{name: ANSIBLE_RETRY_FILES_ENABLED}]
+  ini:
+  - {key: retry_files_enabled, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: errors.retry.enabled}
+RETRY_FILES_SAVE_PATH:
+  default: ~
+  desc: This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
+  env: [{name: ANSIBLE_RETRY_FILES_SAVE_PATH}]
+  ini:
+  - {key: retry_files_save_path, section: defaults}
+  value_type: path
+  vars: []
+  yaml: {key: errors.retry.path}
+SHOW_CUSTOM_STATS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SHOW_CUSTOM_STATS}]
+  ini:
+  - {key: show_custom_stats, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.show_custom_stats}
+STRING_TYPE_FILTERS:
+  default: [string, to_json, to_nice_json, to_yaml, ppretty, json]
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_STRING_TYPE_FILTERS}]
+  ini:
+  - {key: dont_type_filters, section: jinja2}
+  value_type: list
+  vars: []
+  yaml: {key: jinja2.dont_type_filters}
+SYSTEM_WARNINGS:
+  default: True
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_SYSTEM_WARNINGS}]
+  ini:
+  - {key: system_warnings, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.system_warnings}
+USE_PERSISTENT_CONNECTIONS:
+  default: False
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_USE_PERSISTENT_CONNECTIONS}]
+  ini:
+  - {key: use_persistent_connections, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.use_persistent_connections}
+VARIABLE_PRECEDENCE:
+  default: [all_inventory, groups_inventory, all_plugins_inventory, all_plugins_play, groups_plugins_inventory, groups_plugins_play]
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PRECEDENCE}]
+  ini:
+  - {key: precedence, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.precedence}
+YAML_FILENAME_EXTENSIONS:
+  default: [".yml", ".yaml", ".json"]
+  desc: "check all of these extensions when looking for 'variable' files which should be YAML or JSON or vaulted versions of theses."
+  env:
+    - name: ANSIBLE_YAML_FILENAME_EXT
+  ini:
+    - {key: defaults, section: yaml_valid_extensions}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.yaml_valid_extensions}

@@ -1,22 +1,11 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -134,12 +123,11 @@ EXAMPLES = '''
 '''
 RETURN = '''
 ---
-msg: "Standard volume [workload_vol_1] has been created."
-msg: "Thin volume [workload_thin_vol] has been created."
-msg: "Volume [workload_vol_1] has been expanded."
-msg: "Volume [workload_vol_1] has been deleted."
-msg: "Volume [workload_vol_1] did not exist."
-msg: "Volume [workload_vol_1] already exists."
+msg:
+    description: State of volume
+    type: string
+    returned: always
+    sample: "Standard volume [workload_vol_1] has been created."
 '''
 
 import json

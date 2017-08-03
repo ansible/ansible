@@ -41,6 +41,7 @@ try:
 except:
     import simplejson as json
 
+
 class SoftLayerInventory(object):
     common_items = [
         'id',
@@ -54,6 +55,8 @@ class SoftLayerInventory(object):
         'tagReferences.tag.name',
         'userData.value',
         ]
+    ]
+
 
     vs_items = [
         'lastKnownPowerState.name',
@@ -62,16 +65,16 @@ class SoftLayerInventory(object):
         'maxMemory',
         'activeTransaction.transactionStatus[friendlyName,name]',
         'status',
-        ]
+    ]
 
     hw_items = [
         'hardwareStatusId',
         'processorPhysicalCoreAmount',
         'memoryCapacity',
-        ]
+    ]
 
     def _empty_inventory(self):
-        return {"_meta" : {"hostvars" : {}}}
+        return {"_meta": {"hostvars": {}}}
 
     def __init__(self):
         '''Main path'''
@@ -105,9 +108,9 @@ class SoftLayerInventory(object):
 
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on SoftLayer')
         parser.add_argument('--list', action='store_true', default=False,
-                           help='List instances (default: False)')
+                            help='List instances (default: False)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific instance')
+                            help='Get all the variables about a specific instance')
         self.args = parser.parse_args()
 
     def json_format_dict(self, data, pretty=False):
@@ -177,7 +180,7 @@ class SoftLayerInventory(object):
     def get_virtual_servers(self):
         '''Get all the CCI instances'''
         vs = SoftLayer.VSManager(self.client)
-        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items,self.vs_items))
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items, self.vs_items))
         instances = vs.list_instances(mask=mask)
 
         for instance in instances:
@@ -186,7 +189,7 @@ class SoftLayerInventory(object):
     def get_physical_servers(self):
         '''Get all the hardware instances'''
         hw = SoftLayer.HardwareManager(self.client)
-        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items,self.hw_items))
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items, self.hw_items))
         instances = hw.list_hardware(mask=mask)
 
         for instance in instances:

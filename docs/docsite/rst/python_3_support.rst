@@ -15,7 +15,7 @@ Testing Python 3 with commands and playbooks
 
 * `Install Ansible 2.2+ <http://docs.ansible.com/ansible/intro_installation.html>`_
 * To test Python 3 on the controller, run your ansible command via
-  `python3`. For example:
+  ``python3``. For example:
 
 .. code-block:: shell
 
@@ -62,7 +62,7 @@ What to do if an incompatibility is found
 
 If you find a bug while testing modules with Python3 you can submit a bug
 report on `Ansible's GitHub project
-<https://github.com/ansible/ansible/issues/>_`.  Be sure to mention Python3 in
+<https://github.com/ansible/ansible/issues/>`_.  Be sure to mention Python3 in
 the bug report so that the right people look at it.
 
 If you would like to fix the code and submit a pull request on github, you can

@@ -141,13 +141,15 @@ EXAMPLES = """
 """
 
 RETURN = """
-vrouterifcmd:
+command:
   description: The CLI command run on the target node(s).
-stdout/msg:
+  returned: always
+  type: str
+stdout:
   description: The set of responses from the vrouterif command.
   returned: on success
   type: list
-stderr/msg:
+stderr:
   description: The set of error responses from the vrouterif command.
   returned: on error
   type: str

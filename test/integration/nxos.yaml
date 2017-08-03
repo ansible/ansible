@@ -7,14 +7,251 @@
     limit_to: "*"
     debug: false
 
-  roles:
-    - { role: nxos_command, when: "limit_to in ['*', 'nxos_command']" }
-    - { role: nxos_config, when: "limit_to in ['*', 'nxos_config']" }
-    - { role: nxos_facts, when: "limit_to in ['*', 'nxos_facts']" }
-    - { role: nxos_template, when: "limit_to in ['*', 'nxos_template']" }
-    - { role: nxos_nxapi, when: "limit_to in ['*', 'nxos_nxapi']" }
-    - { role: nxos_evpn_global, when: "limit_to in ['*', 'nxos_evpn_global']" }
-    - { role: nxos_feature, when: "limit_to in ['*', 'nxos_feature']" }
-    - { role: nxos_mtu, when: "limit_to in ['*', 'nxos_mtu']" }
-    - { role: nxos_system, when: "limit_to in ['*', 'nxos_system']" }
-    - { role: nxos_interface, when: "limit_to in ['*', 'nxos_interface']" }
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
+
+
+  tasks:
+    - set_fact:
+        test_failed: false
+        failed_modules: []
+    - block:
+      - include_role:
+          name: nxos_command
+        when: "limit_to in ['*', 'nxos_command']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_command' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_config
+        when: "limit_to in ['*', 'nxos_config']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_config' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_facts
+        when: "limit_to in ['*', 'nxos_facts']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_facts' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_nxapi
+        when: "limit_to in ['*', 'nxos_nxapi']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_nxapi' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_evpn_vni
+        when: "limit_to in ['*', 'nxos_evpn_vni']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_evpn_vni' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_evpn_global
+        when: "limit_to in ['*', 'nxos_evpn_global']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_evpn_global' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_feature
+        when: "limit_to in ['*', 'nxos_feature']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_feature' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_mtu
+        when: "limit_to in ['*', 'nxos_mtu']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_mtu' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_system
+        when: "limit_to in ['*', 'nxos_system']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_system' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_interface
+        when: "limit_to in ['*', 'nxos_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_user
+        when: "limit_to in ['*', 'nxos_user']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_user' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_banner
+        when: "limit_to in ['*', 'nxos_banner']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_banner' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_acl
+        when: "limit_to in ['*', 'nxos_acl']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_acl' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_acl_interface
+        when: "limit_to in ['*', 'nxos_acl_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_acl_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrf
+        when: "limit_to in ['*', 'nxos_vrf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrf' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrf_interface
+        when: "limit_to in ['*', 'nxos_vrf_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrf_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrrp
+        when: "limit_to in ['*', 'nxos_vrrp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrrp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_domain
+        when: "limit_to in ['*', 'nxos_vtp_domain']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_domain' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_password
+        when: "limit_to in ['*', 'nxos_vtp_password']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_password' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vtp_version
+        when: "limit_to in ['*', 'nxos_vtp_version']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vtp_version' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_rollback
+        when: "limit_to in ['*', 'nxos_rollback']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_rollback' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_portchannel
+        when: "limit_to in ['*', 'nxos_portchannel']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_portchannel' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vlan
+        when: "limit_to in ['*', 'nxos_vlan']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vlan' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_switchport
+        when: "limit_to in ['*', 'nxos_switchport']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_switchport' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vxlan_vtep
+        when: "limit_to in ['*', 'nxos_vxlan_vtep']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vxlan_vtep' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_logging
+        when: "limit_to in ['*', 'nxos_logging']"
+      rescue:
+        - set_fact: test_failed=true
+
+###########
+    - debug: var=failed_modules
+      when: test_failed
+
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed

@@ -3,21 +3,11 @@
 
 # (c) 2015, Michael Scherer <misc@zarb.org>
 # inspired by code of github.com/dandiker/
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -66,14 +56,17 @@ EXAMPLES = '''
     permissive: true
 '''
 
+import traceback
+
 HAVE_SEOBJECT = False
 try:
     import seobject
     HAVE_SEOBJECT = True
 except ImportError:
     pass
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -99,9 +92,8 @@ def main():
 
     try:
         permissive_domains = seobject.permissiveRecords(store)
-    except ValueError:
-        e = get_exception()
-        module.fail_json(domain=domain, msg=str(e))
+    except ValueError as e:
+        module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
 
     # not supported on EL 6
     if 'set_reload' in dir(permissive_domains):
@@ -109,27 +101,24 @@ def main():
 
     try:
         all_domains = permissive_domains.get_all()
-    except ValueError:
-        e = get_exception()
-        module.fail_json(domain=domain, msg=str(e))
+    except ValueError as e:
+        module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
 
     if permissive:
         if domain not in all_domains:
             if not module.check_mode:
                 try:
                     permissive_domains.add(domain)
-                except ValueError:
-                    e = get_exception()
-                    module.fail_json(domain=domain, msg=str(e))
+                except ValueError as e:
+                    module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
             changed = True
     else:
         if domain in all_domains:
             if not module.check_mode:
                 try:
                     permissive_domains.delete(domain)
-                except ValueError:
-                    e = get_exception()
-                    module.fail_json(domain=domain, msg=str(e))
+                except ValueError as e:
+                    module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
             changed = True
 
     module.exit_json(changed=changed, store=store,

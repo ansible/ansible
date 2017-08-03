@@ -83,7 +83,7 @@ user_data:
     description: User data used to start instance
     returned: when Launch Configuration was found
     type: string
-    user_data: "ZXhwb3J0IENMT1VE"
+    sample: "ZXhwb3J0IENMT1VE"
 name:
     description: Name of the AMI
     returned: when Launch Configuration was found

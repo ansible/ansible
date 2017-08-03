@@ -9,20 +9,18 @@ by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, no
 
 
 .. code-block:: YAML
- :emphasize-lines: 2
+ :emphasize-lines: 3
  :caption: Block example
 
     tasks:
-      - block:
+      - name: Install Apache
+        block:
           - yum: name={{ item }} state=installed
             with_items:
               - httpd
               - memcached
-
           - template: src=templates/src.j2 dest=/etc/foo.conf
-
           - service: name=bar state=started enabled=True
-
         when: ansible_distribution == 'CentOS'
         become: true
         become_user: root
@@ -32,6 +30,9 @@ In the example above, each of the 3 tasks will be executed after appending the `
 and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
 for all the enclosed tasks.
 
+. versionadded:: 2.3
+
+The `name:` keyword for `blocks:` was added in Ansible 2.3.
 
 .. _block_error_handling:
 
@@ -41,20 +42,21 @@ Error Handling
 Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
 
 .. code-block:: YAML
- :emphasize-lines: 2,6,10
+ :emphasize-lines: 3,7,11
  :caption: Block error handling example
 
-  tasks:
-   - block:
-       - debug: msg='i execute normally'
-       - command: /bin/false
-       - debug: msg='i never execute, cause ERROR!'
-     rescue:
-       - debug: msg='I caught an error'
-       - command: /bin/false
-       - debug: msg='I also never execute :-('
-     always:
-       - debug: msg="this always executes"
+   tasks:
+    - name: Attempt and gracefull roll back demo
+      block:
+        - debug: msg='I execute normally'
+        - command: /bin/false
+        - debug: msg='I never execute, due to the above task failing'
+      rescue:
+        - debug: msg='I caught an error'
+        - command: /bin/false
+        - debug: msg='I also never execute :-('
+      always:
+        - debug: msg="this always executes"
 
 
 The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
@@ -65,32 +67,32 @@ error did or did not occur in the ``block`` and ``rescue`` sections.
 Another example is how to run handlers after an error occurred :
 
 .. code-block:: YAML
- :emphasize-lines: 4,8
+ :emphasize-lines: 5,9
  :caption: Block run handlers in error handling
 
   tasks:
-   - block:
-       - debug: msg='i execute normally'
-         notify: run me even after an error
-       - command: /bin/false
-     rescue:
-       - name: make sure all handlers run
-         meta: flush_handlers
-  handlers:
-    - name: run me even after an error
-      debug: msg='this handler runs even on error'
+    - name: Attempt and gracefull roll back demo
+      block:
+        - debug: msg='I execute normally'
+          notify: run me even after an error
+        - command: /bin/false
+      rescue:
+        - name: make sure all handlers run
+          meta: flush_handlers
+   handlers:
+     - name: run me even after an error
+       debug: msg='this handler runs even on error'
 
 .. seealso::
 
    :doc:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
 
 
 

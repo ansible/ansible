@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -33,8 +23,10 @@ notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
+  - For Windows targets, use the M(win_user) module instead.
 description:
     - Manage user accounts and user attributes.
+    - For Windows targets, use the M(win_user) module instead.
 options:
     name:
         required: true
@@ -400,7 +392,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('--expiredate')
+            cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password is not None:
@@ -513,7 +505,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('--expiredate')
+            cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
@@ -552,8 +544,8 @@ class User(object):
         if self.groups is None:
             return None
         info = self.user_info()
-        groups = set(filter(None, self.groups.split(',')))
-        for g in set(groups):
+        groups = set(x.strip() for x in self.groups.split(',') if x)
+        for g in groups.copy():
             if not self.group_exists(g):
                 self.module.fail_json(msg="Group %s does not exist" % (g))
             if info and remove_existing and self.group_info(g)[2] == info[3]:
@@ -719,7 +711,7 @@ class User(object):
             os.chown(path, uid, gid)
             for root, dirs, files in os.walk(path):
                 for d in dirs:
-                    os.chown(path, uid, gid)
+                    os.chown(os.path.join(root, d), uid, gid)
                 for f in files:
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError:
@@ -807,7 +799,7 @@ class FreeBsdUser(User):
             cmd.append(self.login_class)
 
         if self.expires:
-            days =( time.mktime(self.expires) - time.time() ) / 86400
+            days =( time.mktime(self.expires) - time.time() ) // 86400
             cmd.append('-e')
             cmd.append(str(int(days)))
 
@@ -905,7 +897,7 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires:
-            days = ( time.mktime(self.expires) - time.time() ) / 86400
+            days = ( time.mktime(self.expires) - time.time() ) // 86400
             cmd.append('-e')
             cmd.append(str(int(days)))
 
@@ -1028,7 +1020,7 @@ class OpenBSDUser(User):
         if self.groups is not None:
             current_groups = self.user_group_membership()
             groups_need_mod = False
-            groups_option = '-G'
+            groups_option = '-S'
             groups = []
 
             if self.groups == '':
@@ -1042,7 +1034,7 @@ class OpenBSDUser(User):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                groups_option = '-S'
+                                groups_option = '-G'
                                 groups_need_mod = True
                                 break
                     else:
@@ -1361,7 +1353,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
-                        fields[2] = str(int(time.time() / 86400))
+                        fields[2] = str(int(time.time() // 86400))
                         if minweeks:
                             fields[3] = str(int(minweeks) * 7)
                         if maxweeks:
@@ -1455,7 +1447,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
-                        fields[2] = str(int(time.time() / 86400))
+                        fields[2] = str(int(time.time() // 86400))
                         if minweeks:
                             fields[3] = str(int(minweeks) * 7)
                         if maxweeks:
@@ -1652,7 +1644,7 @@ class DarwinUser(User):
     def _update_system_user(self):
         '''Hide or show user on login window according SELF.SYSTEM.
 
-        Returns 0 if a change has been made, None otherwhise.'''
+        Returns 0 if a change has been made, None otherwise.'''
 
         plist_file = '/Library/Preferences/com.apple.loginwindow.plist'
 
@@ -2068,20 +2060,17 @@ class HPUX(User):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                if has_append:
-                                    cmd.append('-a')
                                 groups_need_mod = True
                                 break
                     else:
                         groups_need_mod = True
 
             if groups_need_mod:
-                if self.append and not has_append:
-                    cmd.append('-A')
-                    cmd.append(','.join(group_diff))
-                else:
-                    cmd.append('-G')
-                    cmd.append(','.join(groups))
+                cmd.append('-G')
+                new_groups = groups
+                if self.append:
+                    new_groups = groups | set(current_groups)
+                cmd.append(','.join(new_groups))
 
 
         if self.comment is not None and info[4] != self.comment:

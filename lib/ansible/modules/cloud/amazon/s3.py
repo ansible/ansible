@@ -253,7 +253,7 @@ EXAMPLES = '''
     bucket: mybucket
     mode: delete
 
-- name: GET an object but dont download if the file checksums match. New in 2.0
+- name: GET an object but don't download if the file checksums match. New in 2.0
   s3:
     bucket: mybucket
     object: /my/desired/key.txt
@@ -350,13 +350,32 @@ def delete_bucket(module, s3, bucket):
     if module.check_mode:
         module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
-        bucket = s3.lookup(bucket)
+        bucket = s3.lookup(bucket, validate=False)
         bucket_contents = bucket.list()
         bucket.delete_keys([key.name for key in bucket_contents])
+    except s3.provider.storage_response_error as e:
+        if e.status == 404:
+            # bucket doesn't appear to exist
+            return False
+        elif e.status == 403:
+            # bucket appears to exist but user doesn't have list bucket permission; may still be able to delete bucket
+            pass
+        else:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+    try:
         bucket.delete()
         return True
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        if e.status == 403:
+            module.exit_json(msg="Unable to complete DELETE operation. Check you have have s3:DeleteBucket "
+                             "permission. Error: {0}.".format(e.message),
+                             exception=traceback.format_exc())
+        elif e.status == 409:
+            module.exit_json(msg="Unable to complete DELETE operation. It appears there are contents in the "
+                             "bucket that you don't have permission to delete. Error: {0}.".format(e.message),
+                             exception=traceback.format_exc())
+        else:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 def delete_key(module, s3, bucket, obj, validate=True):
     if module.check_mode:
@@ -676,8 +695,8 @@ def main():
     if mode == 'delete':
         if bucket:
             deletertn = delete_bucket(module, s3, bucket)
-            if deletertn is True:
-                module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
+            message = "Bucket {0} and all keys have been deleted.".format(bucket)
+            module.exit_json(msg=message, changed=deletertn)
         else:
             module.fail_json(msg="Bucket parameter is required.")
 

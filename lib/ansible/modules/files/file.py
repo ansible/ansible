@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -33,7 +23,9 @@ description:
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
        the C(file) module - including M(copy), M(template), and M(assemble).
+     - For Windows targets, use the M(win_file) module instead.
 notes:
+    - For Windows targets, use the M(win_file) module instead.
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
 author:
@@ -138,7 +130,6 @@ import time
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -283,15 +274,13 @@ def main():
                 if prev_state == 'directory':
                     try:
                         shutil.rmtree(b_path, ignore_errors=False)
-                    except Exception:
-                        e = get_exception()
-                        module.fail_json(msg="rmtree failed: %s" % str(e))
+                    except Exception as e:
+                        module.fail_json(msg="rmtree failed: %s" % to_native(e))
                 else:
                     try:
                         os.unlink(b_path)
-                    except Exception:
-                        e = get_exception()
-                        module.fail_json(path=path, msg="unlinking failed: %s " % str(e))
+                    except Exception as e:
+                        module.fail_json(path=path, msg="unlinking failed: %s " % to_native(e))
             module.exit_json(path=path, changed=True, diff=diff)
         else:
             module.exit_json(path=path, changed=False)
@@ -339,8 +328,7 @@ def main():
                     if not os.path.exists(b_curpath):
                         try:
                             os.mkdir(b_curpath)
-                        except OSError:
-                            ex = get_exception()
+                        except OSError as ex:
                             # Possibly something else created the dir since the os.path.exists
                             # check above. As long as it's a dir, we don't need to error out.
                             if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
@@ -348,9 +336,8 @@ def main():
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path'] = curpath
                         changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff)
-            except Exception:
-                e = get_exception()
-                module.fail_json(path=path, msg='There was an issue creating %s as requested: %s' % (curpath, str(e)))
+            except Exception as e:
+                module.fail_json(path=path, msg='There was an issue creating %s as requested: %s' % (curpath, to_native(e)))
 
         # We already know prev_state is not 'absent', therefore it exists in some form.
         elif prev_state != 'directory':
@@ -401,10 +388,17 @@ def main():
                 changed = True
                 if not force:
                     module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
-        elif prev_state in ('file', 'directory'):
+        elif prev_state == 'file':
             changed = True
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
+        elif prev_state == 'directory':
+            changed = True
+            if os.path.exists(b_path):
+                if state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+                    module.exit_json(path=path, changed=False)
+                elif not force:
+                    module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
@@ -415,15 +409,17 @@ def main():
                     [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
                 )
                 try:
-                    if prev_state == 'directory' and (state == 'hard' or state == 'link'):
+                    if prev_state == 'directory' and state == 'link':
                         os.rmdir(b_path)
+                    elif prev_state == 'directory' and state == 'hard':
+                        if os.path.exists(b_path):
+                            os.remove(b_path)
                     if state == 'hard':
                         os.link(b_src, b_tmppath)
                     else:
                         os.symlink(b_src, b_tmppath)
                     os.rename(b_tmppath, b_path)
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     if os.path.exists(b_tmppath):
                         os.unlink(b_tmppath)
                     module.fail_json(path=path, msg='Error while replacing: %s' % to_native(e, nonstring='simplerepr'))
@@ -433,8 +429,7 @@ def main():
                         os.link(b_src, b_path)
                     else:
                         os.symlink(b_src, b_path)
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     module.fail_json(path=path, msg='Error while linking: %s' % to_native(e, nonstring='simplerepr'))
 
         if module.check_mode and not os.path.exists(b_path):
@@ -449,21 +444,18 @@ def main():
             if prev_state == 'absent':
                 try:
                     open(b_path, 'wb').close()
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     module.fail_json(path=path, msg='Error, could not touch target: %s' % to_native(e, nonstring='simplerepr'))
             elif prev_state in ('file', 'directory', 'hard'):
                 try:
                     os.utime(b_path, None)
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     module.fail_json(path=path, msg='Error while touching existing target: %s' % to_native(e, nonstring='simplerepr'))
             else:
                 module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
             try:
                 module.set_fs_attributes_if_different(file_args, True, diff)
-            except SystemExit:
-                e = get_exception()
+            except SystemExit as e:
                 if e.code:
                     # We take this to mean that fail_json() was called from
                     # somewhere in basic.py

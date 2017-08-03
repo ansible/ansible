@@ -82,7 +82,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Add VMs to an exising load balancer
+# Add VMs to an existing load balancer
 - local_action:
     module: cs_loadbalancer_rule_member
     name: balance_http
@@ -207,7 +207,6 @@ state:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -238,7 +237,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
         if self.module.params.get('ip_address'):
             args['publicipid'] = self.get_ip_address(key='id')
 
-        rules = self.cs.listLoadBalancerRules(**args)
+        rules = self.query_api('listLoadBalancerRules', **args)
         if rules:
             if len(rules['loadbalancerrule']) > 1:
                 self.module.fail_json(msg="More than one rule having name %s. Please pass 'ip_address' as well." % args['name'])
@@ -253,9 +252,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
         }
 
     def _get_members_of_rule(self, rule):
-        res = self.cs.listLoadBalancerRuleInstances(id=rule['id'])
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        res = self.query_api('listLoadBalancerRuleInstances', id=rule['id'])
         return res.get('loadbalancerruleinstance', [])
 
     def _ensure_members(self, operation):
@@ -283,7 +280,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
             return rule
 
         args = self._get_common_args()
-        vms = self.cs.listVirtualMachines(**args)
+        vms = self.query_api('listVirtualMachines', **args)
         to_change_ids = []
         for name in to_change:
             for vm in vms.get('virtualmachine', []):
@@ -301,8 +298,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
                 id=rule['id'],
                 virtualmachineids=to_change_ids,
             )
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
             poll_async = self.module.params.get('poll_async')
             if poll_async:
                 self.poll_job(res)
@@ -344,20 +340,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_lb_rule_member = AnsibleCloudStackLBRuleMember(module)
+    acs_lb_rule_member = AnsibleCloudStackLBRuleMember(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            rule = acs_lb_rule_member.remove_members()
-        else:
-            rule = acs_lb_rule_member.add_members()
+    state = module.params.get('state')
+    if state in ['absent']:
+        rule = acs_lb_rule_member.remove_members()
+    else:
+        rule = acs_lb_rule_member.add_members()
 
-        result = acs_lb_rule_member.get_result(rule)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_lb_rule_member.get_result(rule)
     module.exit_json(**result)
 
 

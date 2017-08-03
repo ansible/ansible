@@ -27,18 +27,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_datacenters_facts
-short_description: Retrieve facts about one or more oVirt datacenters
+short_description: Retrieve facts about one or more oVirt/RHV datacenters
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt datacenters."
+    - "Retrieve facts about one or more oVirt/RHV datacenters."
 notes:
     - "This module creates a new top-level C(ovirt_datacenters) fact, which
        contains a list of datacenters."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search datacenter I(X) use following pattern: I(name=X)"
 extends_documentation_fragment: ovirt_facts
 '''
@@ -57,7 +57,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_datacenters:
     description: "List of dictionaries describing the datacenters. Datacenter attribues are mapped to dictionary keys,
-                  all datacenters attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/data_center."
+                  all datacenters attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/data_center."
     returned: On success.
     type: list
 '''

@@ -80,6 +80,7 @@ proposed:
     sample: {"group": "lldp"}
 existing:
     description: k/v pairs of existing trap status
+    returned: always
     type: dict
     sample: {"lldp": [{"enabled": "No",
             "trap": "lldpRemTablesChange"}]}
@@ -105,7 +106,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 import re

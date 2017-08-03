@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-
 DOCUMENTATION = r'''
 ---
 module: win_iis_webapppool
@@ -117,7 +116,7 @@ attributes:
 info:
   description: Information on current state of the Application Pool
   returned: success
-  type: dictionary
+  type: complex
   sample:
   contains:
     attributes:
@@ -151,4 +150,3 @@ info:
       type: string
       sample: "Started"
 '''
-

@@ -47,6 +47,11 @@ function Clear-UserFlag($user, $flag) {
     $user.UserFlags = ($user.UserFlags[0] -BXOR $flag)
 }
 
+function Get-Group($grp) {
+    $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+    return
+}
+
 ########
 
 $params = Parse-Args $args;
@@ -163,7 +168,7 @@ If ($state -eq 'present') {
             If (($groups_action -eq "remove") -or ($groups_action -eq "replace")) {
                 ForEach ($grp in $current_groups) {
                     If ((($groups_action -eq "remove") -and ($groups -contains $grp)) -or (($groups_action -eq "replace") -and ($groups -notcontains $grp))) {
-                        $group_obj = $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+                        $group_obj = Get-Group $grp
                         If ($group_obj) {
                             $group_obj.Remove($user_obj.Path)
                             $result.changed = $true
@@ -177,7 +182,7 @@ If ($state -eq 'present') {
             If (($groups_action -eq "add") -or ($groups_action -eq "replace")) {
                 ForEach ($grp in $groups) {
                     If ($current_groups -notcontains $grp) {
-                        $group_obj = $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+                        $group_obj = Get-Group $grp
                         If ($group_obj) {
                             $group_obj.Add($user_obj.Path)
                             $result.changed = $true
@@ -201,7 +206,10 @@ ElseIf ($state -eq 'absent') {
             $username = $user_obj.Name.Value
             $adsi.delete("User", $user_obj.Name.Value)
             $result.changed = $true
+            $result.msg = "User '$username' deleted successfully"
             $user_obj = $null
+        } else {
+            $result.msg = "User '$username' was not found"
         }
     }
     catch {
@@ -235,7 +243,9 @@ try {
     }
     Else {
         $result.name = $username
-        $result.msg = "User '$username' was not found"
+        if ($state -eq 'query') {
+            $result.msg = "User '$username' was not found"
+        }
         $result.state = "absent"
     }
 }

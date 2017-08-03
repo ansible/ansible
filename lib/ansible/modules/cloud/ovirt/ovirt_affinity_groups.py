@@ -27,16 +27,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_affinity_groups
-short_description: Module to manage affinity groups in oVirt
+short_description: Module to manage affinity groups in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manage affinity groups in oVirt. It can also manage assignments
+    - "This module manage affinity groups in oVirt/RHV. It can also manage assignments
        of those groups to VMs."
 options:
     name:
         description:
-            - "Name of the the affinity group to manage."
+            - "Name of the affinity group to manage."
         required: true
     state:
         description:
@@ -52,12 +52,12 @@ options:
     host_enforcing:
         description:
             - "If I(true) VM cannot start on host if it does not satisfy the C(host_rule)."
-            - "C(This parameter is support since oVirt 4.1 version.)"
+            - "C(This parameter is support since oVirt/RHV 4.1 version.)"
     host_rule:
         description:
             - "If I(positive) I(all) VMs in this group should run on the this host."
             - "If I(negative) I(no) VMs in this group should run on the this host."
-            - "C(This parameter is support since oVirt 4.1 version.)"
+            - "C(This parameter is support since oVirt/RHV 4.1 version.)"
         choices:
           - positive
           - negative
@@ -79,7 +79,7 @@ options:
     hosts:
         description:
             - "List of the hosts names, which should have assigned this affinity group."
-            - "C(This parameter is support since oVirt 4.1 version.)"
+            - "C(This parameter is support since oVirt/RHV 4.1 version.)"
 extends_documentation_fragment: ovirt
 '''
 
@@ -128,9 +128,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 affinity_group:
-    description: "Dictionary of all the affinity group attributes. Affinity group attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_group."
+    description: "Dictionary of all the affinity group attributes. Affinity group attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/affinity_group."
     returned: On success if affinity group is found.
+    type: str
 '''
 
 import traceback
@@ -175,7 +176,7 @@ class AffinityGroupsModule(BaseModule):
             ag_service.vms_service().vm_service(vm).remove()
         for vm in to_add:
             # API return <action> element instead of VM element, so we
-            # need to WA this issue, for oVirt versions having this bug:
+            # need to WA this issue, for oVirt/RHV versions having this bug:
             try:
                 ag_service.vms_service().add(otypes.Vm(id=vm))
             except ValueError as ex:

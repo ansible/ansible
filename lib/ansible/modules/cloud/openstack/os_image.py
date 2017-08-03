@@ -38,6 +38,12 @@ options:
         - Name that has to be given to the image
      required: true
      default: None
+   id:
+     version_added: "2.4"
+     description:
+        - The Id of the image
+     required: false
+     default: None
    disk_format:
      description:
         - The format of the disk that is getting uploaded
@@ -95,7 +101,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -131,6 +137,7 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name              = dict(required=True),
+        id                = dict(default=None),
         disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
         container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
         owner             = dict(default=None),
@@ -159,6 +166,7 @@ def main():
             if not image:
                 image = cloud.create_image(
                     name=module.params['name'],
+                    id=module.params['id'],
                     filename=module.params['filename'],
                     disk_format=module.params['disk_format'],
                     container_format=module.params['container_format'],

@@ -1,25 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to add authorized_keys for ssh logins.
-(c) 2012, Brad Olson <brado@movedbylight.com>
+# (c) 2012, Brad Olson <brado@movedbylight.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -170,42 +157,42 @@ key_option:
   description: Key options related to the key.
   returned: success
   type: string
-  sameple: null
+  sample: null
 keyfile:
   description: Path for authorzied key file.
   returned: success
   type: string
-  sameple: /home/user/.ssh/authorized_keys
+  sample: /home/user/.ssh/authorized_keys
 manage_dir:
   description: Whether this module managed the directory of the authorized key file.
   returned: success
   type: boolean
-  sameple: True
+  sample: True
 path:
   description: Alternate path to the authorized_keys file
   returned: success
   type: string
-  sameple: null
+  sample: null
 state:
   description: Whether the given key (with the given key_options) should or should not be in the file
   returned: success
   type: string
-  sameple: present
+  sample: present
 unique:
   description: Whether the key is unique
   returned: success
   type: boolean
-  sameple: false
+  sample: false
 user:
   description: The username on the remote host whose authorized_keys file will be modified
   returned: success
   type: string
-  sameple: user
+  sample: user
 validate_certs:
   description: This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated.
   returned: success
   type: boolean
-  sameple: true
+  sample: true
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.

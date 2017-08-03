@@ -5,18 +5,10 @@
 # Written by berenddeboer <berend@pobox.com>
 # Based on pkgng module written by bleader <bleader at ratonland.org>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -68,10 +60,13 @@ EXAMPLES = '''
     state: absent
 '''
 
-
-import shlex
 import os
+import re
 import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
+
 
 def query_package(module, name):
 
@@ -81,7 +76,7 @@ def query_package(module, name):
     if pkg_info_path:
         pkgng = False
         pkg_glob_path = module.get_bin_path('pkg_glob', True)
-        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, shlex_quote(name)), use_unsafe_shell=True)
     else:
         pkgng = True
         pkg_info_path = module.get_bin_path('pkg', True)
@@ -137,11 +132,13 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(package)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, shlex_quote(package)), use_unsafe_shell=True)
 
         if query_package(module, package):
             name_without_digits = re.sub('[0-9]', '', package)
-            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(name_without_digits)),use_unsafe_shell=True)
+            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path,
+                                                              shlex_quote(name_without_digits)),
+                                                              use_unsafe_shell=True)
             if query_package(module, package):
                 module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
@@ -211,8 +208,6 @@ def main():
     elif p["state"] == "absent":
         remove_packages(module, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

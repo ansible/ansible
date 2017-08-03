@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2013 Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -34,6 +24,7 @@ description:
       a fact cache.
     - Per the standard Ansible variable precedence rules, many other types of variables have a higher priority, so this value may be overridden.
       See U(http://docs.ansible.com/ansible/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable) for more information.
+    - This module is also supported for Windows targets.
 options:
   key_value:
     description:
@@ -42,10 +33,19 @@ options:
         using the C(args:) statement.
     required: true
     default: null
+  cacheable:
+    description:
+      - This boolean indicates if the facts set will also be added to the
+        fact cache, if fact caching is enabled.
+    required: false
+    default: false
+    version_added: "2.4"
 version_added: "1.2"
 notes:
     - "The `var=value` notation can only create strings or booleans.
       If you want to create lists/arrays or dictionary/hashes use `var: [val1, val2]`"
+    - This module is also supported for Windows targets.
+    - Since 'cacheable' is now a module param, 'cacheable' is no longer a valid fact name as of 2.4.
 '''
 
 EXAMPLES = '''
@@ -57,6 +57,12 @@ EXAMPLES = '''
      one_fact: something
      other_fact: "{{ local_var * 2 }}"
      another_fact: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
+
+# Example setting facts so that they will be persisted in the fact cache
+- set_fact:
+    one_fact: something
+    other_fact: "{{ local_var * 2 }}"
+    cacheable: true
 
 # As of 1.8, Ansible will convert boolean strings ('true', 'false', 'yes', 'no')
 # to proper boolean values when using the key=value syntax, however it is still

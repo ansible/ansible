@@ -1,20 +1,11 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -26,9 +17,9 @@ DOCUMENTATION = """
 module: iosxr_command
 version_added: "2.1"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Run commands on remote devices running Cisco iosxr
+short_description: Run commands on remote devices running Cisco IOS XR
 description:
-  - Sends arbitrary commands to an iosxr node and returns the results
+  - Sends arbitrary commands to an IOS XR node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
@@ -115,12 +106,12 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
@@ -132,17 +123,19 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.iosxr import run_commands
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.iosxr import run_commands, iosxr_argument_spec, check_args
 from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils._text import to_native
+
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = str(item).split('\n')
+            item = to_native(item, errors='surrogate_or_strict').split('\n')
         yield item
+
 
 def parse_commands(module, warnings):
     command = ComplexList(dict(

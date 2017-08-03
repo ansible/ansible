@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_host_networks
-short_description: Module to manage host networks in oVirt
+short_description: Module to manage host networks in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage host networks in oVirt."
+    - "Module to manage host networks in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the host to manage networks for."
+            - "Name of the host to manage networks for."
         required: true
     state:
         description:
@@ -133,9 +133,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 host_nic:
-    description: "Dictionary of all the host NIC attributes. Host NIC attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host_nic."
+    description: "Dictionary of all the host NIC attributes. Host NIC attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host_nic."
     returned: On success if host NIC is found.
+    type: dict
 '''
 
 import traceback

@@ -131,7 +131,7 @@ def _gen_candidate_chars(characters):
         # getattr from string expands things like "ascii_letters" and "digits"
         # into a set of characters.
         chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
-                            errors='strict'))
+                     errors='strict'))
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
 

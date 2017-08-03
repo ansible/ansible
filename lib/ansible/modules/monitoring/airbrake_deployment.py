@@ -77,7 +77,7 @@ EXAMPLES = '''
     revision: '4.2'
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 # ===========================================
 # Module execution.
@@ -122,7 +122,7 @@ def main():
         module.exit_json(changed=True)
 
     # Send the data to airbrake
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     response, info = fetch_url(module, url, data=data)
     if info['status'] == 200:
         module.exit_json(changed=True)

@@ -1,0 +1,51 @@
+---
+
+
+- name: Setup cs vserver
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: cs-vserver-1
+    servicetype: HTTP
+    ipv46: 192.168.1.1
+    td: 0
+
+    port: 80
+    dnsrecordtype: A
+    range: 2
+    stateupdate: DISABLED
+    cacheable: no
+    redirecturl: http://url.com
+    clttimeout: 200
+    precedence: RULE
+    casesensitive: on
+    somethod: CONNECTION
+    sopersistence: ENABLED
+    sopersistencetimeout: 50
+    sothreshold: 200
+    sobackupaction: DROP
+    redirectportrewrite: DISABLED
+    downstateflush: DISABLED
+    disableprimaryondown: DISABLED
+    insertvserveripport: VIPADDR
+    vipheader: someheader
+    rtspnat: off
+    authenticationhost: auth.com
+    authentication: on
+    listenpolicy: "NONE"
+    authn401: off
+    authnvsname: someserver
+    push: DISABLED
+    pushvserver: push_lb_vserver
+    pushlabel: none
+    pushmulticlients: no
+    comment: some comment
+    l2conn: off
+    appflowlog: ENABLED
+    icmpvsrresponse: PASSIVE
+    rhistate: PASSIVE

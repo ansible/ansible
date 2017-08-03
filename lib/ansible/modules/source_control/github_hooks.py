@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Phillip Gentry <phillip@cx.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -26,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: github_hooks
-short_description: Manages github service hooks.
+short_description: Manages GitHub service hooks.
 description:
      - Adds service hooks and removes service hooks that have an error status.
 version_added: "1.4"
@@ -37,7 +27,7 @@ options:
     required: true
   oauthkey:
     description:
-      - The oauth key provided by github. It can be found/generated on github under "Edit Your Profile" >> "Applications" >> "Personal Access Tokens"
+      - The oauth key provided by GitHub. It can be found/generated on GitHub under "Edit Your Profile" >> "Developer settings" >> "Personal Access Tokens"
     required: true
   repo:
     description:
@@ -47,7 +37,7 @@ options:
     required: true
   hookurl:
     description:
-      - When creating a new hook, this is the url that you want github to post to. It is only required when creating a new hook.
+      - When creating a new hook, this is the url that you want GitHub to post to. It is only required when creating a new hook.
     required: false
   action:
     description:
@@ -90,53 +80,52 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
-
 import base64
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
-def _list(module, hookurl, oauthkey, repo, user):
-    url = "%s/hooks" % repo
+def request(module, url, user, oauthkey, data='', method='GET'):
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
-    response, info = fetch_url(module, url, headers=headers)
+    response, info = fetch_url(module, url, headers=headers, data=data, method=method)
+    return response, info
+
+
+def _list(module, oauthkey, repo, user):
+    url = "%s/hooks" % repo
+    response, info = request(module, url, user, oauthkey)
     if info['status'] != 200:
         return False, ''
     else:
         return False, response.read()
 
-def _clean504(module, hookurl, oauthkey, repo, user):
-    current_hooks = _list(hookurl, oauthkey, repo, user)[1]
+
+def _clean504(module, oauthkey, repo, user):
+    current_hooks = _list(module, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
     for hook in decoded:
         if hook['last_response']['code'] == 504:
-            # print "Last response was an ERROR for hook:"
-            # print hook['id']
-            _delete(module, hookurl, oauthkey, repo, user, hook['id'])
+            _delete(module, oauthkey, repo, user, hook['id'])
 
     return 0, current_hooks
 
-def _cleanall(module, hookurl, oauthkey, repo, user):
-    current_hooks = _list(hookurl, oauthkey, repo, user)[1]
+
+def _cleanall(module, oauthkey, repo, user):
+    current_hooks = _list(module, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
     for hook in decoded:
         if hook['last_response']['code'] != 200:
-            # print "Last response was an ERROR for hook:"
-            # print hook['id']
-            _delete(module, hookurl, oauthkey, repo, user, hook['id'])
+            _delete(module, oauthkey, repo, user, hook['id'])
 
     return 0, current_hooks
+
 
 def _create(module, hookurl, oauthkey, repo, user, content_type):
     url = "%s/hooks" % repo
@@ -146,32 +135,26 @@ def _create(module, hookurl, oauthkey, repo, user, content_type):
         "config": {
             "url": "%s" % hookurl,
             "content_type": "%s" % content_type
-            }
         }
-    data = json.dumps(values)
-    auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
-    headers = {
-        'Authorization': 'Basic %s' % auth,
     }
-    response, info = fetch_url(module, url, data=data, headers=headers)
+    data = json.dumps(values)
+    response, info = request(module, url, user, oauthkey, data=data, method='POST')
     if info['status'] != 200:
         return 0, '[]'
     else:
         return 0, response.read()
 
-def _delete(module, hookurl, oauthkey, repo, user, hookid):
+
+def _delete(module, oauthkey, repo, user, hookid):
     url = "%s/hooks/%s" % (repo, hookid)
-    auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
-    headers = {
-        'Authorization': 'Basic %s' % auth,
-    }
-    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
+    response, info = request(module, url, user, oauthkey, method='DELETE')
     return response.read()
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(required=True, choices=['list','clean504','cleanall','create']),
+            action=dict(required=True, choices=['list', 'clean504', 'cleanall', 'create']),
             hookurl=dict(required=False),
             oauthkey=dict(required=True, no_log=True),
             repo=dict(required=True),
@@ -189,13 +172,13 @@ def main():
     content_type = module.params['content_type']
 
     if action == "list":
-        (rc, out) = _list(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _list(module, oauthkey, repo, user)
 
     if action == "clean504":
-        (rc, out) = _clean504(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _clean504(module, oauthkey, repo, user)
 
     if action == "cleanall":
-        (rc, out) = _cleanall(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _cleanall(module, oauthkey, repo, user)
 
     if action == "create":
         (rc, out) = _create(module, hookurl, oauthkey, repo, user, content_type)
@@ -205,10 +188,6 @@ def main():
 
     module.exit_json(msg="success", result=out)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

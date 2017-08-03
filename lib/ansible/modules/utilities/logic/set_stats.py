@@ -1,21 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2016 Ansible RedHat, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -29,6 +19,7 @@ module: set_stats
 short_description: Set stats for the current ansible run
 description:
      - This module allows setting/accumulating stats on the current ansible run, either per host of for all hosts in the run.
+     - This module is also supported for Windows targets.
 options:
   data:
     description:
@@ -44,6 +35,9 @@ options:
         - boolean that indicates if the provided value is aggregated to the existing stat C(yes) or will replace it C(no)
     required: no
     default: yes
+notes:
+    - This module is also supported for Windows targets.
+    - In order for custom stats to be displayed, you must set C(show_custom_stats) in C(ansible.cfg) or C(ANSIBLE_SHOW_CUSTOM_STATS) to C(true).
 version_added: "2.3"
 '''
 

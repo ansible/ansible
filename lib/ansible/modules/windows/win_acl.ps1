@@ -84,6 +84,7 @@ Function UserSearch
             return $apppoolobj.applicationPoolSid
         }
     }
+    Else
     {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
@@ -214,8 +215,9 @@ Function SetPrivilegeTokens() {
 
 $params = Parse-Args $args;
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$result = @{
+    changed = $false
+}
 
 $path = Get-Attr $params "path" -failifempty $true
 $user = Get-Attr $params "user" -failifempty $true
@@ -277,32 +279,27 @@ Try {
  
     # Check if the ACE exists already in the objects ACL list
     $match = $false
-    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
-        ForEach($rule in $objACL.Access){
+
+    # Workaround to handle special use case 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES' and
+    # 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES'- can't translate fully qualified name (win32 API bug/oddity)
+    # 'ALL APPLICATION PACKAGES' exists only on Win2k12 and Win2k16 and 'ALL RESTRICTED APPLICATION PACKAGES' exists only in Win2k16
+    $specialIdRefs = "ALL APPLICATION PACKAGES","ALL RESTRICTED APPLICATION PACKAGES"
+    ForEach($rule in $objACL.Access){
+        $idRefShortValue = ($rule.IdentityReference.Value).split('\')[-1]
+
+        if ( $idRefShortValue -in $specialIdRefs ) {
+            $ruleIdentity = (New-Object Security.Principal.NTAccount $idRefShortValue).Translate([Security.Principal.SecurityIdentifier])
+        }
+        else {
             $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
+        }
+
+        If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
             If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
                 $match = $true
                 Break
             }
-        }
-    }
-    Else {
-        # Workaround to handle special use case 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES' and
-        # 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES'- can't translate fully qualified name (win32 API bug/oddity)
-        # 'ALL APPLICATION PACKAGES' exists only on Win2k12 and Win2k16 and 'ALL RESTRICTED APPLICATION PACKAGES' exists only in Win2k16
-
-        $specialIdRefs = "ALL APPLICATION PACKAGES","ALL RESTRICTED APPLICATION PACKAGES"
-
-        ForEach($rule in $objACL.Access){
-
-            $idRefShortValue = ($rule.IdentityReference.Value).split('\')[-1]
-
-            if ( $idRefShortValue -in $specialIdRefs ) {
-                $ruleIdentity = (New-Object Security.Principal.NTAccount $idRefShortValue).Translate([Security.Principal.SecurityIdentifier])
-            }
-            else {
-                $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
-            }
+        } else {
             If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
                 $match = $true
                 Break
@@ -314,7 +311,7 @@ Try {
         Try {
             $objACL.AddAccessRule($objACE)
             Set-ACL $path $objACL
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         Catch {
             Fail-Json $result "an exception occurred when adding the specified rule - $($_.Exception.Message)"
@@ -324,7 +321,7 @@ Try {
         Try {
             $objACL.RemoveAccessRule($objACE)
             Set-ACL $path $objACL
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         Catch {
             Fail-Json $result "an exception occurred when removing the specified rule - $($_.Exception.Message)"

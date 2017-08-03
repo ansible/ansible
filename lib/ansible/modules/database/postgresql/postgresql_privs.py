@@ -1,20 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -251,16 +243,25 @@ EXAMPLES = """
     role: librarian
 """
 
+import traceback
+
 try:
     import psycopg2
     import psycopg2.extensions
 except ImportError:
     psycopg2 = None
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import pg_quote_identifier
+from ansible.module_utils._text import to_native, to_text
+
 
 VALID_PRIVS = frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',
                          'REFERENCES', 'TRIGGER', 'CREATE', 'CONNECT',
                          'TEMPORARY', 'TEMP', 'EXECUTE', 'USAGE', 'ALL', 'USAGE'))
+
+
 class Error(Exception):
     pass
 
@@ -306,17 +307,10 @@ class Connection(object):
 
         sslrootcert = params.ssl_rootcert
         if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-            module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+            raise ValueError('psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
-        try:
-            self.connection = psycopg2.connect(**kw)
-            self.cursor = self.connection.cursor()
-
-        except TypeError:
-            e = get_exception()
-            if 'sslrootcert' in e.args[0]:
-                module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-            module.fail_json(msg="unable to connect to database: %s" % e)
+        self.connection = psycopg2.connect(**kw)
+        self.cursor = self.connection.cursor()
 
 
     def commit(self):
@@ -611,9 +605,15 @@ def main():
         module.fail_json(msg='Python module "psycopg2" must be installed.')
     try:
         conn = Connection(p)
-    except psycopg2.Error:
-        e = get_exception()
-        module.fail_json(msg='Could not connect to database: %s' % e)
+    except psycopg2.Error as e:
+        module.fail_json(msg='Could not connect to database: %s' % to_native(e), exception=traceback.format_exc())
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+    except ValueError as e:
+        # We raise this when the psycopg library is too old
+        module.fail_json(msg=to_native(e))
 
     try:
         # privs
@@ -652,17 +652,14 @@ def main():
             schema_qualifier=p.schema
         )
 
-    except Error:
-        e = get_exception()
+    except Error as e:
         conn.rollback()
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=e.message, exception=traceback.format_exc())
 
-    except psycopg2.Error:
-        e = get_exception()
+    except psycopg2.Error as e:
         conn.rollback()
-        # psycopg2 errors come in connection encoding, reencode
-        msg = e.message.decode(conn.encoding).encode(sys.getdefaultencoding(),
-                                                     'replace')
+        # psycopg2 errors come in connection encoding
+        msg = to_text(e.message(encoding=conn.encoding))
         module.fail_json(msg=msg)
 
     if module.check_mode:
@@ -672,8 +669,5 @@ def main():
     module.exit_json(changed=changed)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
 if __name__ == '__main__':
     main()

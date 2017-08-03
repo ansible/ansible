@@ -65,4 +65,3 @@ class Connection(Jail):
             raise AnsibleError(u"iocage returned an error: {}".format(stdout))
 
         return stdout.strip('\n')
-

@@ -85,6 +85,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing ntp options
+    returned: always
     type: dict
     sample: {"logging": true, "master": true, "stratum": "8"}
 end_state:
@@ -108,7 +109,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 import re

@@ -42,4 +42,7 @@ options:
         description:
             - UUID of tenant used for all Avi API calls and context of object.
         default: ''
+    api_version:
+        description:
+            - Avi API version of to use for Avi API and objects.
 """

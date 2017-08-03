@@ -119,6 +119,7 @@ tasks:
 '''
 import json
 import urllib
+
 try:
     import boto
     import boto.iam
@@ -126,6 +127,11 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.six import string_types
+
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -317,7 +323,7 @@ def main():
     elif module.params.get('policy_json') is not None:
         pdoc = module.params.get('policy_json')
         # if its a string, assume it is already JSON
-        if not isinstance(pdoc, basestring):
+        if not isinstance(pdoc, string_types):
             try:
                 pdoc = json.dumps(pdoc)
             except Exception as e:
@@ -353,8 +359,6 @@ def main():
                                                            state)
         module.exit_json(changed=changed, group_name=name, policies=current_policies, msg=msg)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

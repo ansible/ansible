@@ -3,14 +3,6 @@ Installation
 
 .. contents:: Topics
 
-.. _getting_ansible:
-
-Getting Ansible
-```````````````
-
-You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
-you have a GitHub account.  This is also where we keep the issue tracker for sharing
-bugs and feature ideas.
 
 .. _what_will_be_installed:
 
@@ -112,21 +104,23 @@ Installing the Control Machine
 Latest Release Via Yum
 ++++++++++++++++++++++
 
-RPMs are available from yum for `EPEL
-<http://fedoraproject.org/wiki/EPEL>`_ 6, 7, and currently supported
+.. note:: We’ve changed how the Ansible community packages are distributed. 
+  For users of RHEL/CentOS/Scientific Linux version 7, the Ansible community RPM
+  package will transition from the EPEL repository to the Extras channel.  There will be no
+  change for version 6 of RHEL/CentOS/Scientific Linux since Extras is not a part of version 6.   
+
+RPMs for RHEL7 are available from `the Extras channel <https://access.redhat.com/solutions/912213>`_.
+
+RPMs for RHEL6 are available from yum for `EPEL
+<http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
 Fedora distributions.
+
+Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com/ansible/rpm/`.
 
 Ansible itself can manage earlier operating
 systems that contain Python 2.6 or higher (so also EL6).
 
-Fedora users can install Ansible directly, though if you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
-
-.. code-block:: bash
-
-    # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
-    $ sudo yum install ansible
-
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, ``asciidoc``, ``git``, ``python-setuptools`` and ``python2-devel`` installed.
+You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. 
 
 .. code-block:: bash
 
@@ -146,6 +140,7 @@ To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
+    $ sudo apt-get update
     $ sudo apt-get install software-properties-common
     $ sudo apt-add-repository ppa:ansible/ansible
     $ sudo apt-get update
@@ -286,6 +281,7 @@ Packaging Ansible or wanting to build a local package yourself, but don't want t
 
 These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
 
+
 .. _from_source:
 
 Running From Source
@@ -304,12 +300,14 @@ open source projects.
    If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
 
 
-To install from source.
+To install from source, clone the Ansible git repository:
 
 .. code-block:: bash
 
     $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
+
+Once git has cloned the Ansible repository, setup the Ansible environment:
 
 Using Bash:
 
@@ -372,6 +370,16 @@ Now let's test things with a ping command:
     $ ansible all -m ping --ask-pass
 
 You can also use "sudo make install".
+
+.. _getting_ansible:
+
+Ansible on GitHub
+`````````````````
+
+You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
+you have a GitHub account.  This is also where we keep the issue tracker for sharing
+bugs and feature ideas.
+
 
 .. seealso::
 

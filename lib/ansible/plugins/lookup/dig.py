@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_native
 import socket
 
 try:
@@ -28,10 +29,11 @@ try:
     import dns.reversename
     import dns.rdataclass
     from dns.rdatatype import (A, AAAA, CNAME, DLV, DNAME, DNSKEY, DS, HINFO, LOC,
-            MX, NAPTR, NS, NSEC3PARAM, PTR, RP, SOA, SPF, SRV, SSHFP, TLSA, TXT)
+                               MX, NAPTR, NS, NSEC3PARAM, PTR, RP, SOA, SPF, SRV, SSHFP, TLSA, TXT)
     HAVE_DNS = True
 except ImportError:
     HAVE_DNS = False
+
 
 def make_rdata_dict(rdata):
     ''' While the 'dig' lookup plugin supports anything which dnspython supports
@@ -41,28 +43,28 @@ def make_rdata_dict(rdata):
         Note: adding support for RRSIG is hard work. :)
     '''
     supported_types = {
-        A           : ['address'],
-        AAAA        : ['address'],
-        CNAME       : ['target'],
-        DNAME       : ['target'],
-        DLV         : ['algorithm', 'digest_type', 'key_tag', 'digest'],
-        DNSKEY      : ['flags', 'algorithm', 'protocol', 'key'],
-        DS          : ['algorithm', 'digest_type', 'key_tag', 'digest'],
-        HINFO       : ['cpu', 'os'],
-        LOC         : ['latitude', 'longitude', 'altitude', 'size', 'horizontal_precision', 'vertical_precision'],
-        MX          : ['preference', 'exchange'],
-        NAPTR       : ['order', 'preference', 'flags', 'service', 'regexp', 'replacement'],
-        NS          : ['target'],
-        NSEC3PARAM  : ['algorithm', 'flags', 'iterations', 'salt'],
-        PTR         : ['target'],
-        RP          : ['mbox', 'txt'],
-        # RRSIG       : ['algorithm', 'labels', 'original_ttl', 'expiration', 'inception', 'signature'],
-        SOA         : ['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum'],
-        SPF         : ['strings'],
-        SRV         : ['priority', 'weight', 'port', 'target'],
-        SSHFP       : ['algorithm', 'fp_type', 'fingerprint'],
-        TLSA        : ['usage', 'selector', 'mtype', 'cert'],
-        TXT         : ['strings'],
+        A: ['address'],
+        AAAA: ['address'],
+        CNAME: ['target'],
+        DNAME: ['target'],
+        DLV: ['algorithm', 'digest_type', 'key_tag', 'digest'],
+        DNSKEY: ['flags', 'algorithm', 'protocol', 'key'],
+        DS: ['algorithm', 'digest_type', 'key_tag', 'digest'],
+        HINFO: ['cpu', 'os'],
+        LOC: ['latitude', 'longitude', 'altitude', 'size', 'horizontal_precision', 'vertical_precision'],
+        MX: ['preference', 'exchange'],
+        NAPTR: ['order', 'preference', 'flags', 'service', 'regexp', 'replacement'],
+        NS: ['target'],
+        NSEC3PARAM: ['algorithm', 'flags', 'iterations', 'salt'],
+        PTR: ['target'],
+        RP: ['mbox', 'txt'],
+        # RRSIG: ['algorithm', 'labels', 'original_ttl', 'expiration', 'inception', 'signature'],
+        SOA: ['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum'],
+        SPF: ['strings'],
+        SRV: ['priority', 'weight', 'port', 'target'],
+        SSHFP: ['algorithm', 'fp_type', 'fingerprint'],
+        TLSA: ['usage', 'selector', 'mtype', 'cert'],
+        TXT: ['strings'],
     }
 
     rd = {}
@@ -70,7 +72,7 @@ def make_rdata_dict(rdata):
     if rdata.rdtype in supported_types:
         fields = supported_types[rdata.rdtype]
         for f in fields:
-            val     = rdata.__getattribute__(f)
+            val = rdata.__getattribute__(f)
 
             if isinstance(val, dns.name.Name):
                 val = dns.name.Name.to_text(val)
@@ -88,10 +90,10 @@ def make_rdata_dict(rdata):
             if rdata.rdtype == TLSA and f == 'cert':
                 val = dns.rdata._hexify(rdata.cert).replace(' ', '')
 
-
-            rd[f]   = val
+            rd[f] = val
 
     return rd
+
 
 # ==============================================================
 # dig: Lookup DNS records
@@ -126,8 +128,8 @@ class LookupModule(LookupBase):
         myres.use_edns(0, ednsflags=dns.flags.DO, payload=edns_size)
 
         domain = None
-        qtype  = 'A'
-        flat   = True
+        qtype = 'A'
+        flat = True
         rdclass = dns.rdataclass.from_text('IN')
 
         for t in terms:
@@ -146,7 +148,7 @@ class LookupModule(LookupBase):
                             nsaddr = dns.resolver.query(ns)[0].address
                             nameservers.append(nsaddr)
                         except Exception as e:
-                            raise AnsibleError("dns lookup NS: ", str(e))
+                            raise AnsibleError("dns lookup NS: %s" % to_native(e))
                     myres.nameservers = nameservers
                 continue
             if '=' in t:
@@ -163,7 +165,7 @@ class LookupModule(LookupBase):
                     try:
                         rdclass = dns.rdataclass.from_text(arg)
                     except Exception as e:
-                        raise errors.AnsibleError("dns lookup illegal CLASS: ", str(e))
+                        raise AnsibleError("dns lookup illegal CLASS: %s" % to_native(e))
 
                 continue
 
@@ -186,7 +188,7 @@ class LookupModule(LookupBase):
             except dns.exception.SyntaxError:
                 pass
             except Exception as e:
-                raise AnsibleError("dns.reversename unhandled exception", str(e))
+                raise AnsibleError("dns.reversename unhandled exception %s" % to_native(e))
 
         try:
             answers = myres.query(domain, qtype, rdclass=rdclass)
@@ -200,10 +202,10 @@ class LookupModule(LookupBase):
                 else:
                     try:
                         rd = make_rdata_dict(rdata)
-                        rd['owner']     = answers.canonical_name.to_text()
-                        rd['type']      = dns.rdatatype.to_text(rdata.rdtype)
-                        rd['ttl']       = answers.rrset.ttl
-                        rd['class']     = dns.rdataclass.to_text(rdata.rdclass)
+                        rd['owner'] = answers.canonical_name.to_text()
+                        rd['type'] = dns.rdatatype.to_text(rdata.rdtype)
+                        rd['ttl'] = answers.rrset.ttl
+                        rd['class'] = dns.rdataclass.to_text(rdata.rdclass)
 
                         ret.append(rd)
                     except Exception as e:
@@ -216,6 +218,6 @@ class LookupModule(LookupBase):
         except dns.resolver.Timeout:
             ret.append('')
         except dns.exception.DNSException as e:
-            raise AnsibleError("dns.resolver unhandled exception", e)
+            raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
 
         return ret

@@ -83,7 +83,7 @@ options:
      version_added: "2.3"
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 extends_documentation_fragment: openstack
 '''
@@ -135,7 +135,7 @@ RETURN = '''
 openstack_flavors:
     description: Dictionary describing the flavors.
     returned: On success.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Flavor ID.

@@ -310,7 +310,7 @@ You may check the registered variable's string contents for emptiness::
 
    :doc:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

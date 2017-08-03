@@ -1,22 +1,12 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -54,7 +44,7 @@ options:
         required: True
     name:
         description:
-            - If the host doesnt yet exist, the label to assign at creation time.
+            - If the host doesn't yet exist, the label to assign at creation time.
             - If the hosts already exists, this is what is used to identify the host to apply any desired changes
         required: True
     host_type_index:
@@ -204,7 +194,7 @@ class Host(object):
         if len(self.available_ports) > 0 and len(self.ports) <= len(self.available_ports):
             for port in self.ports:
                 for free_port in self.available_ports:
-                    # Desired Type matches but also make sure we havent already used the ID
+                    # Desired Type matches but also make sure we haven't already used the ID
                     if not free_port['id'] in used_ids:
                         # update the port arg to have an id attribute
                         used_ids.append(free_port['id'])
@@ -318,7 +308,7 @@ class Host(object):
                 self.post_body['portsToUpdate'].update(dict(
                     portRef=self.other_host['hostPortRef'],
                     hostRef=self.host_obj['id'],
-                    # Doesnt yet address port identifier or chap secret
+                    # Doesn't yet address port identifier or chap secret
                 ))
 
         if apply:

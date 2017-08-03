@@ -31,6 +31,7 @@ short_description: return a list of files based on specific criteria
 description:
     - Return a list of files based on specified criteria.
     - Multiple criteria are AND'd together.
+    - For non-Windows targets, use the M(find) module instead.
 options:
     age:
         description:
@@ -113,6 +114,8 @@ options:
         required: false
         default: false
         choices: ['true', 'false']
+notes:
+    - For non-Windows targets, use the M(find) module instead.
 author: "Jordan Borean (@jborean93)"
 '''
 
@@ -227,13 +230,13 @@ examined:
     sample: 10
 matched:
     description: The number of files/folders that match the criteria
-    returns: always
+    returned: always
     type: int
     sample: 2
 files:
     description: Information on the files/folders that match the criteria returned as a list of dictionary elements for each file matched
     returned: success
-    type: dictionary
+    type: complex
     contains:
         attributes:
             description: attributes of the file at path in raw form

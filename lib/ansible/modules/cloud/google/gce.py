@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -193,7 +183,7 @@ author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom
 EXAMPLES = '''
 # Basic provisioning example.  Create a single Debian 8 instance in the
 # us-central1-a Zone of the n1-standard-1 machine type.
-# Create multiple instances by specifying multiple names, seperated by
+# Create multiple instances by specifying multiple names, separated by
 # commas in the instance_names field
 # (e.g. my-test-instance1,my-test-instance2)
     gce:
@@ -233,6 +223,7 @@ EXAMPLES = '''
         - storage-full
         - taskqueue
         - bigquery
+        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
       service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
       credentials_file: "/path/to/your-key.json"
       project_id: "your-project-name"
@@ -302,6 +293,12 @@ EXAMPLES = '''
 import socket
 
 try:
+    from ast import literal_eval
+    HAS_PYTHON26 = True
+except ImportError:
+    HAS_PYTHON26 = False
+
+try:
     import libcloud
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
@@ -313,11 +310,10 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect, unexpected_error_msg
+from ansible.module_utils.gcp import get_valid_location
+from ansible.module_utils.six.moves import reduce
 
 
 def get_instance_info(inst):
@@ -389,7 +385,6 @@ def create_instances(module, gce, instance_names, number, lc_zone):
     subnetwork = module.params.get('subnetwork')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
     disks = module.params.get('disks')
-    state = module.params.get('state')
     tags = module.params.get('tags')
     ip_forward = module.params.get('ip_forward')
     external_ip = module.params.get('external_ip')
@@ -397,7 +392,6 @@ def create_instances(module, gce, instance_names, number, lc_zone):
     preemptible = module.params.get('preemptible')
     disk_size = module.params.get('disk_size')
     service_account_permissions = module.params.get('service_account_permissions')
-    service_account_email = module.params.get('service_account_email')
 
     if external_ip == "none":
         instance_external_ip = None
@@ -463,7 +457,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
     bad_perms = []
     if service_account_permissions:
         for perm in service_account_permissions:
-            if perm not in gce.SA_SCOPES_MAP:
+            if perm not in gce.SA_SCOPES_MAP and not perm.startswith('https://www.googleapis.com/auth'):
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))
@@ -656,19 +650,12 @@ def main():
 
     gce = gce_connect(module)
 
-    image = module.params.get('image')
     instance_names = module.params.get('instance_names')
-    machine_type = module.params.get('machine_type')
-    metadata = module.params.get('metadata')
     name = module.params.get('name')
     number = module.params.get('num_instances')
-    network = module.params.get('network')
     subnetwork = module.params.get('subnetwork')
-    persistent_boot_disk = module.params.get('persistent_boot_disk')
     state = module.params.get('state')
-    tags = module.params.get('tags')
     zone = module.params.get('zone')
-    ip_forward = module.params.get('ip_forward')
     preemptible = module.params.get('preemptible')
     changed = False
 
@@ -744,9 +731,5 @@ class LazyDiskImage:
         return self.image
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
-from ansible.module_utils.gcp import get_valid_location
 if __name__ == '__main__':
     main()

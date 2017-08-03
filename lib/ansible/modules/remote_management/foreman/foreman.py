@@ -1,21 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2016, Eric D Helms <ericdhelms@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -71,14 +61,18 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-import datetime
+import traceback
 
 try:
-    from nailgun import entities, entity_fields
+    from nailgun import entities
     from nailgun.config import ServerConfig
     HAS_NAILGUN_PACKAGE = True
 except:
     HAS_NAILGUN_PACKAGE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 class NailGun(object):
     def __init__(self, server, entities, module):
@@ -93,7 +87,7 @@ class NailGun(object):
         if len(response) == 1:
             return response[0]
         else:
-            self._module.fail_json(msg="No Content View found for %s" % name)
+            return None
 
     def organization(self, params):
         name = params['name']
@@ -144,7 +138,8 @@ def main():
         org = entities.Organization(server)
         org.search()
     except Exception as e:
-        module.fail_json(msg="Failed to connect to Foreman server: %s " % e)
+        module.fail_json(msg="Failed to connect to Foreman server: %s " % to_native(e),
+                         exception=traceback.format_exc())
 
     if entity == 'organization':
         ng.organization(params)
@@ -152,8 +147,6 @@ def main():
     else:
         module.fail_json(changed=False, result="Unsupported entity supplied")
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
