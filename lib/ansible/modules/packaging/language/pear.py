@@ -37,6 +37,12 @@ options:
         required: false
         default: "present"
         choices: ["present", "absent", "latest"]
+    executable:
+      description:
+        - Path to the pear executable
+      required: false
+      default: null
+      version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -77,6 +83,12 @@ def get_local_version(pear_output):
             return installed
     return None
 
+def _get_pear_path(module):
+    if module.params['executable'] and os.path.isfile(module.params['executable']):
+        return module.params['executable']
+    else:
+        return module.get_bin_path('pear', True, [module.params['executable']])
+
 def get_repository_version(pear_output):
     """Take pear remote-info output and get the latest version"""
     lines = pear_output.split('\n')
@@ -90,13 +102,13 @@ def query_package(module, name, state="present"):
     Returns a boolean to indicate if the package is installed,
     and a second boolean to indicate if the package is up-to-date."""
     if state == "present":
-        lcmd = "pear info %s" % (name)
+        lcmd = "%s info %s" % (_get_pear_path(module), name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
         if lrc != 0:
             # package is not installed locally
             return False, False
 
-        rcmd = "pear remote-info %s" % (name)
+        rcmd = "%s remote-info %s" % (_get_pear_path(module), name)
         rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
 
         # get the version installed locally (if any)
@@ -123,7 +135,7 @@ def remove_packages(module, packages):
         if not installed:
             continue
 
-        cmd = "pear uninstall %s" % (package)
+        cmd = "%s uninstall %s" % (_get_pear_path(module), package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -154,7 +166,7 @@ def install_packages(module, state, packages):
         if state == 'latest':
             command = 'upgrade'
 
-        cmd = "pear %s %s" % (command, package)
+        cmd = "%s %s %s" % (_get_pear_path(module), command, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -185,26 +197,18 @@ def check_packages(module, packages, state):
         module.exit_json(change=False, msg="package(s) already %s" % state)
 
 
-def exe_exists(program):
-    for path in os.environ["PATH"].split(os.pathsep):
-        path = path.strip('"')
-        exe_file = os.path.join(path, program)
-        if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
-            return True
-
-    return False
 
 
 def main():
     module = AnsibleModule(
         argument_spec    = dict(
             name         = dict(aliases=['pkg']),
-            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed'])),
+            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
+            executable   = dict(default=None, required=False, type='path')),
         required_one_of = [['name']],
         supports_check_mode = True)
 
-    if not exe_exists("pear"):
-        module.fail_json(msg="cannot find pear executable in PATH")
+
 
     p = module.params
 
