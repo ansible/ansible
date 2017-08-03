@@ -62,6 +62,21 @@ def get_method_name(request_body):
     return xmlrpc_client.loads(request_body)[1]
 
 
+def mock_request(responses):
+    def transport_request(host, handler, request_body, verbose=0):
+        """Fake request"""
+        method_name = get_method_name(request_body)
+        excepted_name, response = responses.pop(0)
+        if method_name == excepted_name:
+            if isinstance(response, Exception):
+                raise response
+            else:
+                return response
+
+    target = 'ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request'
+    return patch(target, side_effect=transport_request)
+
+
 class TestRhnRegister(unittest.TestCase):
 
     def setUp(self):
@@ -138,23 +153,22 @@ class TestRhnRegister(unittest.TestCase):
             'password': 'pass',
         })
 
-        def transport_request(host, handler, request_body, verbose=0):
-            """Fake request"""
-            if 'auth.login' == get_method_name(request_body):
-                return ['X' * 43]
-            elif 'channel.software.listSystemChannels' == get_method_name(request_body):
-                return [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]
-            elif 'channel.software.setSystemChannels' == get_method_name(request_body):
-                return [1]
+        responses = [
+            ('auth.login', ['X' * 43]),
+            ('channel.software.listSystemChannels',
+                [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]),
+            ('channel.software.setSystemChannels', [1]),
+            ('auth.logout', [1]),
+        ]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
             with patch.object(rhn_register.Rhn, 'systemid', PropertyMock(return_value=12345)):
-                with patch('ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request', side_effect=transport_request) as req:
+                with mock_request(responses):
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['changed'])
-                self.assertEqual(req.call_count, 3)
+                self.assertFalse(responses)  # all responses should have been consumed
 
         self.assertEqual(self.mock_enable.call_count, 1)
         self.mock_enable.reset_mock()
@@ -170,23 +184,23 @@ class TestRhnRegister(unittest.TestCase):
             'channels': 'rhel-x86_64-server-6-debuginfo'
         })
 
-        def transport_request(host, handler, request_body, verbose=0):
-            """Fake request"""
-            if 'auth.login' == get_method_name(request_body):
-                return ['X' * 43]
-            elif 'channel.software.listSystemChannels' == get_method_name(request_body):
-                return [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]
-            elif 'channel.software.setSystemChannels' == get_method_name(request_body):
-                return [1]
+        responses = [
+            ('auth.login', ['X' * 43]),
+            ('channel.software.listSystemChannels', [[{
+                'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)',
+                'channel_label': 'rhel-x86_64-server-6'}]]),
+            ('channel.software.setSystemChannels', [1]),
+            ('auth.logout', [1]),
+        ]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
             with patch.object(rhn_register.Rhn, 'systemid', PropertyMock(return_value=12345)):
-                with patch('ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request', side_effect=transport_request) as req:
+                with mock_request(responses):
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['changed'])
-                self.assertEqual(req.call_count, 3)
+                self.assertFalse(responses)  # all responses should have been consumed
 
         self.assertEqual(self.mock_enable.call_count, 1)
         self.mock_enable.reset_mock()
@@ -202,18 +216,11 @@ class TestRhnRegister(unittest.TestCase):
             'password': 'pass',
         })
 
-        def transport_request(host, handler, request_body, verbose=0):
-            """Fake request"""
-            if 'auth.login' == get_method_name(request_body):
-                return ['X' * 43]
-            elif 'channel.software.listSystemChannels' == get_method_name(request_body):
-                return [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]
-            elif 'channel.software.setSystemChannels' == get_method_name(request_body):
-                return [1]
+        responses = []
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             with patch.object(rhn_register.Rhn, 'is_registered', PropertyMock(return_value=True)) as mock_systemid:
-                with patch('ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request', side_effect=transport_request) as req:
+                with mock_request(responses) as req:
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertFalse(result.exception.args[0]['changed'])
@@ -236,23 +243,22 @@ class TestRhnRegister(unittest.TestCase):
             'state': 'absent',
         })
 
-        def transport_request(host, handler, request_body, verbose=0):
-            """Fake request"""
-            if 'auth.login' == get_method_name(request_body):
-                return ['X' * 43]
-            elif 'system.deleteSystems' == get_method_name(request_body):
-                return [1]
+        responses = [
+            ('auth.login', ['X' * 43]),
+            ('system.deleteSystems', [1]),
+            ('auth.logout', [1]),
+        ]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
             mock_is_registered = PropertyMock(return_value=True)
             mock_systemid = PropertyMock(return_value=12345)
             with patch.multiple(rhn_register.Rhn, systemid=mock_systemid, is_registered=mock_is_registered):
-                with patch('ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request', side_effect=transport_request) as req:
+                with mock_request(responses):
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['changed'])
-                self.assertEqual(req.call_count, 2)
+                self.assertFalse(responses)  # all responses should have been consumed
             self.assertEqual(mock_systemid.call_count, 1)
             self.assertEqual(mock_is_registered.call_count, 1)
         self.assertFalse(run_command.called)
@@ -296,18 +302,22 @@ class TestRhnRegister(unittest.TestCase):
             'state': 'absent',
         })
 
+        responses = [
+            ('auth.login', ['X' * 43]),
+            ('system.deleteSystems', xmlrpc_client.Fault(1003, 'The following systems were NOT deleted: 123456789')),
+            ('auth.logout', [1]),
+        ]
+
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
             mock_is_registered = PropertyMock(return_value=True)
             mock_systemid = PropertyMock(return_value=12345)
             with patch.multiple(rhn_register.Rhn, systemid=mock_systemid, is_registered=mock_is_registered):
-                error = xmlrpc_client.Fault(1003, 'The following systems were NOT deleted: 123456789')
-                with patch('ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request',
-                           side_effect=('X' * 43, error)) as req:
+                with mock_request(responses):
                     with self.assertRaises(AnsibleFailJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['failed'])
-                self.assertEqual(req.call_count, 2)
+                self.assertFalse(responses)  # all responses should have been consumed
             self.assertEqual(mock_systemid.call_count, 1)
             self.assertEqual(mock_is_registered.call_count, 1)
         self.assertFalse(run_command.called)
