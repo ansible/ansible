@@ -837,6 +837,11 @@ files:
     - linode dynamic inventory script
     maintainers:
     - intheclouddan rwaweber zbal
+  contrib/inventory/azure_rm.py:
+    keywords:
+    - azure azure_rm dynamic inventory script
+    maintainers:
+    - $team_azure
   lib/ansible/inventory:
     keywords:
     - core inventory
