@@ -358,7 +358,7 @@ class ScriptVaultSecret(FileVaultSecret):
 
             raise AnsibleError(msg)
 
-        stdout, stderr = p.communicate()
+        stdout, _ = p.communicate()
 
         if p.returncode != 0:
             raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, p.stderr))
@@ -392,7 +392,7 @@ def match_encrypt_secret(secrets):
     '''Find the best/first/only secret in secrets to use for encrypting'''
 
     # ie, consider all of the available secrets as matches
-    _vault_id_matchers = [_vault_id for _vault_id, _vault_secret in secrets]
+    _vault_id_matchers = [_vault_id for _vault_id, _ in secrets]
     best_secret = match_best_secret(secrets, _vault_id_matchers)
     # can be empty list sans any tuple
     return best_secret
@@ -439,7 +439,7 @@ class VaultLib:
 
         if secret is None:
             if self.secrets:
-                secret_vault_id, secret = match_encrypt_secret(self.secrets)
+                _, secret = match_encrypt_secret(self.secrets)
             else:
                 raise AnsibleVaultError("A vault password must be specified to encrypt data")
 
