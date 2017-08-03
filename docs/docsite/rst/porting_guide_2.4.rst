@@ -134,7 +134,7 @@ There have been a number of changes to how Networking Modules operate.
 
 Playbooks should still use ``connection: local``.
 
-In 2.4 we've introduced the concept of Minimum Viable Platform Agnostic Modules. These modules are implemented as an abstraction such that they can be used to target multiple network operating systems. As an example:
+In 2.4 we've introduced the concept of Minimum Viable Platform Agnostic Modules. These modules are implemented as an abstraction such that they can be used to target multiple network operating systems. These include modules for interface, layer2, layer3, protocol, routing, and system. As an example:
 
 .. code-block:: yaml
     
