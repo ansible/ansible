@@ -46,7 +46,7 @@ options:
       - If a stacks fails to form, rollback will remove the stack
     required: false
     default: "false"
-    choices: [ "true", "false" ]
+    choice: [ "true", "false" ]
   template_parameters:
     description:
       - a list of hashes of all the template variables for the stack
@@ -67,7 +67,7 @@ options:
     required: false
     default: null
   notification_arns:
-    description:
+    descriptio:
       - The Simple Notification Service (SNS) topic ARNs to publish stack related events.
     required: false
     default: null
@@ -334,7 +334,7 @@ def create_changeset(module, stack_params, cfn):
             changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + sha1(to_bytes(json_params, errors='surrogate_or_strict')).hexdigest()
             stack_params['ChangeSetName'] = changeset_name
         else:
-            changeset_name=stack_params['ChangeSetName']
+            changeset_name = stack_params['ChangeSetName']
 
         # Determine if this changeset already exists
         pending_changesets = list_changesets(cfn, stack_params['StackName'])
