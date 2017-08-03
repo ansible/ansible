@@ -54,6 +54,16 @@ Inventory plugins
 
 FIXME: starting migration from hardcoded inventory + inventory scripts. scripts will still work via script plugin but efforts will now concentrate on plugins
 
+Multiple inventory
+------------------
+
+**NEW** In Ansible 2.4:
+
+
+.. code-block:: shell
+
+   ansible-playbook -i /path/to/inventory1` /some/other/path/inventory2
+
 
 Deprecated
 ==========
