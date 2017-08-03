@@ -1,0 +1,11 @@
+- block:
+  - name: test of a test
+    azure_rm_virtualnetwork:
+      resource_group: '{{ azure_resource_groups }}'
+      name: testvn162368
+      client_id: '{{ azure_client_id }}'
+      secret: '{{ azure_client_secret }}'
+      subscription_id: '{{ azure_subscription_id }}'
+      tenant: '{{ azure_tenant_id }}'
+      address_prefixes_cidr:
+        - "10.1.0.0/16"
