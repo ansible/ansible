@@ -193,6 +193,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey_path = module.params['privatekey_path']
         self.src = module.params['src']
+        self.mode = module.params['mode']
+        if not self.mode:
+            self.mode = int('0400', 8)
 
     def check(self, module, perms_required=True):
         ''' Ensure the resource is in its desired state. '''
@@ -229,10 +232,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
     def generate(self, module):
         ''' Generate PKCS#12 file archive. '''
 
-        this_mode = module.params['mode']
-        if not this_mode:
-            this_mode = int('0400', 8)
-
         if not self.check(module, perms_required=False) or module.params['force']:
             self.pkcs12 = crypto.PKCS12()
 
@@ -260,7 +259,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
                                            )
 
             try:
-                with open(self.path, 'wb', this_mode) as archive:
+                with open(self.path, 'wb') as archive:
                     archive.write(
                         self.pkcs12.export(
                             self.passphrase,
@@ -268,7 +267,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
                             self.maciter_size
                         )
                     )
-                module.set_mode_if_different(self.path, this_mode, False)
+                module.set_mode_if_different(self.path, self.mode, False)
                 self.changed = True
             except (IOError, OSError) as exc:
                 self.remove()
@@ -276,15 +275,11 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
-            module.set_mode_if_different(self.path, this_mode, False)
+            module.set_mode_if_different(self.path, self.mode, False)
             self.changed = True
 
     def parse(self, module):
         ''' Read PKCS#12 file. '''
-
-        this_mode = module.params['mode']
-        if not this_mode:
-            this_mode = int('0400', 8)
 
         if not self.check(module, perms_required=False) or module.params['force']:
             try:
@@ -299,7 +294,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
                 with open(self.path, 'wb') as content:
                     content.write("%s%s" % (pkey, crt))
-                module.set_mode_if_different(self.path, this_mode, False)
+                module.set_mode_if_different(self.path, self.mode, False)
                 self.changed = True
             except IOError as exc:
                 self.remove()
@@ -307,7 +302,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
-            module.set_mode_if_different(self.path, this_mode, False)
+            module.set_mode_if_different(self.path, self.mode, False)
             self.changed = True
 
 
