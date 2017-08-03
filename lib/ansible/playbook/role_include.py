@@ -127,6 +127,7 @@ class IncludeRole(TaskInclude):
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
         new_me._role_name = self._role_name
+        new_me._role_path = self._role_path
 
         return new_me
 
