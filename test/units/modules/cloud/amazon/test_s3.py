@@ -5,7 +5,7 @@ import unittest
 import ansible.modules.cloud.amazon.s3 as s3
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
-to = pytest.importorskip("boto3")
+boto3 = pytest.importorskip("boto3")
 
 
 class TestUrlparse(unittest.TestCase):

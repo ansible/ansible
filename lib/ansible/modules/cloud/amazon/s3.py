@@ -240,7 +240,7 @@ import os
 import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
-from ansible.module_utils.basic import AnsibleModule, to_text
+from ansible.module_utils.basic import AnsibleModule, to_text, to_native
 from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn, HAS_BOTO3
 
 try:
@@ -272,14 +272,13 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
 
 def keysum(module, s3, bucket, obj, version=None):
     if version:
-        key_check = s3.get_object(Bucket=bucket, Key=obj, VersionId=version)
+        key_check = s3.head_object(Bucket=bucket, Key=obj, VersionId=version)
     else:
-        key_check = s3.get_object(Bucket=bucket, Key=obj)
+        key_check = s3.head_object(Bucket=bucket, Key=obj)
     if not key_check:
         return None
     md5_remote = key_check['ETag'][1:-1]
-    etag_multipart = '-' in md5_remote  # Check for multipart, etag is not md5
-    if etag_multipart is True:
+    if '-' in md5_remote:  # Check for multipart, etag is not md5
         return None
     return md5_remote
 
@@ -307,10 +306,8 @@ def bucket_check(module, s3, bucket, validate=True):
 def create_bucket(module, s3, bucket, location=None):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
-    if location is None:
-        location = 'us-east-1'
     configuration = {}
-    if location != ('us-east-1' or None):
+    if location not in ('us-east-1' or None):
         configuration['LocationConstraint'] = location
     try:
         if len(configuration) > 0:
@@ -328,8 +325,9 @@ def create_bucket(module, s3, bucket, location=None):
 
 
 def list_keys(module, s3, bucket, prefix, marker, max_keys):
-    all_keys = s3.list_objects(Bucket=bucket, Prefix=prefix, Marker=marker, MaxKeys=max_keys)
-    keys = [x['Key'] for x in all_keys.get('Contents', [])]
+    paginator = s3.get_paginator('list_objects')
+    all_keys = [page['Contents'] for page in paginator.paginate(Bucket=bucket)][0]
+    keys = [{'Key': data['Key']} for data in all_keys]
     module.exit_json(msg="LIST operation complete", s3_keys=keys)
 
 
@@ -340,9 +338,10 @@ def delete_bucket(module, s3, bucket):
         exists = bucket_check(module, s3, bucket)
         if exists is False:
             return False
-        objects = s3.list_objects(Bucket=bucket)
+        paginator = s3.get_paginator('list_objects')
+        objects = [page['Contents'] for page in paginator.paginate(Bucket=bucket)][0]
         # if there are contents then we need to delete them before we can delete the bucket
-        keys = [{'Key': data['Key']} for data in objects.get('Contents', [])]
+        keys = [{'Key': data['Key']} for data in objects]
         if keys:
             s3.delete_objects(Bucket=bucket, Delete={'Objects': keys})
         s3.delete_bucket(Bucket=bucket)
@@ -387,9 +386,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
         if metadata:
-            extra = {'Metadata': {}}
-            for meta_key in metadata:
-                extra['Metadata'][meta_key] = metadata[meta_key]
+            extra = {'Metadata': dict(metadata)}
             s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         else:
             s3.upload_file(Filename=src, Bucket=bucket, Key=obj)
@@ -440,9 +437,9 @@ def download_s3str(module, s3, bucket, obj, version=None, validate=True):
         module.exit_json(msg="GET operation skipped - running in check mode", changed=True)
     try:
         if version:
-            contents = to_text(s3.get_object(Bucket=bucket, Key=obj, VersionId=version)["Body"].read())
+            contents = to_native(s3.get_object(Bucket=bucket, Key=obj, VersionId=version)["Body"].read())
         else:
-            contents = to_text(s3.get_object(Bucket=bucket, Key=obj)["Body"].read())
+            contents = to_native(s3.get_object(Bucket=bucket, Key=obj)["Body"].read())
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed while getting contents of object %s as a string." % obj,
