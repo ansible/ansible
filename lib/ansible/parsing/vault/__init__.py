@@ -960,7 +960,7 @@ class VaultAES:
 
         while not finished:
             b_chunk, b_next_chunk = b_next_chunk, cipher.decrypt(in_file.read(1024 * bs))
-            if b_next_chunk:
+            if len(b_next_chunk) == 0:
                 if PY3:
                     padding_length = b_chunk[-1]
                 else:
