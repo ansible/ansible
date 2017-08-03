@@ -1082,7 +1082,7 @@ class VaultAES256:
         return b_key1, b_key2, b_iv
 
     @staticmethod
-    def _encrypt_cryptography(b_plaintext, b_salt, b_key1, b_key2, b_iv):
+    def _encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv):
         cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
@@ -1097,7 +1097,7 @@ class VaultAES256:
         return to_bytes(hexlify(b_hmac), errors='surrogate_or_strict'), hexlify(b_ciphertext)
 
     @staticmethod
-    def _encrypt_pycrypto(b_plaintext, b_salt, b_key1, b_key2, b_iv):
+    def _encrypt_pycrypto(b_plaintext, b_key1, b_key2, b_iv):
         # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
         bs = AES_pycrypto.block_size
         padding_length = (bs - len(b_plaintext) % bs) or bs
@@ -1133,9 +1133,9 @@ class VaultAES256:
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
 
         if HAS_CRYPTOGRAPHY:
-            b_hmac, b_ciphertext = cls._encrypt_cryptography(b_plaintext, b_salt, b_key1, b_key2, b_iv)
+            b_hmac, b_ciphertext = cls._encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv)
         elif HAS_PYCRYPTO:
-            b_hmac, b_ciphertext = cls._encrypt_pycrypto(b_plaintext, b_salt, b_key1, b_key2, b_iv)
+            b_hmac, b_ciphertext = cls._encrypt_pycrypto(b_plaintext, b_key1, b_key2, b_iv)
         else:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in encrypt)')
 
