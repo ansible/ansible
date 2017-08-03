@@ -60,6 +60,7 @@ def re_matchall(regex, value):
             objects.append(obj)
     return objects
 
+
 def re_search(regex, value):
     obj = {}
     match = regex.search(value, re.M)
@@ -158,10 +159,11 @@ def parse_cli_textfsm(value, template):
 
     return results
 
+
 class FilterModule(object):
     """Filters for working with output from network devices"""
 
-    filter_map =  {
+    filter_map = {
         'parse_cli': parse_cli,
         'parse_cli_textfsm': parse_cli_textfsm
     }

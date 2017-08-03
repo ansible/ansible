@@ -149,6 +149,3 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
     def test_template(self):
         tmpl = Template()
         self.assertEqual('foo', tmpl('{{ test }}', {'test': 'foo'}))
-
-
-

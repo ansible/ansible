@@ -42,7 +42,6 @@ except ImportError:
     HAS_JINJA2 = False
 
 
-
 OPERATORS = frozenset(['ge', 'gt', 'eq', 'neq', 'lt', 'le'])
 ALIASES = frozenset([('min', 'ge'), ('max', 'le'), ('exactly', 'eq'), ('neq', 'ne')])
 
