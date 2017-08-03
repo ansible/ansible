@@ -878,6 +878,8 @@ files:
   $module_utils/cnos.py:
     maintainers: dkasberg
     labels: networking
+  $module_utils/crypto.py:
+    maintainers: Spredzy
   $module_utils/dellos:
     maintainers: skg-net
     labels: networking
