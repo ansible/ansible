@@ -130,9 +130,13 @@ EXAMPLES = '''
     login_host: remote.example.org
 '''
 
-import requests
-import urllib
 import json
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError as e:
+    HAS_REQUESTS = False
+import urllib
 
 def main():
     module = AnsibleModule(
@@ -162,6 +166,9 @@ def main():
         urllib.quote(module.params['vhost'],''),
         module.params['name']
     )
+
+    if not HAS_REQUESTS:
+        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
 
     # Check if queue already exists
     r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
