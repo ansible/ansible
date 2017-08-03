@@ -153,14 +153,16 @@ class GenericStrategy(object):
         name = self.module.params['name']
         current_name = self.get_current_hostname()
         if current_name != name:
-            self.set_current_hostname(name)
+            if not self.module.check_mode:
+                self.set_curent_hostname(name)
             self.changed = True
 
     def update_permanent_hostname(self):
         name = self.module.params['name']
         permanent_name = self.get_permanent_hostname()
         if permanent_name != name:
-            self.set_permanent_hostname(name)
+            if not self.module.check_mode:
+                self.set_permanent_hostname(name)
             self.changed = True
 
     def get_current_hostname(self):
@@ -740,7 +742,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(required=True)
-        )
+        ),
+        supports_check_mode=True
     )
 
     hostname = Hostname(module)
