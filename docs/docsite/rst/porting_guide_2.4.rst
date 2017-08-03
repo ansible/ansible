@@ -134,6 +134,36 @@ There have been a number of changes to how Networking Modules operate.
 
 Playbooks should still use ``connection: local``.
 
+In 2.4 we've introduced the concept of Minimum Viable Platform Agnostic Modules. These modules are implemented as an abstraction such that they can be used to target multiple network operating systems. As an example:
+
+.. code-block:: yaml
+    
+       - name: run show version on remote devices
+         net_command:
+           commands: show version
+       - name: run show version and check to see if output contains Network vendor name
+         net_command:
+           commands: show version
+           wait_for: result[0] contains Network vendor name
+       - name: run multiple commands on remote nodes
+         net_command:
+           commands:
+             - show version
+             - show interfaces
+       - name: run multiple commands and evaluate the output
+         net_command:
+           commands:
+             - show version
+             - show interfaces
+           wait_for:
+             - result[0] contains Network vendor name
+             - result[1] contains Loopback0
+       - name: run commands and specify the output format
+         net_command:
+           commands:
+             - command: show version
+               output: json
+
 The following changes apply to:
 
 * FIXME List modules that have been ported to new framework in 2.4 - Link back to 2.3 porting guide
