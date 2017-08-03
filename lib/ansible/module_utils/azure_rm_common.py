@@ -633,4 +633,3 @@ class AzureRMModuleBase(object):
             self._dns_client = DnsManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Dns')
         return self._dns_client
-
