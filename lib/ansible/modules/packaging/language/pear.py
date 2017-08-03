@@ -50,7 +50,7 @@ options:
         - The explicit executable or path to find the pear executable
       required: false
       default: null
-      version_added: "2.3"
+      version_added: "2.4"
 '''
 
 EXAMPLES = '''
