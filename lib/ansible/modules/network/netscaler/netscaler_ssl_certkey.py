@@ -199,7 +199,10 @@ def main():
                 'PFX',
             ]
         ),
-        passplain=dict(type='str'),
+        passplain=dict(
+            type='str',
+            no_log=True,
+        ),
         expirymonitor=dict(
             type='str',
             choices=[
@@ -208,7 +211,6 @@ def main():
             ]
         ),
         notificationperiod=dict(type='float'),
-        bundle=dict(type='bool'),
     )
 
     argument_spec = dict()
