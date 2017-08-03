@@ -164,6 +164,12 @@ In 2.4 we've introduced the concept of Minimum Viable Platform Agnostic Modules.
              - command: show version
                output: json
 
+FIXME Add link to network doc with all the details for Platform Agnostic Modules
+
+In 2.4 we introduced the concept of Declarative Intent Modules. Declarative intent modules are designed to provide playbook designers a set of network modules that perform declarative configuration tasks on network devices.  This includes the ability to declaratively describe a configuration set.  In addition, declarative intent modules will also provide a means for declaratively expressing the intended ephemeral state of configuration resources.
+
+FIXME Add link to network doc with all the details for Declarative Intent Modules
+
 The following changes apply to:
 
 * FIXME List modules that have been ported to new framework in 2.4 - Link back to 2.3 porting guide
