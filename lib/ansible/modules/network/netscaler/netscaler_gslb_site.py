@@ -62,8 +62,8 @@ options:
 
     metricexchange:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Exchange metrics with other sites. Metrics are exchanged by using Metric Exchange Protocol (MEP). The
@@ -77,8 +77,8 @@ options:
 
     nwmetricexchange:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Exchange, with other GSLB sites, network metrics such as round-trip time (RTT), learned from
@@ -87,8 +87,8 @@ options:
 
     sessionexchange:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Exchange persistent session entries with other GSLB sites every five seconds."
 
@@ -152,9 +152,9 @@ EXAMPLES = '''
     siteipaddress: 192.168.1.1
     sitetype: LOCAL
     publicip: 192.168.1.1
-    metricexchange: ENABLED
-    nwmetricexchange: ENABLED
-    sessionexchange: ENABLED
+    metricexchange: enabled
+    nwmetricexchange: enabled
+    sessionexchange: enabled
     triggermonitor: ALWAYS
 
 '''
@@ -235,22 +235,22 @@ def main():
         metricexchange=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         nwmetricexchange=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         sessionexchange=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         triggermonitor=dict(
@@ -338,6 +338,12 @@ def main():
         'publicclip',
     ]
 
+    transforms = {
+        'metricexchange': [lambda v: v.upper()],
+        'nwmetricexchange': [lambda v: v.upper()],
+        'sessionexchange': [lambda v: v.upper()],
+    }
+
     # Instantiate config proxy
     gslb_site_proxy = ConfigProxy(
         actual=gslbsite(),
@@ -346,6 +352,7 @@ def main():
         readwrite_attrs=readwrite_attrs,
         readonly_attrs=readonly_attrs,
         immutable_attrs=immutable_attrs,
+        transforms=transforms,
     )
 
     try:
