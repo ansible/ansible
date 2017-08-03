@@ -320,10 +320,9 @@ class FileVaultSecret(VaultSecret):
         return None
 
     def load(self):
-        self._bytes = self.read_file(self.filename, self.loader)
+        self._bytes = self.read_file(self.filename)
 
-    @staticmethod
-    def read_file(filename, loader):
+    def read_file(self, filename):
         """
         Read a vault password from a file or if executable, execute the script and
         retrieve password from STDOUT
@@ -345,10 +344,8 @@ class FileVaultSecret(VaultSecret):
 
 
 class ScriptVaultSecret(FileVaultSecret):
-
-    @staticmethod
-    def read_file(filename, loader):
-        if not loader.is_executable(filename):
+    def read_file(self, filename):
+        if not self.loader.is_executable(filename):
             raise AnsibleVaultError("The vault password script %s was not executable" % filename)
 
         try:
