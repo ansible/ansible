@@ -145,7 +145,7 @@ except ImportError:
 
 # INSERT REDHAT SNIPPETS
 from ansible.module_utils import redhat
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import urllib, xmlrpc_client
 
 
@@ -396,9 +396,8 @@ def main():
             rhn.enable()
             rhn.register(enable_eus, activationkey, profilename, sslcacert, systemorgid)
             rhn.subscribe(channels)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
+        except Exception as exc:
+            module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, exc))
         finally:
             rhn.logout()
 
@@ -411,9 +410,8 @@ def main():
 
         try:
             rhn.unregister()
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Failed to unregister: %s" % e)
+        except Exception as exc:
+            module.fail_json(msg="Failed to unregister: %s" % exc)
         finally:
             rhn.logout()
 
