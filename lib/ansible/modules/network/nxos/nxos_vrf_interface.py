@@ -222,13 +222,6 @@ def main():
     changed = False
     end_state = existing
 
-    if vrf != existing['vrf'] and state == 'absent':
-        module.fail_json(msg='The VRF you are trying to remove '
-                             'from the interface does not exist '
-                             'on that interface.',
-                         interface=interface, proposed_vrf=vrf,
-                         existing_vrf=existing['vrf'])
-
     commands = []
     if existing:
         if state == 'absent':
