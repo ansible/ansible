@@ -183,6 +183,7 @@ def _update_policy(module, bucket):
 
     return current_policy
 
+
 def _update_tags(module, bucket):
     tags = module.params.get("tags")
     try:
@@ -234,28 +235,25 @@ def create_or_update_bucket(connection, module, location, flavour='aws'):
     # Versioning
     versioning_status = bucket.get_versioning_status()
     if versioning is not None:
-        if versioning and versioning_status.get('Versioning') != "Enabled":
+        versioning_enabled = versioning_status.get('Versioning') == "Enabled"
+        if versioning and not versioning_enabled or not versioning and versioning_enabled:
             try:
                 bucket.configure_versioning(versioning)
                 changed = True
                 versioning_status = bucket.get_versioning_status()
             except S3ResponseError as e:
-                module.fail_json(msg='Failed to enable versioning for S3 bucket: %s' % e, exception=traceback.format_exc())
-        elif not versioning and versioning_status.get('Versioning') == "Enabled":
-            try:
-                bucket.configure_versioning(versioning)
-                changed = True
-                versioning_status = bucket.get_versioning_status()
-            except S3ResponseError as e:
-                module.fail_json(msg='Failed to disable versioning for S3 bucket: %s' % e, exception=traceback.format_exc())
+                module.fail_json(
+                    msg='Failed to %s versioning for S3 bucket: %s'
+                        % ("enable" if versioning else "disable", e),
+                    exception=traceback.format_exc())
 
     # Requester pays
     requester_pays_status = get_request_payment_status(bucket)
     if requester_pays_status != requester_pays:
         if requester_pays:
-            payer='Requester'
+            payer = 'Requester'
         else:
-            payer='BucketOwner'
+            payer = 'BucketOwner'
         bucket.set_request_payment(payer=payer)
         changed = True
         requester_pays_status = get_request_payment_status(bucket)
@@ -264,22 +262,23 @@ def create_or_update_bucket(connection, module, location, flavour='aws'):
     current_policy=None
     if flavour != 'ceph':
         current_policy = _update_policy(module, bucket)
-    if module.params["policy"] is not None and flavour == 'ceph':
+    elif module.params["policy"] is not None:
         # policy not supported by Ceph Object Gateway (radosgw)
         # http://docs.ceph.com/docs/master/radosgw/s3/#features-support
-        module.fail_json(msg="policy not supported by ceph object gateway")
+        module.fail_json(msg="policy not supported by ceph object gateway", exception=traceback.format_exc())
 
     # Tags
-    current_tags_dict=None
+    current_tags_dict = None
     if flavour != 'ceph':
         current_tags_dict = _update_tags(module, bucket)
-    if module.params["tags"] is not None and flavour == 'ceph':
+    elif module.params["tags"] is not None:
         # tagging not supported by Ceph Object Gateway (radosgw)
         # http://docs.ceph.com/docs/hammer/dev/radosgw/s3_compliance/
         module.fail_json(msg="tags not supported by ceph object gateway")
 
     module.exit_json(changed=changed, name=bucket.name, versioning=versioning_status,
-                     requester_pays=requester_pays_status, policy=current_policy, tags=current_tags_dict)
+                     requester_pays=requester_pays_status, policy=current_policy, tags=current_tags_dict,
+                     exception=traceback.format_exc())
 
 
 def destroy_bucket(connection, module, flavour='aws'):
@@ -292,7 +291,7 @@ def destroy_bucket(connection, module, flavour='aws'):
         bucket = connection.get_bucket(name)
     except S3ResponseError as e:
         if e.error_code != "NoSuchBucket":
-            module.fail_json(msg="Failed to get S3 bucket: %s" % e)
+            module.fail_json(msg="Failed to get S3 bucket: %s" % e, exception=traceback.format_exc())
         else:
             # Bucket already absent
             module.exit_json(changed=changed)
@@ -304,13 +303,13 @@ def destroy_bucket(connection, module, flavour='aws'):
                 key.delete()
 
         except BotoServerError as e:
-            module.fail_json(msg='Failed to empty S3 bucket: %s' % e)
+            module.fail_json(msg='Failed to empty S3 bucket: %s' % e, exception=traceback.format_exc())
 
     try:
         bucket = connection.delete_bucket(name)
         changed = True
     except S3ResponseError as e:
-        module.fail_json(msg='Failed to delete S3 bucket: %s' % e)
+        module.fail_json(msg='Failed to delete S3 bucket: %s' % e, exception=traceback.format_exc())
 
     module.exit_json(changed=changed)
 
