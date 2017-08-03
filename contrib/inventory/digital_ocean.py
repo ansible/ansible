@@ -153,7 +153,7 @@ except ImportError:
 try:
     from dopy.manager import DoManager
 except ImportError as e:
-    sys.exit("failed=True msg='`dopy` library required for this script'")
+    sys.exit("failed=True msg={}".format(e.message))
 
 
 class DigitalOceanInventory(object):
