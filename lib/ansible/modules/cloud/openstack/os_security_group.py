@@ -44,6 +44,15 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+     required: false
+   default_rules:
+     version_added: "2.8"
+     description:
+       - When set to absent, remove default security rules when
+         creating a new security group.
+         An existing security group won't be modified.
+     choices: [present, absent]
+     default: present
 '''
 
 EXAMPLES = '''
@@ -100,6 +109,8 @@ def main():
         description=dict(default=''),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None),
+        default_rules=dict(default='present',
+                           choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -111,6 +122,7 @@ def main():
     state = module.params['state']
     description = module.params['description']
     project = module.params['project']
+    default_rules = module.params['default_rules']
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -140,6 +152,9 @@ def main():
                     kwargs['project_id'] = project_id
                 secgroup = cloud.create_security_group(name, description,
                                                        **kwargs)
+                if default_rules == 'absent':
+                    for rule in secgroup['security_group_rules']:
+                        cloud.delete_security_group_rule(rule['id'])
                 changed = True
             else:
                 if _needs_update(module, secgroup):
