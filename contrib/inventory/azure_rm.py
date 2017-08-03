@@ -58,6 +58,7 @@ Environment variables:
  - AZURE_TENANT
  - AZURE_AD_USER
  - AZURE_PASSWORD
+ - AZURE_PREFER_PRIVATE_IP
 
 Run for Specific Host
 -----------------------
@@ -175,6 +176,12 @@ requests security packages:
     pip install requests[security]
 
 
+ansible_host
+------------
+For hosts behind a jumpbox we may want to have `ansible_host` filled in with
+their private IP address instead of the public one. You can do this by using:
+AZURE_PREFER_PRIVATE_IP=yes
+
 author:
     - Chris Houseknecht (@chouseknecht)
     - Matt Davis (@nitzmahone)
@@ -229,7 +236,8 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_resource_group='AZURE_GROUP_BY_RESOURCE_GROUP',
     group_by_location='AZURE_GROUP_BY_LOCATION',
     group_by_security_group='AZURE_GROUP_BY_SECURITY_GROUP',
-    group_by_tag='AZURE_GROUP_BY_TAG'
+    group_by_tag='AZURE_GROUP_BY_TAG',
+    prefer_private_ip='AZURE_PREFER_PRIVATE_IP',
 )
 
 AZURE_MIN_VERSION = "0.30.0rc5"
@@ -417,6 +425,7 @@ class AzureInventory(object):
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
+        self.prefer_private_ip = False
 
         self._inventory = dict(
             _meta=dict(
@@ -477,6 +486,9 @@ class AzureInventory(object):
                             help='Return inventory for comma separated list of locations')
         parser.add_argument('--no-powerstate', action='store_true', default=False,
                             help='Do not include the power state of each virtual host')
+        parser.add_argument('--prefer-private-ip', action='store_true', default=False,
+                            help='Populate ansible_host with the VM private IP address')
+
         return parser.parse_args()
 
     def get_inventory(self):
