@@ -318,6 +318,51 @@ address. For example, to get the IP address itself from a CIDR, you can use::
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :doc:`playbooks_filters_ipaddr`.
 
+.. _network_filters:
+
+Network CLI filters
+```````````````````
+
+.. versionadded:: 2.4
+
+To convert the output of a network device CLI command into structured JSON
+output use the ``parse_cli`` filter::
+
+  {{ output | parse_cli('path/to/spec') }}
+
+The ``parse_cli`` filter will load the spec file and pass the command output
+through it returning JSON output.  The spec file is a YAML yaml that defines
+how to parse the CLI output.  
+
+The spec file should be valid formatted YAML.  It defines how to parse the CLI
+output and return JSON data.  Below is an example of a valid spec file that
+will parse the output from the ``show vlan`` command.::
+
+    ---
+    vlan:
+      vlan_id: "{{ item.vlan_id }}"
+      name: "{{ item.name }}"
+      enabled: "{{ item.state != 'act/lshut' }}"
+      state: "{{ item.state }}"
+
+    attributes:
+      vlans:
+        type: list
+        value: "{{ vlan }}"
+        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+      state_static:
+        value: present
+
+The spec file above will return a JSON data structure that is a list of hashs
+with the parsed VLAN information.
+
+The network filters also support parsing the output of a CLI command using the
+TextFSM library.  To parse the CLI output with TextFSM use the following
+filter::
+
+  {{ output | parse_cli_textfsm('path/to/fsm') }}
+
+Use of the TextFSM filter requires the TextFSM library to be installed.
 
 .. _hash_filters:
 
