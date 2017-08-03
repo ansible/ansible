@@ -54,7 +54,7 @@ Function Extract-ZipLegacy($src, $dest) {
 }
 
 Function Extract-Zip($src, $dest) {
-    $archive = [System.IO.Compression.ZipFile]::OpenRead($src)
+    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
     foreach ($entry in $archive.Entries) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $entry.FullName)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
@@ -243,6 +243,7 @@ if ($mode -eq "query") {
     # on the win_copy action plugin and is only run if a change needs to occur
     try {
         Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
+        Add-Type -Assembl System.IO.Compression | Out-Null
     } catch {
         Set-Alias -Name Extract-Zip -Value Extract-ZipLegacy
     }

@@ -231,11 +231,17 @@ class ActionModule(ActionBase):
         zip_file_path = os.path.join(tmpdir, "win_copy.zip")
         zip_file = zipfile.ZipFile(zip_file_path, "w")
 
+        # need to write in byte string with utf-8 encoding to support unicode
+        # characters in the filename.
         for directory in directories:
-            zip_file.write(directory['src'], directory['dest'], zipfile.ZIP_DEFLATED)
+            directory_path = to_bytes(directory['src'], errors='surrogate_or_strict')
+            archive_path = to_bytes(directory['dest'], errors='surrogate_or_strict')
+            zip_file.write(directory_path, archive_path, zipfile.ZIP_DEFLATED)
 
         for file in files:
-            zip_file.write(file['src'], file['dest'], zipfile.ZIP_DEFLATED)
+            file_path = to_bytes(file['src'], errors='surrogate_or_strict')
+            archive_path = to_bytes(file['dest'], errors='surrogate_or_strict')
+            zip_file.write(file_path, archive_path, zipfile.ZIP_DEFLATED)
 
         return zip_file_path
 
@@ -364,7 +370,7 @@ class ActionModule(ActionBase):
                 )
             )
             result['checksum'] = file_checksum
-            result['size'] = os.path.getsize(source)
+            result['size'] = os.path.getsize(to_bytes(source, errors='surrogate_or_strict'))
 
         # find out the files/directories/symlinks that we need to copy to the server
         new_module_args = self._task.args.copy()
