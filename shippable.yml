@@ -18,7 +18,7 @@ matrix:
     - env: TEST=osx/10.11
 
     - env: TEST=freebsd/10.3-STABLE
-    - env: TEST=freebsd/11.1-STABLE
+    - env: TEST=freebsd/11.0-STABLE
 
     - env: TEST=rhel/7.4
 
