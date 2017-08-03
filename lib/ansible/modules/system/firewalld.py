@@ -527,7 +527,7 @@ def main():
     source = module.params['source']
 
     if module.params['port'] is not None:
-        port, protocol = module.params['port'].split('/')
+        port, protocol = module.params['port'].strip().split('/')
         if protocol is None:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
