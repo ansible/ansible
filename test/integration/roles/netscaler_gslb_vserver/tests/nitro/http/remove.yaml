@@ -1,0 +1,15 @@
+---
+
+- name: Remove gslb vserver
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+
+  netscaler_gslb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: absent
+
+    name: gslb-vserver-1

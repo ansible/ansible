@@ -1,0 +1,46 @@
+---
+
+- name: Setup gslb vserver
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+
+  netscaler_gslb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: gslb-vserver-1
+    servicetype: HTTP
+    dnsrecordtype: A
+    lbmethod: ROUNDROBIN
+    backuplbmethod: RTT
+    tolerance: 50
+    persistencetype: NONE
+    persistenceid: 500
+    persistmask: 255.255.255.0
+    v6persistmasklen: 128
+    timeout: 500
+    mir: DISABLED
+    disableprimaryondown: DISABLED
+    dynamicweight: DISABLED
+    considereffectivestate: NONE
+    comment: some comment
+    somethod: CONNECTION
+    sopersistence: DISABLED
+    sopersistencetimeout: 100
+    sothreshold: 5000
+    sobackupaction: DROP
+    appflowlog: DISABLED
+
+    domain_bindings:
+      - domainname: example.com
+        cookietimeout: 100
+        backupip: 10.10.10.10
+        ttl: 100
+        sitedomainttl: 200
+
+    service_bindings:
+      - weight: 100
+        servicename: gslb-service-1
