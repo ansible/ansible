@@ -1960,9 +1960,9 @@ class AnsibleModule(object):
                         self._check_argument_types(spec, param)
                         self._check_argument_values(spec, param)
 
-                        self._check_required_together(self.required_together, param)
-                        self._check_required_one_of(self.required_one_of, param)
-                        self._check_required_if(self.required_if, param)
+                        self._check_required_together(v.get('required_together', None), param)
+                        self._check_required_one_of(v.get('required_one_of', None), param)
+                        self._check_required_if(v.get('required_if', None), param)
 
                     self._set_defaults(pre=False, spec=spec, param=param)
 
