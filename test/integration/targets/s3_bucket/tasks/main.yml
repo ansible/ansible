@@ -20,10 +20,12 @@
   register: bucket
 # ============================================================
 - name: create temporary file object to use later
-  shell: mktemp /tmp/XXXXXXXX
+  tempfile:
   register: tmp1
 - name: give temporary file data
-  shell: echo foo > "{{ tmp1.stdout }}"
+  copy:
+    content: "foo"
+    dest: "{{ tmp1.path }}"
 # ============================================================
 - name: test create bucket-1
   s3_bucket:
@@ -80,12 +82,10 @@
     name: "{{ bucket.stdout }}-3"
     state: present
     policy: {"Version": "2012-10-17", "Statement": [{"Sid": " Deny all actions", "Principal": "*", "Effect": "Deny", "Action": "s3:*", "Resource": "arn:aws:s3:::{{ bucket.stdout }}-3/*"}]}
-    #policy: roles/test_s3_bucket/files/policy-deny.json
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
     security_token: "{{security_token}}"
     requester_pays: true
-  #with_file: roles/test_s3_bucket/files/policy-deny.json
   register: result
 - name: assert changed is true and that policy is correct
   assert:
@@ -97,7 +97,7 @@
   s3:
     bucket: "{{ bucket.stdout }}-3"
     mode: put
-    src: "{{ tmp1.stdout }}"
+    src: "{{ tmp1.path }}"
     object: delete.txt
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
@@ -107,7 +107,7 @@
 - name: assert that it failed
   assert:
     that:
-      - "result.msg == 'MODULE FAILURE'"
+      - "result.failed == true"
 # ============================================================
 - name: test that we can change the policy
   s3_bucket:
@@ -129,7 +129,7 @@
   s3:
     bucket: "{{ bucket.stdout }}-3"
     mode: put
-    src: "{{ tmp1.stdout }}"
+    src: "{{ tmp1.path }}"
     object: delete.txt
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
@@ -161,7 +161,7 @@
   assert:
     that:
       - "result.changed == false"
-      # TODO - "result.policy == {...}"
+      - result.policy
 # ============================================================
 - name: test delete a bucket that doesn't exist
   s3_bucket:
@@ -181,7 +181,7 @@
   s3:
     bucket: "{{ bucket.stdout }}-1"
     mode: put
-    src: "{{ tmp1.stdout }}"
+    src: "{{ tmp1.path }}"
     object: delete.txt
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
@@ -224,7 +224,7 @@
 - name: delete temporary file 1
   file:
     state: absent
-    path: "{{ tmp1.stdout }}"
+    path: "{{ tmp1.path }}"
 # ============================================================
 - name: delete empty bucket with tags without force  
   s3_bucket:
