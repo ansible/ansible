@@ -741,7 +741,7 @@ class VaultEditor:
         # though we could have multiple secrets for a given vault_id, pick the first one
         secrets = match_secrets(self.vault.secrets, [vault_id])
         secret = secrets[0][1]
-        if self.vault.cipher_name not in CIPHER_WRITE_WHITELIST:
+        if cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
             self._edit_file_helper(filename, secret, existing_data=plaintext, force_save=True)
         else:
