@@ -107,7 +107,7 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
                                 "src": real_file,
                                 "dest": dest_filepath,
                                 "checksum": _get_local_checksum(checksum_check, real_file)
-                             }
+                            }
                         )
                     else:
                         # Mark this file as a symlink to copy
@@ -262,7 +262,7 @@ class ActionModule(ActionBase):
         elif source is not None and content is not None:
             result['msg'] = "src and content are mutually exclusive"
         elif content is not None and dest is not None and (
-            dest.endswith(os.path.sep) or dest.endswith(self.WIN_PATH_SEPARATOR)):
+                dest.endswith(os.path.sep) or dest.endswith(self.WIN_PATH_SEPARATOR)):
             result['msg'] = "dest must be a file if content is defined"
         else:
             del result['failed']
