@@ -29,7 +29,7 @@ module: win_disk_setup
 version_added: '2.4'
 short_description: A windows disk module
 description:
-   - Find a disk on the server and set it up. To find the disk and to setup the disk you have several options.
+   - Find a disk on the server (unit GB) and set it up. To find the disk and to setup the disk you have several options.
 options:
   FindSize:
       description:
@@ -63,7 +63,7 @@ options:
         - MBR
   SetDriveLetter:
       description:
-        - Drive letter which should be set for the partition on found disk (Protected letters are C and D)
+        - Drive letter which should be set for the partition on found disk (protected letters are C and D)
       required: false
       default: E
   SetAllocUnitSize:
@@ -110,7 +110,7 @@ author:
 
 EXAMPLES = r'''
 - name: Find a defined disk and set it up as specified
-  win_disk:
+  win_disk_setup:
     FindSize: 100
     FindPartitionStyle: RAW
     FindOperationalStatus: Offline
@@ -123,7 +123,7 @@ EXAMPLES = r'''
     SetShortNames: true
 
 - name: Find a defined disk and set it up as specified
-  win_disk:
+  win_disk_setup:
     FindSize: 50
     FindPartitionStyle: MBR
     FindOperationalStatus: Online
