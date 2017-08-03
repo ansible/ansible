@@ -103,13 +103,13 @@ class IncludedFile:
                                     parent_include = parent_include._parent
                                     continue
                                 if isinstance(parent_include, IncludeRole):
-                                    parent_include_dir = os.path.dirname(parent_include._role_path)
+                                    parent_include_dir = parent_include._role_path
                                 else:
                                     parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
-                                if cumulative_path is None:
-                                    cumulative_path = parent_include_dir
-                                elif not os.path.isabs(cumulative_path):
+                                if cumulative_path is not None and not os.path.isabs(cumulative_path):
                                     cumulative_path = os.path.join(parent_include_dir, cumulative_path)
+                                else:
+                                    cumulative_path = parent_include_dir
                                 include_target = templar.template(include_result['include'])
                                 if original_task._role:
                                     new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
