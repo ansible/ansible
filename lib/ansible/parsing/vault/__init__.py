@@ -985,7 +985,7 @@ class VaultAES:
         return b_plaintext
 
     @classmethod
-    def decrypt(cls, b_vaulttext, secret, key_length=32, vault_id=None):
+    def decrypt(cls, b_vaulttext, secret, key_length=32):
 
         """ Decrypt the given data and return it
         :arg b_data: A byte string containing the encrypted data
