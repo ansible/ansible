@@ -58,6 +58,10 @@ def skipWhenAllModulesMissing(modules):
     return unittest.skip("{0}: none are available".format(', '.join(modules)))
 
 
+def get_method_name(request_body):
+    return xmlrpc_client.loads(request_body)[1]
+
+
 class TestRhnRegister(unittest.TestCase):
 
     def setUp(self):
@@ -132,11 +136,11 @@ class TestRhnRegister(unittest.TestCase):
 
         def transport_request(host, handler, request_body, verbose=0):
             """Fake request"""
-            if '<methodName>auth.login</methodName>' in request_body:
+            if 'auth.login' == get_method_name(request_body):
                 return ['X' * 43]
-            elif '<methodName>channel.software.listSystemChannels</methodName>' in request_body:
+            elif 'channel.software.listSystemChannels' == get_method_name(request_body):
                 return [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]
-            elif '<methodName>channel.software.setSystemChannels</methodName>' in request_body:
+            elif 'channel.software.setSystemChannels' == get_method_name(request_body):
                 return [1]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
@@ -162,11 +166,11 @@ class TestRhnRegister(unittest.TestCase):
 
         def transport_request(host, handler, request_body, verbose=0):
             """Fake request"""
-            if '<methodName>auth.login</methodName>' in request_body:
+            if 'auth.login' == get_method_name(request_body):
                 return ['X' * 43]
-            elif '<methodName>channel.software.listSystemChannels</methodName>' in request_body:
+            elif 'channel.software.listSystemChannels' == get_method_name(request_body):
                 return [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]
-            elif '<methodName>channel.software.setSystemChannels</methodName>' in request_body:
+            elif 'channel.software.setSystemChannels' == get_method_name(request_body):
                 return [1]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
@@ -192,11 +196,11 @@ class TestRhnRegister(unittest.TestCase):
 
         def transport_request(host, handler, request_body, verbose=0):
             """Fake request"""
-            if '<methodName>auth.login</methodName>' in request_body:
+            if 'auth.login' == get_method_name(request_body):
                 return ['X' * 43]
-            elif '<methodName>channel.software.listSystemChannels</methodName>' in request_body:
+            elif 'channel.software.listSystemChannels' == get_method_name(request_body):
                 return [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]
-            elif '<methodName>channel.software.setSystemChannels</methodName>' in request_body:
+            elif 'channel.software.setSystemChannels' == get_method_name(request_body):
                 return [1]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
@@ -225,9 +229,9 @@ class TestRhnRegister(unittest.TestCase):
 
         def transport_request(host, handler, request_body, verbose=0):
             """Fake request"""
-            if '<methodName>auth.login</methodName>' in request_body:
+            if 'auth.login' == get_method_name(request_body):
                 return ['X' * 43]
-            elif '<methodName>system.deleteSystems</methodName>' in request_body:
+            elif 'system.deleteSystems' == get_method_name(request_body):
                 return [1]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
