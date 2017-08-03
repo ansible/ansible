@@ -218,7 +218,7 @@ def check_args(module, warnings):
                         'removed in the future')
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=3)
+    candidate = NetworkConfig(indent=2)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
