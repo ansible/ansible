@@ -18,6 +18,42 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
+`import_` and `include_` split
+------------------------------
+
+
+**OLD** In Ansible 2.3:
+
+.. code-block:: yaml
+
+    - name: old foo
+
+Will result in:
+
+.. code-block:: yaml
+
+   [WARNING]: deprecation message 1
+   [WARNING]: deprecation message 2
+   [WARNING]: deprecation message 3
+
+
+**NEW** In Ansible 2.4:
+
+
+.. code-block:: yaml
+
+   - name: foo
+
+ansible_facts namespacing
+-------------------------
+
+FIXME:
+
+Inventory plugins
+-----------------
+
+FIXME: starting migration from hardcoded inventory + inventory scripts. scripts will still work via script plugin but efforts will now concentrate on plugins
+
 
 Deprecated
 ==========
@@ -33,49 +69,57 @@ In 2.4, the default has change to merge the tags. You can enable the old overwri
 
 In 2.5, multiple ``--tags`` options will be merged with no way to go back to the old behavior.
 
-.. Nothing currently in this section so commented out 
-   Placeholder left to keep consistent formatting with porting_guide_2.3.rst 
 
-   Other caveats
-   -------------
+Other caveats
+-------------
 
-   Modules
-   =======
+Modules
+=======
 
-   Major changes in popular modules are detailed here
-
-   Modules removed
-   ---------------
-   
-   The following modules no longer exist:
-   
-   * None
-   
-   Deprecation notices
-   -------------------
-   
-   The following modules will be removed in Ansible 2.6. Please update update your    playbooks accordingly.
-   
-   * :ref:`fixme <fixme>`
-   
-   Noteworthy module changes
-   -------------------------
-      
-   Plugins
-   =======
-   
-   Porting custom scripts
-   ======================
+Major changes in popular modules are detailed here
 
 
-.. Placeholder, detail will be added later
-   Networking
-   ==========
+Modules removed
+---------------
 
-   There have been a number of changes to how Networking Modules operate.
+The following modules no longer exist:
 
-   Playbooks should still use ``connection: local``.
+* None
 
-   The following changes apply to:
+Deprecation notices
+-------------------
 
-   * TBD List modules that have been ported to new framework in 2.4 - Link back to 2.3 porting guide
+The following modules will be removed in Ansible 2.8. Please update update your playbooks accordingly.
+
+* :ref:`fixme <fixme>`
+
+Noteworthy module changes
+-------------------------
+
+Plugins
+=======
+
+var plugin changes
+------------------
+
+FIXME: bcoca to add details
+
+
+Porting custom scripts
+======================
+
+Inventory script now obsolete
+-----------------------------
+
+FIXME: inventory scripts are becoming obsolete, in favor of inventory plugins
+
+Networking
+==========
+
+There have been a number of changes to how Networking Modules operate.
+
+Playbooks should still use ``connection: local``.
+
+The following changes apply to:
+
+* FIXME List modules that have been ported to new framework in 2.4 - Link back to 2.3 porting guide
