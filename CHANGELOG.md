@@ -58,6 +58,10 @@ Ansible Changes By Release
 * nxos_template (use nxos_config instead)
 * ops_template (use ops_config instead)
 
+* Modules (scheduled for removal in 2.6)
+
+  * ec2_remote_facts
+
 ### Minor Changes
 * Removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
 * Removed unused and deprecated config option `pattern`
@@ -147,9 +151,20 @@ Ansible Changes By Release
   * aci_rest
 - aix_lvol
 - amazon
+  * aws_api_gateway
+  * dynamodb_ttl
+  * ec2_instance_facts
   * ec2_metadata_facts
   * ec2_vpc_endpoint
+  * ec2_vpc_endpoint_facts
+  * ec2_vpc_peering_facts
+  * elb_application_lb
+  * elb_application_lb_facts
+  * elb_target_group
+  * elb_target_group_facts
   * iam_cert_facts
+  * iam_group
+  * iam_managed_policy
   * lightsail
 - atomic
   * atomic_container
