@@ -1,30 +1,30 @@
 *********************************
-Aggregate Resources in Networking
+Aggregate resources in networking
 *********************************
 
 .. contents:: Topics
 
-This section explores how and when `Aggregate Resources` can be used within Ansible Networking.
+This section explores how and when `aggregate resources` can be used within Ansible networking.
 
-This document is part of a collection on Networking. The complete list of guides can be found at :ref:`Network Guides <guide_networking>`.
+This document is part of a collection on networking. The complete list of guides can be found at :ref:`network guides <guide_networking>`.
 
 Overview
 ========
 
 Consider the case if you wanted to ensure a set of vlans are present on a switch. Although at a high level this sounds like a simple request, there in a slight nuance:
 
-* Should these vlans be in *addition* to the existing configuration?  - *additive*
-* Should these vlans be the *only* ones present? - *aggregate*
+* If the vlans are to be in *addition* to the existing configuration, they are considered **additive** vlans.
+* If the vlans are the *only* ones to exist, they are considered **aggregate** vlans.
 
 
 .. versionadded:: 2.4
 
-   The ``aggregate:`` option has been added in Ansible 2.4 and is available in certain modules, see the modules documentation to see if the feature is available.
+The ``aggregate:`` option has been added in Ansible 2.4 and is available in certain modules. See the modules documentation to see if the feature is available.
 
 Additive resources
 ===================
 
-Continuing our vlan example, the following task ensure that vlans ``1``, ``2`` and ``3`` are in the states specified in the task, in `addition` to any existing vlans.
+Continuing our vlan example, the following task ensures that vlans ``1``, ``2`` and ``3`` are in the states specified in the task, in `addition` to any existing vlans.
 
 This task *will not* change any vlans already configured on the switch, apart from the ones specified in the task. Ansible will ensure that the vlans specified in the task exist with the `name` and `state` specified.
 
@@ -45,7 +45,7 @@ FIXME Should we even document ``with_items``, is that just confusing the matter.
 FIXME Only showing ``with_items`` to show how it could be done
 
 
-Would be better written as
+The preceding example would be better written as follows:
 
 .. code-block:: yaml
 
@@ -57,9 +57,9 @@ Would be better written as
          - { vlan_id: 3, state: suspend }
        state: active
 
-This task is very similar to the `additive resource` example above, though with the following differences:
+This task is very similar to the *additive resource* example above, though with the following differences:
 
-* The module runs only once, rather than n times as it does ``with_items``
+* The module runs only once, rather than *n* times as it does ``with_items``
 * There is no way to to use ``purge`` on ``with_items``
 
 
@@ -79,7 +79,8 @@ Consider the following example:
        state: active
        purge: yes # Important
 
-FIXME Descrbe ``purge``
+FIXME Describe ``purge``
+
 * The ``purge:`` option (which defaults to `no`) ensures that **only** the specified entries are present. All other entries will be **deleted**.
 
 
@@ -87,15 +88,15 @@ FIXME: the ``state:`` is Local overrides of global module values
 
 .. warning:: Why does ``purge`` default to ``no``?
 
-   To prevent from accidental deletion ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this.
+   To prevent from accidental deletion, ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this.
 
 
 
 Local overrides of global module values
 =======================================
 
-* What
-* Why: Cleaner short hand. Allows you to separate out what's common from what's item specific.
+* FIXME: What
+* FIXME: Why: Cleaner short hand. Allows you to separate out what's common from what's item specific.
 
 .. code-block:: yaml
 
@@ -109,8 +110,9 @@ Local overrides of global module values
        state: active # override
        purge: yes # override
 
-Become realy power on ``net_interfaces``, mtu, admin_state, description
-Even more so on ``bpg_neighbour``: https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py#L655
+FIXME: Become realy power on ``net_interfaces``, mtu, admin_state, description
+
+FIXME: Even more so on ``bpg_neighbour``: https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py#L655
 
 
 Reference ID shorthand

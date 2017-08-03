@@ -1,12 +1,12 @@
 *********************************
-Declarative Intent in Networking
+Declarative intent in networking
 *********************************
 
 .. contents:: Topics
 
-This section explores what `Declarative Intent modules` are within the context of Ansible Networking.
+This section explores what `declarative intent modules` are within the context of Ansible networking.
 
-This document is part of a collection on Networking. The complete list of guides can be found at :ref:`Network Guides <guide_networking>`.
+This document is part of a collection on networking. The complete list of guides can be found at :ref:`network guides <guide_networking>`.
 
 Overview
 ========
@@ -14,7 +14,7 @@ Overview
 INTERNAL NOTE: TBD - Short description of the problem. Needs to be very simple
 
 State what you want the end result to be, not how go get there
-This results in easier to understand playbooks, which internally deal with the differences between Network OS versions.
+This results in easier to understand playbooks, which internally deal with the differences between network OS versions.
 
 
 Reminder: Ansible isn't a monitoring tool.
@@ -97,11 +97,11 @@ Declarative intent modules, new in Ansible 2.4, take two broad categories of opt
 * The second is *intended state* which allows the playbook designer to specifiy the desired state
 
 
-**Declarative Configuration**
+**Declarative configuration**
 
-TBD
+FIXME: TBD
 
-**Intended State**
+**Intended state**
 
 Declarative intent modules also take a set of options that allow playbook designers to specify the desired or intended operational state of the resource.  These options allow tasks to define the normalized operating state of the resource once the configuration has been completed.  **State options do not make configuration changes** to the resource.  They serve to validate that a given resource has normalized its operating environment to reflect the intended state.  If the operating state does not reflect the intended (or desired) state of the resource as described in the playbook task, the module is considered failed and remediation actions can be taken in the playbook during the playbook execution.
 
@@ -109,7 +109,7 @@ Declarative intent modules also take a set of options that allow playbook design
 
 .. versionadded:: 2.4
 
-   The `declarative intent modules` are new in Ansible 2.4 and is available in certain modules, see the modules documentation to see if the feature is available.
+The `declarative intent modules` are new in Ansible 2.4 and is available in certain modules, see the modules documentation to see if the feature is available.
 
 Use cases
 ==========
@@ -145,11 +145,11 @@ FIXME: Example
 **Advantages**
 
 * As you can tell from the above example using the declaritive intent format results in a much cleaner task. Checking no longer required the clunky (find better term) ``wait_for``.
-* TBD: Add details of why it's better to use the module from an internal code point of view
+* FIXME: TBD: Add details of why it's better to use the module from an internal code point of view
 * Can be combined with ``aggregate:`` to easily ensure state across multiple items.
-* Q: Why else
+* FIXME: Q: Why else
 
-Q: Any disadvantages?
+FIXME: Q: Any disadvantages?
 * not all modules support declaritive_intent - raise an feature request LINK
 
 
@@ -178,7 +178,7 @@ FIXME: Example
 Configuration then physical
 ---------------------------
 
-Q: What would this look like
+FIXME: Q: What would this look like
 
 **Overview**
 
@@ -197,7 +197,8 @@ Q: What would this look like
 
 Checking state only
 -------------------
-Q: What would this look like
+
+FIXME: Q: What would this look like
 
 **Overview**
 
@@ -217,7 +218,7 @@ Q: What would this look like
 Configuration, cabling, check
 ---------------------------
 
-Q: What would this look like
+FIXME: Q: What would this look like
 
 **Overview**
 
@@ -237,7 +238,7 @@ Q: What would this look like
 Aggreate declaritive intent
 ---------------------------
 
-Q: What would this look like
+FIXME: Q: What would this look like
 
 **Overview**
 
@@ -264,7 +265,7 @@ Block & Rescue
 * Roll back configuration?
 * Send (slack) notification that "{{ port }}" isn't configured, check cabling
 
-Q: What would this look like
+FIXME: Q: What would this look like
 
 **Overview**
 
@@ -339,23 +340,6 @@ Cisco IOS
 Arista EOS
 Platform agnostic layer 2
 Platform agnostic layer 2
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
