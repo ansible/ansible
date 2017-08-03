@@ -20,7 +20,6 @@ future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
 # Eventually we want metaclass3 and future3 to get down to 0
 metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/files -prune \
-        -o -path ./lib/ansible/modules/database/proxysql -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
@@ -42,7 +41,6 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
 
 future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/files -prune \
-        -o -path ./lib/ansible/modules/database/proxysql -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
@@ -70,7 +68,6 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
 # (everything below needs boilerplate added)
 # Priorities: import*, get_exception, then boilerplate-only
 #
-# database/proxysql [!]
 # network/ios
 # network/eos [i]
 # network/netvisor
