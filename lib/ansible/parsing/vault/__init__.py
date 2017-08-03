@@ -431,9 +431,9 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
     VAULT_ID_UNKNOWN_RC = 2
 
     def __init__(self, filename=None, encoding=None, loader=None, vault_id=None):
-        super(ScriptVaultSecret, self).__init__(filename=filename,
-                                                encoding=encoding,
-                                                loader=loader)
+        super(ClientScriptVaultSecret, self).__init__(filename=filename,
+                                                      encoding=encoding,
+                                                      loader=loader)
         self._vault_id = vault_id
         display.vvvv('Executing vault password client script: %s --vault-id=%s' % (filename, vault_id))
 
