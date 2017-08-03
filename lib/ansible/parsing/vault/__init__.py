@@ -487,7 +487,7 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % filename
             raise AnsibleError(msg)
 
-        b_vaulttext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        b_vaulttext, _, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
