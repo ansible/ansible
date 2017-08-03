@@ -47,7 +47,7 @@ options:
         choices: ["present", "absent", "latest"]
     executable:
       description:
-        - The explicit executable or path to find the pear executable
+        - Path to the pear executable
       required: false
       default: null
       version_added: "2.4"
