@@ -122,6 +122,12 @@ options:
         required: false
         default: null
         version_added: "2.3"
+    new_host_delay:
+        description: ["A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
+        This gives the host time to fully initialize."]
+        required: false
+        default: null
+        version_added: "2.4"
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
         required: false
@@ -195,6 +201,7 @@ def main():
             tags=dict(required=False, type='list', default=None),
             locked=dict(required=False, default=False, type='bool'),
             require_full_window=dict(required=False, default=None, type='bool'),
+            new_host_delay=dict(required=False, default=None),
             id=dict(required=False)
         )
     )
@@ -301,7 +308,8 @@ def install_monitor(module):
         "escalation_message": module.params['escalation_message'],
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
-        "require_full_window": module.params['require_full_window']
+        "require_full_window": module.params['require_full_window'],
+        "new_host_delay": module.params['new_host_delay']
     }
 
     if module.params['type'] == "service check":
