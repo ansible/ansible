@@ -119,6 +119,12 @@ gateway.customer_gateway:
             returned: when gateway exists and is available.
             sample: ipsec.1
             type: string
+gateway.customer_gateways:
+    description:
+      - A list containing the details about each gateway (in the same structure as gateway.customer_gateway) that
+        match the provided IP address.
+    type: list
+    returned: success
 changed:
   description: whether or not the customer gateway has been modified
   type: bool
@@ -213,16 +219,21 @@ class Ec2CustomerGatewayManager:
         return response
 
     def clean_results(self, results):
+        # don't camel_dict_to_snake dict the tags
+        current_tags = boto3_tag_list_to_ansible_dict(results.get('gateway', {}).get('CustomerGateway', {}).get('Tags', []))
+
         results = camel_dict_to_snake_dict(results)
 
         if 'response_metadata' in results['gateway']:
             del results['gateway']['response_metadata']
 
-        if 'customer_gateways' in results['gateway']:
-            del results['gateway']['customer_gateways']
+        # since these tags are in a list of dicts they won't be modified by camel_dict_to_snake_dict
+        for gateway in results['gateway']['customer_gateways']:
+            if 'tags' in gateway:
+                gateway['tags'] = boto3_tag_list_to_ansible_dict(gateway['tags'], 'key', 'value')
 
         if 'tags' in results['gateway']['customer_gateway']:
-            results['gateway']['customer_gateway']['tags'] = boto3_tag_list_to_ansible_dict(results['gateway']['customer_gateway']['tags'], 'key', 'value')
+            results['gateway']['customer_gateway']['tags'] = current_tags
 
         return results
 
@@ -301,6 +312,8 @@ def main():
                 )
             results['changed'] = True
 
+    # get latest matching customer gateways
+    results['gateway']['CustomerGateways'] = gw_mgr.describe_gateways(module.params['ip_address']).get('CustomerGateways', [])
     pretty_results = gw_mgr.clean_results(results)
     module.exit_json(**pretty_results)
 
