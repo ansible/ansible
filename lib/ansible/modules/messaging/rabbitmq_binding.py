@@ -103,8 +103,13 @@ EXAMPLES = '''
 '''
 
 import json
-import requests
 import urllib
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError as e:
+    HAS_REQUESTS = False
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -126,6 +131,9 @@ def main():
         ),
         supports_check_mode = True
     )
+
+    if not HAS_REQUESTS:
+        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
 
     if module.params['destination_type'] == "queue":
         dest_type="q"
