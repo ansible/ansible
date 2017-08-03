@@ -20,15 +20,15 @@
     publicport: 80
     maxclient: 100
     healthmonitor: "NO"
-    cip: ENABLED
+    cip: enabled
     cipheader: hello
     sitepersistence: NONE
     siteprefix: prefix
     clttimeout: 100
     maxbandwidth: 100
-    downstateflush: ENABLED
+    downstateflush: enabled
     maxaaausers: 100
     monthreshold: 500
     hashid: 10
     comment: some other comment
-    appflowlog: ENABLED
+    appflowlog: enabled
