@@ -1,0 +1,39 @@
+---
+
+- name: Setup gslb site
+  netscaler_gslb_site:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: "{{ state }}"
+
+    sitename: gslb-site-1
+    siteipaddress: 192.168.1.1
+    sitetype: LOCAL
+    publicip: 192.168.1.1
+    metricexchange: ENABLED
+    nwmetricexchange: ENABLED
+    sessionexchange: ENABLED
+    triggermonitor: ALWAYS
+
+
+  delegate_to: localhost
+  register: result
+
+- name: Setup gslb service
+
+  delegate_to: localhost
+  register: result
+
+  netscaler_gslb_service:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: "{{ state }}"
+
+    servicename: gslb-service-1
+    servicetype: HTTP
+    sitename: gslb-site-1
+    ipaddress: 10.10.10.11
+    port: 80
