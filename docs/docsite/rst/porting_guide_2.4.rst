@@ -62,12 +62,16 @@ Multiple inventory
 
 .. code-block:: shell
 
-   ansible-playbook -i /path/to/inventory1` /some/other/path/inventory2
+   ansible-playbook -i /path/to/inventory1, /some/other/path/inventory2
 
 
 Deprecated
 ==========
 
+Inventory argument
+-------------------------
+
+Use of --inventory-file is now deprecated. Use -inventory or -i.
 
 
 Use of multiple tags
