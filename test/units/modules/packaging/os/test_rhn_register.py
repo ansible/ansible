@@ -80,6 +80,10 @@ class TestRhnRegister(unittest.TestCase):
         self.mock_exit_fail.start()
         self.addCleanup(self.mock_exit_fail.stop)
 
+        enable_patcher = patch.object(rhn_register.Rhn, 'enable')
+        self.mock_enable = enable_patcher.start()
+        self.addCleanup(enable_patcher.stop)
+
     def tearDown(self):
         pass
 
@@ -152,6 +156,8 @@ class TestRhnRegister(unittest.TestCase):
                     self.assertTrue(result.exception.args[0]['changed'])
                 self.assertEqual(req.call_count, 3)
 
+        self.assertEqual(self.mock_enable.call_count, 1)
+        self.mock_enable.reset_mock()
         self.assertEqual(run_command.call_count, 1)
         self.assertEqual(run_command.call_args[0][0][0], '/usr/sbin/rhnreg_ks')
 
@@ -182,6 +188,8 @@ class TestRhnRegister(unittest.TestCase):
                     self.assertTrue(result.exception.args[0]['changed'])
                 self.assertEqual(req.call_count, 3)
 
+        self.assertEqual(self.mock_enable.call_count, 1)
+        self.mock_enable.reset_mock()
         self.assertEqual(run_command.call_count, 1)
         self.assertEqual(run_command.call_args[0][0][0], '/usr/sbin/rhnreg_ks')
 
@@ -212,6 +220,7 @@ class TestRhnRegister(unittest.TestCase):
                 self.assertFalse(req.called)
             self.assertEqual(mock_systemid.call_count, 1)
 
+        self.assertEqual(self.mock_enable.call_count, 0)
         self.assertFalse(run_command.called)
 
     @patch('os.unlink')
