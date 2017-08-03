@@ -83,14 +83,14 @@ options:
   skip_final_cluster_snapshot:
     description:
       - skip a final snapshot before deleting the cluster. Used only when command=delete.
-    aliases: ['skip_snapshot']
+    aliases: ['skip_final_snapshot']
     default: false
     version_added: "2.4"
   final_cluster_snapshot_identifier:
     description:
       - identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided,
         final_cluster_snapshot_identifier must be false. Used only when command=delete.
-    aliases: ['snapshot_identifier']
+    aliases: ['final_snapshot_id']
     default: null
     version_added: "2.4"
   preferred_maintenance_window:
