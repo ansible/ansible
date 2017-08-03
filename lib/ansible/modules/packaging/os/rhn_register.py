@@ -154,6 +154,12 @@ class Rhn(redhat.RegistrationBase):
     def __init__(self, module=None, username=None, password=None):
         redhat.RegistrationBase.__init__(self, module, username, password)
         self.config = self.load_config()
+        self.server = None
+        self.session = None
+
+    def logout(self):
+        if self.session is not None:
+            self.server.auth.logout(self.session)
 
     def load_config(self):
         '''
@@ -211,7 +217,7 @@ class Rhn(redhat.RegistrationBase):
                     root = etree.fromstring(xml_data)
                     systemid = root.xpath(xpath_str)[0].text
                 except ImportError:
-                    pass
+                    raise Exception('"libxml2" or "lxml" is required for this module.')
 
             # Strip the 'ID-' prefix
             if systemid is not None and systemid.startswith('ID-'):
@@ -272,7 +278,7 @@ class Rhn(redhat.RegistrationBase):
         '''
             Convenience RPC wrapper
         '''
-        if not hasattr(self, 'server') or self.server is None:
+        if self.server is None:
             if self.hostname != 'rhn.redhat.com':
                 url = "https://%s/rpc/api" % self.hostname
             else:
@@ -326,10 +332,7 @@ class Rhn(redhat.RegistrationBase):
             Return True if we are running against Hosted (rhn.redhat.com) or
             False otherwise (when running against Satellite or Spacewalk)
         '''
-        if 'rhn.redhat.com' in self.hostname:
-            return True
-        else:
-            return False
+        return 'rhn.redhat.com' in self.hostname
 
 
 def main():
@@ -387,7 +390,7 @@ def main():
 
         # Register system
         if rhn.is_registered:
-            return module.exit_json(changed=False, msg="System already registered.")
+            module.exit_json(changed=False, msg="System already registered.")
 
         try:
             rhn.enable()
@@ -396,19 +399,23 @@ def main():
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
+        finally:
+            rhn.logout()
 
         module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
 
     # Ensure system is *not* registered
     if state == 'absent':
         if not rhn.is_registered:
-            return module.exit_json(changed=False, msg="System already unregistered.")
+            module.exit_json(changed=False, msg="System already unregistered.")
 
         try:
             rhn.unregister()
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failed to unregister: %s" % e)
+        finally:
+            rhn.logout()
 
         module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
 
