@@ -158,6 +158,7 @@ def test_compare_larger_policies_with_difference():
     """
     assert compare_policies(larger_policy_two, larger_policy_three)
 
+
 def test_compare_smaller_policy_with_larger():
     """ Testing two policies of different sizes """
     assert compare_policies(larger_policy_one, small_policy_one)
