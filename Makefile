@@ -91,6 +91,10 @@ RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 100.git$(DATE)$(GITINFO)
 endif
+ifeq ($(PUBLISH),nightly)
+    # https://fedoraproject.org/wiki/Packaging:Versioning#Snapshots
+    RPMRELEASE = $(RELEASE).$(DATE)git.$(GIT_HASH)
+endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 # MOCK build parameters
@@ -182,17 +186,17 @@ sdist_upload: clean docs
 rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
-	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
+	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}$(REPOTAG)#' $(RPMSPEC) >rpm-build/$(NAME).spec
 
 mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
-	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/  --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/
+	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/  --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/
 	@echo "#############################################"
 	@echo "Ansible SRPM is built:"
 	@echo rpm-build/*.src.rpm
 	@echo "#############################################"
 
 mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
-	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/ --rebuild rpm-build/$(NAME)-*.src.rpm
+	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --rebuild rpm-build/$(NAME)-*.src.rpm
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo rpm-build/*.noarch.rpm
