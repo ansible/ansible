@@ -161,7 +161,7 @@ def is_deployed(module):
 
         data = json.dumps(data_dict)
 
-        resp, info = fetch_url(module, 'http://%s:9990/management' % module.params['hostname'], data=data, headers=headers)
+        resp, info = fetch_url(module, 'http://%s:%s/management' % (module.params['hostname'], module.params['port']), data=data, headers=headers)
 
         return info['status'] == 200
 
