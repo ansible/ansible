@@ -255,6 +255,7 @@ Ansible Changes By Release
 - sensu_silence
 - vmware
   * vmware_guest_find
+  * vmware_guest_tools
 - windows
   * win_defrag
   * win_domain_group
