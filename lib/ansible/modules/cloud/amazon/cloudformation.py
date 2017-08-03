@@ -46,7 +46,7 @@ options:
       - If a stacks fails to form, rollback will remove the stack
     required: false
     default: "false"
-    choice: [ "true", "false" ]
+    choices: [ "true", "false" ]
   template_parameters:
     description:
       - a list of hashes of all the template variables for the stack
@@ -67,7 +67,7 @@ options:
     required: false
     default: null
   notification_arns:
-    descriptio:
+    description:
       - The Simple Notification Service (SNS) topic ARNs to publish stack related events.
     required: false
     default: null
