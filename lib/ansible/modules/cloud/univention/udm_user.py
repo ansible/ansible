@@ -334,8 +334,7 @@ EXAMPLES = '''
 RETURN = '''# '''
 
 import crypt
-from datetime import date
-from dateutil.relativedelta import relativedelta
+from datetime import date, timedelta
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.univention_umc import (
@@ -347,7 +346,7 @@ from ansible.module_utils.univention_umc import (
 
 
 def main():
-    expiry = date.strftime(date.today() + relativedelta(years=1), "%Y-%m-%d")
+    expiry = date.strftime(date.today() + timedelta(days=365), "%Y-%m-%d")
     module = AnsibleModule(
         argument_spec = dict(
             birthday                = dict(default=None,
