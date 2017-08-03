@@ -32,7 +32,6 @@ from binascii import unhexlify
 from hashlib import md5
 from hashlib import sha256
 from io import BytesIO
-from subprocess import call
 
 HAS_CRYPTOGRAPHY = False
 HAS_PYCRYPTO = False
@@ -619,7 +618,7 @@ class VaultEditor:
             return
 
         try:
-            r = call(['shred', tmp_path])
+            r = subprocess.call(['shred', tmp_path])
         except (OSError, ValueError):
             # shred is not available on this system, or some other error occurred.
             # ValueError caught because OS X El Capitan is raising an
@@ -646,7 +645,7 @@ class VaultEditor:
                 self.write_data(existing_data, tmp_path, shred=False)
 
             # drop the user into an editor on the tmp file
-            call(self._editor_shell_command(tmp_path))
+            subprocess.call(self._editor_shell_command(tmp_path))
         except:
             # whatever happens, destroy the decrypted file
             self._shred_file(tmp_path)
