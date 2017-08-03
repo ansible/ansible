@@ -13,11 +13,15 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
-# this is to allow the action plugin to use the same module for getting metadata about the files
-$mode = Get-AnsibleParam -obj $params -name "mode" -type "str" -failifempty $true -validateset "explode","query","remote"
+# there are 4 modes to win_copy which are driven by the action plugins:
+#   explode: src is a zip file which needs to be extracted to dest, for use with multiple files
+#   query: win_copy action plugin wants to get the state of remote files to check whether it needs to send them
+#   remote: all copy action is happening remotely (remote_src=True)
+#   single: a single file has been copied, also used with template
+$mode = Get-AnsibleParam -obj $params -name "mode" -type "str" -default "single" -validateset "explode","query","remote","single"
 
-# used in explode and remote mode
-$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($mode -eq "process")
+# used in explode, remote and single mode
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($mode -in @("explode","process","single"))
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 
 # used in query and remote mode
@@ -311,6 +315,16 @@ if ($mode -eq "query") {
     if ($diff_mode) {
         $result.diff.prepared = $diff
     }
+} elseif ($mode -eq "single") {
+    # a single file is located in src and we need to copy to dest, this will
+    # always result in a change as the calculation is done on the Ansible side
+    # before this is run
+    if (-not (Test-Path -Path $src -PathType Leaf)) {
+        Fail-Json -obj $result -message "Cannot copy src file: $src as it does not exist"
+    }
+
+    Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode | Out-Null
+    $result.changed = $true
 }
 
 Exit-Json -obj $result
