@@ -600,7 +600,7 @@ class VaultEditor:
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 
-                    assert(fh.tell() == file_len)  # FIXME remove this assert once we have unittests to check its accuracy
+                    assert fh.tell() == file_len  # FIXME remove this assert once we have unittests to check its accuracy
                     os.fsync(fh)
 
     def _shred_file(self, tmp_path):
