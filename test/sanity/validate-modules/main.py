@@ -636,18 +636,12 @@ class ModuleValidator(Validator):
                     )
 
     def _find_ps_replacers(self):
-        if 'WANT_JSON' not in self.text:
-            self.reporter.error(
-                path=self.object_path,
-                code=206,
-                msg='WANT_JSON not found in module'
-            )
-
-        if REPLACER_WINDOWS not in self.text:
+        ps_module_util_template = '#Requires -Module Ansible.ModuleUtils.'
+        if ps_module_util_template not in self.text and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
                 code=207,
-                msg='"%s" not found in module' % REPLACER_WINDOWS
+                msg='"%s" not found in module' % ps_module_util_template
             )
 
     def _find_ps_docs_py_file(self):
