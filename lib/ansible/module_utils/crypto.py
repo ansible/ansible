@@ -84,6 +84,39 @@ def load_certificate(path):
         raise OpenSSLObjectError(exc)
 
 
+def load_certificate_request(path):
+    """Load the specified certificate signing request."""
+
+    try:
+        csr_content = open(path, 'rb').read()
+        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
+        return csr
+    except (IOError, OSError) as exc:
+        raise OpenSSLObjectError(exc)
+
+
+keyUsageLong = {
+    "digitalSignature": "Digital Signature",
+    "nonRepudiation": "Non Repudiation",
+    "keyEncipherment": "Key Encipherment",
+    "dataEncipherment": "Data Encipherment",
+    "keyAgreement": "Key Agreement",
+    "keyCertSign": "Certificate Sign",
+    "cRLSign": "CRL Sign",
+    "encipherOnly": "Encipher Only",
+    "decipherOnly": "Decipher Only",
+}
+
+extendedKeyUsageLong = {
+    "serverAuth": "TLS Web Server Authentication",
+    "clientAuth": "TLS Web Client Authentication",
+    "codeSigning": "Code Signing",
+    "emailProtection": "E-mail Protection",
+    "timeStamping": "Time Stamping",
+    "OCSPSigning": "OCSP Signing",
+}
+
+
 @six.add_metaclass(abc.ABCMeta)
 class OpenSSLObject(object):
 
