@@ -324,6 +324,9 @@ def create_changeset(module, stack_params, cfn):
 
             changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + sha1(to_bytes(json_params, errors='surrogate_or_strict')).hexdigest()
             stack_params['ChangeSetName'] = changeset_name
+        else:
+            changeset_name = stack_params['ChangeSetName']
+
         # Determine if this changeset already exists
         pending_changesets = list_changesets(cfn, stack_params['StackName'])
         if changeset_name in pending_changesets:
