@@ -54,7 +54,7 @@ def main():
         # key not found rc=2
         return 2
 
-    sys.stdout.write('{}\n'.format(secret))
+    sys.stdout.write('%s\n' % secret)
 
     return rc
 

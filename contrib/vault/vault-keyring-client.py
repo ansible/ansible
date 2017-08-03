@@ -138,7 +138,7 @@ def main():
             sys.exit(KEYNAME_UNKNOWN_RC)
 
         # print('secret: %s' % secret)
-        sys.stdout.write('{}\n'.format(secret))
+        sys.stdout.write('%s\n' % secret)
 
     sys.exit(0)
 
