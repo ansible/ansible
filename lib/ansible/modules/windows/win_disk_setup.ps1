@@ -168,9 +168,9 @@ $DriveLetter = Get-Attr -obj $params -name "SetDriveLetter" -default "E" -result
 $FileSystem = Get-Attr -obj $params -name "SetFileSystem" -default "NTFS" -ValidateSet "NTFS","ReFs" -resultobj $result -failifempty $false
 $Label = Get-Attr -obj $params -name "SetLabel" -default "AdditionalDisk" -resultobj $result -failifempty $false
 $AllocUnitSize = Get-Attr -obj $params -name "SetAllocUnitSize" -default "4" -ValidateSet "4","8","16","32","64" -resultobj $result -failifempty $false
-$LargeFRS = Get-Attr -obj $params -name "SetLargeFRS" -default "false" -ValidateSet "true","false" -resultobj $result -failifempty $false
-$ShortNames = Get-Attr -obj $params -name "SetShortNames" -default "false" -ValidateSet "true","false" -resultobj $result -failifempty $false
-$IntegrityStreams = Get-Attr -obj $params -name "SetIntegrityStreams" -default "false" -ValidateSet "true","false" -resultobj $result -failifempty $false
+$LargeFRS = Get-Attr -obj $params -name "SetLargeFRS" -default $false -type "bool" -resultobj $result -failifempty $false
+$ShortNames = Get-Attr -obj $params -name "SetShortNames" -default $false -type "bool" -resultobj $result -failifempty $false
+$IntegrityStreams = Get-Attr -obj $params -name "SetIntegrityStreams" -default $false -type "bool" -resultobj $result -failifempty $false
 
 # Convert variable for disk size
 [int32]$DSize = [convert]::ToInt32($Size, 10)
@@ -445,7 +445,6 @@ elseif($FileSystem -eq "ReFs"){
 Set-Attr $result.generallog "Check parameters" "Successful"
 
 # Check set switches
-$LargeFRS = $LargeFRS | ConvertTo-Bool
 if($LargeFRS){
                         Set-Attr $result.switches "Large FRS" "Enabled"
                         if($FileSystem -ne "ReFs"){
@@ -460,7 +459,6 @@ else{
     Set-Attr $result.switches "Large FRS" "Disabled"
 }
 
-$ShortNames = $ShortNames | ConvertTo-Bool
 if($ShortNames){
                         Set-Attr $result.switches "Short Names" "Enabled"
                         if($FileSystem -ne "ReFs"){
@@ -475,11 +473,10 @@ else{
     Set-Attr $result.switches "Short Names" "Disabled"
 }
 
-$IntegrityStreams = $IntegrityStreams | ConvertTo-Bool
 if($IntegrityStreams){
                         Set-Attr $result.switches "Integrity Streams" "Enabled"
                         if($FileSystem -eq "ReFs"){
-                                                                    Set-Attr $result.switches "Integrity Streams" "Enabled - activated (no NTFS)"
+#                                                                    Set-Attr $result.switches "Integrity Streams" "Enabled - activated (no NTFS)"
                                                                     }
                         else{
                                 $IntegrityStreams = $false # also works without setting false, because Create-Volume recognizes by itself, but will be kept for maybe later tasks

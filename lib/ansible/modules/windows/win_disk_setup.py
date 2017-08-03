@@ -36,7 +36,6 @@ options:
         - Size of the disk to find
       required: true
       default: 5
-      aliases: []
   FindPartitionStyle:
       description:
         - Partition style which should be set on the disk to find
@@ -93,27 +92,18 @@ options:
   SetLargeFRS:
       description:
         - Switch to set Large FRS option for file system on found disk, only for NTFS file system
-      required: false
-      default: false
-      choices:
-        - true
-        - false
+      type: bool
+      default: 'no'
   SetShortNames:
       description:
         - Switch to set Short Names option for file system on found disk, only for NTFS file system
-      required: false
-      default: false
-      choices:
-        - true
-        - false
+      type: bool
+      default: 'no'
   SetIntegrityStreams:
       description:
         - Switch to set Integrity Streams option for file system on found disk, only for ReFs file system
-      required: false
-      default: false
-      choices:
-        - true
-        - false
+      type: bool
+      default: 'no'
 author:
     - Marc Tschapek (@marqelme)
 '''
