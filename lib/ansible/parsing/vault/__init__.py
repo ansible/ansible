@@ -735,7 +735,7 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        _, _, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
         # if we could decrypt, the vault_id should be in secrets
         # though we could have multiple secrets for a given vault_id, pick the first one
