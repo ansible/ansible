@@ -130,9 +130,9 @@ EXAMPLES = """
 
 """
 from time import sleep
+from traceback import format_exc
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
-from traceback import format_exc
 
 try:
     import boto3
