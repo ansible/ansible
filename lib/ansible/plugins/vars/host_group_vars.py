@@ -35,7 +35,7 @@ __metaclass__ = type
 import os
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.vars import BaseVarsPlugin
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -87,7 +87,7 @@ class VarsModule(BaseVarsPlugin):
                         data = combine_vars(data, new_data)
 
             except Exception as e:
-                raise AnsibleParserError(to_text(e))
+                raise AnsibleParserError(to_native(e))
         return data
 
     def _find_vars_files(self, path, name):
