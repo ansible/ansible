@@ -25,11 +25,25 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import re
+import ast
+import operator
+
 from itertools import chain
 
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.six import iteritems
+
+try:
+    from jinja2 import Environment
+    from jinja2.exceptions import UndefinedError
+    HAS_JINJA2 = True
+except ImportError:
+    HAS_JINJA2 = False
+
+
+OPERATORS = frozenset(['ge', 'gt', 'eq', 'neq', 'lt', 'le'])
+ALIASES = frozenset([('min', 'ge'), ('max', 'le'), ('exactly', 'eq'), ('neq', 'ne')])
 
 
 def to_list(val):
@@ -281,3 +295,75 @@ def dict_merge(base, other):
         combined[key] = other.get(key)
 
     return combined
+
+
+def conditional(expr, val, cast=None):
+    match = re.match('^(.+)\((.+)\)$', str(expr), re.I)
+    if match:
+        op, arg = match.groups()
+    else:
+        op = 'eq'
+        assert (' ' not in str(expr)), 'invalid expression: cannot contain spaces'
+        arg = expr
+
+    if cast is None and val is not None:
+        arg = type(val)(arg)
+    elif callable(cast):
+        arg = cast(arg)
+        val = cast(val)
+
+    op = next((oper for alias, oper in ALIASES if op == alias), op)
+
+    if not hasattr(operator, op) and op not in OPERATORS:
+        raise ValueError('unknown operator: %s' % op)
+
+    func = getattr(operator, op)
+    return func(val, arg)
+
+
+def ternary(value, true_val, false_val):
+    '''  value ? true_val : false_val '''
+    if value:
+        return true_val
+    else:
+        return false_val
+
+
+class Template:
+
+    def __init__(self):
+        if not HAS_JINJA2:
+            raise ImportError("jinja2 is required but does not appear to be installed.  "
+                              "It can be installed using `pip install jinja2`")
+
+        self.env = Environment()
+        self.env.filters.update({'ternary': ternary})
+
+    def __call__(self, value, variables=None):
+        variables = variables or {}
+        if not self.contains_vars(value):
+            return value
+
+        value = self.env.from_string(value).render(variables)
+
+        if value:
+            try:
+                return ast.literal_eval(value)
+            except ValueError:
+                return str(value)
+        else:
+            return None
+
+    def can_template(self, tmpl):
+        try:
+            self(tmpl)
+            return True
+        except:
+            return False
+
+    def contains_vars(self, data):
+        if isinstance(data, string_types):
+            for marker in (self.env.block_start_string, self.env.variable_start_string, self.env.comment_start_string):
+                if marker in data:
+                    return True
+        return False
