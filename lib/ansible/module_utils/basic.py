@@ -1951,7 +1951,7 @@ class AnsibleModule(object):
 
                     # check exclusive early
                     if not self.bypass_checks:
-                        self._check_mutually_exclusive(self.mutually_exclusive, param)
+                        self._check_mutually_exclusive(v.get('mutually_exclusive', None), param)
 
                     self._set_defaults(pre=True, spec=spec, param=param)
 
