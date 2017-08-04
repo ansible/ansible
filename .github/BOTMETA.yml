@@ -562,7 +562,7 @@ files:
   $modules/packaging/os/zypper_repository.py: matze robinro
   $modules/remote_management/foreman/: ehelms
   $modules/remote_management/hpilo/: dagwieers haad
-  $modules/remote_management/imc/imc_xml.py: dagwieers
+  $modules/remote_management/imc/: dagwieers
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/wakeonlan.py: dagwieers

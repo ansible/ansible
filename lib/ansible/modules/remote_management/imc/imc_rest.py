@@ -13,12 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-module: imc_xml
-short_description: Manage Cisco IMC hardware through its XML API
+module: imc_rest
+short_description: Manage Cisco IMC hardware through its REST API
 description:
-- Provides direct access to the Cisco IMC XML API.
+- Provides direct access to the Cisco IMC REST API.
 - Perform any configuration changes and actions that the Cisco IMC supports.
-- More information about the IMC XML API is available from
+- More information about the IMC REST API is available from
   U(http://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/c/sw/api/3_0/b_Cisco_IMC_api_301.html)
 author:
 - Dag Wieers (@dagwieers)
@@ -44,16 +44,16 @@ options:
   path:
     description:
     - Name of the absolute path of the filename that includes the body
-      of the http request being sent to the Cisco IMC XML API.
+      of the http request being sent to the Cisco IMC REST API.
     - Parameter C(path) is mutual exclusive with parameter C(content).
     aliases: [ src ]
   content:
     description:
     - When used instead of C(path), sets the content of the API requests directly.
     - This may be convenient to template simple requests, for anything complex use the M(template) module.
-    - You can add multiple IMC XML documents and they will be processed sequentially,
+    - You can collate multiple IMC XML fragments and they will be processed sequentially in a single stream,
       the Cisco IMC output is subsequently merged.
-    - Parameter C(path) is mutual exclusive with parameter C(content).
+    - Parameter C(content) is mutual exclusive with parameter C(path).
   protocol:
     description:
     - Connection protocol to use.
@@ -62,7 +62,10 @@ options:
   timeout:
     description:
     - The socket level timeout in seconds.
-    default: 30
+    - This is the time that every single connection (every fragment) can spend.
+      If this C(timeout) is reached, the module will fail with a
+      C(Connection failure) indicating that C(The read operation timed out).
+    default: 60
   validate_certs:
     description:
     - If C(no), SSL certificates will not be validated.
@@ -70,18 +73,20 @@ options:
     type: bool
     default: 'yes'
 notes:
-- The XML snippets don't need an authentication cookie, this is injected by the module automatically.
+- The XML fragments don't need an authentication cookie, this is injected by the module automatically.
 - The Cisco IMC XML output is being translated to JSON using the Cobra convention.
 - Any configConfMo change requested has a return status of 'modified', even if there was no actual change
   from the previous configuration. As a result, this module will always report a change on subsequent runs.
   In case this behaviour is fixed in a future update to Cisco IMC, this module will automatically adapt.
-- More information about the IMC XML API is available from
+- If you get a C(Connection failure) related to C(The read operation timed out) increase the C(timeout)
+  parameter. Some XML fragments can take longer than the default timeout.
+- More information about the IMC REST API is available from
   U(http://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/c/sw/api/3_0/b_Cisco_IMC_api_301.html)
 '''
 
 EXAMPLES = r'''
 - name: Power down server
-  imc_xml:
+  imc_rest:
     hostname: '{{ imc_hostname }}'
     username: '{{ imc_username }}'
     password: '{{ imc_password }}'
@@ -92,12 +97,13 @@ EXAMPLES = r'''
       </inConfig></configConfMo>
   delegate_to: localhost
 
-- name: Configure IMC using multiple XML documents
-  imc_xml:
+- name: Configure IMC using multiple XML fragments
+  imc_rest:
     hostname: '{{ imc_hostname }}'
     username: '{{ imc_username }}'
     password: '{{ imc_password }}'
     validate_certs: no
+    timeout: 120
     content: |
       <!-- Configure Serial-on-LAN -->
       <configConfMo><inConfig>
@@ -117,7 +123,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Enable PXE boot and power-cycle server
-  imc_xml:
+  imc_rest:
     hostname: '{{ imc_hostname }}'
     username: '{{ imc_username }}'
     password: '{{ imc_password }}'
@@ -135,7 +141,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Reconfigure IMC to boot from storage
-  imc_xml:
+  imc_rest:
     hostname: '{{ imc_host }}'
     username: '{{ imc_username }}'
     password: '{{ imc_password }}'
@@ -145,6 +151,35 @@ EXAMPLES = r'''
         <lsbootStorage dn="sys/rack-unit-1/boot-policy/storage-read-write" access="read-write" order="1" type="storage"/>
       </inConfig></configConfMo>
   delegate_to: localhost
+
+- name: Add customer description to server
+  imc_rest:
+    hostname: '{{ imc_host }}'
+    username: '{{ imc_username }}'
+    password: '{{ imc_password }}'
+    validate_certs: no
+    content: |
+        <configConfMo><inConfig>
+          <computeRackUnit dn="sys/rack-unit-1" usrLbl="Customer Lab - POD{{ pod_id }} - {{ inventory_hostname_short }}"/>
+        </inConfig></configConfMo>
+    delegate_to: localhost
+
+- name: Disable HTTP and increase session timeout to max value 10800 secs
+  imc_rest:
+    hostname: '{{ imc_host }}'
+    username: '{{ imc_username }}'
+    password: '{{ imc_password }}'
+    validate_certs: no
+    timeout: 120
+    content: |
+        <configConfMo><inConfig>
+          <commHttp dn="sys/svc-ext/http-svc" adminState="disabled"/>
+        </inConfig></configConfMo>
+
+        <configConfMo><inConfig>
+          <commHttps dn="sys/svc-ext/https-svc" adminState="enabled" sessionTimeout="10800"/>
+        </inConfig></configConfMo>
+    delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -163,10 +198,15 @@ aaLogin:
         "response": "yes"
     }
 configConfMo:
-  description: Cisco IMC XML output for any configConfMo XML snipets, translated to JSON using Cobra convention
+  description: Cisco IMC XML output for any configConfMo XML fragments, translated to JSON using Cobra convention
   returned: success
   type: dict
   sample: |
+elapsed:
+  description: Elapsed time in seconds
+  returned: always
+  type: int
+  sample: 31
 response:
   description: HTTP response message, including content length
   returned: always
@@ -219,6 +259,7 @@ output:
 '''
 
 import atexit
+import datetime
 import itertools
 import os
 
@@ -285,7 +326,7 @@ def main():
             content=dict(type='str'),
             path=dict(type='path', aliases=['config_file', 'src']),
             protocol=dict(type='str', default='https', choices=['http', 'https']),
-            timeout=dict(type='int', default=30),
+            timeout=dict(type='int', default=60),
             validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
@@ -315,11 +356,14 @@ def main():
         else:
             module.fail_json(msg='Cannot find/access path:\n%s' % path)
 
+    start = datetime.datetime.utcnow()
+
     # Perform login first
     url = '%s://%s/nuova' % (protocol, hostname)
     data = '<aaaLogin inName="%s" inPassword="%s"/>' % (username, password)
     resp, auth = fetch_url(module, url, data=data, method='POST', timeout=timeout)
     if resp is None or auth['status'] != 200:
+        result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
         module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % auth, **result)
     result.update(imc_response(module, resp.read()))
 
@@ -353,6 +397,7 @@ def main():
         # Perform actual request
         resp, info = fetch_url(module, url, data=data, method='POST', timeout=timeout)
         if resp is None or info['status'] != 200:
+            result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
             module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % info, **result)
 
         # Merge results with previous results
@@ -368,6 +413,7 @@ def main():
         result['changed'] = ('modified' in results)
 
     # Report success
+    result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     module.exit_json(**result)
 
 if __name__ == '__main__':
