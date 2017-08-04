@@ -45,6 +45,7 @@ aci_argument_spec = dict(
     password=dict(type='str', required=True, no_log=True),
     protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     timeout=dict(type='int', default=30),
+    use_proxy=dict(type='bool', default=True),
     use_ssl=dict(type='bool', default=True),
     validate_certs=dict(type='bool', default=True),
 )
@@ -143,7 +144,11 @@ class ACIModule(object):
         # Perform login request
         url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % self.params
         payload = {'aaaUser': {'attributes': {'name': self.params['username'], 'pwd': self.params['password']}}}
-        resp, auth = fetch_url(self.module, url, data=json.dumps(payload), method='POST', timeout=self.params['timeout'])
+        resp, auth = fetch_url(self.module, url,
+                               data=json.dumps(payload),
+                               method='POST',
+                               timeout=self.params['timeout'],
+                               use_proxy=self.params['use_proxy'])
 
         # Handle APIC response
         if auth['status'] != 200:
@@ -168,12 +173,13 @@ class ACIModule(object):
 
         # Perform request
         self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
-        resp, info = fetch_url(self.module,
-                               url=self.result['url'],
+        resp, info = fetch_url(self.module, self.result['url'],
                                data=payload,
+                               headers=self.headers,
                                method=self.params['method'].upper(),
                                timeout=self.params['timeout'],
-                               headers=self.headers)
+                               use_proxy=self.params['use_proxy'])
+
         self.result['response'] = info['msg']
         self.result['status'] = info['status']
 
@@ -189,23 +195,15 @@ class ACIModule(object):
 
         aci_response_json(self.result, resp.read())
 
-    def request_diff(self, path, payload=None):
-        ''' Perform a request, including a proper diff output '''
-        self.result['diff'] = dict()
-        self.result['diff']['before'] = self.query()
-        self.request(path, payload=payload)
-        # TODO: Check if we can use the request output for the 'after' diff
-        self.result['diff']['after'] = self.query()
-
-        if self.result['diff']['before'] != self.result['diff']['after']:
-            self.result['changed'] = True
-
     def query(self, path):
         ''' Perform a query with no payload '''
         url = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
-        resp, query = fetch_url(self.module, url=url, data=None, method='GET',
+        resp, query = fetch_url(self.module, url,
+                                data=None,
+                                headers=self.headers,
+                                method='GET',
                                 timeout=self.params['timeout'],
-                                headers=self.headers)
+                                use_proxy=self.params['use_proxy'])
 
         # Handle APIC response
         if query['status'] != 200:
@@ -222,3 +220,14 @@ class ACIModule(object):
         query = json.loads(resp.read())
 
         return json.dumps(query['imdata'], sort_keys=True, indent=2) + '\n'
+
+    def request_diff(self, path, payload=None):
+        ''' Perform a request, including a proper diff output '''
+        self.result['diff'] = dict()
+        self.result['diff']['before'] = self.query(path)
+        self.request(path, payload=payload)
+        # TODO: Check if we can use the request output for the 'after' diff
+        self.result['diff']['after'] = self.query(path)
+
+        if self.result['diff']['before'] != self.result['diff']['after']:
+            self.result['changed'] = True
