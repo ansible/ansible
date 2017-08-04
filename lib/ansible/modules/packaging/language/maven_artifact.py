@@ -97,6 +97,8 @@ options:
         default: 'yes'
         choices: ['yes', 'no']
         version_added: "1.9.3"
+extends_documentation_fragment:
+    - files
 '''
 
 EXAMPLES = '''
@@ -105,6 +107,7 @@ EXAMPLES = '''
     group_id: junit
     artifact_id: junit
     dest: /tmp/junit-latest.jar
+    owner: foo
 
 # Download JUnit 4.11 from Maven Central
 - maven_artifact:
@@ -112,6 +115,9 @@ EXAMPLES = '''
     artifact_id: junit
     version: 4.11
     dest: /tmp/junit-4.11.jar
+    owner: foo
+    group: foo
+    mode: "u=rw,g=r,o=r"
 
 # Download an artifact from a private repository requiring authentication
 - maven_artifact:
@@ -129,6 +135,9 @@ EXAMPLES = '''
     extension: war
     repository_url: 'https://repo.company.com/maven'
     dest: /var/lib/tomcat7/webapps/web-app.war
+    owner: tomcat
+    group: tomcat
+    mode: 0755
 '''
 
 import hashlib
@@ -363,7 +372,8 @@ def main():
             timeout = dict(default=10, type='int'),
             dest = dict(type="path", default=None),
             validate_certs = dict(required=False, default=True, type='bool'),
-        )
+        ),
+        add_file_common_args=True
     )
 
     repository_url = module.params["repository_url"]
@@ -385,6 +395,7 @@ def main():
     extension = module.params["extension"]
     state = module.params["state"]
     dest = module.params["dest"]
+    file_args = module.load_file_common_arguments(module.params)
 
     #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
@@ -405,12 +416,14 @@ def main():
             os.makedirs(path)
 
     if prev_state == "present":
-        module.exit_json(dest=dest, state=state, changed=False)
+        changed = module.set_fs_attributes_if_different(file_args, False)
+        module.exit_json(dest=dest, state=state, changed=changed)
 
     try:
         if downloader.download(artifact, dest):
+            changed = module.set_fs_attributes_if_different(file_args, True)
             module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,
-                             extension=extension, repository_url=repository_url, changed=True)
+                             extension=extension, repository_url=repository_url, changed=changed)
         else:
             module.fail_json(msg="Unable to download the artifact")
     except ValueError as e:
