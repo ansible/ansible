@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -58,7 +47,7 @@ options:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the aggregates parameter.
+      - Purge static routes not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -111,6 +100,18 @@ EXAMPLES = """
     qualified_preference: 3
     state: present
     active: True
+
+- name: Configure static route using aggregate
+  junos_static_route:
+    aggregate:
+    - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30}
+    - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12}
+
+- name: Delete static route using aggregate
+  junos_static_route:
+    aggregate:
+    - {address: 4.4.4.0/24, state: absent}
+    - {address: 5.5.5.0/24, state: absent}
 """
 
 RETURN = """
@@ -131,9 +132,11 @@ diff.prepared:
 """
 import collections
 
+from copy import copy
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
@@ -144,32 +147,38 @@ except ImportError:
 USE_PERSISTENT_CONNECTION = True
 
 
-def validate_param_values(module, obj):
-    for key in obj:
-        # validate the param value (if validator func exists)
-        validator = globals().get('validate_%s' % key)
-        if callable(validator):
-            validator(module.params.get(key), module)
-
-
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        address=dict(required=True, type='str', aliases=['prefix']),
+    element_spec = dict(
+        address=dict(type='str', aliases=['prefix']),
         next_hop=dict(type='str'),
         preference=dict(type='int', aliases=['admin_distance']),
         qualified_next_hop=dict(type='str'),
         qualified_preference=dict(type='int'),
-        aggregate=dict(type='list'),
-        purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
 
+    aggregate_spec = copy(element_spec)
+    aggregate_spec['address'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
+
     required_one_of = [['aggregate', 'address']]
-    mutually_exclusive = [['aggregate', 'address']]
+    mutually_exclusive = [['aggregate', 'address'],
+                          ['aggregate', 'next_hop'],
+                          ['aggregate', 'preference'],
+                          ['aggregate', 'qualified_next_hop'],
+                          ['aggregate', 'qualified_preference'],
+                          ['aggregate', 'state'],
+                          ['aggregate', 'active']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
@@ -178,10 +187,6 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-
-    if module.params['state'] == 'present':
-        if not module.params['address'] and module.params['next_hop']:
-            module.fail_json(msg="parameters are required together: ['address', 'next_hop']")
 
     result = {'changed': False}
 
@@ -199,13 +204,21 @@ def main():
         ('qualified_preference', {'xpath': 'preference', 'top': 'qualified-next-hop'})
     ])
 
-    validate_param_values(module, param_to_xpath_map)
+    params = to_param_list(module)
+    requests = list()
 
-    want = map_params_to_obj(module, param_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+    for param in params:
+        item = copy(param)
+        if item['state'] == 'present':
+            if not item['address'] and item['next_hop']:
+                module.fail_json(msg="parameters are required together: ['address', 'next_hop']")
+
+        want = map_params_to_obj(module, param_to_xpath_map, param=item)
+        requests.append(map_obj_to_ele(module, want, top, param=item))
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='replace')
 
         commit = not module.check_mode
         if diff:
