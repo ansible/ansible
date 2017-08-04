@@ -24,6 +24,7 @@ Ansible Changes By Release
 * Fix check mode in archive module
 * Fix UnboundLocalError in check mode in cs_role module
 * Fix to always use lowercase hostnames for host keys in known_hosts module
+* Added missing return results for win_stat
 
 <a id="2.3.2"></a>
 
