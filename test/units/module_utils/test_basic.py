@@ -350,20 +350,36 @@ class TestModuleUtilsBasic(ModuleTestCase):
             bar=dict(),
             bam=dict(),
             baz=dict(),
-            bam1=dict(default='test')
+            bam1=dict(),
+            bam2=dict(default='test')
         )
-        arg_spec = dict(foobar=dict(type='list', elements='dict', options=options_spec))
-        mut_ex = (('bar', 'bam'),)
-        req_to = (('bam', 'baz'),)
+        arg_spec = dict(
+            foobar=dict(
+                type='list',
+                elements='dict',
+                options=options_spec,
+                mutually_exclusive=[
+                    ['bam', 'bam1']
+                ],
+                required_if=[
+                    ['foo', 'hello', ['bam']],
+                    ['foo', 'bam2', ['bam2']]
+                ],
+                required_one_of=[
+                    ['bar', 'bam']
+                ],
+                required_together=[
+                    ['bam1', 'baz']
+                ]
+            )
+        )
 
-        # should test ok
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}, {"foo": "test"}]}))
+        # should test ok, tests basic foo requirement and required_if
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bam": "good"}, {"foo": "test", "bar": "good"}]}))
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec=arg_spec,
-                mutually_exclusive=mut_ex,
-                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -371,13 +387,11 @@ class TestModuleUtilsBasic(ModuleTestCase):
             )
 
         # should test ok, handles aliases
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"dup": "hello"}]}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"dup": "test", "bar": "good"}]}))
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec=arg_spec,
-                mutually_exclusive=mut_ex,
-                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -392,86 +406,74 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 SystemExit,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
-                mutually_exclusive=mut_ex,
-                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
                 supports_check_mode=True
             )
 
-        # fail because of mutually exclusive parameters
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bar": "bad", "bam": "bad"}]}))
+        # fail because of mutually exclusive parameters (mutually_exclusive, baz is added as it is required_together with bam1)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]}))
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
-                mutually_exclusive=mut_ex,
-                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
                 supports_check_mode=True
             )
 
-        # fail because a param required due to another param was not specified
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"bam": "bad"}]}))
+        # fail because a param required if for foo=hello is missing (required_if)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bar": "bad"}]}))
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
-                mutually_exclusive=mut_ex,
-                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
                 supports_check_mode=True
             )
 
-        # fail because one of param is required
-        req_one_of = (('bar', 'bam'),)
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}]}))
+        # fail because one of param is required (required_one_of)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test"}]}))
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
-                required_one_of=req_one_of,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
                 supports_check_mode=True
             )
 
-        # fail because value of one param mandates presence of other param required
-        req_if = (('foo', 'hello', ('bam')),)
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}]}))
+        # fail because one parameter requires another (required_together, bar is added for the required_one_of field)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test", "bar": "required_one_of", "bam1": "bad"}]}))
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
-                required_if=req_if,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
                 supports_check_mode=True
             )
 
-        # should test ok, the required param is set by default from spec
-        req_if = [('foo', 'hello', ('bam1',))]
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello"}]}))
+        # should test ok, the required param is set by default from spec (required_if together with default value, bar added for required_one_of
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "bam2", "bar": "required_one_of"}]}))
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec=arg_spec,
-                required_if=req_if,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
