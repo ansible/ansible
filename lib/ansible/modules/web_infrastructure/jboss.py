@@ -79,6 +79,7 @@ options:
     required: false
     description:
       - Path to jboss-cli.sh
+    version_added: 2.4
 notes:
   - "The filesystem deployment strategy requires the deployment scanner to be enabled."
   - "The http deployment strategy requires the requests package to be installed on each host."
@@ -373,7 +374,6 @@ def cli_undeploy(module, deployed):
 
 
 def cli_run_commands(module, commands):
-    command_string = ','.join(commands)
     return module.run_command([
         module.params['cli_path'],
         '--connect',
