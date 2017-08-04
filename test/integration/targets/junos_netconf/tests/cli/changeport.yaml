@@ -32,9 +32,14 @@
     that:
       - "result.changed == false"
 
+- name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
+  pause:
+    seconds: 30
+
 - name: Ensure we can communicate over 22
   junos_command:
-    rpcs: get-software-information
+    rpcs:
+    - get-software-information
     provider: "{{ netconf }}"
     port: 22
 
@@ -59,7 +64,8 @@
 
 - name: Ensure we can communicate over netconf
   junos_command:
-    rpcs: get-software-information
+    rpcs:
+    - get-software-information
     provider: "{{ netconf }}"
 
 - debug: msg="END netconf/changeport.yaml"
