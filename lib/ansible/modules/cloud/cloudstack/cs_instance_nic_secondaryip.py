@@ -75,20 +75,20 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Assign a specific IP to the default NIC of the VM
-- local_action:
+- name: Assign a specific IP to the default NIC of the VM
+  local_action:
     module: cs_instance_nic_secondaryip
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
 
-# Assign an IP to the default NIC of the VM
 # Note: If vm_guest_ip is not set, you will get a new IP address on every run.
-- local_action:
+- name: Assign an IP to the default NIC of the VM
+  local_action:
     module: cs_instance_nic_secondaryip
     vm: customer_xy
 
-# Remove a specific IP from the default NIC
-- local_action:
+- name: Remove a specific IP from the default NIC
+  local_action:
     module: cs_instance_nic_secondaryip
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
