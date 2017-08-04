@@ -29,46 +29,61 @@ module: win_disk_management
 version_added: '2.4'
 short_description: A Windows disk management module
 description:
-   - Find a disk on the server (unit GB) and manage it. To find the disk and to setup the disk you have several options.
+   - With the module you can select a disk on the server and manage it (e.g. initializing, partitioning, formatting).
+   - To select the disk and to manage it you have several options which are all described in the documentation.
+   - The module detects any existing volume and/or partition on selected disk and will end in this case
 options:
-  FindSize:
+  disk_size:
       description:
-        - Size of the disk to find
+        - Size (unit GB) of the disk which will be selected
       required: true
       default: 5
-  FindPartitionStyle:
+  partition_style_select:
       description:
-        - Partition style which should be set on the disk to find
+        - Partition style of the disk which will be selected
       required: false
       default: RAW
       choices:
         - RAW
         - MBR
         - GPT
-  FindOperationalStatus:
+  operational_status:
       description:
-        - Operational Status which should be set on the disk to find
+        - Operational Status of the disk which will be selected
       required: false
       default: Offline
       choices:
         - Offline
         - Online
-  SetPartitionStyle:
+  partition_style_set:
       description:
-        - Partition style which should be set on found disk
+        - Partition style which will be set on selected disk
       required: false
       default: GPT
       choices:
         - GPT
         - MBR
-  SetDriveLetter:
+  drive_letter:
       description:
-        - Drive letter which should be set for the partition on found disk (protected letters are C and D)
+        - Drive letter which will be set for the partition on selected disk (protected letters are C and D)
       required: false
       default: E
-  SetAllocUnitSize:
+  file_system:
       description:
-        - Allocation Unit size which should be set for the file system on found disk (possible values for file system NTFS 4,8,16,32,64KB; ReFs 64KB)
+        - File system which will be set on selected disk
+      required: false
+      default: NTFS
+      choices:
+        - NTFS
+        - ReFs
+  label:
+      description:
+        - File system label which should be set for the file system on found disk
+      required: false
+      default: AdditionalDisk
+  allocation_unit_size:
+      description:
+        - Allocation Unit size which will be set for the file system on selected disk (possible values for file system NTFS 4,8,16,32,64KB; ReFs 64KB)
       required: false
       default: 4
       choices:
@@ -76,32 +91,19 @@ options:
         - 16
         - 32
         - 64
-  SetFileSystem:
+  large_frs:
       description:
-        - File system which should be set on found disk
-      required: false
-      default: NTFS
-      choices:
-        - NTFS
-        - ReFs
-  SetLabel:
-      description:
-        - File system label which should be set for the file system on found disk
-      required: false
-      default: AdditionalDisk
-  SetLargeFRS:
-      description:
-        - Switch to set Large FRS option for file system on found disk, only for NTFS file system
+        - Switch to set Large FRS option for file system on selected disk, only for NTFS file system
       type: bool
       default: 'no'
-  SetShortNames:
+  short_names:
       description:
-        - Switch to set Short Names option for file system on found disk, only for NTFS file system
+        - Switch to set Short Names option for file system on selected disk, only for NTFS file system
       type: bool
       default: 'no'
-  SetIntegrityStreams:
+  integrity_streams:
       description:
-        - Switch to set Integrity Streams option for file system on found disk, only for ReFs file system
+        - Switch to set Integrity Streams option for file system on selected disk, only for ReFs file system
       type: bool
       default: 'no'
 author:
@@ -111,28 +113,28 @@ author:
 EXAMPLES = r'''
 - name: Select a defined disk and manage it as specified
   win_disk_management:
-    FindSize: 100
-    FindPartitionStyle: RAW
-    FindOperationalStatus: Offline
-    SetPartitionStyle: MBR
-    SetDriveLetter: E
-    SetFileSystem: NTFS
-    SetLabel: DatabaseDisk
-    SetAllocUnitSize: 4
-    SetLargeFRS: true
-    SetShortNames: true
+    disk_size: 100
+    partition_style_select: RAW
+    operational_status: Offline
+    partition_style_set: MBR
+    drive_letter: E
+    file_system: NTFS
+    label: DatabaseDisk
+    allocation_unit_size: 4
+    large_frs: true
+    short_names: true
 
 - name: Select a defined disk and manage it as specified
   win_disk_management:
-    FindSize: 50
-    FindPartitionStyle: MBR
-    FindOperationalStatus: Online
-    SetPartitionStyle: GPT
-    SetDriveLetter: F
-    SetFileSystem: ReFs
-    SetLabel: ApplicationDisk
-    SetAllocUnitSize: 64
-    SetIntegrityStreams: true
+    disk_size: 50
+    partition_style_select: MBR
+    operational_status: Online
+    partition_style_set: GPT
+    drive_letter: F
+    file_system: ReFs
+    label: ApplicationDisk
+    allocation_unit_size: 64
+    integrity_streams: true
 '''
 
 RETURN = r'''

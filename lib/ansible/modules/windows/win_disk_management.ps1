@@ -157,20 +157,20 @@ $result = [pscustomobject]@{changed=$false;log=[pscustomobject]@{};generallog=[p
 
 ## Extract each attributes into a variable
 # Find attributes
-$Size = Get-Attr -obj $params -name "FindSize" -resultobj $result -failifempty $true
-$FindPartitionStyle = Get-Attr -obj $params -name "FindPartitionStyle" -default "RAW" -ValidateSet "RAW","MBR","GPT" -resultobj $result -failifempty $false
-$OperationalStatus = Get-Attr -obj $params -name "FindOperationalStatus" -default "Offline" -ValidateSet "Offline","Online" -resultobj $result -failifempty $false
+$Size = Get-Attr -obj $params -name "disk_size" -resultobj $result -failifempty $true
+$FindPartitionStyle = Get-Attr -obj $params -name "partition_style_select" -default "RAW" -ValidateSet "RAW","MBR","GPT" -resultobj $result -failifempty $false
+$OperationalStatus = Get-Attr -obj $params -name "operational_status" -default "Offline" -ValidateSet "Offline","Online" -resultobj $result -failifempty $false
 
 # Set attributes partition
-$SetPartitionStyle = Get-Attr -obj $params -name "SetPartitionStyle" -default "GPT" -ValidateSet "GPT","MBR" -resultobj $result -failifempty $false
-$DriveLetter = Get-Attr -obj $params -name "SetDriveLetter" -default "E" -resultobj $result -failifempty $false
+$SetPartitionStyle = Get-Attr -obj $params -name "partition_style_set" -default "GPT" -ValidateSet "GPT","MBR" -resultobj $result -failifempty $false
+$DriveLetter = Get-Attr -obj $params -name "drive_letter" -default "E" -resultobj $result -failifempty $false
 # Set attributes partition
-$FileSystem = Get-Attr -obj $params -name "SetFileSystem" -default "NTFS" -ValidateSet "NTFS","ReFs" -resultobj $result -failifempty $false
-$Label = Get-Attr -obj $params -name "SetLabel" -default "AdditionalDisk" -resultobj $result -failifempty $false
-$AllocUnitSize = Get-Attr -obj $params -name "SetAllocUnitSize" -default "4" -ValidateSet "4","8","16","32","64" -resultobj $result -failifempty $false
-$LargeFRS = Get-Attr -obj $params -name "SetLargeFRS" -default $false -type "bool" -resultobj $result -failifempty $false
-$ShortNames = Get-Attr -obj $params -name "SetShortNames" -default $false -type "bool" -resultobj $result -failifempty $false
-$IntegrityStreams = Get-Attr -obj $params -name "SetIntegrityStreams" -default $false -type "bool" -resultobj $result -failifempty $false
+$FileSystem = Get-Attr -obj $params -name "file_system" -default "NTFS" -ValidateSet "NTFS","ReFs" -resultobj $result -failifempty $false
+$Label = Get-Attr -obj $params -name "label" -default "AdditionalDisk" -resultobj $result -failifempty $false
+$AllocUnitSize = Get-Attr -obj $params -name "allocation_unit_size" -default "4" -ValidateSet "4","8","16","32","64" -resultobj $result -failifempty $false
+$LargeFRS = Get-Attr -obj $params -name "large_frs" -default $false -type "bool" -resultobj $result -failifempty $false
+$ShortNames = Get-Attr -obj $params -name "short_names" -default $false -type "bool" -resultobj $result -failifempty $false
+$IntegrityStreams = Get-Attr -obj $params -name "integrity_streams" -default $false -type "bool" -resultobj $result -failifempty $false
 
 # Convert variable for disk size
 [int32]$DSize = [convert]::ToInt32($Size, 10)
