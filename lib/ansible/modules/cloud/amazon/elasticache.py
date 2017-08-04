@@ -153,7 +153,7 @@ class ElastiCacheManager(object):
                  hard_modify, region, **aws_connect_kwargs):
         self.module = module
         self.name = name
-        self.engine = engine
+        self.engine = engine.lower()
         self.cache_engine_version = cache_engine_version
         self.node_type = node_type
         self.num_nodes = num_nodes
@@ -209,7 +209,7 @@ class ElastiCacheManager(object):
                 msg = "'%s' is currently deleting. Cannot create."
                 self.module.fail_json(msg=msg % self.name)
         if self.cache_port == None:
-            if self.engine.lower() == "redis":
+            if self.engine == "redis":
                 self.cache_port = 6379
             elif self.engine == "memcached":
                 self.cache_port = 11211
