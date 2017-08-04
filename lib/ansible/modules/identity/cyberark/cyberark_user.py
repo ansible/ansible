@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# (c) 2017, Edward Nunez <edward.nunez@cyberark.com>
 #
 # This file is part of Ansible
 #
@@ -39,12 +39,10 @@ options:
             - The name of the user who will be queried (for details), added, updated or deleted.
     state:
         default: details
-        choices: [details, present, update, addtogroup, absent]
+        choices: [present, absent]
         description:
-            - Specifies the state (defining the action to follow) needed for the user
-              details for query user details, present for create user,
-              update for update user (even the password), addtogroup to add user to a group,
-              absent for delete user.
+            - Specifies the state needed for the user
+              present for create user, absent for delete user.
     cyberark_session:
         required: True
         description:
@@ -88,7 +86,7 @@ options:
             - The Vault Location for the user.
     group_name:
         description:
-            - The name of the group the user will be added to, this parameter is required when state is addtogroup otherwise ignored.
+            - The name of the group the user will be added to.
 '''
 
 EXAMPLES = '''
@@ -97,34 +95,22 @@ EXAMPLES = '''
     api_base_url: "https://components.cyberark.local"
     use_shared_logon_authentication: true
 
-- name: Get Users Details
-  cyberark_user:
-    username: "Username"
-    state: details
-    cyberark_session: "{{ cyberark_session }}"
-
-- name: Create user
+- name: Create user & immediately add it to a group
   cyberark_user:
     username: "username"
     initial_password: "password"
     user_type_name: "EPVUser"
     change_password_on_the_next_logon: false
+    group_name: "GroupOfUsers"
     state: present
     cyberark_session: "{{ cyberark_session }}"
 
-- name: Add User to Group "GroupOfUsers"
-  cyberark_user:
-    username: "username"
-    group_name: "GroupOfUsers"
-    state: addtogroup
-    cyberark_session: "{{ cyberark_session }}"
-
-- name: Reset user credential
+- name: Make sure user is present and reset user credential if present
   cyberark_user:
     username: "Username"
     new_password: "password"
     disabled: false
-    state: update
+    state: present
     cyberark_session: "{{ cyberark_session }}"
 
 - name: Logoff from CyberArk Vault
@@ -134,59 +120,19 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+changed:
+    description: Whether there was a change done.
+    type: bool
+    returned: always
 cyberark_user:
     description: Dictionary containing result properties.
-    returned: success
+    returned: always
     type: dict
     sample:
-        AgentUser:
-            description: Whether or not this user is a gateway user.
-            type: bool
-            returned: always
-        Disabled:
-            description: Whether or not the activated user is disabled.
-            type: bool
-            returned: always
-        Email:
-            description: User email address.
-            type: string
-            returned: always
-        Expired:
-            description: Whether or not the user password has expired.
-            type: bool
-            returned: always
-        ExpiryDate:
-            description: The date when the user account will expire and become disabled.
-            type: string
-            returned: always
-        FirstName:
-            description: The user first name.
-            type: string
-            returned: always
-        LastName:
-            description: The user last name.
-            type: string
-            returned: always
-        Location:
-            description: The Location of the user in the Vault hierarchy.
-            type: string
-            returned: always
-        Source:
-            description: Whether user was created internally, or is an external user who was created from an LDAP directory.
-            type: string
-            returned: always
-        Suspended:
-            description: Whether or not the user is suspended.
-            type: bool
-            returned: always
-        username:
-            description: The name of the user.
-            type: string
-            returned: always
-        UserTypeName:
-            description: The type of the user.
-            type: string
-            returned: always
+        result:
+            description: user properties when state is present
+            type: dict
+            returned: success
 status_code:
     description: Result HTTP Status code
     returned: success
@@ -194,16 +140,12 @@ status_code:
     sample: 200
 '''
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
 import json
-try:
-    import httplib
-except ImportError:
-    # Python 3
-    import http.client as httplib
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import http_client as httplib
+from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.urls import open_url
 
 
 def userDetails(module):
@@ -235,12 +177,15 @@ def userDetails(module):
 
     except (HTTPError, httplib.HTTPException) as http_exception:
 
-        module.fail_json(
-            msg=("Error while performing userDetails."
-                 "Please validate parameters provided."
-                 "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
-            headers=headers,
-            status_code=http_exception.code)
+        if http_exception.code == 404:
+            return (False, None, http_exception.code)
+        else:
+            module.fail_json(
+                msg=("Error while performing userDetails."
+                     "Please validate parameters provided."
+                     "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
+                headers=headers,
+                status_code=http_exception.code)
 
     except Exception as unknown_exception:
 
@@ -388,12 +333,18 @@ def userDelete(module):
 
     except (HTTPError, httplib.HTTPException) as http_exception:
 
-        module.fail_json(
-            msg=("Error while performing userDelete."
-                 "Please validate parameters provided."
-                 "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
-            headers=headers,
-            status_code=http_exception.code)
+        exception_text = to_text(http_exception)
+        if http_exception.code == 404 and "ITATS003E" in exception_text:
+            # User does not exist
+            result = {"result": {}}
+            return (False, result, http_exception.code)
+        else:
+            module.fail_json(
+                msg=("Error while performing userDelete."
+                     "Please validate parameters provided."
+                     "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, exception_text)),
+                headers=headers,
+                status_code=http_exception.code)
 
     except Exception as unknown_exception:
 
@@ -443,13 +394,18 @@ def userAddToGroup(module):
 
     except (HTTPError, httplib.HTTPException) as http_exception:
 
-        module.fail_json(
-            msg=("Error while performing userAddToGroup."
-                 "Please validate parameters provided."
-                 "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
-            payload=payload,
-            headers=headers,
-            status_code=http_exception.code)
+        exception_text = to_text(http_exception)
+        if http_exception.code == 409 and "ITATS262E" in exception_text:
+            # User is already member of Group
+            return (False, None, http_exception.code)
+        else:
+            module.fail_json(
+                msg=("Error while performing userAddToGroup."
+                     "Please validate parameters provided."
+                     "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, exception_text)),
+                payload=payload,
+                headers=headers,
+                status_code=http_exception.code)
 
     except Exception as unknown_exception:
 
@@ -470,7 +426,7 @@ def main():
                   "default": "details"},
         "cyberark_session": {"required": True, "type": "dict"},
         "initial_password": {"type": "str", "no_log": True},
-        "new_password": {"type": "str"},
+        "new_password": {"type": "str", "no_log": True},
         "email": {"type": "str"},
         "first_name": {"type": "str"},
         "last_name": {"type": "str"},
@@ -482,26 +438,28 @@ def main():
         "group_name": {"type": "str"},
     }
 
-    required_if = [
-        ("state", "present", ["initial_password"]),
-        ("state", "addtogroup", ["group_name"]),
-    ]
-
-    module = AnsibleModule(argument_spec=fields, required_if=required_if)
+    module = AnsibleModule(argument_spec=fields)
 
     state = module.params["state"]
 
     changed = False
     result = {}
 
-    if (state == "details"):
+    if (state == "present"):
         (changed, result, status_code) = userDetails(module)
-    elif (state == "present"):
-        (changed, result, status_code) = userAddOrUpdate(module, "POST")
-    elif (state == "update"):
-        (changed, result, status_code) = userAddOrUpdate(module, "PUT")
-    elif (state == "addtogroup"):
-        (changed, result, status_code) = userAddToGroup(module)
+        if (status_code == 200): # user already exists
+            if ("new_password" in module.params):
+                # if new_password specified, proceed to update user credential
+                (changed, result, status_code) = userAddOrUpdate(module, "PUT")
+            if ("group_name" in module.params and module.params["group_name"] is not None):
+                # if user exists, add to group if needed
+                (changed, ignored_result, ignored_status_code) = userAddToGroup(module)
+        elif (status_code == 404):
+            # user does not exist, proceed to create it
+            (changed, result, status_code) = userAddOrUpdate(module, "POST")
+            if (status_code == 201 and "group_name" in module.params and module.params["group_name"] is not None):
+                # if user was created, add to group if needed
+                (changed, ignored_result, ignored_status_code) = userAddToGroup(module)
     elif (state == "absent"):
         (changed, result, status_code) = userDelete(module)
 
