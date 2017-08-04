@@ -30,7 +30,7 @@
   junos_lldp:
     interval: 10
     hold_multiplier: 5
-    transmit_delay: 30
+    transmit_delay: 2
     state: present
     provider: "{{ netconf }}"
   register: result
