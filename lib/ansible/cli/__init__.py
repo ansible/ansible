@@ -161,7 +161,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         running an Ansible command.
         """
 
-        display.vv(self.parser.get_version())
+        display.vv(to_text(self.parser.get_version()))
 
         if C.CONFIG_FILE:
             display.v(u"Using %s as config file" % to_text(C.CONFIG_FILE))
