@@ -98,17 +98,17 @@ EXAMPLES = """
     size: 65536
     rotate_frequency: 10
 
-  - name: Configure file logging using aggregate
-    junos_logging:
-      aggregate:
-      - {dest: file, name: test-1,  facility: pfe, level: critical, active: True}
-      - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True}
+- name: Configure file logging using aggregate
+  junos_logging:
+    aggregate:
+    - {dest: file, name: test-1,  facility: pfe, level: critical, active: True}
+    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True}
 
-  - name: Delete file logging using aggregate
-    junos_logging:
-      aggregate:
-      - {dest: file, name: test-1,  facility: pfe, level: critical, active: True, state: absent}
-      - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True, state: absent}
+- name: Delete file logging using aggregate
+  junos_logging:
+    aggregate:
+    - {dest: file, name: test-1,  facility: pfe, level: critical, active: True, state: absent}
+    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True, state: absent}
 """
 
 RETURN = """

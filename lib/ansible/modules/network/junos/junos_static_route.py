@@ -102,16 +102,16 @@ EXAMPLES = """
     active: True
 
 - name: Configure static route using aggregate
-    junos_static_route:
-      aggregate:
-      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30}
-      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12}
+  junos_static_route:
+    aggregate:
+    - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30}
+    - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12}
 
 - name: Delete static route using aggregate
-    junos_static_route:
-      aggregate:
-      - {address: 4.4.4.0/24, state: absent}
-      - {address: 5.5.5.0/24, state: absent}
+  junos_static_route:
+    aggregate:
+    - {address: 4.4.4.0/24, state: absent}
+    - {address: 5.5.5.0/24, state: absent}
 """
 
 RETURN = """

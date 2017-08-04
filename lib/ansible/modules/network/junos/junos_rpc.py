@@ -1,5 +1,4 @@
 #!/usr/bin/python
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
