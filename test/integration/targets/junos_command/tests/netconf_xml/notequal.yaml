@@ -5,7 +5,7 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: xml
     wait_for:
       - "result[0].rpc-reply.software-information.host-name neq localhost"
@@ -22,7 +22,7 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: xml
     wait_for:
       - "result[0].rpc-reply.software-information.host-name != localhost"
