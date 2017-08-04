@@ -2360,6 +2360,28 @@ class AnsibleModule(object):
                 e = get_exception()
                 self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
 
+            fn_st = os.lstat(fn)
+            fn_uid = fn_st.st_uid
+            fn_gid = fn_st.st_gid
+            if fn_uid != os.getuid():
+                try:
+                    os.lchown(backupdest, fn_uid, -1)
+                except OSError:
+                    pass
+            if fn_gid != os.getgid():
+                try:
+                    os.lchown(backupdest, -1, fn_gid)
+                except OSError:
+                    pass
+            if HAVE_SELINUX and self.selinux_enabled():
+                try:
+                    fn_ret = selinux.lgetfilecon_raw(fn)
+                    bk_ret = selinux.lgetfilecon_raw(backupdest)
+                    if fn_ret[0] != -1 and bk_ret[0] != -1 and fn_ret[1] != bk_ret[1]:
+                        selinux.lsetfilecon(backupdest, fn_ret[1])
+                except OSError:
+                    pass
+
         return backupdest
 
     def cleanup(self, tmpfile):
