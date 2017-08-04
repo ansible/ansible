@@ -90,15 +90,15 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def check_command(module, commandline):
-    arguments = { 'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
-                  'ln': 'state=link', 'mkdir': 'state=directory',
-                  'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch' }
-    commands  = { 'hg': 'hg', 'curl': 'get_url or uri', 'wget': 'get_url or uri',
-                  'svn': 'subversion', 'service': 'service',
-                  'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                  'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
-                  'dnf': 'dnf', 'zypper': 'zypper' }
-    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun' ]
+    arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
+                 'ln': 'state=link', 'mkdir': 'state=directory',
+                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
+    commands = {'hg': 'hg', 'curl': 'get_url or uri', 'wget': 'get_url or uri',
+                'svn': 'subversion', 'service': 'service',
+                'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
+                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
+                'dnf': 'dnf', 'zypper': 'zypper'}
+    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
         module.warn("Consider using file module with %s rather than running %s" % (arguments[command], command))
@@ -114,13 +114,13 @@ def main():
     # hence don't copy this one if you are looking to build others!
     module = AnsibleModule(
         argument_spec=dict(
-            _raw_params = dict(),
-            _uses_shell = dict(type='bool', default=False),
-            chdir = dict(type='path'),
-            executable = dict(),
-            creates = dict(type='path'),
-            removes = dict(type='path'),
-            warn = dict(type='bool', default=True),
+            _raw_params=dict(),
+            _uses_shell=dict(type='bool', default=False),
+            chdir=dict(type='path'),
+            executable=dict(),
+            creates=dict(type='path'),
+            removes=dict(type='path'),
+            warn=dict(type='bool', default=True),
         )
     )
 
@@ -185,14 +185,14 @@ def main():
         err = b''
 
     result = dict(
-        cmd      = args,
-        stdout   = out.rstrip(b"\r\n"),
-        stderr   = err.rstrip(b"\r\n"),
-        rc       = rc,
-        start    = str(startd),
-        end      = str(endd),
-        delta    = str(delta),
-        changed  = True,
+        cmd=args,
+        stdout=out.rstrip(b"\r\n"),
+        stderr=err.rstrip(b"\r\n"),
+        rc=rc,
+        start=str(startd),
+        end=str(endd),
+        delta=str(delta),
+        changed=True,
     )
 
     if rc != 0:
