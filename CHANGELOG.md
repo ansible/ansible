@@ -49,6 +49,7 @@ Ansible Changes By Release
 
 #### Deprecated Modules:
 * ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
+* cs_nic (removed in 2.7), replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
 
 #### Removed Deprecated Modules:
 * eos_template (use eos_config instead)
@@ -253,6 +254,8 @@ Ansible Changes By Release
   * ce_vxlan_tunnel
   * ce_vxlan_vap
 - cloudstack
+  * cs_instance_nic
+  * cs_instance_nic_secondaryip
   * cs_network_acl
   * cs_network_acl_rule
   * cs_vpn_gateway
