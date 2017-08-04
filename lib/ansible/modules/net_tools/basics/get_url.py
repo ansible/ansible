@@ -20,14 +20,6 @@ short_description: Downloads files from HTTP, HTTPS, or FTP to node
 description:
      - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
        server I(must) have direct access to the remote resource.
-     - By default, if an environment variable C(<protocol>_proxy) is set on
-       the target host, requests will be sent through that proxy. This
-       behaviour can be overridden by setting a variable for this task
-       (see `setting the environment
-       <http://docs.ansible.com/playbooks_environment.html>`_),
-       or by using the use_proxy option.
-     - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
-       your proxy environment for both protocols is correct.
      - From Ansible 2.4 when run with C(--check), it will do a HEAD request to validate the URL but
        will not download the entire file or verify it against hashes.
      - For Windows targets, use the M(win_get_url) module instead.
@@ -55,14 +47,15 @@ options:
   force:
     description:
       - If C(yes) and C(dest) is not a directory, will download the file every
-        time and replace the file if the contents change. If C(no), the file
-        will only be downloaded if the destination does not exist. Generally
-        should be C(yes) only for small local files.
+        time and replace the file if the contents change.
+      - If C(no), the file will only be downloaded if the destination does not
+        exist.
+      - Generally should be C(yes) only for small local files.
       - Prior to 0.6, this module behaved as if C(yes) was the default.
-    version_added: '0.7'
-    default: 'no'
     type: bool
+    default: 'no'
     aliases: [ thirsty ]
+    version_added: '0.7'
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
@@ -94,18 +87,6 @@ options:
         (unless C(force) is true).
     default: ''
     version_added: "2.0"
-  use_proxy:
-    description:
-      - if C(no), it will not use a proxy, even if one is defined in
-        an environment variable on the target hosts.
-    default: 'yes'
-    type: bool
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled sites using self-signed certificates.
-    default: 'yes'
-    type: bool
   timeout:
     description:
       - Timeout in seconds for URL request.
@@ -115,45 +96,15 @@ options:
     description:
         - Add custom HTTP headers to a request in the format "key:value,key:value".
     version_added: '2.0'
-  url_username:
-    description:
-      - The username for use in HTTP basic authentication.
-      - This parameter can be used without C(url_password) for sites that allow empty passwords.
-    version_added: '1.6'
-  url_password:
-    description:
-        - The password for use in HTTP basic authentication.
-        - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
-    version_added: '1.6'
-  force_basic_auth:
-    version_added: '2.0'
-    description:
-      - httplib2, the library used by the uri module only sends authentication information when a webservice
-        responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail. This option forces the sending of the Basic authentication header
-        upon initial request.
-    default: 'no'
-    type: bool
-  client_cert:
-    description:
-      - PEM formatted certificate chain file to be used for SSL client
-        authentication. This file can also include the key as well, and if
-        the key is included, C(client_key) is not required.
-    version_added: '2.4'
-  client_key:
-    description:
-      - PEM formatted file that contains your private key to be used for SSL
-        client authentication. If C(client_cert) contains both the certificate
-        and key, this option is not required.
-    version_added: '2.4'
   others:
     description:
       - all arguments accepted by the M(file) module also work here
 # informational: requirements for nodes
 extends_documentation_fragment:
-    - files
+- files
+- urls
 notes:
-     - For Windows targets, use the M(win_get_url) module instead.
+- For Windows targets, use the M(win_get_url) module instead.
 author:
 - Jan-Piet Mens (@jpmens)
 '''
@@ -383,6 +334,7 @@ def main():
     argument_spec.update(
         url=dict(type='str', required=True),
         dest=dict(type='path', required=True),
+        force=dict(type='bool', default=False, aliases=['thirsty']),
         backup=dict(type='bool'),
         sha256sum=dict(type='str', default=''),
         checksum=dict(type='str', default=''),

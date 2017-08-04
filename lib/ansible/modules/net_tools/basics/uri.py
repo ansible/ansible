@@ -28,14 +28,28 @@ options:
     required: true
   dest:
     description:
-      - path of where to download the file to (if desired). If I(dest) is a
+      - Path of where to download the file to (if desired). If I(dest) is a
         directory, the basename of the file on the remote server will be used.
-  user:
+  force:
     description:
-      - username for the module to use for Digest, Basic or WSSE authentication.
-  password:
+      - If C(yes) and C(dest) is not a directory, will download the file every
+        time and replace the file if the contents change.
+      - If C(no), the file will only be downloaded if the destination does not
+        exist.
+      - Generally should be C(yes) only for small local files.
+      - Prior to 0.6, this module behaved as if C(yes) was the default.
+    type: bool
+    default: 'no'
+    aliases: [ thirsty ]
+    version_added: '0.7'
+  url_username:
     description:
-      - password for the module to use for Digest, Basic or WSSE authentication.
+      - Username for the module to use for Digest, Basic or WSSE authentication.
+    aliases: [ user ]
+  url_password:
+    description:
+      - Password for the module to use for Digest, Basic or WSSE authentication.
+    aliases: [ password ]
   body:
     description:
       - The body of the http request/response to the web service. If C(body_format) is set
@@ -47,30 +61,22 @@ options:
         body argument, if needed, and automatically sets the Content-Type header accordingly.
         As of C(2.3) it is possible to override the `Content-Type` header, when
         set to json via the I(headers) option.
-    choices: [ "raw", "json" ]
+    choices: [ json, raw ]
     default: raw
     version_added: "2.0"
   method:
     description:
       - The HTTP method of the request or response. It MUST be uppercase.
-    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH" ]
-    default: "GET"
+    choices: [ CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, REFRESH, TRACE ]
+    default: GET
   return_content:
     description:
-      - Whether or not to return the body of the response as a "content" key in
+      - Whether or not to return the body of the response as a C(content) key in
         the dictionary result. If the reported Content-type is
         "application/json", then the JSON is additionally loaded into a key
         called C(json) in the dictionary results.
     type: bool
-    default: 'no'
-  force_basic_auth:
-    description:
-      - The library used by the uri module only sends authentication information when a webservice
-        responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail. This option forces the sending of the Basic authentication header
-        upon initial request.
-    type: bool
-    default: 'no'
+    default: "no"
   follow_redirects:
     description:
       - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
@@ -79,14 +85,14 @@ options:
         any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
         where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
         are deprecated and will be removed in some future version of Ansible.
-    choices: [ "all", "safe", "none" ]
-    default: "safe"
+    choices: [ all, none, safe ]
+    default: safe
   creates:
     description:
-      - a filename, when it already exists, this step will not be run.
+      - A filename, when it already exists, this step will not be run.
   removes:
     description:
-      - a filename, when it does not exist, this step will not be run.
+      - A filename, when it does not exist, this step will not be run.
   status_code:
     description:
       - A valid, numeric, HTTP status code that signifies success of the
@@ -94,7 +100,7 @@ options:
     default: 200
   timeout:
     description:
-      - The socket level timeout in seconds
+      - The socket level timeout in seconds.
     default: 30
   HEADER_:
     description:
@@ -111,31 +117,12 @@ options:
     version_added: '2.1'
   others:
     description:
-      - all arguments accepted by the M(file) module also work here
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated.  This should only
-        set to C(no) used on personally controlled sites using self-signed
-        certificates.  Prior to 1.9.2 the code defaulted to C(no).
-    type: bool
-    default: 'yes'
-    version_added: '1.9.2'
-  client_cert:
-    description:
-      - PEM formatted certificate chain file to be used for SSL client
-        authentication. This file can also include the key as well, and if
-        the key is included, I(client_key) is not required
-    version_added: '2.4'
-  client_key:
-    description:
-      - PEM formatted file that contains your private key to be used for SSL
-        client authentication. If I(client_cert) contains both the certificate
-        and key, this option is not required.
-    version_added: '2.4'
+      - All arguments accepted by the M(file) module also work here.
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
-  - The module returns all the HTTP headers in lower-case.
   - For Windows targets, use the M(win_uri) module instead.
+extends_documentation_fragment:
+- urls
 author:
 - Romeo Theriault (@romeotheriault)
 '''
@@ -161,8 +148,8 @@ EXAMPLES = r'''
   uri:
     url: https://your.jira.example.com/rest/api/2/issue/
     method: POST
-    user: your_username
-    password: your_pass
+    url_username: your_username
+    url_password: your_pass
     body: "{{ lookup('file','issue.json') }}"
     force_basic_auth: yes
     status_code: 201
@@ -191,8 +178,8 @@ EXAMPLES = r'''
   uri:
     url: "http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}"
     method: GET
-    user: "{{ jenkins.user }}"
-    password: "{{ jenkins.password }}"
+    url_username: "{{ jenkins.user }}"
+    url_password: "{{ jenkins.password }}"
     force_basic_auth: yes
     status_code: 201
 
@@ -368,19 +355,21 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
 def main():
     argument_spec = url_argument_spec()
     argument_spec.update(dict(
+        url=dict(type='str', required=True),
         dest=dict(type='path'),
+        force=dict(type='bool', default=False, aliases=['thirsty']),
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
         body=dict(type='raw'),
         body_format=dict(type='str', default='raw', choices=['raw', 'json']),
         method=dict(type='str', default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
-        return_content=dict(type='bool', default='no'),
+        return_content=dict(type='bool', default=False),
         follow_redirects=dict(type='str', default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', default=[200]),
         timeout=dict(type='int', default=30),
-        headers=dict(type='dict', default={})
+        headers=dict(type='dict', default={}),
     ))
 
     module = AnsibleModule(
