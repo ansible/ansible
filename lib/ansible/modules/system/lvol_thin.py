@@ -136,9 +136,10 @@ EXAMPLES = '''
 
 import re
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 decimal_point = re.compile(r"(\d+\.?\d+)")
+
 
 class Vg(object):
 
@@ -177,6 +178,7 @@ class Vg(object):
             'vg_extent_size': float(decimal_point.match(parts[3]).group(1))
         }
 
+
 class Lvol(object):
 
     name = ''
@@ -199,7 +201,7 @@ class Lvol(object):
         self.unit = unit
         self.opts = opts
         self.pvs = pvs
-        
+
         self.yes_opt = self.get_yes_opt(module)
 
     @classmethod
@@ -290,9 +292,9 @@ class Lvol(object):
         parts = current_lvs.strip().split(';')
 
         return {
-            'name': parts[0].replace('[','').replace(']',''),
+            'name': parts[0].replace('[', '').replace(']', ''),
             'size': float(decimal_point.match(parts[1]).group(1)),
-            'pool_lv': parts[2].replace('[','').replace(']',''),
+            'pool_lv': parts[2].replace('[', '').replace(']', ''),
             'cachemode': parts[3]
         }
 
@@ -301,10 +303,10 @@ class Lvol(object):
         # Determine if the "--yes" option should be used
         version_found = cls.get_lvm_version(module)
 
-        if version_found == None:
+        if version_found is None:
             module.fail_json(msg="Failed to get LVM version number")
 
-        version_yesopt = cls.mkversion(2, 2, 99) # First LVM with the "--yes" option
+        version_yesopt = cls.mkversion(2, 2, 99)  # First LVM with the "--yes" option
 
         if version_found >= version_yesopt:
             yesopt = "--yes"
@@ -329,24 +331,24 @@ class Lvol(object):
             size_whole = parts[1]
 
             if size_whole == 'VG' or size_whole == 'PVS':
-               size_requested = float(size_percent) * float(vg_size) / 100
-            else: # size_whole == 'FREE':
-               size_requested = float(size_percent) * float(vg_free) / 100
+                size_requested = float(size_percent) * float(vg_size) / 100
+            else:  # size_whole == 'FREE':
+                size_requested = float(size_percent) * float(vg_free) / 100
 
             if '+' in size:
-               size_requested += float(lv_size)
+                size_requested += float(lv_size)
         else:
             size_requested = float(size[0:-1])
 
             if '+' in size:
-               size_requested += float(lv_size)
+                size_requested += float(lv_size)
 
         return size_requested
 
     @classmethod
     def create_lv(cls, module, requested_size, unit, opts, vg_name, lv_name, pvs):
         yes_opt = cls.get_yes_opt(module)
-        
+
         lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
 
         cmd = "%s %s -n %s -L %s%s %s %s %s" % (lvcreate_cmd, yes_opt, lv_name, requested_size, unit, opts, vg_name, pvs)
@@ -364,7 +366,7 @@ class Lvol(object):
         lvremove_cmd = module.get_bin_path("lvremove", required=True)
         rc, _, err = module.run_command("%s --force %s/%s" % (lvremove_cmd, vg_name, lv_name))
 
-        if rc !=0 :
+        if rc != 0:
             module.fail_json(msg="Failed to remove logical volume %s/%s" % (vg_name, lv_name), rc=rc, err=err)
 
     def resize_common(self, tool, requested_size, pvs):
@@ -392,12 +394,12 @@ class Lvol(object):
         self.resize_common(tool, requested_size, pvs)
 
     def extend_lv(self, requested_size, pvs):
-        if (self.vg.free > 0)  and self.vg.free >= (requested_size - self.size):
+        if (self.vg.free > 0) and self.vg.free >= (requested_size - self.size):
             tool = self.module.get_bin_path("lvextend", required=True)
         else:
             self.module.fail_json(
                 msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)"
-                % (self.name, (requested_size -  self.size), self.unit, self.vg.free, self.unit)
+                % (self.name, (requested_size - self.size), self.unit, self.vg.free, self.unit)
             )
 
         self.resize_common(tool, requested_size, pvs)
@@ -438,12 +440,13 @@ class Lvol(object):
 
         return ThinPoolLvol(self.module, self.vg.name, self.name, self.unit, self.opts, self.pvs)
 
+
 class ThinPoolLvol(Lvol):
 
     @classmethod
     def create_lv(cls, module, requested_size, unit, opts, vg_name, lv_name, pvs):
         opts += " --type thin-pool"
-        
+
         super(ThinPoolLvol, cls).create_lv(module, requested_size, unit, opts, vg_name, lv_name, pvs)
 
     def get_thin_lvol_name(self):
@@ -461,17 +464,17 @@ class ThinPoolLvol(Lvol):
 
         for line in current_lvs.splitlines():
             parts = line.strip().split(';')
-            pool = parts[2].replace('[','').replace(']','')
+            pool = parts[2].replace('[', '').replace(']', '')
 
             if pool == self.name:
-                thin_lvol_info = parts[0].replace('[','').replace(']','')
+                thin_lvol_info = parts[0].replace('[', '').replace(']', '')
 
         return thin_lvol_info
 
     def convert_to_thin(self, force, opts, pvs, pool):
         self.delete_lv(self.module, force, self.vg.name, self.name)
         ThinLvol.create_lv(self.module, self.size, self.unit, opts, self.vg.name, self.name, pvs, pool)
-        
+
         return ThinLvol(self.module, self.vg.name, self.name, self.unit, self.opts, self.pvs)
 
     def convert_to_normal(self, force, opts, pvs):
@@ -483,10 +486,11 @@ class ThinPoolLvol(Lvol):
     def shrink_lv(self, force, requested_size, pvs):
         self.delete_lv(self.module, force, self.vg.name, self.name)
         self.create_lv(self.module, self.size, self.unit, self.opts, self.vg.name, self.name, self.pvs)
-        
+
         self.__init__(self.module, self.vg.name, self.name, self.unit, self.opts, self.pvs)
 
         return self
+
     
 class ThinLvol(Lvol):
 
@@ -495,7 +499,7 @@ class ThinLvol(Lvol):
         yes_opt = cls.get_yes_opt(module)
         opts += ' --thin-pool %s' % (pool)
         pvs = ''
-        
+
         lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
 
         cmd = "%s %s -n %s -V %s%s %s %s %s" % (lvcreate_cmd, yes_opt, lv_name, requested_size, unit, opts, vg_name, pvs)
@@ -504,7 +508,7 @@ class ThinLvol(Lvol):
 
         if rc != 0:
             module.fail_json(msg="Creating logical volume '%s' failed" % lv_name, rc=rc, err=err)
-            
+
     def convert_to_normal(self, force, opts, pvs):
         self.delete_lv(self.module, force, self.vg.name, self.name)
         Lvol.create_lv(self.module, self.size, self.unit, opts, self.vg.name, self.name, pvs)
@@ -523,6 +527,7 @@ class ThinLvol(Lvol):
 
         self.__init__(self.module, self.vg.name, self.name, self.unit, self.opts, self.pvs)
 
+
 def validate_size(module, size):
     if '%' in size:
         size_parts = size.split('%', 1)
@@ -538,17 +543,19 @@ def validate_size(module, size):
         elif size_whole not in ['VG', 'PVS', 'FREE']:
             module.fail_json(msg="Specify extents as a percentage of VG|PVS|FREE")
 
-    if not '%' in size:
+    if '%' not in size:
         if size[-1].lower() in 'bskmgtpe':
-           size = size[0:-1]
+            size = size[0:-1]
         else:
             module.fail_json(msg="Invalid units for size: %s" % size)
 
         try:
-           float(size)
-           if not size[0].isdigit(): raise ValueError()
+            float(size)
+            if not size[0].isdigit():
+                raise ValueError()
         except ValueError:
-           module.fail_json(msg="Bad size specification of '%s'" % size)
+            module.fail_json(msg="Bad size specification of '%s'" % size)
+
 
 def main():
     module = AnsibleModule(
@@ -576,7 +583,8 @@ def main():
     type = module.params['type']
     pool = module.params['pool']
 
-    if size: validate_size(module, size)
+    if size:
+        validate_size(module, size)
 
     if pvs is None:
         pvs = ""
@@ -622,7 +630,7 @@ def main():
                     Lvol.create_lv(module, requested_size, unit, opts, vg, lv, pvs)
 
                 changed = True
-                msg="Volume %s/%s created" % (vg, lv)
+                msg = "Volume %s/%s created" % (vg, lv)
     else:
         if state == 'absent':
             if module.check_mode:
@@ -735,5 +743,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
