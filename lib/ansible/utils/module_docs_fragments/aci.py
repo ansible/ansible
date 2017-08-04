@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+#
+# This file is part of Ansible
+
 # Copyright 2017 Dag Wieers <dag@wieers.com>
 # Copyright 2017 Swetha Chunduri (@schunduri)
 
