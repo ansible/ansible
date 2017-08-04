@@ -12,9 +12,9 @@
     siteipaddress: 192.168.1.1
     sitetype: LOCAL
     publicip: 192.168.1.1
-    metricexchange: ENABLED
-    nwmetricexchange: ENABLED
-    sessionexchange: ENABLED
+    metricexchange: enabled
+    nwmetricexchange: enabled
+    sessionexchange: enabled
     triggermonitor: ALWAYS
 
 
