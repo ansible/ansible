@@ -202,7 +202,7 @@ if ($mode -eq "query") {
 
     # TODO: Handle symlinks
 
-    # Detech if the PS zip assemblies are available, this will control whether
+    # Detect if the PS zip assemblies are available, this will control whether
     # the win_copy plugin will use explode as the mode or single
     try {
         Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
