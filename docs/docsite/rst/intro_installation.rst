@@ -115,7 +115,7 @@ RPMs for RHEL6 are available from yum for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
 Fedora distributions.
 
-Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com/ansible/rpm/`.
+Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com/ansible/rpms/`.
 
 Ansible itself can manage earlier operating
 systems that contain Python 2.6 or higher (so also EL6).
@@ -124,7 +124,7 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git --recursive
+    $ git clone git://github.com/ansible/ansible.git 
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
@@ -280,6 +280,8 @@ Tarballs of Tagged Releases
 Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available on the `Ansible downloads <http://releases.ansible.com/ansible>`_ page.
 
 These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
+
+
 
 
 .. _from_source:
