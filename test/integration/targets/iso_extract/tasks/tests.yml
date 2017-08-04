@@ -17,27 +17,36 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact:
-    output_dir_test: '{{ output_dir }}/test_iso_extract'
+- name: Extract the iso
+  iso_extract:
+    image: '{{ output_dir_test }}/test.iso'
+    dest: '{{ output_dir_test }}'
+    files:
+    - 1.txt
+    - 2.txt
+  register: iso_extract_test0
 
-- name: Install 7zip
-  include_tasks: 7zip.yml
+- assert:
+    that:
+    - iso_extract_test0|changed == true
 
-- name: Prepare environment
-  include_tasks: prepare.yml
+- name: Extract the iso again
+  iso_extract:
+    image: '{{ output_dir_test }}/test.iso'
+    dest: '{{ output_dir_test }}'
+    files:
+    - 1.txt
+    - 2.txt
+  register: iso_extract_test0_again
 
-- name: Test in normal mode
-  include_tasks: tests.yml
-  vars:
-    in_check_mode: no
+- name: Test iso_extract_test0_again (normal mode)
+  assert:
+    that:
+    - iso_extract_test0_again|changed == false
+  when: not in_check_mode
 
-- name: Prepare environment
-  include_tasks: prepare.yml
-
-- name: Test in check-mode
-  include_tasks: tests.yml
-  vars:
-    in_check_mode: yes
-  check_mode: yes
-
-# FIXME - fill this in after figuring out how to allow mounts
+- name: Test iso_extract_test0_again (check-mode)
+  assert:
+    that:
+    - iso_extract_test0_again|changed == true
+  when: in_check_mode
