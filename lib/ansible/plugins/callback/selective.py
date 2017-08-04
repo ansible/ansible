@@ -182,8 +182,7 @@ class CallbackModule(CallbackBase):
             self._print_task()
             self.last_skipped = False
             msg = to_text(result._result.get('msg', '')) or\
-                to_text(result._result.get('reason', '')) or\
-                to_text(result._result.get('message', ''))
+                to_text(result._result.get('reason', ''))
 
             stderr = [result._result.get('exception', None),
                       result._result.get('module_stderr', None)]
