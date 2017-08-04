@@ -75,6 +75,10 @@ options:
     description:
       - Port binding for HTTP management API
     version_added: 2.4
+  cli_path:
+    required: false
+    description:
+      - Path to jboss-cli.sh
 notes:
   - "The filesystem deployment strategy requires the deployment scanner to be enabled."
   - "The http deployment strategy requires the requests package to be installed on each host."
@@ -168,7 +172,7 @@ def is_deployed(module):
     elif module.params['deployment_strategy'] == 'filesystem':
         return os.path.exists(os.path.join(module.params['deploy_path'], "%s.deployed" % module.params['deployment']))
     else:
-        rc, stdout, stderr = cli_run_commands(module, ['deployment-info', '--name=%s' module.params['deployment']])
+        rc, stdout, stderr = cli_run_commands(module, ['deployment-info', '--name=%s' % module.params['deployment']])
 
         if rc != 0:
             return False
@@ -368,7 +372,6 @@ def cli_undeploy(module, deployed):
         module.fail_json(msg=stdout)
 
 
-# commands arg should be a list of strings that includes the command and any args, i.e. ['command [args]',]
 def cli_run_commands(module, commands):
     command_string = ','.join(commands)
     return module.run_command([
