@@ -50,7 +50,12 @@ keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
 	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/ -d ./keyword_desc.yml
 
 modules: $(FORMATTER) ../templates/plugin.rst.j2
+# Limit building of module documentation if requested.
+ifdef MODULES
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ -l $(MODULES)	
+else
 	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/
+endif
 
 testing:
 	$(TESTING_FORMATTER)
