@@ -40,7 +40,7 @@ Control Machine Requirements
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
 .. note::
-  Ansible 2.2 introduces a tech preview of support for Python 3. For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
+  Ansible 2.2 introduces a tech preview of support for Python 3 (versions 3.5 and higher). For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 
