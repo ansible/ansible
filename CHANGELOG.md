@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 2.3.2 "Ramble On" - TBD
+## 2.3.2 "Ramble On" - 2017-08-04
 
 ### Bugfixes
 * Fix partend i18n issues
