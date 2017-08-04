@@ -25,7 +25,7 @@
       - show interfaces lo0
     format: xml
     wait_for:
-      - "result[1].rpc-reply.interface-information.physical-interface.mtu lt 7"
+      - "result[1].rpc-reply.interface-information.physical-interface.local-index lt 7"
     provider: "{{ netconf }}"
   register: result
 
