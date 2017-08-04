@@ -53,17 +53,24 @@
   become: yes
   when: ansible_distribution in ['Ubuntu']
 
-# FIXME: The homebrew module no longer seems to work
-#        "Error: Running Homebrew as root is extremely dangerous."
+- name: Find brew binary
+  command: which brew
+  register: brew_which
+  when: ansible_distribution in ['MacOSX']
+
+- name: Get owner of brew binary
+  stat:
+    path: "{{ brew_which.stdout }}"
+  register: brew_stat
+  when: ansible_distribution in ['MacOSX']
+
 - name: Install 7zip package if we are on MacOSX
-#  macports:
-#    name: p7zip
-#    state: installed
-#    update_cache: yes
   homebrew:
     name: p7zip
     state: present
-    update_homebrew: yes
+    update_homebrew: no
+  become: yes
+  become_user: "{{ brew_stat.stat.pw_name }}"
   when: ansible_distribution in ['MacOSX']
 
 - name: Install 7zip package if we are on FreeBSD
