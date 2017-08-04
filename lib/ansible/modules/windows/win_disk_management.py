@@ -148,62 +148,62 @@ msg:
     returned: failed
     type: string
     sample: No disk found (size or property is wrong or disk is not attached).
-generallog:
+general_log:
     description: dictionary containing all the general logs and stat data
     returned: always
     type: complex
     contains:
-        Rescan disks:
+        rescan_disks:
             description: Documents whether rescaning the disks of the computer via diskpart was successful or not
             returned: success or failed
             type: string
             sample: "Successful"
-        Search disk:
+        search_disk:
             description: Documents whether the search of the attached disk was successful or not
             returned: success or failed
             type: string
             sample: "Successful"
-        Set Operational Status:
+        set_operational_status:
             description: Documents whether setting the operational status of the disk was successful or not
             returned: success or failed (only displayed if operational status was set)
             type: string
             sample: "Successful"
-        Set Writeable Status:
+        set_writeable_status:
             description: Documents whether setting the writeable status of the disk was successful or not
             returned: success or failed (only displayed if writeable status was set)
             type: string
             sample: "Successful"
-        Check parameters:
+        check_parameters:
             description: Documents whether all set paramters for the disk passed the checks or not
             returned: success or failed
             type: string
             sample: "Successful"
-        Check switches:
+        check_switches:
             description: Documents whether all set switches for the disk passed the checks or not
             returned: success or failed
             type: string
             sample: "Failed"
-        Initialize / convert disk:
+        initialize_convert_disk:
             description: Documents whether the initialization of the disk or convertion of the partition style was successful or not
             returned: success or failed (disk will be inititialized or convert, not both)
             type: string
             sample: "Successful"
-        Check volumes / partitions:
+        check_volumes_partitions:
             description: Documents whether the disk passed all the checks of existing volumes or partitions
             returned: success or failed
             type: string
             sample: "Successful"
-        Create Partition:
+        create_partition:
             description: Documents whether the new partition on the disk could be created or not
             returned: success or failed
             type: string
             sample: "Failed"
-        Create Volume:
+        create_volume:
             description: Documents whether the new volume on the partition of the disk could be created or not
             returned: success or failed
             type: string
             sample: "Successful"
-        Maintain ShellHWService:
+        maintain_shellhw_service:
             description: Documents whether maintaining the ShellHWService (Start,Stop) was successful or not
             returned: success or failed
             type: string
@@ -213,102 +213,106 @@ log:
     returned: always
     type: complex
     contains:
-        Disk:
-            description: Detailed information about found disk
+        disk:
             returned: success or failed
             type: string
             sample: "Disks found: 1, Disk number: 1, Location: PCIROOT(0)#PCI(1F00)#SCSI(P00T00L00), Serial Number: f78c2db7b54562, Unique ID: 31414634313031"
-        Operational Status:
+        operational_status:
             description: Detailed information about setting operational status of the disk
             returned: success or failed (only displayed if operational status was set)
             type: string
             sample: "Disk set not online because partition style is RAW"
-        Disk Writeable:
+        disk_writeable:
             description: Detailed information if disk was set to writeable and if not why it was not set to it
             returned: success or failed (only displayed if writeable status was set
             type: string
             sample: "Disk need not set to writeable because partition style is RAW"
-        Existing volumes:
+        existing_volumes:
             description: Detailed information about found volumes on the searched disk
             returned: success or failed
             type: string
             sample: "Volumes found: 1"
-        Existing partitions:
+        existing_partitions:
             description: Detailed information about found partitions on the searched disk
             returned: success or failed
             type: string
             sample: "Partition Style: RAW, Partitions found: 0"
-        Initialize disk:
+        initialize_disk:
             description: Detailed information about initializing the disk
             returned: success or failed (only displayed if disk was initialized)
             type: string
             sample: "Disk initialization successful - Partition style RAW (FindPartitionStyle) was initalized to GPT (SetPartitionStyle)"
-        Convert disk (no initialization needed):
-            description: Detailed information about converting the partition style of the disk
+        convert_disk:
+            description: Detailed information about converting the partition style of the disk (in case of converting no initalization of disk)
             returned: success or failed (only displayed if partition style was converted)
             type: string
             sample: "Partition style GPT (FindPartitionStyle) could not be converted to MBR (SetPartitionStyle)"
-        Partitioning:
+        partitioning:
             description: Detailed information about partition creation on the found disk
             returned: success or failed
             type: string
             sample: "Initial partition Basic was created successfully on partition style GPT"
-        Formatting:
+        formatting:
             description: Detailed information about volume creation on partitoned disk
             returned: success or failed
             type: string
             sample: "Volume ReFS was created successfully on partiton Basic"
-        ShellHWService State:
+        shellhw_service_state:
             description: Detailed information about maintaining ShellHWService (Start,Stop)
             returned: success or failed
             type: string
             sample: "Service was stopped already and need not to be started again"
 parameters:
-    description: All values of the set parameters
+    description: All values of the selected parameters
     returned: always
     type: complex
     contains:
-        Set drive letter:
+        disk_size:
+            description: Shows the chosen disk size
+            returned: success or failed
+            type: string
+            sample: "64 GB"
+        drive_letter_set:
             description: Shows the chosen drive letter
             returned: success or failed
             type: string
             sample: "R"
-        Found same drive letter:
+        drive_letter_used:
             description: Documents whether the chosen drive letter is already in use on the computer
             returned: success or failed
             type: string
             sample: "No"
-        Set forbidden drive letter C or D:
-            description: Documents whether the chosen drive letter is not C or D
+        forbidden_drive_letter_set:
+            description: Documents whether the chosen drive letter is forbidden letter C or D
             returned: success or failed
             type: string
             sample: "No"
-        File system:
+        file_system:
             description: Shows the chosen File System
             returned: success or failed
             type: string
             sample: "ReFs"
-        Allocation Unit size:
+        allocation_unit_size:
             description: Shows the chosen Allocation Unit Size and whether it was adjusted or not
             returned: success or failed
             type: string
             sample: "64 KB (adjusted for ReFs)"
 switches:
-    description: All values of the set switches
+    description: All values of the selected switches
     returned: always
     type: complex
     contains:
-        Integrity Streams:
+        integrity_streams:
             description: Shows whether integrity streams are activated or not
             returned: success or failed
             type: string
             sample: "Disabled"
-        LargeFRS:
+        large_frs:
             description: Shows whether LargeFRS is activated or not
             returned: success or failed
             type: string
             sample: "Enabled"
-        Short Names:
+        short_names:
             description: Shows whether short names are activated or not
             returned: success or failed
             type: string
