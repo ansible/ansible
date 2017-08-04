@@ -31,8 +31,8 @@ options:
   password:
     description:
       - Password of user to add.
-      - To change the password of an existing user, you must also specify
-        C(force=yes).
+      - To change the password of an existing user for RabbitMQ < 3.6.5,
+        you must also specify C(force=yes).
     required: false
     default: null
   tags:
@@ -146,17 +146,17 @@ class RabbitMqUser(object):
         self._permissions = []
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
-    def _exec(self, args, run_in_check_mode=False):
+    def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
             if self.node is not None:
                 cmd.extend(['-n', self.node])
-            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
-            return out.splitlines()
-        return list()
+            rc, out, err = self.module.run_command(cmd + args, check_rc=check_rc)
+            return out.splitlines(), rc
+        return list(), 0
 
     def get(self):
-        users = self._exec(['list_users'], True)
+        users, rc = self._exec(['list_users'], run_in_check_mode=True)
 
         for user_tag in users:
             if '\t' not in user_tag:
@@ -178,7 +178,7 @@ class RabbitMqUser(object):
         return False
 
     def _get_permissions(self):
-        perms_out = self._exec(['list_user_permissions', self.username], True)
+        perms_out, rc = self._exec(['list_user_permissions', self.username], run_in_check_mode=True)
 
         perms_list = list()
         for perm in perms_out:
@@ -229,6 +229,13 @@ class RabbitMqUser(object):
     def has_permissions_modifications(self):
         return sorted(self._permissions) != sorted(self.permissions)
 
+    def has_password_modification(self):
+        _, rc = self._exec(['authenticate_user', self.username, self.password], run_in_check_mode=True, check_rc=False)
+        # 'EX_NOUSER' (The user specified does not exist) from https://github.com/rabbitmq/rabbitmq-server/blob/master/include/rabbit_cli.hrl#L70
+        return rc == 67
+
+    def set_password(self):
+        self._exec(['change_password', self.username, self.password])
 
 def main():
     arg_spec = dict(
@@ -294,6 +301,10 @@ def main():
 
             if rabbitmq_user.has_permissions_modifications():
                 rabbitmq_user.set_permissions()
+                result['changed'] = True
+
+            if rabbitmq_user.has_password_modification():
+                rabbitmq_user.set_password()
                 result['changed'] = True
     elif state == 'present':
         rabbitmq_user.add()
