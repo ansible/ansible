@@ -31,8 +31,8 @@ options:
   password:
     description:
       - Password of user to add.
-      - To change the password of an existing user for RabbitMQ < 3.6.5,
-        you must also specify C(force=yes).
+      - To change the password of an existing user, you must also specify C(force=yes).
+      - Since 2.4, C(force=yes) is optional with RabbitMQ 3.6.5 and later.
     required: false
     default: null
   tags:
