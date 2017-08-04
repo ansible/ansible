@@ -342,8 +342,8 @@ if($disk.NumberOfPartitions -ge 1){
                 }
                 else{
                     [string]$VolNumber = ($volume | Measure-Object).Count 
-                    [string]$VolType = $volume.FileSystemType
-                    Set-Attr $result.log "existing_volumes" "Volumes found: $VolNumber" "Volume types: $VolType" "Partition Style: $DPartStyle, Partitions found: $PartNumber, Partition types: $PartType"
+                    [string]$VolType = $volume.FileSystem
+                    Set-Attr $result.log "existing_volumes" "Volumes found: $VolNumber, Volume types: $VolType, Partition Style: $DPartStyle, Partitions found: $PartNumber, Partition types: $PartType"
                     Set-Attr $result.general_log "check_volumes_partitions" "Failed"
                     if($SetOnline){
                                try{

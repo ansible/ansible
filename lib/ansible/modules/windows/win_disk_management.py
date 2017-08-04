@@ -231,7 +231,7 @@ log:
             description: Detailed information about found volumes on the searched disk
             returned: success or failed
             type: string
-            sample: "Volumes found: 1"
+            sample: "Volumes found: 0"
         existing_partitions:
             description: Detailed information about found partitions on the searched disk
             returned: success or failed
