@@ -52,7 +52,7 @@ options:
     description:
       - The port number on which each of the cache nodes will accept connections
     required: false
-    default: 11211
+    default: None
   cache_parameter_group:
     description:
       - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group
@@ -208,6 +208,11 @@ class ElastiCacheManager(object):
             else:
                 msg = "'%s' is currently deleting. Cannot create."
                 self.module.fail_json(msg=msg % self.name)
+        if self.cache_port == None:
+            if self.engine.lower() == "redis":
+                self.cache_port = 6379
+            elif self.engine == "memcached":
+                self.cache_port = 11211
 
         try:
             self.conn.create_cache_cluster(CacheClusterId=self.name,
@@ -488,7 +493,7 @@ def main():
         num_nodes={'required': False, 'default': 1, 'type': 'int'},
         # alias for compat with the original PR 1950
         cache_parameter_group={'required': False, 'default': "", 'aliases': ['parameter_group']},
-        cache_port={'required': False, 'type': 'int', 'default': 11211},
+        cache_port={'required': False, 'type': 'int', 'default': None},
         cache_subnet_group={'required': False, 'default': ""},
         cache_security_groups={'required': False, 'default': [], 'type': 'list'},
         security_group_ids={'required': False, 'default': [], 'type': 'list'},
