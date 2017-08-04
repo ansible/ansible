@@ -1,5 +1,8 @@
-# !/usr/bin/python
-# meiliu@fusionlayer.com
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c), meiliu@fusionlayer.com, 2017
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -7,153 +10,100 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-
-has_url_parse = True
-try:
-    # python3
-    import urllib.request as urllib_request
-    import urllib.parse as urllib_parse
-    from urllib.request import AbstractHTTPHandler
-    has_url_parse = True
-except ImportError as e:
-    # python2
-    has_url_parse = False
-    # print(" using python2 librarary")
-    import urllib2 as urllib2_request
-    import urllib
-    import base64
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 module: infinity
-short_description: manage Infinity IPAM using  Web API
+short_description: "manage Infinity IPAM using Rest API"
 description:
-  - Manage Infinity IPAM using Web API
-version_added: "1.0"
+  - "Manage Infinity IPAM using REST API"
+version_added: "2.4"
 author:
   - "Meirong Liu"
 options:
-  server:
+  server_ip:
     description:
-      - Infinity IP
-    required: True
+      - Infinity server_ip with IP address
+    required: true
   username:
     description:
-      -  username to access Infinity
+      - Username to access Infinity
       - The user must have Rest API privileges
-    required: True
+    required: true
   password:
     description:
       - Infinity password
-    required: True
+    required: true
   action:
     description:
       - Action to perform
-    required: True
-    choices:  [ 'reserve_next_available_ip', 'release_ip' , 'delete_network',
-    'add_network' ,  'reserve_network', 'release_network', 'get_network_id'],
+    required: true
+    choices:
+      - reserve_next_available_ip
+      - release_ip
+      - delete_network
+      - add_network
+      - reserve_network
+      - release_network
+      - get_network_id
 
   network_id:
     description:
       - Network ID
-      - Must be indicated as a network_id
-    required: False
-    default: False
+    default: ''
   ip_address:
     description:
-      - IP Address for reservation or for release
-    required: False
-    default: False
+      - IP Address for a reservation or a release
+    default: ''
   network_address:
     description:
-      - nework address  CIDR format (e.g 192.168.310.0)
-    required: False
-    default: False
- network_size:
+      - Network address with CIDR format (e.g., 192.168.310.0)
+    required: false
+    default: ""
+  network_size:
     description:
-      - nework bitmask (e.g. 255.255.255.220)or CIDR format (e.g  /26)
-    required: False
-    default: False
- network_name:
+      - Network bitmask (e.g. 255.255.255.220) or CIDR format (e.g., /26)
+    default: ''
+  network_name:
     description:
-      - nework name
-    required: False
-    default: False
- network_location:
+      - The name of a network
+    default: ''
+  network_location:
     description:
-        the parent network id for a given network
-    required: False
+      - the parent network id for a given network
     default: -1
- network_type:
+  network_type:
     description:
-      - network type defined by     Infinity
-    required: False
-    "choices": ['lan', 'shared_lan', 'supernet']
+      - Network type defined by Infinity
+    choices:
+      - lan
+      - shared_lan
+      - supernet
     default: "lan"
- network_family:
+  network_family:
     description:
-      - network family defined by  Infinity, e.g. IPv4, IPv6 , Dual stack
-    required: False
-    "choices": ['4', '6', 'dual']
+      - Network family defined by Infinity, e.g. IPv4, IPv6 and Dual stack
+    choices:
+      - 4
+      - 6
+      - dual
     default: "4"
 
 """
-RETURN = """
-result:
-  {
-    "network_address": "192.168.10.32/28",
-    "information": [
 
-        {
-            "name": "Country Location",
-            "value": "Australia",
-            "type": "one_of",
-            "required": true
-        },
-        {
-            "name": "Customer Email",
-            "value": "relaxed.admin@ease.com",
-            "type": "unicode_string",
-            "required": true
-        },
-
-        {
-            "name": "Location City",
-            "value": "City Name",
-            "type": "unicode_string",
-            "required": true
-        }
-    ],
-    "network_family": "4",
-    "network_id": 3102,
-    "network_size": null,
-    "description": null,
-    "network_location": "3085",
-    "ranges": {
-        "id": 0,
-        "name": null,
-        "first_ip": null,
-        "type": null,
-        "last_ip": null
-    },
-    "network_type": "lan",
-    "network_name": "'reserve_new_ansible_network'"
-}
-"""
 
 EXAMPLES = """
 ---
 - hosts: localhost
   connection: local
-       gather_facts: False
   strategy: debug
   tasks:
     - name: Reserve network into Infinity IPAM
       infinity:
-        server: "80.75.107.12"
+        server_ip: "80.75.107.12"
         username: "username"
         password: "password"
         action: "reserve_network"
@@ -166,17 +116,43 @@ EXAMPLES = """
 
 """
 
+RETURN = """
+network_id:
+    description: id for a given network
+    returned: success
+    type: string
+    sample: '1501'
+ip_info:
+    description: when reserve next available ip address from a network, the ip address info ) is returned.
+    returned: success
+    type: json_string
+    sample: '{"address": "192.168.10.3", "hostname": "", "FQDN": "", "domainname": "", "id": 3229}'
+network_info:
+    description: when reserving a LAN network from a Infinity supernet by providing network_size, the information about the reserved network is returned.
+    returned: success
+    type: json_tring
+    sample:  {"network_address": "192.168.10.32/28","network_family": "4", "network_id": 3102,
+    "network_size": null,"description": null,"network_location": "3085",
+    "ranges": { "id": 0, "name": null,"first_ip": null,"type": null,"last_ip": null},
+    "network_type": "lan","network_name": "'reserve_new_ansible_network'"}
+"""
+
+
+from ansible.module_utils.basic import json
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import open_url
+
 
 class Infinity(object):
     """
     Class for manage REST API calls with the Infinity.
     """
 
-    def __init__(self, module, server, username, password):
+    def __init__(self, module, server_ip, username, password):
         self.module = module
         self.auth_user = username
         self.auth_pass = password
-        self.base_url = "https://%s/rest/v1/" % (str(server))
+        self.base_url = "https://%s/rest/v1/" % (str(server_ip))
 
     def _get_api_call_ansible_handler(
             self,
@@ -230,9 +206,8 @@ class Infinity(object):
     # get_network()
     # ---------------------------------------------------------------------------
     def get_network(self, network_id, network_name, limit=-1):
-        # get_network works @20170721
         """
-        Search network_name in Infinity by using rest api
+        Search network_name inside Infinity by using rest api
         Network id  or network_name needs to be provided
         return the details of a given with given network_id or name
         """
@@ -258,6 +233,7 @@ class Infinity(object):
             if response and isinstance(response, list) and len(
                     response) > 1 and limit == 1:
                 response = response[0]
+                response = json.dumps(response)
         return response
 
     # ---------------------------------------------------------------------------
@@ -272,7 +248,7 @@ class Infinity(object):
         response = None
         if network_name is None:
             self.module.exit_json(
-                msg="You must specify  the the  option 'network_name'")
+                msg="You must specify the option 'network_name'")
         params = {"query": json.dumps(
             {"name": network_name, "type": "network"})}
         response = self._get_api_call_ansible_handler(
@@ -297,9 +273,10 @@ class Infinity(object):
         method = "post"
         resource_url = ''
         response = None
+        ip_info = ''
         if not network_id:
             self.module.exit_json(
-                msg="You must specify  the  option  'network_id'.")
+                msg="You must specify the option 'network_id'.")
         if network_id:
             resource_url = "networks/" + str(network_id) + "/reserve_ip"
             response = self._get_api_call_ansible_handler(method, resource_url)
@@ -307,8 +284,8 @@ class Infinity(object):
                     "[") >= 0 and response.find("]") >= 0:
                 start_pos = response.find("{")
                 end_pos = response.find("}")
-                response = response[start_pos: (end_pos + 1)]
-        return response
+                ip_info = response[start_pos: (end_pos + 1)]
+        return ip_info
 
     # -------------------------
     # release_ip()
@@ -322,13 +299,13 @@ class Infinity(object):
         response = None
         if ip_address is None or network_id is None:
             self.module.exit_json(
-                msg="You must specify  those two  options 'network_id' or 'ip_address'.")
+                msg="You must specify  those two options: 'network_id' and 'ip_address'.")
 
         resource_url = "networks/" + str(network_id) + "/children"
         response = self._get_api_call_ansible_handler(method, resource_url)
         if not response:
             self.module.exit_json(
-                msg="There is  error in release ip %s from network  %s." %
+                msg="There is an error in release ip %s from network  %s." %
                 (ip_address, network_id))
 
         ip_list = json.loads(response)
@@ -355,7 +332,7 @@ class Infinity(object):
                 method, resource_url, stat_codes=[204])
         else:
             self.module.exit_json(
-                msg=" When release ip, could not find the ip address  %r from the given network %r' ." %
+                msg=" When release ip, could not find the ip address %r from the given network %r' ." %
                 (ip_address, network_id))
 
         return response
@@ -367,13 +344,12 @@ class Infinity(object):
         """
         delete network from  Infinity by using rest api
         """
-        # verfiy that delete network is done
         method = 'delete'
         resource_url = ''
         response = None
         if network_id is None and network_name is None:
             self.module.exit_json(
-                msg="You must specify   one of those the  options 'network_id','network_name' .")
+                msg="You must specify one of those options: 'network_id','network_name' .")
         if network_id is None and network_name:
             network_id = self.get_network_id(network_name=network_name)
         if network_id:
@@ -384,16 +360,10 @@ class Infinity(object):
 
     # reserve_network()
     # ---------------------------------------------------------------------------
-    def reserve_network(
-        self,
-        network_id="",
-        reserved_network_name="",
-        reserved_network_description="",
-        reserved_network_size="",
-        reserved_network_family='4',
-        reserved_network_type='lan',
-        reserved_network_address="",
-    ):
+    def reserve_network(self, network_id="",
+                        reserved_network_name="", reserved_network_description="",
+                        reserved_network_size="", reserved_network_family='4',
+                        reserved_network_type='lan', reserved_network_address="",):
         """
         Reserves the first available network of specified size from a given supernet
          <dt>network_name (required)</dt><dd>Name of the network</dd>
@@ -406,10 +376,10 @@ class Infinity(object):
         """
         method = 'post'
         resource_url = ''
-        response = None
+        network_info = None
         if network_id is None or reserved_network_name is None or reserved_network_size is None:
             self.module.exit_json(
-                msg="You must specify  those the  options 'network_id', 'reserved_network_name' and 'reserved_network_size'")
+                msg="You must specify those options: 'network_id', 'reserved_network_name' and 'reserved_network_size'")
         if network_id:
             resource_url = "networks/" + str(network_id) + "/reserve_network"
         if not reserved_network_family:
@@ -426,11 +396,10 @@ class Infinity(object):
         if reserved_network_address:
             payload_data.update({'network_address': reserved_network_address})
 
-        response = self._get_api_call_ansible_handler(
-            method, resource_url, stat_codes=[
-                200, 201], payload_data=payload_data)
+        network_info = self._get_api_call_ansible_handler(
+            method, resource_url, stat_codes=[200, 201], payload_data=payload_data)
 
-        return response
+        return network_info
 
     # ---------------------------------------------------------------------------
     # release_network()
@@ -447,13 +416,13 @@ class Infinity(object):
         response = None
         if network_id is None or released_network_name is None:
             self.module.exit_json(
-                msg="You must specify  those the  options 'network_id', 'reserved_network_name' and 'reserved_network_size'")
+                msg="You must specify those options 'network_id', 'reserved_network_name' and 'reserved_network_size'")
         matched_network_id = ""
         resource_url = "networks/" + str(network_id) + "/children"
         response = self._get_api_call_ansible_handler(method, resource_url)
         if not response:
             self.module.exit_json(
-                msg=" there is  error  in release network %r  from network  %s." %
+                msg=" there is an error in releasing network %r  from network  %s." %
                 (network_id, released_network_name))
         if response:
             response = json.loads(response)
@@ -478,24 +447,19 @@ class Infinity(object):
     # add_network()
     # ---------------------------------------------------------------------------
     def add_network(
-            self,
-            network_name="",
-            network_address="",
-            network_size="",
-            network_family='4',
-            network_type='lan',
-            network_location=-1):
+            self, network_name="", network_address="",
+            network_size="", network_family='4',
+            network_type='lan', network_location=-1):
         """
-        add  new nework into    Infinity via rest api  into given supernet or default supernet
+        add a new LAN network into a given supernet Fusionlayer Infinity via rest api  or default supernet
         required fields=['network_name', 'network_family', 'network_type',  'network_address','network_size' ]
-
         """
         method = 'post'
         resource_url = 'networks'
         response = None
         if network_name is None or network_address is None or network_size is None:
             self.module.exit_json(
-                msg="You must specify  those the  options 'network_name', 'network_address' and 'network_size'")
+                msg="You must specify  those options 'network_name', 'network_address' and 'network_size'")
 
         if not network_family:
             network_family = '4'
@@ -511,76 +475,29 @@ class Infinity(object):
             'network_type': network_type,
             'network_location': network_location}
         response = self._get_api_call_ansible_handler(
-            method='post',
-            resource_url=resource_url,
-            stat_codes=[200],
-            payload_data=payload_data)
+            method='post', resource_url=resource_url,
+            stat_codes=[200], payload_data=payload_data)
         return response
 
 
 def main():
-
-    fields = {
-        "server": {
-            "required": True,
-            "type": "str"},
-        "username": {
-            "required": True,
-            "type": "str"},
-        "password": {
-            "required": True,
-            "type": "str"},
-        "network_id": {
-            "required": False},
-        "ip_address": {
-            "required": False,
-            "type": "str"},
-        "network_name": {
-            "required": False,
-            "type": "str"},
-        "network_location": {
-            "required": False,
-            "type": "int",
-            "default": -1},
-        "network_family": {
-            "required": False,
-            "type": "str",
-            "choices": [
-                '4',
-                '6',
-                'dual']},
-        "network_type": {
-            "required": False,
-            "choices": [
-                'lan',
-                'shared_lan',
-                'supernet']},
-        "network_address": {
-            "required": False,
-            "type": "str"},
-        "network_size": {
-            "required": False,
-            "type": "str"},
-        "action": {
-            "required": True,
-            "choices": [
-                'get_network',  # works
-                'reserve_next_available_ip',  # works
-                'release_ip',  # work
-                'delete_network',  # work
-                'reserve_network',  # work
-                'release_network',  # work
-                'add_network',
-                'get_network_id'],  # work
-        },
-    }
-
-    # mutually_exclusive = [ ["network_id", "network_name"] ]
-    # required_together = [ ["attr_name", "attr_value"], ]
-    # module = AnsibleModule(argument_spec=fields, mutually_exclusive=mutually_exclusive, supports_check_mode=True)
-    my_module = AnsibleModule(argument_spec=fields)
-
-    server = my_module.params["server"]
+    my_module = AnsibleModule(argument_spec=dict(
+        server_ip=dict(required=True, type='str'),
+        username=dict(required=True, type='str'),
+        password=dict(required=True, type='str', no_log=True),
+        network_id=dict(type='str'),
+        ip_address=dict(type='str'),
+        network_name=dict(type='str'),
+        network_location=dict(default=-1, type='int'),
+        network_family=dict(default='4', choices=['4', '6', 'dual']),
+        network_type=dict(default='lan', choices=['lan', 'shared_lan', 'supernet']),
+        network_address=dict(type='str'),
+        network_size=dict(type='str'),
+        action=dict(required=True, choices=['get_network', 'reserve_next_available_ip', 'release_ip',
+                                            'delete_network', 'reserve_network', 'release_network',
+                                            'add_network', 'get_network_id'],),
+    ), required_together=(['username', 'password'],),)
+    server_ip = my_module.params["server_ip"]
     username = my_module.params["username"]
     password = my_module.params["password"]
     action = my_module.params["action"]
@@ -592,50 +509,51 @@ def main():
     network_address = my_module.params["network_address"]
     network_size = my_module.params["network_size"]
     network_location = my_module.params["network_location"]
-    my_infinity = Infinity(my_module, server, username, password)
-    result2 = ''
+    my_infinity = Infinity(my_module, server_ip, username, password)
+    result = ''
     if action == "reserve_next_available_ip":
         if network_id:
-            result2 = my_infinity.reserve_next_available_ip(network_id)
-            if not result2:
-                result2 = 'There is an error in calling method reserve_next_available_ip'
-            my_module.exit_json(changed=True, meta=result2)
+            result = my_infinity.reserve_next_available_ip(network_id)
+            if not result:
+                result = 'There is an error in calling method of reserve_next_available_ip'
+                my_module.exit_json(changed=False, meta=result)
+            my_module.exit_json(changed=True, meta=result)
     elif action == "release_ip":
         if network_id and released_ip:
-            result2 = my_infinity.release_ip(
+            result = my_infinity.release_ip(
                 network_id=network_id, ip_address=released_ip)
-            my_module.exit_json(changed=True, meta=result2)
+            my_module.exit_json(changed=True, meta=result)
     elif action == "delete_network":
-        result2 = my_infinity.delete_network(
+        result = my_infinity.delete_network(
             network_id=network_id, network_name=network_name)
-        my_module.exit_json(changed=True, meta=result2)
+        my_module.exit_json(changed=True, meta=result)
 
     elif action == "get_network_id":
-        result2 = my_infinity.get_network_id(
+        result = my_infinity.get_network_id(
             network_name=network_name, network_type=network_type)
-        my_module.exit_json(changed=True, meta=result2)
+        my_module.exit_json(changed=True, meta=result)
     elif action == "get_network":
-        result2 = my_infinity.get_network(
+        result = my_infinity.get_network(
             network_id=network_id, network_name=network_name)
-        my_module.exit_json(changed=True, meta=result2)
+        my_module.exit_json(changed=True, meta=result)
     elif action == "reserve_network":
-        result2 = my_infinity.reserve_network(
+        result = my_infinity.reserve_network(
             network_id=network_id,
             reserved_network_name=network_name,
             reserved_network_size=network_size,
             reserved_network_family=network_family,
             reserved_network_type=network_type,
             reserved_network_address=network_address)
-        my_module.exit_json(changed=True, meta=result2)
+        my_module.exit_json(changed=True, meta=result)
     elif action == "release_network":
-        result2 = my_infinity.release_network(
+        result = my_infinity.release_network(
             network_id=network_id,
             released_network_name=network_name,
             released_network_type=network_type)
-        my_module.exit_json(changed=True, meta=result2)
+        my_module.exit_json(changed=True, meta=result)
 
     elif action == "add_network":
-        result2 = my_infinity.add_network(
+        result = my_infinity.add_network(
             network_name=network_name,
             network_location=network_location,
             network_address=network_address,
@@ -643,7 +561,7 @@ def main():
             network_family=network_family,
             network_type=network_type)
 
-        my_module.exit_json(changed=True, meta=result2)
+        my_module.exit_json(changed=True, meta=result)
 
 
 if __name__ == '__main__':
