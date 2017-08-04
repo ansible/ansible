@@ -279,7 +279,7 @@ Ansible Changes By Release
   * purefa_pg
   * purefa_volume
 - imc
-  * imc_xml
+  * imc_rest
 - rundeck
   * rundeck_acl_policy
   * rundeck_project
