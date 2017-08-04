@@ -40,41 +40,6 @@ if ($diff_mode) {
     $result.diff = @{}
 }
 
-Function Extract-ZipLegacy($src, $dest) {
-    # System.IO.Compression was only added in .NET 4.5, need to use Shell Com
-    # object if it isn't available
-    $shell = New-Object -ComObject Shell.Application
-    $zip = $shell.NameSpace($src)
-    $dest_path = $shell.NameSpace($dest)
-
-    if (-not $check_mode) {
-        # https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx
-        # From Folder.CopyHere documentation, 1044 means:
-        #  - 1024: do not display a user interface if an error occurs
-        #  -   16: respond with "yes to all" for any dialog box that is displayed
-        #  -    4: do not display a progress dialog box
-        $dest_path.CopyHere($zip.items(), 1044)
-    }
-}
-
-Function Extract-Zip($src, $dest) {
-    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
-    foreach ($entry in $archive.Entries) {
-        $entry_target_path = [System.IO.Path]::Combine($dest, $entry.FullName)
-        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
-
-        if (-not (Test-Path -Path $entry_dir)) {
-            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
-        }
-
-        if (-not ($entry_target_path.EndsWith("`\") -or $entry_target_path.EndsWith("/"))) {
-            if (-not $check_mode) {
-                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
-            }
-        }
-    }
-}
-
 Function Copy-File($source, $dest) {
     $diff = ""
     $copy_file = $false
@@ -237,6 +202,16 @@ if ($mode -eq "query") {
 
     # TODO: Handle symlinks
 
+    # Detech if the PS zip assemblies are available, this will control whether
+    # the win_copy plugin will use explode as the mode or single
+    try {
+        Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
+        Add-Type -Assembl System.IO.Compression | Out-Null
+        $result.zip_available = $true
+    } catch {
+        $result.zip_available = $false
+    }
+
     $result.will_change = $will_change
     $result.files = $changed_files
     $result.directories = $changed_directories
@@ -245,19 +220,29 @@ if ($mode -eq "query") {
     # a single zip file containing the files and directories needs to be
     # expanded this will always result in a change as the calculation is done
     # on the win_copy action plugin and is only run if a change needs to occur
-    try {
-        Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
-        Add-Type -Assembl System.IO.Compression | Out-Null
-    } catch {
-        Set-Alias -Name Extract-Zip -Value Extract-ZipLegacy
+    if (-not (Test-Path -Path $src -PathType Leaf)) {
+        Fail-Json -obj $result -message "Cannot expand src zip file file: $src as it does not exist"
     }
 
-    if (Test-Path -Path $dest -PathType Leaf) {
-        Remove-Item -Path $dest -Force -Recurse -WhatIf:$check_mode | Out-Null
-        New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode
+    Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
+    Add-Type -Assembly System.IO.Compression | Out-Null
+
+    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
+    foreach ($entry in $archive.Entries) {
+        $entry_target_path = [System.IO.Path]::Combine($dest, $entry.FullName)
+        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
+
+        if (-not (Test-Path -Path $entry_dir)) {
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+        }
+
+        if (-not ($entry_target_path.EndsWith("`\") -or $entry_target_path.EndsWith("/"))) {
+            if (-not $check_mode) {
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
+            }
+        }
     }
 
-    Extract-Zip -src $src -dest $dest
     $result.changed = $true
 } elseif ($mode -eq "remote") {
     # all copy actions are happening on the remote side (windows host), need
