@@ -383,6 +383,13 @@ Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` direc
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
 
+In order to speed up the build process, you can limit the documentation build to 
+only include modules you specify, or no modules at all. To do this, run the command:
+``MODULES=$MODULENAME make webdocs``. The ``MODULES`` environment variable
+accepts a comma-separated list of module names. To skip building
+documentation for all modules, specify a non-existent module name, for example:
+``MODULES=none make webdocs``.
+
 To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
 
 .. code-block:: bash
