@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -52,7 +41,7 @@ options:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the aggregates parameter.
+      - Purge static routes not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -158,16 +147,14 @@ def config_to_dict(module):
 
 def map_params_to_obj(module):
     obj = []
-
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for c in aggregate:
             d = c.copy()
             if '/' in d['prefix']:
                 d['mask'] = d['prefix'].split('/')[1]
                 d['prefix'] = d['prefix'].split('/')[0]
 
-            if 'state' not in d:
-                d['state'] = module.params['state']
             if 'admin_distance' not in d:
                 d['admin_distance'] = str(module.params['admin_distance'])
 
@@ -181,14 +168,12 @@ def map_params_to_obj(module):
             mask = module.params['mask'].strip()
         next_hop = module.params['next_hop'].strip()
         admin_distance = str(module.params['admin_distance'])
-        state = module.params['state']
 
         obj.append({
             'prefix': prefix,
             'mask': mask,
             'next_hop': next_hop,
             'admin_distance': admin_distance,
-            'state': state
         })
 
     return obj
@@ -197,24 +182,37 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        prefix=dict(type='str'),
-        mask=dict(type='str'),
-        next_hop=dict(type='str'),
+    element_spec = dict(
+        prefix=dict(),
+        mask=dict(),
+        next_hop=dict(),
         admin_distance=dict(type='int'),
-        aggregate=dict(type='list'),
-        purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    argument_spec.update(vyos_argument_spec)
     required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'next_hop']]
-    mutually_exclusive = [['aggregate', 'prefix']]
+    mutually_exclusive = [['aggregate', 'prefix'],
+                          ['aggregate', 'mask'],
+                          ['aggregate', 'next_hop'],
+                          ['aggregate', 'admin_distance'],
+                          ['aggregate', 'state']]
+
+    aggregate_spec = element_spec.copy()
+    aggregate_spec['prefix'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, required_together=required_together),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(vyos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            required_together=required_together,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()

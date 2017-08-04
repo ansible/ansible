@@ -4,6 +4,15 @@
     dest: console
     facility: all
     level: info
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- name: Configure logging
+  net_logging:
+    dest: console
+    facility: all
+    level: info
     state: present
     provider: "{{ cli }}"
   register: result
@@ -13,7 +22,7 @@
       - 'result.changed == true'
       - '"set system syslog console facility all level info" in result.commands'
 
-- name: set-up logging again (idempotent)
+- name: Configure logging again (idempotent)
   net_logging:
     dest: console
     facility: all
@@ -84,12 +93,18 @@
     that:
       - 'result.changed == false'
 
+- name: Add logging collections (setup)
+  net_logging:
+    aggregate:
+      - { dest: file, name: test1, facility: all, level: info, state: absent }
+      - { dest: file, name: test2, facility: news, level: debug, state: absent }
+    provider: "{{ cli }}"
+
 - name: Add logging collections
   net_logging:
     aggregate:
       - { dest: file, name: test1, facility: all, level: info }
       - { dest: file, name: test2, facility: news, level: debug }
-    state: present
     provider: "{{ cli }}"
   register: result
 
@@ -105,7 +120,6 @@
       - { dest: console, facility: all, level: info }
       - { dest: file, name: test1, facility: all, level: info, state: absent }
       - { dest: console, facility: daemon, level: warning }
-    state: present
     provider: "{{ cli }}"
   register: result
 
@@ -118,10 +132,9 @@
 - name: Remove logging collections
   net_logging:
     aggregate:
-      - { dest: console, facility: all, level: info }
-      - { dest: console, facility: daemon, level: warning }
-      - { dest: file, name: test2, facility: news, level: debug }
-    state: absent
+      - { dest: console, facility: all, level: info, state: absent }
+      - { dest: console, facility: daemon, level: warning, state: absent }
+      - { dest: file, name: test2, facility: news, level: debug, state: absent }
     provider: "{{ cli }}"
   register: result
 

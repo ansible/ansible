@@ -92,7 +92,6 @@
     aggregate:
     - { name: eth1 }
     - { name: eth2 }
-    state: present
   register: result
 
 - assert:
@@ -106,7 +105,6 @@
     aggregate:
     - { name: eth1 }
     - { name: eth2 }
-    state: present
   register: result
 
 - assert:
@@ -118,7 +116,6 @@
     aggregate:
     - { name: eth1 }
     - { name: eth2, state: disabled }
-    state: present
   register: result
 
 - assert:
@@ -131,7 +128,6 @@
     aggregate:
     - { name: eth1 }
     - { name: eth2, state: disabled }
-    state: present
   register: result
 
 - assert:
@@ -141,9 +137,8 @@
 - name: Delete aggregate of LLDP interface configurations
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
-    - { name: eth2 }
-    state: absent
+    - { name: eth1, state: absent }
+    - { name: eth2, state: absent }
   register: result
 
 - assert:
@@ -155,9 +150,8 @@
 - name: Delete aggregate of LLDP interface configurations (idempotent)
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
-    - { name: eth2 }
-    state: absent
+    - { name: eth1, state: absent }
+    - { name: eth2, state: absent }
   register: result
 
 - assert:

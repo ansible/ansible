@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -77,6 +67,17 @@ EXAMPLES = """
     name: test
     facility: local3
     level: err
+- name: Add logging aggregate
+  vyos_logging:
+    aggregate:
+      - { dest: file, name: test1, facility: all, level: info, state: present }
+      - { dest: file, name: test2, facility: news, level: debug, state: present }
+- name: Remove logging aggregate
+  vyos_logging:
+    aggregate:
+      - { dest: console, facility: all, level: info, state: absent }
+      - { dest: console, facility: daemon, level: warning, state: absent }
+      - { dest: file, name: test2, facility: news, level: debug, state: absent }
 """
 
 RETURN = """
@@ -162,20 +163,15 @@ def config_to_dict(module):
 
 def map_params_to_obj(module):
     obj = []
-
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for c in aggregate:
             d = c.copy()
             if d['dest'] not in ('host', 'file', 'user'):
                 d['name'] = None
             else:
                 pass
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
-
             obj.append(d)
-
     else:
         if module.params['dest'] not in ('host', 'file', 'user'):
             module.params['name'] = None
@@ -194,25 +190,42 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         dest=dict(type='str', choices=['console', 'file', 'global', 'host', 'user']),
         name=dict(type='str'),
         facility=dict(type='str'),
         level=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
     )
 
-    argument_spec.update(vyos_argument_spec)
+    required_one_of = [['dest', 'aggregate']]
+    mutually_exclusive = [['dest', 'aggregate'],
+                          ['name', 'aggregate'],
+                          ['facility', 'aggregate'],
+                          ['level', 'aggregate'],
+                          ['state', 'aggregate']]
+
     required_if = [('dest', 'host', ['name', 'facility', 'level']),
                    ('dest', 'file', ['name', 'facility', 'level']),
                    ('dest', 'user', ['name', 'facility', 'level']),
                    ('dest', 'console', ['facility', 'level']),
                    ('dest', 'global', ['facility', 'level'])]
 
+    aggregate_spec = element_spec.copy()
+    aggregate_spec['dest'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, required_if=required_if),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(vyos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
+                           mutually_exclusive=mutually_exclusive,
+                           required_one_of=required_one_of,
                            supports_check_mode=True)
 
     warnings = list()

@@ -68,6 +68,17 @@ EXAMPLES = """
     name: 1.1.1.1
     facility: kernel
     level: critical
+- name: Add logging aggregate
+  net_logging:
+    aggregate:
+      - { dest: file, name: test1, facility: all, level: info }
+      - { dest: file, name: test2, facility: news, level: debug }
+- name: Remove logging aggregate
+  net_logging:
+    aggregate:
+      - { dest: console, facility: all, level: info, state: absent }
+      - { dest: console, facility: daemon, level: warning, state: absent }
+      - { dest: file, name: test2, facility: news, level: debug, state: absent }
 """
 
 RETURN = """

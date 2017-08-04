@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -151,48 +140,46 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module):
-    obj = []
-
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
-
-            if 'ipv4' not in d:
-                d['ipv4'] = None
-            if 'ipv6' not in d:
-                d['ipv6'] = None
-            if 'state' not in d:
-                d['state'] = module.params['state']
-
-            obj.append(d)
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        return aggregate
     else:
-        obj.append({
+        return [{
             'name': module.params['name'],
             'ipv4': module.params['ipv4'],
             'ipv6': module.params['ipv6'],
             'state': module.params['state']
-        })
-
-    return obj
+        }]
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         ipv4=dict(),
         ipv6=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent'])
     )
 
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate'],
+                          ['ipv4', 'aggregate'],
+                          ['ipv6', 'aggregate'],
+                          ['state', 'aggregate']]
+
+    aggregate_spec = element_spec.copy()
+    aggregate_spec['name'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
-    required_one_of = [['name', 'aggregate']]
-    mutually_exclusive = [['name', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,

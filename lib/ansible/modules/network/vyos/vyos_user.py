@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -36,12 +26,12 @@ description:
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         VyOS device. The list entries can either be the username or
         a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument. alias C(aggregate).
+        exclusive with the C(name) argument. alias C(users).
   name:
     description:
       - The username to be configured on the VyOS device.
@@ -113,6 +103,11 @@ EXAMPLES = """
     password: "{{ new_password }}"
     update_password: always
     state: present
+- name: Add aggregate of users
+  vyos_user:
+    aggregate:
+      - { name: ansibletest2, level: operator }
+      - { name: ansibletest3, level: operator }
 """
 
 RETURN = """
@@ -231,26 +226,14 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
-        elif not module.params['name']:
-            module.fail_json(msg='username is required')
         else:
             aggregate = [{'name': module.params['name']}]
-    else:
-        aggregate = list()
-        for item in users:
-            if not isinstance(item, dict):
-                aggregate.append({'name': item})
-            elif 'name' not in item:
-                module.fail_json(msg='name is required')
-            else:
-                aggregate.append(item)
 
     objects = list()
-
     for item in aggregate:
         get_value = partial(get_param_value, item=item, module=module)
         item['password'] = get_value('password')
@@ -278,25 +261,37 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        users=dict(type='list', aliases=['aggregate']),
+    element_spec = dict(
         name=dict(),
-
         full_name=dict(),
         level=dict(aliases=['role']),
-
         password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
-
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    required_one_of = [['aggregate', 'name']]
+    mutually_exclusive = [['name', 'aggregate'],
+                          ['full_name', 'aggregate'],
+                          ['level', 'aggregate'],
+                          ['password', 'aggregate'],
+                          ['update_password', 'aggregate'],
+                          ['state', 'aggregate']]
+
+    aggregate_spec = element_spec.copy()
+    aggregate_spec['name'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list',  aliases=['users'], elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
-    mutually_exclusive = [('name', 'users')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
+                           required_one_of=required_one_of,
                            supports_check_mode=True)
 
     warnings = list()

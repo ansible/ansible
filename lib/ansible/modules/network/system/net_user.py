@@ -104,10 +104,8 @@ EXAMPLES = """
 - name: set multiple users to privilege level 15
   net_user:
     aggregate:
-      - name: netop
-      - name: netend
-    privilege: 15
-    state: present
+      - { name: netop, privilege: 15 }
+      - name: netend, privilege: 15 }
 - name: Change Password for User netop
   net_user:
     name: netop

@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -52,19 +41,31 @@ options:
 
 EXAMPLES = """
 - name: Enable LLDP on eth1
-  net_lldp_interface:
+  vyos_lldp_interface:
     state: present
 
 - name: Enable LLDP on specific interfaces
-  net_lldp_interface:
-    interfaces:
+  vyos_lldp_interface:
+    name:
       - eth1
       - eth2
     state: present
 
 - name: Disable LLDP globally
-  net_lldp_interface:
+  vyos_lldp_interface:
     state: lldp
+
+- name: Create aggregate of LLDP interface configurations again
+  vyos_lldp_interface:
+    aggregate:
+    - { name: eth1, state: present }
+    - { name: eth2, state: present }
+
+- name: Delete aggregate of LLDP interface configurations
+  vyos_lldp_interface:
+    aggregate:
+    - { name: eth1, state: absent }
+    - { name: eth2, state: absent }
 """
 
 RETURN = """
@@ -140,37 +141,37 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module):
-    obj = []
-
-    if module.params['aggregate']:
-        for i in module.params['aggregate']:
-            d = i.copy()
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
-
-            obj.append(d)
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        return aggregate
     else:
-        obj.append({'name': module.params['name'], 'state': module.params['state']})
-
-    return obj
+        return [{'name': module.params['name'], 'state': module.params['state']}]
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent',
                             'enabled', 'disabled'])
     )
 
-    argument_spec.update(vyos_argument_spec)
     required_one_of = [['name', 'aggregate']]
-    mutually_exclusive = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate'],
+                          ['state', 'aggregate']]
+
+    aggregate_spec = element_spec.copy()
+    aggregate_spec['name'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(vyos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,

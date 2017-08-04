@@ -48,7 +48,7 @@ options:
     description: List of link aggregation definitions.
   purge:
     description:
-      - Purge link aggregation groups not defined in the aggregates parameter.
+      - Purge link aggregation groups not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -70,6 +70,17 @@ EXAMPLES = """
     name: bond0
     state: absent
 
+- name: Create aggregate of linkagg definitions
+  net_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
+
+- name: Remove aggregate of linkagg definitions
+  net_linkagg:
+    aggregate:
+      - { name: bond0, state: absent }
+      - { name: bond1, state: absent }
 """
 
 RETURN = """
