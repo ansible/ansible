@@ -84,7 +84,7 @@ class SoftLayerInventory(object):
             self.get_all_servers()
             print(self.json_format_dict(self.inventory, True))
         elif self.args.host:
-            self.get_virtual_servers()
+            self.get_all_servers()
             print(self.json_format_dict(self.inventory["_meta"]["hostvars"][self.args.host], True))
 
     def to_safe(self, word):
@@ -135,9 +135,13 @@ class SoftLayerInventory(object):
 
         # if there's no IP address, we can't reach it
         if 'primaryIpAddress' not in instance:
-            return
+            if 'primaryBackendIpAddress' not in instance:
+                return
 
-        dest = instance['primaryIpAddress']
+        if 'primaryIpAddress' in instance:
+            dest = instance['primaryIpAddress']
+        else:
+            dest = instance['primaryBackendIpAddress']
 
         self.inventory["_meta"]["hostvars"][dest] = instance
 
@@ -171,6 +175,7 @@ class SoftLayerInventory(object):
         # Inventory: group by tag
         for tag in instance['tagReferences']:
             self.push(self.inventory, tag['tag']['name'], dest)
+
 
     def get_virtual_servers(self):
         '''Get all the CCI instances'''
