@@ -29,7 +29,7 @@
     lxml_predictable_attribute_order: '{{ lxml_major_version.stdout|int >= 3 }}'
 
     # NOTE: The xml module requires at least lxml v2.3.0
-    lxml_xpath_attribute_result_attrname: '{{ lxml_major_version.stdout|int >= 2 and lxml_minor_version|int >= 3 }}'
+    lxml_xpath_attribute_result_attrname: '{{ lxml_major_version.stdout|int >= 2 and lxml_minor_version.stdout|int >= 3 }}'
 
 - name: Only run the tests when lxml v2.3.0+
   when: lxml_xpath_attribute_result_attrname
