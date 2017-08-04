@@ -2,27 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = """
 ---
@@ -53,7 +41,7 @@ options:
     description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the aggregates parameter.
+      - Purge VLANs not defined in the aggregate parameter.
     default: no
   state:
     description:
@@ -95,6 +83,18 @@ EXAMPLES = """
     vlan_name: test
     state: present
     active: True
+
+- name: Create vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1, state: present }
+      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2, state: present }
+
+- name: Delete vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, state: absent }
+      - { vlan_id: 160, name: test_vlan_2, state: absent }
 """
 
 RETURN = """
@@ -110,9 +110,11 @@ diff.prepared:
 """
 import collections
 
+from copy import copy
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
@@ -128,31 +130,52 @@ def validate_vlan_id(value, module):
         module.fail_json(msg='vlan_id must be between 1 and 4094')
 
 
-def validate_param_values(module, obj):
+def validate_param_values(module, obj, param=None):
+    if not param:
+        param = module.params
     for key in obj:
         # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
         if callable(validator):
-            validator(module.params.get(key), module)
+            validator(param.get(key), module)
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        name=dict(required=True),
-        vlan_id=dict(required=True, type='int'),
+    element_spec = dict(
+        name=dict(),
+        vlan_id=dict(type='int'),
         description=dict(),
         interfaces=dict(),
-        aggregate=dict(),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
+    aggregate_spec = copy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+    aggregate_spec['vlan_id'] = dict(required=True, type='int')
 
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
+    required_one_of = [['aggregate', 'name']]
+    required_together = [['name', 'vlan_id']]
+    mutually_exclusive = [['aggregate', 'name'],
+                          ['aggregate', 'vlan_id'],
+                          ['aggregate', 'description'],
+                          ['aggregate', 'interfaces'],
+                          ['aggregate', 'state'],
+                          ['aggregate', 'active']]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           required_together=required_together,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -172,13 +195,19 @@ def main():
         ('description', 'description')
     ])
 
-    validate_param_values(module, param_to_xpath_map)
+    params = to_param_list(module)
+    requests = list()
 
-    want = map_params_to_obj(module, param_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+    for param in params:
+        item = copy(param)
+        validate_param_values(module, param_to_xpath_map, param=item)
+
+        want = map_params_to_obj(module, param_to_xpath_map, param=item)
+        requests.append(map_obj_to_ele(module, want, top, param=item))
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='replace')
 
         commit = not module.check_mode
         if diff:

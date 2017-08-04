@@ -184,6 +184,10 @@ def locked_config(module):
 def get_diff(module):
 
     reply = get_configuration(module, compare=True, format='text')
+    # if warning is received from device diff is empty.
+    if isinstance(reply, list):
+        return None
+
     output = reply.find('.//configuration-output')
     if output is not None:
         return to_text(output.text, encoding='latin1').strip()
@@ -210,7 +214,7 @@ def get_param(module, key):
     return module.params[key] or module.params['provider'].get(key)
 
 
-def map_params_to_obj(module, param_to_xpath_map):
+def map_params_to_obj(module, param_to_xpath_map, param=None):
     """
     Creates a new dictionary with key as xpath corresponding
     to param and value is a list of dict with metadata and values for
@@ -231,12 +235,15 @@ def map_params_to_obj(module, param_to_xpath_map):
     :param param_to_xpath_map: Modules params to xpath map
     :return: obj
     """
+    if not param:
+        param = module.params
+
     obj = collections.OrderedDict()
     for key, attribute in param_to_xpath_map.items():
-        if key in module.params:
+        if key in param:
             is_attribute_dict = False
 
-            value = module.params[key]
+            value = param[key]
             if not isinstance(value, (list, tuple)):
                 value = [value]
 
@@ -261,9 +268,12 @@ def map_params_to_obj(module, param_to_xpath_map):
     return obj
 
 
-def map_obj_to_ele(module, want, top, value_map=None):
+def map_obj_to_ele(module, want, top, value_map=None, param=None):
     if not HAS_LXML:
         module.fail_json(msg='lxml is not installed.')
+
+    if not param:
+        param = module.params
 
     root = Element('root')
     top_ele = top.split('/')
@@ -273,8 +283,8 @@ def map_obj_to_ele(module, want, top, value_map=None):
         for item in top_ele[1:-1]:
             ele = SubElement(ele, item)
     container = ele
-    state = module.params.get('state')
-    active = module.params.get('active')
+    state = param.get('state')
+    active = param.get('active')
     if active:
         oper = 'active'
     else:
@@ -374,3 +384,14 @@ def map_obj_to_ele(module, want, top, value_map=None):
                             par.set('delete', 'delete')
 
     return root.getchildren()[0]
+
+
+def to_param_list(module):
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        if isinstance(aggregate, dict):
+            return [aggregate]
+        else:
+            return aggregate
+    else:
+        return [module.params]

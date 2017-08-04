@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -68,9 +57,8 @@ options:
         exclusive with the C(name) argument.
   purge:
     description:
-      - Instructs the module to consider the
-        VRF definition absolute.  It will remove any previously configured
-        VRFs on the device.
+      - Instructs the module to consider the VRF definition absolute.
+        It will remove any previously configured VRFs on the device.
     default: false
   state:
     description:
@@ -136,6 +124,26 @@ EXAMPLES = """
     rd: 1.1.1.1:10
     target: target:65514:113
     active: True
+
+- name: Create vrf using aggregate
+  junos_vrf:
+    aggregate:
+    - name: test-1
+      description: test-vrf-1
+      interfaces:
+        - ge-0/0/3
+         - ge-0/0/2
+      rd: 1.1.1.1:10
+      target: target:65514:113
+      state: present
+    - name: test-2
+      description: test-vrf-2
+      interfaces:
+        - ge-0/0/4
+        - ge-0/0/5
+      rd: 2.2.2.2:10
+      target: target:65515:114
+      state: present
 """
 
 RETURN = """
@@ -156,9 +164,11 @@ diff.prepared:
 """
 import collections
 
+from copy import copy
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
@@ -172,22 +182,40 @@ USE_PERSISTENT_CONNECTION = True
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        name=dict(required=True),
+    element_spec = dict(
+        name=dict(),
         description=dict(),
         rd=dict(type='list'),
         interfaces=dict(type='list'),
         target=dict(type='list'),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
 
+    aggregate_spec = copy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
+    required_one_of = [['aggregate', 'name']]
+    mutually_exclusive = [['aggregate', 'name'],
+                          ['aggregate', 'description'],
+                          ['aggregate', 'rd'],
+                          ['aggregate', 'interfaces'],
+                          ['aggregate', 'target'],
+                          ['aggregate', 'state'],
+                          ['aggregate', 'active']]
+
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+                           supports_check_mode=True,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive)
 
     warnings = list()
     check_args(module, warnings)
@@ -209,13 +237,20 @@ def main():
         ('target', 'vrf-target/community'),
     ])
 
-    module.params['type'] = 'vrf'
+    params = to_param_list(module)
+    requests = list()
 
-    want = map_params_to_obj(module, param_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+    for param in params:
+        item = copy(param)
+
+        item['type'] = 'vrf'
+
+        want = map_params_to_obj(module, param_to_xpath_map, param=item)
+        requests.append(map_obj_to_ele(module, want, top, param=item))
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='replace')
 
         commit = not module.check_mode
         if diff:
