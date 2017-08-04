@@ -13,7 +13,7 @@
 - name: Change port
   junos_netconf:
     state: present
-    netconf_port: 8080
+    netconf_port: 22
     provider: "{{ cli }}"
   register: result
 
@@ -24,7 +24,7 @@
 - name: idempotent tests
   junos_netconf:
     state: present
-    netconf_port: 8080
+    netconf_port: 22
     provider: "{{ cli }}"
   register: result
 
@@ -32,11 +32,11 @@
     that:
       - "result.changed == false"
 
-- name: Ensure we can communicate over 8080
+- name: Ensure we can communicate over 22
   junos_command:
     rpcs: get-software-information
     provider: "{{ netconf }}"
-    port: 8080
+    port: 22
 
 # This protects against the port override above not being honoured and a bug setting the port
 - name: Ensure we can NOT communicate over default port
