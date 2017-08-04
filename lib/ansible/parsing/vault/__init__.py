@@ -356,7 +356,7 @@ class ScriptVaultSecret(FileVaultSecret):
 
             raise AnsibleError(msg)
 
-        stdout, _ = p.communicate()
+        stdout, dummy = p.communicate()
 
         if p.returncode != 0:
             raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, p.stderr))
@@ -390,7 +390,7 @@ def match_encrypt_secret(secrets):
     '''Find the best/first/only secret in secrets to use for encrypting'''
 
     # ie, consider all of the available secrets as matches
-    _vault_id_matchers = [_vault_id for _vault_id, _ in secrets]
+    _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
     best_secret = match_best_secret(secrets, _vault_id_matchers)
     # can be empty list sans any tuple
     return best_secret
@@ -437,7 +437,7 @@ class VaultLib:
 
         if secret is None:
             if self.secrets:
-                _, secret = match_encrypt_secret(self.secrets)
+                dummy, secret = match_encrypt_secret(self.secrets)
             else:
                 raise AnsibleVaultError("A vault password must be specified to encrypt data")
 
@@ -485,7 +485,7 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % filename
             raise AnsibleError(msg)
 
-        b_vaulttext, _, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
@@ -524,7 +524,7 @@ class VaultLib:
         # the known vault secrets.
         if not C.DEFAULT_VAULT_ID_MATCH:
             # Add all of the known vault_ids as candidates for decrypting a vault.
-            vault_id_matchers.extend([_vault_id for _vault_id, _secret in self.secrets if _vault_id != vault_id])
+            vault_id_matchers.extend([_vault_id for _vault_id, _dummy in self.secrets if _vault_id != vault_id])
 
         matched_secrets = match_secrets(self.secrets, vault_id_matchers)
 
@@ -733,7 +733,7 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        _, _, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
         # if we could decrypt, the vault_id should be in secrets
         # though we could have multiple secrets for a given vault_id, pick the first one
