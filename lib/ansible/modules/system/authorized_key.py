@@ -627,17 +627,21 @@ def enforce_state(module, params):
     if do_write:
         filename = keyfile(module, user, do_write, path, manage_dir)
         new_content = serialize(existing_keys)
-        diff = {
-            'before_header': params['keyfile'],
-            'after_header': filename,
-            'before': existing_content,
-            'after': new_content,
-        }
+
+        diff = None
+        if module._diff:
+            diff = {
+                'before_header': params['keyfile'],
+                'after_header': filename,
+                'before': existing_content,
+                'after': new_content,
+            }
+            params['diff'] = diff
+
         if module.check_mode:
             module.exit_json(changed=True, diff=diff)
         writefile(module, filename, new_content)
         params['changed'] = True
-        params['diff'] = diff
     else:
         if module.check_mode:
             module.exit_json(changed=False)
