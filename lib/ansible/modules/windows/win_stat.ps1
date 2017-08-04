@@ -78,7 +78,13 @@ $checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -
 
 $result = @{
     changed = $false
-    stat = @{}
+    stat = @{
+        exists = $false
+        isdir = $false
+        islnk = $false
+        isreg = $false
+        isshared = $false
+    }
 }
 
 # Backward compatibility
@@ -89,11 +95,6 @@ if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) 
 If (Test-Path -Path $path)
 {
     $result.stat.exists = $true
-
-    # Initial values
-    $result.stat.isdir = $false
-    $result.stat.islnk = $false
-    $result.stat.isshared = $false
 
     # Need to use -Force so it picks up hidden files
     $info = Get-Item -Force $path
@@ -160,8 +161,9 @@ If (Test-Path -Path $path)
     }
     Else
     {
-        $result.stat.size = $info.Length
         $result.stat.extension = $info.Extension
+        $result.stat.isreg = $true
+        $result.stat.size = $info.Length
 
         If ($get_md5) {
             $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
@@ -171,10 +173,6 @@ If (Test-Path -Path $path)
             $result.stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
         }
     }
-}
-Else
-{
-    $result.stat.exists = $false
 }
 
 Exit-Json $result
