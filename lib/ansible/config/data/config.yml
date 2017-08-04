@@ -963,7 +963,7 @@ DEFAULT_SUDO_EXE:
   vars: []
   yaml: {key: defaults.sudo_exe}
 DEFAULT_SUDO_FLAGS:
-  default: -H -S -n
+  default: -H -S -n http_proxy=$http_proxy https_proxy=$https_proxy no_proxy=$no_proxy ftp_proxy=$ftp_proxy
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SUDO_FLAGS}]
   ini:
