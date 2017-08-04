@@ -97,6 +97,14 @@ options:
         default: 'yes'
         choices: ['yes', 'no']
         version_added: "1.9.3"
+    keep_name:
+        description:
+            - If C(yes), the downloaded artifact's name is preserved, i.e the version number remains part of it.
+            - This option only has effect when C(dest) is a directory and C(version) is set to C(latest).
+        required: false
+        default: no
+        choices: ['yes', 'no']
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -129,6 +137,14 @@ EXAMPLES = '''
     extension: war
     repository_url: 'https://repo.company.com/maven'
     dest: /var/lib/tomcat7/webapps/web-app.war
+
+# Keep a downloaded artifact's name, i.e. retain the version
+- maven_artifact:
+    version: latest
+    artifact_id: spring-core
+    group_id: org.springframework
+    dest: /tmp/
+    keep_name: yes
 '''
 
 import hashlib
@@ -223,17 +239,21 @@ class MavenDownloader:
             base = base.rstrip("/")
         self.base = base
         self.user_agent = "Maven Artifact Downloader/1.0"
+        self.latest_version_found = None
 
-    def _find_latest_version_available(self, artifact):
+    def find_latest_version_available(self, artifact):
+        if self.latest_version_found:
+            return self.latest_version_found
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
         xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
         v = xml.xpath("/metadata/versioning/versions/version[last()]/text()")
         if v:
+            self.latest_version_found = v[0]
             return v[0]
 
     def find_uri_for_artifact(self, artifact):
         if artifact.version == "latest":
-            artifact.version = self._find_latest_version_available(artifact)
+            artifact.version = self.find_latest_version_available(artifact)
 
         if artifact.is_snapshot():
             path = "/%s/maven-metadata.xml" % (artifact.path())
@@ -287,7 +307,7 @@ class MavenDownloader:
     def download(self, artifact, filename=None):
         filename = artifact.get_filename(filename)
         if not artifact.version or artifact.version == "latest":
-            artifact = Artifact(artifact.group_id, artifact.artifact_id, self._find_latest_version_available(artifact),
+            artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact),
                                 artifact.classifier, artifact.extension)
 
         url = self.find_uri_for_artifact(artifact)
@@ -349,6 +369,7 @@ class MavenDownloader:
 
 
 def main():
+
     module = AnsibleModule(
         argument_spec = dict(
             group_id = dict(default=None),
@@ -363,6 +384,7 @@ def main():
             timeout = dict(default=10, type='int'),
             dest = dict(type="path", default=None),
             validate_certs = dict(required=False, default=True, type='bool'),
+            keep_name = dict(required=False, default=False, type='bool'),
         )
     )
 
@@ -385,6 +407,7 @@ def main():
     extension = module.params["extension"]
     state = module.params["state"]
     dest = module.params["dest"]
+    keep_name = module.params["keep_name"]
 
     #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
@@ -396,7 +419,10 @@ def main():
 
     prev_state = "absent"
     if os.path.isdir(dest):
-        dest = posixpath.join(dest, artifact_id + "-" + version + "." + extension)
+        version_part = version
+        if keep_name and version == 'latest':
+            version_part = downloader.find_latest_version_available(artifact)
+        dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
     if os.path.lexists(dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
         prev_state = "present"
     else:
