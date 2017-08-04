@@ -168,15 +168,17 @@ def is_deployed(module):
     elif module.params['deployment_strategy'] == 'filesystem':
         return os.path.exists(os.path.join(module.params['deploy_path'], "%s.deployed" % module.params['deployment']))
     else:
-        rc, stdout, stderr = module.run_command([module.params['cli_path'], '--connect', '--commands=deploy-info'])
+        rc, stdout, stderr = cli_run_commands(module, ['deployment-info', '--name=%s' module.params['deployment']])
 
         if rc != 0:
             return False
-
-        lines = stdout.split()
-        for line in lines:
-            if module.params['deployment'] in line:
-                return True
+        try:
+            lines = stdout.split()
+            for line in lines:
+                if module.params['deployment'] in line:
+                    return True
+        except TypeError:
+            return False
         return False
 
 
@@ -347,19 +349,35 @@ def http_undeploy(module, deployed):
 
 
 def cli_deploy(module, deployed):
-    rc, stdout, stderr = module.run_command([module.params['cli_path'], '--connect', '--commands=deploy %s --force' % module.params['src']])
+    if deployed:
+        return False
+    rc, stdout, stderr = cli_run_commands(module, ['deploy %s --force' % module.params['src'], 'ls deployment'])
     if rc == 0:
         return True
     else:
-        module.fail_json(msg=stderr)
+        module.fail_json(msg=stdout)
 
 
 def cli_undeploy(module, deployed):
-    rc, stdout, stderr = module.run_command([module.params['cli_path'], '--connect', '--commands=undeploy %s' % module.params['deployment']])
+    if not deployed:
+        return False
+    rc, stdout, stderr = cli_run_commands(module, ['undeploy %s' % module.params['deployment'], 'ls deployment'])
     if rc == 0:
         return True
     else:
-        module.fail_json(msg=stderr)
+        module.fail_json(msg=stdout)
+
+
+# commands arg should be a list of strings that includes the command and any args, i.e. ['command [args]',]
+def cli_run_commands(module, commands):
+    command_string = ','.join(commands)
+    return module.run_command([
+        module.params['cli_path'],
+        '--connect',
+        '--user=%s' % module.params['url_username'],
+        '--password=%s' % module.params['url_password'],
+        '--commands=%s' % ','.join(commands)
+    ])
 
 
 DEPLOY_CALLABLES = {
