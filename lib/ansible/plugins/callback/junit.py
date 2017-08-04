@@ -132,7 +132,7 @@ class CallbackModule(CallbackBase):
 
         task_data = self._task_data[task_uuid]
 
-        if self._fail_on_change == 'true' and status == 'changed':
+        if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
             status = 'failed'
 
         if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
@@ -230,10 +230,7 @@ class CallbackModule(CallbackBase):
             self._finish_task('failed', result)
 
     def v2_runner_on_ok(self, result):
-        if result._result.get('changed', False):
-            self._finish_task('changed', result)
-        else:
-            self._finish_task('ok', result)
+        self._finish_task('ok', result)
 
     def v2_runner_on_skipped(self, result):
         self._finish_task('skipped', result)
