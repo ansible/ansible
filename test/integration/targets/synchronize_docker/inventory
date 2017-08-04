@@ -1,0 +1,1 @@
+testhost ansible_host=ubuntu-latest ansible_connection=docker
