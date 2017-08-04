@@ -173,9 +173,9 @@ def get_aws_connection_info(module, boto3=False):
             access_key = os.environ['AWS_ACCESS_KEY']
         elif os.environ.get('EC2_ACCESS_KEY'):
             access_key = os.environ['EC2_ACCESS_KEY']
-        elif boto.config.get('Credentials', 'aws_access_key_id'):
+        elif HAS_BOTO and boto.config.get('Credentials', 'aws_access_key_id'):
             access_key = boto.config.get('Credentials', 'aws_access_key_id')
-        elif boto.config.get('default', 'aws_access_key_id'):
+        elif HAS_BOTO and boto.config.get('default', 'aws_access_key_id'):
             access_key = boto.config.get('default', 'aws_access_key_id')
         else:
             # in case access_key came in as empty string
@@ -188,9 +188,9 @@ def get_aws_connection_info(module, boto3=False):
             secret_key = os.environ['AWS_SECRET_KEY']
         elif os.environ.get('EC2_SECRET_KEY'):
             secret_key = os.environ['EC2_SECRET_KEY']
-        elif boto.config.get('Credentials', 'aws_secret_access_key'):
+        elif HAS_BOTO and boto.config.get('Credentials', 'aws_secret_access_key'):
             secret_key = boto.config.get('Credentials', 'aws_secret_access_key')
-        elif boto.config.get('default', 'aws_secret_access_key'):
+        elif HAS_BOTO and boto.config.get('default', 'aws_secret_access_key'):
             secret_key = boto.config.get('default', 'aws_secret_access_key')
         else:
             # in case secret_key came in as empty string
@@ -205,10 +205,13 @@ def get_aws_connection_info(module, boto3=False):
             region = os.environ['EC2_REGION']
         else:
             if not boto3:
-                # boto.config.get returns None if config not found
-                region = boto.config.get('Boto', 'aws_region')
-                if not region:
-                    region = boto.config.get('Boto', 'ec2_region')
+                if HAS_BOTO:
+                    # boto.config.get returns None if config not found
+                    region = boto.config.get('Boto', 'aws_region')
+                    if not region:
+                        region = boto.config.get('Boto', 'ec2_region')
+                else:
+                    module.fail_json(msg="boto is required for this module. Please install boto and try again")
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
                 region = botocore.session.get_session().get_config_variable('region')
@@ -222,9 +225,9 @@ def get_aws_connection_info(module, boto3=False):
             security_token = os.environ['AWS_SESSION_TOKEN']
         elif os.environ.get('EC2_SECURITY_TOKEN'):
             security_token = os.environ['EC2_SECURITY_TOKEN']
-        elif boto.config.get('Credentials', 'aws_security_token'):
+        elif HAS_BOTO and boto.config.get('Credentials', 'aws_security_token'):
             security_token = boto.config.get('Credentials', 'aws_security_token')
-        elif boto.config.get('default', 'aws_security_token'):
+        elif HAS_BOTO and boto.config.get('default', 'aws_security_token'):
             security_token = boto.config.get('default', 'aws_security_token')
         else:
             # in case secret_token came in as empty string
