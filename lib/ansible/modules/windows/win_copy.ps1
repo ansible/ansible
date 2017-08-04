@@ -206,7 +206,7 @@ if ($mode -eq "query") {
     # the win_copy plugin will use explode as the mode or single
     try {
         Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
-        Add-Type -Assembl System.IO.Compression | Out-Null
+        Add-Type -Assembly System.IO.Compression | Out-Null
         $result.zip_available = $true
     } catch {
         $result.zip_available = $false
