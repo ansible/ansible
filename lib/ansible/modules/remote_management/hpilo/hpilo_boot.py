@@ -122,15 +122,15 @@ warnings.simplefilter('ignore')
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            host = dict(required=True, type='str'),
-            login = dict(default='Administrator', type='str'),
-            password = dict(default='admin', type='str', no_log=True),
-            media = dict(default=None, type='str', choices=['cdrom', 'floppy', 'rbsu', 'hdd', 'network', 'normal', 'usb']),
-            image = dict(default=None, type='str'),
-            state = dict(default='boot_once', type='str', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot', 'poweroff']),
-            force = dict(default=False, type='bool'),
-            ssl_version = dict(default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
+        argument_spec=dict(
+            host=dict(type='str', required=True),
+            login=dict(type='str', default='Administrator'),
+            password=dict(type='str', default='admin', no_log=True),
+            media=dict(type='str', choices=['cdrom', 'floppy', 'rbsu', 'hdd', 'network', 'normal', 'usb']),
+            image=dict(type='str'),
+            state=dict(type='str', default='boot_once', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot', 'poweroff']),
+            force=dict(type='bool', default=False),
+            ssl_version=dict(type='str', default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
         )
     )
 
@@ -144,7 +144,7 @@ def main():
     image = module.params['image']
     state = module.params['state']
     force = module.params['force']
-    ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V','v'))
+    ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V', 'v'))
 
     ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
     changed = False
@@ -183,13 +183,13 @@ def main():
             module.fail_json(msg='HP iLO (%s) reports that the server is already powered on !' % host)
 
         if power_status == 'ON':
-            #ilo.cold_boot_server()
             ilo.warm_boot_server()
+#            ilo.cold_boot_server()
             changed = True
         else:
             ilo.press_pwr_btn()
-            #ilo.reset_server()
-            #ilo.set_host_power(host_power=True)
+#            ilo.reset_server()
+#            ilo.set_host_power(host_power=True)
             changed = True
 
     elif state in ('poweroff'):
@@ -198,7 +198,7 @@ def main():
 
         if not power_status == 'OFF':
             ilo.hold_pwr_btn()
-            #ilo.set_host_power(host_power=False)
+#            ilo.set_host_power(host_power=False)
             changed = True
 
     module.exit_json(changed=changed, power=power_status, **status)
