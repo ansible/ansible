@@ -577,7 +577,7 @@ def enforce_state(module, params):
             parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3], parsed_new_key[4])
 
         if comment is not None:
-            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_new_key[2], comment)
+            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_new_key[2], comment, parsed_new_key[4])
 
         matched = False
         non_matching_keys = []
