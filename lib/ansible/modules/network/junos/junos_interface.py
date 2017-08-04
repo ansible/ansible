@@ -125,8 +125,8 @@ EXAMPLES = """
 - name: Delete interface using aggregate
   junos_interface:
     aggregate:
-      - { name: ge-0/0/1, description: test-interface-1, state: absent}
-      - { name: ge-0/0/2, description: test-interface-2, state: absent}
+      - { name: ge-0/0/1, state: absent}
+      - { name: ge-0/0/2, state: absent}
 """
 
 RETURN = """

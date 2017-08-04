@@ -87,6 +87,18 @@ EXAMPLES = """
     name: ge-0/0/1
     description: test-interface
     state: down
+
+- name: Create interface using aggregate
+  net_interface:
+    aggregate:
+      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, duplex: half, mtu: 512}
+      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, duplex: full, mtu: 256}
+
+- name: Delete interface using aggregate
+  net_interface:
+    aggregate:
+      - { name: ge-0/0/1, state: absent}
+      - { name: ge-0/0/2, state: absent}
 """
 
 RETURN = """
