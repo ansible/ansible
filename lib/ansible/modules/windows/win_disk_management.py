@@ -25,11 +25,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-module: win_disk_setup
+module: win_disk_management
 version_added: '2.4'
-short_description: A windows disk module
+short_description: A Windows disk management module
 description:
-   - Find a disk on the server (unit GB) and set it up. To find the disk and to setup the disk you have several options.
+   - Find a disk on the server (unit GB) and manage it. To find the disk and to setup the disk you have several options.
 options:
   FindSize:
       description:
@@ -109,8 +109,8 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Find a defined disk and set it up as specified
-  win_disk_setup:
+- name: Select a defined disk and manage it as specified
+  win_disk_management:
     FindSize: 100
     FindPartitionStyle: RAW
     FindOperationalStatus: Offline
@@ -122,8 +122,8 @@ EXAMPLES = r'''
     SetLargeFRS: true
     SetShortNames: true
 
-- name: Find a defined disk and set it up as specified
-  win_disk_setup:
+- name: Select a defined disk and manage it as specified
+  win_disk_management:
     FindSize: 50
     FindPartitionStyle: MBR
     FindOperationalStatus: Online

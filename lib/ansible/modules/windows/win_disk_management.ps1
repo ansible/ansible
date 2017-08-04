@@ -28,7 +28,7 @@ param(
 
 $DiskSize = $DiskSize *1GB
 
-Get-Disk -ErrorAction SilentlyContinue | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.Size -eq $DiskSize)}
+Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.Size -eq $DiskSize)}
 
 }
 
