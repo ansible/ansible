@@ -39,7 +39,7 @@
     that:
       - "result.changed == true"
       - result.diff.prepared | search("\+ *advertisement-interval 10")
-      - result.diff.prepared | search("\+ *transmit-delay 30")
+      - result.diff.prepared | search("\+ *transmit-delay 2")
       - result.diff.prepared | search("\+ *hold-multiplier 5")
 
 - name: configure lldp parameters and enable lldp(idempotent)
