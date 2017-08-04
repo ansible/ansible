@@ -177,6 +177,19 @@ def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
     return True
 
 
+def get_cache_name():
+    cloud = os.getenv('OS_CLOUD')
+    if not cloud:
+        project_name = (os.getenv('OS_PROJECT_NAME') or
+                        os.getenv('OS_TENANT_NAME') or
+                        os.getenv('OS_PROJECT_ID') or
+                        os.getenv('OS_TENANT_ID') or
+                        'ansible')
+        region = (os.getenv('OS_REGION_NAME') or 'inventory')
+        cloud = project_name + '-' + region.lower()
+    return cloud + ".cache"
+
+
 def get_cache_settings():
     config = os_client_config.config.OpenStackConfig(
         config_files=os_client_config.config.CONFIG_FILES + CONFIG_FILES)
@@ -185,7 +198,7 @@ def get_cache_settings():
     cache_path = config.get_cache_path()
     if not os.path.exists(cache_path):
         os.makedirs(cache_path)
-    cache_file = os.path.join(cache_path, 'ansible-inventory.cache')
+    cache_file = os.path.join(cache_path, get_cache_name())
     return (cache_file, cache_expiration_time)
 
 
