@@ -193,7 +193,7 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor']:
+            if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
                 cpu_facts['processor'].append(data[1].strip())
