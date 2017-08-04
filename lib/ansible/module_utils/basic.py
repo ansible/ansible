@@ -68,6 +68,7 @@ FILE_ATTRIBUTES = {
 # be used to do many common tasks
 
 import locale
+import logging
 import os
 import re
 import shlex
@@ -88,6 +89,8 @@ import datetime
 from collections import deque
 from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import repeat, chain
+# TODO: is this in all py2.4 versions? it is in 2.4.6
+from logging.handlers import BufferingHandler
 
 try:
     import syslog
@@ -252,6 +255,59 @@ PERMS_RE = re.compile(r'[^rwxXstugo]')
 PERM_BITS = 0o7777       # file mode permission bits
 EXEC_PERM_BITS = 0o0111  # execute permission bits
 DEFAULT_PERM = 0o0666    # default file permission bits
+
+log = logging.getLogger(__name__)
+
+
+class AnsibleBufferingHandler(BufferingHandler):
+    def flush(self):
+        serializable_log_records = []
+        for log_record in self.buffer:
+            serializable_log_records.append(self.prepare(log_record))
+
+        return serializable_log_records
+
+    def prepare(self, record):
+        '''prepare a LogRecord to be serialized.
+
+        NOTE: This modifies 'record'.'''
+        record_dict = {}
+        # These are known to be valid log record
+        # Could also try
+        record_attrs = ['name', 'msg', 'levelname', 'levelno', 'pathname',
+                        'filename', 'module', 'lineno', 'created', 'msecs', 'relativeCreated',
+                        'thread', 'threadName', 'process', 'funcName', 'processName']
+        # TODO: could use set intersection here
+        for attr in record.__dict__:
+            if attr in record_attrs:
+                value = getattr(record, attr, None)
+                record_dict[attr] = value
+            # TODO: could also try handling extra records here
+
+        if record.exc_info:
+            exc_text = self.format(record)
+            record_dict['exc_text'] = exc_text
+
+        try:
+            record_dict['message'] = record.getMessage()
+            # we populated the 'message', now replace 'msg' (the string format with %s's passed to debug() etc)
+            # with the rendered text, saving the orig in _orig_msg.
+            # Something that gets the log record_dict could reconstruct 'message' with: _orig_msg % _orig_args
+            record_dict['_orig_msg'] = record_dict['msg']
+            record_dict['msg'] = record_dict['message']
+        except TypeError as e:
+            record_dict['_log_message_format_exception'] = '%s' % e
+            record_dict['message'] = 'ERROR: record.getMessage() failed. record.msg: %s record.args: %s' % (record.msg, record.args)
+
+        # TODO: include record.args? needs to be serializable
+        arg_reprs = []
+        if isinstance(record.args, dict):
+            arg_reprs = dict([(to_text(x[0]), to_text(x[1])) for x in record.args.items()])
+        else:
+            arg_reprs = [to_text(arg) for arg in record.args]
+
+        record_dict['_orig_args'] = arg_reprs
+        return record_dict
 
 
 def get_platform():
@@ -835,6 +891,9 @@ class AnsibleModule(object):
         self.no_log_values = set()
         self._handle_no_log_values()
 
+        self._setup_logging(level=logging.DEBUG)
+
+
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
@@ -880,11 +939,38 @@ class AnsibleModule(object):
         # finally, make sure we're in a sane working dir
         self._set_cwd()
 
+    def _setup_logging(self, level=None):
+        level = level or logging.INFO
+        # TODO: would be useful to include the ansible module name in default log record attributes
+        self.logger = logging.getLogger('ansible.module_utils.basic.AnsibleModule')
+        self.logger.setLevel(level)
+        log.setLevel(level)
+
+        # TODO: for no_log, setup a NullHandler
+        # TODO: could also setup a filter for censoring output, although we are just adding
+        #       adding a item to the returned results with a list of log records, and that gets passed
+        #       though remove_values already
+        # TODO: add a filter that will populate some record info about the task
+        #       (module name, arg spec? task args / invocation / self.params?
+        #       local hostname? remote_user? any of the _legal_inputs
+        self.log_handler = AnsibleBufferingHandler(capacity=1)
+        self.log_handler.setLevel(logging.DEBUG)
+
+        # self.log propogates to 'log' and its handler, if the logger names are correct
+        log.addHandler(self.log_handler)
+
+        log.debug('logging was setup. log=%s, self.logger=%s, self.log_handler=%s',
+                  log, self.logger, self.log_handler,
+                  extra={'some_key': 'some_value', 'another_key': None})
+        self.logger.info("self.logger test")
+        self.logger.info('test of passing a single dict as arg to logger %(foo)s test', {'foo': 'blip'})
+
     def warn(self, warning):
 
         if isinstance(warning, string_types):
             self._warnings.append(warning)
             self.log('[WARNING] %s' % warning)
+            self.logger.warn(warning)
         else:
             raise TypeError("warn requires a string not a %s" % type(warning))
 
@@ -895,6 +981,7 @@ class AnsibleModule(object):
                 'version': version
             })
             self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
+            self.logger.warn('[DEPRECATION WARNING] %s %s', msg, version)
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
 
@@ -2066,14 +2153,18 @@ class AnsibleModule(object):
 
     def debug(self, msg):
         if self._debug:
+            self.logger.debug(msg)
             self.log('[debug] %s' % msg)
 
     def log(self, msg, log_args=None):
 
         if not self.no_log:
 
-            if log_args is None:
-                log_args = dict()
+            # FIXME: kluge for testing, logging more useful if called directly
+            # if log_args is None:
+            #    self.logger.info(msg)
+            # else:
+            #    self.logger.info(msg, log_args)
 
             module = 'ansible-%s' % self._name
             if isinstance(module, binary_type):
@@ -2114,6 +2205,7 @@ class AnsibleModule(object):
         # Sanitize possible password argument when logging.
         log_args = dict()
 
+        log_args_list = []
         for param in self.params:
             canon = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
@@ -2121,10 +2213,12 @@ class AnsibleModule(object):
 
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
+                log_args_list.append((param, 'NOT_LOGGING_PARAMETER'))
             # try to capture all passwords/passphrase named fields missed by no_log
             elif PASSWORD_MATCH.search(param) and arg_opts.get('type', 'str') != 'bool' and not arg_opts.get('choices', False):
                 # skip boolean and enums as they are about 'password' state
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
+                log_args_list.append((param, 'NOT_LOGGING_PASSWORD'))
                 self.warn('Module did not set no_log for %s' % param)
             else:
                 param_val = self.params[param]
@@ -2132,15 +2226,22 @@ class AnsibleModule(object):
                     param_val = str(param_val)
                 elif isinstance(param_val, text_type):
                     param_val = param_val.encode('utf-8')
-                log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
+                _msg = heuristic_log_sanitize(param_val, self.no_log_values)
+                log_args[param] = _msg
+                log_args_list.append((param, _msg))
 
-        msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
-        if msg:
-            msg = 'Invoked with %s' % ' '.join(msg)
+        msg_blurbs = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
+        log_msgs = ['%s=%s' for x in log_args_list]
+        if msg_blurbs:
+            msg = 'Invoked with %s' % ' '.join(msg_blurbs)
+            log_msgs_format = 'Invoked with %s' % ' '.join(log_msgs)
         else:
             msg = 'Invoked'
+            log_msgs_format = ['Invoked']
 
-        self.log(msg, log_args=log_args)
+        self.log(msg, log_args)
+
+        self.logger.info(log_msgs_format, *[item for sublist in log_args_list for item in sublist])
 
     def _set_cwd(self):
         try:
@@ -2257,6 +2358,8 @@ class AnsibleModule(object):
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
+
+        kwargs['log_records'] = self.log_handler.flush()
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
@@ -2753,6 +2856,7 @@ class AnsibleModule(object):
         try:
             if self._debug:
                 self.log('Executing: ' + clean_args)
+                self.logger.info('Executing: %s', clean_args)
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
@@ -2803,10 +2907,14 @@ class AnsibleModule(object):
         except (OSError, IOError):
             e = get_exception()
             self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
+            self.logger.error("Error Executing CMD:%s Exception:%s", clean_args, to_native(e))
+            self.logger.exception(e)
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
         except Exception:
             e = get_exception()
             self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(traceback.format_exc())))
+            self.logger.error("Error Executing CMD:%s Exception:%s", clean_args, to_native(traceback.format_exc()))
+            self.logger.exception(e)
             self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
 
         # Restore env settings
