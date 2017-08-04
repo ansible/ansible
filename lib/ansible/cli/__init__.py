@@ -488,7 +488,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help="don't make any changes; instead, try to predict some of the changes that may occur")
             parser.add_option('--syntax-check', dest='syntax', action='store_true',
                               help="perform a syntax check on the playbook, but do not execute it")
-            parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
+            parser.add_option("-D", "--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                               help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
         if meta_opts:
