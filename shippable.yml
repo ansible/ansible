@@ -30,6 +30,7 @@ matrix:
     - env: TEST=linux/centos7/1
     - env: TEST=linux/fedora24/1
     - env: TEST=linux/fedora25/1
+    - env: TEST=linux/fedora26/1
     - env: TEST=linux/opensuse42.1/1
     - env: TEST=linux/opensuse42.2/1
     - env: TEST=linux/ubuntu1404/1
@@ -40,6 +41,7 @@ matrix:
     - env: TEST=linux/centos7/2
     - env: TEST=linux/fedora24/2
     - env: TEST=linux/fedora25/2
+    - env: TEST=linux/fedora26/2
     - env: TEST=linux/opensuse42.1/2
     - env: TEST=linux/opensuse42.2/2
     - env: TEST=linux/ubuntu1404/2
@@ -50,6 +52,7 @@ matrix:
     - env: TEST=linux/centos7/3
     - env: TEST=linux/fedora24/3
     - env: TEST=linux/fedora25/3
+    - env: TEST=linux/fedora26/3
     - env: TEST=linux/opensuse42.1/3
     - env: TEST=linux/opensuse42.2/3
     - env: TEST=linux/ubuntu1404/3

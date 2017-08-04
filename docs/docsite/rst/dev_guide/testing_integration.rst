@@ -128,6 +128,7 @@ Most container images are for testing with Python 2:
   - centos7
   - fedora24
   - fedora25
+  - fedora26
   - opensuse42.1
   - opensuse42.2
   - ubuntu1204
