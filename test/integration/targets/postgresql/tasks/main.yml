@@ -769,6 +769,16 @@
 # ============================================================
 - include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
 
+# test extension loading
+# ============================================================
+- include: test_postgresql_ext.yml
+  vars:
+    ext_version: '{{ item }}'
+  with_items:
+    - nil
+    - '{ext_version_1}'
+    - '{ext_version_2}'
+
 #
 # Cleanup
 #

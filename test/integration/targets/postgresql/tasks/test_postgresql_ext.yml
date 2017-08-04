@@ -1,0 +1,91 @@
+- name: Enable extension
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_ext:
+    db: "{{ db_name }}"
+    state: present
+    name: "{{ ext_name }}"
+    version: "{{ ext_version }}"
+  register: result
+
+- name: assert that module reports a change
+  assert:
+    that:
+       - "result.changed == true"
+
+- name: Enable extension - idempotence test
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_ext:
+    db: "{{ db_name }}"
+    state: present
+    name: "{{ ext_name }}"
+    version: "{{ ext_version }}"
+  register: result
+
+- name: assert that module reports no change
+  assert:
+    that:
+       - "result.changed == false"
+
+- name: Check that the extension is available
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "select extname,extversion from pg_extension where extname = '{{ ext_name }}'" | psql -d "{{ db_name }}";
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- assert:
+    that:
+      - "'{{ ext_version }}' in result.stdout"
+  when:
+    - '{{ ext_version }}'
+
+- name: Disable extension
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_ext:
+    db: "{{ db_name }}"
+    state: absent
+    name: "{{ ext_name }}"
+  register: result
+  when:
+    - not '{{ ext_version }}'
+
+- name: assert that module reports a change
+  assert:
+    that:
+       - "result.changed == true"
+  when:
+    - not '{{ ext_version }}'
+
+- name: Disable extension - idempotence test
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_ext:
+    db: "{{ db_name }}"
+    state: present
+    name: "{{ ext_name }}"
+  register: result
+  when:
+    - not '{{ ext_version }}'
+
+- name: assert that module reports no change
+  assert:
+    that:
+       - "result.changed == false"
+  when:
+    - not '{{ ext_version }}'
+
+- name: Check that the extension is not available
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "select extname,extversion from pg_extension where extname = '{{ ext_name }}'" | psql -d "{{ db_name }}";
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 row)'"
