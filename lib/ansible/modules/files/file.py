@@ -464,12 +464,12 @@ def main():
             os.system("shred -u " + b_path)
         else:
             list_files_in_directory(add_delimiter_to_path(b_path))
-        module.exit_json(dest=path, changed=True, diff=diff)  
-    elif state == 'absent':   
+        module.exit_json(dest=path, changed=True, diff=diff)
+    elif state == 'absent':
         try:
             os.system("shred -u " + b_path)
         except Exception:
-           	print ("Error" )         
+            print ("Couldn't remove")
     elif state == 'touch':
         if not module.check_mode:
 
