@@ -452,8 +452,14 @@ class PlayContext(Base):
         # this ensures any become settings are obeyed correctly
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
         if new_info.connection == 'local':
-            new_info.connection_user = new_info.remote_user
-            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
+            # If the remote_user has already been set to the currently logged in user
+            # then we have already changed it.  Do not change it twice.
+            # Use the old value for remote_user for connection_user.
+            if new_info.remote_user == pwd.getpwuid(os.getuid()).pw_name:
+                new_info.connection_user = self.remote_user
+            else:
+                new_info.connection_user = new_info.remote_user
+                new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
