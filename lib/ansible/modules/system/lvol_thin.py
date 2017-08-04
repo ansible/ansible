@@ -18,11 +18,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['stable'],
+    'supported_by': 'community'
+}
+
 DOCUMENTATION = '''
 ---
 author:
     - "Pavol Ipoth <pavol.ipoth@gmail.com>"
 module: lvol_thin
+version_added: 2.4
 short_description: Configure Thin LVM logical volumes
 description:
   - This module creates, removes or resizes, converts thin logical volumes.
@@ -133,6 +140,8 @@ EXAMPLES = '''
 # Remove thin pool lvol, this also changes thin lvol to normal
 - lvol: vg=firefly lv=testpool size=2g type=thin-pool state=absent force=yes
 '''
+
+RETURN = ''''''
 
 import re
 # import module snippets
@@ -449,7 +458,7 @@ class ThinPoolLvol(Lvol):
 
         super(ThinPoolLvol, cls).create_lv(module, requested_size, unit, opts, vg_name, lv_name, pvs)
 
-    def get_thin_lvol_name(self):
+    def get_thin_lvol_name(self, state):
         thin_lvol_info = None
         lvs_cmd = self.module.get_bin_path("lvs", required=True)
 
@@ -491,7 +500,7 @@ class ThinPoolLvol(Lvol):
 
         return self
 
-    
+
 class ThinLvol(Lvol):
 
     @classmethod
@@ -716,7 +725,7 @@ def main():
                             msg = "Volume %s converted to normal LV to %s." % (lv, size)
                     elif Lvol.is_thin_pool(module, vg, lv):
                             thinPoolLvol = ThinPoolLvol(module, vg, lv, unit, opts, pvs)
-                            thin_lvol_name = thinPoolLvol.get_thin_lvol_name()
+                            thin_lvol_name = thinPoolLvol.get_thin_lvol_name(state)
 
                             if thin_lvol_name is not None:
                                 thinLvol = ThinLvol(module, vg, thin_lvol_name, unit, opts, pvs)
@@ -743,4 +752,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
