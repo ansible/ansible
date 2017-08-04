@@ -240,7 +240,6 @@ class PromptVaultSecret(VaultSecret):
 
     def __init__(self, _bytes=None, vault_id=None, prompt_formats=None):
         super(PromptVaultSecret, self).__init__(_bytes=_bytes)
-        self._bytes = _bytes
         self.vault_id = vault_id
 
         if prompt_formats is None:
