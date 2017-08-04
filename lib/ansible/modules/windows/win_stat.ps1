@@ -80,10 +80,6 @@ $result = @{
     changed = $false
     stat = @{
         exists = $false
-        isdir = $false
-        islnk = $false
-        isreg = $false
-        isshared = $false
     }
 }
 
@@ -95,6 +91,12 @@ if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) 
 If (Test-Path -Path $path)
 {
     $result.stat.exists = $true
+
+    # Initial values
+    $result.stat.isdir = $false
+    $result.stat.islnk = $false
+    $result.stat.isreg = $false
+    $result.stat.isshared = $false
 
     # Need to use -Force so it picks up hidden files
     $info = Get-Item -Force $path

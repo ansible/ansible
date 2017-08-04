@@ -155,7 +155,7 @@ stat:
             sample: True
         isdir:
             description: if the path is a directory or not
-            returned: always
+            returned: success, path exists
             type: boolean
             sample: True
         ishidden:
@@ -165,7 +165,7 @@ stat:
             sample: True
         islnk:
             description: if the path is a symbolic link or junction or not
-            returned: always
+            returned: success, path exists
             type: boolean
             sample: True
         isreadonly:
@@ -175,12 +175,12 @@ stat:
             sample: True
         isreg:
             description: if the path is a regular file
-            returned: always
+            returned: success, path exists
             type: boolean
             sample: True
         isshared:
             description: if the path is shared or not
-            returned: always
+            returned: success, path exists
             type: boolean
             sample: True
         lastaccesstime:
