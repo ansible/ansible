@@ -135,10 +135,11 @@ from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info,
 from traceback import format_exc
 
 try:
+    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # will be detected by imported HAS_BOTO3
+
 
 class ElastiCacheManager(object):
 
@@ -477,7 +478,7 @@ class ElastiCacheManager(object):
 
 def main():
     """ elasticache ansible module """
-    argument_spec             = ec2_argument_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state={'required': True, 'choices': ['present', 'absent', 'rebooted']},
         name={'required': True},
@@ -499,6 +500,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
