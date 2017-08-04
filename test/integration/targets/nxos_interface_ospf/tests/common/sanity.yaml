@@ -59,6 +59,27 @@
       that:
         - "result.changed == false"
 
+  - name: Modify properties
+    nxos_interface_ospf: &modify
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 1
+      cost: 66
+      passive_interface: false
+      hello_interval: 17
+      dead_interval: 70
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *modify
+    register: result
+
+  - assert: *false
+
   - name: remove ospf interface config
     nxos_interface_ospf: &removeconfig
       interface: "{{ testint }}"
