@@ -455,7 +455,7 @@ class ElastiCacheManager(object):
                     self.status = 'gone'
                     return
                 else:
-                    self.module.fail_json(msg=e.message, exception= format_exc(),
+                    self.module.fail_json(msg=e.message, exception=format_exc(),
                                           **camel_dict_to_snake_dict(e.response))
             cache_cluster_data = response['CacheClusters'][0]
         self.data = cache_cluster_data
@@ -488,7 +488,7 @@ def main():
         state={'required': True, 'choices': ['present', 'absent', 'rebooted']},
         name={'required': True},
         engine={'required': False, 'default': 'memcached'},
-        cache_engine_version ={'required': False, 'default': ""},
+        cache_engine_version={'required': False, 'default': ""},
         node_type={'required': False, 'default': 'cache.t2.small'},
         num_nodes={'required': False, 'default': 1, 'type': 'int'},
         # alias for compat with the original PR 1950
