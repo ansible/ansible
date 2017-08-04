@@ -53,6 +53,7 @@ class SoftLayerInventory(object):
         'primaryIpAddress',
         'datacenter',
         'tagReferences.tag.name',
+        'userData.value',
     ]
 
     vs_items = [
@@ -136,6 +137,8 @@ class SoftLayerInventory(object):
         # if there's no IP address, we can't reach it
         if 'primaryIpAddress' not in instance:
             return
+
+        instance['userData'] = instance['userData'][0]['value'] if instance['userData'] else ''
 
         dest = instance['primaryIpAddress']
 
