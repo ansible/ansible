@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2016, René Moser <mail@renemoser.net>
+# (c) 2017, René Moser <mail@renemoser.net>
 #
 # This file is part of Ansible
 #
@@ -19,93 +19,77 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
+                    'status': ['preview'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
 ---
-module: cs_nic
-short_description: Manages NICs and secondary IPs of an instance on Apache CloudStack based clouds.
+module: cs_instance_nic_secondaryip
+short_description: Manages secondary IPs of an instance on Apache CloudStack based clouds.
 description:
-    - Add and remove secondary IPs to and from a NIC.
-version_added: "2.3"
+    - Add and remove secondary IPs to and from a NIC of an instance.
+version_added: "2.4"
 author: "René Moser (@resmo)"
 options:
   vm:
     description:
       - Name of instance.
     required: true
-    aliases: ['name']
+    aliases: [ name ]
   network:
     description:
       - Name of the network.
       - Required to find the NIC if instance has multiple networks assigned.
-    required: false
-    default: null
   vm_guest_ip:
     description:
       - Secondary IP address to be added to the instance nic.
       - If not set, the API always returns a new IP address and idempotency is not given.
-    required: false
-    default: null
-    aliases: ['secondary_ip']
+    aliases: [ secondary_ip ]
   vpc:
     description:
       - Name of the VPC the C(vm) is related to.
-    required: false
-    default: null
   domain:
     description:
       - Domain the instance is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the instance is deployed in.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the instance is deployed in.
       - If not set, default zone is used.
-    required: false
-    default: null
   state:
     description:
       - State of the ipaddress.
-    required: false
-    default: "present"
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
     default: true
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Assign a specific IP to the default NIC of the VM
-- local_action:
-    module: cs_nic
+- name: Assign a specific IP to the default NIC of the VM
+  local_action:
+    module: cs_instance_nic_secondaryip
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
 
-# Assign an IP to the default NIC of the VM
 # Note: If vm_guest_ip is not set, you will get a new IP address on every run.
-- local_action:
-    module: cs_nic
+- name: Assign an IP to the default NIC of the VM
+  local_action:
+    module: cs_instance_nic_secondaryip
     vm: customer_xy
 
-# Remove a specific IP from the default NIC
-- local_action:
-    module: cs_nic
+- name: Remove a specific IP from the default NIC
+  local_action:
+    module: cs_instance_nic_secondaryip
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
     state: absent
@@ -114,7 +98,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 id:
-  description: UUID of the nic.
+  description: UUID of the NIC.
   returned: success
   type: string
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
@@ -166,13 +150,17 @@ project:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
-class AnsibleCloudStackNic(AnsibleCloudStack):
+class AnsibleCloudStackInstanceNicSecondaryIp(AnsibleCloudStack):
 
     def __init__(self, module):
-        super(AnsibleCloudStackNic, self).__init__(module)
+        super(AnsibleCloudStackInstanceNicSecondaryIp, self).__init__(module)
         self.vm_guest_ip = self.module.params.get('vm_guest_ip')
         self.nic = None
         self.returns = {
@@ -188,11 +176,11 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
             'virtualmachineid': self.get_vm(key='id'),
             'networkid': self.get_network(key='id'),
         }
-        nics = self.cs.listNics(**args)
+        nics = self.query_api('listNics', **args)
         if nics:
             self.nic = nics['nic'][0]
             return self.nic
-        self.module.fail_json(msg="NIC for VM %s in network %s not found" %(self.get_vm(key='name'), self.get_network(key='name')))
+        self.fail_json(msg="NIC for VM %s in network %s not found" % (self.get_vm(key='name'), self.get_network(key='name')))
 
     def get_secondary_ip(self):
         nic = self.get_nic()
@@ -203,7 +191,7 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
                     return secondary_ip
         return None
 
-    def present_nic(self):
+    def present_nic_ip(self):
         nic = self.get_nic()
         if not self.get_secondary_ip():
             self.result['changed'] = True
@@ -213,10 +201,7 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
             }
 
             if not self.module.check_mode:
-                res = self.cs.addIpToNic(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('addIpToNic', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -225,15 +210,13 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
                     self.vm_guest_ip = nic['ipaddress']
         return nic
 
-    def absent_nic(self):
+    def absent_nic_ip(self):
         nic = self.get_nic()
         secondary_ip = self.get_secondary_ip()
         if secondary_ip:
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.removeIpFromNic(id=secondary_ip['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % nic['errortext'])
+                res = self.query_api('removeIpFromNic', id=secondary_ip['id'])
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -241,15 +224,12 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
         return nic
 
     def get_result(self, nic):
-        super(AnsibleCloudStackNic, self).get_result(nic)
+        super(AnsibleCloudStackInstanceNicSecondaryIp, self).get_result(nic)
         if nic and not self.module.params.get('network'):
             self.module.params['network'] = nic.get('networkid')
         self.result['network'] = self.get_network(key='name')
         self.result['vm'] = self.get_vm(key='name')
         self.result['vm_guest_ip'] = self.vm_guest_ip
-        self.result['domain'] =  self.get_domain(key='path')
-        self.result['account'] = self.get_account(key='name')
-        self.result['project'] = self.get_project(key='name')
         return self.result
 
 
@@ -257,14 +237,14 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         vm=dict(required=True, aliases=['name']),
-        vm_guest_ip=dict(default=None, aliases=['secondary_ip']),
-        network=dict(default=None),
-        vpc=dict(default=None),
+        vm_guest_ip=dict(aliases=['secondary_ip']),
+        network=dict(),
+        vpc=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
-        domain=dict(default=None),
-        account=dict(default=None),
-        project=dict(default=None),
-        zone=dict(default=None),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        zone=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -277,22 +257,17 @@ def main():
         ])
     )
 
-    try:
-        acs_nic = AnsibleCloudStackNic(module)
+    acs_instance_nic_secondaryip = AnsibleCloudStackInstanceNicSecondaryIp(module)
+    state = module.params.get('state')
 
-        state = module.params.get('state')
+    if state == 'absent':
+        nic = acs_instance_nic_secondaryip.absent_nic_ip()
+    else:
+        nic = acs_instance_nic_secondaryip.present_nic_ip()
 
-        if state == 'absent':
-            nic = acs_nic.absent_nic()
-        else:
-            nic = acs_nic.present_nic()
-
-        result = acs_nic.get_result(nic)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_instance_nic_secondaryip.get_result(nic)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
