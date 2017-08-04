@@ -202,7 +202,8 @@ def common_environment():
 
     optional = (
         'HTTPTESTER',
-        'SSH_AUTH_SOCK'
+        'LD_LIBRARY_PATH',
+        'SSH_AUTH_SOCK',
     )
 
     env.update(pass_vars(required=required, optional=optional))
