@@ -5,10 +5,9 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     wait_for:
-      - "result[0]['software-information'][0]['host-name'][0]['data'] == {{ inventory_hostname_short }}"
-      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] == fxp0"
+      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] == lo0"
     format: json
     provider: "{{ netconf }}"
   register: result
@@ -23,10 +22,9 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     wait_for:
-      - "result[0]['software-information'][0]['host-name'][0]['data'] eq {{ inventory_hostname_short }}"
-      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] eq fxp0"
+      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] eq lo0"
     format: json
     provider: "{{ netconf }}"
   register: result

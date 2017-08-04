@@ -5,7 +5,7 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: json
     wait_for:
       - "result[0]['software-information'][0]['host-name'][0]['data'] neq localhost"
@@ -22,7 +22,7 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: json
     wait_for:
       - "result[0]['software-information'][0]['host-name'][0]['data'] != localhost"

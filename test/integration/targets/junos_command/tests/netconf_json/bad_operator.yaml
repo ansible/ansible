@@ -5,9 +5,9 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     wait_for:
-      - "result[0]['software-information'][0]['host-name'][0]['data'] foo fxp0"
+      - "result[0]['software-information'][0]['host-name'][0]['data'] foo lo0"
     format: json
     provider: "{{ netconf }}"
   register: result
