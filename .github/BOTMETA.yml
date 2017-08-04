@@ -564,6 +564,7 @@ files:
   $modules/remote_management/hpilo/: dagwieers haad
   $modules/remote_management/imc/: dagwieers
   $modules/remote_management/ipmi/: cloudnull
+  $modules/remote_management/manageiq/ : $team_manageiq
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/wakeonlan.py: dagwieers
   $modules/source_control/bzr.py: andreparames
@@ -906,6 +907,8 @@ files:
   $module_utils/junos.py:
     maintainers: $team_networking
     labels: networking
+  $module_utils/manageiq.py:
+    maintainers: $team_manageiq
   $module_utils/netcfg.py:
     maintainers: $team_networking
     labels: networking
@@ -1050,6 +1053,7 @@ macros:
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone tstringer
   team_cumulus: isharacomix jrrivers privateip
+  team_manageiq: gtanzillo abellotti zgalor yaacov
   team_netapp: hulquest lmprice timuster
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
