@@ -180,11 +180,6 @@ options:
                 setting, the client-side connection port is used as the source port for the server-side connection.
             - "Note: This parameter is available only when the Use Source IP (USIP) parameter is set to YES."
 
-    sc:
-        description:
-            - "State of SureConnect for the service."
-        default: off
-
     sp:
         description:
             - "Enable surge protection for the service."
@@ -621,10 +616,6 @@ def main():
         cipheader=dict(type='str'),
         usip=dict(type='bool'),
         useproxyport=dict(type='bool'),
-        sc=dict(
-            type='bool',
-            default=False,
-        ),
         sp=dict(type='bool'),
         rtspsessionidremap=dict(
             type='bool',
@@ -742,7 +733,6 @@ def main():
         'cipheader',
         'usip',
         'useproxyport',
-        'sc',
         'sp',
         'rtspsessionidremap',
         'clttimeout',
@@ -828,7 +818,6 @@ def main():
         'healthmonitor': ['bool_yes_no'],
         'useproxyport': ['bool_yes_no'],
         'rtspsessionidremap': ['bool_on_off'],
-        'sc': ['bool_on_off'],
         'accessdown': ['bool_yes_no'],
         'cmp': ['bool_yes_no'],
     }
