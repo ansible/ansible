@@ -307,7 +307,7 @@ def create_bucket(module, s3, bucket, location=None):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     configuration = {}
-    if location not in ('us-east-1' or None):
+    if location not in ('us-east-1', None):
         configuration['LocationConstraint'] = location
     try:
         if len(configuration) > 0:
@@ -324,10 +324,15 @@ def create_bucket(module, s3, bucket, location=None):
         return True
 
 
+def paginated_list(s3, bucket):
+    pg = s3.get_paginator('list_objects')
+    for page in pg.paginate(Bucket=bucket):
+        for data in page.get('Contents', {}):
+            yield data['Key']
+
+
 def list_keys(module, s3, bucket, prefix, marker, max_keys):
-    paginator = s3.get_paginator('list_objects')
-    all_keys = [page['Contents'] for page in paginator.paginate(Bucket=bucket)][0]
-    keys = [{'Key': data['Key']} for data in all_keys]
+    keys = [key for key in paginated_list(s3, bucket)]
     module.exit_json(msg="LIST operation complete", s3_keys=keys)
 
 
@@ -338,10 +343,8 @@ def delete_bucket(module, s3, bucket):
         exists = bucket_check(module, s3, bucket)
         if exists is False:
             return False
-        paginator = s3.get_paginator('list_objects')
-        objects = [page['Contents'] for page in paginator.paginate(Bucket=bucket)][0]
         # if there are contents then we need to delete them before we can delete the bucket
-        keys = [{'Key': data['Key']} for data in objects]
+        keys = [{'Key': key} for key in paginated_list(s3, bucket)]
         if keys:
             s3.delete_objects(Bucket=bucket, Delete={'Objects': keys})
         s3.delete_bucket(Bucket=bucket)
@@ -355,7 +358,7 @@ def delete_key(module, s3, bucket, obj):
         module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
         s3.delete_object(Bucket=bucket, Key=obj)
-        module.exit_json(msg="Object %s deleted from bucket %s." % (obj, bucket), changed=True)
+        module.exit_json(msg="Object deleted from bucket %s." % (bucket), changed=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed while trying to delete %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -392,9 +395,9 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
             s3.upload_file(Filename=src, Bucket=bucket, Key=obj)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-        url = url = s3.generate_presigned_url(ClientMethod='put_object',
-                                              Params={'Bucket': bucket, 'Key': obj},
-                                              ExpiresIn=expiry)
+        url = s3.generate_presigned_url(ClientMethod='put_object',
+                                        Params={'Bucket': bucket, 'Key': obj},
+                                        ExpiresIn=expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to complete PUT operation.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
