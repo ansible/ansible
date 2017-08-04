@@ -117,7 +117,7 @@ Fedora distributions.
 
 Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com/ansible/rpms/`.
 
-Ansible itself can manage earlier operating
+Ansible version 2.4 can manage earlier operating
 systems that contain Python 2.6 or higher.
 
 You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. 
