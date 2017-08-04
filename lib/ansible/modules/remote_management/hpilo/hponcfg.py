@@ -62,12 +62,13 @@ EXAMPLES = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            src = dict(required=True, type='path', aliases=['path']),
-            minfw = dict(type='str'),
+        argument_spec=dict(
+            src=dict(type='path', required=True, aliases=['path']),
+            minfw=dict(type='str'),
         )
     )
 

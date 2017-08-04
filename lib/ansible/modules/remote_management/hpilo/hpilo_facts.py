@@ -151,11 +151,11 @@ def parse_flat_interface(entry, non_numeric='hw_eth_ilo'):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            host = dict(required=True, type='str'),
-            login = dict(default='Administrator', type='str'),
-            password = dict(default='admin', type='str', no_log=True),
-            ssl_version = dict(default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
+        argument_spec=dict(
+            host=dict(type='str', required=True),
+            login=dict(type='str', default='Administrator'),
+            password=dict(type='str', default='admin', no_log=True),
+            ssl_version=dict(type='str', default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
         ),
         supports_check_mode=True,
     )
@@ -179,17 +179,17 @@ def main():
     for entry in data:
         if 'type' not in entry:
             continue
-        elif entry['type'] == 0: # BIOS Information
+        elif entry['type'] == 0:  # BIOS Information
             facts['hw_bios_version'] = entry['Family']
             facts['hw_bios_date'] = entry['Date']
-        elif entry['type'] == 1: # System Information
+        elif entry['type'] == 1:  # System Information
             facts['hw_uuid'] = entry['UUID']
             facts['hw_system_serial'] = entry['Serial Number'].rstrip()
             facts['hw_product_name'] = entry['Product Name']
             facts['hw_product_uuid'] = entry['cUUID']
-        elif entry['type'] == 209: # Embedded NIC MAC Assignment
+        elif entry['type'] == 209:  # Embedded NIC MAC Assignment
             if 'fields' in entry:
-                for (name, value) in [ (e['name'], e['value']) for e in entry['fields'] ]:
+                for (name, value) in [(e['name'], e['value']) for e in entry['fields']]:
                     if name.startswith('Port'):
                         try:
                             factname = 'hw_eth' + str(int(value) - 1)
