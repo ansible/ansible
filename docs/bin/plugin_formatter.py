@@ -255,9 +255,6 @@ def process_module(module, options, env, template, outputname, module_map, alias
     if doc is None:
         sys.exit("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
 
-    if metadata is None:
-        sys.exit("*** ERROR: MODULE MISSING METADATA: %s, %s ***\n" % (fname, module))
-
     if deprecated and 'deprecated' not in doc:
         sys.exit("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
 

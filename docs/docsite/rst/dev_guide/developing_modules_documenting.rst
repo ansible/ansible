@@ -75,7 +75,7 @@ For new modules, the following block can be simply added into your module
 
 .. code-block:: python
 
-   ANSIBLE_METADATA = {'metadata_version': '1.0',
+   ANSIBLE_METADATA = {'metadata_version': '1.1',
                        'status': ['preview'],
                        'supported_by': 'community'}
 
@@ -92,7 +92,7 @@ For new modules, the following block can be simply added into your module
     ANSIBLE_METADATA doesn't look quite right because of this.  Module
     metadata should be fixed before checking it into the repository.
 
-Version 1.0 of the metadata
+Version 1.1 of the metadata
 +++++++++++++++++++++++++++
 
 Structure
@@ -101,7 +101,7 @@ Structure
 .. code-block:: python
 
   ANSIBLE_METADATA = {
-      'metadata_version': '1.0',
+      'metadata_version': '1.1',
       'supported_by': 'community',
       'status': ['preview', 'deprecated']
   }
@@ -115,13 +115,17 @@ Fields
    of the metadata. We’ll increment Y if we add fields or legal values
    to an existing field. We’ll increment X if we remove fields or values
    or change the type or meaning of a field.
+   Current metadata_version is "1.1"
 :supported_by: This field records who supports the module.
    Default value is ``community``. Values are:
 
-   :core:
-   :curated:
-   :community:
-   
+   * core
+   * network
+   * certfied
+   * community
+   * curated (Deprecated.  Modules in this category should probably be core or
+     certified instead)
+
    For information on what the support level values entail, please see
    `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
 
@@ -141,6 +145,18 @@ Fields
    :removed: This module is not present in the release. A stub is
       kept so that documentation can be built. The documentation helps
       users port from the removed module to new modules.
+
+Changes from Version 1.0
+++++++++++++++++++++++++
+
+:metadata_version: Version updated from 1.0 to 1.1
+:supported_by: All substantive changes were to potential values of the supported_by field
+
+  * Added the certified value
+  * Deprecated the curated value, modules shipped with Ansible will use
+    certified instead.  Third party modules are encouraged not to use this as
+    it is meaningless within Ansible proper.
+  * Added the network value
 
 DOCUMENTATION Block
 -------------------

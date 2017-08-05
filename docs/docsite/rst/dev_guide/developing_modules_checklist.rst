@@ -31,7 +31,7 @@ The following  checklist items are important guidelines for people who want to c
 
     ANSIBLE_METADATA = {'status': ['preview'],
                         'supported_by': 'community',
-                        'metadata_version': '1.0'}
+                        'metadata_version': '1.1'}
 
 The complete module metadata specification is here: `Ansible metadata block <https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block>`_
 

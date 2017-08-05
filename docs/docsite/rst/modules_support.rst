@@ -18,15 +18,21 @@ The modules are hosted on GitHub in a subdirectory of the `ansible <https://gith
 Core
 ````
 
-These are modules that the core ansible team maintains and will always ship with ansible itself.
+These are modules that the Ansible Core Team maintains and will always ship with Ansible itself.
 They will also receive slightly higher priority for all requests. Non-core modules are still fully usable.
 
-Curated
+Network
 ```````
 
-Some examples of Curated modules are submitted by other companies or maintained by the community. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
+These modules are supported by the Ansible Network Team in a relationship
+similar to how the Ansible Core Team maintains the Core modules.
 
-Core Committers will review all modules becoming Curated.  Core Committers will review proposed changes to existing Curated modules once the community maintainers of the module have approved the changes. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
+Certified
+`````````
+
+Some examples of Certified modules are those submitted by other companies. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
+
+Core Committers will review all modules becoming Certified.  Core Committers will review proposed changes to existing Certified modules once the community maintainers of the module have approved the changes. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
 Also, it is strongly recommended (but not presently required) for these types of modules to have unit tests.
 
 These modules are currently shipped with Ansible, but might be shipped separately in the future.

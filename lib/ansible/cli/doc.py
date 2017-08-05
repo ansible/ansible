@@ -361,6 +361,36 @@ class DocCLI(CLI):
                     text.append(self._dump_yaml({k: opt[k]}, opt_indent))
             text.append('')
 
+    @staticmethod
+    def get_support_block(doc):
+        # Note: 'curated' is deprecated and not used in any of the modules we ship
+        support_level_msg = {'core': 'The Ansible Core Team',
+                             'network': 'The Ansible Network Team',
+                             'certified': 'an Ansible Partner',
+                             'community': 'The Ansible Community',
+                             'curated': 'A Third Party',
+                             }
+        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
+            return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
+
+        return []
+
+    @staticmethod
+    def get_metadata_block(doc):
+        text = []
+        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
+            text.append("METADATA:")
+            text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
+
+            for k in (m for m in doc['metadata'] if m not in ('version', 'metadata_version', 'supported_by')):
+                if isinstance(k, list):
+                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+                else:
+                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+            return text
+
+        return []
+
     def get_man_text(self, doc):
 
         IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date'])
@@ -380,6 +410,10 @@ class DocCLI(CLI):
 
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc.pop('deprecated'))
+
+        support_block = self.get_support_block(doc)
+        if support_block:
+            text.extend(support_block)
 
         if doc.pop('action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
@@ -433,6 +467,11 @@ class DocCLI(CLI):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
                 text.append(self._dump_yaml({k.upper(): doc[k]}, opt_indent))
+            text.append('')
+
+        metadata_block = self.get_metadata_block(doc)
+        if metadata_block:
+            text.extend(metadata_block)
             text.append('')
 
         return "\n".join(text)

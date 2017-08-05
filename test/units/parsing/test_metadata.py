@@ -41,14 +41,14 @@ from foo import bar
 """
 
 STANDARD_METADATA = b"""
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 """
 
 TEXT_STD_METADATA = b"""
 ANSIBLE_METADATA = u'''
-metadata_version: '1.0'
+metadata_version: '1.1'
 status:
   - 'stableinterface'
 supported_by: 'core'
@@ -57,7 +57,7 @@ supported_by: 'core'
 
 BYTES_STD_METADATA = b"""
 ANSIBLE_METADATA = b'''
-metadata_version: '1.0'
+metadata_version: '1.1'
 status:
   - 'stableinterface'
 supported_by: 'core'
@@ -65,45 +65,45 @@ supported_by: 'core'
 """
 
 TRAILING_COMMENT_METADATA = b"""
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'} # { Testing }
 """
 
 MULTIPLE_STATEMENTS_METADATA = b"""
-DOCUMENTATION = "" ; ANSIBLE_METADATA = {'metadata_version': '1.0',
+DOCUMENTATION = "" ; ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'} ; RETURNS = ""
 """
 
 EMBEDDED_COMMENT_METADATA = b"""
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     # { Testing }
                     'supported_by': 'core'}
 """
 
 HASH_SYMBOL_METADATA = b"""
-ANSIBLE_METADATA = {'metadata_version': '1.0 # 4',
+ANSIBLE_METADATA = {'metadata_version': '1.1 # 4',
                     'status': ['stableinterface'],
                     'supported_by': 'core # Testing '}
 """
 
 HASH_SYMBOL_METADATA = b"""
-ANSIBLE_METADATA = {'metadata_version': '1.0 # 4',
+ANSIBLE_METADATA = {'metadata_version': '1.1 # 4',
                     'status': ['stableinterface'],
                     'supported_by': 'core # Testing '}
 """
 
 HASH_COMBO_METADATA = b"""
-ANSIBLE_METADATA = {'metadata_version': '1.0 # 4',
+ANSIBLE_METADATA = {'metadata_version': '1.1 # 4',
                     'status': ['stableinterface'],
                     # { Testing }
                     'supported_by': 'core'} # { Testing }
 """
 
-METADATA = {'metadata_version': '1.0', 'status': ['stableinterface'], 'supported_by': 'core'}
-HASH_SYMBOL_METADATA = {'metadata_version': '1.0 # 4', 'status': ['stableinterface'], 'supported_by': 'core'}
+METADATA = {'metadata_version': '1.1', 'status': ['stableinterface'], 'supported_by': 'core'}
+HASH_SYMBOL_METADATA = {'metadata_version': '1.1 # 4', 'status': ['stableinterface'], 'supported_by': 'core'}
 
 METADATA_EXAMPLES = (
     # Standard import
@@ -225,15 +225,15 @@ def test_module_data_param_given_with_offset():
 
 def test_invalid_dict_metadata():
     with pytest.raises(SyntaxError):
-        assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0",\n' + REGULAR_IMPORTS)
+        assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1",\n' + REGULAR_IMPORTS)
 
     with pytest.raises(md.ParseError, message='Unable to find the end of dictionary'):
-        assert md.extract_metadata(module_ast=ast.parse(LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0"}\n' + REGULAR_IMPORTS),
-                                   module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0",\n' + REGULAR_IMPORTS,
+        assert md.extract_metadata(module_ast=ast.parse(LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1"}\n' + REGULAR_IMPORTS),
+                                   module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1",\n' + REGULAR_IMPORTS,
                                    offsets=True)
 
 
 def test_multiple_statements_limitation():
     with pytest.raises(md.ParseError, message='Multiple statements per line confuses the module metadata parser.'):
-        assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.0"}; a=b\n' + REGULAR_IMPORTS,
+        assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1"}; a=b\n' + REGULAR_IMPORTS,
                                    offsets=True)

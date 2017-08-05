@@ -27,6 +27,11 @@ import yaml
 from ansible.module_utils._text import to_text
 
 
+# There are currently defaults for all metadata fields so we can add it
+# automatically if a file doesn't specify it
+DEFAULT_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
+
+
 class ParseError(Exception):
     """Thrown when parsing a file fails"""
     pass
