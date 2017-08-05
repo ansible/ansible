@@ -86,10 +86,30 @@ import traceback
 try:
     import psycopg2
     import psycopg2.extras
+    postgresqldb_found = True
 except ImportError:
     postgresqldb_found = False
-else:
-    postgresqldb_found = True
+
+try:
+    # quote_ident is available since Psycopg 2.7
+    from psycopg2.extensions import quote_ident
+    HAS_QUOTE_IDENT = True
+except ImportError:
+    HAS_QUOTE_IDENT = False
+
+    import re
+    class QuotedIdentifier(object):
+        # See https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+        EXTENSION_PATTERN = r'[^\W\d][\w_\$]+$'
+        def __init__(self, identifier):
+            self.identifier = identifier
+
+        def getquoted(self):
+            if re.match(self.EXTENSION_PATTERN, self.identifier):
+                return self.identifier
+            else:
+                raise Exception('%r is not a valid identifier' % self.identifier)
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -97,6 +117,15 @@ from ansible.module_utils._text import to_native
 
 class NotSupportedError(Exception):
     pass
+
+
+def prepare_ext_query(cursor, query, params, name):
+    if HAS_QUOTE_IDENT:
+        query = query.format(ext=quote_ident(name, cursor))
+    else:
+        query = query.format(ext='%(ext)s')
+        params['ext'] = QuotedIdentifier(name)
+    return query
 
 
 # ===========================================
@@ -113,8 +142,10 @@ def ext_exists(cursor, ext, ver=None):
 
 def ext_delete(cursor, ext):
     if ext_exists(cursor, ext):
-        query = "DROP EXTENSION \"%s\"" % ext
-        cursor.execute(query)
+        query = "DROP EXTENSION %(ext)s"
+        params = {}
+        query = prepare_ext_query(cursor, query, params, ext)
+        cursor.execute(query, params)
         return True
     else:
         return False
@@ -122,16 +153,21 @@ def ext_delete(cursor, ext):
 def ext_create(cursor, ext, ver=None):
     if not ext_exists(cursor, ext):
         if ver:
-            query = 'CREATE EXTENSION "%(ext)s" VERSION "%(ver)s"'
+            query = 'CREATE EXTENSION {ext} VERSION %(ver)s'
         else:
-            query = 'CREATE EXTENSION "%(ext)s"'
-        cursor.execute(query, {'ext': ext, 'ver': ver})
+            query = 'CREATE EXTENSION {ext}'
+
+        params = {'ver': ver}
+        query = prepare_ext_query(cursor, query, params, ext)
+        cursor.execute(query, params)
         return True
     else:
         if ver:
             if not ext_exists(cursor, ext, ver):
-                query = 'ALTER EXTENSION "%(ext)s" UPDATE TO "%(ver)s"'
-                cursor.execute(query, {'ext': ext, 'ver': ver})
+                query = 'ALTER EXTENSION {ext} UPDATE TO %(ver)s'
+                params = {'ver': ver}
+                query = prepare_ext_query(cursor, query, params, ext)
+                cursor.execute(query, params)
                 return True
         return False
 
@@ -156,6 +192,8 @@ def main():
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
+    elif not HAS_QUOTE_IDENT:
+        psycopg2.extensions.register_adapter(QuotedIdentifier, lambda identifier: identifier)
 
     db = module.params["db"]
     ext = module.params["ext"]
