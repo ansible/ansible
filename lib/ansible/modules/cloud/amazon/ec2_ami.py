@@ -334,7 +334,6 @@ snapshots_deleted:
 
 import sys
 import time
-
 import traceback
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, boto3_conn, camel_dict_to_snake_dict, HAS_BOTO3
 from ansible.module_utils.basic import AnsibleModule
@@ -346,27 +345,21 @@ except ImportError:
 
 
 def get_block_device_mapping(image):
-    """
-    Retrieves block device mapping from AMI
-    """
-
-    block_device_mapping = dict()
-
-    if image is not None and hasattr(image, 'block_device_mapping'):
-        block_device_mapping = getattr(image, 'block_device_mapping')
+    block_device_mapping = {}
+    if image is not None and hasattr(image, 'BlockDeviceMapping'):
+        block_device_mapping = getattr(image, 'BlockDeviceMapping')
         for device_name in block_device_mapping.keys():
             block_device_mapping_dict[device_name] = {
-                'size': block_device_mapping[device_name].size,
-                'snapshot_id': block_device_mapping[device_name].snapshot_id,
-                'volume_type': block_device_mapping[device_name].volume_type,
-                'encrypted': block_device_mapping[device_name].encrypted,
-                'delete_on_termination': block_device_mapping[device_name].delete_on_termination
+                'Size': block_device_mapping[device_name].get('Size'),
+                'SnapshotId': block_device_mapping[device_name].get('SnapshotId'),
+                'VolumeType': block_device_mapping[device_name].get('VolumeType'),
+                'Encrypted': block_device_mapping[device_name].get('Encrypted'),
+                'DeleteOnTermination': block_device_mapping[device_name].get('DeleteOnTermination')
             }
     return block_device_mapping
 
 
 def get_ami_info(image):
-
     return dict(
         image_id=image.id,
         state=image.state,
@@ -386,7 +379,6 @@ def get_ami_info(image):
 
 
 def create_image(module, connection):
-
     instance_id = module.params.get('instance_id')
     name = module.params.get('name')
     wait = module.params.get('wait')
@@ -406,20 +398,18 @@ def create_image(module, connection):
             'Name': name,
             'Description': description
         }
-
         images = connection.describe_images(
             Filters=[
                 {
                     'Name': 'name',
-                    'Values': [name, ]
+                    'Values': [name]
                 },
             ],
         ).get('Images')
 
+        # ensure that launch_permissions are up to date
         if images and images[0]:
-            # ensure that launch_permissions are up to date
             update_image(module, connection, images[0].get('ImageId'))
-
         block_device_mapping = None
         if device_mapping:
             block_device_mapping = BlockDeviceMapping()
@@ -430,7 +420,6 @@ def create_image(module, connection):
                 del device['DeviceName']
                 bd = BlockDeviceType(**device)
                 block_device_mapping[device_name] = bd
-
         if instance_id:
             params['InstanceId'] = instance_id
             params['NoReboot'] = no_reboot
@@ -456,7 +445,6 @@ def create_image(module, connection):
     for i in range(wait_timeout):
         try:
             image = get_image_by_id(connection, image_id)
-
             if image.state == 'available':
                 break
             elif image.state == 'failed':
@@ -476,6 +464,7 @@ def create_image(module, connection):
             connection.create_tags(image_id, tags)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error tagging image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
     if launch_permissions:
         try:
             image = get_image_by_id(connection, image_id)
@@ -488,14 +477,11 @@ def create_image(module, connection):
 
 
 def deregister_image(module, connection):
-
-    image_id = module.params.get('image_id')
-    delete_snapshot = module.params.get('delete_snapshot')
-    wait = module.params.get('wait')
-    wait_timeout = module.params.get('wait_timeout')
-
+    image_id = module.params.get('ImageId')
+    delete_snapshot = module.params.get('DeleteSnapshot')
+    wait = module.params.get('Wait')
+    wait_timeout = module.params.get('WaitTimeout')
     image = get_image_by_id(connection, image)
-
     if image is None:
         module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
 
@@ -506,11 +492,11 @@ def deregister_image(module, connection):
             snapshots.append(image.block_device_mapping[key].snapshot_id)
 
     # When trying to re-delete an already deleted image it doesn't raise an exception, it just returns an object without image attributes.
-    if hasattr(image, 'id'):
+    if hasattr(image, 'Id'):
         try:
             params = {
-                'image_id': image_id,
-                'delete_snapshot': delete_snapshot
+                'ImageId': image_id,
+                'DeleteSnapshot': delete_snapshot
             }
             res = connection.deregister_image(**params)
         except botocore.exceptions.ClientError as e:
@@ -527,7 +513,6 @@ def deregister_image(module, connection):
     if wait and wait_timeout <= time.time():
         # waiting took too long
         module.fail_json(msg="Timed out waiting for image to be deregistered/deleted.")
-
     # Boto library has hardcoded the deletion of the snapshot for the root volume mounted as '/dev/sda1' only
     # Make it possible to delete all snapshots which belong to image, including root block device mapped as '/dev/xvda'
     delete_complete_message = "AMI deregister/delete operation complete."
@@ -536,8 +521,8 @@ def deregister_image(module, connection):
             for snapshot_id in snapshots:
                 connection.delete_snapshot(snapshot_id)
         except botocore.exceptions.ClientError as e:
+            # Don't error out if root volume snapshot was already deleted as part of deregister_image
             if e.error_code == 'InvalidSnapshot.NotFound':
-                # Don't error out if root volume snapshot was already deleted as part of deregister_image
                 pass
         module.exit_json(msg=delete_complete_message, changed=True, snapshots_deleted=snapshots)
     else:
@@ -545,17 +530,12 @@ def deregister_image(module, connection):
 
 
 def update_image(module, connection, image_id):
-
     launch_permissions = module.params.get('launch_permissions') or []
-
     if 'user_ids' in launch_permissions:
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
-
     image = get_image_by_id(connection, image_id)
-
     if image is None:
         module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
-
     try:
         set_permissions = connection.describe_image_attribute(Attribute='launchPermission', ImageId=image_id).get('LaunchPermissions')
         if set_permissions != launch_permissions:
@@ -618,14 +598,11 @@ def main():
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):
             module.fail_json(msg='image_id needs to be an ami image to registered/delete')
-
         deregister_image(module, connection)
-
     elif module.params.get('state') == 'present':
         if module.params.get('image_id') and module.params.get('launch_permissions'):
             # Update image's launch permissions
             update_image(module, connection, module.params.get('image_id'))
-
         # Changed is always set to true when provisioning a new AMI
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
             module.fail_json(msg='instance_id or device_mapping (register from ebs snapshot) parameter is required for new image')
