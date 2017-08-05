@@ -25,7 +25,7 @@ module: ec2_ami
 version_added: "1.3"
 short_description: create or destroy an image in ec2
 description:
-     - Creates or deletes ec2 images.
+     - Regsiters or deregisters ec2 images.
 options:
   instance_id:
     description:
@@ -73,7 +73,7 @@ options:
     default: 300
   state:
     description:
-      - Create or deregister/delete AMI.
+      - Create or deregister AMI.
     required: false
     default: 'present'
     choices: [ "absent", "present" ]
@@ -410,7 +410,7 @@ def create_image(module, connection):
     # of subsequent DescribeImages API call using the new image id returned.
     for i in range(wait_timeout):
         try:
-            image = get_image_by_id(connection, image_id)
+            image = get_image_by_id(module, connection, image_id)
             if image.state == 'available':
                 break
             elif image.state == 'failed':
@@ -433,7 +433,7 @@ def create_image(module, connection):
 
     if launch_permissions:
         try:
-            image = get_image_by_id(connection, image_id)
+            image = get_image_by_id(module, connection, image_id)
             image.set_launch_permissions(**launch_permissions)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error setting launch permissions for image: " + image_id + " - " + str(e), exception=traceback.format_exc(),
@@ -443,11 +443,11 @@ def create_image(module, connection):
 
 
 def deregister_image(module, connection):
-    image_id = module.params.get('ImageId')
-    delete_snapshot = module.params.get('DeleteSnapshot')
-    wait = module.params.get('Wait')
-    wait_timeout = module.params.get('WaitTimeout')
-    image = get_image_by_id(connection, image)
+    image_id = module.params.get('image_id')
+    delete_snapshot = module.params.get('delete_snapshot')
+    wait = module.params.get('wait')
+    wait_timeout = module.params.get('wait_timeout')
+    image = get_image_by_id(module, connection, image_id)
     if image is None:
         module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
 
@@ -457,8 +457,8 @@ def deregister_image(module, connection):
         for key in image.block_device_mapping:
             snapshots.append(image.block_device_mapping[key].snapshot_id)
 
-    # When trying to re-delete an already deleted image it doesn't raise an exception, it just returns an object without image attributes.
-    if hasattr(image, 'Id'):
+    # When trying to re-deregister an already deregistered image it doesn't raise an exception, it just returns an object without image attributes.
+    if hasattr(image, 'ImageId'):
         try:
             params = {
                 'ImageId': image_id,
@@ -468,38 +468,38 @@ def deregister_image(module, connection):
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error deregistering image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
-        module.exit_json(msg="Image %s has already been deleted." % image_id, changed=False)
+        module.exit_json(msg="Image %s has already been deregistered." % image_id, changed=False)
 
     # wait here until the image is gone
-    image = get_image_by_id(connection, image_id)
+    image = get_image_by_id(module, connection, image_id)
     wait_timeout = time.time() + wait_timeout
     while wait and wait_timeout > time.time() and image is not None:
-        image = get_image_by_id(connection, image_id)
+        image = get_image_by_id(module, connection, image_id)
         time.sleep(3)
     if wait and wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg="Timed out waiting for image to be deregistered/deleted.")
+        module.fail_json(msg="Timed out waiting for image to be deregistered.")
     # Boto library has hardcoded the deletion of the snapshot for the root volume mounted as '/dev/sda1' only
-    # Make it possible to delete all snapshots which belong to image, including root block device mapped as '/dev/xvda'
-    delete_complete_message = "AMI deregister/delete operation complete."
+    # Make it possible to deregister all snapshots which belong to image, including root block device mapped as '/dev/xvda'
+    deregister_complete_message = "AMI deregister operation complete."
     if delete_snapshot:
         try:
             for snapshot_id in snapshots:
                 connection.delete_snapshot(snapshot_id)
         except botocore.exceptions.ClientError as e:
-            # Don't error out if root volume snapshot was already deleted as part of deregister_image
+            # Don't error out if root volume snapshot was already deregistered as part of deregister_image
             if e.error_code == 'InvalidSnapshot.NotFound':
                 pass
-        module.exit_json(msg=delete_complete_message, changed=True, snapshots_deleted=snapshots)
+        module.exit_json(msg=deregister_complete_message, changed=True, snapshots_deleted=snapshots)
     else:
-        module.exit_json(msg=delete_complete_message, changed=True)
+        module.exit_json(msg=deregister_complete_message, changed=True)
 
 
 def update_image(module, connection, image_id):
     launch_permissions = module.params.get('launch_permissions') or []
     if 'user_ids' in launch_permissions:
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
-    image = get_image_by_id(connection, image_id)
+    image = get_image_by_id(module, connection, image_id)
     if image is None:
         module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
     try:
@@ -520,7 +520,7 @@ def update_image(module, connection, image_id):
         module.fail_json(msg="Error updating image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
-def get_image_by_id(connection, image_id):
+def get_image_by_id(module, connection, image_id):
     try:
         return connection.describe_images(ImageIds=[image_id]).get('Images')
     except botocore.exceptions.ClientError as e:
@@ -532,22 +532,22 @@ def main():
     argument_spec.update(dict(
         instance_id=dict(),
         image_id=dict(),
-        architecture=dict(default="x86_64"),
+        architecture=dict(default='x86_64'),
         kernel_id=dict(),
-        virtualization_type=dict(default="hvm"),
+        virtualization_type=dict(default='hvm'),
         root_device_name=dict(),
         delete_snapshot=dict(default=False, type='bool'),
         name=dict(),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(default=900, type='int'),
-        description=dict(default=""),
+        description=dict(default=''),
         no_reboot=dict(default=False, type='bool'),
         state=dict(default='present'),
         device_mapping=dict(type='list'),
         tags=dict(type='dict'),
         launch_permissions=dict(type='dict')
-    )
-    )
+    ))
+
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
@@ -563,7 +563,7 @@ def main():
 
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):
-            module.fail_json(msg='image_id needs to be an ami image to registered/delete')
+            module.fail_json(msg='The parameter image_id needs to be an AMI to deregister.')
         deregister_image(module, connection)
     elif module.params.get('state') == 'present':
         if module.params.get('image_id') and module.params.get('launch_permissions'):
@@ -571,9 +571,9 @@ def main():
             update_image(module, connection, module.params.get('image_id'))
         # Changed is always set to true when provisioning a new AMI
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
-            module.fail_json(msg='instance_id or device_mapping (register from ebs snapshot) parameter is required for new image')
+            module.fail_json(msg='The parameters instance_id or device_mapping (register from EBS snapshot) are required for a new image.')
         if not module.params.get('name'):
-            module.fail_json(msg='THe name parameter is required for new image.')
+            module.fail_json(msg='The name parameter is required for a new image.')
         create_image(module, connection)
 
 
