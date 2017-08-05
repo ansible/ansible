@@ -11,7 +11,7 @@
 - name: assert that module reports a change
   assert:
     that:
-       - "result.changed == true"
+       - "result.changed"
 
 - name: Enable extension - idempotence test
   become_user: "{{ pg_user }}"
@@ -26,7 +26,7 @@
 - name: assert that module reports no change
   assert:
     that:
-       - "result.changed == false"
+       - "not result.changed"
 
 - name: Check that the extension is available
   become_user: "{{ pg_user }}"
@@ -51,7 +51,7 @@
 - name: assert that module reports a change
   assert:
     that:
-       - "result.changed == true"
+       - "result.changed"
 
 - name: Disable extension - idempotence test
   become_user: "{{ pg_user }}"
@@ -65,7 +65,7 @@
 - name: assert that module reports no change
   assert:
     that:
-       - "result.changed == false"
+       - "not result.changed"
 
 - name: Check that the extension is not available
   become_user: "{{ pg_user }}"
