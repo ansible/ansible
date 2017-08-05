@@ -2,22 +2,17 @@
 
 # James Laska (jlaska@redhat.com)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -196,8 +191,20 @@ EXAMPLES = '''
     autosubscribe: yes
 '''
 
+RETURN = '''
+subscribed_pool_ids:
+    description: List of pool IDs to which system is now subscribed
+    returned: success
+    type: complex
+    contains: {
+        "8a85f9815ab905d3015ab928c7005de4": "1"
+    }
+'''
+
 import os
 import re
+import shutil
+import tempfile
 import types
 
 from ansible.module_utils.basic import AnsibleModule
@@ -234,16 +241,22 @@ class RegistrationBase(object):
 
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
+
         if os.path.isfile(plugin_conf):
+            tmpfd, tmpfile = tempfile.mkstemp()
+            shutil.copy2(plugin_conf, tmpfile)
             cfg = configparser.ConfigParser()
-            cfg.read([plugin_conf])
+            cfg.read([tmpfile])
+
             if enabled:
                 cfg.set('main', 'enabled', 1)
             else:
                 cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
+
+            fd = open(tmpfile, 'w+')
             cfg.write(fd)
             fd.close()
+            self.module.atomic_move(tmpfile, plugin_conf)
 
     def subscribe(self, **kwargs):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -324,7 +337,7 @@ class Rhsm(RegistrationBase):
 
     def register(self, username, password, autosubscribe, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register, environment,
-                 rhsm_baseurl, server_insecure):
+                 rhsm_baseurl, server_insecure, server_hostname):
         '''
             Register the current system to the provided RHSM or Sat6 server
             Raises:
@@ -341,6 +354,9 @@ class Rhsm(RegistrationBase):
 
         if server_insecure:
             args.extend(['--insecure'])
+
+        if server_hostname:
+            args.extend(['--serverurl', server_hostname])
 
         if activationkey:
             args.extend(['--activationkey', activationkey])
@@ -392,6 +408,8 @@ class Rhsm(RegistrationBase):
         '''
         args = [SUBMAN_CMD, 'unregister']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        self.update_plugin_conf('rhnplugin', False)
+        self.update_plugin_conf('subscription-manager', False)
 
     def subscribe(self, regexp):
         '''
@@ -538,6 +556,7 @@ class RhsmPools(object):
     """
         This class is used for manipulating pools subscriptions with RHSM
     """
+
     def __init__(self, module, consumed=False):
         self.module = module
         self.products = self._load_product_list(consumed)
@@ -702,7 +721,7 @@ def main():
                 rhsm.configure(**module.params)
                 rhsm.register(username, password, autosubscribe, activationkey, org_id,
                               consumer_type, consumer_name, consumer_id, force_register,
-                              environment, rhsm_baseurl, server_insecure)
+                              environment, rhsm_baseurl, server_insecure, server_hostname)
                 if pool_ids:
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
                 else:

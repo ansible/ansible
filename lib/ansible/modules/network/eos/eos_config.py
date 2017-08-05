@@ -30,7 +30,7 @@ short_description: Manage Arista EOS configuration sections
 description:
   - Arista EOS configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
-    an implementation for working with eos configuration sections in
+    an implementation for working with EOS configuration sections in
     a deterministic way.  This module works with either CLI or eAPI
     transports.
 extends_documentation_fragment: eos
@@ -115,7 +115,7 @@ options:
         will be removed in a future release.
     required: false
     default: false
-    choices: ['yes', 'no']
+    type: bool
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -125,19 +125,21 @@ options:
         exist, it is created.
     required: false
     default: no
-    choices: ['yes', 'no']
+    type: bool
     version_added: "2.2"
-  config:
+  running_config:
     description:
       - The module, by default, will connect to the remote device and
         retrieve the current running-config to use as a base for comparing
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
-        every task in a playbook.  The I(config) argument allows the
+        every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
-        config for comparison.
+        config for this module.
     required: false
     default: null
+    aliases: ['config']
+    version_added: "2.4"
   defaults:
     description:
       - The I(defaults) argument will influence how the running-config
@@ -147,6 +149,7 @@ options:
         is issued without the all keyword
     required: false
     default: false
+    type: bool
     version_added: "2.2"
   save:
     description:
@@ -156,27 +159,78 @@ options:
         no changes are made, the configuration is still saved to the
         startup config.  This option will always cause the module to
         return changed.
+      - This option is deprecated as of Ansible 2.4, use C(save_when)
     required: false
     default: false
+    type: bool
     version_added: "2.2"
+  save_when:
+    description:
+      - When changes are made to the device running-configuration, the
+        changes are not copied to non-volatile storage by default.  Using
+        this argument will change that before.  If the argument is set to
+        I(always), then the running-config will always be copied to the
+        startup-config and the I(modified) flag will always be set to
+        True.  If the argument is set to I(modified), then the running-config
+        will only be copied to the startup-config if it has changed since
+        the last save to startup-config.  If the argument is set to
+        I(never), the running-config will never be copied to the the
+        startup-config
+    required: false
+    default: never
+    choices: ['always', 'never', 'modified']
+    version_added: "2.4"
+  diff_against:
+    description:
+      - When using the C(ansible-playbook --diff) command line argument the i
+        module can generate diffs against different sources.
+      - When this option is configure as I(startup), the module will return
+        the diff of the running-config against the startup-config.
+      - When this option is configured as I(intended), the module will
+        return the diff of the running-config against the configuration
+        provided in the C(intended_config) argument.
+      - When this option is configured as I(running), the module will
+        return the before and after diff of the running-config with respect
+        to any changes made to the device configuration.
+      - When this option is configured as C(session), the diff returned will
+        be based on the configuration session.
+    required: false
+    default: session
+    choices: ['startup', 'running', 'intended', 'session']
+    version_added: "2.4"
+  diff_ignore_lines:
+    description:
+      - Use this argument to specify one or more lines that should be
+        ignored during the diff.  This is used for lines in the configuration
+        that are automatically updated by the system.  This argument takes
+        a list of regular expressions or exact line matches.
+    required: false
+    version_added: "2.4"
+  intended_config:
+    description:
+      - The C(intended_config) provides the master configuration that
+        the node should conform to and is used to check the final
+        running-config against.   This argument will not modify any settings
+        on the remote device and is strictly used to check the compliance
+        of the current device's configuration against.  When specifying this
+        argument, the task should also modify the C(diff_against) value and
+        set it to I(intended).
+    required: false
+    version_added: "2.4"
 """
 
 EXAMPLES = """
-- eos_config:
+- name: configure top level settings
+  eos_config:
     lines: hostname {{ inventory_hostname }}
 
-- eos_config:
-    lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-      - 40 permit ip 4.4.4.4/32 any log
-      - 50 permit ip 5.5.5.5/32 any log
-    parents: ip access-list test
-    before: no ip access-list test
-    match: exact
+- name: diff against a provided master config
+  eos_config:
+    diff_against: config
+    config: "{{ lookup('file', 'master.cfg') }}"
 
-- eos_config:
+- name: load an acl into the device
+  eos_config:
     lines:
       - 10 permit ip 1.1.1.1/32 any log
       - 20 permit ip 2.2.2.2/32 any log
@@ -189,12 +243,22 @@ EXAMPLES = """
 - name: load configuration from file
   eos_config:
     src: eos.cfg
+
+- name: diff the running config against a master config
+  eos_config:
+    diff_against: intended
+    intended_config: "{{ lookup('file', 'master.cfg') }}"
 """
 
 RETURN = """
 commands:
   description: The set of commands that will be pushed to the remote device
-  returned: Only when lines is specified.
+  returned: always
+  type: list
+  sample: ['hostname switch01', 'interface Ethernet1', 'no shutdown']
+updates:
+  description: The set of commands that will be pushed to the remote device
+  returned: always
   type: list
   sample: ['hostname switch01', 'interface Ethernet1', 'no shutdown']
 backup_path:
@@ -208,17 +272,11 @@ from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.eos import run_commands
 from ansible.module_utils.eos import eos_argument_spec
-from ansible.module_utils.eos import check_args as eos_check_args
+from ansible.module_utils.eos import check_args
 
-def check_args(module, warnings):
-    eos_check_args(module, warnings)
-    if module.params['force']:
-        warnings.append('The force argument is deprecated, please use '
-                        'match=none instead.  This argument will be '
-                        'removed in the future')
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=3)
+    candidate = NetworkConfig(indent=2)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
@@ -226,51 +284,19 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def get_running_config(module):
-    flags = []
-    if module.params['defaults'] is True:
-        flags.append('all')
-    return get_config(module, flags)
 
-def run(module, result):
-    match = module.params['match']
-    replace = module.params['replace']
+def get_running_config(module, config=None):
+    contents = module.params['running_config']
+    if not contents:
+        if config:
+            contents = config
+        else:
+            flags = []
+            if module.params['defaults']:
+                flags.append('all')
+            contents = get_config(module, flags=flags)
+    return NetworkConfig(indent=2, contents=contents)
 
-    candidate = get_candidate(module)
-
-    if match != 'none' and replace != 'config':
-        config_text = get_running_config(module)
-        config = NetworkConfig(indent=3, contents=config_text)
-        path = module.params['parents']
-        configobjs = candidate.difference(config, match=match, replace=replace, path=path)
-    else:
-        configobjs = candidate.items
-
-    if configobjs:
-        commands = dumps(configobjs, 'commands').split('\n')
-
-        if module.params['lines']:
-            if module.params['before']:
-                commands[:0] = module.params['before']
-
-            if module.params['after']:
-                commands.extend(module.params['after'])
-
-        result['commands'] = commands
-        result['updates'] = commands
-
-        replace = module.params['replace'] == 'config'
-        commit = not module.check_mode
-
-        response = load_config(module, commands, replace=replace, commit=commit)
-
-        if 'diff' in response:
-            result['diff'] = {'prepared': response['diff']}
-
-        if 'session' in response:
-            result['session'] = response['session']
-
-        result['changed'] = True
 
 def main():
     """ main entry point for module execution
@@ -288,33 +314,38 @@ def main():
         replace=dict(default='line', choices=['line', 'block', 'config']),
 
         defaults=dict(type='bool', default=False),
-
         backup=dict(type='bool', default=False),
-        save=dict(default=False, type='bool'),
 
-        # deprecated arguments (Ansible 2.3)
-        config=dict(),
-        # this argument is deprecated in favor of setting match: none
-        # it will be removed in a future version
-        force=dict(default=False, type='bool'),
+        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+
+        diff_against=dict(choices=['startup', 'session', 'intended', 'running'], default='session'),
+        diff_ignore_lines=dict(type='list'),
+
+        running_config=dict(aliases=['config']),
+        intended_config=dict(),
+
+        # save is deprecated as of ans2.4, use save_when instead
+        save=dict(default=False, type='bool', removed_in_version='2.4'),
+
+        # force argument deprecated in ans2.2
+        force=dict(default=False, type='bool', removed_in_version='2.2')
     )
 
     argument_spec.update(eos_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('save', 'save_when')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines']),
-                   ('replace', 'config', ['src'])]
+                   ('replace', 'config', ['src']),
+                   ('diff_against', 'intended', ['intended_config'])]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
-
-    if module.params['force'] is True:
-        module.params['match'] = 'none'
 
     warnings = list()
     check_args(module, warnings)
@@ -323,18 +354,111 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    if module.params['backup']:
-        result['__backup__'] = get_config(module)
+    config = None
+
+    if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
+        contents = get_config(module)
+        config = NetworkConfig(indent=2, contents=contents)
+        if module.params['backup']:
+            result['__backup__'] = contents
 
     if any((module.params['src'], module.params['lines'])):
-        run(module, result)
+        match = module.params['match']
+        replace = module.params['replace']
 
-    if module.params['save']:
-        if not module.check_mode:
-            response = run_commands(module, ['show running-config diffs'])
-            if len(response[0]):
-                run_commands(module, ['copy running-config startup-config'])
-                result['changed'] = True
+        candidate = get_candidate(module)
+
+        if match != 'none' and replace != 'config':
+            config_text = get_running_config(module)
+            config = NetworkConfig(indent=3, contents=config_text)
+            path = module.params['parents']
+            configobjs = candidate.difference(config, match=match, replace=replace, path=path)
+        else:
+            configobjs = candidate.items
+
+        if configobjs:
+            commands = dumps(configobjs, 'commands').split('\n')
+
+            if module.params['before']:
+                commands[:0] = module.params['before']
+
+            if module.params['after']:
+                commands.extend(module.params['after'])
+
+            result['commands'] = commands
+            result['updates'] = commands
+
+            replace = module.params['replace'] == 'config'
+            commit = not module.check_mode
+
+            response = load_config(module, commands, replace=replace, commit=commit)
+
+            if 'diff' in response and module.params['diff_against'] == 'session':
+                result['diff'] = {'prepared': response['diff']}
+
+            if 'session' in response:
+                result['session'] = response['session']
+
+            result['changed'] = True
+
+
+    running_config = None
+    startup_config = None
+
+    diff_ignore_lines = module.params['diff_ignore_lines']
+
+    if module.params['save_when'] != 'never':
+        output = run_commands(module, [{'command': 'show running-config', 'output': 'text'},
+                                       {'command': 'show startup-config', 'output': 'text'}])
+
+        running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
+        startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
+
+        if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
+            result['changed'] = True
+            if not module.check_mode:
+                cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
+                run_commands(module, [cmd])
+            else:
+                module.warn('Skipping command `copy running-config startup-config` '
+                            'due to check_mode.  Configuration not copied to '
+                            'non-volatile storage')
+
+    if module._diff:
+        if not running_config:
+            output = run_commands(module, {'command': 'show running-config', 'output': 'text'})
+            contents = output[0]
+        else:
+            contents = running_config.config_text
+
+        # recreate the object in order to process diff_ignore_lines
+        running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+
+        if module.params['diff_against'] == 'running':
+            if module.check_mode:
+                module.warn("unable to perform diff against running-config due to check mode")
+                contents = None
+            else:
+                contents = config.config_text
+
+        elif module.params['diff_against'] == 'startup':
+            if not startup_config:
+                output = run_commands(module, {'command': 'show startup-config', 'output': 'text'})
+                contents = output[0]
+            else:
+                contents = startup_config.config_text
+
+        elif module.params['diff_against'] == 'intended':
+            contents = module.params['intended_config']
+
+        if contents is not None:
+            base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+
+            if running_config.sha1 != base_config.sha1:
+                result.update({
+                    'changed': True,
+                    'diff': {'before': str(base_config), 'after': str(running_config)}
+                })
 
     module.exit_json(**result)
 

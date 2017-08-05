@@ -47,6 +47,8 @@ class TestNxosVrfModule(TestNxosModule):
             output = list()
 
             for command in commands:
+                if isinstance(command, dict):
+                    command = command['command']
                 filename = str(command).split(' | ')[0].replace(' ', '_')
                 output.append(load_fixture('nxos_vrf', filename))
             return output

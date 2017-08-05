@@ -1,20 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Team
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -53,7 +44,42 @@ options:
         required: true
         description:
             - Action to perform
-        choices: [ 'latest_release' ]
+        choices: [ 'latest_release', 'create_release' ]
+    tag:
+        required: false
+        description:
+            - Tag name when creating a release. Required when using action is set to C(create_release).
+        version_added: 2.4
+    target:
+        required: false
+        description:
+            - Target of release when creating a release
+        version_added: 2.4
+    name:
+        required: false
+        description:
+            - Name of release when creating a release
+        version_added: 2.4
+    body:
+        required: false
+        description:
+            - Description of the release when creating a release
+        version_added: 2.4
+    draft:
+        required: false
+        description:
+            - Sets if the release is a draft or not. (boolean)
+        default: false
+        version_added: 2.4
+        choices: ['True', 'False']
+    prerelease:
+        required: false
+        description:
+            - Sets if the release is a prerelease or not. (boolean)
+        default: false
+        version_added: 2.4
+        choices: ['True', 'False']
+
 
 author:
     - "Adrian Moisey (@adrianmoisey)"
@@ -62,7 +88,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Get latest release of test/test
+- name: Get latest release of testuseer/testrepo
   github_release:
     token: tokenabc1234567890
     user: testuser
@@ -75,6 +101,18 @@ EXAMPLES = '''
     password: secret123
     repo: testrepo
     action: latest_release
+
+- name: Create a new release
+  github:
+    token: tokenabc1234567890
+    user: testuser
+    repo: testrepo
+    action: create_release
+    tag: test
+    target: master
+    name: My Release
+    body: Some description
+
 '''
 
 RETURN = '''
@@ -91,7 +129,9 @@ try:
     HAS_GITHUB_API = True
 except ImportError:
     HAS_GITHUB_API = False
-from ansible.module_utils.basic import AnsibleModule, get_exception
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -101,11 +141,19 @@ def main():
             user=dict(required=True),
             password=dict(no_log=True),
             token=dict(no_log=True),
-            action=dict(required=True, choices=['latest_release']),
+            action=dict(
+                required=True, choices=['latest_release', 'create_release']),
+            tag=dict(type='str'),
+            target=dict(type='str'),
+            name=dict(type='str'),
+            body=dict(type='str'),
+            draft=dict(type='bool', default=False),
+            prerelease=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_one_of=(('password', 'token'),),
         mutually_exclusive=(('password', 'token'),),
+        required_if=[('action', 'create_release', ['tag'])],
     )
 
     if not HAS_GITHUB_API:
@@ -117,6 +165,12 @@ def main():
     password = module.params['password']
     login_token = module.params['token']
     action = module.params['action']
+    tag = module.params.get('tag')
+    target = module.params.get('target')
+    name = module.params.get('name')
+    body = module.params.get('body')
+    draft = module.params.get('draft')
+    prerelease = module.params.get('prerelease')
 
     # login to github
     try:
@@ -127,9 +181,8 @@ def main():
 
         # test if we're actually logged in
         gh_obj.me()
-    except github3.AuthenticationFailed:
-        e = get_exception()
-        module.fail_json(msg='Failed to connect to GitHub: %s' % e,
+    except github3.AuthenticationFailed as e:
+        module.fail_json(msg='Failed to connect to GitHub: %s' % to_native(e),
                          details="Please check username and password or token "
                                  "for repository %s" % repo)
 
@@ -140,6 +193,19 @@ def main():
 
     if action == 'latest_release':
         release = repository.latest_release()
+        if release:
+            module.exit_json(tag=release.tag_name)
+        else:
+            module.exit_json(tag=None)
+
+    if action == 'create_release':
+        release_exists = repository.release_from_tag(tag)
+        if release_exists:
+            module.exit_json(
+                skipped=True, msg="Release for tag %s already exists." % tag)
+
+        release = repository.create_release(
+            tag, target, name, body, draft, prerelease)
         if release:
             module.exit_json(tag=release.tag_name)
         else:

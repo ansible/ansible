@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -73,6 +63,10 @@ EXAMPLES = '''
     dev: /dev/sdb1
     opts: -cc
 '''
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def _get_dev_size(dev, module):
     """ Return size in bytes of device. Returns int """
@@ -96,17 +90,17 @@ def _get_fs_size(fssize_cmd, dev, module):
                     break
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err )
-    elif 'xfs_info' == fssize_cmd:
+    elif 'xfs_growfs' == fssize_cmd:
         # Get Block count and Block size
-        rc, size, err = module.run_command("%s %s" % (cmd, dev))
+        rc, size, err = module.run_command([cmd, '-n', dev])
         if rc == 0:
             for line in size.splitlines():
                 col = line.split('=')
                 if col[0].strip() == 'data':
                     if col[1].strip() != 'bsize':
-                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "bsize")')
+                        module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "bsize")')
                     if col[2].split()[1] != 'blocks':
-                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "blocks")')
+                        module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "blocks")')
                     block_size = int(col[2].split()[0])
                     block_count = int(col[3].split(',')[0])
                     break
@@ -176,7 +170,7 @@ def main():
             'grow' : 'xfs_growfs',
             'grow_flag' : None,
             'force_flag' : '-f',
-            'fsinfo': 'xfs_info',
+            'fsinfo': 'xfs_growfs',
         },
         'btrfs' : {
             'mkfs' : 'mkfs.btrfs',
@@ -264,7 +258,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

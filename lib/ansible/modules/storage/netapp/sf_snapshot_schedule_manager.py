@@ -1,21 +1,11 @@
 #!/usr/bin/python
 # (c) 2017, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -141,12 +131,15 @@ schedule_id:
     returned: success
     type: string
 """
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
+
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
+
 
 class SolidFireSnapShotSchedule(object):
 
@@ -249,9 +242,9 @@ class SolidFireSnapShotSchedule(object):
 
             self.create_schedule_result = self.sfe.create_schedule(schedule=sched)
 
-        except:
-            err = get_exception()
-            self.module.fail_json(msg='Error creating schedule %s' % self.name, exception=str(err))
+        except Exception as e:
+            self.module.fail_json(msg='Error creating schedule %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def delete_schedule(self):
 
@@ -261,9 +254,9 @@ class SolidFireSnapShotSchedule(object):
             sched.to_be_deleted = True
             self.sfe.modify_schedule(schedule=sched)
 
-        except:
-            err = get_exception()
-            self.module.fail_json(msg='Error deleting schedule %s' % self.name, exception=str(err))
+        except Exception as e:
+            self.module.fail_json(msg='Error deleting schedule %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def update_schedule(self):
 
@@ -300,9 +293,9 @@ class SolidFireSnapShotSchedule(object):
             # Make API call
             self.sfe.modify_schedule(schedule=sched)
 
-        except:
-            err = get_exception()
-            self.module.fail_json(msg='Error updating schedule %s' % self.name, exception=str(err))
+        except Exception as e:
+            self.module.fail_json(msg='Error updating schedule %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def apply(self):
         changed = False

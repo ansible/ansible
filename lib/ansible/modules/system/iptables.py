@@ -2,31 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-BINS = dict(
-    ipv4='iptables',
-    ipv6='ip6tables',
-)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ICMP_TYPE_OPTIONS = dict(
-    ipv4='--icmp-type',
-    ipv6='--icmpv6-type',
-)
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -124,6 +104,16 @@ options:
         inverts the sense of the address.
     required: false
     default: null
+  tcp_flags:
+    version_added: "2.4"
+    description:
+      - TCP flags specification. tcp_flags expects a dict with the two keys
+        "flags" and "flags_set". The "flags" list is the mask, a list of
+        flags you want to examine. The "flags_set" list tells which one(s)
+        should be set. If one of the two values is missing, the --tcp-flags option
+        will be ignored.
+    required: false
+    default: {}
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -355,8 +345,19 @@ EXAMPLES = '''
 
 import re
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
+
+
+BINS = dict(
+    ipv4='iptables',
+    ipv6='ip6tables',
+)
+
+ICMP_TYPE_OPTIONS = dict(
+    ipv4='--icmp-type',
+    ipv6='--icmpv6-type',
+)
+
 
 def append_param(rule, param, flag, is_list):
     if is_list:
@@ -366,6 +367,10 @@ def append_param(rule, param, flag, is_list):
         if param is not None:
             rule.extend([flag, param])
 
+def append_tcp_flags(rule, param, flag):
+    if param:
+        if 'flags' in param and 'flags_set' in param:
+            rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
 def append_csv(rule, param, flag):
     if param:
@@ -388,6 +393,7 @@ def construct_rule(params):
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
+    append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
     append_param(rule, params['jump'], '-j', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
     append_param(rule, params['to_source'], '--to-source', False)
@@ -508,6 +514,7 @@ def main():
             destination=dict(required=False, default=None, type='str'),
             to_destination=dict(required=False, default=None, type='str'),
             match=dict(required=False, default=[], type='list'),
+            tcp_flags=dict(required=False, default={}, type='dict'),
             jump=dict(required=False, default=None, type='str'),
             goto=dict(required=False, default=None, type='str'),
             in_interface=dict(required=False, default=None, type='str'),

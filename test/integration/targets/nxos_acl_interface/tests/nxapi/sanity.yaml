@@ -1,0 +1,118 @@
+---
+- debug: msg="START TRANSPORT:NXAPI nxos_acl_interface sanity test"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- name: "Interface selected for this test"
+  debug: msg="{{ intname }}"
+
+- name: "Setup: Put interface into a default state"
+  nxos_config: &default
+    lines:
+      - "default interface {{ intname }}"
+    provider: "{{ nxapi }}"
+  ignore_errors: yes
+
+- name: "Setup: Cleanup possibly existing acl"
+  nxos_acl: &remove
+    name: ANSIBLE_ACL
+    seq: 10
+    state: absent
+    provider: "{{ nxapi }}"
+  ignore_errors: yes
+
+- name: Configure Supporting ACL
+  nxos_acl:
+    name: ANSIBLE_ACL
+    seq: 10
+    action: permit
+    proto: tcp
+    src: 1.1.1.1/24
+    dest: any
+    provider: "{{ nxapi }}"
+
+- block:
+  - name: Configure acl interface egress
+    nxos_acl_interface: &configure_egr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: egress
+      state: present
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence egress"
+    nxos_acl_interface: *configure_egr
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure acl interface ingress
+    nxos_acl_interface: &configure_ingr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: ingress
+      state: present
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence ingress"
+    nxos_acl_interface: *configure_ingr
+    register: result
+
+  - assert: *false
+
+  - name: Cleanup acl interface egress
+    nxos_acl_interface: &cleanup_egr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: egress
+      state: absent
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence egress cleanup"
+    nxos_acl_interface: *cleanup_egr
+    register: result
+
+  - assert: *false
+
+  - name: Cleanup acl interface ingress
+    nxos_acl_interface: &cleanup_ingr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: ingress
+      state: absent
+      provider: "{{ nxapi }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence ingress cleanup"
+    nxos_acl_interface: *cleanup_ingr
+    register: result
+
+  - assert: *false
+
+  rescue:
+  - name: Put test interface into default state.
+    nxos_config: *default
+    ignore_errors: yes
+
+  - name: Remove possible configured ACL
+    nxos_acl: *remove
+    ignore_errors: yes
+
+  always:
+  - debug: msg="END TRANSPORT:NXAPI nxos_acl_interface sanity test"

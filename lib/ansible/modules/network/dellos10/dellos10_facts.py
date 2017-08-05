@@ -1,24 +1,13 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-#
 # Copyright (c) 2017 Dell Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -134,21 +123,20 @@ ansible_net_neighbors:
 
 import re
 
-from ansible.module_utils.dellos10 import run_commands
-from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import zip
-
 try:
     from lxml import etree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
 
+from ansible.module_utils.dellos10 import run_commands
+from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
 
 class FactsBase(object):
 
-    COMMANDS = list()
+    COMMANDS = []
 
     def __init__(self, module):
         self.module = module
@@ -239,8 +227,8 @@ class Hardware(FactsBase):
         data = self.responses[1]
         match = self.parse_memory(data)
         if match:
-            self.facts['memtotal_mb'] = int(match[0]) / 1024
-            self.facts['memfree_mb'] = int(match[2]) / 1024
+            self.facts['memtotal_mb'] = int(match[0]) // 1024
+            self.facts['memfree_mb'] = int(match[2]) // 1024
 
     def parse_cpu_arch(self, data):
         cpu_arch = data.find('./data/system-sw-state/sw-version/cpu-arch')
@@ -365,7 +353,7 @@ class Interfaces(FactsBase):
                 intf['mediatype'] = mediatype
             except:
                 # fanout
-                for subport in xrange(1, 5):
+                for subport in range(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
                     try:
                         intf = self.intf_facts[name]

@@ -20,6 +20,7 @@ __metaclass__ = type
 import sys
 import copy
 
+from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.six import iteritems
@@ -59,7 +60,7 @@ class ActionModule(ActionBase):
         play_context.remote_user = self.provider['username'] or self._play_context.connection_user
         play_context.password = self.provider['password'] or self._play_context.password
         play_context.private_key_file = self.provider['ssh_keyfile'] or self._play_context.private_key_file
-        play_context.timeout = self.provider['timeout'] or self._play_context.timeout
+        play_context.timeout = self.provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
         if 'authorize' in self.provider.keys():
             play_context.become = self.provider['authorize'] or False
             play_context.become_pass = self.provider['auth_pass']
@@ -67,12 +68,19 @@ class ActionModule(ActionBase):
         socket_path = self._start_connection(play_context)
         task_vars['ansible_socket'] = socket_path
 
+        if 'fail_on_missing_module' not in self._task.args:
+            self._task.args['fail_on_missing_module'] = False
+
         result = super(ActionModule, self).run(tmp, task_vars)
 
         module = self._get_implementation_module(play_context.network_os, self._task.action)
 
         if not module:
-            result['failed'] = True
+            if self._task.args['fail_on_missing_module']:
+                result['failed'] = True
+            else:
+                result['failed'] = False
+
             result['msg'] = ('Could not find implementation module %s for %s' %
                              (self._task.action, play_context.network_os))
         else:
@@ -82,6 +90,8 @@ class ActionModule(ActionBase):
             # already started
             if 'network_os' in new_module_args:
                 del new_module_args['network_os']
+
+            del new_module_args['fail_on_missing_module']
 
             display.vvvv('Running implementation module %s' % module)
             result.update(self._execute_module(module_name=module,

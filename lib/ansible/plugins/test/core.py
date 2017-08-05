@@ -27,50 +27,43 @@ from distutils.version import LooseVersion, StrictVersion
 from ansible import errors
 
 
-def failed(*a, **kw):
+def failed(result):
     ''' Test if task result yields failed '''
-    item = a[0]
-    if not isinstance(item, MutableMapping):
+    if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc', 0)
-    failed = item.get('failed', False)
-    if rc != 0 or failed:
-        return True
-    else:
-        return False
+    return result.get('failed', False)
 
 
-def success(*a, **kw):
+def success(result):
     ''' Test if task result yields success '''
-    return not failed(*a, **kw)
+    return not failed(result)
 
 
-def changed(*a, **kw):
+def changed(result):
     ''' Test if task result yields changed '''
-    item = a[0]
-    if not isinstance(item, MutableMapping):
+    if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("|changed expects a dictionary")
-    if 'changed' not in item:
+    if 'changed' not in result:
         changed = False
         if (
-            'results' in item and   # some modules return a 'results' key
-            isinstance(item['results'], MutableSequence) and
-            isinstance(item['results'][0], MutableMapping)
+            'results' in result and   # some modules return a 'results' key
+            isinstance(result['results'], MutableSequence) and
+            isinstance(result['results'][0], MutableMapping)
         ):
-            for result in item['results']:
-                changed = changed or result.get('changed', False)
+            for res in result['results']:
+                if res.get('changed', False):
+                    changed = True
+                    break
     else:
-        changed = item.get('changed', False)
+        changed = result.get('changed', False)
     return changed
 
 
-def skipped(*a, **kw):
+def skipped(result):
     ''' Test if task result yields skipped '''
-    item = a[0]
-    if not isinstance(item, MutableMapping):
+    if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
-    skipped = item.get('skipped', False)
-    return skipped
+    return result.get('skipped', False)
 
 
 def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='search'):
@@ -133,13 +126,17 @@ class TestModule(object):
         return {
             # failure testing
             'failed': failed,
+            'failure': failed,
             'succeeded': success,
+            'success': success,
 
             # changed testing
             'changed': changed,
+            'change': changed,
 
             # skip testing
             'skipped': skipped,
+            'skip': skipped,
 
             # regex
             'match': match,

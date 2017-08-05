@@ -374,10 +374,7 @@ def main():
         vip=dict(type='str', required=False),
         auth_type=dict(choices=['text', 'md5'], required=False),
         auth_string=dict(type='str', required=False),
-        state=dict(choices=['absent', 'present'], required=False, default='present'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -464,11 +461,15 @@ def main():
             module.exit_json(**results)
         else:
             load_config(module, commands)
-            if transport == 'cli':
+
+            # validate IP
+            if transport == 'cli' and state == 'present':
+                commands.insert(0, 'config t')
                 body = run_commands(module, commands)
                 validate_config(body, vip, module)
+
             results['changed'] = True
-            end_state = get_hsrp_group(group, interface, module)
+
             if 'configure' in commands:
                 commands.pop(0)
 

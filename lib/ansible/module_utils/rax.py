@@ -32,7 +32,6 @@ import os
 import re
 from uuid import UUID
 
-from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils.six import text_type, binary_type
 
 FINAL_STATUSES = ('ACTIVE', 'ERROR')

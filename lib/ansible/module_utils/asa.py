@@ -4,8 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# Copyright (c) 2016 Peter Sprygada, <psprygada@ansible.com>
-# Copyright (c) 2016 Patrick Ogenstad, <@ogenstad>
+# (c) 2016 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -26,90 +25,126 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network_common import to_list, EntityCollection
+from ansible.module_utils.connection import Connection, exec_command
 
-import re
+_DEVICE_CONFIGS = {}
+_CONNECTION = None
 
-from ansible.module_utils.network import NetworkError, NetworkModule
-from ansible.module_utils.network import add_argument, register_transport
-from ansible.module_utils.network import to_list
-from ansible.module_utils.shell import CliBase
-from ansible.module_utils.netcli import Command
+asa_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
+    'context': dict()
+}
 
-add_argument('context', dict(required=False))
+command_spec = {
+    'command': dict(key=True),
+    'prompt': dict(),
+    'answer': dict()
+}
 
 
-class Cli(CliBase):
+def get_argspec():
+    return asa_argument_spec
 
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
 
-    CLI_ERRORS_RE = [
-        re.compile(r"error:", re.I),
-        re.compile(r"^Removing.* not allowed")
-    ]
+def check_args(module):
+    provider = module.params['provider'] or {}
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+    for key in asa_argument_spec:
+        if key not in ['provider', 'authorize'] and module.params[key]:
+            module.warn('argument %s has been deprecated and will be removed in a future version' % key)
 
-    def __init__(self, *args, **kwargs):
+    if provider:
+        for param in ('auth_pass', 'password'):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
-        super(Cli, self).__init__(*args, **kwargs)
-        self.default_output = 'text'
 
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
+def get_connection(module):
+    global _CONNECTION
+    if _CONNECTION:
+        return _CONNECTION
+    _CONNECTION = Connection(module)
 
-        if params['context']:
-            self.change_context(params, **kwargs)
+    context = module.params['context']
 
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        errors = self.shell.errors
-        # Disable errors (if already in enable mode)
-        self.shell.errors = []
-        cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
-        self.execute([cmd, 'no terminal pager'])
-        # Reapply error handling
-        self.shell.errors = errors
-
-    def change_context(self, params):
-        context = params['context']
+    if context:
         if context == 'system':
             command = 'changeto system'
         else:
             command = 'changeto context %s' % context
+        _CONNECTION.get(command)
 
-        self.execute(command)
+    return _CONNECTION
 
-    # Config methods
 
-    def configure(self, commands):
-        cmds = ['configure terminal']
-        cmds.extend(to_list(commands))
-        if cmds[-1] == 'exit':
-            cmds[-1] = 'end'
-        elif cmds[-1] != 'end':
-            cmds.append('end')
-        responses = self.execute(cmds)
-        return responses[1:]
+def to_commands(module, commands):
+    assert isinstance(commands, list), 'argument must be of type <list>'
 
-    def get_config(self, include=None):
-        if include not in [None, 'defaults', 'passwords']:
-            raise ValueError('include must be one of None, defaults, passwords')
-        cmd = 'show running-config'
-        if include == 'passwords':
-            cmd = 'more system:running-config'
-        elif include == 'defaults':
-            cmd = 'show running-config all'
-        else:
-            cmd = 'show running-config'
-        return self.run_commands(cmd)[0]
+    transform = EntityCollection(module, command_spec)
+    commands = transform(commands)
 
-    def load_config(self, commands):
-        return self.configure(commands)
+    for index, item in enumerate(commands):
+        if module.check_mode and not item['command'].startswith('show'):
+            module.warn('only show commands are supported when using check '
+                        'mode, not executing `%s`' % item['command'])
 
-    def save_config(self):
-        self.execute(['write memory'])
+    return commands
 
-Cli = register_transport('cli', default=True)(Cli)
+
+def run_commands(module, commands, check_rc=True):
+    commands = to_commands(module, to_list(commands))
+    connection = get_connection(module)
+
+    responses = list()
+
+    for cmd in commands:
+        out = connection.get(**cmd)
+        responses.append(to_text(out, errors='surrogate_then_replace'))
+
+    return responses
+
+
+def get_config(module, flags=[]):
+    cmd = 'show running-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        conn = get_connection(module)
+        out = conn.get(cmd)
+        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
+
+
+def load_config(module, config):
+    conn = get_connection(module)
+    conn.edit_config(config)
+
+
+def get_defaults_flag(module):
+    rc, out, err = exec_command(module, 'show running-config ?')
+    out = to_text(out, errors='surrogate_then_replace')
+
+    commands = set()
+    for line in out.splitlines():
+        if line:
+            commands.add(line.strip().split()[0])
+
+    if 'all' in commands:
+        return 'all'
+    else:
+        return 'full'

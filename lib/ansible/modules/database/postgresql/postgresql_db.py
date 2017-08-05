@@ -1,20 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -61,11 +52,25 @@ options:
     required: false
     default: null
   state:
-    description:
-      - The database state
+    description: |
+        The database state. present implies that the database should be created if necessary.
+        absent implies that the database should be removed if present.
+        dump requires a target definition to which the database will be backed up.
+        (Added in 2.4) restore also requires a target definition from which the database will be restored.
+        (Added in 2.4) The format of the backup will be detected based on the target name.
+        Supported compression formats for dump and restore are: .bz2, .gz, and .xz
+        Supported formats for dump and restore are: .sql and .tar
     required: false
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "dump", "restore" ]
+  target:
+    version_added: "2.4"
+    description:
+      - File to back up or restore from. Used when state is "dump" or "restore"
+  target_opts:
+    version_added: "2.4"
+    description:
+      - Further arguments for pg_dump or pg_restore. Used when state is "dump" or "restore"
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
@@ -85,23 +90,47 @@ EXAMPLES = '''
     lc_collate: de_DE.UTF-8
     lc_ctype: de_DE.UTF-8
     template: template0
+
+# Dump an existing database to a file
+- postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme.sql
+
+# Dump an existing database to a file (with compression)
+- postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme.sql.gz
+
+# Dump a single schema for an existing database
+- postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme.sql
+    target_opts: "-n public"
 '''
+
+import traceback
 
 HAS_PSYCOPG2 = False
 try:
     import psycopg2
     import psycopg2.extras
+    import pipes
+    import subprocess
+    import os
+
 except ImportError:
     pass
 else:
     HAS_PSYCOPG2 = True
-from ansible.module_utils.six import iteritems
-
-import traceback
 
 import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -205,6 +234,122 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         else:
             return True
 
+def db_dump(module, target, target_opts="",
+            db=None,
+            user=None,
+            password=None,
+            host=None,
+            port=None,
+            **kw):
+
+    flags = login_flags(db, host, port, user, db_prefix=False)
+    cmd = module.get_bin_path('pg_dump', True)
+    comp_prog_path = None
+
+    if os.path.splitext(target)[-1] == '.tar':
+        flags.append(' --format=t')
+    if os.path.splitext(target)[-1] == '.gz':
+        if module.get_bin_path('pigz'):
+            comp_prog_path = module.get_bin_path('pigz', True)
+        else:
+            comp_prog_path = module.get_bin_path('gzip', True)
+    elif os.path.splitext(target)[-1] == '.bz2':
+        comp_prog_path = module.get_bin_path('bzip2', True)
+    elif os.path.splitext(target)[-1] == '.xz':
+        comp_prog_path = module.get_bin_path('xz', True)
+
+    cmd += "".join(flags)
+    if target_opts:
+        cmd += " {0} ".format(target_opts)
+
+    if comp_prog_path:
+        cmd = '{0}|{1} > {2}'.format(cmd, comp_prog_path, pipes.quote(target))
+    else:
+        cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
+
+    return do_with_password(module, cmd, password)
+
+def db_restore(module, target, target_opts="",
+            db=None,
+            user=None,
+            password=None,
+            host=None,
+            port=None,
+            **kw):
+
+    flags = login_flags(db, host, port, user)
+    comp_prog_path = None
+    cmd = module.get_bin_path('psql', True)
+
+    if os.path.splitext(target)[-1] == '.sql':
+        flags.append(' --file={0}'.format(target))
+
+    elif os.path.splitext(target)[-1] == '.tar':
+        flags.append(' --format=Tar')
+        cmd = module.get_bin_path('pg_restore', True)
+
+    elif os.path.splitext(target)[-1] == '.gz':
+        comp_prog_path = module.get_bin_path('zcat', True)
+
+    elif os.path.splitext(target)[-1] == '.bz2':
+        comp_prog_path = module.get_bin_path('bzcat', True)
+
+    elif os.path.splitext(target)[-1] == '.xz':
+        comp_prog_path = module.get_bin_path('xzcat', True)
+
+    cmd += "".join(flags)
+    if target_opts:
+        cmd += " {0} ".format(target_opts)
+
+    if comp_prog_path:
+        env = os.environ.copy()
+        if password:
+            env = {"PGPASSWORD": password}
+        p1 = subprocess.Popen([comp_prog_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
+        (stdout2, stderr2) = p2.communicate()
+        p1.stdout.close()
+        p1.wait()
+        if p1.returncode != 0:
+            stderr1 = p1.stderr.read()
+            return p1.returncode, '', stderr1, 'cmd: ****'
+        else:
+            return p2.returncode, '', stderr2, 'cmd: ****'
+    else:
+        cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
+
+    return do_with_password(module, cmd, password)
+
+def login_flags(db, host, port, user, db_prefix=True):
+    """
+    returns a list of connection argument strings each prefixed
+    with a space and quoted where necessary to later be combined
+    in a single shell string with `"".join(rv)`
+
+    db_prefix determines if "--dbname" is prefixed to the db argument,
+    since the argument was introduced in 9.3.
+    """
+    flags = []
+    if db:
+        if db_prefix:
+            flags.append(' --dbname={0}'.format(pipes.quote(db)))
+        else:
+            flags.append(' {0}'.format(pipes.quote(db)))
+    if host:
+        flags.append(' --host={0}'.format(host))
+    if port:
+        flags.append(' --port={0}'.format(port))
+    if user:
+        flags.append(' --username={0}'.format(user))
+    return flags
+
+def do_with_password(module, cmd, password):
+    env = {}
+    if password:
+        env = {"PGPASSWORD": password}
+    rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True, environ_update=env)
+    return rc, stderr, stdout, cmd
+
 # ===========================================
 # Module execution.
 #
@@ -218,7 +363,9 @@ def main():
         encoding=dict(default=""),
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
-        state=dict(default="present", choices=["absent", "present"]),
+        state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
+        target=dict(default=""),
+        target_opts=dict(default=""),
     ))
 
 
@@ -231,14 +378,14 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
-    port = module.params["port"]
     owner = module.params["owner"]
     template = module.params["template"]
     encoding = module.params["encoding"]
     lc_collate = module.params["lc_collate"]
     lc_ctype = module.params["lc_ctype"]
+    target = module.params["target"]
+    target_opts = module.params["target_opts"]
     state = module.params["state"]
-    sslrootcert = module.params["ssl_rootcert"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
@@ -257,12 +404,20 @@ def main():
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
+
+    if target == "":
+        target = "{0}/{1}.sql".format(os.getcwd(), db)
+        target = os.path.expanduser(target)
+    else:
+        target = os.path.expanduser(target)
 
     try:
         pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
         db_connection = psycopg2.connect(database="postgres", **kw)
+
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True
@@ -270,20 +425,17 @@ def main():
             db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    except pgutils.LibraryError:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
+    except pgutils.LibraryError as e:
+        module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
 
-    except TypeError:
-        e = get_exception()
+    except TypeError as e:
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e),
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
                              exception=traceback.format_exc())
-        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
@@ -296,25 +448,33 @@ def main():
         if state == "absent":
             try:
                 changed = db_delete(cursor, db)
-            except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state == "present":
             try:
                 changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
-            except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
-    except NotSupportedError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
+        elif state in ("dump", "restore"):
+            method = state == "dump" and db_dump or db_restore
+            try:
+                rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
+                if rc != 0:
+                    module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
+                else:
+                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
+            except SQLParseError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
+    except NotSupportedError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:
         # Avoid catching this on Python 2.4
         raise
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Database query failed: %s" % e)
+    except Exception as e:
+        module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, db=db)
 

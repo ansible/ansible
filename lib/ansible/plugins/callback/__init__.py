@@ -209,7 +209,7 @@ class CallbackBase:
 
     def _clean_results(self, result, task_name):
         if task_name in ['debug']:
-            for remove_key in ('changed', 'invocation'):
+            for remove_key in ('changed', 'invocation', 'failed', 'skipped'):
                 if remove_key in result:
                     del result[remove_key]
 
