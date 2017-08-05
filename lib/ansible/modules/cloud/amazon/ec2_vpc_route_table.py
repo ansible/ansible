@@ -77,7 +77,7 @@ options:
   subnets:
     description:
       - "An array of subnets to add to this route table. Subnets may be specified by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'."
-    required: true
+    required: false
   tags:
     description:
       - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
@@ -404,6 +404,8 @@ def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
         if route_table.id is None:
             continue
         for a in route_table.associations:
+            if a.main:
+                continue
             if a.subnet_id == subnet_id:
                 if route_table.id == route_table_id:
                     return {'changed': False, 'association_id': a.id}
@@ -418,7 +420,7 @@ def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
 
 def ensure_subnet_associations(vpc_conn, vpc_id, route_table, subnets,
                                check_mode, purge_subnets):
-    current_association_ids = [a.id for a in route_table.associations]
+    current_association_ids = [a.id for a in route_table.associations if not a.main]
     new_association_ids = []
     changed = False
     for subnet in subnets:

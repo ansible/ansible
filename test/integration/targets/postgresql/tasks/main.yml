@@ -336,16 +336,21 @@
   become: True
   shell: echo "create table test_table2 (field text);" | psql {{ db_name }}
 
-- name: Create a user with some permissions on the db
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    encrypted: 'yes'
-    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
-    db: "{{ db_name }}"
-    priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
-    login_user: "{{ pg_user }}"
+- vars:
+    db_password: 'secretù' # use UTF-8
+  block:
+    - name: Create a user with some permissions on the db
+      become_user: "{{ pg_user }}"
+      become: True
+      postgresql_user:
+        name: "{{ db_user1 }}"
+        encrypted: 'yes'
+        password: "md5{{ (db_password ~ db_user1) | hash('md5')}}"
+        db: "{{ db_name }}"
+        priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
+        login_user: "{{ pg_user }}"
+
+    - include: pg_authid_not_readable.yml
 
 - name: Check that the user has the requested permissions (table1)
   become_user: "{{ pg_user }}"
@@ -748,6 +753,21 @@
 - assert:
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
+
+# dump/restore tests per format
+# ============================================================
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.gz
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.bz2
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.xz
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.gz
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.bz2
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.xz
+
+# dump/restore tests per other logins
+# ============================================================
+- include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
 
 #
 # Cleanup

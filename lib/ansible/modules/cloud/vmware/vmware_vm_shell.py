@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, 2016 Ritesh Khadgaray <khadgaray () gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -50,6 +40,24 @@ options:
             - Will help speed up search
         required: False
         default: None
+    folder:
+        description:
+            - Destination folder, absolute or relative path to find an existing guest or create the new guest.
+            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+            - 'Examples:'
+            - '   folder: /ha-datacenter/vm'
+            - '   folder: ha-datacenter/vm'
+            - '   folder: /datacenter1/vm'
+            - '   folder: datacenter1/vm'
+            - '   folder: /datacenter1/vm/folder1'
+            - '   folder: datacenter1/vm/folder1'
+            - '   folder: /folder1/datacenter1/vm'
+            - '   folder: folder1/datacenter1/vm'
+            - '   folder: /folder1/datacenter1/vm/folder2'
+            - '   folder: vm/folder2'
+            - '   folder: folder2'
+        default: /vm
+        version_added: "2.4"
     vm_id:
         description:
             - The identification for the VM
@@ -97,22 +105,23 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-    - name: shell execution
-      local_action:
-        module: vmware_vm_shell
-        hostname: myVSphere
-        username: myUsername
-        password: mySecret
-        datacenter: myDatacenter
-        vm_id: NameOfVM
-        vm_username: root
-        vm_password: superSecret
-        vm_shell: /bin/echo
-        vm_shell_args: " $var >> myFile "
-        vm_shell_env:
-          - "PATH=/bin"
-          - "VAR=test"
-        vm_shell_cwd: "/tmp"
+- name: shell execution
+  local_action:
+    module: vmware_vm_shell
+    hostname: myVSphere
+    username: myUsername
+    password: mySecret
+    datacenter: myDatacenter
+    folder: /vm
+    vm_id: NameOfVM
+    vm_username: root
+    vm_password: superSecret
+    vm_shell: /bin/echo
+    vm_shell_args: " $var >> myFile "
+    vm_shell_env:
+      - "PATH=/bin"
+      - "VAR=test"
+    vm_shell_cwd: "/tmp"
 
 '''
 
@@ -121,6 +130,11 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, find_datacenter_by_name,
+                                         find_vm_by_id, vmware_argument_spec)
+
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/execute_program_in_vm.py
 def execute_command(content, vm, vm_username, vm_password, program_path, args="", env=None, cwd=None):
@@ -131,11 +145,12 @@ def execute_command(content, vm, vm_username, vm_password, program_path, args=""
 
     return cmdpid
 
-def main():
 
+def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(datacenter=dict(default=None, type='str'),
                               cluster=dict(default=None, type='str'),
+                              folder=dict(type='str', default='/vm'),
                               vm_id=dict(required=True, type='str'),
                               vm_id_type=dict(default='vm_name', type='str', choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
                               vm_username=dict(required=False, type='str'),
@@ -145,16 +160,19 @@ def main():
                               vm_shell_env=dict(default=None, type='list'),
                               vm_shell_cwd=dict(default=None, type='str')))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False,
+                           required_if=[['vm_id_type', 'inventory_path', ['folder']]],
+                           )
 
     if not HAS_PYVMOMI:
         module.fail_json(changed=False, msg='pyvmomi is required for this module')
-
 
     try:
         p = module.params
         datacenter_name = p['datacenter']
         cluster_name = p['cluster']
+        folder = p['folder']
         content = connect_to_api(module)
 
         datacenter = None
@@ -169,7 +187,11 @@ def main():
             if not cluster:
                 module.fail_json(changed=False, msg="cluster not found")
 
-        vm = find_vm_by_id(content, p['vm_id'], p['vm_id_type'], datacenter, cluster)
+        if p['vm_id_type'] == 'inventory_path':
+            vm = find_vm_by_id(content, vm_id=p['vm_id'], vm_id_type="inventory_path", folder=folder)
+        else:
+            vm = find_vm_by_id(content, vm_id=p['vm_id'], vm_id_type=p['vm_id_type'], datacenter=datacenter, cluster=cluster)
+
         if not vm:
             module.fail_json(msg='VM not found')
 
@@ -184,8 +206,6 @@ def main():
     except Exception as e:
         module.fail_json(changed=False, msg=str(e))
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

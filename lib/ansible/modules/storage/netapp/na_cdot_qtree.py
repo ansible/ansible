@@ -1,22 +1,12 @@
 #!/usr/bin/python
 
 # (c) 2017, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -84,10 +74,12 @@ EXAMPLES = """
 RETURN = """
 
 """
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -161,10 +153,9 @@ class NetAppCDOTQTree(object):
         try:
             self.server.invoke_successfully(qtree_create,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg="Error provisioning qtree %s." % self.name,
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg="Error provisioning qtree %s: %s" % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def delete_qtree(self):
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
@@ -174,10 +165,9 @@ class NetAppCDOTQTree(object):
         try:
             self.server.invoke_successfully(qtree_delete,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg="Error deleting qtree %s." % path,
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg="Error deleting qtree %s: %s" % (path, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def rename_qtree(self):
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
@@ -189,10 +179,9 @@ class NetAppCDOTQTree(object):
         try:
             self.server.invoke_successfully(qtree_rename,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg="Error renaming qtree %s." % self.name,
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg="Error renaming qtree %s: %s" % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def apply(self):
         changed = False
@@ -239,6 +228,7 @@ class NetAppCDOTQTree(object):
 def main():
     v = NetAppCDOTQTree()
     v.apply()
+
 
 if __name__ == '__main__':
     main()

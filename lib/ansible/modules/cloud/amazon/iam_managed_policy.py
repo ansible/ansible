@@ -102,137 +102,191 @@ policy:
   returned: success
   type: string
   sample: '{
-        "Arn": "arn:aws:iam::aws:policy/AdministratorAccess "
-        "AttachmentCount": 0,
-        "CreateDate": "2017-03-01T15:42:55.981000+00:00",
-        "DefaultVersionId": "v1",
-        "IsAttachable": true,
-        "Path": "/",
-        "PolicyId": "ANPALM4KLDMTFXGOOJIHL",
-        "PolicyName": "AdministratorAccess",
-        "UpdateDate": "2017-03-01T15:42:55.981000+00:00"
+        "arn": "arn:aws:iam::aws:policy/AdministratorAccess "
+        "attachment_count": 0,
+        "create_date": "2017-03-01T15:42:55.981000+00:00",
+        "default_version_id": "v1",
+        "is_attachable": true,
+        "path": "/",
+        "policy_id": "ANPALM4KLDMTFXGOOJIHL",
+        "policy_name": "AdministratorAccess",
+        "update_date": "2017-03-01T15:42:55.981000+00:00"
   }'
 '''
+
 from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.ec2
-from ansible.module_utils.ec2 import sort_json_policy_dict
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import sort_json_policy_dict, camel_dict_to_snake_dict, HAS_BOTO3
 import json
+import traceback
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
 
 
-def get_policy_by_name(iam, name, **kwargs):
-    response = iam.list_policies(Scope='Local', **kwargs)
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_policies_with_backoff(iam):
+    paginator = iam.get_paginator('list_policies')
+    return paginator.paginate(Scope='Local').build_full_result()
+
+
+def get_policy_by_name(module, iam, name):
+    try:
+        response = list_policies_with_backoff(iam)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't list policies: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
     for policy in response['Policies']:
         if policy['PolicyName'] == name:
             return policy
-    if response['IsTruncated']:
-        return get_policy_by_name(iam, name, marker=response['marker'])
     return None
 
 
-def delete_oldest_non_default_version(iam, policy):
-    versions = [v for v in iam.list_policy_versions(PolicyArn=policy['Arn'])[
-        'Versions'] if not v['IsDefaultVersion']]
+def delete_oldest_non_default_version(module, iam, policy):
+    try:
+        versions = [v for v in iam.list_policy_versions(PolicyArn=policy['Arn'])['Versions']
+                    if not v['IsDefaultVersion']]
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't list policy versions: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
     versions.sort(key=lambda v: v['CreateDate'], reverse=True)
     for v in versions[-1:]:
-        iam.delete_policy_version(
-            PolicyArn=policy['Arn'],
-            VersionId=v['VersionId']
-        )
+        try:
+            iam.delete_policy_version(PolicyArn=policy['Arn'], VersionId=v['VersionId'])
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't delete policy version: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+
 
 # This needs to return policy_version, changed
-
-
-def get_or_create_policy_version(iam, policy, policy_document):
-    versions = iam.list_policy_versions(PolicyArn=policy['Arn'])['Versions']
+def get_or_create_policy_version(module, iam, policy, policy_document):
+    try:
+        versions = iam.list_policy_versions(PolicyArn=policy['Arn'])['Versions']
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't list policy versions: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
     for v in versions:
-        document = iam.get_policy_version(
-            PolicyArn=policy['Arn'],
-            VersionId=v['VersionId'])['PolicyVersion']['Document']
+        try:
+            document = iam.get_policy_version(PolicyArn=policy['Arn'],
+                                              VersionId=v['VersionId'])['PolicyVersion']['Document']
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't get policy version %s: %s" % (v['VersionId'], str(e)),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
         if sort_json_policy_dict(document) == sort_json_policy_dict(
                 json.loads(policy_document)):
             return v, False
 
     # No existing version so create one
-    # Instead of testing the versions list for the magic number 5, we are
-    # going to attempt to create a version and catch the error
+    # There is a service limit (typically 5) of policy versions.
+    #
+    # Rather than assume that it is 5, we'll try to create the policy
+    # and if that doesn't work, delete the oldest non default policy version
+    # and try again.
     try:
-        return iam.create_policy_version(
-            PolicyArn=policy['Arn'],
-            PolicyDocument=policy_document
-        )['PolicyVersion'], True
-    except Exception as e:
-        delete_oldest_non_default_version(iam, policy)
-        return iam.create_policy_version(
-            PolicyArn=policy['Arn'],
-            PolicyDocument=policy_document
-        )['PolicyVersion'], True
+        version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
+        return version, True
+    except botocore.exceptions.ClientError as e:
+        if e['Error']['Code'] == 'LimitExceeded':
+            delete_oldest_non_default_version(module, iam, policy)
+            try:
+                version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
+                return version, True
+            except botocore.exceptions.ClientError as e:
+                pass
+        # Handle both when the exception isn't LimitExceeded or
+        # the second attempt still failed
+        module.fail_json(msg="Couldn't create policy version: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 
 
-def set_if_default(iam, policy, policy_version, is_default):
+def set_if_default(module, iam, policy, policy_version, is_default):
     if is_default and not policy_version['IsDefaultVersion']:
-        iam.set_default_policy_version(
-            PolicyArn=policy['Arn'],
-            VersionId=policy_version['VersionId']
-        )
+        try:
+            iam.set_default_policy_version(PolicyArn=policy['Arn'], VersionId=policy_version['VersionId'])
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't set default policy version: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
         return True
     return False
 
 
-def set_if_only(iam, policy, policy_version, is_only):
+def set_if_only(module, iam, policy, policy_version, is_only):
     if is_only:
-        versions = [v for v in iam.list_policy_versions(PolicyArn=policy['Arn'])[
-            'Versions'] if not v['IsDefaultVersion']]
+        try:
+            versions = [v for v in iam.list_policy_versions(PolicyArn=policy['Arn'])[
+                'Versions'] if not v['IsDefaultVersion']]
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't list policy versions: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
         for v in versions:
-            iam.delete_policy_version(
-                PolicyArn=policy['Arn'],
-                VersionId=v['VersionId']
-            )
+            try:
+                iam.delete_policy_version(PolicyArn=policy['Arn'], VersionId=v['VersionId'])
+            except botocore.exceptions.ClientError as e:
+                module.fail_json(msg="Couldn't delete policy version: %s" % str(e),
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
         return len(versions) > 0
     return False
 
 
-def detach_all_entities(iam, policy, **kwargs):
-    entities = iam.list_entities_for_policy(PolicyArn=policy['Arn'], **kwargs)
+def detach_all_entities(module, iam, policy, **kwargs):
+    try:
+        entities = iam.list_entities_for_policy(PolicyArn=policy['Arn'], **kwargs)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't detach list entities for policy %s: %s" % (policy['PolicyName'], str(e)),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+
     for g in entities['PolicyGroups']:
-        iam.detach_group_policy(
-            PolicyArn=policy['Arn'],
-            GroupName=g['GroupName']
-        )
+        try:
+            iam.detach_group_policy(PolicyArn=policy['Arn'], GroupName=g['GroupName'])
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't detach group policy %s: %s" % (g['GroupName'], str(e)),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
     for u in entities['PolicyUsers']:
-        iam.detach_user_policy(
-            PolicyArn=policy['Arn'],
-            UserName=u['UserName']
-        )
+        try:
+            iam.detach_user_policy(PolicyArn=policy['Arn'], UserName=u['UserName'])
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't detach user policy %s: %s" % (u['UserName'], str(e)),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
     for r in entities['PolicyRoles']:
-        iam.detach_role_policy(
-            PolicyArn=policy['Arn'],
-            RoleName=r['RoleName']
-        )
+        try:
+            iam.detach_role_policy(PolicyArn=policy['Arn'], RoleName=r['RoleName'])
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't detach role policy %s: %s" % (r['RoleName'], str(e)),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
     if entities['IsTruncated']:
-        detach_all_entities(iam, policy, marker=entities['Marker'])
+        detach_all_entities(module, iam, policy, marker=entities['Marker'])
 
 
 def main():
-    argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         policy_name=dict(required=True),
-        policy_description=dict(required=False, default=''),
-        policy=dict(type='json', required=False, default=None),
-        make_default=dict(type='bool', required=False, default=True),
-        only_version=dict(type='bool', required=False, default=False),
-        fail_on_delete=dict(type='bool', required=False, default=True),
-        state=dict(required=True, default=None, choices=['present', 'absent']),
+        policy_description=dict(default=''),
+        policy=dict(type='json'),
+        make_default=dict(type='bool', default=True),
+        only_version=dict(type='bool', default=False),
+        fail_on_delete=dict(type='bool', default=True),
+        state=dict(required=True, choices=['present', 'absent']),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_if=[['state', 'present', ['policy']]]
     )
 
     if not HAS_BOTO3:
@@ -249,58 +303,70 @@ def main():
     if module.params.get('policy') is not None:
         policy = json.dumps(json.loads(module.params.get('policy')))
 
-    if state == 'present' and policy is None:
-        module.fail_json(msg='if state is present policy is required')
-
     try:
-        region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(
-            module, boto3=True)
-        iam = ansible.module_utils.ec2.boto3_conn(
-            module,
-            conn_type='client',
-            resource='iam',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg=boto_exception(e))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        iam = boto3_conn(module, conn_type='client', resource='iam',
+                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
+        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
+                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    p = get_policy_by_name(iam, name)
+    p = get_policy_by_name(module, iam, name)
     if state == 'present':
         if p is None:
             # No Policy so just create one
-            rvalue = iam.create_policy(
-                PolicyName=name,
-                Path='/',
-                PolicyDocument=policy,
-                Description=description
-            )
-            module.exit_json(changed=True, policy=rvalue['Policy'])
+            try:
+                rvalue = iam.create_policy(PolicyName=name, Path='/',
+                                           PolicyDocument=policy, Description=description)
+            except:
+                module.fail_json(msg="Couldn't create policy %s: %s" % (name, str(e)),
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
+
+            module.exit_json(changed=True, policy=camel_dict_to_snake_dict(rvalue['Policy']))
         else:
-            policy_version, changed = get_or_create_policy_version(
-                iam, p, policy)
-            changed = set_if_default(
-                iam, p, policy_version, default) or changed
-            changed = set_if_only(iam, p, policy_version, only) or changed
+            policy_version, changed = get_or_create_policy_version(module, iam, p, policy)
+            changed = set_if_default(module, iam, p, policy_version, default) or changed
+            changed = set_if_only(module, iam, p, policy_version, only) or changed
             # If anything has changed we needto refresh the policy
             if changed:
-                p = iam.get_policy(PolicyArn=p['Arn'])['Policy']
+                try:
+                    p = iam.get_policy(PolicyArn=p['Arn'])['Policy']
+                except:
+                    module.fail_json(msg="Couldn't get policy: %s" % str(e),
+                                     exception=traceback.format_exc(),
+                                     **camel_dict_to_snake_dict(e.response))
 
-            module.exit_json(changed=changed, policy=p)
+            module.exit_json(changed=changed, policy=camel_dict_to_snake_dict(p))
     else:
         # Check for existing policy
         if p:
             # Detach policy
-            detach_all_entities(iam, p)
+            detach_all_entities(module, iam, p)
             # Delete Versions
-            for v in iam.list_policy_versions(PolicyArn=p['Arn'])['Versions']:
+            try:
+                versions = iam.list_policy_versions(PolicyArn=p['Arn'])['Versions']
+            except botocore.exceptions.ClientError as e:
+                module.fail_json(msg="Couldn't list policy versions: %s" % str(e),
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
+            for v in versions:
                 if not v['IsDefaultVersion']:
-                    iam.delete_policy_version(
-                        PolicyArn=p['Arn'], VersionId=v['VersionId'])
+                    try:
+                        iam.delete_policy_version(PolicyArn=p['Arn'], VersionId=v['VersionId'])
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json(msg="Couldn't delete policy version %s: %s" % (v['VersionId'], str(e)),
+                                         exception=traceback.format_exc(),
+                                         **camel_dict_to_snake_dict(e.response))
             # Delete policy
-            iam.delete_policy(PolicyArn=p['Arn'])
+            try:
+                iam.delete_policy(PolicyArn=p['Arn'])
+            except:
+                module.fail_json(msg="Couldn't delete policy %s: %s" % (p['PolicyName'], str(e)),
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
             # This is the one case where we will return the old policy
-            module.exit_json(changed=True, policy=p)
+            module.exit_json(changed=True, policy=camel_dict_to_snake_dict(p))
         else:
             module.exit_json(changed=False, policy=None)
 # end main

@@ -1,81 +1,84 @@
 Ansible Releases at a Glance
 ============================
 
-For more info http://docs.ansible.com/ansible/dev_guide/developing_releases.html
+VERSION  RELEASE     CODE NAME
+++++++++++++++++++++++++++++++
 
-Active Development
-++++++++++++++++++
-
-2.4    TBD - in progress
-
-Released
-++++++++
-
-2.3.0  "Ramble On" 04-12-2017
-2.2.0  "The Battle of Evermore"	11-01-2016
-2.1.3  "The Song Remains the Same"  11-04-2016
-2.1.2  "The Song Remains the Same"  10-29-2016
-2.1.1  "The Song Remains the Same"  07-28-2016
-2.1.0  "The Song Remains the Same"  05-25-2016
-2.0.2  "Over the Hills and Far Away" 04-19-2016
-2.0.1  "Over the Hills and Far Away" 02-24-2016
-2.0.0  "Over the Hills and Far Away" 01-12-2016
-1.9.6  "Dancing In the Streets" 04-15-2016
-1.9.5  "Dancing In the Streets" 03-21-2016
-1.9.4  "Dancing In the Streets" 10-09-2015
-1.9.3  "Dancing In the Streets" 09-03-2015
-1.9.2  "Dancing In the Streets" 06-24-2015
-1.9.1  "Dancing In the Streets" 04-27-2015
-1.9.0  "Dancing In the Streets" 03-25-2015
-1.8.4  "You Really Got Me" ---- 02-19-2015
-1.8.3  "You Really Got Me" ---- 02-17-2015
-1.8.2  "You Really Got Me" ---- 12-04-2014
-1.8.1  "You Really Got Me" ---- 11-26-2014
-1.7.2  "Summer Nights" -------- 09-24-2014
-1.7.1  "Summer Nights" -------- 08-14-2014
-1.7    "Summer Nights" -------- 08-06-2014
-1.6.10 "The Cradle Will Rock" - 07-25-2014
-1.6.9  "The Cradle Will Rock" - 07-24-2014
-1.6.8  "The Cradle Will Rock" - 07-22-2014
-1.6.7  "The Cradle Will Rock" - 07-21-2014
-1.6.6  "The Cradle Will Rock" - 07-01-2014
-1.6.5  "The Cradle Will Rock" - 06-25-2014
-1.6.4  "The Cradle Will Rock" - 06-25-2014
-1.6.3  "The Cradle Will Rock" - 06-09-2014
-1.6.2  "The Cradle Will Rock" - 05-23-2014
-1.6.1  "The Cradle Will Rock" - 05-07-2014
-1.6    "The Cradle Will Rock" - 05-05-2014 
-1.5.5  "Love Walks In" -------- 04-18-2014
-1.5.4  "Love Walks In" -------- 04-01-2014
-1.5.3  "Love Walks In" -------- 03-13-2014
-1.5.2  "Love Walks In" -------- 03-11-2014
-1.5.1  "Love Walks In" -------- 03-10-2014
-1.5    "Love Walks In" -------- 02-28-2014
-1.4.5  "Could This Be Magic?" - 02-12-2014
-1.4.4  "Could This Be Magic?" - 01-06-2014
-1.4.3  "Could This Be Magic?" - 12-20-2013
-1.4.2  "Could This Be Magic?" - 12-18-2013
-1.4.1  "Could This Be Magic?" - 11-27-2013
-1.4    "Could This Be Magic?" - 11-21-2013
-1.3.4  "Top of the World" ----- 10-29-2013
-1.3.3  "Top of the World" ----- 10-09-2013
-1.3.2  "Top of the World" ----- 09-19-2013
-1.3.1  "Top of the World" ----- 09-16-2013
-1.3    "Top of the World" ----- 09-13-2013
-1.2.3  "Hear About It Later" -- 08-21-2013
-1.2.2  "Hear About It Later" -- 07-05-2013
-1.2.1  "Hear About It Later" -- 07-04-2013
-1.2    "Right Now" ------------ 06-10-2013
-1.1    "Mean Street" ---------- 04-02-2013
-1.0    "Eruption" ------------- 02-01-2013
-0.9    "Dreams" --------------- 11-30-2012
-0.8    "Cathedral" ------------ 10-19-2012
-0.7    "Panama" --------------- 09-06-2012
-0.6    "Cabo" ----------------- 08-06-2012
-0.5    "Amsterdam" ------------ 07-04-2012
-0.4    "Unchained" ------------ 05-23-2012
-0.3    "Baluchitherium" ------- 04-23-2012
-0.0.2  Untitled
-0.0.1  Untitled
-
-
+2.4.0    TBD         "Dancing Days"
+2.3.2    08-04-2017  "Ramble On"
+2.3.1    06-01-2017  "Ramble On"
+2.3.0    04-12-2017  "Ramble On"
+2.2.3    05-09-2017  "The Battle of Evermore"
+2.2.2    03-27-2017  "The Battle of Evermore"
+2.2.1    01-16-2017  "The Battle of Evermore"
+2.2.0    11-01-2016  "The Battle of Evermore"
+2.1.6    06-01-2017  "The Song Remains the Same"
+2.1.5    03-27-2017  "The Song Remains the Same"
+2.1.4    01-16-2017  "The Song Remains the Same"
+2.1.3    11-04-2016  "The Song Remains the Same"
+2.1.2    09-29-2016  "The Song Remains the Same"
+2.1.1    07-28-2016  "The Song Remains the Same"
+2.1.0    05-25-2016  "The Song Remains the Same"
+2.0.2    04-19-2016  "Over the Hills and Far Away"
+2.0.1    02-24-2016  "Over the Hills and Far Away"
+2.0.0    01-12-2016  "Over the Hills and Far Away"
+1.9.6    04-15-2016  "Dancing In the Streets"
+1.9.5    03-21-2016  "Dancing In the Streets"
+1.9.4    10-09-2015  "Dancing In the Streets"
+1.9.3    09-03-2015  "Dancing In the Streets"
+1.9.2    06-24-2015  "Dancing In the Streets"
+1.9.1    04-27-2015  "Dancing In the Streets"
+1.9.0    03-25-2015  "Dancing In the Streets"
+1.8.4    02-19-2015  "You Really Got Me"
+1.8.3    02-17-2015  "You Really Got Me"
+1.8.2    12-04-2014  "You Really Got Me"
+1.8.1    11-26-2014  "You Really Got Me"
+1.8.0    11-25-2014  "You Really Got Me"
+1.7.2    09-24-2014  "Summer Nights"
+1.7.1    08-14-2014  "Summer Nights"
+1.7.0    08-06-2014  "Summer Nights"
+1.6.10   07-25-2014  "The Cradle Will Rock"
+1.6.9    07-24-2014  "The Cradle Will Rock"
+1.6.8    07-22-2014  "The Cradle Will Rock"
+1.6.7    07-21-2014  "The Cradle Will Rock"
+1.6.6    07-01-2014  "The Cradle Will Rock"
+1.6.5    06-25-2014  "The Cradle Will Rock"
+1.6.4    06-25-2014  "The Cradle Will Rock"
+1.6.3    06-09-2014  "The Cradle Will Rock"
+1.6.2    05-23-2014  "The Cradle Will Rock"
+1.6.1    05-07-2014  "The Cradle Will Rock"
+1.6.0    05-05-2014  "The Cradle Will Rock"
+1.5.5    04-18-2014  "Love Walks In"
+1.5.4    04-01-2014  "Love Walks In"
+1.5.3    03-13-2014  "Love Walks In"
+1.5.2    03-11-2014  "Love Walks In"
+1.5.1    03-10-2014  "Love Walks In"
+1.5.0    02-28-2014  "Love Walks In"
+1.4.5    02-12-2014  "Could This Be Magic?"
+1.4.4    01-06-2014  "Could This Be Magic?"
+1.4.3    12-20-2013  "Could This Be Magic?"
+1.4.2    12-18-2013  "Could This Be Magic?"
+1.4.1    11-27-2013  "Could This Be Magic?"
+1.4.0    11-21-2013  "Could This Be Magic?"
+1.3.4    10-29-2013  "Top of the World"
+1.3.3    10-09-2013  "Top of the World"
+1.3.2    09-19-2013  "Top of the World"
+1.3.1    09-16-2013  "Top of the World"
+1.3.0    09-13-2013  "Top of the World"
+1.2.3    08-21-2013  "Right Now"
+1.2.2    07-05-2013  "Right Now"
+1.2.1    07-04-2013  "Right Now"
+1.2.0    06-10-2013  "Right Now"
+1.1.0    04-02-2013  "Mean Street"
+1.0.0    02-01-2013  "Eruption"
+0.9.0    11-30-2012  "Dreams"
+0.8.0    10-19-2012  "Cathedral"
+0.7.0    09-06-2012  "Panama"
+0.6.0    08-06-2012  "Cabo"
+0.5.0    07-04-2012  "Amsterdam"
+0.4.0    05-23-2012  "Unchained"
+0.3.0    04-23-2012  "Baluchitherium"
+0.2.0    ?           "Untitled"
+0.1.0    ?           "Untitled"
+0.0.2    ?           "Untitled"
+0.0.1    ?           "Untitled"

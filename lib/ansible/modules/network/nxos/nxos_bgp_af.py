@@ -279,7 +279,6 @@ BOOL_PARAMS = [
     'additional_paths_receive',
     'additional_paths_send',
     'advertise_l2vpn_evpn',
-    'client_to_client',
     'dampening_state',
     'default_information_originate',
     'suppress_inactive',
@@ -420,8 +419,15 @@ def get_value(arg, config, module):
         if has_tablemap:
             value = has_tablemap.group('value')
 
+    elif arg == 'client_to_client':
+        no_command_re = re.compile(r'^\s+no\s{0}\s*$'.format(command), re.M)
+        value = True
+
+        if no_command_re.search(config):
+            value = False
+
     elif arg in BOOL_PARAMS:
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+        command_re = re.compile(r'^\s+{0}\s*$'.format(command), re.M)
         value = False
 
         if command_re.search(config):
@@ -674,14 +680,12 @@ def state_present(module, existing, proposed, candidate):
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
-        if len(commands) == 1:
-            candidate.add(commands, parents=parents)
-        elif len(commands) > 1:
-            parents.append('address-family {0} {1}'.format(module.params['afi'],
-                                                           module.params['safi']))
-            if addr_family_command in commands:
-                commands.remove(addr_family_command)
-            candidate.add(commands, parents=parents)
+        addr_family_command = "address-family {0} {1}".format(module.params['afi'],
+                                                              module.params['safi'])
+        parents.append(addr_family_command)
+        if addr_family_command in commands:
+            commands.remove(addr_family_command)
+        candidate.add(commands, parents=parents)
 
 
 def state_absent(module, candidate):

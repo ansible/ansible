@@ -1,20 +1,12 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -76,9 +68,10 @@ commands:
 """
 import re
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import commit_configuration, discard_changes
 from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import iteritems
 
@@ -160,11 +153,12 @@ def load_config(module, config, commit=False):
     exec_command(module, 'top')
     rc, diff, err = exec_command(module, 'show | compare')
 
-    if commit:
-        exec_command(module, 'commit and-quit')
-    else:
-        for cmd in ['rollback 0', 'exit']:
-            exec_command(module, cmd)
+    if diff:
+        if commit:
+            exec_command(module, 'commit and-quit')
+        else:
+            for cmd in ['rollback 0', 'exit']:
+                exec_command(module, cmd)
 
     return str(diff).strip()
 

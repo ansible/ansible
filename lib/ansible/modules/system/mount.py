@@ -4,21 +4,10 @@
 # (c) 2012, Red Hat, inc
 # Written by Seth Vidal
 # based on the mount modules from salt and puppet
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -78,8 +67,9 @@ options:
     default: 0
   state:
     description:
-      - If C(mounted) or C(unmounted), the device will be actively mounted or
-        unmounted as needed and appropriately configured in I(fstab).
+      - If C(mounted), the device will be actively mounted and appropriately
+        configured in I(fstab).
+      - If C(unmounted), the device will be unmounted without changing I(fstab).
       - C(absent) and C(present) only deal with I(fstab) but will not affect
         current mounting.
       - If specifying C(mounted) and the mount point is not present, the mount

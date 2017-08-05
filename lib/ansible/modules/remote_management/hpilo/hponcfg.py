@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -72,12 +62,13 @@ EXAMPLES = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            src = dict(required=True, type='path', aliases=['path']),
-            minfw = dict(type='str'),
+        argument_spec=dict(
+            src=dict(type='path', required=True, aliases=['path']),
+            minfw=dict(type='str'),
         )
     )
 
@@ -93,7 +84,7 @@ def main():
 #    options += ' -v'
 
     if minfw:
-        option += ' -m %s' % minfw
+        options += ' -m %s' % minfw
 
     rc, stdout, stderr = module.run_command('hponcfg %s' % options)
 
@@ -101,6 +92,7 @@ def main():
         module.fail_json(rc=rc, msg="Failed to run hponcfg", stdout=stdout, stderr=stderr)
 
     module.exit_json(changed=changed, stdout=stdout, stderr=stderr)
+
 
 if __name__ == '__main__':
     main()

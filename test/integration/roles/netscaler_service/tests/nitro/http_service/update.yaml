@@ -23,7 +23,6 @@
     cipheader: client-ip
     usip: yes
     useproxyport: yes
-    sc: off
     sp: off
     rtspsessionidremap: off
     clttimeout: 100
@@ -40,7 +39,6 @@
     comment: some comment
     appflowlog: ENABLED
     processlocal: ENABLED
-    netprofile: net-profile-1
 
     monitor_bindings:
       - monitorname: http

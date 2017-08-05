@@ -1,20 +1,11 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -231,13 +222,12 @@ responses:
   type: list
   sample: ['...', '...']
 """
-import re
+import traceback
 
-import ansible.module_utils.asa
-
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils._text import to_native
+
 
 def get_config(module):
     contents = module.params['config']
@@ -289,7 +279,7 @@ def run(module, result):
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
-            module.config.load_config(commands)
+            result['responses'] = module.config.load_config(commands)
         result['changed'] = True
 
     if module.params['save']:
@@ -339,11 +329,11 @@ def main():
 
     try:
         run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+    except NetworkError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **e.kwargs)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

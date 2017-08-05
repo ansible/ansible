@@ -51,10 +51,12 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._handle_exception(result._result)
         self._handle_warnings(result._result)
 
@@ -64,8 +66,7 @@ class CallbackModule(CallbackBase):
         else:
             if delegated_vars:
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
-                                                                            self._dump_results(result._result)),
-                                      color=C.COLOR_ERROR)
+                                                                            self._dump_results(result._result)), color=C.COLOR_ERROR)
             else:
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
@@ -74,13 +75,12 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
 
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        self._clean_results(result._result, result._task.action)
-
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        self._clean_results(result._result, result._task.action)
         if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
@@ -108,6 +108,10 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
+
+            delegated_vars = result._result.get('_ansible_delegated_vars', None)
+            self._clean_results(result._result, result._task.action)
+
             if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
@@ -195,6 +199,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_ok(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
         if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
@@ -218,6 +223,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_failed(self, result):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
         self._handle_exception(result._result)
 
         msg = "failed: "
@@ -231,6 +237,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
+            self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % self._dump_results(result._result)

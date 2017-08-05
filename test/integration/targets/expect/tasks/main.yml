@@ -15,6 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- name: Install test requirements
+  pip:
+    name: pexpect
+    state: present
 
 - name: record the test_command file
   set_fact: test_command_file={{output_dir | expanduser}}/test_command.py
@@ -57,7 +61,7 @@
 
 - name: test chdir
   expect:
-    command: "pwd"
+    command: "/bin/sh -c 'pwd && sleep 1'"
     chdir: "{{output_dir}}"
     responses:
       foo: bar
@@ -66,14 +70,14 @@
 - name: assert chdir works
   assert:
     that:
-    - "chdir_result.stdout == '{{output_dir | expanduser | realpath}}'"
+    - "'{{chdir_result.stdout |expanduser | realpath }}' == '{{output_dir | expanduser | realpath}}'"
 
 - name: test timeout option
   expect:
-    command: "cat"
+    command: "sleep 10"
     responses:
       foo: bar
-    timeout: 0
+    timeout: 1
   ignore_errors: true
   register: timeout_result
 

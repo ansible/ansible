@@ -146,13 +146,13 @@ try:
     from f5.bigiq import ManagementRoot as BigIqMgmt
 
     from f5.iworkflow import ManagementRoot as iWorkflowMgmt
-    from icontrol.session import iControlUnexpectedHTTPError
+    from icontrol.exceptions import iControlUnexpectedHTTPError
     HAS_F5SDK = True
 except ImportError:
     HAS_F5SDK = False
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems, with_metaclass
 
 
@@ -200,7 +200,7 @@ F5_COMMON_ARGS = dict(
 class AnsibleF5Client(object):
     def __init__(self, argument_spec=None, supports_check_mode=False,
                  mutually_exclusive=None, required_together=None,
-                 required_if=None, required_one_of=None,
+                 required_if=None, required_one_of=None, add_file_common_args=False,
                  f5_product_name='bigip'):
 
         self.f5_product_name = f5_product_name
@@ -225,7 +225,8 @@ class AnsibleF5Client(object):
             mutually_exclusive=mutually_exclusive_params,
             required_together=required_together_params,
             required_if=required_if,
-            required_one_of=required_one_of
+            required_one_of=required_one_of,
+            add_file_common_args=add_file_common_args
         )
 
         self.check_mode = self.module.check_mode
@@ -292,7 +293,7 @@ class AnsibleF5Client(object):
         :return:
         :raises iControlUnexpectedHTTPError
         """
-        self.client.api = self._get_mgmt_root(
+        self.api = self._get_mgmt_root(
             self.f5_product_name, **self._connect_params
         )
 

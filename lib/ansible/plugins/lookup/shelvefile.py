@@ -64,11 +64,11 @@ class LookupModule(LookupBase):
             if shelvefile:
                 res = self.read_shelve(shelvefile, key)
                 if res is None:
-                    raise AnsibleError("Key %s not found in shelve file %s" % (key, file))
+                    raise AnsibleError("Key %s not found in shelve file %s" % (key, shelvefile))
                 # Convert the value read to string
                 ret.append(to_text(res))
                 break
             else:
-                raise AnsibleError("Could not locate shelve file in lookup: %s" % file)
+                raise AnsibleError("Could not locate shelve file in lookup: %s" % paramvals['file'])
 
         return ret

@@ -35,8 +35,6 @@ options:
   filter:
     description:
       - Filter for a specific fact.
-    required: false
-    default: null
     choices:
       - cloudstack_service_offering
       - cloudstack_availability_zone
@@ -46,6 +44,11 @@ options:
       - cloudstack_local_ipv4
       - cloudstack_instance_id
       - cloudstack_user_data
+  meta_data_host:
+    description:
+      - Host or IP of the meta data API service.
+      - If not set, determination by parsing the dhcp lease file.
+    version_added: "2.4"
 requirements: [ 'yaml' ]
 '''
 
@@ -57,6 +60,12 @@ EXAMPLES = '''
 # Gather specific fact on instances
 - name: Gather cloudstack facts
   cs_facts: filter=cloudstack_instance_id
+
+# Gather specific fact on instances with a given meta_data_host
+- name: Gather cloudstack facts
+  cs_facts:
+    filter: cloudstack_instance_id
+    meta_data_host: 169.254.169.254
 '''
 
 RETURN = '''
@@ -106,7 +115,7 @@ cloudstack_user_data:
 import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.facts import ansible_facts, module
+from ansible.module_utils.facts import ansible_collector, default_collectors
 
 try:
     import yaml
@@ -121,7 +130,12 @@ CS_USERDATA_BASE_URL = "http://%s/latest/user-data"
 class CloudStackFacts(object):
 
     def __init__(self):
-        self.facts = ansible_facts(module)
+        collector = ansible_collector.get_ansible_collector(all_collector_classes=default_collectors.collectors,
+                                                            filter_spec='default_ipv4',
+                                                            gather_subset=['!all', 'network'],
+                                                            gather_timeout=10)
+        self.facts = collector.collect(module)
+
         self.api_ip = None
         self.fact_paths = {
             'cloudstack_service_offering': 'service-offering',
@@ -182,7 +196,9 @@ class CloudStackFacts(object):
 
     def _get_api_ip(self):
         """Return the IP of the DHCP server."""
-        if not self.api_ip:
+        if module.params.get('meta_data_host'):
+            return module.params.get('meta_data_host')
+        elif not self.api_ip:
             dhcp_lease_file = self._get_dhcp_lease_file()
             for line in open(dhcp_lease_file):
                 if 'dhcp-server-identifier' in line:
@@ -209,8 +225,9 @@ def main():
                 'cloudstack_instance_id',
                 'cloudstack_user_data',
             ]),
+            meta_data_host=dict(),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if not HAS_LIB_YAML:

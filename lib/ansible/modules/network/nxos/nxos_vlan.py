@@ -74,6 +74,13 @@ options:
     required: false
     default: present
     choices: ['present','absent']
+  mode:
+    description:
+      - Set VLAN mode to classical ethernet or fabricpath.
+    required: false
+    default: null
+    choices: ['ce','fabricpath']
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -228,6 +235,7 @@ def get_vlan(vlanid, module):
     try:
         body = run_commands(module, [command])[0]
         vlan_table = body['TABLE_vlanbriefid']['ROW_vlanbriefid']
+        mtu_table = body['TABLE_mtuinfoid']['ROW_mtuinfoid']
     except (TypeError, IndexError, KeyError):
         return {}
 
@@ -240,11 +248,18 @@ def get_vlan(vlanid, module):
 
     vlan = apply_key_map(key_map, vlan_table)
 
+    vlan['mode'] = mtu_table['vlanshowinfo-vlanmode']
+
     value_map = {
         "admin_state": {
             "shutdown": "down",
             "noshutdown": "up"
+        },
+        "mode": {
+            "fabricpath-vlan": "fabricpath",
+            "ce-vlan": "ce"
         }
+
     }
 
     vlan = apply_value_map(value_map, vlan)
@@ -284,6 +299,7 @@ def main():
         mapped_vni=dict(required=False, type='str'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
+        mode=dict(choices=['ce', 'fabricpath'], required=False),
 
         # Deprecated in Ansible 2.4
         include_defaults=dict(default=False),
@@ -309,13 +325,14 @@ def main():
     admin_state = module.params['admin_state']
     mapped_vni = module.params['mapped_vni']
     state = module.params['state']
+    mode = module.params['mode']
 
     if vlan_id:
         if not vlan_id.isdigit():
             module.fail_json(msg='vlan_id must be a valid VLAN ID')
 
     args = dict(name=name, vlan_state=vlan_state,
-                admin_state=admin_state, mapped_vni=mapped_vni)
+                admin_state=admin_state, mapped_vni=mapped_vni, mode=mode)
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
 
@@ -353,7 +370,10 @@ def main():
         if existing.get('mapped_vni'):
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                     existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
-                commands.insert(1, 'no vn-segment')
+                if state == 'absent':
+                    commands = ['vlan ' + vlan_id, 'no vn-segment', 'no vlan ' + vlan_id]
+                else:
+                    commands.insert(1, 'no vn-segment')
         if module.check_mode:
             module.exit_json(changed=True, commands=commands)
         else:

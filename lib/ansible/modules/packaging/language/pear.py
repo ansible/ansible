@@ -5,20 +5,11 @@
 # (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
 # (c) 2015, Jonathan Lestrelin <jonathan.lestrelin@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -46,6 +37,12 @@ options:
         required: false
         default: "present"
         choices: ["present", "absent", "latest"]
+    executable:
+      description:
+        - Path to the pear executable
+      required: false
+      default: null
+      version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -72,6 +69,9 @@ EXAMPLES = '''
 
 import os
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def get_local_version(pear_output):
     """Take pear remoteinfo output and get the installed version"""
     lines = pear_output.split('\n')
@@ -82,6 +82,12 @@ def get_local_version(pear_output):
                 continue
             return installed
     return None
+
+def _get_pear_path(module):
+    if module.params['executable'] and os.path.isfile(module.params['executable']):
+        return module.params['executable']
+    else:
+        return module.get_bin_path('pear', True, [module.params['executable']])
 
 def get_repository_version(pear_output):
     """Take pear remote-info output and get the latest version"""
@@ -96,13 +102,13 @@ def query_package(module, name, state="present"):
     Returns a boolean to indicate if the package is installed,
     and a second boolean to indicate if the package is up-to-date."""
     if state == "present":
-        lcmd = "pear info %s" % (name)
+        lcmd = "%s info %s" % (_get_pear_path(module), name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
         if lrc != 0:
             # package is not installed locally
             return False, False
 
-        rcmd = "pear remote-info %s" % (name)
+        rcmd = "%s remote-info %s" % (_get_pear_path(module), name)
         rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
 
         # get the version installed locally (if any)
@@ -129,7 +135,7 @@ def remove_packages(module, packages):
         if not installed:
             continue
 
-        cmd = "pear uninstall %s" % (package)
+        cmd = "%s uninstall %s" % (_get_pear_path(module), package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -160,7 +166,7 @@ def install_packages(module, state, packages):
         if state == 'latest':
             command = 'upgrade'
 
-        cmd = "pear %s %s" % (command, package)
+        cmd = "%s %s %s" % (_get_pear_path(module), command, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -191,26 +197,18 @@ def check_packages(module, packages, state):
         module.exit_json(change=False, msg="package(s) already %s" % state)
 
 
-def exe_exists(program):
-    for path in os.environ["PATH"].split(os.pathsep):
-        path = path.strip('"')
-        exe_file = os.path.join(path, program)
-        if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
-            return True
-
-    return False
 
 
 def main():
     module = AnsibleModule(
         argument_spec    = dict(
             name         = dict(aliases=['pkg']),
-            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed'])),
+            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
+            executable   = dict(default=None, required=False, type='path')),
         required_one_of = [['name']],
         supports_check_mode = True)
 
-    if not exe_exists("pear"):
-        module.fail_json(msg="cannot find pear executable in PATH")
+
 
     p = module.params
 
@@ -235,8 +233,6 @@ def main():
         elif p['state'] == 'absent':
             remove_packages(module, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

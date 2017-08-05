@@ -1,30 +1,19 @@
 # this is a virtual module that is entirely implemented server side
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
-short_description: Templates a file out to a remote server.
+short_description: Templates a file out to a remote server
 description:
      - Templates are processed by the Jinja2 templating language
        (U(http://jinja.pocoo.org/docs/)) - documentation on the template
@@ -51,8 +40,8 @@ options:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
   newline_sequence:
     description:
       - Specify the newline sequence to use for templating files.
@@ -82,15 +71,16 @@ options:
   trim_blocks:
     description:
       - If this is set to True the first newline after a block is removed (block, not variable tag!).
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: '2.4'
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
         are different than the source.  If C(no), the file will only be transferred
         if the destination does not exist.
-    choices: [ "yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
 notes:
   - For Windows you can use M(win_template) which uses '\r\n' as C(newline_sequence).
   - Including a string that uses a date in the template will result in the template being marked 'changed' each time
@@ -100,6 +90,8 @@ notes:
     which changes the variable interpolation markers to  [% var %] instead of  {{ var }}.
     This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
     raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
+  - You can use the C(copy) module with the C(content:) option if you prefer the template inline,
+    as part of the playbook.
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -135,7 +127,7 @@ EXAMPLES = r'''
 - template:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: 'visudo -cf %s'
+    validate: '/usr/sbin/visudo -cf %s'
 
 # Update sshd configuration safely, avoid locking yourself out
 - template:

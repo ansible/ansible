@@ -25,8 +25,6 @@ Setting = namedtuple('Setting','name value origin')
 
 class ConfigData(object):
 
-    BOOL_TRUE = frozenset(["true", "t", "y", "1", "yes", "on"])
-
     def __init__(self):
         self._global_settings = {}
         self._plugins = {}

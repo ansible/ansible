@@ -4,20 +4,11 @@
 # Sponsored by Four Kitchens http://fourkitchens.com.
 # (c) 2014, Epic Games, Inc.
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -120,7 +111,9 @@ notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
       can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
 requirements: [ "pymongo" ]
-author: "Elliott Foster (@elliotttf)"
+author:
+    - "Elliott Foster (@elliotttf)"
+    - "Julien Thebault (@lujeni)"
 '''
 
 EXAMPLES = '''
@@ -201,6 +194,7 @@ user:
 
 import os
 import ssl as ssl_lib
+import traceback
 from distutils.version import LooseVersion
 
 try:
@@ -219,8 +213,9 @@ else:
     pymongo_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 
 # =========================================
@@ -331,7 +326,7 @@ def check_if_roles_changed(uinfo, roles, db_name):
     def make_sure_roles_are_a_list_of_dict(roles, db_name):
         output = list()
         for role in roles:
-            if isinstance(role, basestring):
+            if isinstance(role, (binary_type, text_type)):
                 new_role = { "role": role, "db": db_name }
                 output.append(new_role)
             else:
@@ -386,7 +381,6 @@ def main():
     user = module.params['name']
     password = module.params['password']
     ssl = module.params['ssl']
-    ssl_cert_reqs = None
     roles = module.params['roles'] or []
     state = module.params['state']
     update_password = module.params['update_password']
@@ -425,28 +419,27 @@ def main():
                 module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
             #else: this has to be the first admin user added
 
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg='unable to connect to database: %s' % str(e))
+    except Exception as e:
+        module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
 
     if state == 'present':
         if password is None and update_password == 'always':
             module.fail_json(msg='password parameter required when adding a user unless update_password is set to on_create')
 
         try:
-            uinfo = user_find(client, user, db_name)
-            if update_password != 'always' and uinfo:
-                password = None
-                if not check_if_roles_changed(uinfo, roles, db_name):
-                    module.exit_json(changed=False, user=user)
+            if update_password != 'always':
+                uinfo = user_find(client, user, db_name)
+                if uinfo:
+                    password = None
+                    if not check_if_roles_changed(uinfo, roles, db_name):
+                        module.exit_json(changed=False, user=user)
 
             if module.check_mode:
                 module.exit_json(changed=True, user=user)
 
             user_add(module, client, db_name, user, password, roles)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='Unable to add or update user: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='Unable to add or update user: %s' % to_native(e), exception=traceback.format_exc())
 
             # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
             #newuinfo = user_find(client, user, db_name)
@@ -456,9 +449,8 @@ def main():
     elif state == 'absent':
         try:
             user_remove(module, client, db_name, user)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg='Unable to remove user: %s' % str(e))
+        except Exception as e:
+            module.fail_json(msg='Unable to remove user: %s' % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=True, user=user)
 

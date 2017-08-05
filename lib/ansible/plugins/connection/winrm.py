@@ -42,6 +42,7 @@ from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
@@ -279,7 +280,10 @@ class Connection(ConnectionBase):
 
             # NB: this can hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
             # FUTURE: Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
-            response = Response(self.protocol.get_command_output(self.shell_id, command_id))
+            resptuple = self.protocol.get_command_output(self.shell_id, command_id)
+            # ensure stdout/stderr are text for py3
+            # FUTURE: this should probably be done internally by pywinrm
+            response = Response(tuple(to_text(v) if isinstance(v, binary_type) else v for v in resptuple))
 
             # TODO: check result from response and set stdin_push_failed if we have nonzero
             if from_exec:
@@ -416,11 +420,11 @@ class Connection(ConnectionBase):
         in_size = os.path.getsize(to_bytes(in_path, errors='surrogate_or_strict'))
         offset = 0
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
-            for out_data in iter((lambda: in_file.read(buffer_size)), ''):
+            for out_data in iter((lambda: in_file.read(buffer_size)), b''):
                 offset += len(out_data)
                 self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
                 # yes, we're double-encoding over the wire in this case- we want to ensure that the data shipped to the end PS pipeline is still b64-encoded
-                b64_data = base64.b64encode(out_data) + '\r\n'
+                b64_data = base64.b64encode(out_data) + b'\r\n'
                 # cough up the data, as well as an indicator if this is the last chunk so winrm_send knows to set the End signal
                 yield b64_data, (in_file.tell() == in_size)
 

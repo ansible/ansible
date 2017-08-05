@@ -28,6 +28,8 @@
 
 import os
 import re
+import shutil
+import tempfile
 import types
 
 from ansible.module_utils.six.moves import configparser
@@ -59,16 +61,22 @@ class RegistrationBase(object):
 
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
+
         if os.path.isfile(plugin_conf):
+            tmpfd, tmpfile = tempfile.mkstemp()
+            shutil.copy2(plugin_conf, tmpfile)
             cfg = configparser.ConfigParser()
-            cfg.read([plugin_conf])
+            cfg.read([tmpfile])
+
             if enabled:
                 cfg.set('main', 'enabled', 1)
             else:
                 cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
+
+            fd = open(tmpfile, 'w+')
             cfg.write(fd)
             fd.close()
+            self.module.atomic_move(tmpfile, plugin_conf)
 
     def subscribe(self, **kwargs):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -190,6 +198,8 @@ class Rhsm(RegistrationBase):
         '''
         args = ['subscription-manager', 'unregister']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        self.update_plugin_conf('rhnplugin', False)
+        self.update_plugin_conf('subscription-manager', False)
 
     def subscribe(self, regexp):
         '''

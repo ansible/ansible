@@ -3,22 +3,11 @@
 
 # (c) 2012, David "DaviXX" CHANIAL <david.chanial@gmail.com>
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -118,8 +107,10 @@ EXAMPLES = '''
 
 import os
 import tempfile
-from ansible.module_utils.basic import get_platform, get_exception, AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+
+from ansible.module_utils.basic import get_platform, AnsibleModule
 from ansible.module_utils.six import string_types
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 
 class SysctlModule(object):
@@ -309,8 +300,7 @@ class SysctlModule(object):
                 f = open(self.sysctl_file, "r")
                 lines = f.readlines()
                 f.close()
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, str(e)))
 
         for line in lines:
@@ -335,7 +325,7 @@ class SysctlModule(object):
                 self.fixed_lines.append(line)
                 continue
             tmpline = line.strip()
-            k, v = line.split('=',1)
+            k, v = tmpline.split('=',1)
             k = k.strip()
             v = v.strip()
             if k not in checked:
@@ -360,8 +350,7 @@ class SysctlModule(object):
         try:
             for l in self.fixed_lines:
                 f.write(l.strip() + "\n")
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
         f.flush()
         f.close()
