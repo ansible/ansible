@@ -86,10 +86,10 @@ def map_obj_to_commands(updates, module):
         if have['state'] == 'present':
             commands.append('delete system services netconf')
     else:
-        if (have['state'] == 'absent' or want['netconf_port'] != have.get('netconf_port')):
-                commands.append(
-                    'set system services netconf ssh port %s' % want['netconf_port']
-                )
+        if have['state'] == 'absent' or want['netconf_port'] != have.get('netconf_port'):
+            commands.append(
+                'set system services netconf ssh port %s' % want['netconf_port']
+            )
 
     return commands
 
