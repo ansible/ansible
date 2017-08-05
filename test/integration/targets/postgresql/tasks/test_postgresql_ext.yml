@@ -67,7 +67,7 @@
   become: True
   postgresql_ext:
     db: "{{ db_name }}"
-    state: present
+    state: absent
     name: "{{ ext_name }}"
   register: result
   when:
