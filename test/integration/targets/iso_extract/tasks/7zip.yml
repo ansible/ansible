@@ -29,13 +29,20 @@
     state: present
   when: ansible_distribution in ['CentOS']
 
-- name: Install 7zip package if we are on Fedora or CentOS
+- name: Install 7zip package if we are on Fedora
+  dnf:
+    name: p7zip-plugins
+    state: installed
+  become: yes
+  when: ansible_distribution in ['Fedora']
+
+- name: Install 7zip package if we are on CentOS
   yum:
     name: p7zip-plugins
     state: installed
     update_cache: yes
   become: yes
-  when: ansible_distribution in ['Fedora', 'CentOS']
+  when: ansible_distribution in ['CentOS']
 
 - name: Install 7zip package if we are on OpenSUSE
   zypper:
