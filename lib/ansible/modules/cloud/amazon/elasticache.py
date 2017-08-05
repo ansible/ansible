@@ -208,7 +208,7 @@ class ElastiCacheManager(object):
             else:
                 msg = "'%s' is currently deleting. Cannot create."
                 self.module.fail_json(msg=msg % self.name)
-        if self.cache_port == None:
+        if self.cache_port is None:
             if self.engine == "redis":
                 self.cache_port = 6379
             elif self.engine == "memcached":
