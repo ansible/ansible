@@ -95,14 +95,32 @@ options:
 '''
 
 EXAMPLES = '''
-# configure a simple asn
-- nxos_vpc:
+- name: configure a simple asn
+  nxos_vpc:
     domain: 100
     role_priority: 1000
     system_priority: 2000
     pkl_dest: 192.168.100.4
     pkl_src: 10.1.100.20
     peer_gw: true
+    auto_recovery: true
+
+# peer-gateway might ask for confirmation to apply changes
+# Device should be configured with terminal dont-ask that makes
+# the device take default answer on confirmation prompt
+
+- name: Make device take default answer
+  nxos_command:
+    commands: terminal dont-ask
+
+- name: configure
+  nxos_vpc:
+    domain: 100
+    role_priority: 32667
+    system_priority: 2000
+    peer_gw: true
+    pkl_src: 10.1.100.2
+    pkl_dest: 192.168.100.4
     auto_recovery: true
 '''
 
