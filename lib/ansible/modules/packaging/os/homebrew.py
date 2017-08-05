@@ -7,18 +7,11 @@
 #
 # Based on macports (Jimmy Tang <jcftang@gmail.com>)
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -137,7 +130,8 @@ EXAMPLES = '''
 import os.path
 import re
 
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems, string_types
 
 
 # exceptions -------------------------------------------------------------- {{{
@@ -206,7 +200,7 @@ class Homebrew(object):
              - os.path.sep
         '''
 
-        if isinstance(path, basestring):
+        if isinstance(path, string_types):
             return not cls.INVALID_PATH_REGEX.search(path)
 
         try:
@@ -234,7 +228,7 @@ class Homebrew(object):
             return True
 
         return (
-            isinstance(brew_path, basestring)
+            isinstance(brew_path, string_types)
             and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
         )
 
@@ -246,7 +240,7 @@ class Homebrew(object):
             return True
 
         return (
-            isinstance(package, basestring)
+            isinstance(package, string_types)
             and not cls.INVALID_PACKAGE_REGEX.search(package)
         )
 
@@ -267,7 +261,7 @@ class Homebrew(object):
             return True
         else:
             return (
-                isinstance(state, basestring)
+                isinstance(state, string_types)
                 and state.lower() in (
                     'installed',
                     'upgraded',
@@ -316,7 +310,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
         else:
-            if isinstance(path, basestring):
+            if isinstance(path, string_types):
                 self._path = path.split(':')
             else:
                 self._path = path
@@ -515,7 +509,7 @@ class Homebrew(object):
             'update',
         ])
         if rc == 0:
-            if out and isinstance(out, basestring):
+            if out and isinstance(out, string_types):
                 already_updated = any(
                     re.search(r'Already up-to-date.', s.strip(), re.IGNORECASE)
                     for s in out.split('\n')
@@ -902,8 +896,6 @@ def main():
     else:
         module.exit_json(changed=changed, msg=message)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

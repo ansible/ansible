@@ -1,5 +1,4 @@
 ---
-
 - hosts: facthost7
   tags: [ 'fact_negation' ]
   connection: local
@@ -12,9 +11,6 @@
            - "!hardware"
       register: not_hardware_facts
 
-    - name: debug setup with not hardware
-      debug:
-        var: not_hardware_facts
 
 - hosts: facthost0
   tags: [ 'fact_min' ]
@@ -31,6 +27,7 @@
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
           - 'ansible_mounts|default("UNDEF_NET") != "UNDEF_HW"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
+
 
 - hosts: facthost19
   tags: [ 'fact_min' ]
@@ -66,6 +63,7 @@
           - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
           - 'ansible_env|default("UNDEF_ENV") == "UNDEF_ENV"'
+          - 'ansible_pkg_mgr|default("UNDEF_PKG_MGR") == "UNDEF_PKG_MGR"'
 
 - hosts: facthost11
   tags: [ 'fact_min' ]
@@ -110,7 +108,10 @@
     - name: Test that only retrieving minimal facts work
       assert:
         that:
+          # from the min set, which should still collect
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
+          - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
+          # non min facts that are not collected
           - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
           - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
@@ -197,10 +198,16 @@
     - name: Test that negation of fact subsets work
       assert:
         that:
+          # network, not collected since it is not in min
+          - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
+          # not collecting virt, should be undef
+          - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
+          # mounts/devices are collected by hardware, so should be not collected and undef
+          - 'ansible_mounts|default("UNDEF_MOUNTS") == "UNDEF_MOUNTS"'
+          - 'ansible_devices|default("UNDEF_DEVICES") == "UNDEF_DEVICES"'
+          # from the min set, which should still collect
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
-          - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
-          - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
+          - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
 
 - hosts: facthost8
   tags: [ 'fact_mixed_negation_addition' ]
@@ -215,6 +222,46 @@
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
           - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
+
+- hosts: facthost14
+  tags: [ 'fact_mixed_negation_addition_min' ]
+  connection: local
+  gather_subset: "!all,!min,network"
+  gather_facts: yes
+  tasks:
+    - name: Test that negation and additional subsets work together for min subset
+      assert:
+        that:
+          - 'ansible_user_id|default("UNDEF_MIN") == "UNDEF_MIN"'
+          - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
+          - 'ansible_default_ipv4|default("UNDEF_DEFAULT_IPV4") != "UNDEF_DEFAULT_IPV4"'
+          - 'ansible_all_ipv4_addresses|default("UNDEF_ALL_IPV4") != "UNDEF_ALL_IPV4"'
+          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
+          - 'ansible_env|default("UNDEF_ENV") == "UNDEF_ENV"'
+
+- hosts: facthost15
+  tags: [ 'fact_negate_all_min_add_pkg_mgr' ]
+  connection: local
+  gather_subset: "!all,!min,pkg_mgr"
+  gather_facts: yes
+  tasks:
+    - name: Test that negation and additional subsets work together for min subset
+      assert:
+        that:
+          # network, not collected since it is not in min
+          - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
+          # not collecting virt, should be undef
+          - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
+          # mounts/devices are collected by hardware, so should be not collected and undef
+          - 'ansible_mounts|default("UNDEF_MOUNTS") == "UNDEF_MOUNTS"'
+          - 'ansible_devices|default("UNDEF_DEVICES") == "UNDEF_DEVICES"'
+          # from the min set, which should not collect
+          - 'ansible_user_id|default("UNDEF_MIN") == "UNDEF_MIN"'
+          - 'ansible_env|default("UNDEF_ENV") == "UNDEF_ENV"'
+          # the pkg_mgr fact we requested explicitly
+          - 'ansible_pkg_mgr|default("UNDEF_PKG_MGR") != "UNDEF_PKGMGR"'
+
 
 - hosts: facthost9
   tags: [ 'fact_local']
@@ -260,3 +307,18 @@
       assert:
         that:
           - '"{{ ansible_local.testfact.fact_dir }}" == "custom"'
+
+- hosts: facthost20
+  tags: [ 'fact_facter_ohai' ]
+  connection: local
+  gather_subset:
+    - facter
+    - ohai
+  gather_facts: yes
+  tasks:
+    - name: Test that retrieving facter and ohai doesnt fail
+      assert:
+        # not much to assert here, aside from not crashing, since test images dont have
+        # facter/ohai
+        that:
+          - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'

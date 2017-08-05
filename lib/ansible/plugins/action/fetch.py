@@ -20,10 +20,10 @@ __metaclass__ = type
 import os
 import base64
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
@@ -51,9 +51,11 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
-        flat = boolean(self._task.args.get('flat'))
-        fail_on_missing = boolean(self._task.args.get('fail_on_missing'))
-        validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5', True)))
+        flat = boolean(self._task.args.get('flat'), strict=False)
+        fail_on_missing = boolean(self._task.args.get('fail_on_missing'), strict=False)
+        validate_checksum = boolean(self._task.args.get('validate_checksum',
+                                                        self._task.args.get('validate_md5', True)),
+                                    strict=False)
 
         # validate source and dest are strings FIXME: use basic.py and module specs
         if not isinstance(source, string_types):
@@ -118,6 +120,11 @@ class ActionModule(ActionBase):
 
         dest = os.path.expanduser(dest)
         if flat:
+            if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')) and not dest.endswith(os.sep):
+                result['msg'] = "dest is an existing directory, use a trailing slash if you want to fetch src into that directory"
+                result['file'] = dest
+                result['failed'] = True
+                return result
             if dest.endswith(os.sep):
                 # if the path ends with "/", we'll use the source filename as the
                 # destination filename

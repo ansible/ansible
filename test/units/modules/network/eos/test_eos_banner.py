@@ -53,12 +53,6 @@ class TestEosBannerModule(TestEosModule):
         commands = ['banner login', 'test', 'banner', 'string', 'EOF']
         self.execute_module(changed=True, commands=commands)
 
-    def test_eos_banner_create_with_eapi_transport(self):
-        set_module_args(dict(banner='login', text='test\nbanner\nstring',
-                             transport='eapi'))
-        commands = [{'cmd': 'banner login', 'input': 'test\nbanner\nstring'}]
-        self.execute_module(changed=True, commands=commands, transport='eapi')
-
     def test_eos_banner_remove_with_cli_transport(self):
         set_module_args(dict(banner='login', state='absent', transport='cli'))
         commands = ['no banner login']

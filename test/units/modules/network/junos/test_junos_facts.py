@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch, MagicMock
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_facts
 from .junos_module import TestJunosModule, load_fixture, set_module_args
 

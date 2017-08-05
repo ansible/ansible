@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # Copyright 2016 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -186,9 +176,6 @@ topic:
     type: str
     sample: "mytopic"
 '''
-CLOUD_CLIENT = 'google-cloud-pubsub'
-CLOUD_CLIENT_MINIMUM_VERSION = '0.22.0'
-CLOUD_CLIENT_USER_AGENT = 'ansible-pubsub-0.1'
 
 try:
     from ast import literal_eval
@@ -201,6 +188,14 @@ try:
     HAS_GOOGLE_CLOUD_PUBSUB = True
 except ImportError as e:
     HAS_GOOGLE_CLOUD_PUBSUB = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
+
+
+CLOUD_CLIENT = 'google-cloud-pubsub'
+CLOUD_CLIENT_MINIMUM_VERSION = '0.22.0'
+CLOUD_CLIENT_USER_AGENT = 'ansible-pubsub-0.1'
 
 
 def publish_messages(message_list, topic):
@@ -336,8 +331,6 @@ def main():
     json_output.update(mod_params)
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gcp import *
+
 if __name__ == '__main__':
     main()

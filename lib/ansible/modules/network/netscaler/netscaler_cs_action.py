@@ -2,22 +2,10 @@
 # -*- coding: utf-8 -*-
 
 #  Copyright (c) 2017 Citrix Systems
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -105,9 +93,16 @@ diff:
     sample: "{ 'targetlbvserver': 'difference. ours: (str) server1 other: (str) server2' }"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 import json
 
+try:
+    from nssrc.com.citrix.netscaler.nitro.resource.config.cs.csaction import csaction
+    from nssrc.com.citrix.netscaler.nitro.exception.nitro_exception import nitro_exception
+    PYTHON_SDK_IMPORTED = True
+except ImportError as e:
+    PYTHON_SDK_IMPORTED = False
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netscaler import (
     ConfigProxy,
     get_nitro_client,
@@ -116,13 +111,6 @@ from ansible.module_utils.netscaler import (
     ensure_feature_is_enabled,
     get_immutables_intersection
 )
-
-try:
-    from nssrc.com.citrix.netscaler.nitro.resource.config.cs.csaction import csaction
-    from nssrc.com.citrix.netscaler.nitro.exception.nitro_exception import nitro_exception
-    PYTHON_SDK_IMPORTED = True
-except ImportError as e:
-    PYTHON_SDK_IMPORTED = False
 
 
 def action_exists(client, module):

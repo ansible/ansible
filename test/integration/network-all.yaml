@@ -11,3 +11,4 @@
 - { include: dellos10.yaml }
 - { include: dellos9.yaml }
 - { include: dellos6.yaml }
+- { include: nuage.yaml }

@@ -4,21 +4,11 @@
 # Copyright 2015 Cristian van Ee <cristian at cvee.org>
 # Copyright 2015 Igor Gnatenko <i.gnatenko.brain@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -375,7 +365,7 @@ def ensure(module, base, state, names, autoremove):
             # Install groups.
             for group in groups:
                 try:
-                    base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                    base.group_install(group.id, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
                     # In dnf 2.0 if all the mandatory packages in a group do
                     # not install, an error is raised.  We want to capture
@@ -399,10 +389,10 @@ def ensure(module, base, state, names, autoremove):
             for group in groups:
                 try:
                     try:
-                        base.group_upgrade(group)
+                        base.group_upgrade(group.id)
                     except dnf.exceptions.CompsError:
                         # If not already installed, try to install.
-                        base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                        base.group_install(group.id, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
                     failures.append((group, e))
 
@@ -433,7 +423,7 @@ def ensure(module, base, state, names, autoremove):
 
             for group in groups:
                 try:
-                    base.group_remove(group)
+                    base.group_remove(group.id)
                 except dnf.exceptions.CompsError:
                     # Group is already uninstalled.
                     pass

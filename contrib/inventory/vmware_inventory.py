@@ -23,35 +23,33 @@ $ jq '._meta.hostvars[].config' data.json | head
 
 from __future__ import print_function
 
-import argparse
 import atexit
 import datetime
 import getpass
+import json
 import os
 import re
-import six
 import ssl
 import sys
 import uuid
-
 from collections import defaultdict
-from six.moves import configparser
 from time import time
+
+import six
 from jinja2 import Environment
+from six import integer_types, string_types
+from six.moves import configparser
 
-HAS_PYVMOMI = False
 try:
-    from pyVmomi import vim
+    import argparse
+except ImportError:
+    sys.exit('Error: This inventory script required "argparse" python module.  Please install it or upgrade to python-2.7')
+
+try:
+    from pyVmomi import vim, vmodl
     from pyVim.connect import SmartConnect, Disconnect
-
-    HAS_PYVMOMI = True
 except ImportError:
-    pass
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+    sys.exit("ERROR: This inventory script required 'pyVmomi' Python module, it was not able to load it")
 
 hasvcr = False
 try:
@@ -99,10 +97,7 @@ class VMWareInventory(object):
     skip_keys = []
     groupby_patterns = []
 
-    if sys.version_info > (3, 0):
-        safe_types = [int, bool, str, float, None]
-    else:
-        safe_types = [int, long, bool, str, float, None]
+    safe_types = [bool, str, float, None] + list(integer_types)
     iter_types = [dict, list]
 
     bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
@@ -119,14 +114,12 @@ class VMWareInventory(object):
     env.filters['regex_match'] = regex_match
 
     # translation table for attributes to fetch for known vim types
-    if not HAS_PYVMOMI:
-        vimTable = {}
-    else:
-        vimTable = {
-            vim.Datastore: ['_moId', 'name'],
-            vim.ResourcePool: ['_moId', 'name'],
-            vim.HostSystem: ['_moId', 'name'],
-        }
+
+    vimTable = {
+        vim.Datastore: ['_moId', 'name'],
+        vim.ResourcePool: ['_moId', 'name'],
+        vim.HostSystem: ['_moId', 'name'],
+    }
 
     @staticmethod
     def _empty_inventory():
@@ -347,13 +340,21 @@ class VMWareInventory(object):
         ''' Make API calls '''
 
         instances = []
-        si = SmartConnect(**inkwargs)
+        try:
+            si = SmartConnect(**inkwargs)
+        except ssl.SSLError as connection_error:
+            if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and self.validate_certs:
+                sys.exit("Unable to connect to ESXi server due to %s, "
+                         "please specify validate_certs=False and try again" % connection_error)
+
+        except Exception as exc:
+            self.debugl("Unable to connect to ESXi server due to %s" % exc)
+            sys.exit("Unable to connect to ESXi server due to %s" % exc)
 
         self.debugl('retrieving all instances')
         if not si:
-            print("Could not connect to the specified host using specified "
-                  "username and password")
-            return -1
+            sys.exit("Could not connect to the specified host using specified "
+                     "username and password")
         atexit.register(Disconnect, si)
         content = si.RetrieveContent()
 
@@ -384,12 +385,16 @@ class VMWareInventory(object):
             instance_tuples.append((instance, ifacts))
         self.debugl('facts collected for all instances')
 
-        cfm = content.customFieldsManager
-        if cfm is not None and cfm.field:
-            for f in cfm.field:
-                if f.managedObjectType == vim.VirtualMachine:
-                    self.custom_fields[f.key] = f.name
-            self.debugl('%d custom fieds collected' % len(self.custom_fields))
+        try:
+            cfm = content.customFieldsManager
+            if cfm is not None and cfm.field:
+                for f in cfm.field:
+                    if f.managedObjectType == vim.VirtualMachine:
+                        self.custom_fields[f.key] = f.name
+                self.debugl('%d custom fields collected' % len(self.custom_fields))
+        except vmodl.RuntimeFault as exc:
+            self.debugl("Unable to gather custom fields due to %s" % exc.msg)
+
         return instance_tuples
 
     def instances_to_inventory(self, instances):
@@ -481,7 +486,7 @@ class VMWareInventory(object):
             for k, v in inventory['_meta']['hostvars'].items():
                 if 'customvalue' in v:
                     for tv in v['customvalue']:
-                        if not isinstance(tv['value'], str) and not isinstance(tv['value'], unicode):
+                        if not isinstance(tv['value'], string_types):
                             continue
 
                         newkey = None
@@ -657,11 +662,9 @@ class VMWareInventory(object):
                 rdata = vobj.decode('ascii', 'ignore')
         elif issubclass(type(vobj), bool) or isinstance(vobj, bool):
             rdata = vobj
-        elif issubclass(type(vobj), int) or isinstance(vobj, int):
+        elif issubclass(type(vobj), integer_types) or isinstance(vobj, integer_types):
             rdata = vobj
         elif issubclass(type(vobj), float) or isinstance(vobj, float):
-            rdata = vobj
-        elif issubclass(type(vobj), long) or isinstance(vobj, long):
             rdata = vobj
         elif issubclass(type(vobj), list) or issubclass(type(vobj), tuple):
             rdata = []

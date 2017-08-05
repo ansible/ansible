@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2012 Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -47,6 +37,12 @@ options:
     description:
     - The password to authenticate to the HP iLO interface.
     default: admin
+  ssl_version:
+    description:
+      - Change the ssl_version used.
+    default: TLSv1
+    choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
+    version_added: '2.4'
 requirements:
 - hpilo
 notes:
@@ -125,13 +121,14 @@ hw_uuid:
 
 import re
 import warnings
-from ansible.module_utils.basic import AnsibleModule
 
 try:
     import hpilo
     HAS_HPILO = True
 except ImportError:
     HAS_HPILO = False
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 # Suppress warnings from hpilo
@@ -154,10 +151,11 @@ def parse_flat_interface(entry, non_numeric='hw_eth_ilo'):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            host = dict(required=True, type='str'),
-            login = dict(default='Administrator', type='str'),
-            password = dict(default='admin', type='str', no_log=True),
+        argument_spec=dict(
+            host=dict(type='str', required=True),
+            login=dict(type='str', default='Administrator'),
+            password=dict(type='str', default='admin', no_log=True),
+            ssl_version=dict(type='str', default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
         ),
         supports_check_mode=True,
     )
@@ -168,8 +166,9 @@ def main():
     host = module.params['host']
     login = module.params['login']
     password = module.params['password']
+    ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V', 'v'))
 
-    ilo = hpilo.Ilo(host, login=login, password=password)
+    ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
 
     facts = {
         'module_hw': True,
@@ -180,17 +179,17 @@ def main():
     for entry in data:
         if 'type' not in entry:
             continue
-        elif entry['type'] == 0: # BIOS Information
+        elif entry['type'] == 0:  # BIOS Information
             facts['hw_bios_version'] = entry['Family']
             facts['hw_bios_date'] = entry['Date']
-        elif entry['type'] == 1: # System Information
+        elif entry['type'] == 1:  # System Information
             facts['hw_uuid'] = entry['UUID']
             facts['hw_system_serial'] = entry['Serial Number'].rstrip()
             facts['hw_product_name'] = entry['Product Name']
             facts['hw_product_uuid'] = entry['cUUID']
-        elif entry['type'] == 209: # Embedded NIC MAC Assignment
+        elif entry['type'] == 209:  # Embedded NIC MAC Assignment
             if 'fields' in entry:
-                for (name, value) in [ (e['name'], e['value']) for e in entry['fields'] ]:
+                for (name, value) in [(e['name'], e['value']) for e in entry['fields']]:
                     if name.startswith('Port'):
                         try:
                             factname = 'hw_eth' + str(int(value) - 1)

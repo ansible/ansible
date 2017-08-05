@@ -35,24 +35,19 @@ options:
   full_name:
     description:
       - Full name of the user.
-    required: false
   username_credential:
     description:
       - Name of the user to create, remove or modify.
-    required: true
+    required: True
     aliases:
       - name
   password_credential:
     description:
       - Set the users password to this unencrypted value.
         C(password_credential) is required when creating a new account.
-    default: None
-    required: false
   shell:
     description:
       - Optionally set the users shell.
-    required: false
-    default: None
     choices:
       - bash
       - none
@@ -67,13 +62,10 @@ options:
         C(operator), C(resource-admin), C(user-manager), C(web-application-security-administrator),
         and C(web-application-security-editor). Partition portion of tuple should
         be an existing partition or the value 'all'.
-    required: false
-    default: None
   state:
     description:
       - Whether the account should exist or not, taking action if the state is
         different from what is stated.
-    required: false
     default: present
     choices:
       - present
@@ -82,14 +74,13 @@ options:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
         C(on_create) will only set the password for newly created users.
-    required: false
     default: on_create
     choices:
       - always
       - on_create
 notes:
-   - Requires the requests Python package on the host. This is as easy as
-     pip install requests
+   - Requires the f5-sdk Python package on the host. This is as easy as
+     pip install f5-sdk.
    - Requires BIG-IP versions >= 12.0.0
 extends_documentation_fragment: f5
 requirements:
@@ -560,26 +551,16 @@ class ArgumentSpec(object):
                 aliases=['username_credential']
             ),
             password_credential=dict(
-                required=False,
-                default=None,
                 no_log=True,
             ),
             partition_access=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
-            full_name=dict(
-                required=False,
-                default=None
-            ),
+            full_name=dict(),
             shell=dict(
-                required=False,
-                default=None,
                 choices=['none', 'bash', 'tmsh']
             ),
             update_password=dict(
-                required=False,
                 default='always',
                 choices=['always', 'on_create']
             )

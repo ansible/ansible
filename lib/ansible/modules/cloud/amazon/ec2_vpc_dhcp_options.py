@@ -207,16 +207,25 @@ EXAMPLES = """
 
 """
 
-import boto.vpc
-import boto.ec2
-from boto.exception import EC2ResponseError
-import socket
 import collections
+import socket
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
+
+if HAS_BOTO:
+    import boto.vpc
+    import boto.ec2
+    from boto.exception import EC2ResponseError
+
 
 def get_resource_tags(vpc_conn, resource_id):
     return dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': resource_id}))
 
-def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
+
+def ensure_tags(module, vpc_conn, resource_id, tags, add_only, check_mode):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
         if tags == cur_tags:
@@ -233,7 +242,7 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
-        module.fail_json(msg=get_error_message(e.args[2]))
+        module.fail_json(msg="Failed to modify tags: %s" % e.message, exception=traceback.format_exc())
 
 def fetch_dhcp_options_for_vpc(vpc_conn, vpc_id):
     """
@@ -248,6 +257,7 @@ def fetch_dhcp_options_for_vpc(vpc_conn, vpc_id):
         return None
     return dhcp_options[0]
 
+
 def match_dhcp_options(vpc_conn, tags=None, options=None):
     """
     Finds a DHCP Options object that optionally matches the tags and options provided
@@ -259,6 +269,7 @@ def match_dhcp_options(vpc_conn, tags=None, options=None):
                 return(True, dopts)
     return(False, None)
 
+
 def remove_dhcp_options_by_id(vpc_conn, dhcp_options_id):
     associations = vpc_conn.get_all_vpcs(filters={'dhcpOptionsId': dhcp_options_id})
     if len(associations) > 0:
@@ -266,6 +277,7 @@ def remove_dhcp_options_by_id(vpc_conn, dhcp_options_id):
     else:
         vpc_conn.delete_dhcp_options(dhcp_options_id)
         return True
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -290,6 +302,8 @@ def main():
     changed = False
     new_options = collections.defaultdict(lambda: None)
 
+    if not HAS_BOTO:
+        module.fail_json(msg='boto is required for this module')
 
     region, ec2_url, boto_params = get_aws_connection_info(module)
     connection = connect_to_aws(boto.vpc, region, **boto_params)
@@ -339,7 +353,7 @@ def main():
             found = True
             dhcp_option = supplied_options[0]
             if params['state'] != 'absent' and params['tags']:
-                ensure_tags(connection, dhcp_option.id, params['tags'], False, module.check_mode)
+                ensure_tags(module, connection, dhcp_option.id, params['tags'], False, module.check_mode)
 
     # Now we have the dhcp options set, let's do the necessary
 
@@ -370,7 +384,7 @@ def main():
                 new_options['netbios-node-type'])
             changed = True
             if params['tags']:
-                ensure_tags(connection, dhcp_option.id, params['tags'], False, module.check_mode)
+                ensure_tags(module, connection, dhcp_option.id, params['tags'], False, module.check_mode)
 
     # If we were given a vpc_id, then attach the options we now have to that before we finish
     if params['vpc_id'] and not module.check_mode:
@@ -382,9 +396,6 @@ def main():
 
     module.exit_json(changed=changed, new_options=new_options, dhcp_options_id=dhcp_option.id)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == "__main__":
     main()

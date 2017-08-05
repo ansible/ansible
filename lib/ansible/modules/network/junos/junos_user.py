@@ -1,20 +1,12 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -34,13 +26,14 @@ description:
     defined accounts
 extends_documentation_fragment: junos
 options:
-  users:
+  aggregate:
     description:
-      - The C(users) argument defines a list of users to be configured
+      - The C(aggregate) argument defines a list of users to be configured
         on the remote device.  The list of users will be compared against
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
         the name argument.
+    version_added: "2.4"
     required: False
     default: null
   name:
@@ -48,7 +41,7 @@ options:
       - The C(name) argument defines the username of the user to be created
         on the system.  This argument must follow appropriate usernaming
         conventions for the target device running JUNOS.  This argument is
-        mutually exclusive with the C(users) argument.
+        mutually exclusive with the C(aggregate) argument.
     required: false
     default: null
   full_name:
@@ -91,6 +84,12 @@ options:
     required: false
     default: present
     choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
+    version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -115,15 +114,38 @@ EXAMPLES = """
   junos_user:
     name: ansible
     purge: yes
+
+- name: Create list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: present}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: present}
+
+- name: Delete list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: absent}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: absent}
 """
 
 RETURN = """
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
+  type: string
+  sample: >
+          [edit system login]
+          +    user test-user {
+          +        uid 2005;
+          +        class read-only;
+          +    }
 """
 from functools import partial
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load_config
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import commit_configuration, discard_changes
+from ansible.module_utils.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
@@ -150,6 +172,11 @@ def map_obj_to_ele(want):
         SubElement(user, 'name').text = item['name']
 
         if operation == 'replace':
+            if item['active']:
+                user.set('active', 'active')
+            else:
+                user.set('inactive', 'inactive')
+
             SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
@@ -184,8 +211,8 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
         elif not module.params['name']:
@@ -194,7 +221,7 @@ def map_params_to_obj(module):
             collection = [{'name': module.params['name']}]
     else:
         collection = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
             elif 'name' not in item:
@@ -210,7 +237,8 @@ def map_params_to_obj(module):
             'full_name': get_value('full_name'),
             'role': get_value('role'),
             'sshkey': get_value('sshkey'),
-            'state': get_value('state')
+            'state': get_value('state'),
+            'active': get_value('active')
         })
 
         for key, value in iteritems(item):
@@ -227,25 +255,35 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        users=dict(type='list', aliases=['collection']),
+    element_spec = dict(
         name=dict(),
-
         full_name=dict(),
         role=dict(choices=ROLES, default='unauthorized'),
         sshkey=dict(),
-
-        purge=dict(type='bool'),
-
-        state=dict(choices=['present', 'absent'], default='present')
+        state=dict(choices=['present', 'absent'], default='present'),
+        active=dict(default=True, type='bool')
     )
 
-    mutually_exclusive = [('users', 'name')]
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=element_spec, aliases=['collection', 'users']),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(junos_argument_spec)
+
+    required_one_of = [['aggregate', 'name']]
+    mutually_exclusive = [['aggregate', 'name'],
+                          ['aggregate', 'full_name'],
+                          ['aggregate', 'sshkey'],
+                          ['aggregate', 'state'],
+                          ['aggregate', 'active']]
 
     argument_spec.update(junos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
+                           required_one_of=required_one_of,
                            supports_check_mode=True)
 
     warnings = list()
@@ -256,17 +294,23 @@ def main():
     want = map_params_to_obj(module)
     ele = map_obj_to_ele(want)
 
-    kwargs = {'commit': not module.check_mode}
+    kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, **kwargs)
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff}
-        })
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

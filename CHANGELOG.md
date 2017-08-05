@@ -7,52 +7,74 @@ Ansible Changes By Release
 
 * Support for Python-2.4 and Python-2.5 on the managed system's side was dropped. If you need to manage a system that ships with Python-2.4 or Python-2.5, you'll need to install Python-2.6 or better on the managed system or run Ansible-2.3 until you can upgrade the system.
 * New import/include keywords to replace the old bare `include` directives. The use of `static: {yes|no}` on such includes is now deprecated.
-    - Using import_* (import_playbook, import_tasks, import_role) directives are static.
-    - Using include_* (include_tasks, include_role) directives are dynamic.
-* Added fact namespacing, from now on facts will be available under 'ansible_facts' namespace (i.e. `ansible_facts.ansible_os_distribution`), they will still also be added into the main namespace directly but now also having a configuration toggle to disable this. Eventually this will be on by default. This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
-* new 'order' play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
-* Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous 'sorting by name'.
+    - Using `import_*` (`import_playbook`, `import_tasks`, `import_role`) directives are static.
+    - Using `include_*` (`include_tasks`, `include_role`) directives are dynamic.
+* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.ansible_os_distribution`).
+  They will continue to be added into the main namespace directly, but now a configuration toggle to disable this, currently off by default, in the future it will be on by default.
+  This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
+* New `order` play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
+* Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous sorting by name'.
 * Inventory has been revamped:
-	- Inventory  classes have been split to allow for better management and deduplication
-	- Logic that each inventory source duplicated is now common and pushed up to reconciliation
-	- VariableManager has been updated for better interaction with inventory
-	- Updated CLI with helper method to initialize base objects for plays
-	- New Inventory plugins for creating inventory
-    - Old inventory formats are still supported via plugins
-	- Inline host_list is also an inventory plugin, an example alternative 'advanced_host_list' is also provided (it supports ranges)
-	- New configuration option to list enabled plugins and precedence order: 'whitelist_inventory' in ansible.cfg
-    - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
-	- Loading group_vars/host_vars is now a vars plugin and can be overridden
-	- It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
-	- Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
-	- Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
-	- Improved warnings and error messages across the board
+  - Inventory classes have been split to allow for better management and deduplication
+  - Logic that each inventory source duplicated is now common and pushed up to reconciliation
+  - VariableManager has been updated for better interaction with inventory
+  - Updated CLI with helper method to initialize base objects for plays
+  - New inventory plugins for creating inventory
+  - Old inventory formats are still supported via plugins
+  - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
+  - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
+  - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
+  - Loading group_vars/host_vars is now a vars plugin and can be overridden
+  - It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
+  - Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
+  - Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
+  - Improved warnings and error messages across the board
 * Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
-	- Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
-	- TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
+  - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
+  - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
+* Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
+* Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
 
 ### Deprecations
-* The behaviour when specifying --tags (or --skip-tags) multiple times on the command line
+* The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line
   has changed so that the tags are merged together by default.  See the
   documentation for how to temporarily use the old behaviour if needed:
   https://docs.ansible.com/ansible/intro_configuration.html#merge-multiple-cli-tags
-* The fetch module's validate_md5 parameter has been deprecated and will be
+* The `fetch` module's `validate_md5` parameter has been deprecated and will be
   removed in 2.8.  If you wish to disable post-validation of the downloaded
   file, use validate_checksum instead.
-* Those using ansible as a library should note that the ansible.vars.unsafe_proxy
+* Those using ansible as a library should note that the `ansible.vars.unsafe_proxy`
   module is deprecated and slated to go away in 2.8.  The functionality has been
-  moved to ansible.utils.unsafe_proxy to avoid a circular import.
+  moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
+
+#### Deprecated Modules:
+* ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
+* cs_nic (removed in 2.7), replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+
+#### Removed Deprecated Modules:
+* eos_template (use eos_config instead)
+* ios_template (use ios_config instead)
+* iosxr_template (use iosxr_config instead)
+* junos_template (use junos_config instead)
+* nxos_template (use nxos_config instead)
+* ops_template (use ops_config instead)
+
+* Modules (scheduled for removal in 2.6)
+
+  * ec2_remote_facts
 
 ### Minor Changes
-* removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
-* removed unused and deprecated config option 'pattern'
+* Removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
+* Removed unused and deprecated config option `pattern`
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
+* The `include_dir` var is not a global anymore, as we now allow multiple inventory sources, it is now host dependant.
+  This means it cannot be used wherever host vars are not permitted, for example in task/handler names.
 * Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
   was a quoted string with hash marks ("#") in it then the parsed string
   included the quotes.  Now the string will not be quoted.  Previously, if the
   quoting ended before the string finished and then the hash mark appeared, the
   hash mark was included as part of the string.  Now it is treated as
-  a trailing comment::
+  a trailing comment:
 
       # Before:
       var1="string#comment"   ===>  var1: "\"string#comment\""
@@ -64,15 +86,39 @@ Ansible Changes By Release
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
 * As of 2.4.0, the fetch module fails if there are errors reading the remote file.
-  Use ignore_errors or failed_when in playbooks if you wish to ignore errors.
+  Use `ignore_errors` or `failed_when` in playbooks if you wish to ignore errors.
 * Experimentally added pmrun become method.
 * Enable the docker connection plugin to use su as a become method
 * Add an encoding parameter for the replace module so that it can operate on non-utf-8 files
-* By default, Ansible now uses the cryptography module to implement vault
-  instead of the older pycrypto module.
+* By default, Ansible now uses the cryptography module to implement vault instead of the older pycrypto module.
+* Changed task state resulting from both `rc` and `failed` fields returned, 'rc' no longer overrides 'failed'. Test plugins have also been updated accordingly.
+* The win_unzip module no longer includes dictionary 'win_unzip' in its results,
+  the content is now directly in the resulting output, like pretty much every other module.
+* Rewrite of the copy module so that it handles cornercases with symbolic links
+  and empty directories.  The copy module has a new parameter, `local_follow`
+  which controls how links on the source system are treated. (The older
+  parameter, follow is for links on the remote system.)
+* Update the handling of symbolic file permissions in file-related mode
+  parameters to deal with multiple operators.  For instance, `mode='u=rw+x-X'` to
+  set the execute bit on directories, remove it from filea, and set read-write
+  on both is now supported
+* Added better cookie parsing to fetch_url/open_url. Cookies are now in a dictionary named `cookies`
+  in the fetch_url result. Anything using `open_url` directly can pass a cookie object as a named arg
+  (`cookies`), and then parse/format the cookies in the result.
+* The bundled copy of six in lib/ansible/module_utils/six is now used
+  unconditionally.  The code to fallback on a system six interfered with static
+  analysis of the code so the cost of using the fallback code became too high.
+  Distributions which wish to unbundle may do so by replacing the bundled six
+  in ansible/module_utils/six/__init__.py.  Six is tricky to unbundle, however,
+  so they may want to base their efforts off the code we were using:
+    * https://github.com/ansible/ansible/blob/2fff690caab6a1c6a81973f704be3fbd0bde2c2f/lib/ansible/module_utils/six/__init__.py
+* Update ipaddr Jinja filters to replace existing non RFC compliant ones. Added additional filters for easier use
+  of handling IP addresses. (PR# 26566)
 
 #### New Callbacks:
+- full_skip
 - profile_roles
+- stderr
 
 #### New Inventory Plugins:
 - advanced_host_list
@@ -80,8 +126,8 @@ Ansible Changes By Release
 - host_list
 - ini
 - script
-- yaml
 - virtualbox
+- yaml
 
 #### New Inventory scripts:
 - lxd
@@ -91,17 +137,35 @@ Ansible Changes By Release
 - all: true if all elements are true
 
 ### Module Notes
-
-- The docker_container module has gained a new option, working_dir which allows
+- The docker_container module has gained a new option, `working_dir` which allows
   specifying the working directory for the command being run in the image.
 - The ec2_win_password module now requires the cryptography python module be installed to run
+- The stat module added a field, lnk_target.  When the file being stated is
+  a symlink, lnk_target will contain the target of the link.  This differs from
+  lnk_source when the target is specified relative to the symlink.  In this
+  case, lnk_target will remain relative while lnk_source will be expanded to an
+  absolute path.
+- The archive module has a new parameter exclude_path which lists paths to exclude from the archive
 
 ### New Modules
-
+- aci
+  * aci_rest
 - aix_lvol
 - amazon
+  * aws_api_gateway
+  * dynamodb_ttl
+  * ec2_instance_facts
+  * ec2_metadata_facts
   * ec2_vpc_endpoint
+  * ec2_vpc_endpoint_facts
+  * ec2_vpc_peering_facts
+  * elb_application_lb
+  * elb_application_lb_facts
+  * elb_target_group
+  * elb_target_group_facts
   * iam_cert_facts
+  * iam_group
+  * iam_managed_policy
   * lightsail
 - atomic
   * atomic_container
@@ -190,11 +254,14 @@ Ansible Changes By Release
   * ce_vxlan_tunnel
   * ce_vxlan_vap
 - cloudstack
+  * cs_instance_nic
+  * cs_instance_nic_secondaryip
   * cs_network_acl
   * cs_network_acl_rule
   * cs_vpn_gateway
 - crypto
   * openssl_csr
+- digital_ocean_floating_ip
 - f5
   * bigip_command
   * bigip_switchport
@@ -206,13 +273,16 @@ Ansible Changes By Release
   * gcp_healthcheck
   * gcp_target_proxy
   * gcp_url_map
+- gunicorn
+- nuage
+  * nuage_vpsk
 - purestorage
-  * purefa_host
-  * purefa_volume
   * purefa_hg
+  * purefa_host
   * purefa_pg
+  * purefa_volume
 - imc
-  * imc_xml
+  * imc_rest
 - rundeck
   * rundeck_acl_policy
   * rundeck_project
@@ -221,13 +291,20 @@ Ansible Changes By Release
   * vmware_guest_find
 - windows
   * win_defrag
+  * win_domain_group
   * win_dsc
   * win_firewall
+  * win_group_membership
   * win_psmodule
   * win_route
+  * win_security_policy
+  * win_wakeonlan
 
+<a id="2.3"></a>
 
 ## 2.3 "Ramble On" - 2017-04-12
+
+Moving to Ansible 2.3 guide http://docs.ansible.com/ansible/porting_guide_2.3.html
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
@@ -286,6 +363,7 @@ Ansible Changes By Release
 #### New: lookups
 
 - keyring: allows getting password from the 'controller' system's keyrings
+- chef_databag: allows querying Chef Databags via pychef library
 
 #### New: cache
 
@@ -541,6 +619,7 @@ Ansible Changes By Release
   * zfs_facts
   * zpool_facts
 
+<a id="2.2.1"></a>
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
 
@@ -567,10 +646,11 @@ Ansible Changes By Release
 * Improvements and fixes to OpenBSD fact gathering.
 * Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
 * Fixed Windows async to avoid blocking due to handle inheritance.
-* Fixed bugs in the mount module on older Linux kernels and *BSDs
+* Fixed bugs in the mount module on older Linux kernels and BSDs
 * Various minor fixes for Python 3
 * Inserted some checks for jinja2-2.9, which can cause some issues with Ansible currently.
 
+<a id="2.2"></a>
 
 ## 2.2 "The Battle of Evermore" - 2016-11-01
 
@@ -885,11 +965,15 @@ Notice given that the following will be removed in Ansible 2.4:
   * nxos_template
   * ops_template
 
+<a id="2.1.4"></a>
+
 ## 2.1.4 "The Song Remains the Same" - 2017-01-16
 
 * Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
 * Fixed a bug with conditionals in loops, where undefined variables and other errors will defer raising the error until the conditional has been evaluated.
 * Added a version check for jinja2-2.9, which does not fully work with Ansible currently.
+
+<a id="2.1.3"></a>
 
 ## 2.1.3 "The Song Remains the Same" - 2016-11-04
 
@@ -903,10 +987,12 @@ Notice given that the following will be removed in Ansible 2.4:
   login_password as no_log so the password is obscured when logging.
 * Fixed several bugs related to locating files relative to role/playbook directories.
 * Fixed a bug in the way hosts were tested for failed states, resulting in incorrectly skipped block sessions.
-* Fixed a bug in the way our custom JSON encoder is used for the to_json* filters.
+* Fixed a bug in the way our custom JSON encoder is used for the `to_json*` filters.
 * Fixed some bugs related to the use of non-ascii characters in become passwords.
 * Fixed a bug with Azure modules which may be using the latest rc6 library.
 * Backported some docker_common fixes.
+
+<a id="2.1.2"></a>
 
 ## 2.1.2 "The Song Remains the Same" - 2016-09-29
 
@@ -969,6 +1055,8 @@ Module fixes:
   Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
   Use `_fixup_perms2` if support for previous releases is not required.
   Otherwise use `_fixup_perms` with `recursive=False`.
+
+<a id="2.1"></a>
 
 ## 2.1 "The Song Remains the Same"
 
@@ -1157,6 +1245,8 @@ Module fixes:
   completely in 2.3, after which time it will be an error.
 * play_hosts magic variable, use ansible_play_batch or ansible_play_hosts instead.
 
+<a id="2.0.2"></a>
+
 ## 2.0.2 "Over the Hills and Far Away"
 
 * Backport of the 2.1 feature to ensure per-item callbacks are sent as they occur,
@@ -1198,9 +1288,11 @@ Module fixes:
   permissions on the temporary file too leniently on a temporary file that was
   executed as a script.  Addresses CVE-2016-3096
 * Fix a bug in the uri module where setting headers via module params that
-  start with HEADER_ were causing a traceback.
+  start with `HEADER_` were causing a traceback.
 * Fix bug in the free strategy that was causing it to synchronize its workers
   after every task (making it a lot more like linear than it should have been).
+
+<a id="2.0.1"></a>
 
 ## 2.0.1 "Over the Hills and Far Away"
 
@@ -1209,7 +1301,7 @@ Module fixes:
   running rsync.  In 1.9.x and previous, sudo was run on the host that rsync
   connected to.  2.0.1 restores the 1.9.x behaviour.
 * Additionally, several other problems with where synchronize chose to run when
-  combined with delegate_to were fixed.  In particular, if a playbook targeted
+  combined with delegate_to were fixed.  In particular, if a playbook targetted
   localhost and then delegated_to a remote host the prior behavior (in 1.9.x
   and 2.0.0.x) was to copy files between the src and destination directories on
   the delegated host.  This has now been fixed to copy between localhost and
@@ -1242,6 +1334,8 @@ Module fixes:
 * Fix to make implicit fact gathering task correctly inherit settings from play,
   this might cause an error if settings environment on play depending on 'ansible_env'
   which was previouslly ignored
+
+<a id="2.0"></a>
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 

@@ -342,6 +342,173 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 supports_check_mode=True,
             )
 
+    def test_module_utils_basic_ansible_module_with_options_creation(self):
+        from ansible.module_utils import basic
+
+        options_spec = dict(
+            foo=dict(required=True, aliases=['dup']),
+            bar=dict(),
+            bam=dict(),
+            baz=dict(),
+            bam1=dict(),
+            bam2=dict(default='test')
+        )
+        arg_spec = dict(
+            foobar=dict(
+                type='list',
+                elements='dict',
+                options=options_spec,
+                mutually_exclusive=[
+                    ['bam', 'bam1']
+                ],
+                required_if=[
+                    ['foo', 'hello', ['bam']],
+                    ['foo', 'bam2', ['bam2']]
+                ],
+                required_one_of=[
+                    ['bar', 'bam']
+                ],
+                required_together=[
+                    ['bam1', 'baz']
+                ]
+            )
+        )
+
+        # should test ok, tests basic foo requirement and required_if
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bam": "good"}, {"foo": "test", "bar": "good"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, handles aliases
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"dup": "test", "bar": "good"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail, because a required param was not specified
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because of mutually exclusive parameters (mutually_exclusive, baz is added as it is required_together with bam1)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because a param required if for foo=hello is missing (required_if)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bar": "bad"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because one of param is required (required_one_of)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because one parameter requires another (required_together, bar is added for the required_one_of field)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test", "bar": "required_one_of", "bam1": "bad"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, the required param is set by default from spec (required_if together with default value, bar added for required_one_of
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "bam2", "bar": "required_one_of"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, for options in dict format.
+        arg_spec = dict(foobar=dict(type='dict', options=options_spec))
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': {"foo": "hello"}}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should fail, check for invalid agrument
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': {"foo1": "hello"}}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=True,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
     def test_module_utils_basic_ansible_module_type_check(self):
         from ansible.module_utils import basic
 
@@ -374,6 +541,52 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         # fail, because bar does not accept floating point numbers
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bar": 123.0}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+    def test_module_utils_basic_ansible_module_options_type_check(self):
+        from ansible.module_utils import basic
+
+        options_spec = dict(
+            foo=dict(type='float'),
+            foo2=dict(type='float'),
+            foo3=dict(type='float'),
+            bar=dict(type='int'),
+            bar2=dict(type='int'),
+        )
+
+        arg_spec = dict(foobar=dict(type='list', elements='dict', options=options_spec))
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{
+            "foo": 123.0,  # float
+            "foo2": 123,  # int
+            "foo3": "123",  # string
+            "bar": 123,  # int
+            "bar2": "123",  # string
+        }]}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"bar": 123.0}]}))
 
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
@@ -994,43 +1207,3 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.selinux_default_context.return_value = mock_context
         am.selinux_enabled.return_value = True
         am.atomic_move('/path/to/src', '/path/to/dest')
-
-    def test_module_utils_basic_ansible_module__symbolic_mode_to_octal(self):
-
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-
-        mock_stat = MagicMock()
-
-        # FIXME: trying many more combinations here would be good
-        # directory, give full perms to all, then one group at a time
-        mock_stat.st_mode = 0o040000
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a+rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx,g+rwx,o+rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o+rwx'), 0o0007)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g+rwx'), 0o0070)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx'), 0o0700)
-
-        # same as above, but in reverse so removing permissions
-        mock_stat.st_mode = 0o040777
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a-rwx'), 0o0000)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx,g-rwx,o-rwx'), 0o0000)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o-rwx'), 0o0770)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g-rwx'), 0o0707)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx'), 0o0077)
-
-        # now using absolute assignment
-        mock_stat.st_mode = 0o040000
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a=rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx,g=rwx,o=rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o=rwx'), 0o0007)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g=rwx'), 0o0070)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
-
-        # invalid modes
-        mock_stat.st_mode = 0o040000
-        self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')

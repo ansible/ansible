@@ -25,7 +25,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'curated'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_chocolatey
@@ -34,41 +33,37 @@ short_description: Installs packages using chocolatey
 description:
     - Installs packages using Chocolatey (U(http://chocolatey.org/)).
     - If Chocolatey is missing from the system, the module will install it.
-    - List of packages can be found at U(http://chocolatey.org/packages)
+    - List of packages can be found at U(http://chocolatey.org/packages).
 options:
   name:
     description:
       - Name of the package to be installed.
-    required: true
+    required: yes
   state:
     description:
       - State of the package on the system.
     choices:
-      - present
       - absent
       - latest
+      - present
       - reinstalled
     default: present
   force:
     description:
       - Forces install of the package (even if it already exists).
       - Using C(force) will cause ansible to always report that a change was made.
-    choices:
-      - yes
-      - no
-    default: no
+    type: bool
+    default: 'no'
   upgrade:
     description:
       - If package is already installed it, try to upgrade to the latest version or to the specified version.
-      - As of Ansible v2.3 this is deprecated, set parameter C(state) to "latest" for the same result.
-    choices:
-      - yes
-      - no
-    default: no
+      - As of Ansible v2.3 this is deprecated, set parameter C(state) to C(latest) for the same result.
+    type: bool
+    default: 'no'
   version:
     description:
       - Specific version of the package to be installed.
-      - Ignored when C(state) is set to "absent".
+      - Ignored when C(state) is set to C(absent).
   source:
     description:
       - Specify source rather than using default chocolatey repository.
@@ -83,17 +78,20 @@ options:
   allow_empty_checksums:
     description:
       - Allow empty checksums to be used.
-    default: false
+    type: bool
+    default: 'no'
     version_added: '2.2'
   ignore_checksums:
     description:
       - Ignore checksums altogether.
-    default: false
+    type: bool
+    default: 'no'
     version_added: '2.2'
   ignore_dependencies:
     description:
       - Ignore dependencies, only install/upgrade the package itself.
-    default: false
+    type: bool
+    default: 'no'
     version_added: '2.1'
   timeout:
     description:
@@ -101,36 +99,51 @@ options:
     default: 2700
     version_added: '2.3'
     aliases: [ execution_timeout ]
-author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
+  skip_scripts:
+    description:
+    - Do not run I(chocolateyInstall.ps1) or I(chocolateyUninstall.ps1) scripts.
+    type: bool
+    default: 'no'
+    version_added: '2.4'
+notes:
+- Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
+  is considered to be a floating-point number and depending on the locale could
+  become C(6,1), which will cause a failure.
+author:
+- Trond Hindenes (@trondhindenes)
+- Peter Mounce (@petemounce)
+- Pepe Barbe (@elventear)
+- Adam Keech (@smadam813)
 '''
 
 # TODO:
 # * Better parsing when a package has dependencies - currently fails
 # * Time each item that is run
 # * Support 'changed' with gems - would require shelling out to `gem list` first and parsing, kinda defeating the point of using chocolatey.
+# * Version provided not as string might be translated to 6,6 depending on Locale (results in errors)
 
 EXAMPLES = r'''
-  # Install git
+- name: Install git
   win_chocolatey:
     name: git
     state: present
 
-  # Upgrade installed packages
+- name: Upgrade installed packages
   win_chocolatey:
     name: all
     state: latest
 
-  # Install notepadplusplus version 6.6
+- name: Install notepadplusplus version 6.6
   win_chocolatey:
     name: notepadplusplus.install
     version: '6.6'
 
-  # Install git from specified repository
+- name: Install git from specified repository
   win_chocolatey:
     name: git
     source: https://someserver/api/v2/
 
-  # Uninstall git
+- name: Uninstall git
   win_chocolatey:
     name: git
     state: absent

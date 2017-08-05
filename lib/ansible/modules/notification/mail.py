@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2012 Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -203,24 +193,15 @@ EXAMPLES = '''
 import os
 import smtplib
 import ssl
-
-try:
-    # Python 2.6+
-    from email import encoders
-    from email.utils import parseaddr, formataddr
-    from email.mime.base import MIMEBase
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-except ImportError:
-    # Python 2.4 & 2.5
-    from email import Encoders as encoders
-    from email.Utils import parseaddr, formataddr
-    from email.MIMEBase import MIMEBase
-    from email.MIMEMultipart import MIMEMultipart
-    from email.MIMEText import MIMEText
+import traceback
+from email import encoders
+from email.utils import parseaddr, formataddr
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -275,18 +256,18 @@ def main():
     if secure in ('never', 'try', 'starttls'):
         try:
             code, smtpmessage = smtp.connect(host, port=port)
-        except smtplib.SMTPException:
-            e = get_exception()
+        except smtplib.SMTPException as e:
             if secure == 'try':
                 try:
                     smtp = smtplib.SMTP_SSL(timeout=timeout)
                     code, smtpmessage = smtp.connect(host, port=port)
                     secure_state = True
-                except ssl.SSLError:
-                    e = get_exception()
-                    module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
+                except ssl.SSLError as e:
+                    module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
+                                     (host, port, to_native(e)), exception=traceback.format_exc())
             else:
-                module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' % (host, port, e))
+                module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' %
+                                 (host, port, to_native(e)), exception=traceback.format_exc())
 
 
     if (secure == 'always'):
@@ -294,16 +275,16 @@ def main():
             smtp = smtplib.SMTP_SSL(timeout=timeout)
             code, smtpmessage = smtp.connect(host, port=port)
             secure_state = True
-        except ssl.SSLError:
-            e = get_exception()
-            module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
+        except ssl.SSLError as e:
+            module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
+                             (host, port, to_native(e)), exception=traceback.format_exc())
 
     if int(code) > 0:
         try:
             smtp.ehlo()
-        except smtplib.SMTPException:
-            e = get_exception()
-            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, e))
+        except smtplib.SMTPException as e:
+            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' %
+                             (host, port, to_native(e)), exception=traceback.format_exc())
 
         auth_flag = smtp.has_extn('AUTH')
 
@@ -312,10 +293,11 @@ def main():
                 try:
                     smtp.starttls()
                     smtp.ehlo()
+                    auth_flag = smtp.has_extn('AUTH')
                     secure_state = True
-                except smtplib.SMTPException:
-                    e = get_exception()
-                    module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
+                except smtplib.SMTPException as e:
+                    module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
+                                     (host, port, to_native(e)), exception=traceback.format_exc())
             else:
                 if secure == 'starttls':
                     module.fail_json(rc=1, msg='StartTLS is not offered on server %s:%s' % (host, port))
@@ -384,17 +366,17 @@ def main():
 
                 part.add_header('Content-disposition', 'attachment', filename=os.path.basename(file))
                 msg.attach(part)
-            except Exception:
-                e = get_exception()
-                module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" % (file, e))
+            except Exception as e:
+                module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" %
+                                 (file, to_native(e)), exception=traceback.format_exc())
 
     composed = msg.as_string()
 
     try:
         smtp.sendmail(sender_addr, set(addr_list), composed)
-    except Exception:
-        e = get_exception()
-        module.fail_json(rc=1, msg='Failed to send mail to %s: %s' % (", ".join(addr_list), e))
+    except Exception as e:
+        module.fail_json(rc=1, msg='Failed to send mail to %s: %s' %
+                         (", ".join(addr_list), to_native(e)), exception=traceback.format_exc())
 
     smtp.quit()
 
