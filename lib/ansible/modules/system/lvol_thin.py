@@ -20,7 +20,7 @@
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
-    'status': ['stable'],
+    'status': ['preview'],
     'supported_by': 'community'
 }
 
@@ -141,7 +141,7 @@ EXAMPLES = '''
 - lvol: vg=firefly lv=testpool size=2g type=thin-pool state=absent force=yes
 '''
 
-RETURN = ''''''
+RETURN = ''' # '''
 
 import re
 # import module snippets
