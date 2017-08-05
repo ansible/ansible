@@ -24,16 +24,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: cisco_ucs_dns
-short_description: Configures dns on a cisco ucs server.
+short_description: Configures DNS on a Cisco UCS server.
 version_added: "2.4"
 description:
-   -  Configures dns on a cisco ucs server.
+   -  Configures DNS on a Cisco UCS server.
 options:
     state:
         description:
-         - if C(present), will perform create/add/enable operation
-         - if C(absent), will perform delete/remove/disable operation
-        required: false
+         - if C(present), adds DNS server
+         - if C(absent), removes DNS server
         choices: ['present', 'absent']
         default: "present"
     name:
@@ -41,7 +40,6 @@ options:
         required: true
     descr:
         description: description of server
-        required: false
 
 requirements:
     - 'ucsmsdk'
@@ -54,7 +52,7 @@ author: "Cisco Systems Inc(ucs-python@cisco.com)"
 
 
 EXAMPLES = '''
-- name:
+- name: "Add DNS Server"
   cisco_ucs_dns:
     name: "10.10.10.10"
     descr: "description"
@@ -111,7 +109,6 @@ def _ansible_module_create():
 
 
 def _get_mo_params(params):
-    from ansible.module_utils.cisco_ucs import UcsConnection
     args = {}
     for key in _argument_mo():
         if params.get(key) is None:
