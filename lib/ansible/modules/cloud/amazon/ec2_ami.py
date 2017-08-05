@@ -364,28 +364,32 @@ def create_image(module, connection):
             'Name': name,
             'Description': description
         }
+
         images = connection.describe_images(
             Filters=[
                 {
                     'Name': 'name',
                     'Values': [name]
-                },
-            ],
+                }
+            ]
         ).get('Images')
 
         # ensure that launch_permissions are up to date
         if images and images[0]:
             update_image(module, connection, images[0].get('ImageId'))
+
         block_device_mapping = None
+
         if device_mapping:
             block_device_mapping = BlockDeviceMapping()
             for device in device_mapping:
                 if 'DeviceName' not in device:
-                    module.fail_json(msg='Device name must be set for volume.')
+                    module.fail_json(msg="Error - Device name must be set for volume.")
                 device_name = device['DeviceName']
                 del device['DeviceName']
                 bd = BlockDeviceType(**device)
                 block_device_mapping[device_name] = bd
+
         if instance_id:
             params['InstanceId'] = instance_id
             params['NoReboot'] = no_reboot
@@ -408,22 +412,23 @@ def create_image(module, connection):
 
     # Wait until the image is recognized. EC2 API has eventual consistency such that a successful CreateImage API call doesn't guarantee the success
     # of subsequent DescribeImages API call using the new image id returned.
+    image_create_error_message = "Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help."
+
     for i in range(wait_timeout):
         try:
             image = get_image_by_id(module, connection, image_id)
             if image.state == 'available':
                 break
             elif image.state == 'failed':
-                module.fail_json(msg="AMI creation failed, please see the AWS console for more details")
+                module.fail_json(msg="AMI creation failed, please see the AWS console for more details.")
         except botocore.exceptions.ClientError as e:
             if ('InvalidAMIID.NotFound' not in e.error_code and 'InvalidAMIID.Unavailable' not in e.error_code) and wait and i == wait_timeout - 1:
-                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help. %s: %s"
-                                 % (e.error_code, e.error_message))
+                module.fail_json(msg="%s %s: %s" % (image_create_error_message, e.error_code, e.error_message))
         finally:
             time.sleep(1)
 
     if image.state != 'available':
-        module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
+        module.fail_json(msg=image_create_error_message)
 
     if tags:
         try:
@@ -439,7 +444,7 @@ def create_image(module, connection):
             module.fail_json(msg="Error setting launch permissions for image: " + image_id + " - " + str(e), exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
 
-    module.exit_json(msg="AMI creation operation complete", changed=True, **camel_dict_to_snake_dict(image))
+    module.exit_json(msg="AMI creation operation complete.", changed=True, **camel_dict_to_snake_dict(image))
 
 
 def deregister_image(module, connection):
@@ -448,12 +453,13 @@ def deregister_image(module, connection):
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
     image = get_image_by_id(module, connection, image_id)
-    if image is None:
-        module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
 
-    # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable
+    if image is None:
+        module.fail_json(msg="Image %s does not exist." % image_id, changed=False)
+
+    # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable.
     snapshots = []
-    if hasattr(image, 'block_device_mapping'):
+    if hasattr(image, 'BlockDeviceMappings'):
         for key in image.block_device_mapping:
             snapshots.append(image.block_device_mapping[key].snapshot_id)
 
@@ -470,18 +476,20 @@ def deregister_image(module, connection):
     else:
         module.exit_json(msg="Image %s has already been deregistered." % image_id, changed=False)
 
-    # wait here until the image is gone
     image = get_image_by_id(module, connection, image_id)
     wait_timeout = time.time() + wait_timeout
+
     while wait and wait_timeout > time.time() and image is not None:
         image = get_image_by_id(module, connection, image_id)
         time.sleep(3)
+
     if wait and wait_timeout <= time.time():
-        # waiting took too long
         module.fail_json(msg="Timed out waiting for image to be deregistered.")
-    # Boto library has hardcoded the deletion of the snapshot for the root volume mounted as '/dev/sda1' only
+
+    # Boto library has hardcoded the deletion of the snapshot for the root volume mounted as '/dev/sda1' only.
     # Make it possible to deregister all snapshots which belong to image, including root block device mapped as '/dev/xvda'
     deregister_complete_message = "AMI deregister operation complete."
+
     if delete_snapshot:
         try:
             for snapshot_id in snapshots:
@@ -497,11 +505,15 @@ def deregister_image(module, connection):
 
 def update_image(module, connection, image_id):
     launch_permissions = module.params.get('launch_permissions') or []
+
     if 'user_ids' in launch_permissions:
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
+
     image = get_image_by_id(module, connection, image_id)
+
     if image is None:
         module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
+
     try:
         set_permissions = connection.describe_image_attribute(Attribute='launchPermission', ImageId=image_id).get('LaunchPermissions')
         if set_permissions != launch_permissions:
@@ -515,7 +527,6 @@ def update_image(module, connection, image_id):
             module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True)
         else:
             module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
-
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Error updating image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -563,17 +574,15 @@ def main():
 
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):
-            module.fail_json(msg='The parameter image_id needs to be an AMI to deregister.')
+            module.fail_json(msg="The parameter image_id is required to deregister and AMI."")
         deregister_image(module, connection)
     elif module.params.get('state') == 'present':
         if module.params.get('image_id') and module.params.get('launch_permissions'):
-            # Update image's launch permissions
             update_image(module, connection, module.params.get('image_id'))
-        # Changed is always set to true when provisioning a new AMI
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
-            module.fail_json(msg='The parameters instance_id or device_mapping (register from EBS snapshot) are required for a new image.')
+            module.fail_json(msg="The parameters instance_id or device_mapping (register from EBS snapshot) are required for a new image.")
         if not module.params.get('name'):
-            module.fail_json(msg='The name parameter is required for a new image.')
+            module.fail_json(msg="The name parameter is required for a new image.")
         create_image(module, connection)
 
 
