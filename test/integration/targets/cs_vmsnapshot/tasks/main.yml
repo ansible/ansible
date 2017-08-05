@@ -80,6 +80,19 @@
     - snap|changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
+- name: test fail revert unknown snapshot
+  cs_vmsnapshot:
+    name: "{{ cs_resource_prefix }}_snapshot_unknown"
+    vm: "{{ cs_resource_prefix }}-vm-snapshot"
+    state: revert
+  register: snap
+  ignore_errors: true
+- name: verify test fail revert unknown snapshot
+  assert:
+    that:
+    - snap|failed
+    - snap.msg == "snapshot not found, could not revert VM"
+
 - name: test revert snapshot
   cs_vmsnapshot:
     name: "{{ cs_resource_prefix }}_snapshot"

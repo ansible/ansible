@@ -44,39 +44,27 @@ options:
   description:
     description:
       - Description of the snapshot.
-    required: false
-    default: null
   snapshot_memory:
     description:
       - Snapshot memory if set to true.
-    required: false
     default: false
   zone:
     description:
       - Name of the zone in which the VM is in. If not set, default zone is used.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the VM is assigned to.
-    required: false
-    default: null
   state:
     description:
       - State of the snapshot.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent', 'revert' ]
   domain:
     description:
       - Domain the VM snapshot is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the VM snapshot is related to.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -86,30 +74,28 @@ options:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "To delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
     aliases: [ 'tag' ]
     version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a VM snapshot of disk and memory before an upgrade
-- local_action:
+- name: Create a VM snapshot of disk and memory before an upgrade
+  local_action:
     module: cs_vmsnapshot
     name: Snapshot before upgrade
     vm: web-01
     snapshot_memory: yes
 
-# Revert a VM to a snapshot after a failed upgrade
-- local_action:
+- name: Revert a VM to a snapshot after a failed upgrade
+  local_action:
     module: cs_vmsnapshot
     name: Snapshot before upgrade
     vm: web-01
     state: revert
 
-# Remove a VM snapshot after successful upgrade
-- local_action:
+- name: Remove a VM snapshot after successful upgrade
+  local_action:
     module: cs_vmsnapshot
     name: Snapshot before upgrade
     vm: web-01
@@ -139,7 +125,7 @@ created:
   type: string
   sample: 2015-03-29T14:57:06+0200
 current:
-  description: true if snapshot is current
+  description: true if the snapshot is current
   returned: success
   type: boolean
   sample: True
@@ -175,8 +161,12 @@ project:
   sample: Production
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
@@ -184,41 +174,36 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackVmSnapshot, self).__init__(module)
         self.returns = {
-            'type':     'type',
-            'current':  'current',
+            'type': 'type',
+            'current': 'current',
         }
 
-
     def get_snapshot(self):
-        args                        = {}
-        args['virtualmachineid']    = self.get_vm('id')
-        args['account']             = self.get_account('name')
-        args['domainid']            = self.get_domain('id')
-        args['projectid']           = self.get_project('id')
-        args['name']                = self.module.params.get('name')
-
-        snapshots = self.cs.listVMSnapshot(**args)
+        args = {
+            'virtualmachineid': self.get_vm('id'),
+            'account': self.get_account('name'),
+            'domainid': self.get_domain('id'),
+            'projectid': self.get_project('id'),
+            'name': self.module.params.get('name'),
+        }
+        snapshots = self.query_api('listVMSnapshot', **args)
         if snapshots:
             return snapshots['vmSnapshot'][0]
         return None
-
 
     def create_snapshot(self):
         snapshot = self.get_snapshot()
         if not snapshot:
             self.result['changed'] = True
 
-            args                        = {}
-            args['virtualmachineid']    = self.get_vm('id')
-            args['name']                = self.module.params.get('name')
-            args['description']         = self.module.params.get('description')
-            args['snapshotmemory']      = self.module.params.get('snapshot_memory')
-
+            args = {
+                'virtualmachineid': self.get_vm('id'),
+                'name': self.module.params.get('name'),
+                'description': self.module.params.get('description'),
+                'snapshotmemory': self.module.params.get('snapshot_memory'),
+            }
             if not self.module.check_mode:
-                res = self.cs.createVMSnapshot(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('createVMSnapshot', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
@@ -229,22 +214,17 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
         return snapshot
 
-
     def remove_snapshot(self):
         snapshot = self.get_snapshot()
         if snapshot:
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.deleteVMSnapshot(vmsnapshotid=snapshot['id'])
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteVMSnapshot', vmsnapshotid=snapshot['id'])
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
                     res = self.poll_job(res, 'vmsnapshot')
         return snapshot
-
 
     def revert_vm_to_snapshot(self):
         snapshot = self.get_snapshot()
@@ -255,7 +235,7 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
                 self.module.fail_json(msg="snapshot state is '%s', not ready, could not revert VM" % snapshot['state'])
 
             if not self.module.check_mode:
-                res = self.cs.revertToVMSnapshot(vmsnapshotid=snapshot['id'])
+                res = self.query_api('revertToVMSnapshot', vmsnapshotid=snapshot['id'])
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
@@ -265,53 +245,41 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
         self.module.fail_json(msg="snapshot not found, could not revert VM")
 
 
-
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True, aliases=['display_name']),
-        vm = dict(required=True),
-        description = dict(default=None),
-        zone = dict(default=None),
-        snapshot_memory = dict(type='bool', default=False),
-        state = dict(choices=['present', 'absent', 'revert'], default='present'),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        poll_async = dict(type='bool', default=True),
-        tags=dict(type='list', aliases=['tag'], default=None),
+        name=dict(required=True, aliases=['display_name']),
+        vm=dict(required=True),
+        description=dict(),
+        zone=dict(),
+        snapshot_memory=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent', 'revert'], default='present'),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag']),
     ))
-
-    required_together = cs_required_together()
-    required_together.extend([
-        ['icmp_type', 'icmp_code'],
-    ])
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_together=required_together,
+        required_together=cs_required_together(),
         supports_check_mode=True
     )
 
-    try:
-        acs_vmsnapshot = AnsibleCloudStackVmSnapshot(module)
+    acs_vmsnapshot = AnsibleCloudStackVmSnapshot(module)
 
-        state = module.params.get('state')
-        if state in ['revert']:
-            snapshot = acs_vmsnapshot.revert_vm_to_snapshot()
-        elif state in ['absent']:
-            snapshot = acs_vmsnapshot.remove_snapshot()
-        else:
-            snapshot = acs_vmsnapshot.create_snapshot()
+    state = module.params.get('state')
+    if state in ['revert']:
+        snapshot = acs_vmsnapshot.revert_vm_to_snapshot()
+    elif state in ['absent']:
+        snapshot = acs_vmsnapshot.remove_snapshot()
+    else:
+        snapshot = acs_vmsnapshot.create_snapshot()
 
-        result = acs_vmsnapshot.get_result(snapshot)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_vmsnapshot.get_result(snapshot)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
