@@ -26,7 +26,7 @@ options:
     state:
       description:
         - Indicate desired state of the cluster
-      choices: ['online', 'offline', 'restart', 'cleanup']
+      choices: ['online', 'offline', 'restart', 'cleanup', 'enabled_maintenance_mode', 'disabled_maintenance_mode']
       required: true
     node:
       description:
@@ -80,7 +80,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 _PCS_CLUSTER_DOWN="Error: cluster is not currently running on this node"
-
+_PCS_CLUSTER_MAINTENANCE_MODE_ENABLED="Resource management is DISABLED"
 
 def get_cluster_status(module):
     cmd = "pcs cluster status"
@@ -102,6 +102,18 @@ def get_node_status(module, node='all'):
     for o in out.splitlines():
         status.append(o.split(':'))
     return status
+
+def get_maintenance_mode_status(module):
+    cmd = "pcs cluster status"
+    rc, out, err = module.run_command(cmd)
+    if rc is 1:
+        module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
+
+    if _PCS_CLUSTER_MAINTENANCE_MODE_ENABLED in out:
+        return 'enabled_maintenance_mode'
+    else:
+        return 'disabled_maintenance_mode'
+
 
 def clean_cluster(module, timeout):
     cmd = "pcs resource cleanup"
@@ -129,6 +141,29 @@ def set_cluster(module, state, timeout, force):
             break
     if not ready:
         module.fail_json(msg="Failed to set the state `%s` on the cluster\n" % (state))
+
+def set_maintenance_mode(module, state, timeout, force):
+
+    if state == 'enabled_maintenance_mode':
+        cmd = "pcs property set maintenance-mode=true"
+    if state == 'disabled_maintenance_mode':
+        cmd = "pcs property set maintenance-mode=false"
+    if force:
+        cmd = "%s --force" % cmd
+    rc, out, err = module.run_command(cmd)
+    if rc is 1:
+        module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
+
+    t = time.time()
+    ready = False
+    while time.time() < t+timeout:
+        cluster_state = get_maintenance_mode_status(module)
+        if cluster_state == state:
+            ready = True
+            break
+    if not ready:
+        module.fail_json(msg="Failed to set the state `%s` on the cluster\n" % (state))
+
 
 def set_node(module, state, timeout, force, node='all'):
     # map states
@@ -160,7 +195,7 @@ def set_node(module, state, timeout, force, node='all'):
 
 def main():
     argument_spec = dict(
-        state = dict(choices=['online', 'offline', 'restart', 'cleanup']),
+        state = dict(choices=['online', 'offline', 'restart', 'cleanup', 'enabled_maintenance_mode', 'disabled_maintenance_mode']),
         node  = dict(default=None),
         timeout=dict(default=300, type='int'),
         force=dict(default=True, type='bool'),
@@ -222,6 +257,14 @@ def main():
         set_cluster(module, state, timeout, force)
         module.exit_json(changed=True,
                  out=cluster_state)
+
+    if state in ['enabled_maintenance_mode', 'disabled_maintenance_mode']:
+        current_state = get_maintenance_mode_status(module)
+        if current_state != state:
+          set_maintenance_mode(module, state, timeout, force)
+          module.exit_json(changed=True, out=state)
+        else:
+          module.exit_json(changed=False, out=state)
 
 
 if __name__ == '__main__':
