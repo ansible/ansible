@@ -432,7 +432,7 @@ def main():
 
     if (state == "present"):
         (changed, result, status_code) = userDetails(module)
-        if (status_code == 200): # user already exists
+        if (status_code == 200):  # user already exists
             if ("new_password" in module.params):
                 # if new_password specified, proceed to update user credential
                 (changed, result, status_code) = userAddOrUpdate(module, "PUT")
