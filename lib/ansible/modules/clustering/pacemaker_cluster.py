@@ -78,9 +78,9 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
+_PCS_CLUSTER_DOWN = "Error: cluster is not currently running on this node"
+_PCS_CLUSTER_MAINTENANCE_MODE_ENABLED = "Resource management is DISABLED"
 
-_PCS_CLUSTER_DOWN="Error: cluster is not currently running on this node"
-_PCS_CLUSTER_MAINTENANCE_MODE_ENABLED="Resource management is DISABLED"
 
 def get_cluster_status(module):
     cmd = "pcs cluster status"
@@ -89,6 +89,7 @@ def get_cluster_status(module):
         return 'offline'
     else:
         return 'online'
+
 
 def get_node_status(module, node='all'):
     if node == 'all':
@@ -102,6 +103,7 @@ def get_node_status(module, node='all'):
     for o in out.splitlines():
         status.append(o.split(':'))
     return status
+
 
 def get_maintenance_mode_status(module):
     cmd = "pcs cluster status"
@@ -120,6 +122,7 @@ def clean_cluster(module, timeout):
     rc, out, err = module.run_command(cmd)
     if rc is 1:
         module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
+
 
 def set_cluster(module, state, timeout, force):
     if state == 'online':
@@ -141,6 +144,7 @@ def set_cluster(module, state, timeout, force):
             break
     if not ready:
         module.fail_json(msg="Failed to set the state `%s` on the cluster\n" % (state))
+
 
 def set_maintenance_mode(module, state, timeout, force):
 
@@ -193,17 +197,16 @@ def set_node(module, state, timeout, force, node='all'):
     if not ready:
         module.fail_json(msg="Failed to set the state `%s` on the cluster\n" % (state))
 
+
 def main():
     argument_spec = dict(
-        state = dict(choices=['online', 'offline', 'restart', 'cleanup', 'enabled_maintenance_mode', 'disabled_maintenance_mode']),
-        node  = dict(default=None),
+        state=dict(choices=['online', 'offline', 'restart', 'cleanup', 'enabled_maintenance_mode', 'disabled_maintenance_mode']),
+        node=dict(default=None),
         timeout=dict(default=300, type='int'),
         force=dict(default=True, type='bool'),
     )
 
-    module = AnsibleModule(argument_spec,
-        supports_check_mode=True,
-    )
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
     changed = False
     state = module.params['state']
     node = module.params['node']
@@ -215,29 +218,27 @@ def main():
         if node is None:
             cluster_state = get_cluster_status(module)
             if cluster_state == state:
-                module.exit_json(changed=changed,
-                         out=cluster_state)
+                module.exit_json(changed=changed, out=cluster_state)
             else:
                 set_cluster(module, state, timeout, force)
                 cluster_state = get_cluster_status(module)
                 if cluster_state == state:
-                    module.exit_json(changed=True,
-                         out=cluster_state)
+                    module.exit_json(changed=True, out=cluster_state)
                 else:
-                    module.fail_json(msg="Fail to bring the cluster %s" % state)
+                    module.fail_json(
+                        msg="Fail to bring the cluster %s" % state
+                    )
         else:
             cluster_state = get_node_status(module, node)
             # Check cluster state
             for node_state in cluster_state:
                 if node_state[1].strip().lower() == state:
-                    module.exit_json(changed=changed,
-                             out=cluster_state)
+                    module.exit_json(changed=changed, out=cluster_state)
                 else:
                     # Set cluster status if needed
                     set_cluster(module, state, timeout, force)
                     cluster_state = get_node_status(module, node)
-                    module.exit_json(changed=True,
-                             out=cluster_state)
+                    module.exit_json(changed=True, out=cluster_state)
 
     if state in ['restart']:
         set_cluster(module, 'offline', timeout, force)
@@ -246,26 +247,25 @@ def main():
             set_cluster(module, 'online', timeout, force)
             cluster_state = get_cluster_status(module)
             if cluster_state == 'online':
-                module.exit_json(changed=True,
-                     out=cluster_state)
+                module.exit_json(changed=True, out=cluster_state)
             else:
                 module.fail_json(msg="Failed during the restart of the cluster, the cluster can't be started")
         else:
             module.fail_json(msg="Failed during the restart of the cluster, the cluster can't be stopped")
 
     if state in ['cleanup']:
-        set_cluster(module, state, timeout, force)
+        clean_cluster(module, timeout)
+        cluster_state = get_cluster_status(module)
         module.exit_json(changed=True,
-                 out=cluster_state)
+                         out=cluster_state)
 
     if state in ['enabled_maintenance_mode', 'disabled_maintenance_mode']:
         current_state = get_maintenance_mode_status(module)
         if current_state != state:
-          set_maintenance_mode(module, state, timeout, force)
-          module.exit_json(changed=True, out=state)
+            set_maintenance_mode(module, state, timeout, force)
+            module.exit_json(changed=True, out=state)
         else:
-          module.exit_json(changed=False, out=state)
-
+            module.exit_json(changed=False, out=state)
 
 if __name__ == '__main__':
     main()
