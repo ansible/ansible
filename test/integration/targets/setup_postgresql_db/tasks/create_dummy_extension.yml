@@ -1,0 +1,45 @@
+# pg_config requires postgresql-server-dev package,
+# try find extension path using one way for all systems
+- name: find PostgreSQL extension directory
+  find:
+    file_type: file
+    paths: /usr/share
+    patterns: sql_features.txt
+    recurse: yes
+    follow: yes
+  register: sql_features_path
+
+- name: ensure that only one path was found
+  assert:
+    that:
+      - 'sql_features_path.matched == 1'
+
+- set_fact:
+    postgresql_ext_dir: '{{ sql_features_path.files[0].path | dirname }}/extension'
+
+- name: retrieve fact for extension directory
+  stat:
+    path: '{{ postgresql_ext_dir }}'
+  register: extension_directory
+
+- name: ensure that extension directory exists
+  assert:
+    that:
+      - 'extension_directory.stat.exists and extension_directory.stat.isdir'
+
+- name: copy control file
+  copy:
+    src: dummy.control
+    dest: '{{ postgresql_ext_dir }}'
+    mode: 0444
+    owner: '{{ extension_directory.stat.pw_name }}'
+
+- name: copy extension files
+  copy:
+    src: 'dummy--{{ item }}.sql'
+    dest: '{{ postgresql_ext_dir }}'
+    mode: 0444
+    owner: '{{ extension_directory.stat.pw_name }}'
+  with_items:
+    - '1.0'
+    - '2.0'

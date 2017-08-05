@@ -133,3 +133,5 @@
 
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted
+
+- import_tasks: create_dummy_extension.yml
