@@ -149,26 +149,21 @@
 
 # ENV LOOKUP
 
-- name: get first environment var name
-  shell: env | fgrep -v '.' | head -n1 | cut -d\= -f1
-  register: known_var_name
+- name: get HOME environment var value
+  shell: "echo $HOME"
+  register: home_var_value
 
-- name: get first environment var value
-  shell: echo {{ '$' + known_var_name.stdout }}
-  register: known_var_value
-
-- name: use env lookup to get known var
+- name: use env lookup to get HOME var
   set_fact:
-    test_val: "{{ lookup('env', known_var_name.stdout) }}"
+    test_val: "{{ lookup('env', 'HOME') }}"
 
-- debug: var=known_var_name.stdout
-- debug: var=known_var_value.stdout
+- debug: var=home_var_value.stdout
 - debug: var=test_val
 
 - name: compare values
   assert:
     that:
-        - "test_val == known_var_value.stdout"
+        - "test_val == home_var_value.stdout"
 
 
 # PIPE LOOKUP

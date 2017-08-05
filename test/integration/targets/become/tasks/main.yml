@@ -80,3 +80,4 @@
     name: "{{ become_test_user }}"
     state: "absent"
     remove: "yes"
+    force: "yes"
