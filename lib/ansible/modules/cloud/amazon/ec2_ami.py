@@ -344,40 +344,6 @@ except ImportError:
     pass
 
 
-def get_block_device_mapping(image):
-    block_device_mapping = {}
-    if image is not None and hasattr(image, 'BlockDeviceMapping'):
-        block_device_mapping = getattr(image, 'BlockDeviceMapping')
-        for device_name in block_device_mapping.keys():
-            block_device_mapping_dict[device_name] = {
-                'Size': block_device_mapping[device_name].get('Size'),
-                'SnapshotId': block_device_mapping[device_name].get('SnapshotId'),
-                'VolumeType': block_device_mapping[device_name].get('VolumeType'),
-                'Encrypted': block_device_mapping[device_name].get('Encrypted'),
-                'DeleteOnTermination': block_device_mapping[device_name].get('DeleteOnTermination')
-            }
-    return block_device_mapping
-
-
-def get_ami_info(image):
-    return dict(
-        image_id=image.id,
-        state=image.state,
-        architecture=image.architecture,
-        block_device_mapping=get_block_device_mapping(image),
-        creationDate=image.creationDate,
-        description=image.description,
-        hypervisor=image.hypervisor,
-        is_public=image.is_public,
-        location=image.location,
-        ownerId=image.ownerId,
-        root_device_name=image.root_device_name,
-        root_device_type=image.root_device_type,
-        tags=image.tags,
-        virtualization_type=image.virtualization_type
-    )
-
-
 def create_image(module, connection):
     instance_id = module.params.get('instance_id')
     name = module.params.get('name')
@@ -473,7 +439,7 @@ def create_image(module, connection):
             module.fail_json(msg="Error setting launch permissions for image: " + image_id + " - " + str(e), exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
 
-    module.exit_json(msg="AMI creation operation complete", changed=True, **get_ami_info(image))
+    module.exit_json(msg="AMI creation operation complete", changed=True, **camel_dict_to_snake_dict(image))
 
 
 def deregister_image(module, connection):
@@ -591,9 +557,9 @@ def main():
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
-        module.fail_json(msg=("region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file"))
+        module.fail_json(msg=("Region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file."))
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="unable to establish connection - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to establish connection - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):
