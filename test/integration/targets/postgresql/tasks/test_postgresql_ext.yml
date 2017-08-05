@@ -37,12 +37,7 @@
 - assert:
     that:
       - "result.stdout_lines[-1] == '(1 row)'"
-
-- assert:
-    that:
-      - "'{{ ext_version }}' in result.stdout"
-  when:
-    - '{{ ext_version }}'
+      - "not ext_version or ext_version in result.stdout"
 
 - name: Disable extension
   become_user: "{{ pg_user }}"
@@ -52,15 +47,11 @@
     state: absent
     name: "{{ ext_name }}"
   register: result
-  when:
-    - not '{{ ext_version }}'
 
 - name: assert that module reports a change
   assert:
     that:
        - "result.changed == true"
-  when:
-    - not '{{ ext_version }}'
 
 - name: Disable extension - idempotence test
   become_user: "{{ pg_user }}"
@@ -70,15 +61,11 @@
     state: absent
     name: "{{ ext_name }}"
   register: result
-  when:
-    - not '{{ ext_version }}'
 
 - name: assert that module reports no change
   assert:
     that:
        - "result.changed == false"
-  when:
-    - not '{{ ext_version }}'
 
 - name: Check that the extension is not available
   become_user: "{{ pg_user }}"
