@@ -56,6 +56,10 @@
       - "result.failed == true"
       - "'unable to open shell' in result.msg"
 
+- name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
+  pause:
+    seconds: 30
+
 - name: Set back netconf to default port
   junos_netconf:
     state: present
