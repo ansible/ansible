@@ -772,14 +772,32 @@
 # test extension loading
 # ============================================================
 - name: Test extension loading
-  include_tasks: test_postgresql_ext.yml
-  vars:
-    ext_name: dummy
-    ext_version: '{{ item }}'
-  with_items:
-    - null
-    - '1.0'
-    - '2.0'
+  block:
+  - name: Create DB
+    become_user: "{{ pg_user }}"
+    become: True
+    postgresql_db:
+      state: present
+      name: "{{ db_name }}"
+      login_user: "{{ pg_user }}"
+
+  - include_tasks: test_postgresql_ext.yml
+    vars:
+      ext_name: dummy
+      ext_version: '{{ item }}'
+    with_items:
+      - null
+      - '1.0'
+      - '2.0'
+
+  always:
+  - name: Destroy DB
+    become_user: "{{ pg_user }}"
+    become: True
+    postgresql_db:
+      state: absent
+      name: "{{ db_name }}"
+      login_user: "{{ pg_user }}"
 
 #
 # Cleanup
