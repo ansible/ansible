@@ -771,13 +771,15 @@
 
 # test extension loading
 # ============================================================
-- include: test_postgresql_ext.yml
+- name: Test extension loading
+  include_tasks: test_postgresql_ext.yml
   vars:
+    ext_name: dummy
     ext_version: '{{ item }}'
   with_items:
-    - nil
-    - '{ext_version_1}'
-    - '{ext_version_2}'
+    - null
+    - '1.0'
+    - '2.0'
 
 #
 # Cleanup
