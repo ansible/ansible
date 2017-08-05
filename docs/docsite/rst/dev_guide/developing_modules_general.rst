@@ -56,9 +56,9 @@ working on a whole new file. Here is an example:
     #!/usr/bin/python
 
     ANSIBLE_METADATA = {
-        'metadata_version': '1.0',
+        'metadata_version': '1.1',
         'status': ['preview'],
-        'supported_by': 'curated'
+        'supported_by': 'community'
     }
 
     DOCUMENTATION = '''

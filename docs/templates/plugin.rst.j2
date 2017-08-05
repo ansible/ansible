@@ -207,7 +207,7 @@ Notes
 {% endif %}
 
 {% if not deprecated %}
-{% set support = { 'core': 'This module is maintained by those with core commit privileges', 'curated': 'This module is supported mainly by the community and is curated by core committers.', 'community': 'This module is community maintained without core committer oversight.'} %}
+{% set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
 {% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
 
 {% if metadata %}
@@ -223,10 +223,10 @@ This module is flagged as **@{cur_state}@** which means that @{module_states[cur
 
 {% if metadata.supported_by %}
 
-Support
-~~~~~~~
+Support Level
+~~~~~~~~~~~~~
 
-@{ support[metadata.supported_by] }@
+This module is maintained by @{ support[metadata.supported_by] }@
 
 For more information on what this means please read :doc:`modules_support`
 
