@@ -297,9 +297,10 @@ def main():
         else:
             candidate = CustomNetworkConfig(indent=3)
             candidate.add(commands, parents=parents)
+            candidate = candidate.items_text()
             load_config(module, candidate)
             results['changed'] = True
-            results['commands'] = candidate.items_text()
+            results['commands'] = candidate
     else:
         results['commands'] = []
     module.exit_json(**results)

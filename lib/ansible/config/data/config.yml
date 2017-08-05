@@ -10,6 +10,7 @@ ACCELERATE_CONNECT_TIMEOUT:
   ini:
   - {key: accelerate_connect_timeout, section: accelerate}
   value_type: float
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_connect_timeout}
   version_added: "1.4"
@@ -23,12 +24,14 @@ ACCELERATE_DAEMON_TIMEOUT:
   ini:
   - {key: accelerate_daemon_timeout, section: accelerate}
   value_type: integer
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_daemon_timeout}
   version_added: "1.6"
 ACCELERATE_KEYS_DIR:
   default: ~/.fireball.keys
-  desc: 'TODO: write it'
+  desc: ''
+  deprecated: True
   env: [{name: ACCELERATE_KEYS_DIR}]
   ini:
   - {key: accelerate_keys_dir, section: accelerate}
@@ -40,6 +43,7 @@ ACCELERATE_KEYS_DIR_PERMS:
   env: [{name: ACCELERATE_KEYS_DIR_PERMS}]
   ini:
   - {key: accelerate_keys_dir_perms, section: accelerate}
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_keys_dir_perms}
 ACCELERATE_KEYS_FILE_PERMS:
@@ -48,6 +52,7 @@ ACCELERATE_KEYS_FILE_PERMS:
   env: [{name: ACCELERATE_KEYS_FILE_PERMS}]
   ini:
   - {key: accelerate_keys_file_perms, section: accelerate}
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_keys_file_perms}
 ACCELERATE_MULTI_KEY:
@@ -57,6 +62,7 @@ ACCELERATE_MULTI_KEY:
   ini:
   - {key: accelerate_multi_key, section: accelerate}
   value_type: boolean
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_multi_key}
 ACCELERATE_PORT:
@@ -66,6 +72,7 @@ ACCELERATE_PORT:
   ini:
   - {key: accelerate_port, section: accelerate}
   value_type: integer
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_port}
 ACCELERATE_TIMEOUT:
@@ -75,20 +82,24 @@ ACCELERATE_TIMEOUT:
   ini:
   - {key: accelerate_timeout, section: accelerate}
   value_type: integer
+  deprecated: True
   vars: []
   yaml: {key: accelerate.accelerate_timeout}
 ALLOW_WORLD_READABLE_TMPFILES:
   default: False
-  desc: 'TODO: write it'
+  desc:
+    - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
+    - It is useful when becoming an unprivileged user.
   env: []
   ini:
   - {key: allow_world_readable_tmpfiles, section: defaults}
   value_type: boolean
   vars: []
   yaml: {key: defaults.allow_world_readable_tmpfiles}
+  version_added: "2.1"
 ANSIBLE_COW_SELECTION:
   default: default
-  desc: 'TODO: write it'
+  desc: This allows you to chose a specific cowsay stencil for the banners or use 'random' to cycle through them.
   env: [{name: ANSIBLE_COW_SELECTION}]
   ini:
   - {key: cow_selection, section: defaults}
@@ -96,7 +107,7 @@ ANSIBLE_COW_SELECTION:
   yaml: {key: defaults.cow_selection}
 ANSIBLE_COW_WHITELIST:
   default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
-  desc: 'TODO: write it'
+  desc: White list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
   env: [{name: ANSIBLE_COW_WHITELIST}]
   ini:
   - {key: cow_whitelist, section: defaults}
@@ -104,8 +115,8 @@ ANSIBLE_COW_WHITELIST:
   vars: []
   yaml: {key: defaults.cow_whitelist}
 ANSIBLE_FORCE_COLOR:
-  default: 
-  desc: 'TODO: write it'
+  default: False
+  desc: This options forces color mode even when running without a TTY
   env: [{name: ANSIBLE_FORCE_COLOR}]
   ini:
   - {key: force_color, section: defaults}
@@ -113,8 +124,8 @@ ANSIBLE_FORCE_COLOR:
   vars: []
   yaml: {key: defaults.force_color}
 ANSIBLE_NOCOLOR:
-  default: 
-  desc: 'TODO: write it'
+  default: False
+  desc: This setting allows suppressing colorizing output, which is used to give a better indication of failure and status information.
   env: [{name: ANSIBLE_NOCOLOR}]
   ini:
   - {key: nocolor, section: defaults}
@@ -122,8 +133,8 @@ ANSIBLE_NOCOLOR:
   vars: []
   yaml: {key: defaults.nocolor}
 ANSIBLE_NOCOWS:
-  default: 
-  desc: 'TODO: write it'
+  default: False
+  desc: If you have cowsay installed but want to avoid the 'cows' (why????), use this.
   env: [{name: ANSIBLE_NOCOWS}]
   ini:
   - {key: nocows, section: defaults}
@@ -132,15 +143,22 @@ ANSIBLE_NOCOWS:
   yaml: {key: defaults.nocows}
 ANSIBLE_SSH_ARGS:
   default: -C -o ControlMaster=auto -o ControlPersist=60s
-  desc: 'TODO: write it'
+  desc:
+    - If set, this will override the Ansible default ssh arguments.
+    - In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may be appropriate.
+    - Be aware that if `-o ControlPath` is set in ssh_args, the control path setting is not used.
   env: [{name: ANSIBLE_SSH_ARGS}]
   ini:
   - {key: ssh_args, section: ssh_connection}
   vars: []
   yaml: {key: ssh_connection.ssh_args}
 ANSIBLE_SSH_CONTROL_PATH:
-  default: 
-  desc: 'TODO: write it'
+  default: null
+  desc:
+    - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
+    - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
+    - Before 2.3 it defaulted to `control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r`.
+    - Be aware that this setting is ignored if `-o ControlPath` is set in ssh args.
   env: [{name: ANSIBLE_SSH_CONTROL_PATH}]
   ini:
   - {key: control_path, section: ssh_connection}
@@ -148,7 +166,9 @@ ANSIBLE_SSH_CONTROL_PATH:
   yaml: {key: ssh_connection.control_path}
 ANSIBLE_SSH_CONTROL_PATH_DIR:
   default: ~/.ansible/cp
-  desc: 'TODO: write it'
+  desc:
+    - This sets the directory to use for ssh control path if the control path setting is null.
+    - Also, provides the `%(directory)s` variable for the control path setting.
   env: [{name: ANSIBLE_SSH_CONTROL_PATH_DIR}]
   ini:
   - {key: control_path_dir, section: ssh_connection}
@@ -156,15 +176,23 @@ ANSIBLE_SSH_CONTROL_PATH_DIR:
   yaml: {key: ssh_connection.control_path_dir}
 ANSIBLE_SSH_EXECUTABLE:
   default: ssh
-  desc: 'TODO: write it'
+  desc:
+    - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
+    - This option is usually not required, it might be useful when access to system ssh is restricted,
+      or when using ssh wrappers to connect to remote hosts.
   env: [{name: ANSIBLE_SSH_EXECUTABLE}]
   ini:
   - {key: ssh_executable, section: ssh_connection}
   vars: []
   yaml: {key: ssh_connection.ssh_executable}
+  version_added: "2.2"
 ANSIBLE_SSH_PIPELINING:
   default: False
-  desc: 'TODO: write it'
+  desc:
+    - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
+      by executing many Ansible modules without actual file transfer.
+    - This can result in a very significant performance improvement when enabled.
+    - However this conflicts with privilege escalation (become). For example, when using “sudo:” operations you must first disable ‘requiretty’ in /etc/sudoers on all managed hosts, which is why it is disabled by default.
   env: [{name: ANSIBLE_SSH_PIPELINING}]
   ini:
   - {key: pipelining, section: ssh_connection}
@@ -180,9 +208,21 @@ ANSIBLE_SSH_RETRIES:
   value_type: integer
   vars: []
   yaml: {key: ssh_connection.retries}
+ANY_ERRORS_FATAL:
+  default: False
+  desc: Sets the default value for the any_errors_fatal keyword
+  env:
+    - name: ANSIBLE_ANY_ERRORS_FATAL
+  ini:
+    - section:  defaults
+      key: any_errors_fatal
+  value_type: boolean
+  vars: []
+  yaml: {key: errors.anyerrors_fatal}
+  version_added: "2.4"
 BECOME_ALLOW_SAME_USER:
   default: False
-  desc: 'TODO: write it'
+  desc: This setting controls if become is skipped when remote user and become user are the same.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
   ini:
   - {key: become_allow_same_user, section: privilege_escalation}
@@ -191,15 +231,15 @@ BECOME_ALLOW_SAME_USER:
   yaml: {key: privilege_escalation.become_allow_same_user}
 CACHE_PLUGIN:
   default: memory
-  desc: 'TODO: write it'
+  desc: Chooses which cache plugin to use
   env: [{name: ANSIBLE_CACHE_PLUGIN}]
   ini:
   - {key: fact_caching, section: defaults}
   vars: []
   yaml: {key: defaults.fact_caching}
 CACHE_PLUGIN_CONNECTION:
-  default: 
-  desc: 'TODO: write it'
+  default:
+  desc: Defines connection or path information for the cache plugin
   env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
   ini:
   - {key: fact_caching_connection, section: defaults}
@@ -207,7 +247,7 @@ CACHE_PLUGIN_CONNECTION:
   yaml: {key: defaults.fact_caching_connection}
 CACHE_PLUGIN_PREFIX:
   default: ansible_facts
-  desc: 'TODO: write it'
+  desc: Prefix to use for cache plugin files/tables
   env: [{name: ANSIBLE_CACHE_PLUGIN_PREFIX}]
   ini:
   - {key: fact_caching_prefix, section: defaults}
@@ -215,7 +255,7 @@ CACHE_PLUGIN_PREFIX:
   yaml: {key: defaults.fact_caching_prefix}
 CACHE_PLUGIN_TIMEOUT:
   default: 86400
-  desc: 'TODO: write it'
+  desc: Expiration timeout for the cache plugin data
   env: [{name: ANSIBLE_CACHE_PLUGIN_TIMEOUT}]
   ini:
   - {key: fact_caching_timeout, section: defaults}
@@ -224,15 +264,15 @@ CACHE_PLUGIN_TIMEOUT:
   yaml: {key: defaults.fact_caching_timeout}
 COLOR_CHANGED:
   default: yellow
-  desc: 'TODO: write it'
+  desc: Defines the color to use on 'Changed' status
   env: [{name: ANSIBLE_COLOR_CHANGED}]
   ini:
   - {key: changed, section: colors}
   vars: []
-  yaml: {key: colors.changed}
+  yaml: {key: display.colors.changed}
 COLOR_DEBUG:
   default: dark gray
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting debug messages
   env: [{name: ANSIBLE_COLOR_DEBUG}]
   ini:
   - {key: debug, section: colors}
@@ -240,7 +280,7 @@ COLOR_DEBUG:
   yaml: {key: colors.debug}
 COLOR_DEPRECATE:
   default: purple
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting deprecation messages
   env: [{name: ANSIBLE_COLOR_DEPRECATE}]
   ini:
   - {key: deprecate, section: colors}
@@ -248,7 +288,7 @@ COLOR_DEPRECATE:
   yaml: {key: colors.deprecate}
 COLOR_DIFF_ADD:
   default: green
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing added lines in diffs
   env: [{name: ANSIBLE_COLOR_DIFF_ADD}]
   ini:
   - {key: diff_add, section: colors}
@@ -256,7 +296,7 @@ COLOR_DIFF_ADD:
   yaml: {key: colors.diff_add}
 COLOR_DIFF_LINES:
   default: cyan
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing diffs
   env: [{name: ANSIBLE_COLOR_DIFF_LINES}]
   ini:
   - {key: diff_lines, section: colors}
@@ -264,7 +304,7 @@ COLOR_DIFF_LINES:
   yaml: {key: colors.diff_lines}
 COLOR_DIFF_REMOVE:
   default: red
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing removed lines in diffs
   env: [{name: ANSIBLE_COLOR_DIFF_REMOVE}]
   ini:
   - {key: diff_remove, section: colors}
@@ -272,7 +312,7 @@ COLOR_DIFF_REMOVE:
   yaml: {key: colors.diff_remove}
 COLOR_ERROR:
   default: red
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting error messages
   env: [{name: ANSIBLE_COLOR_ERROR}]
   ini:
   - {key: error, section: colors}
@@ -288,7 +328,7 @@ COLOR_HIGHLIGHT:
   yaml: {key: colors.highlight}
 COLOR_OK:
   default: green
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing 'OK' status
   env: [{name: ANSIBLE_COLOR_OK}]
   ini:
   - {key: ok, section: colors}
@@ -296,7 +336,7 @@ COLOR_OK:
   yaml: {key: colors.ok}
 COLOR_SKIP:
   default: cyan
-  desc: 'TODO: write it'
+  desc: Defines the color to use when showing 'Skipped' status
   env: [{name: ANSIBLE_COLOR_SKIP}]
   ini:
   - {key: skip, section: colors}
@@ -304,7 +344,7 @@ COLOR_SKIP:
   yaml: {key: colors.skip}
 COLOR_UNREACHABLE:
   default: bright red
-  desc: 'TODO: write it'
+  desc: Defines the color to use on 'Unreachable' status
   env: [{name: ANSIBLE_COLOR_UNREACHABLE}]
   ini:
   - {key: unreachable, section: colors}
@@ -312,7 +352,7 @@ COLOR_UNREACHABLE:
   yaml: {key: colors.unreachable}
 COLOR_VERBOSE:
   default: blue
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting verbose messages
   env: [{name: ANSIBLE_COLOR_VERBOSE}]
   ini:
   - {key: verbose, section: colors}
@@ -320,7 +360,7 @@ COLOR_VERBOSE:
   yaml: {key: colors.verbose}
 COLOR_WARN:
   default: bright purple
-  desc: 'TODO: write it'
+  desc: Defines the color to use when emitting warning messages
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
@@ -408,7 +448,7 @@ DEFAULT_BECOME_ASK_PASS:
   vars: []
   yaml: {key: privilege_escalation.become_ask_pass}
 DEFAULT_BECOME_EXE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_BECOME_EXE}]
   ini:
@@ -416,7 +456,7 @@ DEFAULT_BECOME_EXE:
   vars: []
   yaml: {key: privilege_escalation.become_exe}
 DEFAULT_BECOME_FLAGS:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
@@ -502,7 +542,7 @@ DEFAULT_EXECUTABLE:
   vars: []
   yaml: {key: defaults.executable}
 DEFAULT_FACT_PATH:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
@@ -610,7 +650,7 @@ DEFAULT_INVENTORY_PLUGIN_PATH:
   vars: []
   yaml: {key: defaults.inventory_plugins}
 DEFAULT_JINJA2_EXTENSIONS:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
@@ -757,7 +797,7 @@ DEFAULT_NO_TARGET_SYSLOG:
   vars: []
   yaml: {key: defaults.no_target_syslog}
 DEFAULT_NULL_REPRESENTATION:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_NULL_REPRESENTATION}]
   ini:
@@ -775,7 +815,7 @@ DEFAULT_POLL_INTERVAL:
   vars: []
   yaml: {key: defaults.poll_interval}
 DEFAULT_PRIVATE_KEY_FILE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_PRIVATE_KEY_FILE}]
   ini:
@@ -793,7 +833,7 @@ DEFAULT_PRIVATE_ROLE_VARS:
   vars: []
   yaml: {key: defaults.private_role_vars}
 DEFAULT_REMOTE_PORT:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_REMOTE_PORT}]
   ini:
@@ -807,10 +847,11 @@ DEFAULT_REMOTE_TMP:
   env: [{name: ANSIBLE_REMOTE_TEMP}]
   ini:
   - {key: remote_tmp, section: defaults}
-  vars: []
+  vars:
+    - name: ansible_remote_tmp
   yaml: {key: defaults.remote_tmp}
 DEFAULT_REMOTE_USER:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_REMOTE_USER}]
   ini:
@@ -863,7 +904,7 @@ DEFAULT_SQUASH_ACTIONS:
   vars: []
   yaml: {key: defaults.squash_actions}
 DEFAULT_SSH_TRANSFER_METHOD:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
   ini:
@@ -914,7 +955,7 @@ DEFAULT_SUDO:
   vars: []
   yaml: {key: defaults.sudo}
 DEFAULT_SUDO_EXE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SUDO_EXE}]
   ini:
@@ -938,7 +979,7 @@ DEFAULT_SUDO_USER:
   vars: []
   yaml: {key: defaults.sudo_user}
 DEFAULT_SU_EXE:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SU_EXE}]
   ini:
@@ -946,7 +987,7 @@ DEFAULT_SU_EXE:
   vars: []
   yaml: {key: defaults.su_exe}
 DEFAULT_SU_FLAGS:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_SU_FLAGS}]
   ini:
@@ -1031,8 +1072,24 @@ DEFAULT_VAR_COMPRESSION_LEVEL:
   value_type: integer
   vars: []
   yaml: {key: defaults.var_compression_level}
+DEFAULT_VAULT_ID_MATCH:
+  default: False
+  desc: 'If true, decrypting vaults with a vault id will only try the password from the matching vault-id'
+  env: [{name: ANSIBLE_VAULT_ID_MATCH}]
+  ini:
+  - {key: vault_id_match, section: defaults}
+  vars: []
+  yaml: {key: defaults.vault_id_match}
+DEFAULT_VAULT_IDENTITY:
+  default: default
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_VAULT_IDENTITY}]
+  ini:
+  - {key: vault_identity, section: defaults}
+  vars: []
+  yaml: {key: defaults.vault_identity}
 DEFAULT_VAULT_PASSWORD_FILE:
-  default: ~
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_VAULT_PASSWORD_FILE}]
   ini:
@@ -1113,7 +1170,7 @@ GALAXY_IGNORE_CERTS:
   vars: []
   yaml: {key: galaxy.ignore_certs}
 GALAXY_ROLE_SKELETON:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
   ini:
@@ -1158,34 +1215,34 @@ HOST_KEY_CHECKING:
   yaml: {key: defaults.host_key_checking}
 INVENTORY_ENABLED:
   default: [host_list, script, yaml, ini]
-  desc: 'TODO: write it'
+  desc: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
   - {key: inventory_enabled, section: defaults}
   value_type: list
   vars: []
-  yaml: {key: defaults.inventory_enabled}
+  yaml: {key: inventory.enabled_plugins}
 INVENTORY_IGNORE_EXTS:
-  default: ['.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.orig', '.ini', '.cfg', '.retry']
-  desc: 'TODO: write it'
+  default: BLACKLIST_EXTS + [ '~', '.orig', '.ini', '.cfg', '.retry']
+  desc: List of extensions to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
   - {key: inventory_ignore_extensions, section: defaults}
   value_type: list
   vars: []
-  yaml: {key: defaults.inventory_ignore_extensions}
+  yaml: {key: inventory.ignore_extensions}
 INVENTORY_IGNORE_PATTERNS:
   default: []
-  desc: 'TODO: write it'
+  desc: List of patterns to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE_REGEX}]
   ini:
   - {key: inventory_ignore_patterns, section: defaults}
   value_type: list
   vars: []
-  yaml: {key: defaults.inventory_ignore_patterns}
+  yaml: {key: inventory.ignore_patterns}
 MAX_FILE_SIZE_FOR_DIFF:
   default: 104448
-  desc: 'TODO: write it'
+  desc: Maximum size of files to be considered for diff display
   env: [{name: ANSIBLE_MAX_DIFF_SIZE}]
   ini:
   - {key: max_diff_size, section: defaults}
@@ -1201,17 +1258,8 @@ MERGE_MULTIPLE_CLI_TAGS:
   value_type: boolean
   vars: []
   yaml: {key: defaults.merge_multiple_cli_tags}
-NAMESPACE_FACTS:
-  default: False
-  desc: 'TODO: write it'
-  env: [{name: ANSIBLE_RESTRICT_FACTS}]
-  ini:
-  - {key: restrict_facts_namespace, section: defaults}
-  value_type: boolean
-  vars: []
-  yaml: {key: defaults.restrict_facts_namespace}
 NETWORK_GROUP_MODULES:
-  default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6]
+  default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos]
   desc: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
@@ -1219,6 +1267,18 @@ NETWORK_GROUP_MODULES:
   value_type: list
   vars: []
   yaml: {key: defaults.network_group_modules}
+ONLY_NAMESPACE_FACTS:
+  default: False
+  desc:
+    - Facts normally get injected as top level variables, this setting prevents that.
+    - Facts are still available in the `ansible_facts` variable w/o the `ansible_` prefix.
+  env: [{name: ANSIBLE_RESTRICT_FACTS}]
+  ini:
+  - {key: restrict_facts_namespace, section: defaults}
+  value_type: boolean
+  vars: []
+  yaml: {key: defaults.restrict_facts_namespace}
+  version_added: "2.4"
 PARAMIKO_HOST_KEY_AUTO_ADD:
   default: False
   desc: 'TODO: write it'
@@ -1238,7 +1298,7 @@ PARAMIKO_LOOK_FOR_KEYS:
   vars: []
   yaml: {key: paramiko_connection.look_for_keys}
 PARAMIKO_PROXY_COMMAND:
-  default: 
+  default:
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
   ini:
@@ -1263,15 +1323,6 @@ PARAMIKO_RECORD_HOST_KEYS:
   value_type: boolean
   vars: []
   yaml: {key: paramiko_connection.record_host_keys}
-PERSISTENT_CONNECT_INTERVAL:
-  default: 1
-  desc: 'TODO: write it'
-  env: [{name: ANSIBLE_PERSISTENT_CONNECT_INTERVAL}]
-  ini:
-  - {key: connect_interval, section: persistent_connection}
-  value_type: integer
-  vars: []
-  yaml: {key: persistent_connection.connect_interval}
 PERSISTENT_CONTROL_PATH_DIR:
   default: ~/.ansible/pc
   desc: 'TODO: write it'
@@ -1280,15 +1331,6 @@ PERSISTENT_CONTROL_PATH_DIR:
   - {key: control_path_dir, section: persistent_connection}
   vars: []
   yaml: {key: persistent_connection.control_path_dir}
-PERSISTENT_CONNECT_RETRIES:
-  default: 30
-  desc: 'TODO: write it'
-  env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRIES}]
-  ini:
-  - {key: connect_retries, section: persistent_connection}
-  value_type: integer
-  vars: []
-  yaml: {key: persistent_connection.connect_retries}
 PERSISTENT_CONNECT_TIMEOUT:
   default: 30
   desc: 'TODO: write it'
@@ -1298,24 +1340,42 @@ PERSISTENT_CONNECT_TIMEOUT:
   value_type: integer
   vars: []
   yaml: {key: persistent_connection.connect_timeout}
+PERSISTENT_CONNECT_RETRY_TIMEOUT:
+  default: 15
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
+  ini:
+  - {key: connect_retry_timeout, section: persistent_connection}
+  value_type: integer
+  vars: []
+  yaml: {key: persistent_connection.connect_retry_timeout}
+PERSISTENT_COMMAND_TIMEOUT:
+  default: 10
+  desc: 'TODO: write it'
+  env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
+  ini:
+  - {key: command_timeout, section: persistent_connection}
+  value_type: integer
+  vars: []
+  yaml: {key: persistent_connection.command_timeout}
 RETRY_FILES_ENABLED:
   default: True
-  desc: 'TODO: write it'
+  desc: This controls whether a failed Ansible playbook should create a .retry file.
   env: [{name: ANSIBLE_RETRY_FILES_ENABLED}]
   ini:
   - {key: retry_files_enabled, section: defaults}
   value_type: boolean
   vars: []
-  yaml: {key: defaults.retry_files_enabled}
+  yaml: {key: errors.retry.enabled}
 RETRY_FILES_SAVE_PATH:
   default: ~
-  desc: 'TODO: write it'
+  desc: This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
   env: [{name: ANSIBLE_RETRY_FILES_SAVE_PATH}]
   ini:
   - {key: retry_files_save_path, section: defaults}
   value_type: path
   vars: []
-  yaml: {key: defaults.retry_files_save_path}
+  yaml: {key: errors.retry.path}
 SHOW_CUSTOM_STATS:
   default: False
   desc: 'TODO: write it'
@@ -1361,3 +1421,13 @@ VARIABLE_PRECEDENCE:
   value_type: list
   vars: []
   yaml: {key: defaults.precedence}
+YAML_FILENAME_EXTENSIONS:
+  default: [".yml", ".yaml", ".json"]
+  desc: "check all of these extensions when looking for 'variable' files which should be YAML or JSON or vaulted versions of theses."
+  env:
+    - name: ANSIBLE_YAML_FILENAME_EXT
+  ini:
+    - {key: defaults, section: yaml_valid_extensions}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.yaml_valid_extensions}

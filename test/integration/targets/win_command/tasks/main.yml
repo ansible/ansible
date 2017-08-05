@@ -120,6 +120,7 @@
   assert:
     that:
     - cmdout|failed
+    - cmdout.failed == True # check the failure key explicitly, since failed does magic with RC
     - cmdout.rc == 254
 
 - name: interleave large writes between stdout/stderr (check for buffer consumption deadlock)

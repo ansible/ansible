@@ -1,0 +1,7 @@
+---
+- debug: msg="START prepare_junos_tests/main.yaml"
+
+- name: Ensure netconf is enabled
+  junos_netconf:
+    state: present
+    provider: "{{ cli }}"

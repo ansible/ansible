@@ -7,7 +7,7 @@
       - no description
       - no shutdown
     parents:
-      - interface Ethernet5
+      - interface Ethernet2
     match: none
     provider: "{{ cli }}"
 
@@ -35,5 +35,16 @@
       - "result.changed == false"
 # https://github.com/ansible/ansible-modules-core/issues/4807
       - "result.updates is not defined"
+
+- name: check replace config with src
+  eos_config:
+    src: basic/vlan.j2
+    replace: config
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
 
 - debug: msg="END cli/src_basic.yaml"

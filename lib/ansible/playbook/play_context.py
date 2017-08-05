@@ -33,20 +33,20 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.utils.ssh_functions import check_for_controlpersist
 
-
-boolean = C.mk_boolean
-
-__all__ = ['PlayContext']
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+
+__all__ = ['PlayContext']
 
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
@@ -57,6 +57,7 @@ MAGIC_VARIABLE_MAPPING = dict(
     connection=('ansible_connection', ),
     remote_addr=('ansible_ssh_host', 'ansible_host'),
     remote_user=('ansible_ssh_user', 'ansible_user'),
+    remote_tmp_dir=('ansible_remote_tmp', ),
     port=('ansible_ssh_port', 'ansible_port'),
     timeout=('ansible_ssh_timeout', 'ansible_timeout'),
     ssh_executable=('ansible_ssh_executable', ),
@@ -168,6 +169,7 @@ class PlayContext(Base):
     # (connection, port, remote_user, environment, no_log)
     _docker_extra_args = FieldAttribute(isa='string')
     _remote_addr = FieldAttribute(isa='string')
+    _remote_tmp_dir = FieldAttribute(isa='string', default=C.DEFAULT_REMOTE_TMP)
     _password = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
@@ -214,7 +216,7 @@ class PlayContext(Base):
     _force_handlers = FieldAttribute(isa='bool', default=False)
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
-    _diff = FieldAttribute(isa='bool', default=C.DIFF_ALWAYS)
+    _diff = FieldAttribute(isa='bool')
 
     # Fact gathering settings
     _gather_subset = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
@@ -287,7 +289,7 @@ class PlayContext(Base):
         self.become_method = options.become_method
         self.become_user = options.become_user
 
-        self.check_mode = boolean(options.check)
+        self.check_mode = boolean(options.check, strict=False)
 
         # get ssh options FIXME: make these common to all connections
         for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
@@ -317,6 +319,10 @@ class PlayContext(Base):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
+
+        :arg task: the task object with the parameters that were set on it
+        :arg variables: variables from inventory
+        :arg templar: templar instance if templating variables is needed
         '''
 
         new_info = self.copy()
@@ -401,9 +407,9 @@ class PlayContext(Base):
         # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
-                setattr(new_info, 'become_pass', new_info.sudo_pass)
+                new_info.become_pass = new_info.sudo_pass
             elif new_info.become_method == 'su' and new_info.su_pass:
-                setattr(new_info, 'become_pass', new_info.su_pass)
+                new_info.become_pass = new_info.su_pass
 
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
@@ -416,7 +422,7 @@ class PlayContext(Base):
                     if sudo_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[sudo_pass_name])
                         break
-            if new_info.become_method == 'sudo':
+            elif new_info.become_method == 'su':
                 for su_pass_name in MAGIC_VARIABLE_MAPPING.get('su_pass'):
                     if su_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[su_pass_name])
@@ -452,9 +458,6 @@ class PlayContext(Base):
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
-
-        # set become defaults if not previouslly set
-        task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
         if task.always_run:
             display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)

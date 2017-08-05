@@ -229,7 +229,7 @@ class VariableManager:
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
-            def _get_plugin_vars(plugin, loader, path, entities):
+            def _get_plugin_vars(plugin, path, entities):
                 data = {}
                 try:
                     data = plugin.get_vars(self._loader, path, entities)
@@ -258,14 +258,14 @@ class VariableManager:
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
-                        data = combine_vars(data, _get_plugin_vars(plugin, self._loader, inventory_dir, entities))
+                        data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
                 return data
 
             def _plugins_play(entities):
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
-                    data = combine_vars(data, _get_plugin_vars(plugin, self._loader, basedir, entities))
+                    data = combine_vars(data, _get_plugin_vars(plugin, basedir, entities))
                 return data
 
             # configurable functions that are sortable via config
@@ -316,12 +316,14 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                host_facts = wrap_var(self._fact_cache.get(host.name, dict()))
-                if not C.NAMESPACE_FACTS:
+                host_facts = wrap_var(self._fact_cache.get(host.name, {}))
+                if not C.ONLY_NAMESPACE_FACTS:
                     # allow facts to polute main namespace
                     all_vars = combine_vars(all_vars, host_facts)
+
                 # always return namespaced facts
                 all_vars = combine_vars(all_vars, {'ansible_facts': host_facts})
+
             except KeyError:
                 pass
 
@@ -369,10 +371,12 @@ class VariableManager:
                         raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item,
                                                        obj=vars_file_item)
                     else:
-                        # we do not have a full context here, and the missing variable could be
-                        # because of that, so just show a warning and continue
+                        # we do not have a full context here, and the missing variable could be because of that
+                        # so just show a warning and continue
                         display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
                         continue
+
+                display.vvv("Read vars_file '%s'" % vars_file_item)
 
             # By default, we now merge in all vars from all roles in the play,
             # unless the user has disabled this via a config option

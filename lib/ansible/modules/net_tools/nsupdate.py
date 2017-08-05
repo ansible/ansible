@@ -1,27 +1,16 @@
 #!/usr/bin/python
 
-"""
-Ansible module to manage DNS records using dnspython
-(c) 2016, Marcin Skarbek <github@skarbek.name>
-(c) 2016, Andreas Olsson <andreas@arrakis.se>
-(c) 2017, Loic Blot <loic.blot@unix-experience.fr>
+# (c) 2016, Marcin Skarbek <github@skarbek.name>
+# (c) 2016, Andreas Olsson <andreas@arrakis.se>
+# (c) 2017, Loic Blot <loic.blot@unix-experience.fr>
+#
+# This module was ported from https://github.com/mskarbek/ansible-nsupdate
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This module was ported from https://github.com/mskarbek/ansible-nsupdate
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -151,9 +140,6 @@ dns_rc_str:
 from binascii import Error as binascii_error
 from socket import error as socket_error
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-
 try:
     import dns.update
     import dns.query
@@ -164,6 +150,9 @@ try:
     HAVE_DNSPYTHON = True
 except ImportError:
     HAVE_DNSPYTHON = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class RecordManager(object):
@@ -182,9 +171,8 @@ class RecordManager(object):
                 })
             except TypeError:
                 module.fail_json(msg='Missing key_secret')
-            except binascii_error:
-                e = get_exception()
-                module.fail_json(msg='TSIG key error: %s' % str(e))
+            except binascii_error as e:
+                module.fail_json(msg='TSIG key error: %s' % to_native(e))
         else:
             self.keyring = None
 
@@ -199,12 +187,10 @@ class RecordManager(object):
         response = None
         try:
             response = dns.query.tcp(update, self.module.params['server'], timeout=10)
-        except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature):
-            e = get_exception()
-            self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, str(e)))
-        except (socket_error, dns.exception.Timeout):
-            e = get_exception()
-            self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, str(e)))
+        except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
+            self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
+        except (socket_error, dns.exception.Timeout) as e:
+            self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
         return response
 
     def create_or_update_record(self):
@@ -288,9 +274,8 @@ class RecordManager(object):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
         try:
             update.present(self.module.params['record'], self.module.params['type'])
-        except dns.rdatatype.UnknownRdatatype:
-            e = get_exception()
-            self.module.fail_json(msg='Record error: {}'.format(str(e)))
+        except dns.rdatatype.UnknownRdatatype as e:
+            self.module.fail_json(msg='Record error: {0}'.format(to_native(e)))
 
         response = self.__do_update(update)
         self.dns_rc = dns.message.Message.rcode(response)

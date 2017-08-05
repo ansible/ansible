@@ -1,0 +1,170 @@
+---
+- debug: msg="START junos_user netconf/basic.yaml"
+
+- name: setup - remove user
+  junos_user:
+    name: test_user
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create user
+  junos_user:
+    name: test_user
+    state: present
+    full_name: test_user
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user</name>' in config.xml"
+      - "'<full-name>test_user</full-name>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
+
+- name: Create user again (idempotent)
+  junos_user:
+    name: test_user
+    state: present
+    full_name: test_user
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate user
+  junos_user:
+    name: test_user
+    state: present
+    full_name: test_user
+    role: operator
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<user inactive=\"inactive\">' in config.xml"
+      - "'<name>test_user</name>' in config.xml"
+
+- name: Activate user
+  junos_user:
+    name: test_user
+    state: present
+    full_name: test_user
+    role: operator
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user</name>' in config.xml"
+      - "'<full-name>test_user</full-name>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
+
+- name: Delete user
+  junos_user:
+    name: test_user
+    state: absent
+    full_name: test_user
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user</name>' not in config.xml"
+      - "'<full-name>test_user</full-name>' not in config.xml"
+
+- name: Delete user again (idempotent check)
+  junos_user:
+    name: test_user
+    state: absent
+    full_name: test_user
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Teardown list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, state: absent}
+      - {name: test_user2, state: absent}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Create list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: present}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: present}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user1</name>' in config.xml"
+      - "'<name>test_user2</name>' in config.xml"
+
+- name: Delete list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: absent}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: absent}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user1</name>' not in config.xml"
+      - "'<name>test_user2</name>' not in config.xml"

@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -44,6 +34,12 @@ options:
     required: false
     default: 10
     version_added: "2.3"
+  validate_certs:
+    description:
+      - When set to C(NO), SSL certificates will not be validated.
+    required: false
+    default: "yes"
+    version_added: "2.4"
 notes:
   - "Visit https://www.ipify.org to get more information."
 '''
@@ -69,17 +65,11 @@ ipify_public_ip:
   sample: 1.2.3.4
 '''
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 
 class IpifyFacts(object):
@@ -92,21 +82,23 @@ class IpifyFacts(object):
         result = {
             'ipify_public_ip': None
         }
-        (response, info) = fetch_url(module=module, url=self.api_url + "?format=json" , force=True, timeout=self.timeout)
+        (response, info) = fetch_url(module=module, url=self.api_url + "?format=json", force=True, timeout=self.timeout)
 
         if not response:
             module.fail_json(msg="No valid or no response from url %s within %s seconds (timeout)" % (self.api_url, self.timeout))
 
-        data = json.loads(response.read())
+        data = json.loads(to_text(response.read()))
         result['ipify_public_ip'] = data.get('ip')
         return result
+
 
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(
-            api_url=dict(default='https://api.ipify.org'),
+        argument_spec=dict(
+            api_url=dict(default='https://api.ipify.org/'),
             timeout=dict(type='int', default=10),
+            validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
@@ -114,6 +106,7 @@ def main():
     ipify_facts = IpifyFacts().run()
     ipify_facts_result = dict(changed=False, ansible_facts=ipify_facts)
     module.exit_json(**ipify_facts_result)
+
 
 if __name__ == '__main__':
     main()

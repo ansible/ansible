@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Adam Miller (maxamillion@fedoraproject.org)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -537,7 +527,7 @@ def main():
     source = module.params['source']
 
     if module.params['port'] is not None:
-        port, protocol = module.params['port'].split('/')
+        port, protocol = module.params['port'].strip().split('/')
         if protocol is None:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
@@ -1009,7 +999,7 @@ def main():
                     action_handler(set_masquerade_permanent, (zone, True))
                     changed=True
                 if not is_enabled_immediate:
-                    action_handler(set_masquerade_enabled, (zone))
+                    action_handler(set_masquerade_enabled, (zone,))
                     changed=True
                 if changed:
                     msgs.append("Added masquerade to zone %s" % (zone))
@@ -1022,7 +1012,7 @@ def main():
                     action_handler(set_masquerade_permanent, (zone, False))
                     changed=True
                 if is_enabled_immediate:
-                    action_handler(set_masquerade_disabled, (zone))
+                    action_handler(set_masquerade_disabled, (zone,))
                     changed=True
                 if changed:
                     msgs.append("Removed masquerade from zone %s" % (zone))

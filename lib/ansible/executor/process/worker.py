@@ -118,7 +118,7 @@ class WorkerProcess(multiprocessing.Process):
                 self._rslt_q
             ).run()
 
-            display.debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
+            display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
             self._host.vars = dict()
             self._host.groups = []
             task_result = TaskResult(
@@ -129,9 +129,9 @@ class WorkerProcess(multiprocessing.Process):
             )
 
             # put the result on the result queue
-            display.debug("sending task result")
+            display.debug("sending task result for task %s" % self._task._uuid)
             self._rslt_q.put(task_result)
-            display.debug("done sending task result")
+            display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:
             self._host.vars = dict()

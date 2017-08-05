@@ -4,6 +4,7 @@
 
 - name: test getting default facts
   ios_facts:
+    provider: "{{ cli }}"
   register: result
 
 - assert:

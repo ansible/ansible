@@ -132,3 +132,23 @@ class TestEosConfigModule(TestEosModule):
         set_module_args(args)
         result = self.execute_module()
         self.assertIn('__backup__', result)
+
+    def test_eos_config_save_when(self):
+        mock_run_commands = patch('ansible.modules.network.eos.eos_config.run_commands')
+        run_commands = mock_run_commands.start()
+
+        run_commands.return_value = [load_fixture('eos_config_config.cfg'),
+                                     load_fixture('eos_config_config.cfg')]
+
+        args = dict(save_when='modified')
+        set_module_args(args)
+        result = self.execute_module()
+
+        run_commands.return_value = [load_fixture('eos_config_config.cfg'),
+                                     load_fixture('eos_config_config_updated.cfg')]
+
+        args = dict(save_when='modified')
+        set_module_args(args)
+        result = self.execute_module(changed=True)
+
+        mock_run_commands.stop()

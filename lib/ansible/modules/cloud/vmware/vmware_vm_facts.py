@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Joseph Callen <jcallen () csc.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -55,6 +45,9 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import HAS_PYVMOMI, connect_to_api, get_all_objs, vmware_argument_spec
+
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/getallvms.py
 def get_all_virtual_machines(content):
@@ -68,12 +61,17 @@ def get_all_virtual_machines(content):
             _ip_address = summary.guest.ipAddress
             if _ip_address is None:
                 _ip_address = ""
+        _mac_address = []
+        for dev in vm.config.hardware.device:
+            if isinstance(dev, vim.vm.device.VirtualEthernetCard):
+                _mac_address.append(dev.macAddress)
 
         virtual_machine = {
             summary.config.name: {
                 "guest_fullname": summary.config.guestFullName,
                 "power_state": summary.runtime.powerState,
                 "ip_address": _ip_address,
+                "mac_address": _mac_address,
                 "uuid": summary.config.uuid
             }
         }
@@ -101,8 +99,6 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

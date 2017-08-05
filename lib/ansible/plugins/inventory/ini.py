@@ -27,6 +27,9 @@ DOCUMENTATION:
         - The C(children) modifier indicates that the section contains groups.
         - The C(vars) modifier indicates that the section contains variables assigned to members of the group.
         - Anything found outside a section is considered an 'ungrouped' host.
+        - Values passed in using the C(key=value) syntax are interpreted as Python literal structure (strings, numbers, tuples, lists, dicts,
+          booleans, None), alternatively as string. For example C(var=FALSE) would create a string equal to 'FALSE'. Do not rely on types set
+          during definition, always make sure you specify type with a filter when needed when consuming the variable.
     notes:
         - It takes the place of the previously hardcoded INI inventory.
         - To function it requires being whitelisted in configuration.
@@ -63,7 +66,7 @@ EXAMPLES:
       # other example config
       host1 # this is 'ungrouped'
 
-      # both hsots have same IP but diff ports, also 'ungrouped'
+      # both hosts have same IP but diff ports, also 'ungrouped'
       host2 ansible_host=127.0.0.1 ansible_port=44
       host3 ansible_host=127.0.0.1 ansible_port=45
 

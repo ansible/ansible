@@ -123,16 +123,14 @@ EXAMPLES = '''
     - svi
     - nve
 
-- name: Admin up all ethernet interfaces
+- name: Admin up all loopback interfaces
   nxos_interface:
-    interface: ethernet
-    host: 68.170.147.165
+    interface: loopback 0-1023
     admin_state: up
 
-- name: Admin down ALL interfaces (physical and logical)
+- name: Admin down all loopback interfaces
   nxos_interface:
-    interface: all
-    host: 68.170.147.165
+    interface: looback 0-1023
     admin_state: down
 '''
 
@@ -147,8 +145,6 @@ commands:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-
-
 
 
 def is_default_interface(interface, module):
@@ -386,14 +382,15 @@ def get_interfaces_dict(module):
         'portchannel': [],
         'nve': [],
         'unknown': []
-        }
+    }
 
-    interface_list = body.get('TABLE_interface')['ROW_interface']
-    for index in interface_list:
-        intf = index['interface']
-        intf_type = get_interface_type(intf)
+    if body:
+        interface_list = body['TABLE_interface']['ROW_interface']
+        for index in interface_list:
+            intf = index['interface']
+            intf_type = get_interface_type(intf)
 
-        interfaces[intf_type].append(intf)
+            interfaces[intf_type].append(intf)
 
     return interfaces
 
@@ -547,9 +544,15 @@ def smart_existing(module, intf_type, normalized_interface):
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-    cmds = [command]
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+
     body = run_commands(module, cmds)
     return body
 
@@ -584,10 +587,7 @@ def main():
         interface_type=dict(required=False, choices=['loopback', 'portchannel', 'svi', 'nve']),
         ip_forward=dict(required=False, choices=['enable', 'disable']),
         fabric_forwarding_anycast_gateway=dict(required=False, type='bool'),
-        state=dict(choices=['absent', 'present', 'default'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present', 'default'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -687,7 +687,7 @@ def main():
             load_config(module, cmds)
             results['changed'] = True
             if module.params['interface']:
-                if delta.get('mode'): # or delta.get('admin_state'):
+                if delta.get('mode'):
                     # if the mode changes from L2 to L3, the admin state
                     # seems to change after the API call, so adding a second API
                     # call to ensure it's in the desired state.

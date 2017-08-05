@@ -22,8 +22,9 @@ __metaclass__ = type
 import re
 import json
 
-from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils._text import to_text, to_bytes
+from ansible.plugins.terminal import TerminalBase
 
 
 class TerminalModule(TerminalBase):
@@ -34,40 +35,23 @@ class TerminalModule(TerminalBase):
     ]
 
     terminal_stderr_re = [
-        re.compile(r"% ?Error"),
-        re.compile(r"^% \w+", re.M),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"error:", re.I),
+        re.compile(r"^Removing.* not allowed")
     ]
 
-    def authorize(self, passwd=None):
-        if self._get_prompt().endswith('#'):
+    def on_authorize(self, passwd=None):
+        if self._get_prompt().endswith(b'#'):
             return
 
-        cmd = {'command': 'enable'}
+        cmd = {u'command': u'enable'}
         if passwd:
-            cmd['prompt'] = r"[\r\n]?password: $"
-            cmd['answer'] = passwd
+            # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
+            # an r string and use to_text to ensure it's text on both py2 and py3.
+            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            cmd[u'answer'] = passwd
 
         try:
-            self._exec_cli_command(json.dumps(cmd))
-            self._exec_cli_command('terminal pager 0')
+            self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
+            self._exec_cli_command(u'no terminal pager')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
-
-    def on_deauthorize(self):
-        prompt = self._get_prompt()
-        if prompt is None:
-            # if prompt is None most likely the terminal is hung up at a prompt
-            return
-
-        if '(config' in prompt:
-            self._exec_cli_command('end')
-            self._exec_cli_command('disable')
-
-        elif prompt.endswith('#'):
-            self._exec_cli_command('disable')

@@ -1,0 +1,186 @@
+---
+- debug: msg="START net_l3_interface junos/basic.yaml"
+
+- name: setup - remove interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Configure interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.1/32</name>' in config.xml"
+      - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
+      - "'+       address 1.1.1.1/32;' in result.diff.prepared"
+      - "'+       address fd5d:12c9:2201:1::1/128;' in result.diff.prepared"
+
+- name: Configure interface address (idempotent)
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.1/32</name>' not in config.xml"
+      - "'<name>fd5d:12c9:2201:1::1/128</name>' not in config.xml"
+      - "'-       address 1.1.1.1/32;' in result.diff.prepared"
+      - "'-       address fd5d:12c9:2201:1::1/128;' in result.diff.prepared"
+
+- name: Delete interface address (idempotent)
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Aggregate setup- delete interface ge-0/0/1
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 1.1.1.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Aggregate setup- delete interface ge-0/0/2
+  net_l3_interface:
+    name: ge-0/0/2
+    ipv4: 2.2.2.2
+    ipv6: fd5d:12c9:2201:2::2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Configure l3 interface in aggregate
+  net_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 1.1.1.1
+      ipv6: fd5d:12c9:2201:1::1
+    - name: ge-0/0/2
+      ipv4: 2.2.2.2
+      ipv6: fd5d:12c9:2201:2::2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *address 1.1.1.1/32")
+      - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:1::1/128")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *address 2.2.2.2/32")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:2::2/128")
+
+- name: Configure l3 interface in aggregate (idempotent)
+  net_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 1.1.1.1
+      ipv6: fd5d:12c9:2201:1::1
+      active: True
+    - name: ge-0/0/2
+      ipv4: 2.2.2.2
+      ipv6: fd5d:12c9:2201:2::2
+      active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Delete l3 interface configuration
+  net_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 1.1.1.1
+      ipv6: fd5d:12c9:2201:1::1
+      state: absent
+    - name: ge-0/0/2
+      ipv4: 2.2.2.2
+      ipv6: fd5d:12c9:2201:2::2
+      state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared | search("\- *address 1.1.1.1/32")
+      - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared | search("\- *address fd5d:12c9:2201:1::1/128")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared | search("\- *address 2.2.2.2/32")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared | search("\- *address fd5d:12c9:2201:2::2/128")
+
+- name: Delete l3 interface configuration (idempotent)
+  net_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 1.1.1.1
+      ipv6: fd5d:12c9:2201:1::1
+      state: absent
+    - name: ge-0/0/2
+      ipv4: 2.2.2.2
+      ipv6: fd5d:12c9:2201:2::2
+      state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

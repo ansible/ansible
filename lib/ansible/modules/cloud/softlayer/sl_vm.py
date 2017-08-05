@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -236,7 +228,21 @@ EXAMPLES = '''
 # TODO: Disabled RETURN as it is breaking the build for docs. Needs to be fixed.
 RETURN = '''# '''
 
+import json
 import time
+
+try:
+    import SoftLayer
+    from SoftLayer import VSManager
+
+    HAS_SL = True
+    vsManager = VSManager(SoftLayer.create_client_from_env())
+except ImportError:
+    HAS_SL = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+
 
 #TODO: get this info from API
 STATES = ['present', 'absent']
@@ -248,15 +254,6 @@ INITIALDISK_SIZES = [25, 100]
 LOCALDISK_SIZES = [25, 100, 150, 200, 300]
 SANDISK_SIZES = [10, 20, 25, 30, 40, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 500, 750, 1000, 1500, 2000]
 NIC_SPEEDS = [10, 100, 1000]
-
-try:
-    import SoftLayer
-    from SoftLayer import VSManager
-
-    HAS_SL = True
-    vsManager = VSManager(SoftLayer.create_client_from_env())
-except ImportError:
-    HAS_SL = False
 
 
 def create_virtual_instance(module):
@@ -329,7 +326,7 @@ def cancel_instance(module):
     canceled = True
     if module.params.get('instance_id') is None and (module.params.get('tags') or module.params.get('hostname') or module.params.get('domain')):
         tags = module.params.get('tags')
-        if isinstance(tags, basestring):
+        if isinstance(tags, string_types):
             tags = [module.params.get('tags')]
         instances = vsManager.list_instances(tags = tags, hostname = module.params.get('hostname'), domain = module.params.get('domain'))
         for instance in instances:
@@ -390,7 +387,6 @@ def main():
 
     module.exit_json(changed=changed, instance=json.loads(json.dumps(instance, default=lambda o: o.__dict__)))
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

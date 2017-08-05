@@ -1,305 +1,53 @@
-# test code for the copy module and action plugin
-# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+- block:
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+    - name: Create a local temporary directory
+      shell: mktemp -d "${TMPDIR:-/tmp}/ansible_test.XXXXXXXXX"
+      register: tempfile_result
+      connection: local
 
-- name: record the output directory
-  set_fact: output_file={{output_dir}}/foo.txt
+    - set_fact:
+        local_temp_dir: '{{ tempfile_result.stdout }}'
+        # output_dir is hardcoded in test/runner/lib/executor.py and created there
+        remote_dir: '{{ output_dir }}'
 
-- name: locate sha1sum/shasum
-  shell: which sha1sum || which shasum
-  register: sha1sum
+    - name: create remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+      register: user
 
-- name: initiate a basic copy, and also test the mode
-  copy: src=foo.txt dest={{output_file}} mode=0444
-  register: copy_result
+    - file:
+        path: "{{ user.home }}/.ssh"
+        owner: '{{ remote_unprivileged_user }}'
+        state: directory
+        mode: 0700
 
-- name: check the mode of the output file
-  file: name={{output_file}} state=file
-  register: file_result_check
+    - name: 'duplicate authorized_keys'
+      copy:
+        src: $HOME/.ssh/authorized_keys
+        dest: '{{ user.home }}/.ssh/authorized_keys'
+        owner: '{{ remote_unprivileged_user }}'
+        mode: 0600
+        remote_src: yes
 
-- name: assert the mode is correct
-  assert:
-    that:
-      - "file_result_check.mode == '0444'"
+    - file:
+        path: "{{ remote_dir }}"
+        state: directory
+      remote_user: '{{ remote_unprivileged_user }}'
 
-- name: assert basic copy worked
-  assert: 
-    that: 
-      - "'changed' in copy_result"
-      - "'dest' in copy_result"
-      - "'group' in copy_result"
-      - "'gid' in copy_result"
-      - "'md5sum' in copy_result"
-      - "'checksum' in copy_result"
-      - "'owner' in copy_result"
-      - "'size' in copy_result"
-      - "'src' in copy_result"
-      - "'state' in copy_result"
-      - "'uid' in copy_result"
+    # execute tests tasks using an unprivileged user, this is useful to avoid
+    # local/remote ambiguity when controller and managed hosts are identical.
+    - import_tasks: tests.yml
+      remote_user: '{{ remote_unprivileged_user }}'
 
-- name: verify that the file was marked as changed
-  assert:
-    that:
-      - "copy_result.changed == true"
+  always:
+    - name: Cleaning
+      file:
+        path: '{{ local_temp_dir }}'
+        state: absent
+      connection: local
 
-- name: verify that the file checksums are correct
-  assert:
-    that:
-      - "copy_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
-
-- name: verify that the legacy md5sum is correct
-  assert:
-    that:
-      - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
-  when: ansible_fips|bool != True
-
-- name: check the stat results of the file
-  stat: path={{output_file}}
-  register: stat_results
-
-- debug: var=stat_results
-
-- name: assert the stat results are correct
-  assert: 
-    that:
-      - "stat_results.stat.exists == true"
-      - "stat_results.stat.isblk == false"
-      - "stat_results.stat.isfifo == false"
-      - "stat_results.stat.isreg == true"
-      - "stat_results.stat.issock == false"
-      - "stat_results.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
-
-- name: verify that the legacy md5sum is correct
-  assert:
-    that:
-      - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
-  when: ansible_fips|bool != True
-
-- name: overwrite the file via same means
-  copy: src=foo.txt dest={{output_file}}
-  register: copy_result2
-
-- name: assert that the file was not changed
-  assert: 
-    that: 
-      - "not copy_result2|changed"
-
-- name: overwrite the file using the content system
-  copy: content="modified" dest={{output_file}}
-  register: copy_result3
-
-- name: assert that the file has changed
-  assert: 
-     that: 
-       - "copy_result3|changed"
-       - "'content' not in copy_result3"
-
-# test recursive copy
-
-- name: set the output subdirectory
-  set_fact: output_subdir={{output_dir}}/sub
-
-- name: make an output subdirectory
-  file: name={{output_subdir}} state=directory
-
-- name: test recursive copy to directory
-  copy: src=subdir dest={{output_subdir}} directory_mode=0700
-  register: recursive_copy_result
-
-- debug: var=recursive_copy_result
-- name: assert that the recursive copy did something
-  assert:
-    that:
-      - "recursive_copy_result|changed"
-
-- name: check that a file in a directory was transferred
-  stat: path={{output_dir}}/sub/subdir/bar.txt
-  register: stat_bar
-
-- name: check that a file in a deeper directory was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir2/baz.txt 
-  register: stat_bar2
-
-- name: check that a file in a directory whose parent contains a directory alone was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir2/subdir3/subdir4/qux.txt
-  register: stat_bar3
-
-- name: assert recursive copy things
-  assert:
-    that:
-      - "stat_bar.stat.exists"
-      - "stat_bar2.stat.exists"
-      - "stat_bar3.stat.exists"
-
-- name: stat the recursively copied directories
-  stat: path={{output_dir}}/sub/{{item}}
-  register: dir_stats
-  with_items:
-    - "subdir"
-    - "subdir/subdir2"
-    - "subdir/subdir2/subdir3"
-    - "subdir/subdir2/subdir3/subdir4"
-
-- name: assert recursive copied directories mode
-  assert:
-    that:
-      - "item.stat.mode == '0700'"
-  with_items: "{{dir_stats.results}}"
-
-
-# errors on this aren't presently ignored so this test is commented out.  But it would be nice to fix.
-#
-
-- name: overwrite the file again using the content system, also passing along file params
-  copy: content="modified" dest={{output_file}} 
-  register: copy_result4
-  
-#- name: assert invalid copy input location fails
-#  copy: src=invalid_file_location_does_not_exist dest={{output_dir}}/file.txt
-#  ignore_errors: True
-#  register: failed_copy
-
-- name: copy already copied directory again
-  copy: src=subdir dest={{output_subdir | expanduser}} owner={{ansible_ssh_user|default(omit)}}
-  register: copy_result5
-
-- name: assert that the directory was not changed
-  assert:
-    that:
-      - "not copy_result5|changed"
-
-# issue 8394
-- name: create a file with content and a literal multiline block
-  copy: |
-    content='this is the first line
-    this is the second line
-
-    this line is after an empty line
-    this line is the last line
-    '
-    dest={{output_dir}}/multiline.txt
-  register: copy_result6
-
-- debug: var=copy_result6
-
-- name: assert the multiline file was created correctly
-  assert:
-    that:
-      - "copy_result6.changed"
-      - "copy_result6.dest == '{{output_dir|expanduser}}/multiline.txt'"
-      - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
-
-# test overwriting a file as an unprivileged user (pull request #8624)
-# this can't be relative to {{output_dir}} as ~root usually has mode 700
-
-- name: create world writable directory
-  file: dest=/tmp/worldwritable state=directory mode=0777
-
-- name: create world writable file
-  copy: dest=/tmp/worldwritable/file.txt content="bar" mode=0666
-
-- name: overwrite the file as user nobody
-  copy: dest=/tmp/worldwritable/file.txt content="baz"
-  become: yes
-  become_user: nobody
-  register: copy_result7
-
-- name: assert the file was overwritten
-  assert:
-    that:
-      - "copy_result7.changed"
-      - "copy_result7.dest == '/tmp/worldwritable/file.txt'"
-      - "copy_result7.checksum == 'bbe960a25ea311d21d40669e93df2003ba9b90a2'"
-
-- name: clean up
-  file: dest=/tmp/worldwritable state=absent
-
-# test overwriting a link using "follow=yes" so that the link
-# is preserved and the link target is updated
-
-- name: create a test file to symlink to
-  copy: dest={{output_dir}}/follow_test content="this is the follow test file\n"
-
-- name: create a symlink to the test file
-  file: path={{output_dir}}/follow_link src='./follow_test' state=link
-
-- name: update the test file using follow=True to preserve the link
-  copy: dest={{output_dir}}/follow_link content="this is the new content\n" follow=yes
-  register: replace_follow_result
-
-- name: stat the link path
-  stat: path={{output_dir}}/follow_link
-  register: stat_link_result
-
-- name: assert that the link is still a link
-  assert:
-    that:
-    - stat_link_result.stat.islnk
-
-- name: get the checksum of the link target
-  shell: "{{ sha1sum.stdout }} {{output_dir}}/follow_test | cut -f1 -sd ' '"
-  register: target_file_result
-
-- name: assert that the link target was updated
-  assert:
-    that:
-    - replace_follow_result.checksum == target_file_result.stdout
-
-- name: create a test dir to copy
-  file:
-    path: '{{ output_dir }}/top_dir'
-    state: directory
-
-- name: create a test dir to symlink to
-  file:
-    path: '{{ output_dir }}/linked_dir'
-    state: directory
-
-- name: create a file in the test dir
-  copy:
-    dest: '{{ output_dir }}/linked_dir/file1'
-    content: 'hello world'
-
-- name: create a link to the test dir
-  file:
-    path: '{{ output_dir }}/top_dir/follow_link_dir'
-    src: '{{ output_dir }}/linked_dir'
-    state: link
-
-- name: copy the directory's link
-  copy:
-    src: '{{ output_dir }}/top_dir'
-    dest: '{{ output_dir }}/new_dir'
-    follow: True
-
-- name: stat the copied path
-  stat:
-    path: '{{ output_dir }}/new_dir/top_dir/follow_link_dir'
-  register: stat_dir_result
-
-- name: stat the copied path
-  stat:
-    path: '{{ output_dir }}/new_dir/top_dir/follow_link_dir/file1'
-  register: stat_file_in_dir_result
-
-- name: assert that the directory exists
-  assert:
-    that:
-    - stat_dir_result.stat.exists
-    - stat_dir_result.stat.isdir
-    - stat_file_in_dir_result.stat.exists
-    - stat_file_in_dir_result.stat.isreg
+    - name: remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+        state: absent
+        remove: yes

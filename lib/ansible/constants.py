@@ -22,18 +22,21 @@ __metaclass__ = type
 from string import ascii_letters, digits
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.config.manager import ConfigManager
 
-config = ConfigManager()
+_config = ConfigManager()
 
 # Generate constants from config
-for setting in config.data.get_settings():
+for setting in _config.data.get_settings():
     vars()[setting.name] = setting.value
 
 
 def mk_boolean(value):
-    ''' moved '''
-    return config.make_boolean(value)
+    ''' moved to module_utils'''
+    # We don't have a display here so we can't call deprecated
+    # display.deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead', version='2.8')
+    return boolean(value, strict=False)
 
 
 # ### CONSTANTS ### yes, actual ones
@@ -60,7 +63,7 @@ BECOME_MISSING_STRINGS = {
     'ksu': 'No password given',
     'pmrun': ''
 }  # FIXME: deal with i18n
-BOOL_TRUE = config.data.BOOL_TRUE
+BOOL_TRUE = BOOLEANS_TRUE
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS = None
@@ -76,4 +79,3 @@ RESTRICTED_RESULT_KEYS = ['ansible_rsync_path', 'ansible_playbook_python']
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
-YAML_FILENAME_EXTENSIONS = [".yml", ".yaml", ".json"]  # check all of these extensions when looking for 'variable' files which should be YAML or JSON.

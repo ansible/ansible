@@ -19,9 +19,12 @@ from lib.util import (
     ApplicationError,
     run_command,
     make_dirs,
-    EnvironmentConfig,
     display,
     is_shippable,
+)
+
+from lib.config import (
+    EnvironmentConfig,
 )
 
 AWS_ENDPOINTS = {
@@ -55,6 +58,7 @@ class AnsibleCoreCI(object):
             'aws',
             'windows',
             'freebsd',
+            'rhel',
             'vyos',
             'junos',
             'ios',

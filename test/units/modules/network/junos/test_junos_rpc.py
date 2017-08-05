@@ -19,13 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-from xml.etree.ElementTree import tostring
+try:
+    from lxml.etree import tostring
+except ImportError:
+    from xml.etree.ElementTree import tostring
 
-from ansible.compat.tests.mock import patch, MagicMock
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_rpc
 from .junos_module import TestJunosModule, load_fixture, set_module_args
-from ansible.module_utils._text import to_text
+
 
 RPC_CLI_MAP = {
     'get-software-information': 'show version',

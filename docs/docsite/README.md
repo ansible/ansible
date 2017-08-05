@@ -14,6 +14,12 @@ such as link references, you may install sphinx and build the documentation by r
 To include module documentation you'll need to run `make webdocs` at the top level of the repository.  The generated
 html files are in docsite/htmlout/.
 
+To limit module documentation building to a specific module, run `MODULES=NAME
+make webdocs` instead. This should make testing module documentation syntax much
+faster. Instead of a single module, you can also specify a comma-separated list
+of modules. In order to skip building documentation for all modules, specify
+non-existing module name, for example `MODULES=none make webdocs`.
+
 If you do not want to learn the reStructuredText format, you can also [file issues] about
 documentation problems on the Ansible GitHub project.
 

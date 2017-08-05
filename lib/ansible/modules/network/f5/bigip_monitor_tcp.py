@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2013, serge van Ginderachter <serge@vanginderachter.be>
+#
+# Copyright 2017 F5 Networks Inc.
 #
 # This file is part of Ansible
 #
@@ -18,101 +18,70 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'metadata_version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
 module: bigip_monitor_tcp
-short_description: "Manages F5 BIG-IP LTM tcp monitors"
-description:
-  - "Manages F5 BIG-IP LTM tcp monitors via iControl SOAP API"
+short_description: Manages F5 BIG-IP LTM tcp monitors.
+description: Manages F5 BIG-IP LTM tcp monitors via iControl SOAP API.
 version_added: "1.4"
-author:
-  - Serge van Ginderachter (@srvg)
-  - Tim Rupp (@caphrim007)
-notes:
-  - "Requires BIG-IP software version >= 11"
-  - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
-  - "Best run as a local_action in your playbook"
-  - "Monitor API documentation: https://devcentral.f5.com/wiki/iControl.LocalLB__Monitor.ashx"
-requirements:
-  - bigsuds
 options:
-  state:
-    description:
-      - Monitor state
-    required: false
-    default: 'present'
-    choices:
-      - present
-      - absent
   name:
     description:
-      - Monitor name
-    required: true
-    default: null
+      - Monitor name.
+    required: True
     aliases:
       - monitor
-  partition:
-    description:
-      - Partition for the monitor
-    required: false
-    default: 'Common'
-  type:
-    description:
-      - The template type of this monitor template
-    required: false
-    default: 'tcp'
-    choices:
-      - TTYPE_TCP
-      - TTYPE_TCP_ECHO
-      - TTYPE_TCP_HALF_OPEN
   parent:
     description:
-      - The parent template of this monitor template
-    required: false
+      - The parent template of this monitor template. Once this value has
+        been set, it cannot be changed. By default, this value is the C(tcp)
+        parent on the C(Common) partition.
+    default: "/Common/tcp"
+  send:
+    description:
+      - The send string for the monitor call.
+  receive:
+    description:
+      - The receive string for the monitor call.
+  ip:
+    description:
+      - IP address part of the IP/port definition. If this parameter is not
+        provided when creating a new monitor, then the default value will be
+        '*'.
+      - If this value is an IP address, and the C(type) is C(tcp) (the default),
+        then a C(port) number must be specified.
+  type:
+    description:
+      - The template type of this monitor template.
+      - Deprecated in 2.4. Use one of the C(bigip_monitor_tcp_echo) or
+        C(bigip_monitor_tcp_half_open) modules instead.
     default: 'tcp'
     choices:
       - tcp
       - tcp_echo
       - tcp_half_open
-  parent_partition:
-    description:
-      - Partition for the parent monitor
-    required: false
-    default: 'Common'
-  send:
-    description:
-      - The send string for the monitor call
-    required: true
-    default: none
-  receive:
-    description:
-      - The receive string for the monitor call
-    required: true
-    default: none
-  ip:
-    description:
-      - IP address part of the ipport definition. The default API setting
-        is "0.0.0.0".
-    required: false
-    default: none
+      - TTYPE_TCP
+      - TTYPE_TCP_ECHO
+      - TTYPE_TCP_HALF_OPEN
   port:
     description:
-      - Port address part op the ipport definition. The default API
-        setting is 0.
-    required: false
-    default: none
+      - Port address part of the IP/port definition. If this parameter is not
+        provided when creating a new monitor, then the default value will be
+        '*'. Note that if specifying an IP address, a value between 1 and 65535
+        must be specified
+      - This argument is not supported for TCP Echo types.
   interval:
     description:
-      - The interval specifying how frequently the monitor instance
-        of this template will run. By default, this interval is used for up and
-        down states. The default API setting is 5.
-    required: false
-    default: none
+      - The interval specifying how frequently the monitor instance of this
+        template will run. If this parameter is not provided when creating
+        a new monitor, then the default value will be 5. This value B(must)
+        be less than the C(timeout) value.
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -120,44 +89,37 @@ options:
         period, it is considered up. If the target does not respond within
         the set time period, it is considered down. You can change this
         number to any number you want, however, it should be 3 times the
-        interval number of seconds plus 1 second. The default API setting
-        is 16.
-    required: false
-    default: none
+        interval number of seconds plus 1 second. If this parameter is not
+        provided when creating a new monitor, then the default value will be 16.
   time_until_up:
     description:
       - Specifies the amount of time in seconds after the first successful
         response before a node will be marked up. A value of 0 will cause a
         node to be marked up immediately after a valid response is received
-        from the node. The default API setting is 0.
-    required: false
-    default: none
+        from the node. If this parameter is not provided when creating
+        a new monitor, then the default value will be 0.
+notes:
+  - Requires the f5-sdk Python package on the host. This is as easy as pip
+    install f5-sdk.
+  - Requires BIG-IP software version >= 12
+requirements:
+  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
+author:
+  - Tim Rupp (@caphrim007)
 '''
 
 EXAMPLES = '''
 - name: Create TCP Monitor
   bigip_monitor_tcp:
-    state: "present"
-    server: "lb.mydomain.com"
-    user: "admin"
-    password: "secret"
-    name: "my_tcp_monitor"
-    type: "tcp"
-    send: "tcp string to send"
-    receive: "tcp string to receive"
-  delegate_to: localhost
-
-- name: Create TCP half open Monitor
-  bigip_monitor_tcp:
-    state: "present"
-    server: "lb.mydomain.com"
-    user: "admin"
-    password: "secret"
-    name: "my_tcp_monitor"
-    type: "tcp"
-    send: "tcp string to send"
-    receive: "http string to receive"
+      state: "present"
+      server: "lb.mydomain.com"
+      user: "admin"
+      password: "secret"
+      name: "my_tcp_monitor"
+      type: "tcp"
+      send: "tcp string to send"
+      receive: "tcp string to receive"
   delegate_to: localhost
 
 - name: Remove TCP Monitor
@@ -167,326 +129,852 @@ EXAMPLES = '''
       user: "admin"
       password: "secret"
       name: "my_tcp_monitor"
+  delegate_to: localhost
 '''
 
-TEMPLATE_TYPE = DEFAULT_TEMPLATE_TYPE = 'TTYPE_TCP'
-TEMPLATE_TYPE_CHOICES = ['tcp', 'tcp_echo', 'tcp_half_open']
-DEFAULT_PARENT = DEFAULT_TEMPLATE_TYPE_CHOICE = DEFAULT_TEMPLATE_TYPE.replace('TTYPE_', '').lower()
+RETURN = '''
+parent:
+    description: New parent template of the monitor.
+    returned: changed
+    type: string
+    sample: "tcp"
+send:
+    description: The new send string for this monitor.
+    returned: changed
+    type: string
+    sample: "tcp string to send"
+receive:
+    description: The new receive string for this monitor.
+    returned: changed
+    type: string
+    sample: "tcp string to receive"
+ip:
+    description: The new IP of IP/port definition.
+    returned: changed
+    type: string
+    sample: "10.12.13.14"
+port:
+    description: The new port of IP/port definition.
+    returned: changed
+    type: string
+    sample: "admin@root.local"
+interval:
+    description: The new interval in which to run the monitor check.
+    returned: changed
+    type: int
+    sample: 2
+timeout:
+    description: The new timeout in which the remote system must respond to the monitor.
+    returned: changed
+    type: int
+    sample: 10
+time_until_up:
+    description: The new time in which to mark a system as up after first successful response.
+    returned: changed
+    type: int
+    sample: 2
+'''
+
+import os
+
+try:
+    import netaddr
+    HAS_NETADDR = True
+except ImportError:
+    HAS_NETADDR = False
+
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.f5_utils import iteritems
+from ansible.module_utils.f5_utils import defaultdict
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
-def check_monitor_exists(module, api, monitor, parent):
-    # hack to determine if monitor exists
-    result = False
-    try:
-        ttype = api.LocalLB.Monitor.get_template_type(template_names=[monitor])[0]
-        parent2 = api.LocalLB.Monitor.get_parent_template(template_names=[monitor])[0]
-        if ttype == TEMPLATE_TYPE and parent == parent2:
-            result = True
+class Parameters(AnsibleF5Parameters):
+    def __init__(self, params=None):
+        self._values = defaultdict(lambda: None)
+        self._values['__warnings'] = []
+        if params:
+            self.update(params=params)
+
+    def update(self, params=None):
+        if params:
+            for k, v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    map_key = self.api_map[k]
+                else:
+                    map_key = k
+
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have
+                        # an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
+
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+            return result
+        except Exception:
+            return result
+
+    def api_params(self):
+        result = {}
+        for api_attribute in self.api_attributes:
+            if self.api_map is not None and api_attribute in self.api_map:
+                result[api_attribute] = getattr(self, self.api_map[api_attribute])
+            else:
+                result[api_attribute] = getattr(self, api_attribute)
+        result = self._filter_params(result)
+        return result
+
+    @property
+    def interval(self):
+        if self._values['interval'] is None:
+            return None
+        if 1 > int(self._values['interval']) > 86400:
+            raise F5ModuleError(
+                "Interval value must be between 1 and 86400"
+            )
+        return int(self._values['interval'])
+
+    @property
+    def timeout(self):
+        if self._values['timeout'] is None:
+            return None
+        return int(self._values['timeout'])
+
+    @property
+    def ip(self):
+        if self._values['ip'] is None:
+            return None
+        try:
+            if self._values['ip'] in ['*', '0.0.0.0']:
+                return '*'
+            result = str(netaddr.IPAddress(self._values['ip']))
+            return result
+        except netaddr.core.AddrFormatError:
+            raise F5ModuleError(
+                "The provided 'ip' parameter is not an IP address."
+            )
+
+    @property
+    def time_until_up(self):
+        if self._values['time_until_up'] is None:
+            return None
+        return int(self._values['time_until_up'])
+
+    @property
+    def parent(self):
+        if self._values['parent_partition']:
+            if self._values['parent_partition'] is None:
+                return None
+            if self._values['parent_partition'].startswith('/'):
+                partition = os.path.basename(self._values['parent_partition'])
+                result = '/{0}/{1}'.format(partition, self.type)
+            else:
+                result = '/{0}/{1}'.format(self.parent_partition, self.type)
         else:
-            module.fail_json(msg='Monitor already exists, but has a different type (%s) or parent(%s)' % (ttype, parent))
-    except bigsuds.OperationFailed as e:
-        if "was not found" in str(e):
-            result = False
-        else:
-            # genuine exception
-            raise
-    return result
+            if self._values['parent'] is None:
+                return None
+            if self._values['parent'].startswith('/'):
+                parent = os.path.basename(self._values['parent'])
+                result = '/{0}/{1}'.format(self.partition, parent)
+            else:
+                result = '/{0}/{1}'.format(self.partition, self._values['parent'])
+        return result
 
-
-def create_monitor(api, monitor, template_attributes):
-    try:
-        api.LocalLB.Monitor.create_template(
-            templates=[{
-                'template_name': monitor,
-                'template_type': TEMPLATE_TYPE
-            }],
-            template_attributes=[template_attributes]
+    @property
+    def parent_partition(self):
+        if self._values['parent_partition'] is None:
+            return None
+        self._values['__warnings'].append(
+            dict(
+                msg="The parent_partition param is deprecated",
+                version='2.4'
+            )
         )
-    except bigsuds.OperationFailed as e:
-        if "already exists" in str(e):
-            return False
-        else:
-            # genuine exception
-            raise
-    return True
+        return self._values['parent_partition']
 
 
-def delete_monitor(api, monitor):
-    try:
-        api.LocalLB.Monitor.delete_template(template_names=[monitor])
-    except bigsuds.OperationFailed as e:
-        # maybe it was deleted since we checked
-        if "was not found" in str(e):
-            return False
-        else:
-            # genuine exception
-            raise
-    return True
+class ParametersTcp(Parameters):
+    api_map = {
+        'timeUntilUp': 'time_until_up',
+        'defaultsFrom': 'parent',
+        'recv': 'receive'
+    }
+
+    api_attributes = [
+        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'recv', 'send',
+        'destination'
+    ]
+
+    returnables = [
+        'parent', 'send', 'receive', 'ip', 'port', 'interval', 'timeout',
+        'time_until_up'
+    ]
+
+    updatables = [
+        'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up'
+    ]
+
+    @property
+    def port(self):
+        if self._values['port'] is None:
+            return None
+        elif self._values['port'] == '*':
+            return '*'
+        return int(self._values['port'])
+
+    @property
+    def destination(self):
+        if self.ip is None and self.port is None:
+            return None
+        destination = '{0}:{1}'.format(self.ip, self.port)
+        return destination
+
+    @destination.setter
+    def destination(self, value):
+        ip, port = value.split(':')
+        self._values['ip'] = ip
+        self._values['port'] = port
+
+    @property
+    def type(self):
+        return 'tcp'
+
+    @type.setter
+    def type(self, value):
+        if value:
+            self._values['__warnings'].append(
+                dict(
+                    msg="The type param is deprecated",
+                    version='2.4'
+                )
+            )
 
 
-def check_string_property(api, monitor, str_property):
-    try:
-        template_prop = api.LocalLB.Monitor.get_template_string_property(
-            [monitor], [str_property['type']]
-        )[0]
-        return str_property == template_prop
-    except bigsuds.OperationFailed as e:
-        # happens in check mode if not created yet
-        if "was not found" in str(e):
-            return True
-        else:
-            # genuine exception
-            raise
+class ParametersEcho(Parameters):
+    api_map = {
+        'timeUntilUp': 'time_until_up',
+        'defaultsFrom': 'parent',
+        'destination': 'ip'
+    }
 
+    api_attributes = [
+        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination'
+    ]
 
-def set_string_property(api, monitor, str_property):
-    api.LocalLB.Monitor.set_template_string_property(
-        template_names=[monitor],
-        values=[str_property]
-    )
+    returnables = [
+        'parent', 'ip', 'interval', 'timeout', 'time_until_up'
+    ]
 
+    updatables = [
+        'destination', 'interval', 'timeout', 'time_until_up'
+    ]
 
-def check_integer_property(api, monitor, int_property):
-    try:
-        return int_property == api.LocalLB.Monitor.get_template_integer_property(
-            [monitor], [int_property['type']]
-        )[0]
-    except bigsuds.OperationFailed as e:
-        # happens in check mode if not created yet
-        if "was not found" in str(e):
-            return True
-        else:
-            # genuine exception
-            raise
+    @property
+    def type(self):
+        return 'tcp_echo'
 
+    @type.setter
+    def type(self, value):
+        if value:
+            self._values['__warnings'].append(
+                dict(
+                    msg="The type param is deprecated",
+                    version='2.4'
+                )
+            )
 
-def set_integer_property(api, monitor, int_property):
-    api.LocalLB.Monitor.set_template_integer_property(
-        template_names=[monitor],
-        values=[int_property]
-    )
+    @property
+    def destination(self):
+        return self.ip
 
+    @destination.setter
+    def destination(self, value):
+        self._values['ip'] = value
 
-def update_monitor_properties(api, module, monitor, template_string_properties, template_integer_properties):
-    changed = False
-    for str_property in template_string_properties:
-        if str_property['value'] is not None and not check_string_property(api, monitor, str_property):
-            if not module.check_mode:
-                set_string_property(api, monitor, str_property)
-            changed = True
-
-    for int_property in template_integer_properties:
-        if int_property['value'] is not None and not check_integer_property(api, monitor, int_property):
-            if not module.check_mode:
-                set_integer_property(api, monitor, int_property)
-            changed = True
-
-    return changed
-
-
-def get_ipport(api, monitor):
-    return api.LocalLB.Monitor.get_template_destination(template_names=[monitor])[0]
-
-
-def set_ipport(api, monitor, ipport):
-    try:
-        api.LocalLB.Monitor.set_template_destination(
-            template_names=[monitor], destinations=[ipport]
+    @property
+    def send(self):
+        if self._values['send'] is None:
+            return None
+        raise F5ModuleError(
+            "The 'send' parameter is not available for TCP echo"
         )
-        return True, ""
 
-    except bigsuds.OperationFailed as e:
-        if "Cannot modify the address type of monitor" in str(e):
-            return False, "Cannot modify the address type of monitor if already assigned to a pool."
+    @property
+    def receive(self):
+        if self._values['receive'] is None:
+            return None
+        raise F5ModuleError(
+            "The 'receive' parameter is not available for TCP echo"
+        )
+
+    @property
+    def port(self):
+        return None
+
+
+class ParametersHalfOpen(Parameters):
+    api_map = {
+        'timeUntilUp': 'time_until_up',
+        'defaultsFrom': 'parent'
+    }
+
+    api_attributes = [
+        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination'
+    ]
+
+    returnables = [
+        'parent', 'ip', 'port', 'interval', 'timeout', 'time_until_up'
+    ]
+
+    updatables = [
+        'destination', 'interval', 'timeout', 'time_until_up'
+    ]
+
+    @property
+    def destination(self):
+        if self.ip is None and self.port is None:
+            return None
+        result = '{0}:{1}'.format(self.ip, self.port)
+        return result
+
+    @destination.setter
+    def destination(self, value):
+        ip, port = value.split(':')
+        self._values['ip'] = ip
+        self._values['port'] = port
+
+    @property
+    def port(self):
+        if self._values['port'] is None:
+            return None
+        elif self._values['port'] == '*':
+            return '*'
+        return int(self._values['port'])
+
+    @property
+    def type(self):
+        return 'tcp_half_open'
+
+    @type.setter
+    def type(self, value):
+        if value:
+            self._values['__warnings'].append(
+                dict(
+                    msg="The type param is deprecated",
+                    version='2.4'
+                )
+            )
+
+    @property
+    def send(self):
+        if self._values['send'] is None:
+            return None
+        raise F5ModuleError(
+            "The 'send' parameter is not available for TCP half open"
+        )
+
+    @property
+    def receive(self):
+        if self._values['receive'] is None:
+            return None
+        raise F5ModuleError(
+            "The 'receive' parameter is not available for TCP half open"
+        )
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            result = self.__default(param)
+            return result
+
+    @property
+    def parent(self):
+        if self.want.parent != self.want.parent:
+            raise F5ModuleError(
+                "The parent monitor cannot be changed"
+            )
+
+    @property
+    def destination(self):
+        if self.want.type == 'tcp_echo':
+            if self.want.ip is None:
+                return None
         else:
-            # genuine exception
-            raise
+            if self.want.ip is None and self.want.port is None:
+                return None
+            if self.want.port is None:
+                self.want.update({'port': self.have.port})
+            if self.want.ip is None:
+                self.want.update({'ip': self.have.ip})
+
+            if self.want.port in [None, '*'] and self.want.ip != '*':
+                raise F5ModuleError(
+                    "Specifying an IP address requires that a port number be specified"
+                )
+
+        if self.want.destination != self.have.destination:
+            return self.want.destination
+
+    @property
+    def interval(self):
+        if self.want.timeout is not None and self.want.interval is not None:
+            if self.want.interval >= self.want.timeout:
+                raise F5ModuleError(
+                    "Parameter 'interval' must be less than 'timeout'."
+                )
+        elif self.want.timeout is not None:
+            if self.have.interval >= self.want.timeout:
+                    raise F5ModuleError(
+                        "Parameter 'interval' must be less than 'timeout'."
+                    )
+        elif self.want.interval is not None:
+            if self.want.interval >= self.have.timeout:
+                raise F5ModuleError(
+                    "Parameter 'interval' must be less than 'timeout'."
+                )
+        if self.want.interval != self.have.interval:
+            return self.want.interval
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+
+# TODO: Remove all of this in 2.5
+class ModuleManager(object):
+    def __init__(self, client):
+        self.client = client
+
+    def exec_module(self):
+        type = self.client.module.params.get('type', 'tcp')
+        manager = self.get_manager(type)
+        return manager.exec_module()
+
+    def get_manager(self, type):
+        if type in [None, 'tcp', 'TTYPE_TCP']:
+            return TcpManager(self.client)
+        elif type in ['tcp_echo', 'TTYPE_TCP_ECHO']:
+            return TcpEchoManager(self.client)
+        elif type in ['tcp_half_open', 'TTYPE_TCP_HALF_OPEN']:
+            return TcpHalfOpenManager(self.client)
+
+
+class BaseManager(object):
+    def _announce_deprecations(self):
+        warnings = []
+        if self.want:
+            warnings += self.want._values.get('__warnings', [])
+        if self.have:
+            warnings += self.have._values.get('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        try:
+            if state == "present":
+                changed = self.present()
+            elif state == "absent":
+                changed = self.absent()
+        except iControlUnexpectedHTTPError as e:
+            raise F5ModuleError(str(e))
+
+        changes = self.changes.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations()
+        return result
+
+    def present(self):
+        if self.exists():
+            return self.update()
+        else:
+            return self.create()
+
+    def create(self):
+        self._set_changed_options()
+        self._set_default_creation_values()
+        if self.client.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.client.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def remove(self):
+        if self.client.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the monitor.")
+        return True
+
+
+class TcpManager(BaseManager):
+    def __init__(self, client):
+        self.client = client
+        self.have = None
+        self.want = ParametersTcp(self.client.module.params)
+        self.changes = ParametersTcp()
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in ParametersTcp.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = ParametersTcp(changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = ParametersTcp.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                changed[k] = change
+        if changed:
+            self.changes = ParametersTcp(changed)
+            return True
+        return False
+
+    def _set_default_creation_values(self):
+        if self.want.timeout is None:
+            self.want.update({'timeout': 16})
+        if self.want.interval is None:
+            self.want.update({'interval': 5})
+        if self.want.time_until_up is None:
+            self.want.update({'time_until_up': 0})
+        if self.want.ip is None:
+            self.want.update({'ip': '*'})
+        if self.want.port is None:
+            self.want.update({'port': '*'})
+
+    def read_current_from_device(self):
+        resource = self.client.api.tm.ltm.monitor.tcps.tcp.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result = resource.attrs
+        return ParametersTcp(result)
+
+    def exists(self):
+        result = self.client.api.tm.ltm.monitor.tcps.tcp.exists(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        return result
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        result = self.client.api.tm.ltm.monitor.tcps.tcp.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result.modify(**params)
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        self.client.api.tm.ltm.monitor.tcps.tcp.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+
+    def remove_from_device(self):
+        result = self.client.api.tm.ltm.monitor.tcps.tcp.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        if result:
+            result.delete()
+
+
+# TODO: Remove this in 2.5 and put it its own module
+class TcpEchoManager(BaseManager):
+    def __init__(self, client):
+        self.client = client
+        self.have = None
+        self.want = ParametersEcho(self.client.module.params)
+        self.changes = ParametersEcho()
+
+    def _set_default_creation_values(self):
+        if self.want.timeout is None:
+            self.want.update({'timeout': 16})
+        if self.want.interval is None:
+            self.want.update({'interval': 5})
+        if self.want.time_until_up is None:
+            self.want.update({'time_until_up': 0})
+        if self.want.ip is None:
+            self.want.update({'ip': '*'})
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in ParametersEcho.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = ParametersEcho(changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = ParametersEcho.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                changed[k] = change
+        if changed:
+            self.changes = ParametersEcho(changed)
+            return True
+        return False
+
+    def read_current_from_device(self):
+        resource = self.client.api.tm.ltm.monitor.tcp_echos.tcp_echo.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result = resource.attrs
+        return ParametersEcho(result)
+
+    def exists(self):
+        result = self.client.api.tm.ltm.monitor.tcp_echos.tcp_echo.exists(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        return result
+
+    def update_on_device(self):
+        params = self.want.api_params()
+        result = self.client.api.tm.ltm.monitor.tcp_echos.tcp_echo.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result.modify(**params)
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        self.client.api.tm.ltm.monitor.tcp_echos.tcp_echo.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+
+    def remove_from_device(self):
+        result = self.client.api.tm.ltm.monitor.tcp_echos.tcp_echo.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        if result:
+            result.delete()
+
+
+# TODO: Remove this in 2.5 and put it its own module
+class TcpHalfOpenManager(BaseManager):
+    def __init__(self, client):
+        self.client = client
+        self.have = None
+        self.want = ParametersHalfOpen(self.client.module.params)
+        self.changes = ParametersHalfOpen()
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in ParametersHalfOpen.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = ParametersHalfOpen(changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = ParametersHalfOpen.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                changed[k] = change
+        if changed:
+            self.changes = ParametersHalfOpen(changed)
+            return True
+        return False
+
+    def _set_default_creation_values(self):
+        if self.want.timeout is None:
+            self.want.update({'timeout': 16})
+        if self.want.interval is None:
+            self.want.update({'interval': 5})
+        if self.want.time_until_up is None:
+            self.want.update({'time_until_up': 0})
+        if self.want.ip is None:
+            self.want.update({'ip': '*'})
+        if self.want.port is None:
+            self.want.update({'port': '*'})
+
+    def read_current_from_device(self):
+        resource = self.client.api.tm.ltm.monitor.tcp_half_opens.tcp_half_open.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result = resource.attrs
+        return ParametersHalfOpen(result)
+
+    def exists(self):
+        result = self.client.api.tm.ltm.monitor.tcp_half_opens.tcp_half_open.exists(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        return result
+
+    def update_on_device(self):
+        params = self.want.api_params()
+        result = self.client.api.tm.ltm.monitor.tcp_half_opens.tcp_half_open.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        result.modify(**params)
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        self.client.api.tm.ltm.monitor.tcp_half_opens.tcp_half_open.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+
+    def remove_from_device(self):
+        result = self.client.api.tm.ltm.monitor.tcp_half_opens.tcp_half_open.load(
+            name=self.want.name,
+            partition=self.want.partition
+        )
+        if result:
+            result.delete()
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        self.argument_spec = dict(
+            name=dict(required=True),
+
+            # Make this assume "tcp" in the partition specified. The user
+            # is required to specify the full path if they want to use a different
+            # partition.
+            parent=dict(),
+
+            send=dict(),
+            receive=dict(),
+            ip=dict(),
+            port=dict(type='int'),
+            interval=dict(type='int'),
+            timeout=dict(type='int'),
+            time_until_up=dict(type='int'),
+
+            # Deprecated params
+            type=dict(
+                removed_in_version='2.4',
+                choices=[
+                    'tcp', 'TTYPE_TCP', 'TTYPE_TCP_ECHO', 'TTYPE_TCP_HALF_OPEN'
+                ]
+            ),
+            parent_partition=dict(
+                removed_in_version='2.4'
+            )
+        )
+        self.f5_product_name = 'bigip'
+        self.mutually_exclusive = [
+            ['parent', 'parent_partition']
+        ]
 
 
 def main():
-    argument_spec = f5_argument_spec()
-
-    meta_args = dict(
-        name=dict(required=True),
-        type=dict(default=DEFAULT_TEMPLATE_TYPE_CHOICE, choices=TEMPLATE_TYPE_CHOICES),
-        parent=dict(default=DEFAULT_PARENT),
-        parent_partition=dict(default='Common'),
-        send=dict(required=False),
-        receive=dict(required=False),
-        ip=dict(required=False),
-        port=dict(required=False, type='int'),
-        interval=dict(required=False, type='int'),
-        timeout=dict(required=False, type='int'),
-        time_until_up=dict(required=False, type='int', default=0)
-    )
-    argument_spec.update(meta_args)
-
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
-    )
-
-    if module.params['validate_certs']:
-        import ssl
-        if not hasattr(ssl, 'SSLContext'):
-            module.fail_json(
-                msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task'
-            )
-
-    server = module.params['server']
-    server_port = module.params['server_port']
-    user = module.params['user']
-    password = module.params['password']
-    state = module.params['state']
-    partition = module.params['partition']
-    validate_certs = module.params['validate_certs']
-
-    parent_partition = module.params['parent_partition']
-    name = module.params['name']
-    type = 'TTYPE_' + module.params['type'].upper()
-    parent = fq_name(parent_partition, module.params['parent'])
-    monitor = fq_name(partition, name)
-    send = module.params['send']
-    receive = module.params['receive']
-    ip = module.params['ip']
-    port = module.params['port']
-    interval = module.params['interval']
-    timeout = module.params['timeout']
-    time_until_up = module.params['time_until_up']
-
-    # tcp monitor has multiple types, so overrule
-    global TEMPLATE_TYPE
-    TEMPLATE_TYPE = type
-
-    # end monitor specific stuff
-
-    api = bigip_api(server, user, password, validate_certs, port=server_port)
-    monitor_exists = check_monitor_exists(module, api, monitor, parent)
-
-    # ipport is a special setting
-    if monitor_exists:
-        # make sure to not update current settings if not asked
-        cur_ipport = get_ipport(api, monitor)
-        if ip is None:
-            ip = cur_ipport['ipport']['address']
-        if port is None:
-            port = cur_ipport['ipport']['port']
-    else:
-        # use API defaults if not defined to create it
-        if interval is None:
-            interval = 5
-        if timeout is None:
-            timeout = 16
-        if ip is None:
-            ip = '0.0.0.0'
-        if port is None:
-            port = 0
-        if send is None:
-            send = ''
-        if receive is None:
-            receive = ''
-
-    # define and set address type
-    if ip == '0.0.0.0' and port == 0:
-        address_type = 'ATYPE_STAR_ADDRESS_STAR_PORT'
-    elif ip == '0.0.0.0' and port != 0:
-        address_type = 'ATYPE_STAR_ADDRESS_EXPLICIT_PORT'
-    elif ip != '0.0.0.0' and port != 0:
-        address_type = 'ATYPE_EXPLICIT_ADDRESS_EXPLICIT_PORT'
-    else:
-        address_type = 'ATYPE_UNSET'
-
-    ipport = {
-        'address_type': address_type,
-        'ipport': {
-            'address': ip,
-            'port': port
-        }
-    }
-
-    template_attributes = {
-        'parent_template': parent,
-        'interval': interval,
-        'timeout': timeout,
-        'dest_ipport': ipport,
-        'is_read_only': False,
-        'is_directly_usable': True
-    }
-
-    # monitor specific stuff
-    if type == 'TTYPE_TCP':
-        template_string_properties = [
-            {
-                'type': 'STYPE_SEND',
-                'value': send
-            },
-            {
-                'type': 'STYPE_RECEIVE',
-                'value': receive
-            }
-        ]
-    else:
-        template_string_properties = []
-
-    template_integer_properties = [
-        {
-            'type': 'ITYPE_INTERVAL',
-            'value': interval
-        },
-        {
-            'type': 'ITYPE_TIMEOUT',
-            'value': timeout
-        },
-        {
-            'type': 'ITYPE_TIME_UNTIL_UP',
-            'value': time_until_up
-        }
-    ]
-
-    # main logic, monitor generic
-
     try:
-        result = {'changed': False}  # default
+        spec = ArgumentSpec()
 
-        if state == 'absent':
-            if monitor_exists:
-                if not module.check_mode:
-                    # possible race condition if same task
-                    # on other node deleted it first
-                    result['changed'] |= delete_monitor(api, monitor)
-                else:
-                    result['changed'] |= True
-        else:
-            # check for monitor itself
-            if not monitor_exists:
-                if not module.check_mode:
-                    # again, check changed status here b/c race conditions
-                    # if other task already created it
-                    result['changed'] |= create_monitor(api, monitor, template_attributes)
-                else:
-                    result['changed'] |= True
+        client = AnsibleF5Client(
+            argument_spec=spec.argument_spec,
+            supports_check_mode=spec.supports_check_mode,
+            f5_product_name=spec.f5_product_name,
+            mutually_exclusive=spec.mutually_exclusive
+        )
 
-            # check for monitor parameters
-            # whether it already existed, or was just created, now update
-            # the update functions need to check for check mode but
-            # cannot update settings if it doesn't exist which happens in check mode
-            result['changed'] |= update_monitor_properties(api, module, monitor,
-                                                           template_string_properties,
-                                                           template_integer_properties)
+        if not HAS_F5SDK:
+            raise F5ModuleError("The python f5-sdk module is required")
 
-            # we just have to update the ipport if monitor already exists and it's different
-            if monitor_exists and cur_ipport != ipport:
-                set_ipport(api, monitor, ipport)
-                result['changed'] |= True
-            # else: monitor doesn't exist (check mode) or ipport is already ok
-    except Exception as e:
-        module.fail_json(msg="received exception: %s" % e)
+        if not HAS_NETADDR:
+            raise F5ModuleError("The python netaddr module is required")
 
-    module.exit_json(**result)
+        mm = ModuleManager(client)
+        results = mm.exec_module()
+        client.module.exit_json(**results)
+    except F5ModuleError as e:
+        client.module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

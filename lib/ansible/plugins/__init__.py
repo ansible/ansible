@@ -329,13 +329,18 @@ class PluginLoader:
     __contains__ = has_plugin
 
     def _load_module_source(self, name, path):
-        if name in sys.modules:
-            # See https://github.com/ansible/ansible/issues/13110
-            return sys.modules[name]
+
+        # avoid collisions across plugins
+        full_name = '.'.join([self.package, name])
+
+        if full_name in sys.modules:
+            # Avoids double loading, See https://github.com/ansible/ansible/issues/13110
+            return sys.modules[full_name]
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             with open(path, 'rb') as module_file:
-                module = imp.load_source(name, path, module_file)
+                module = imp.load_source(full_name, path, module_file)
         return module
 
     def get(self, name, *args, **kwargs):
@@ -350,7 +355,7 @@ class PluginLoader:
             return None
 
         if path not in self._module_cache:
-            self._module_cache[path] = self._load_module_source('.'.join([self.package, name]), path)
+            self._module_cache[path] = self._load_module_source(name, path)
             found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
@@ -494,6 +499,15 @@ module_loader = PluginLoader(
 )
 
 module_utils_loader = PluginLoader(
+    '',
+    'ansible.module_utils',
+    C.DEFAULT_MODULE_UTILS_PATH,
+    'module_utils',
+)
+
+# NB: dedicated loader is currently necessary because PS module_utils expects "with subdir" lookup where
+# regular module_utils doesn't. This can be revisited once we have more granular loaders.
+ps_module_utils_loader = PluginLoader(
     '',
     'ansible.module_utils',
     C.DEFAULT_MODULE_UTILS_PATH,

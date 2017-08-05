@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # This is backwards compat.  unsafe_proxy was moved to avoid circular imports.
-from ansible.utils.unsafe_proxy import *
+from ansible.utils.unsafe_proxy import *  # pylint: disable=wildcard-import
 
 try:
     from __main__ import display

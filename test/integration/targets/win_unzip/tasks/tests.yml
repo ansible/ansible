@@ -1,0 +1,85 @@
+- name: Unarchive sysinternals archive
+  win_unzip:
+    src: C:\Windows\Temp\SysinternalsSuite.zip
+    dest: C:\Program Files\sysinternals
+  register: unzip_archive
+
+- name: Test unzip_archive
+  assert:
+    that:
+    - unzip_archive|changed == true
+    - unzip_archive.removed == false
+
+
+- name: Unarchive sysinternals archive again, use creates
+  win_unzip:
+    src: C:\Windows\Temp\SysinternalsSuite.zip
+    dest: C:\Program Files\sysinternals
+    creates: C:\Program Files\sysinternals\procexp.exe
+  register: unzip_archive_again_creates
+
+# NOTE: This module is not idempotent, it always extracts, except if we use creates !
+- name: Test unzip_archive_again_creates (normal mode)
+  assert:
+    that:
+    - unzip_archive_again_creates|changed == false
+    - unzip_archive_again_creates.removed == false
+  when: not in_check_mode
+
+- name: Test unzip_archive_again_creates (check-mode)
+  assert:
+    that:
+    - unzip_archive_again_creates|changed == true
+    - unzip_archive_again_creates.removed == false
+  when: in_check_mode
+
+
+- name: Unarchive sysinternals archive again
+  win_unzip:
+    src: C:\Windows\Temp\SysinternalsSuite.zip
+    dest: C:\Program Files\sysinternals
+    delete_archive: yes
+  register: unzip_archive_again
+
+# NOTE/ This module is not idempotent, it always extracts
+- name: Test unzip_archive_again
+  assert:
+    that:
+    - unzip_archive_again|changed == true
+    - unzip_archive_again.removed == true
+
+
+- name: Test whether archive is removed
+  win_stat:
+    path: C:\Windows\Temp\SysinternalsSuite.zip
+  register: stat_archive
+
+- name: Test stat_archive (normal mode)
+  assert:
+    that:
+    - stat_archive.stat.exists == false
+  when: not in_check_mode
+
+- name: Test stat_archive (check-mode)
+  assert:
+    that:
+    - stat_archive.stat.exists == true
+  when: in_check_mode
+
+
+- name: Test extracted files
+  win_stat:
+    path: C:\Program Files\sysinternals\procexp.exe
+  register: stat_procexp
+
+- name: Test stat_procexp (normal mode)
+  assert:
+    that:
+    - stat_procexp.stat.exists == true
+  when: not in_check_mode
+
+- name: Test stat_procexp (check-mode)
+  assert:
+    that:
+    - stat_procexp.stat.exists == false
+  when: in_check_mode

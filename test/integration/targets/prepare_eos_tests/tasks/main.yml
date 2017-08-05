@@ -1,9 +1,17 @@
- - name: enable cli on remote device
-   eos_eapi:
-     enable_http: yes
-     enable_https: yes
-     enable_local_http: yes
-     enable_socket: yes
-     provider: "{{ cli }}"
-   register: eos_eapi_output
-   connection: local
+- name: Enable Ethernet1 interface and disable switchport
+  eos_config:
+    lines:
+      - no shutdown
+      - no switchport
+    parents: int Ethernet1
+    authorize: yes
+  connection: local
+
+- name: Enable Ethernet2 interface and disable switchport
+  eos_config:
+    lines:
+      - no shutdown
+      - no switchport
+    parents: int Ethernet2
+    authorize: yes
+  connection: local

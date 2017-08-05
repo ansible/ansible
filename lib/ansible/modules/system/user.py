@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -809,7 +799,7 @@ class FreeBsdUser(User):
             cmd.append(self.login_class)
 
         if self.expires:
-            days =( time.mktime(self.expires) - time.time() ) / 86400
+            days =( time.mktime(self.expires) - time.time() ) // 86400
             cmd.append('-e')
             cmd.append(str(int(days)))
 
@@ -907,7 +897,7 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires:
-            days = ( time.mktime(self.expires) - time.time() ) / 86400
+            days = ( time.mktime(self.expires) - time.time() ) // 86400
             cmd.append('-e')
             cmd.append(str(int(days)))
 
@@ -1363,7 +1353,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
-                        fields[2] = str(int(time.time() / 86400))
+                        fields[2] = str(int(time.time() // 86400))
                         if minweeks:
                             fields[3] = str(int(minweeks) * 7)
                         if maxweeks:
@@ -1457,7 +1447,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
-                        fields[2] = str(int(time.time() / 86400))
+                        fields[2] = str(int(time.time() // 86400))
                         if minweeks:
                             fields[3] = str(int(minweeks) * 7)
                         if maxweeks:

@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Joseph Callen <jcallen () csc.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -34,7 +24,7 @@ author: "Joseph Callen (@jcpowermac)"
 notes:
     - Tested on vSphere 5.5
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - PyVmomi
 options:
     esxi_hostname:
@@ -74,11 +64,20 @@ EXAMPLES = '''
 '''
 
 try:
-    import collections
+    from collections import Counter
+    HAS_COLLECTIONS_COUNTER = True
+except ImportError:
+    HAS_COLLECTIONS_COUNTER = False
+
+try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_dvs_by_name,
+                                         find_hostsystem_by_name, vmware_argument_spec, wait_for_task)
 
 
 class VMwareDvsHost(object):
@@ -201,7 +200,7 @@ class VMwareDvsHost(object):
                 for pnicSpec in dvs_host_member.config.backing.pnicSpec:
                     pnic_device.append(pnicSpec.pnicDevice)
 
-        return collections.Counter(pnic_device) == collections.Counter(self.vmnics)
+        return Counter(pnic_device) == Counter(self.vmnics)
 
     def check_dvs_host_state(self):
         self.dv_switch = find_dvs_by_name(self.content, self.switch_name)
@@ -244,11 +243,12 @@ def main():
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
 
+    if not HAS_COLLECTIONS_COUNTER:
+        module.fail_json(msg='collections.Counter from Python-2.7 is required for this module')
+
     vmware_dvs_host = VMwareDvsHost(module)
     vmware_dvs_host.process_state()
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
