@@ -1192,11 +1192,8 @@ class CloudFrontValidationManager(object):
             self.module.fail_json(msg="Error validating common distribution parameters - " + str(e) + "\n" + traceback.format_exc())
 
     def validate_caller_reference_for_distribution(self, config, caller_reference):
-        try:
-            config['caller_reference'] = caller_reference or self.__default_datetime_string
-            return config
-        except Exception as e:
-            self.module.fail_json(msg="Error validating caller reference - " + str(e) + "\n" + traceback.format_exc())
+        config['caller_reference'] = caller_reference or self.__default_datetime_string
+        return config
 
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
         try:
