@@ -120,6 +120,7 @@ import xml.etree.ElementTree as ET
 
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import sort_json_policy_dict
@@ -132,6 +133,14 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+try:
+    # Although this is to allow Python 3 the ability to use the custom comparison as a key, Python 2.7 also
+    # uses this (and it works as expected). Python 2.6 will trigger the ImportError.
+    from functools import cmp_to_key
+    PY3_COMPARISON = True
+except ImportError:
+    PY3_COMPARISON = False
 
 
 def get_request_payment_status(bucket):
@@ -153,6 +162,82 @@ def create_tags_container(tags):
 
     tags_obj.add_tag_set(tag_set)
     return tags_obj
+
+
+def hashable_policy(policy, policy_list):
+    """
+        Takes a policy and returns a list, the contents of which are all hashable and sorted.
+        Example input policy:
+        {'Version': '2012-10-17',
+         'Statement': [{'Action': 's3:PutObjectAcl',
+                        'Sid': 'AddCannedAcl2',
+                        'Resource': 'arn:aws:s3:::test_policy/*',
+                        'Effect': 'Allow',
+                        'Principal': {'AWS': ['arn:aws:iam::XXXXXXXXXXXX:user/username1', 'arn:aws:iam::XXXXXXXXXXXX:user/username2']}
+                       }]}
+        Returned value:
+        [('Statement',  ((('Action', (u's3:PutObjectAcl',)),
+                          ('Effect', (u'Allow',)),
+                          ('Principal', ('AWS', ((u'arn:aws:iam::XXXXXXXXXXXX:user/username1',), (u'arn:aws:iam::XXXXXXXXXXXX:user/username2',)))),
+                          ('Resource', (u'arn:aws:s3:::test_policy/*',)), ('Sid', (u'AddCannedAcl2',)))),
+         ('Version', (u'2012-10-17',)))]
+
+    """
+    if isinstance(policy, list):
+        for each in policy:
+            tupleified = hashable_policy(each, [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append(tupleified)
+    elif isinstance(policy, string_types):
+        return [(to_text(policy))]
+    elif isinstance(policy, dict):
+        sorted_keys = list(policy.keys())
+        sorted_keys.sort()
+        for key in sorted_keys:
+            tupleified = hashable_policy(policy[key], [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append((key, tupleified))
+
+    # ensure we aren't returning deeply nested structures of length 1
+    if len(policy_list) == 1 and isinstance(policy_list[0], tuple):
+        policy_list = policy_list[0]
+    if isinstance(policy_list, list):
+        if PY3_COMPARISON:
+            policy_list.sort(key=cmp_to_key(py3cmp))
+        else:
+            policy_list.sort()
+    return policy_list
+
+
+def py3cmp(a, b):
+    """ Python 2 can sort lists of mixed types. Strings < tuples. Without this function this fails on Python 3."""
+    try:
+        if a > b:
+            return 1
+        elif a < b:
+            return -1
+        else:
+            return 0
+    except TypeError as e:
+        # check to see if they're tuple-string
+        # always say strings are less than tuples (to maintain compatibility with python2)
+        str_ind = to_text(e).find('str')
+        tup_ind = to_text(e).find('tuple')
+        if -1 not in (str_ind, tup_ind):
+            if str_ind < tup_ind:
+                return -1
+            elif tup_ind < str_ind:
+                return 1
+        raise
+
+
+def compare_policies(current_policy, new_policy):
+    """ Compares the existing policy and the updated policy
+        Returns True if there is a difference between policies.
+    """
+    return set(hashable_policy(new_policy, [])) != set(hashable_policy(current_policy, []))
 
 
 def _create_or_update_bucket(connection, module, location):
@@ -195,9 +280,9 @@ def _create_or_update_bucket(connection, module, location):
     requester_pays_status = get_request_payment_status(bucket)
     if requester_pays_status != requester_pays:
         if requester_pays:
-            payer='Requester'
+            payer = 'Requester'
         else:
-            payer='BucketOwner'
+            payer = 'BucketOwner'
         bucket.set_request_payment(payer=payer)
         changed = True
         requester_pays_status = get_request_payment_status(bucket)
@@ -220,9 +305,11 @@ def _create_or_update_bucket(connection, module, location):
             changed = bool(current_policy)
 
         elif sort_json_policy_dict(current_policy) != sort_json_policy_dict(policy):
+            # doesn't necessarily mean the policy has changed; syntax could differ
+            changed = compare_policies(sort_json_policy_dict(current_policy), sort_json_policy_dict(policy))
             try:
-                bucket.set_policy(json.dumps(policy))
-                changed = True
+                if changed:
+                    bucket.set_policy(json.dumps(policy))
                 current_policy = json.loads(bucket.get_policy())
             except S3ResponseError as e:
                 module.fail_json(msg=e.message)
@@ -291,7 +378,7 @@ def _destroy_bucket(connection, module):
 
 
 def _create_or_update_bucket_ceph(connection, module, location):
-    #TODO: add update
+    # TODO: add update
 
     name = module.params.get("name")
 
@@ -348,6 +435,7 @@ def is_walrus(s3_url):
         return not o.hostname.endswith('amazonaws.com')
     else:
         return False
+
 
 def main():
 
@@ -434,8 +522,8 @@ def main():
     except Exception as e:
         module.fail_json(msg='Failed to connect to S3: %s' % str(e))
 
-    if connection is None: # this should never happen
-        module.fail_json(msg ='Unknown error, failed to create s3 connection, no information from boto.')
+    if connection is None:  # this should never happen
+        module.fail_json(msg='Unknown error, failed to create s3 connection, no information from boto.')
 
     state = module.params.get("state")
 

@@ -127,7 +127,7 @@ The following tests can provide information about a path on the controller::
       when: mypath|samefile(path2)
 
     - debug: msg="path is a mount"
-      when: mypath|ismount
+      when: mypath|is_mount
 
 
 .. _test_task_results:

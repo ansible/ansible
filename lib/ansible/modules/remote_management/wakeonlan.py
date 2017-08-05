@@ -2,28 +2,17 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: wakeonlan
 version_added: '2.2'
@@ -43,7 +32,8 @@ options:
     description:
     - UDP port to use for magic Wake-on-LAN packet.
     default: 7
-author: "Dag Wieers (@dagwieers)"
+author:
+- Dag Wieers (@dagwieers)
 todo:
   - Add arping support to check whether the system is up (before and after)
   - Enable check-mode support (when we have arping support)
@@ -51,10 +41,10 @@ todo:
 notes:
   - This module sends a magic packet, without knowing whether it worked
   - Only works if the target system was properly configured for Wake-on-LAN (in the BIOS and/or the OS)
-  - Some BIOSes have a different (configurable) Wake-on-LAN boot order (i.e. PXE first) when turned off
+  - Some BIOSes have a different (configurable) Wake-on-LAN boot order (i.e. PXE first).
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
   wakeonlan:
     mac: '00:00:5E:00:53:66'
@@ -67,14 +57,15 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-RETURN='''
+RETURN = r'''
 # Default return values
 '''
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 import socket
 import struct
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def wakeonlan(module, mac, broadcast, port):
@@ -97,39 +88,41 @@ def wakeonlan(module, mac, broadcast, port):
         module.fail_json(msg="Incorrect MAC address format: %s" % mac_orig)
 
     # Create payload for magic packet
-    data = ''
+    data = b''
     padding = ''.join(['FFFFFFFFFFFF', mac * 20])
     for i in range(0, len(padding), 2):
-        data = ''.join([data, struct.pack('B', int(padding[i: i + 2], 16))])
+        data = b''.join([data, struct.pack('B', int(padding[i: i + 2], 16))])
 
     # Broadcast payload to network
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    try:
-        sock.sendto(data, (broadcast, port))
-    except socket.error:
-        e = get_exception()
-        sock.close()
-        module.fail_json(msg=str(e))
+
+    if not module.check_mode:
+
+        try:
+            sock.sendto(data, (broadcast, port))
+        except socket.error as e:
+            sock.close()
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
     sock.close()
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            mac = dict(type='str', required=True),
-            broadcast = dict(type='str', default='255.255.255.255'),
-            port = dict(type='int', default=7),
+        argument_spec=dict(
+            mac=dict(type='str', required=True),
+            broadcast=dict(type='str', default='255.255.255.255'),
+            port=dict(type='int', default=7),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     mac = module.params['mac']
     broadcast = module.params['broadcast']
     port = module.params['port']
 
-    if not module.check_mode:
-        wakeonlan(module, mac, broadcast, port)
+    wakeonlan(module, mac, broadcast, port)
 
     module.exit_json(changed=True)
 

@@ -3,21 +3,11 @@
 
 # (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
 # based on lvol module by Jeroen Hoekx <jeroen.hoekx@dsquare.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -47,6 +37,12 @@ options:
     - The size of the physical extent in megabytes. Must be a power of 2.
     default: 4
     required: false
+  pv_options:
+    description:
+    - Additional options to pass to C(pvcreate) when creating the volume group.
+    default: null
+    required: false
+    version_added: "2.4"
   vg_options:
     description:
     - Additional options to pass to C(vgcreate) when creating the volume group.
@@ -90,6 +86,10 @@ EXAMPLES = '''
     vg: vg.services
     state: absent
 '''
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def parse_vgs(data):
     vgs = []
@@ -130,6 +130,7 @@ def main():
             vg=dict(required=True),
             pvs=dict(type='list'),
             pesize=dict(type='int', default=4),
+            pv_options=dict(default=''),
             vg_options=dict(default=''),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
@@ -141,6 +142,7 @@ def main():
     state = module.params['state']
     force = module.boolean(module.params['force'])
     pesize = module.params['pesize']
+    pvoptions = module.params['pv_options'].split()
     vgoptions = module.params['vg_options'].split()
 
     dev_list = []
@@ -197,7 +199,7 @@ def main():
                 ### create PV
                 pvcreate_cmd = module.get_bin_path('pvcreate', True)
                 for current_dev in dev_list:
-                    rc,_,err = module.run_command("%s -f %s" % (pvcreate_cmd,current_dev))
+                    rc,_,err = module.run_command([pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
                     if rc == 0:
                         changed = True
                     else:
@@ -238,7 +240,7 @@ def main():
                     ### create PV
                     pvcreate_cmd = module.get_bin_path('pvcreate', True)
                     for current_dev in devs_to_add:
-                        rc,_,err = module.run_command("%s -f %s" % (pvcreate_cmd, current_dev))
+                        rc,_,err = module.run_command([pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
                         if rc == 0:
                             changed = True
                         else:
@@ -263,8 +265,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

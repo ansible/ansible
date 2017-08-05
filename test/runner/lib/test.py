@@ -4,14 +4,14 @@ from __future__ import absolute_import, print_function
 
 import datetime
 import json
+import os
 
 from lib.util import (
     display,
-    EnvironmentConfig,
 )
 
-from lib.metadata import (
-    Metadata,
+from lib.config import (
+    TestConfig,
 )
 
 
@@ -53,38 +53,6 @@ def calculate_confidence(path, line, metadata):
 
     # changes were made to the same file and the line number is different
     return 50
-
-
-class TestConfig(EnvironmentConfig):
-    """Configuration common to all test commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(TestConfig, self).__init__(args, command)
-
-        self.coverage = args.coverage  # type: bool
-        self.coverage_label = args.coverage_label  # type: str
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
-
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: list [str]
-
-        self.lint = args.lint if 'lint' in args else False  # type: bool
-        self.junit = args.junit if 'junit' in args else False  # type: bool
-        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
-
-        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
 
 
 class TestResult(object):
@@ -293,6 +261,7 @@ class TestFailure(TestResult):
         """
         message = self.format_title()
         output = self.format_block()
+        docs = self.find_docs()
 
         if self.messages:
             verified = all((m.confidence or 0) >= 50 for m in self.messages)
@@ -301,6 +270,7 @@ class TestFailure(TestResult):
 
         bot_data = dict(
             verified=verified,
+            docs=docs,
             results=[
                 dict(
                     message=message,
@@ -339,6 +309,25 @@ class TestFailure(TestResult):
             command += ' --python %s' % self.python_version
 
         return command
+
+    def find_docs(self):
+        """
+        :rtype: str
+        """
+        testing_docs_url = 'https://docs.ansible.com/ansible/devel/dev_guide/testing'
+        testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
+
+        url = '%s/%s/' % (testing_docs_url, self.command)
+        path = os.path.join(testing_docs_dir, self.command)
+
+        if self.test:
+            url += '%s.html' % self.test
+            path = os.path.join(path, '%s.rst' % self.test)
+
+        if os.path.exists(path):
+            return url
+
+        return None
 
     def format_title(self):
         """

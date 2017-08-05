@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -280,18 +270,11 @@ record:
             sample: sample.com
 '''
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
 
 
@@ -342,9 +325,8 @@ class CloudflareAPI(object):
         if payload:
             try:
                 data = json.dumps(payload)
-            except Exception:
-                e = get_exception()
-                self.module.fail_json(msg="Failed to encode payload as JSON: %s " % str(e))
+            except Exception as e:
+                self.module.fail_json(msg="Failed to encode payload as JSON: %s " % to_native(e))
 
         resp, info = fetch_url(self.module,
                                self.cf_api_endpoint + api_call,
@@ -596,13 +578,17 @@ class CloudflareAPI(object):
             if (type == 'CNAME') and (cur_record['content'] != new_record['content']):
                 do_update = True
             if do_update:
-                if not self.module.check_mode:
+                if self.module.check_mode:
+                    result = new_record
+                else:
                     result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(zone_id,records[0]['id']),'PUT',new_record)
                 self.changed = True
                 return result,self.changed
             else:
                 return records,self.changed
-        if not self.module.check_mode:
+        if self.module.check_mode:
+            result = new_record
+        else:
             result, info = self._cf_api_call('/zones/{0}/dns_records'.format(zone_id),'POST',new_record)
         self.changed = True
         return result,self.changed

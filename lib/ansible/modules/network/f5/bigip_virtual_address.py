@@ -196,8 +196,6 @@ try:
 except ImportError:
     HAS_NETADDR = False
 
-from ansible.module_utils.basic import BOOLEANS_TRUE
-from ansible.module_utils.basic import BOOLEANS_FALSE
 from ansible.module_utils.f5_utils import (
     AnsibleF5Client,
     AnsibleF5Parameters,
@@ -205,6 +203,7 @@ from ansible.module_utils.f5_utils import (
     F5ModuleError,
     iControlUnexpectedHTTPError
 )
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 
 class Parameters(AnsibleF5Parameters):

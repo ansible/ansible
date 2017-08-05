@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -100,23 +89,25 @@ EXAMPLES = """
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
   type: string
   sample: >
-            <interfaces>
-                <interface>
-                    <name>ge-0/0/0</name>
-                    <description>test interface</description>
-                </interface>
-            </interfaces>
+          [edit system]
+          +  host-name test;
+          +  domain-name ansible.com;
+          +  domain-search redhat.com;
+          [edit system name-server]
+              172.26.1.1 { ... }
+          +   8.8.8.8;
 """
 import collections
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -178,21 +169,22 @@ def main():
 
     validate_param_values(module, param_to_xpath_map)
 
-    want = list()
-    want.append(map_params_to_obj(module, param_to_xpath_map))
+    want = map_params_to_obj(module, param_to_xpath_map)
     ele = map_obj_to_ele(module, want, top)
 
-    kwargs = {'commit': not module.check_mode}
-    kwargs['action'] = 'replace'
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, action='replace')
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
-        })
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

@@ -36,6 +36,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
         convert_data_p = kwargs.get('convert_data', True)
+        lookup_template_vars = kwargs.get('template_vars', {})
         ret = []
 
         for term in terms:
@@ -62,13 +63,18 @@ class LookupModule(LookupBase):
                         searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
                     self._templar.environment.loader.searchpath = searchpath
 
-                    # add ansible 'template' vars
-                    temp_vars = variables.copy()
-                    temp_vars.update(generate_ansible_template_vars(lookupfile))
-                    self._templar.set_available_variables(temp_vars)
+                    # The template will have access to all existing variables,
+                    # plus some added by ansible (e.g., template_{path,mtime}),
+                    # plus anything passed to the lookup with the template_vars=
+                    # argument.
+                    vars = variables.copy()
+                    vars.update(generate_ansible_template_vars(lookupfile))
+                    vars.update(lookup_template_vars)
+                    self._templar.set_available_variables(vars)
 
                     # do the templating
-                    res = self._templar.template(template_data, preserve_trailing_newlines=True, convert_data=convert_data_p)
+                    res = self._templar.template(template_data, preserve_trailing_newlines=True,
+                                                 convert_data=convert_data_p, escape_backslashes=False)
                     ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)

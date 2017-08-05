@@ -234,7 +234,6 @@ pod:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
     CS_HYPERVISORS
@@ -273,7 +272,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             'name': self.module.params.get('pod'),
             'zoneid': self.get_zone(key='id'),
         }
-        pods = self.cs.listPods(**args)
+        pods = self.query_api('listPods', **args)
         if pods:
             return self._get_by_key(key, pods['pod'][0])
         self.module.fail_json(msg="Pod %s not found in zone %s" % (self.module.params.get('pod'), self.get_zone(key='name')))
@@ -285,13 +284,13 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             uuid = self.module.params.get('id')
             if uuid:
                 args['id'] = uuid
-                clusters = self.cs.listClusters(**args)
+                clusters = self.query_api('listClusters', **args)
                 if clusters:
                     self.cluster = clusters['cluster'][0]
                     return self.cluster
 
             args['name'] = self.module.params.get('name')
-            clusters = self.cs.listClusters(**args)
+            clusters = self.query_api('listClusters', **args)
             if clusters:
                 self.cluster = clusters['cluster'][0]
                 # fix different return from API then request argument given
@@ -335,9 +334,8 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
         cluster = None
         if not self.module.check_mode:
-            res = self.cs.addCluster(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('addCluster', **args)
+
             # API returns a list as result CLOUDSTACK-9205
             if isinstance(res['cluster'], list):
                 cluster = res['cluster'][0]
@@ -355,10 +353,9 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.updateCluster(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateCluster', **args)
                 cluster = res['cluster']
+
         return cluster
 
     def absent_cluster(self):
@@ -369,10 +366,10 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             args = {
                 'id': cluster['id'],
             }
+
             if not self.module.check_mode:
-                res = self.cs.deleteCluster(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deleteCluster', **args)
+
         return cluster
 
 
@@ -406,19 +403,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_cluster = AnsibleCloudStackCluster(module)
+    acs_cluster = AnsibleCloudStackCluster(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            cluster = acs_cluster.absent_cluster()
-        else:
-            cluster = acs_cluster.present_cluster()
+    state = module.params.get('state')
+    if state in ['absent']:
+        cluster = acs_cluster.absent_cluster()
+    else:
+        cluster = acs_cluster.present_cluster()
 
-        result = acs_cluster.get_result(cluster)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_cluster.get_result(cluster)
 
     module.exit_json(**result)
 

@@ -240,7 +240,7 @@ class Cli:
             self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
         if replace:
-            self.exec_command('rollback clean-config', check_rc=True)
+            self.exec_command('rollback clean-config')
 
         rc, out, err = self.send_config(commands)
         if rc != 0:

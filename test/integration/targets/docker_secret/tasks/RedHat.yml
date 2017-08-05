@@ -1,0 +1,32 @@
+# The RHEL extras repository must be enabled to provide the container-selinux package.
+# See: https://docs.docker.com/engine/installation/linux/docker-ee/rhel/#install-using-the-repository
+
+- name: Install Docker pre-reqs
+  yum:
+    name: "{{ item }}"
+    state: present
+  items:
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+    - libseccomp
+
+- name: Enable extras repository for RHEL on AWS
+  command: yum-config-manager --enable rhui-REGION-rhel-server-extras
+
+- name: Add repository
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Update cache
+  command: yum -y makecache fast
+
+- name: Install docker
+  yum:
+    name: docker-ce
+    state: present
+
+- name: Make sure the docker daemon is running (failure expected inside docker container)
+  service:
+    name: docker
+    state: started
+  ignore_errors: yes

@@ -108,7 +108,7 @@
       - "result.changed == false"
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
-      - "result.session_name is not defined"
+      - "'session_name' not in result.commands"
 
 
 # FIXME add in tests for everything defined in docs

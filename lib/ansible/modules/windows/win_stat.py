@@ -173,6 +173,11 @@ stat:
             returned: success, path exists
             type: boolean
             sample: True
+        isreg:
+            description: if the path is a regular file
+            returned: success, path exists
+            type: boolean
+            sample: True
         isshared:
             description: if the path is shared or not
             returned: success, path exists

@@ -464,7 +464,7 @@ def main():
             func_kwargs.update({'Environment': {'Variables': environment_variables}})
 
         if dead_letter_arn:
-            func_kwargs.update({'DeadLetterConfig': {'TargetARN': dead_letter_arn}})
+            func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:

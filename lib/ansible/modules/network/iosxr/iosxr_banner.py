@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -87,6 +76,8 @@ commands:
     - string
 """
 
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.iosxr import get_config, load_config
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
@@ -97,12 +88,13 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' or (state == 'absent' and
-                             'text' in have.keys() and have['text']):
-        commands.append('no banner %s' % module.params['banner'])
+    if state == 'absent':
+        if have.get('state') != 'absent' and ('text' in have.keys() and have['text']):
+            commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
-        if want['text'] and (want['text'] != have.get('text')):
+        if (want['text'] and
+                want['text'].encode().decode('unicode_escape').strip("'") != have.get('text')):
             banner_cmd = 'banner %s ' % module.params['banner']
             banner_cmd += want['text'].strip()
             commands.append(banner_cmd)
@@ -113,9 +105,17 @@ def map_obj_to_commands(updates, module):
 def map_config_to_obj(module):
     flags = 'banner %s' % module.params['banner']
     output = get_config(module, flags=[flags])
+
+    match = re.search(r'banner (\S+) (.*)', output, re.DOTALL)
+    if match:
+        text = match.group(2).strip("'")
+    else:
+        text = None
+
     obj = {'banner': module.params['banner'], 'state': 'absent'}
+
     if output:
-        obj['text'] = output
+        obj['text'] = text
         obj['state'] = 'present'
 
     return obj
@@ -124,7 +124,7 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
-        text = str(text).strip()
+        text = "%r" % (str(text).strip())
 
     return {
         'banner': module.params['banner'],
@@ -168,6 +168,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

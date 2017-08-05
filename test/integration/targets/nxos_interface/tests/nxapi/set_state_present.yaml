@@ -12,6 +12,7 @@
     interface: Loopback1
     state: present
     provider: "{{ nxapi }}"
+  register: result
 
 - assert:
     that:
@@ -22,6 +23,7 @@
     interface: Loopback1
     state: present
     provider: "{{ nxapi }}"
+  register: result
 
 - assert:
     that:

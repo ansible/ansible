@@ -326,7 +326,6 @@ network_offering:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -363,7 +362,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             'zoneid': self.get_zone(key='id')
         }
 
-        network_offerings = self.cs.listNetworkOfferings(**args)
+        network_offerings = self.query_api('listNetworkOfferings', **args)
         if network_offerings:
             for no in network_offerings['networkoffering']:
                 if network_offering in [no['name'], no['displaytext'], no['id']]:
@@ -388,7 +387,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id')
             }
-            networks = self.cs.listNetworks(**args)
+            networks = self.query_api('listNetworks', **args)
             if networks:
                 for n in networks['network']:
                     if network in [n['name'], n['displaytext'], n['id']]:
@@ -411,10 +410,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         if self.has_changed(args, network):
             self.result['changed'] = True
             if not self.module.check_mode:
-                network = self.cs.updateNetwork(**args)
-
-                if 'errortext' in network:
-                    self.module.fail_json(msg="Failed: '%s'" % network['errortext'])
+                network = self.query_api('updateNetwork', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if network and poll_async:
@@ -446,10 +442,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         })
 
         if not self.module.check_mode:
-            res = self.cs.createNetwork(**args)
-
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createNetwork', **args)
 
             network = res['network']
         return network
@@ -470,10 +463,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             }
 
             if not self.module.check_mode:
-                network = self.cs.restartNetwork(**args)
-
-                if 'errortext' in network:
-                    self.module.fail_json(msg="Failed: '%s'" % network['errortext'])
+                network = self.query_api('restartNetwork', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if network and poll_async:
@@ -490,14 +480,11 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             }
 
             if not self.module.check_mode:
-                res = self.cs.deleteNetwork(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteNetwork', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    res = self.poll_job(res, 'network')
+                    self.poll_job(res, 'network')
             return network
 
 
@@ -539,24 +526,19 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_network = AnsibleCloudStackNetwork(module)
+    acs_network = AnsibleCloudStackNetwork(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            network = acs_network.absent_network()
+    state = module.params.get('state')
+    if state in ['absent']:
+        network = acs_network.absent_network()
 
-        elif state in ['restarted']:
-            network = acs_network.restart_network()
+    elif state in ['restarted']:
+        network = acs_network.restart_network()
 
-        else:
-            network = acs_network.present_network()
+    else:
+        network = acs_network.present_network()
 
-        result = acs_network.get_result(network)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_network.get_result(network)
     module.exit_json(**result)
 
 

@@ -4,20 +4,11 @@
 # (c) 2016, Peter Sagerson <psagers@ignorare.net>
 # (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -193,8 +184,7 @@ modlist:
   sample: '[[2, "olcRootDN", ["cn=root,dc=example,dc=com"]]]'
 """
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+import traceback
 
 try:
     import ldap
@@ -203,6 +193,9 @@ try:
     HAS_LDAP = True
 except ImportError:
     HAS_LDAP = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class LdapAttr(object):
@@ -251,11 +244,10 @@ class LdapAttr(object):
         try:
             results = self.connection.search_s(
                 self.dn, ldap.SCOPE_BASE, attrlist=[self.name])
-        except ldap.LDAPError:
-            e = get_exception()
+        except ldap.LDAPError as e:
             self.module.fail_json(
                 msg="Cannot search for attribute %s" % self.name,
-                details=str(e))
+                details=to_native(e))
 
         current = results[0][1].get(self.name, [])
         modlist = []
@@ -293,19 +285,17 @@ class LdapAttr(object):
         if self.start_tls:
             try:
                 connection.start_tls_s()
-            except ldap.LDAPError:
-                e = get_exception()
-                self.module.fail_json(msg="Cannot start TLS.", details=str(e))
+            except ldap.LDAPError as e:
+                self.module.fail_json(msg="Cannot start TLS.", details=to_native(e))
 
         try:
             if self.bind_dn is not None:
                 connection.simple_bind_s(self.bind_dn, self.bind_pw)
             else:
                 connection.sasl_interactive_bind_s('', ldap.sasl.external())
-        except ldap.LDAPError:
-            e = get_exception()
+        except ldap.LDAPError as e:
             self.module.fail_json(
-                msg="Cannot bind to the server.", details=str(e))
+                msg="Cannot bind to the server.", details=to_native(e))
 
         return connection
 
@@ -360,10 +350,9 @@ def main():
         if not module.check_mode:
             try:
                 ldap.connection.modify_s(ldap.dn, modlist)
-            except Exception:
-                e = get_exception()
-                module.fail_json(
-                    msg="Attribute action failed.", details=str(e))
+            except Exception as e:
+                module.fail_json(msg="Attribute action failed.", details=to_native(e),
+                                 exception=traceback.format_exc())
 
     module.exit_json(changed=changed, modlist=modlist)
 

@@ -4,6 +4,8 @@ Python 3 Support
 
 Ansible 2.2 features a tech preview of Python 3 support. This topic discusses how you can test to make sure your modules and playbooks work with Python 3.
 
+.. note:: Ansible supports Python version 3.5 and above only.
+
 
 .. note:: Technology preview features provide early access to upcoming product innovations, 
    enabling you to test functionality and provide feedback during the development process.

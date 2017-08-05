@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Ryan Scott Brown <ryansb@redhat.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -38,6 +27,11 @@ options:
       - Goal state of given stage/project
     required: false
     default: present
+  serverless_bin_path:
+    description:
+      - The path of a serverless framework binary relative to the 'service_path' eg. node_module/.bin/serverless
+    required: false
+    version_added: "2.4"
   service_path:
     description:
       - The path to the root of the Serverless Service to be operated on.
@@ -94,6 +88,13 @@ EXAMPLES = """
     region: us-east-1
     stack_name: '{{ sls.service_name }}'
     stack_resources: true
+
+# Deploy a project but use a locally installed serverless binary instead of the global serverless binary
+- serverless:
+    stage: dev
+    region: us-east-1
+    service_path: '{{ project_dir }}'
+    serverless_bin_path: node_modules/.bin/serverless
 """
 
 RETURN = """
@@ -113,10 +114,11 @@ command:
   sample: serverless deploy --stage production
 """
 
-
 import os
 import traceback
 import yaml
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def read_serverless_config(module):
@@ -153,6 +155,7 @@ def main():
             region       = dict(default='', required=False),
             stage        = dict(default='', required=False),
             deploy       = dict(default=True, type='bool', required=False),
+            serverless_bin_path = dict(required=False, type='path')
         ),
     )
 
@@ -162,8 +165,13 @@ def main():
     region = module.params.get('region')
     stage = module.params.get('stage')
     deploy = module.params.get('deploy', True)
+    serverless_bin_path = module.params.get('serverless_bin_path')
 
-    command = "serverless "
+    if serverless_bin_path is not None:
+        command = serverless_bin_path + " "
+    else:
+        command = "serverless "
+
     if state == 'present':
         command += 'deploy '
     elif state == 'absent':
@@ -190,8 +198,6 @@ def main():
     module.exit_json(changed=True, state='present', out=out, command=command,
             service_name=get_service_name(module, stage))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

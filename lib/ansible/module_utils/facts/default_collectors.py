@@ -123,7 +123,7 @@ collectors = [ApparmorFactCollector,
               OpenBSDVirtualCollector,
               NetBSDVirtualCollector,
               SunOSVirtualCollector,
-              HPUXVirtualCollector]
+              HPUXVirtualCollector,
 
-external_collectors = [FacterFactCollector,
-                       OhaiFactCollector]
+              FacterFactCollector,
+              OhaiFactCollector]

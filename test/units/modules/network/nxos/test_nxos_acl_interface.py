@@ -48,8 +48,7 @@ class TestNxosAclInterfaceModule(TestNxosModule):
 
             for item in commands:
                 try:
-                    obj = json.loads(item)
-                    command = obj['command']
+                    command = item['command']
                 except ValueError:
                     command = item
                 filename = '%s.txt' % str(command).split(' | ')[0].replace(' ', '_')

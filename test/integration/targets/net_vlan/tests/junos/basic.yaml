@@ -58,3 +58,54 @@
     that:
       - "result.changed == true"
       - "'<name>test-vlan</name>' not in config.xml"
+
+- name: Setup vlan configuration for aggregate
+  net_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, state: absent }
+      - { vlan_id: 160, name: test_vlan_2, state: absent }
+    provider: "{{ netconf }}"
+
+- name: Create vlan configuration using aggregate
+  net_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1, state: present }
+      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2, state: present }
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared | search("\+ *test_vlan_1")
+      - result.diff.prepared | search("\+ *vlan-id 159")
+      - result.diff.prepared | search("\+ *test_vlan_2")
+      - result.diff.prepared | search("\+ *vlan-id 160")
+
+- name: Delete vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, state: absent }
+      - { vlan_id: 160, name: test_vlan_2, state: absent }
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared | search("\- *test_vlan_1")
+      - result.diff.prepared | search("\- *vlan-id 159")
+      - result.diff.prepared | search("\- *test_vlan_2")
+      - result.diff.prepared | search("\- *vlan-id 160")
+
+- name: Delete vlan configuration using aggregate (idempotent)
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, state: absent }
+      - { vlan_id: 160, name: test_vlan_2, state: absent }
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

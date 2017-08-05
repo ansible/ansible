@@ -35,8 +35,8 @@ description:
     base set of facts from the device and can enable or disable
     collection of additional facts.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 options:
   gather_subset:
     description:
@@ -52,17 +52,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
-
----
 - nxos_facts:
     gather_subset: all
 
@@ -233,6 +222,7 @@ class Default(FactsBase):
         if data:
             self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
+
 class Config(FactsBase):
 
     def populate(self):
@@ -243,7 +233,6 @@ class Config(FactsBase):
 class Hardware(FactsBase):
 
     def populate(self):
-        cmd = {'command': 'dir', 'output': 'text'},
         data = self.run('dir', 'text')
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
@@ -321,8 +310,7 @@ class Interfaces(FactsBase):
             if data.startswith('ERROR'):
                 return dict()
 
-            lines = data.split('\n')
-            regex = re.compile('(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
+            regex = re.compile(r'(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
 
             for item in data.split('\n')[4:-1]:
                 match = regex.match(item)
@@ -357,6 +345,7 @@ class Interfaces(FactsBase):
             intf = self.facts['interfaces'][name]
             intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
             self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
+
 
 class Legacy(FactsBase):
     # facts from nxos_facts 2.1
@@ -456,6 +445,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     spec = dict(

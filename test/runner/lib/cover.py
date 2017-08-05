@@ -13,9 +13,13 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    EnvironmentConfig,
     run_command,
     common_environment,
+)
+
+from lib.config import (
+    CoverageConfig,
+    CoverageReportConfig,
 )
 
 from lib.executor import (
@@ -137,7 +141,7 @@ def command_coverage_combine(args):
 
 def command_coverage_report(args):
     """
-    :type args: CoverageConfig
+    :type args: CoverageReportConfig
     """
     output_files = command_coverage_combine(args)
 
@@ -145,9 +149,14 @@ def command_coverage_report(args):
         if args.group_by or args.stub:
             display.info('>>> Coverage Group: %s' % ' '.join(os.path.basename(output_file).split('=')[1:]))
 
+        options = []
+
+        if args.show_missing:
+            options.append('--show-missing')
+
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'report'])
+        run_command(args, env=env, cmd=['coverage', 'report'] + options)
 
 
 def command_coverage_html(args):
@@ -239,16 +248,3 @@ def get_coverage_group(args, coverage_file):
             group += '=%s' % names[part]
 
     return group
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool

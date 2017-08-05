@@ -18,8 +18,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.constants import mk_boolean as boolean
 from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
 
@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
                 val = self._task.args.get(opt, None)
                 if val is not None:
                     if not isinstance(val, bool):
-                        stats[opt] = boolean(self._templar.template(val))
+                        stats[opt] = boolean(self._templar.template(val), strict=False)
                     else:
                         stats[opt] = val
 

@@ -150,19 +150,21 @@ failed_conditions:
 
 
 import time
+import traceback
 
-from ansible.module_utils.ce import run_commands
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ce import ce_argument_spec, check_args
+from ansible.module_utils.ce import run_commands
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.ce import ce_argument_spec, check_args
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 def to_lines(stdout):
     lines = list()
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         lines.append(item)
     return lines
@@ -223,9 +225,8 @@ def main():
 
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except AttributeError as exc:
+        module.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
     retries = module.params['retries']
     interval = module.params['interval']

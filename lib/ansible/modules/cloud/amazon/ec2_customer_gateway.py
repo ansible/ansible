@@ -47,6 +47,12 @@ options:
     description:
       - Name of the customer gateway.
     required: true
+  routing:
+    description:
+      - The type of routing.
+    choices: ['static', 'dynamic']
+    default: dynamic
+    version_added: '2.4'
   state:
     description:
       - Create or terminate the Customer Gateway.
@@ -129,7 +135,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
-        ec2_argument_spec, get_aws_connection_info)
+                                      ec2_argument_spec, get_aws_connection_info)
 
 
 class Ec2CustomerGatewayManager:
@@ -153,6 +159,8 @@ class Ec2CustomerGatewayManager:
         return response
 
     def ensure_cgw_present(self, bgp_asn, ip_address):
+        if not bgp_asn:
+            bgp_asn = 65000
         response = self.ec2.create_customer_gateway(
             DryRun=False,
             Type='ipsec.1',
@@ -204,6 +212,7 @@ def main():
             bgp_asn=dict(required=False, type='int'),
             ip_address=dict(required=True),
             name=dict(required=True),
+            routing=dict(default='dynamic', choices=['dynamic', 'static']),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
@@ -211,7 +220,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            required_if=[
-                               ('state', 'present', ['bgp_asn'])
+                               ('routing', 'dynamic', ['bgp_asn'])
                            ]
                            )
 
@@ -226,22 +235,20 @@ def main():
     name = module.params.get('name')
 
     existing = gw_mgr.describe_gateways(module.params['ip_address'])
-    # describe_gateways returns a key of CustomerGateways where as create_gateway returns a
-    # key of CustomerGateway. For consistency, change it here
-    existing['CustomerGateway'] = existing['CustomerGateways']
 
     results = dict(changed=False)
     if module.params['state'] == 'present':
-        if existing['CustomerGateway']:
+        if existing['CustomerGateways']:
+            existing['CustomerGateway'] = existing['CustomerGateways'][0]
             results['gateway'] = existing
-            if existing['CustomerGateway'][0]['Tags']:
-                tag_array = existing['CustomerGateway'][0]['Tags']
+            if existing['CustomerGateway']['Tags']:
+                tag_array = existing['CustomerGateway']['Tags']
                 for key, value in enumerate(tag_array):
                     if value['Key'] == 'Name':
                         current_name = value['Value']
                         if current_name != name:
                             results['name'] = gw_mgr.tag_cgw_name(
-                                results['gateway']['CustomerGateway'][0]['CustomerGatewayId'],
+                                results['gateway']['CustomerGateway']['CustomerGatewayId'],
                                 module.params['name'],
                             )
                             results['changed'] = True
@@ -258,11 +265,12 @@ def main():
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
-        if existing['CustomerGateway']:
+        if existing['CustomerGateways']:
+            existing['CustomerGateway'] = existing['CustomerGateways'][0]
             results['gateway'] = existing
             if not module.check_mode:
                 results['gateway'] = gw_mgr.ensure_cgw_absent(
-                    existing['CustomerGateway'][0]['CustomerGatewayId']
+                    existing['CustomerGateway']['CustomerGatewayId']
                 )
             results['changed'] = True
 

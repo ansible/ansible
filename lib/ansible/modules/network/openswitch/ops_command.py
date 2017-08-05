@@ -1,20 +1,11 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -133,12 +124,15 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+import traceback
+
 import ansible.module_utils.openswitch
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+
 
 VALID_KEYS = ['command', 'prompt', 'response']
 
@@ -193,7 +187,6 @@ def main():
             try:
                 runner.add_command(**cmd)
             except AddCommandError:
-                exc = get_exception()
                 warnings.append('duplicate command detected: %s' % cmd)
 
     for item in conditionals:
@@ -205,12 +198,11 @@ def main():
 
     try:
         runner.run()
-    except FailedConditionsError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except FailedConditionsError as e:
+        module.fail_json(msg=to_native(e), failed_conditions=e.failed_conditions,
+                         exception=traceback.format_exc())
+    except NetworkError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     result = dict(changed=False, stdout=list())
 
