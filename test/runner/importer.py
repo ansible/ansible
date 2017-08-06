@@ -29,22 +29,22 @@ def main():
             for result in results:
                 if result[0].startswith(base_dir):
                     source = result[0][len(base_dir) + 1:].replace('test/runner/import/', '')
-                    line = result[1]
+                    line = result[1] or 0
                     break
 
             if not source:
                 # If none of our source files are found in the traceback, report the file we were testing.
                 # I haven't been able to come up with a test case that encounters this issue yet.
                 source = path
-                message += ' (in %s:%d)' % (results[-1][0], results[-1][1])
+                message += ' (in %s:%d)' % (results[-1][0], results[-1][1] or 0)
             elif isinstance(ex, SyntaxError):
                 if ex.filename.endswith(path):  # pylint: disable=locally-disabled, no-member
                     # A SyntaxError in the source we're importing will have the correct path, line and offset.
                     # However, the traceback will report the path to this importer.py script instead.
                     # We'll use the details from the SyntaxError in this case, as it's more accurate.
                     source = path
-                    line = ex.lineno  # pylint: disable=locally-disabled, no-member
-                    offset = ex.offset  # pylint: disable=locally-disabled, no-member
+                    line = ex.lineno or 0  # pylint: disable=locally-disabled, no-member
+                    offset = ex.offset or 0  # pylint: disable=locally-disabled, no-member
                     message = str(ex)
 
                     # Hack to remove the filename and line number from the message, if present.
