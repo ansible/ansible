@@ -134,4 +134,14 @@
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted
 
+- name: Check if extension are supported
+  # extension supported since PostgreSQL 9.1
+  shell: echo "select pg_available_extensions();" | psql -d postgres
+  register: extension_supported
+  ignore_errors: True
+
+- set_fact:
+    pg_extension_supported: '{{ extension_supported|success }}'
+
 - import_tasks: create_dummy_extension.yml
+  when: pg_extension_supported

@@ -798,6 +798,7 @@
       state: absent
       name: "{{ db_name }}"
       login_user: "{{ pg_user }}"
+  when: pg_extension_supported
 
 #
 # Cleanup
