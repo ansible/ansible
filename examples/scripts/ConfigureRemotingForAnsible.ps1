@@ -171,12 +171,12 @@ If (!(Get-Service "WinRM"))
 }
 ElseIf ((Get-Service "WinRM").Status -ne "Running")
 {
-    Write-Verbose "Starting WinRM service."
-    Start-Service -Name "WinRM" -ErrorAction Stop
-    Write-Log "Started WinRM service."
     Write-Verbose "Setting WinRM service to start automatically on boot."
     Set-Service -Name "WinRM" -StartupType Automatic
     Write-Log "Set WinRM service to start automatically on boot."
+    Write-Verbose "Starting WinRM service."
+    Start-Service -Name "WinRM" -ErrorAction Stop
+    Write-Log "Started WinRM service."
 
 }
 
