@@ -39,6 +39,17 @@
       - "result.stdout_lines[-1] == '(1 row)'"
       - "ext_version|default(ext_default_version) in result.stdout"
 
+- name: Check that the function defined by extension is available
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "select dummy_display_ext_version();" | psql -d "{{ db_name }}" -t -c "select dummy_display_ext_version();"
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "result.stdout_lines[-2].strip() == ext_version|default(ext_default_version)"
+
 - name: Disable extension
   become_user: "{{ pg_user }}"
   become: True
