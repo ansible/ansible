@@ -533,7 +533,7 @@ def get_image_by_id(module, connection, image_id):
         images = connection.describe_images(ImageIds=[image_id]).get('Images')
         no_images = len(images)
         if no_images == 0:
-            return []
+            return {}
         if no_images == 1:
             return images[0]
         module.fail_json(msg="Invalid number of instances (%s) found for image_id: %s" % (str(len(images)), image_id))
