@@ -178,7 +178,30 @@ EXAMPLES = r'''
     children: []
 '''
 
-RETURN = r'''# '''
+RETURN = r'''
+actions:
+    description: A dictionary with the original xpath, namespaces and state.
+    type: dict
+    returned: success
+    sample: {xpath: xpath, namespaces: [namespace1, namespace2], state=present}
+count:
+    description: The count of xpath matches.
+    type: int
+    returned: when parameter 'count' is set
+    sample: 2
+matches:
+    description: The xpath matches found.
+    type: list
+    returned: when parameter 'print_match' is set
+msg:
+    description: A message related to the performed action(s).
+    type: string
+    returned: always
+xmlstring:
+    description: An XML string of the resulting output.
+    type: string
+    returned: when parameter 'xmlstring' is set
+'''
 
 import os
 import re
