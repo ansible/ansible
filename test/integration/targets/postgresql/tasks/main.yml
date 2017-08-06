@@ -785,6 +785,7 @@
     vars:
       ext_name: dummy
       ext_version: '{{ item }}'
+      ext_default_version: '1.0'
     with_items:
       - null
       - '1.0'
