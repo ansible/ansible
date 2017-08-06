@@ -92,7 +92,9 @@ def read_hosts(url, authkey):
 
 
 def main():
-    settings = {i[0]: i[1] for i in read_settings()}
+    settings = {}
+    for i in read_settings():
+        settings[i[0]] = i[1]
     options = read_args()
 
     if options.host:
