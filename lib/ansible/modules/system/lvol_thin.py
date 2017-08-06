@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
     'status': ['preview'],
@@ -144,7 +146,6 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 __metaclass__ = type
-from __future__ import (absolute_import, division, print_function)
 import re
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
