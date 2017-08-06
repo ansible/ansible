@@ -77,7 +77,14 @@ Function Chocolatey-Install-Upgrade
             Fail-Json $result "Chocolatey bootstrap installation failed."
         }
         $result.changed = $true
-        $script:executable = "C:\ProgramData\chocolatey\bin\choco.exe"
+        if (Test-Path "Env:\ChocolateyInstall")
+        {
+            $script:executable = "{0}\bin\choco.exe" -f (Get-ChildItem "Env:\ChocolateyInstall").Value
+        }
+        else
+        {
+            $script:executable = "C:\ProgramData\chocolatey\bin\choco.exe"
+        }
         Add-Warning $result 'Chocolatey was missing from this system, so it was installed during this task run.'
 
     }
