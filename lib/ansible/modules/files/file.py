@@ -141,25 +141,30 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
+
+
 def add_delimiter_to_path(dir):
         if dir[-1] != '/':
-                dir=dir+'/'
+                dir += '/'
         return dir
+
+
 def list_files_in_directory(fileName):
-        files_list=[]
+        files_list = []
         try:
-                files_list=os.listdir(fileName)
+                files_list = os.listdir(fileName)
         except Exception:
                 print ("Couldn't open directory" + fileName)
         for file in files_list:
-                path=fileName+file
+                path = fileName+file
                 if os.path.isdir(path):
                         list_files_in_directory(add_delimiter_to_path(path))
                 else:
                         try:
-                                os.system("shred -u " + path )
+                                os.system("shred -u " + path)
                         except Exception:
                                 print ("Couldn't remove " + path)
+
 
 def get_state(b_path):
     ''' Find out current state '''
@@ -205,7 +210,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent', 'absent_secure' ], default=None),
+            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent', 'absent_secure'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
