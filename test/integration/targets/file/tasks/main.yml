@@ -15,6 +15,44 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- name: setup create test file
+  file: path=/tmp/file  state=touch
+- name: remove single file with absent_secure option
+  file: path=/tmp/file  state=absent_secure
+  register: absent_secure_result
+- name: check result
+  assert:
+    that:
+     - "absent_secure_result.state=='absent'"
+- name: setup test direrectory
+  file: path=/tmp/tempdir  state=directory
+- name: setup create temp file1
+  file: path=/tmp/tempdir/file1  state=touch
+- name: setup create subfolder
+  file: path=/tmp/tempdir/subfolder  state=directory
+- name: setup create file in subfolder
+  file: path=/tmp/tempdir/subfolder/file2  state=touch
+
+- name: get information about file in subfolder
+  shell: ls -R /tmp/tempdir
+  register: output
+- name: check that file is exists
+  assert:
+    that:
+     - "'file1' in  output.stdout_lines"
+     - "'file2' in  output.stdout_lines"
+- name: test remove all files in folder using absent_secure option
+  file: path=/tmp/tempdir  state=absent_secure
+  register: absent_secure_folder_deletion
+
+- name: get information about file in subfolder
+  shell: ls -R /tmp/tempdir
+  register: output
+- name: check that file is removed
+  assert:
+    that:
+    - "'file1' not in output.stdout_lines"
+    - "'file2' not in output.stdout_lines"
 
 - set_fact: output_file={{output_dir}}/foo.txt
 

@@ -134,6 +134,29 @@ from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
 
 
+def add_delimiter_to_path(dir):
+        if dir[-1] != '/':
+                dir += '/'
+        return dir
+
+
+def list_files_in_directory(fileName):
+        files_list = []
+        try:
+                files_list = os.listdir(fileName)
+        except Exception:
+                print ("Couldn't open directory" + fileName)
+        for file in files_list:
+                path = fileName+file
+                if os.path.isdir(path):
+                        list_files_in_directory(add_delimiter_to_path(path))
+                else:
+                        try:
+                                os.system("shred -u " + path)
+                        except Exception:
+                                print ("Couldn't remove " + path)
+
+
 def get_state(b_path):
     ''' Find out current state '''
 
@@ -178,7 +201,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
+            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent', 'absent_secure'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
@@ -267,7 +290,6 @@ def main():
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
         state_change = True
-
     if state == 'absent':
         if state_change:
             if not module.check_mode:
@@ -437,7 +459,17 @@ def main():
 
         changed = module.set_fs_attributes_if_different(file_args, changed, diff)
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
-
+    if state == 'absent_secure':
+        if os.path.isfile(b_path):
+            os.system("shred -u " + b_path)
+        else:
+            list_files_in_directory(add_delimiter_to_path(b_path))
+        module.exit_json(dest=path, changed=True, diff=diff)
+    elif state == 'absent':
+        try:
+            os.system("shred -u " + b_path)
+        except Exception:
+            print ("Couldn't remove")
     elif state == 'touch':
         if not module.check_mode:
 
