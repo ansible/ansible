@@ -459,17 +459,14 @@ def deregister_image(module, connection):
 
     # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable.
     snapshots = []
-    if hasattr(image, 'BlockDeviceMappings'):
-        for key in image.block_device_mapping:
-            snapshots.append(image.block_device_mapping[key].snapshot_id)
+    if 'BlockDeviceMappings' in image:
+        for mapping in image.get('BlockDeviceMappings'):
+            snapshots.append(mapping.get('SnapshotId'))
 
     # When trying to re-deregister an already deregistered image it doesn't raise an exception, it just returns an object without image attributes.
-    if hasattr(image, 'ImageId'):
+    if 'ImageId' in image:
         try:
-            params = {
-                'ImageId': image_id,
-                'DeleteSnapshot': delete_snapshot
-            }
+            params = {'ImageId': image_id}
             res = connection.deregister_image(**params)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error deregistering image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -533,7 +530,13 @@ def update_image(module, connection, image_id):
 
 def get_image_by_id(module, connection, image_id):
     try:
-        return connection.describe_images(ImageIds=[image_id]).get('Images')
+        images = connection.describe_images(ImageIds=[image_id]).get('Images')
+        no_images = len(images)
+        if no_images == 0:
+            return []
+        if no_images == 1:
+            return images[0]
+        module.fail_json(msg="Invalid number of instances (%s) found for image_id: %s" % (str(len(images)), image_id))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Error retreiving image by image_id - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -574,7 +577,7 @@ def main():
 
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):
-            module.fail_json(msg="The parameter image_id is required to deregister and AMI."")
+            module.fail_json(msg="The parameter image_id is required to deregister an AMI.")
         deregister_image(module, connection)
     elif module.params.get('state') == 'present':
         if module.params.get('image_id') and module.params.get('launch_permissions'):
