@@ -5,3 +5,6 @@ postgresql_packages:
 
 pg_hba_location: "/var/lib/pgsql/data/pg_hba.conf"
 pg_dir: "/var/lib/pgsql/data"
+# pg_extension_dir not set here because path contains PostgreSQL version which
+# is not the same for all RedHat based distributions (pg_ver is used only for
+# tasks run on Debian based distributions).
