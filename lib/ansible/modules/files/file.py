@@ -144,26 +144,26 @@ from ansible.module_utils._text import to_bytes, to_native
 
 
 def add_delimiter_to_path(dir):
-        if dir[-1] != '/':
-                dir += '/'
-        return dir
+    if dir[-1] != '/':
+        dir += '/'
+    return dir
 
 
 def list_files_in_directory(fileName):
-        files_list = []
-        try:
-                files_list = os.listdir(fileName)
-        except Exception:
-                print ("Couldn't open directory" + fileName)
-        for file in files_list:
-                path = fileName+file
-                if os.path.isdir(path):
-                        list_files_in_directory(add_delimiter_to_path(path))
-                else:
-                        try:
-                                os.system("shred -u " + path)
-                        except Exception:
-                                print ("Couldn't remove " + path)
+    files_list = []
+    try:
+        files_list = os.listdir(fileName)
+    except Exception:
+        print ("Couldn't open directory" + fileName)
+    for file in files_list:
+        path = fileName + file
+        if os.path.isdir(path):
+            list_files_in_directory(add_delimiter_to_path(path))
+        else:
+            try:
+                os.system("shred -u " + path)
+            except Exception:
+                print ("Couldn't remove " + path)
 
 
 def get_state(b_path):
@@ -190,19 +190,26 @@ def recursive_set_attributes(module, b_path, follow, file_args):
             b_fsname = os.path.join(b_root, b_fsobj)
             if not os.path.islink(b_fsname):
                 tmp_file_args = file_args.copy()
-                tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                tmp_file_args['path'] = to_native(
+                    b_fsname, errors='surrogate_or_strict')
+                changed |= module.set_fs_attributes_if_different(
+                    tmp_file_args, changed)
             else:
                 tmp_file_args = file_args.copy()
-                tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                tmp_file_args['path'] = to_native(
+                    b_fsname, errors='surrogate_or_strict')
+                changed |= module.set_fs_attributes_if_different(
+                    tmp_file_args, changed)
                 if follow:
                     b_fsname = os.path.join(b_root, os.readlink(b_fsname))
                     if os.path.isdir(b_fsname):
-                        changed |= recursive_set_attributes(module, b_fsname, follow, file_args)
+                        changed |= recursive_set_attributes(
+                            module, b_fsname, follow, file_args)
                     tmp_file_args = file_args.copy()
-                    tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                    tmp_file_args['path'] = to_native(
+                        b_fsname, errors='surrogate_or_strict')
+                    changed |= module.set_fs_attributes_if_different(
+                        tmp_file_args, changed)
     return changed
 
 
@@ -210,13 +217,17 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent', 'absent_secure'], default=None),
+            state=dict(choices=['file', 'directory', 'link', 'hard',
+                                'touch', 'absent', 'absent_secure'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
-            original_basename=dict(required=False),  # Internal use only, for recursive ops
+            # Internal use only, for recursive ops
+            original_basename=dict(required=False),
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
-            diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
-            validate=dict(required=False, default=None),  # Internal use only, for template and copy
+            # Internal use only, for internal checks in the action plugins
+            diff_peek=dict(default=None),
+            # Internal use only, for template and copy
+            validate=dict(required=False, default=None),
             src=dict(required=False, default=None, type='path'),
         ),
         add_file_common_args=True,
@@ -247,7 +258,8 @@ def main():
                 appears_binary = True
         except:
             pass
-        module.exit_json(path=path, changed=False, appears_binary=appears_binary)
+        module.exit_json(path=path, changed=False,
+                         appears_binary=appears_binary)
 
     prev_state = get_state(b_path)
 
@@ -270,7 +282,8 @@ def main():
                 src = to_native(os.path.realpath(b_path), errors='strict')
                 b_src = to_bytes(os.path.realpath(b_path), errors='strict')
             else:
-                module.fail_json(msg='src and dest are required for creating links')
+                module.fail_json(
+                    msg='src and dest are required for creating links')
 
     # original_basename is used by other modules that depend on file.
     if state not in ("link", "absent") and os.path.isdir(b_path):
@@ -285,7 +298,8 @@ def main():
 
     # make sure the target path is a directory when we're doing a recursive operation
     if recurse and state != 'directory':
-        module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
+        module.fail_json(
+            path=path, msg="recurse option requires state to be 'directory'")
 
     file_args = module.load_file_common_arguments(params)
 
@@ -313,7 +327,8 @@ def main():
                         os.unlink(b_path)
                     except Exception:
                         e = get_exception()
-                        module.fail_json(path=path, msg="unlinking failed: %s " % str(e))
+                        module.fail_json(
+                            path=path, msg="unlinking failed: %s " % str(e))
             module.exit_json(path=path, changed=True, diff=diff)
         else:
             module.exit_json(path=path, changed=False)
@@ -330,9 +345,11 @@ def main():
 
         if prev_state not in ('file', 'hard'):
             # file is not absent and any other state is a conflict
-            module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
+            module.fail_json(
+                path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
-        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        changed = module.set_fs_attributes_if_different(
+            file_args, changed, diff)
         module.exit_json(path=path, changed=changed, diff=diff)
 
     elif state == 'directory':
@@ -369,19 +386,24 @@ def main():
                                 raise
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path'] = curpath
-                        changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff)
+                        changed = module.set_fs_attributes_if_different(
+                            tmp_file_args, changed, diff)
             except Exception:
                 e = get_exception()
-                module.fail_json(path=path, msg='There was an issue creating %s as requested: %s' % (curpath, str(e)))
+                module.fail_json(
+                    path=path, msg='There was an issue creating %s as requested: %s' % (curpath, str(e)))
 
         # We already know prev_state is not 'absent', therefore it exists in some form.
         elif prev_state != 'directory':
-            module.fail_json(path=path, msg='%s already exists as a %s' % (path, prev_state))
+            module.fail_json(
+                path=path, msg='%s already exists as a %s' % (path, prev_state))
 
-        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        changed = module.set_fs_attributes_if_different(
+            file_args, changed, diff)
 
         if recurse:
-            changed |= recursive_set_attributes(module, to_bytes(file_args['path'], errors='surrogate_or_strict'), follow, file_args)
+            changed |= recursive_set_attributes(module, to_bytes(
+                file_args['path'], errors='surrogate_or_strict'), follow, file_args)
 
         module.exit_json(path=path, changed=changed, diff=diff)
 
@@ -396,19 +418,23 @@ def main():
         absrc = os.path.join(relpath, src)
         b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
         if not force and not os.path.exists(b_absrc):
-            module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
+            module.fail_json(
+                path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
 
         if state == 'hard':
             if not os.path.isabs(b_src):
                 module.fail_json(msg="absolute paths are required")
         elif prev_state == 'directory':
             if not force:
-                module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
+                module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (
+                    prev_state, state, path))
             elif len(os.listdir(b_path)) > 0:
                 # refuse to replace a directory that has files in it
-                module.fail_json(path=path, msg='the directory %s is not empty, refusing to convert it' % path)
+                module.fail_json(
+                    path=path, msg='the directory %s is not empty, refusing to convert it' % path)
         elif prev_state in ('file', 'hard') and not force:
-            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
+            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (
+                prev_state, state, path))
 
         if prev_state == 'absent':
             changed = True
@@ -422,19 +448,23 @@ def main():
             if not (state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino):
                 changed = True
                 if not force:
-                    module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
+                    module.fail_json(
+                        dest=path, src=src, msg='Cannot link, different hard link exists at destination')
         elif prev_state in ('file', 'directory'):
             changed = True
             if not force:
-                module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
+                module.fail_json(
+                    dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
         else:
-            module.fail_json(dest=path, src=src, msg='unexpected position reached')
+            module.fail_json(dest=path, src=src,
+                             msg='unexpected position reached')
 
         if changed and not module.check_mode:
             if prev_state != 'absent':
                 # try to replace atomically
                 b_tmppath = to_bytes(os.path.sep).join(
-                    [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
+                    [os.path.dirname(b_path), to_bytes(
+                        ".%s.%s.tmp" % (os.getpid(), time.time()))]
                 )
                 try:
                     if prev_state == 'directory' and (state == 'hard' or state == 'link'):
@@ -448,7 +478,8 @@ def main():
                     e = get_exception()
                     if os.path.exists(b_tmppath):
                         os.unlink(b_tmppath)
-                    module.fail_json(path=path, msg='Error while replacing: %s' % to_native(e, nonstring='simplerepr'))
+                    module.fail_json(path=path, msg='Error while replacing: %s' % to_native(
+                        e, nonstring='simplerepr'))
             else:
                 try:
                     if state == 'hard':
@@ -457,12 +488,14 @@ def main():
                         os.symlink(b_src, b_path)
                 except OSError:
                     e = get_exception()
-                    module.fail_json(path=path, msg='Error while linking: %s' % to_native(e, nonstring='simplerepr'))
+                    module.fail_json(path=path, msg='Error while linking: %s' % to_native(
+                        e, nonstring='simplerepr'))
 
         if module.check_mode and not os.path.exists(b_path):
             module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
-        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        changed = module.set_fs_attributes_if_different(
+            file_args, changed, diff)
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
     if state == 'absent_secure':
         if os.path.isfile(b_path):
@@ -483,15 +516,18 @@ def main():
                     open(b_path, 'wb').close()
                 except OSError:
                     e = get_exception()
-                    module.fail_json(path=path, msg='Error, could not touch target: %s' % to_native(e, nonstring='simplerepr'))
+                    module.fail_json(path=path, msg='Error, could not touch target: %s' % to_native(
+                        e, nonstring='simplerepr'))
             elif prev_state in ('file', 'directory', 'hard'):
                 try:
                     os.utime(b_path, None)
                 except OSError:
                     e = get_exception()
-                    module.fail_json(path=path, msg='Error while touching existing target: %s' % to_native(e, nonstring='simplerepr'))
+                    module.fail_json(path=path, msg='Error while touching existing target: %s' % to_native(
+                        e, nonstring='simplerepr'))
             else:
-                module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
+                module.fail_json(
+                    msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
             try:
                 module.set_fs_attributes_if_different(file_args, True, diff)
             except SystemExit:
@@ -507,6 +543,7 @@ def main():
         module.exit_json(dest=path, changed=True, diff=diff)
 
     module.fail_json(path=path, msg='unexpected position reached')
+
 
 if __name__ == '__main__':
     main()
