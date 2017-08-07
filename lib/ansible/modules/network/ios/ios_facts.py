@@ -315,7 +315,11 @@ class Interfaces(FactsBase):
 
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
-            self.facts['interfaces'][key]['ipv6'] = list()
+            try:
+                self.facts['interfaces'][key]['ipv6'] = list()
+            except KeyError:
+                self.facts['interfaces'][key] = dict()
+                self.facts['interfaces'][key]['ipv6'] = list()
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             subnets = re.findall(r', subnet is (.+)$', value, re.M)
             for addr, subnet in zip(addresses, subnets):
