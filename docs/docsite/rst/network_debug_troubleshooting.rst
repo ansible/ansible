@@ -36,7 +36,7 @@ Errors generally fall into one of the following categories:
   * Not using ``connection: local``
 
 
-.. warning: ``unable to open shell`
+.. warning:: ``unable to open shell``
 
   The ``unable to open shell`` message is new in Ansible 2.3, it means that the ``ansible-connection`` daemon has not been able to successfully
   talk to the remote network device. This generally means that there is an authentication issue. See the "Authentication and connection issues" section
@@ -437,39 +437,38 @@ Add `authorize: yes` to the task. For example:
 
 .. delete_to not honoured
    ----------------------
-   
+
    FIXME Do we get an error message
-   
+
    FIXME Link to howto
-   
-   
-   
-   
+
+
+
+
    fixmes
    ======
-   
+
    Error: "number of connection attempts exceeded, unable to connect to control socket"
    ------------------------------------------------------------------------------------
-   
+
    **Platforms:** Any
-   
+
    This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
-   
-   
+
+
    This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
-   
+
    .. code-block:: yaml
-   
+
      less $ANSIBLE_LOG_PATH
      2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
      2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
      2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
-   
+
    Suggestions to resolve:
-   
+
    Do stuff For example:
-   
+
    .. code-block:: yaml
-   
+
    	Example stuff
-   
