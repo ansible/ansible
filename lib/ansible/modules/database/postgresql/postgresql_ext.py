@@ -142,7 +142,7 @@ def ext_exists(cursor, ext, ver=None):
 
 def ext_delete(cursor, ext):
     if ext_exists(cursor, ext):
-        query = "DROP EXTENSION %(ext)s"
+        query = "DROP EXTENSION {ext}"
         params = {}
         query = prepare_ext_query(cursor, query, params, ext)
         cursor.execute(query, params)
