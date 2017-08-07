@@ -122,7 +122,7 @@ def main():
     password = module.params['password']
 
     # initialize connection
-    client = xmlrpc_client(saturl)
+    client = xmlrpc_client.Server(saturl)
     session = client.auth.login(user, password)
 
     # get systemid
