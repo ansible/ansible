@@ -39,7 +39,7 @@
 - assert:
     that:
       - "result.stdout_lines[-1] == '(1 row)'"
-      - "ext_version|default(ext_default_version) in result.stdout"
+      - "ext_version|default(ext_default_version, boolean=True) in result.stdout"
 
 - name: Check that the function defined by extension is available
   become_user: "{{ pg_user }}"
@@ -49,7 +49,7 @@
 
 - assert:
     that:
-      - "result.stdout.strip() == ext_version|default(ext_default_version)"
+      - "result.stdout.strip() == ext_version|default(ext_default_version, boolean=True)"
 
 - name: Disable extension
   become_user: "{{ pg_user }}"
