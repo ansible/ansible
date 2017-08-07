@@ -378,7 +378,11 @@ def stack_operation(cfn, stack_name, operation):
         try:
             stack = get_stack_facts(cfn, stack_name)
             existed.append('yes')
-        except:
+        except Exception as ex:
+            if is_throttling_exception(ex):
+                # If the api is throttling, wait and try again
+                time.sleep(5)
+                continue
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
             if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
@@ -420,6 +424,17 @@ def stack_operation(cfn, stack_name, operation):
 @AWSRetry.backoff(tries=3, delay=5)
 def describe_stacks(cfn, stack_name):
     return cfn.describe_stacks(StackName=stack_name)
+
+def is_throttling_exception(ex):
+  if not isinstance(ex, botocore.exceptions.ClientError):
+    return False
+  if 'Error' not in ex.response:
+    return False
+  if 'Code' not in ex.response['Error']:
+    return False
+  if ex.response['Error']['Code'] == 'Throttling':
+    return True
+  return False
 
 def get_stack_facts(cfn, stack_name):
     try:
