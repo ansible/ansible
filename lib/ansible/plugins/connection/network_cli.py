@@ -204,7 +204,7 @@ class Connection(Rpc, _Connection):
         """Removes elements from the response before returning to the caller"""
         cleaned = []
         for line in resp.splitlines():
-            if (command and line.startswith(command.strip())) or self._matched_prompt.strip() in line:
+            if (command and line.strip() == command.strip()) or self._matched_prompt.strip() in line:
                 continue
             cleaned.append(line)
         return b'\n'.join(cleaned).strip()
