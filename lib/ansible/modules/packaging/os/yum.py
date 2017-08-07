@@ -294,24 +294,23 @@ def ensure_yum_utils(module):
 
 def fetch_rpm_from_url(spec, module=None):
     # download package so that we can query it
-    tempdir = tempfile.mkdtemp()
-    package = os.path.join(tempdir, str(spec.rsplit('/', 1)[1]))
+    package_name, _ = os.path.splitext(str(spec.rsplit('/', 1)[1]))
+    package_file = tempfile.NamedTemporaryFile(prefix=package_name, suffix='.rpm', delete=False)
+    module.add_cleanup_file(package_file.name)
     try:
         rsp, info = fetch_url(module, spec)
         if not rsp:
             module.fail_json(msg="Failure downloading %s, %s" % (spec, info['msg']))
-        f = open(package, 'w')
         data = rsp.read(BUFSIZE)
         while data:
-            f.write(data)
+            package_file.write(data)
             data = rsp.read(BUFSIZE)
-        f.close()
+        package_file.close()
     except Exception:
         e = get_exception()
-        shutil.rmtree(tempdir)
         if module:
             module.fail_json(msg="Failure downloading %s, %s" % (spec, e))
-    return package
+    return package_file.name
 
 def po_to_nevra(po):
 
@@ -481,13 +480,6 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None,
         en_repos = []
     if dis_repos is None:
         dis_repos = []
-
-    if req_spec.endswith('.rpm') and '://' not in req_spec:
-        return req_spec
-
-    elif '://' in req_spec:
-        local_path = fetch_rpm_from_url(req_spec, module=module)
-        return local_path
 
     if not repoq:
 
@@ -659,7 +651,6 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
     res['msg'] = ''
     res['rc'] = 0
     res['changed'] = False
-    tempdir = tempfile.mkdtemp()
 
     for spec in items:
         pkg = None
@@ -758,13 +749,6 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
         cmd = yum_basecmd + ['install'] + pkgs
 
         if module.check_mode:
-            # Remove rpms downloaded for EL5 via url
-            try:
-                shutil.rmtree(tempdir)
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
-
             module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
 
         changed = True
@@ -797,13 +781,6 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
         # Record change
         res['changed'] = changed
-
-    # Remove rpms downloaded for EL5 via url
-    try:
-        shutil.rmtree(tempdir)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
 
     return res
 
