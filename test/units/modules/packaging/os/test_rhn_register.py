@@ -4,32 +4,10 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import PropertyMock, patch, mock_open
 from ansible.module_utils import basic
 from ansible.module_utils.six.moves import xmlrpc_client
-from ansible.module_utils._text import to_bytes
 from ansible.modules.packaging.os import rhn_register
 
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-
-class AnsibleExitJson(Exception):
-    pass
-
-
-class AnsibleFailJson(Exception):
-    pass
-
-
-def exit_json(*args, **kwargs):
-    if 'changed' not in kwargs:
-        kwargs['changed'] = False
-    raise AnsibleExitJson(kwargs)
-
-
-def fail_json(*args, **kwargs):
-    kwargs['failed'] = True
-    raise AnsibleFailJson(kwargs)
+from .rhn_utils import (set_module_args, AnsibleExitJson, AnsibleFailJson,
+                        exit_json, fail_json, get_method_name, mock_request)
 
 
 SYSTEMID = """<?xml version="1.0"?>
@@ -56,25 +34,6 @@ def skipWhenAllModulesMissing(modules):
             continue
 
     return unittest.skip("{0}: none are available".format(', '.join(modules)))
-
-
-def get_method_name(request_body):
-    return xmlrpc_client.loads(request_body)[1]
-
-
-def mock_request(responses):
-    def transport_request(host, handler, request_body, verbose=0):
-        """Fake request"""
-        method_name = get_method_name(request_body)
-        excepted_name, response = responses.pop(0)
-        if method_name == excepted_name:
-            if isinstance(response, Exception):
-                raise response
-            else:
-                return response
-
-    target = 'ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request'
-    return patch(target, side_effect=transport_request)
 
 
 class TestRhnRegister(unittest.TestCase):
@@ -164,7 +123,7 @@ class TestRhnRegister(unittest.TestCase):
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
             with patch.object(rhn_register.Rhn, 'systemid', PropertyMock(return_value=12345)):
-                with mock_request(responses):
+                with mock_request(responses, self.module.__name__):
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['changed'])
@@ -196,7 +155,7 @@ class TestRhnRegister(unittest.TestCase):
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
             with patch.object(rhn_register.Rhn, 'systemid', PropertyMock(return_value=12345)):
-                with mock_request(responses):
+                with mock_request(responses, self.module.__name__):
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['changed'])
@@ -220,7 +179,7 @@ class TestRhnRegister(unittest.TestCase):
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             with patch.object(rhn_register.Rhn, 'is_registered', PropertyMock(return_value=True)) as mock_systemid:
-                with mock_request(responses) as req:
+                with mock_request(responses, self.module.__name__) as req:
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertFalse(result.exception.args[0]['changed'])
@@ -254,7 +213,7 @@ class TestRhnRegister(unittest.TestCase):
             mock_is_registered = PropertyMock(return_value=True)
             mock_systemid = PropertyMock(return_value=12345)
             with patch.multiple(rhn_register.Rhn, systemid=mock_systemid, is_registered=mock_is_registered):
-                with mock_request(responses):
+                with mock_request(responses, self.module.__name__):
                     with self.assertRaises(AnsibleExitJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['changed'])
@@ -313,7 +272,7 @@ class TestRhnRegister(unittest.TestCase):
             mock_is_registered = PropertyMock(return_value=True)
             mock_systemid = PropertyMock(return_value=12345)
             with patch.multiple(rhn_register.Rhn, systemid=mock_systemid, is_registered=mock_is_registered):
-                with mock_request(responses):
+                with mock_request(responses, self.module.__name__):
                     with self.assertRaises(AnsibleFailJson) as result:
                         self.module.main()
                     self.assertTrue(result.exception.args[0]['failed'])
