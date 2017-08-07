@@ -250,8 +250,8 @@ def configure_member_params(module, requests, item):
 
             validate_param_values(module, member_to_xpath_map, item)
 
-            want = map_params_to_obj(module, member_to_xpath_map, item)
-            ele = map_obj_to_ele(module, want, top, item)
+            want = map_params_to_obj(module, member_to_xpath_map, param=item)
+            ele = map_obj_to_ele(module, want, top, param=item)
             requests.append(ele)
 
 
@@ -339,6 +339,9 @@ def main():
             else:
                 discard_changes(module)
             result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 
