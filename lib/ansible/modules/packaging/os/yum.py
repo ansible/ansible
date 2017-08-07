@@ -952,6 +952,35 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
                 pkgs['update'].append(spec)
                 will_update.add(spec)
                 continue
+
+            # check if pkgspec is installed (if possible for idempotence)
+            # localpkg
+            elif spec.endswith('.rpm') and '://' not in spec:
+                if not os.path.exists(spec):
+                    res['msg'] += "No RPM file matching '%s' found on system" % spec
+                    res['results'].append("No RPM file matching '%s' found on system" % spec)
+                    res['rc'] = 127 # Ensure the task fails in with-loop
+                    module.fail_json(**res)
+
+                # get the pkg name-v-r.arch
+                nvra = local_nvra(module, spec)
+
+                # local rpm files can't be updated
+                if not is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                    pkgs['install'].append(spec)
+                continue
+
+            # URL
+            elif '://' in spec:
+                # download package so that we can check if it's already installed
+                package = fetch_rpm_from_url(spec, module=module)
+                nvra = local_nvra(module, package)
+
+                # local rpm files can't be updated
+                if not is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                    pkgs['install'].append(package)
+                continue
+
             # dep/pkgname  - find it
             else:
                 if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
