@@ -92,10 +92,8 @@ class RpmKey(object):
 
         self.gpg = self.module.get_bin_path('gpg')
         if not self.gpg:
-            self.gpg = self.module.get_bin_path('gpg2')
-        if not self.gpg:
-            self.module.fail_json(msg="rpm_key requires a command line gpg or gpg2, none found")
-
+            self.gpg = self.module.get_bin_path('gpg2',required=True)
+        
         if '://' in key:
             keyfile = self.fetch_key(key)
             keyid = self.getkeyid(keyfile)
