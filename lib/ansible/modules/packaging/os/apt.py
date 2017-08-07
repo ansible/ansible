@@ -49,6 +49,7 @@ options:
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
+        As of Ansible 2.4, this implicitly sets I(update_cache) if set.
     required: false
     default: 0
   purge:
@@ -926,7 +927,7 @@ def main():
         # Cache valid time is default 0, which will update the cache if
         #  needed and `update_cache` was set to true
         updated_cache = False
-        if p['update_cache']:
+        if p['update_cache'] or p['cache_valid_time']:
             now = datetime.datetime.now()
             tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
             if not mtimestamp + tdelta >= now:
