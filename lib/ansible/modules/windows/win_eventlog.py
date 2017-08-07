@@ -83,7 +83,6 @@ options:
     description:
       - The minimum number of days event entries must remain in the log.
       - This option is only used when C(overflow_action) is C(OverwriteOlder).
-    type: int
 author:
     - Andrew Saraceni (@andrewsaraceni)
 '''
