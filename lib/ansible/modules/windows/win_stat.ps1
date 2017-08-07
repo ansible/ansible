@@ -117,6 +117,8 @@ If (Test-Path -Path $path)
     $result.stat.isarchive = $attributes -contains "Archive"
     $result.stat.ishidden = $attributes -contains "Hidden"
     $result.stat.isreadonly = $attributes -contains "ReadOnly"
+    $result.stat.issystem = $attributes -contains "System"
+    $result.stat.isnormal = $attributes -contains "Normal"
 
     If ($info)
     {

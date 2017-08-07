@@ -25,6 +25,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "absent","directory","file","touch"
+$attributes = Get-AnsibleParam -obj $params -name "attributes" -type "str"
 
 $result = @{
     changed = $false
@@ -77,10 +78,69 @@ function Remove-Directory($directory) {
     Remove-Item -Path $directory.FullName -Force -Recurse
 }
 
+function Set-FileAttributes($file, $options, $checkmode){
+
+    $CurrentAttributes = Get-ChildItem -Path $file -Force;
+    $normalizedOptions = $options.Replace("+",$null);
+    $fBucket = ([regex]::Matches($normalizedOptions, "\-"))
+    $fBucket | ForEach-Object{
+        $AttributesOff = $AttributesOff + $normalizedOptions[($_.Index)+1] | Out-String -Stream
+    }
+    if($normalizedOptions[0] -eq "-"){$normalizedOptions = "q"+$normalizedOptions}
+    if($normalizedOptions[$normalizedOptions.Length-2] -eq "-"){$normalizedOptions = $normalizedOptions+"q"}
+    $AttributesOn = $normalizedOptions.Replace("-",$null)
+
+    for($i=0; $i -le $AttributesOn.Length; $i++){
+        if(($AttributesOff -gt 0) -and [int]$AttributesOn.IndexOf($AttributesOff[$i]) -gt 0){
+            $AttributesOn = $AttributesOn.Remove([int]$AttributesOn.IndexOf($AttributesOff[$i]),1)
+        }
+    }
+    if(-not $checkmode -and $AttributesOn -match "n"){
+        $CurrentAttributes.Attributes = "Normal"
+        Return (Get-ChildItem -Path $file -Force).Attributes;
+    }
+    if(-not $checkmode){
+        if($AttributesOn -match "a" -and $CurrentAttributes.Attributes -notmatch "Archive"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::Archive)
+        }elseif($AttributesOff -match "a" -and $CurrentAttributes.Attributes -match "Archive"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::Archive)
+        };
+        if($AttributesOn -match "r" -and $CurrentAttributes.Attributes -notmatch "ReadOnly"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::ReadOnly)
+        }elseif($AttributesOff -match "r" -and $CurrentAttributes.Attributes -match "ReadOnly"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::ReadOnly)
+        };
+        if($AttributesOn -match "s" -and $CurrentAttributes.Attributes -notmatch "System"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::System)
+        }elseif($AttributesOff -match "s" -and $CurrentAttributes.Attributes -match "System"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::System)
+        };
+        if($AttributesOn -match "h" -and $CurrentAttributes.Attributes -notmatch "Hidden"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::Hidden)
+        }elseif($AttributesOff -match "h" -and $CurrentAttributes.Attributes -match "Hidden"){
+            $CurrentAttributes.Attributes = $CurrentAttributes.Attributes -bxor ([System.IO.FileAttributes]::Hidden)
+        };
+        Return (Get-ChildItem -Path $file -Force).Attributes;
+    };
+}
+
+if(($attributes -ne $null) -and (Test-Path $path)){
+    $NewAttributes = Set-FileAttributes -file $path -options $attributes -checkmode $check_mode;
+    if ($check_mode -eq $true) {$result.changed = $false}else{$result.changed = $true};
+    $result.msg = $NewAttributes;
+}
 
 if ($state -eq "touch") {
     if (Test-Path -Path $path) {
-        (Get-ChildItem -Path $path).LastWriteTime = Get-Date
+        try {
+        (Get-ChildItem -Path $path -Force).LastWriteTime = Get-Date
+        } catch {
+            if ((Get-ChildItem -Path $path -Force).IsReadOnly) {
+                Fail-Json $result "file $path is in a read only state"
+            } else {
+                Fail-Json $result "file $path is in a bad state"
+            }
+        }
     } else {
         Write-Output $null | Out-File -FilePath $path -Encoding ASCII -WhatIf:$check_mode
         $result.changed = $true
@@ -88,7 +148,7 @@ if ($state -eq "touch") {
 }
 
 if (Test-Path $path) {
-    $fileinfo = Get-Item -Path $path
+    $fileinfo = Get-Item -Path $path -Force
     if ($state -eq "absent") {
         Remove-File -File $fileinfo -CheckMode $check_mode
         $result.changed = $true
@@ -120,7 +180,7 @@ if (Test-Path $path) {
             New-Item -Path $path -ItemType Directory -WhatIf:$check_mode | Out-Null
         } catch {
             if ($_.CategoryInfo.Category -eq "ResourceExists") {
-                $fileinfo = Get-Item $_.CategoryInfo.TargetName
+                $fileinfo = Get-Item $_.CategoryInfo.TargetName -Force
                 if ($state -eq "directory" -and -not $fileinfo.PsIsContainer) {
                     Fail-Json $result "path $path is not a directory"
                 }
