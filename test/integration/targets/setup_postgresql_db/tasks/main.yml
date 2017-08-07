@@ -137,6 +137,8 @@
 - name: Check if extension are supported
   # extension supported since PostgreSQL 9.1
   shell: echo "select pg_available_extensions();" | psql -d postgres
+  become_user: "{{ pg_user }}"
+  become: True
   register: extension_supported
   ignore_errors: True
 
