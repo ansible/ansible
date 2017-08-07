@@ -579,7 +579,7 @@ def main():
                 'type': 'str'
             }
         },
-        required_if = [
+        required_if=[
             ['state', 'present', ['number']],
             ['state', 'absent', ['number']],
         ],
