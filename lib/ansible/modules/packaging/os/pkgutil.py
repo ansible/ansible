@@ -32,7 +32,10 @@ options:
   name:
     description:
       - Package name, e.g. (C(CSWnrpe))
+      - When using state=latest, this can be '*', which updates all installed packages managed by pkgutil.
+      - Multiple packages can be specified using a comma as a separator.
     required: true
+    aliases: [ 'pkg' ]
   site:
     description:
       - Specifies the repository path to install the package from.
@@ -40,18 +43,24 @@ options:
     required: false
   state:
     description:
-      - Whether to install (C(present)), or remove (C(absent)) a package.
-      - The upgrade (C(latest)) operation will update/install the package to the latest version available.
-      - "Note: The module has a limitation that (C(latest)) only works for one package, not lists of them."
+      - Whether to install (C(present)), or remove (C(absent)) packages.
+      - The upgrade (C(latest)) operation will update/install the packages to the latest version available.
     required: true
     choices: ["present", "absent", "latest"]
   update_catalog:
     description:
       - If you want to refresh your catalog from the mirror, set this to (C(yes)).
-    required: false
-    default: False
     type: bool
+    default: no
     version_added: "2.1"
+  force:
+    description:
+      - Allows the update process to downgrade packages to what is present in the repostory set this to (C(yes)).
+      - It is useful as a rollback to stable from testing, and similar operations.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -65,33 +74,80 @@ EXAMPLES = '''
     name: CSWnrpe
     site: 'ftp://myinternal.repo/opencsw/kiel'
     state: latest
+
+# Remove a package
+- pkgutil:
+    name: CSWtop
+    state: absent
+
+# Install several packages
+- pkgutil:
+    name: CSWtop,CSWsudo
+    state: present
+
+# Update all packages
+- pkgutil:
+    name: '*'
+    state: latest
+
+# Update all packages and force versions to match latest in catalog
+- pkgutil:
+    name: '*'
+    state: latest
+    force: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 
 
-def package_installed(module, name):
-    cmd = ['pkginfo']
-    cmd.append('-q')
-    cmd.append(name)
-    rc, out, err = run_command(module, cmd)
-    if rc == 0:
-        return True
-    else:
-        return False
-
-
-def package_latest(module, name, site):
-    # Only supports one package
-    cmd = ['pkgutil', '-U', '--single', '-c']
+def packages_not_installed(module, name):
+    # check if each package is installed
+    # and store the ones that aren't in a list
+    pkgs = []
+    for pkg in name:
+        cmd = ['pkginfo']
+        cmd.append('-q')
+        cmd.append(pkg)
+        rc, out, err = run_command(module, cmd)
+        if rc != 0:
+            pkgs += [ pkg ]
+    return pkgs
+    
+def packages_installed(module, name):
+    # check if each package is installed
+    # and store the ones that are in a list
+    pkgs = []
+    for pkg in name:
+        cmd = ['pkginfo']
+        cmd.append('-q')
+        cmd.append(pkg)
+        rc, out, err = run_command(module, cmd)
+        if rc == 0 and 'CSW' in pkg:
+            pkgs += [ pkg ]
+    return pkgs
+    
+def packages_not_latest(module, name, site, update_catalog):
+    # check status of each package
+    # and store the ones needing an upgrade in a list
+    cmd = [ 'pkgutil' ]
+    if update_catalog:
+        cmd += [ '-U' ]
+    cmd += [ '-c' ]
     if site is not None:
-        cmd += ['-t', site]
-    cmd.append(name)
+        cmd += [ '-t', site]
+    if name != ['*']:
+        for package in name:
+            cmd.append(package)
     rc, out, err = run_command(module, cmd)
-    # replace | tail -1 |grep -v SAME
-    # use -2, because splitting on \n create a empty line
-    # at the end of the list
-    return 'SAME' in out.split('\n')[-2]
+    packages = []
+    # find packages in the catalog and not up to date
+    for line in out.split('\n')[1:-1]:
+        if 'catalog' not in line:
+            if 'SAME' not in line:
+                packages += [ line.split(' ')[0] ]
+    # remove duplicates
+    pkgs = list(set(packages))
+    return pkgs
 
 
 def run_command(module, cmd, **kwargs):
@@ -99,44 +155,54 @@ def run_command(module, cmd, **kwargs):
     cmd[0] = module.get_bin_path(progname, True, ['/opt/csw/bin'])
     return module.run_command(cmd, **kwargs)
 
-
-def package_install(module, state, name, site, update_catalog):
-    cmd = ['pkgutil', '-iy']
+def package_install(module, state, pkgs, site, update_catalog, force):
+    cmd = [ 'pkgutil' ]
+    if module.check_mode:
+        cmd += [ '-n' ]
+    cmd += [ '-iy' ]
     if update_catalog:
         cmd += ['-U']
     if site is not None:
-        cmd += ['-t', site]
-    if state == 'latest':
-        cmd += ['-f']
-    cmd.append(name)
+        cmd += [ '-t', site ]
+    if force:
+        cmd += [ '-f' ]
+    cmd += pkgs
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
 
-
-def package_upgrade(module, name, site, update_catalog):
-    cmd = ['pkgutil', '-ufy']
+def package_upgrade(module, pkgs, site, update_catalog, force):
+    cmd = [ 'pkgutil' ]
+    if module.check_mode:
+        cmd += [ '-n' ]
+    cmd += [ '-uy' ]
     if update_catalog:
         cmd += ['-U']
     if site is not None:
-        cmd += ['-t', site]
-    cmd.append(name)
+        cmd += [ '-t', site ]
+    if force:
+        cmd += [ '-f' ]
+    cmd += pkgs
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
 
-
-def package_uninstall(module, name):
-    cmd = ['pkgutil', '-ry', name]
+def package_uninstall(module, pkgs):
+    cmd = [ 'pkgutil' ]
+    if module.check_mode:
+        cmd += [ '-n' ]
+    cmd += [ '-ry' ]
+    cmd += pkgs
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
 
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True),
-            state=dict(required=True, choices=['present', 'absent', 'latest']),
-            site=dict(default=None),
-            update_catalog=dict(required=False, default=False, type='bool'),
+        argument_spec = dict(
+            name = dict(required = True, aliases=['pkg'], type='list'),
+            state = dict(required = True, choices=['present','installed','absent','removed','latest']),
+            site = dict(default = None),
+            update_catalog = dict(required = False, default = False, type='bool'),
+            force = dict(required = False, default = False, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -144,6 +210,7 @@ def main():
     state = module.params['state']
     site = module.params['site']
     update_catalog = module.params['update_catalog']
+    force = module.params['force']
     rc = None
     out = ''
     err = ''
@@ -151,63 +218,63 @@ def main():
     result['name'] = name
     result['state'] = state
 
-    if state == 'present':
-        if not package_installed(module, name):
-            if module.check_mode:
-                module.exit_json(changed=True)
-            (rc, out, err) = package_install(module, state, name, site, update_catalog)
-            # Stdout is normally empty but for some packages can be
-            # very long and is not often useful
-            if len(out) > 75:
-                out = out[:75] + '...'
-            if rc != 0:
-                if err:
-                    msg = err
-                else:
-                    msg = out
-                module.fail_json(msg=msg)
-
-    elif state == 'latest':
-        if not package_installed(module, name):
-            if module.check_mode:
-                module.exit_json(changed=True)
-            (rc, out, err) = package_install(module, state, name, site, update_catalog)
-            if len(out) > 75:
-                out = out[:75] + '...'
-            if rc != 0:
-                if err:
-                    msg = err
-                else:
-                    msg = out
-                module.fail_json(msg=msg)
-
-        else:
-            if not package_latest(module, name, site):
-                if module.check_mode:
-                    module.exit_json(changed=True)
-                (rc, out, err) = package_upgrade(module, name, site, update_catalog)
-                if len(out) > 75:
-                    out = out[:75] + '...'
+    if state in ['installed', 'present']:
+        if name != ['*']:
+            pkgs = packages_not_installed(module, name)
+            if pkgs != []:
+                (rc, out, err) = package_install(module, state, pkgs, site, update_catalog, force)
                 if rc != 0:
                     if err:
                         msg = err
                     else:
                         msg = out
                     module.fail_json(msg=msg)
+            else:
+                module.exit_json(changed=False)
+        else:
+            module.fail_json(msg="Can not use state: present with name: *")
 
-    elif state == 'absent':
-        if package_installed(module, name):
-            if module.check_mode:
-                module.exit_json(changed=True)
-            (rc, out, err) = package_uninstall(module, name)
-            if len(out) > 75:
-                out = out[:75] + '...'
+    elif state in ['latest']:
+        if name != ['*']:
+            pkgs = packages_not_installed(module, name)
+            pkgs += packages_not_latest(module, name, site, update_catalog)
+            if pkgs != []:
+                (rc, out, err) = package_upgrade(module, pkgs, site, update_catalog, force)
+                if rc != 0:
+                    if err:
+                        msg = err
+                    else:
+                        msg = out
+                    module.fail_json(msg=msg)
+            else:
+                module.exit_json(changed=False)
+        else:
+            pkgs = packages_not_latest(module, name, site, update_catalog)
+            if pkgs != []:
+                pkgs == []
+                (rc, out, err) = package_upgrade(module, pkgs, site, update_catalog, force)
+                if rc != 0:
+                    if err:
+                        msg = err
+                    else:
+                        msg = out
+                    module.fail_json(msg=msg)
+            else:
+                module.exit_json(changed=False)
+        
+
+    elif state in ['absent', 'removed']:
+        pkgs = packages_installed(module, name)
+        if pkgs != []:
+            (rc, out, err) = package_uninstall(module, pkgs)
             if rc != 0:
                 if err:
                     msg = err
                 else:
                     msg = out
                 module.fail_json(msg=msg)
+        else:
+            module.exit_json(changed=False)
 
     if rc is None:
         # pkgutil was not executed because the package was already present/absent
