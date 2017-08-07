@@ -288,6 +288,7 @@ Ansible Changes By Release
   * rundeck_project
 - sensu_silence
 - vmware
+  * vcenter_license
   * vmware_guest_find
 - windows
   * win_defrag
