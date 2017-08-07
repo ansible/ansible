@@ -131,6 +131,52 @@ foreach ($item in Get-ChildItem Env:) {
     $env_vars.Add($name, $value)
 }
 
+$disks = Get-disk|select signature,number,model,location,manufacturer,numberofpartitions,path,serialnumber,size,bustype,operationalstatus,partitionstyle,uniqueidformat
+
+$devs = @{}
+
+foreach ($dev in $disks) {
+    if ($dev.numberofpartitions -gt 0) {
+        $parts = Get-Partition -DiskNumber $dev.number|select uniqueid,isboot,isactive,ishidden,isreadonly,issystem,driveletter,offset,partitionnumber,size
+
+        $partitions = @{}
+
+        foreach ($part in $parts) {
+            $partInfo = @{
+                part_drive_letter = $part.driveletter
+                part_number = $part.partitionnumber
+                part_offset = $part.offset
+                part_size = $part.size
+                part_isboot = $part.isboot
+                part_isactive = $part.isactive
+                part_ishidden = $part.ishidden
+                part_isreadonly = $part.isreadonly
+                part_issystem = $part.issystem
+                part_uniqueid = $part.uniqueid
+            }
+
+            $partitions["Part" + $part.partitionnumber] = $partInfo
+        }
+    }
+        
+    $devInfo = @{
+        disk_number = $dev.number
+        disk_model = $dev.model
+        disk_manufacturer = $dev.manufacturer
+        disk_num_partitions = $dev.numberofpartitions
+        disk_path = $dev.path
+        disk_serialnumber = $dev.serialnumber
+        disk_size = $dev.size
+        disk_bustype = $dev.bustype
+        disk_status = $dev.operationalstatus
+        disk_partitionstyle = $dev.partitionstyle
+        disk_partitions = $partitions
+        disk_signature = $dev.signature
+    }
+
+    $devs["Disk" + $dev.number] = $devInfo
+}
+
 $ansible_facts = @{
     ansible_architecture = $win32_os.OSArchitecture
     ansible_bios_date = $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
@@ -178,6 +224,7 @@ $ansible_facts = @{
     # Win32_PhysicalMemory is empty on some virtual platforms
     ansible_memtotal_mb = ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
     ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
+    ansible_devices = $devs
 
     module_setup = $true
 }
