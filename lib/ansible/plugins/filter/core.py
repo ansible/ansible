@@ -125,7 +125,7 @@ def to_bool(a):
     return False
 
 
-def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
+def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.strptime(string, format)
 
 
