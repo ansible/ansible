@@ -800,6 +800,7 @@ def create_autoscaling_group(connection, module):
 
         # Update load balancers if they are specified and one or more already exists
         elif as_group['LoadBalancerNames']:
+            change_load_balancers = load_balancers is not None
             # Get differences
             if not load_balancers:
                 load_balancers = list()
@@ -807,7 +808,7 @@ def create_autoscaling_group(connection, module):
 
             has_elbs = set(as_group['LoadBalancerNames'])
             # check if all requested are already existing
-            if has_elbs.issuperset(wanted_elbs):
+            if has_elbs.issuperset(wanted_elbs) and change_load_balancers:
                 # if wanted contains less than existing, then we need to delete some
                 elbs_to_detach = has_elbs.difference(wanted_elbs)
                 if elbs_to_detach:
@@ -816,7 +817,7 @@ def create_autoscaling_group(connection, module):
                         AutoScalingGroupName=group_name,
                         LoadBalancerNames=list(elbs_to_detach)
                     )
-            if wanted_elbs.issuperset(has_elbs):
+            if wanted_elbs.issuperset(has_elbs) or (wanted_elbs ^ has_elbs):
                 # if has contains less than wanted, then we need to add some
                 elbs_to_attach = wanted_elbs.difference(has_elbs)
                 if elbs_to_attach:
