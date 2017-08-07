@@ -930,6 +930,16 @@ class Ec2Inventory(object):
             if self.nested_groups:
                 self.push_group(self.inventory, 'instance_states', state_name)
 
+        # Inventory: Group by platform
+        if self.group_by_platform:
+            if instance.platform:
+                platform = self.to_safe('platform_' + instance.platform)
+            else:
+                platform = self.to_safe('platform_undefined')
+            self.push(self.inventory, platform, hostname)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'platforms', platform)
+
         # Inventory: Group by key pair
         if self.group_by_key_pair and instance.key_name:
             key_name = self.to_safe('key_' + instance.key_name)
