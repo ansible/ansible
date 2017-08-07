@@ -42,12 +42,12 @@ class CallbackModule(CallbackBase):
     def _get_task_display_name(self, task):
         display_name = task.get_name().strip().split(" : ")
 
-        if len(task_display_name) > 1:
+        if len(display_name) > 1:
             display_name_index = 1
         else:
             display_name_index = 0
 
-        self.task_display_name = task_display_name[display_name_index].capitalize()
+        self.task_display_name = display_name[display_name_index].capitalize()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         # TODO only display task if it will not be skipped for any hosts
