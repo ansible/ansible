@@ -224,7 +224,7 @@ class CallbackModule(CallbackBase):
         res = result._result
         module = result._task.action
 
-        if module == 'setup':
+        if module == 'setup' or 'ansible_facts' in res:
             host = result._host.get_name()
             self.send_facts(host, res)
         else:
