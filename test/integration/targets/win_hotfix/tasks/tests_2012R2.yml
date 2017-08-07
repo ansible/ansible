@@ -49,7 +49,7 @@
   register: install_hotfix_check
   check_mode: yes
 
-- name: get actual install hotfix check
+- name: get result of install hotfix check
   win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
   register: install_hotfix_actual_check
   ignore_errors: True
@@ -68,7 +68,7 @@
     state: present
   register: install_hotfix
 
-- name: get actual install hotfix
+- name: get result of install hotfix
   win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
   register: install_hotfix_actual
 
@@ -102,7 +102,7 @@
   register: uninstall_hotfix_check
   check_mode: yes
 
-- name: get actual uninstall hotfix check
+- name: get result of uninstall hotfix check
   win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
   register: uninstall_hotfix_actual_check
 
@@ -120,7 +120,7 @@
     state: absent
   register: uninstall_hotfix
 
-- name: get actual uninstall hotfix
+- name: get result of uninstall hotfix
   win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
   register: uninstall_hotfix_actual
   ignore_errors: True
@@ -153,7 +153,7 @@
     state: present
   register: install_reboot_hotfix
 
-- name: get actual install reboot hotfix
+- name: get result of install reboot hotfix
   win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_reboot_kb}}
   register: install_hotfix_reboot_actual
 
@@ -200,7 +200,7 @@
   register: uninstall_hotfix_kb_check
   check_mode: yes
 
-- name: get actual uninstall hotfix with kb check
+- name: get result of uninstall hotfix with kb check
   win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_reboot_kb}}
   register: uninstall_hotfix_kb_actual_check
 
@@ -219,7 +219,7 @@
     state: absent
   register: uninstall_hotfix_kb
 
-- name: get actual uninstall hotfix with kb
+- name: get result of uninstall hotfix with kb
   win_command: powershell.exe Get-Hotfix -Id {{test_win_hotfix_kb}}
   register: uninstall_hotfix_kb_actual
   ignore_errors: True

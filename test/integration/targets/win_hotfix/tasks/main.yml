@@ -1,6 +1,3 @@
-# There are manual tests that can be run on a fresh Server 2012 R2 install
-# from the evaluation ISO, these are run when test_win_hotfix_manual_run
-# is set to True
 ---
 - name: filter servers that can support DISM
   win_command: powershell.exe "Import-Module -Name DISM"
@@ -19,6 +16,39 @@
   include_tasks: tests.yml
   when: eligable_servers.rc == 0
 
-- name: run manual tests if flag is set
-  include_tasks: manual_tests.yml
-  when: eligable_servers.rc == 0 and test_win_hotfix_manual_run == True
+- name: set output to true if running Server 2012 R2
+  win_command: powershell.exe "$version = [Environment]::OSVersion.Version; if ($version.Major -eq 6 -and $version.Minor -eq 3) { 'true' } else { 'false' }"
+  register: test_hotfix
+
+- block:
+  - name: ensure hotfixes are uninstalled before tests
+    win_hotfix:
+      hotfix_identifier: '{{item}}'
+      state: absent
+    register: pre_uninstall
+    with_items:
+    - '{{test_win_hotfix_identifier}}'
+    - '{{test_win_hotfix_reboot_identifier}}'
+
+  - name: reboot after pre test uninstall if required
+    win_reboot:
+    when: pre_uninstall.results[0].reboot_required == True or pre_uninstall.results[1].reboot_required == True
+
+  - name: run actual hotfix tests on Server 2012 R2 only
+    include_tasks: tests_2012R2.yml
+
+  always:
+  - name: ensure hotfixes are uninstalled after tests
+    win_hotfix:
+      hotfix_identifier: '{{item}}'
+      state: absent
+    register: post_uninstall
+    with_items:
+    - '{{test_win_hotfix_identifier}}'
+    - '{{test_win_hotfix_reboot_identifier}}'
+
+  - name: reboot after post test uninstall if required
+    win_reboot:
+    when: post_uninstall.results[0].reboot_required == True or post_uninstall.results[1].reboot_required == True
+
+  when: test_hotfix.stdout_lines[0] == "true"
