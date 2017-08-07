@@ -103,8 +103,6 @@ diff:
 """
 import collections
 
-from copy import copy
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
@@ -130,7 +128,7 @@ def main():
         active=dict(default=True, type='bool')
     )
 
-    aggregate_spec = copy(element_spec)
+    aggregate_spec = element_spec.copy()
     aggregate_spec['name'] = dict(required=True)
 
     argument_spec = dict(
@@ -174,7 +172,7 @@ def main():
 
     requests = list()
     for param in params:
-        item = copy(param)
+        item = param.copy()
         if not item['ipv4'] and not item['ipv6']:
             module.fail_json(msg="one of the following is required: ipv4,ipv6")
 

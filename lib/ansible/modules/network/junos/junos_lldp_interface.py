@@ -142,11 +142,12 @@ def main():
         ('disable', {'xpath': 'disable', 'tag_only': True})
     ])
 
-    state = module.params.get('state')
-    module.params['disable'] = True if state in ('disabled', 'absent') else False
+    item = module.params.copy()
+    state = item.get('state')
+    item['disable'] = True if state in ('disabled', 'absent') else False
 
     if state in ('enabled', 'disabled'):
-        module.params['state'] = 'present'
+        item['state'] = 'present'
 
     want = map_params_to_obj(module, param_to_xpath_map)
     ele = map_obj_to_ele(module, want, top)
