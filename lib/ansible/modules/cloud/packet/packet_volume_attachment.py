@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -129,9 +133,6 @@ import os
 import uuid
 
 from ansible.module_utils.basic import AnsibleModule
-
-__metaclass__ = type
-from __future__ import (absolute_import, division, print_function)
 
 HAS_PACKET_SDK = True
 
