@@ -85,7 +85,17 @@ class KubernetesAnsibleModule(AnsibleModule):
         :return: dict: a valid Ansible argument spec
         """
         if not self.argspec_cache:
-            spec = {}
+            spec = {
+                'dry_run': {
+                    'type': 'bool',
+                    'default': False,
+                    'description': [
+                        "If set to C(True) the module will exit without executing any action."
+                        "Useful to only generate YAML file definitions for the resources in the tasks."
+                    ]
+                }
+            }
+
             for arg_name, arg_properties in self.helper.argspec.items():
                 spec[arg_name] = {}
                 for option, option_value in arg_properties.items():
@@ -125,12 +135,18 @@ class KubernetesAnsibleModule(AnsibleModule):
 
         state = self.params.get('state', None)
         force = self.params.get('force', False)
+        dry_run = self.params.pop('dry_run', False)
         name = self.params.get('name')
         namespace = self.params.get('namespace', None)
         existing = None
 
-        return_attributes = dict(changed=False, api_version=self.api_version)
+        return_attributes = dict(changed=False,
+                                 api_version=self.api_version,
+                                 request=self.helper.request_body_from_params(self.params))
         return_attributes[self.helper.base_model_name_snake] = {}
+
+        if dry_run:
+            self.exit_json(**return_attributes)
 
         try:
             auth_options = {}
