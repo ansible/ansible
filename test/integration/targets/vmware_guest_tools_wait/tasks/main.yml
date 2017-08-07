@@ -69,7 +69,7 @@
 # FixMe: govcsim does not support VMware tools status reporting
 ## Testcase 0001: Wait for VMware tools to become available by name
 #- name: Waiting until VMware tools becomes available
-#  vmware_guest_tools:
+#  vmware_guest_tools_wait:
 #    validate_certs: False
 #    hostname: "{{ vcsim }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
@@ -92,7 +92,7 @@
 #
 # Testcase 0002: Wait for VMware tools to become available by UUID
 #- name: Waiting until VMware tools becomes available
-#  vmware_guest_tools:
+#  vmware_guest_tools_wait:
 #    validate_certs: False
 #    hostname: "{{ vcsim }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"

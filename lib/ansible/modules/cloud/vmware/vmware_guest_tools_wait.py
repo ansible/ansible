@@ -25,13 +25,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: vmware_guest_tools
+module: vmware_guest_tools_wait
 short_description: Wait for VMware tools to become available and return facts
 description:
     - Wait for VMware tools to become available on the VM and return facts
 version_added: 2.4
 author:
-    - Philippe Dellaert <philippe@dellaert.org>
+    - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 notes:
     - Tested on vSphere 6.5
 requirements:
