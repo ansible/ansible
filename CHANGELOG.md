@@ -25,6 +25,9 @@ Ansible Changes By Release
 * Fix UnboundLocalError in check mode in cs_role module
 * Fix to always use lowercase hostnames for host keys in known_hosts module
 * Added missing return results for win_stat
+* Fix rabbitmq modules to give a helpful error if requests is not installed
+* Fix yum module not deleting rpms that it downloaded
+* Fix yum module failing with a URL to an rpm
 
 <a id="2.3.2"></a>
 
