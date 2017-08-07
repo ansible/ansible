@@ -125,12 +125,12 @@ network_id:
 ip_info:
     description: when reserve next available ip address from a network, the ip address info ) is returned.
     returned: success
-    type: json_string
+    type: string
     sample: '{"address": "192.168.10.3", "hostname": "", "FQDN": "", "domainname": "", "id": 3229}'
 network_info:
     description: when reserving a LAN network from a Infinity supernet by providing network_size, the information about the reserved network is returned.
     returned: success
-    type: json_tring
+    type: string
     sample:  {"network_address": "192.168.10.32/28","network_family": "4", "network_id": 3102,
     "network_size": null,"description": null,"network_location": "3085",
     "ranges": { "id": 0, "name": null,"first_ip": null,"type": null,"last_ip": null},
