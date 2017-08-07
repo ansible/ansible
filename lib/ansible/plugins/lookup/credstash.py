@@ -1,3 +1,5 @@
+
+#!/usr/bin/env python
 # (c) 2015, Ensighten <infra@ensighten.com>
 #
 # This file is part of Ansible
@@ -41,12 +43,23 @@ class LookupModule(LookupBase):
                 version = kwargs.pop('version', '')
                 region = kwargs.pop('region', None)
                 table = kwargs.pop('table', 'credential-store')
-                val = credstash.getSecret(term, version, region, table,
-                                          context=kwargs)
+
+                profile = kwargs.pop('profile', None)
+                iam_arn_assume_role = kwargs.pop('iam_arn_assume_role', None)
+
+                # If the profile is none, it will use arn, otherwise
+                # it will always use the profile to build the session
+                session_params = credstash.get_session_params(profile, iam_arn_assume_role)
+                kwargs.update(session_params)
+
+                try:
+                    val = credstash.getSecret(term, version, region, table, **kwargs)
+                except Exception as e:
+                    raise AnsibleError('credstash.getSecret failed with context {}: {}'.format(kwargs, e))
             except credstash.ItemNotFound:
                 raise AnsibleError('Key {0} not found'.format(term))
             except Exception as e:
-                raise AnsibleError('Encountered exception while fetching {0}: {1}'.format(term, e.message))
+                raise AnsibleError('Encountered exception while fetching {}: {}'.format(term, e))
             ret.append(val)
 
         return ret

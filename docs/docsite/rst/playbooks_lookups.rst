@@ -295,6 +295,15 @@ You can specify regions or tables to fetch secrets from::
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
 
+You can access credentials kept in another aws account using an aws cli profile or sts assumed role.
+If both profile and iam_arn_assumed_role are set, iam_arn_assumed_role is ignored.
+    ---
+    - name: "Test credstash lookup plugin -- get credential from a different aws account named in ~/.aws/config"
+      debug: msg="Credstash lookup! {{ lookup('credstash', 'my-password', region='us-west-1', profile='production-account') }}"
+
+
+    - name: "Test credstash lookup plugin -- get credential from another account using STS assumed role"
+      debug: msg="Credstash lookup! {{ lookup('credstash', 'my-password', iam_arn_assume_role='sts-assume-other-account-role(specify arn)') }}"
 
 If you use the context feature when putting your secret, you can get it by passing a dictionary to the context option like this::
 
