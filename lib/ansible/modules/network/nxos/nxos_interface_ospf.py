@@ -285,6 +285,13 @@ def state_present(module, existing, proposed, candidate):
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in proposed_commands.items():
+        if existing_commands.get(key):
+            if key == 'ip router ospf':
+                if proposed['area'] == existing['area']:
+                    continue
+            if existing_commands[key] == proposed_commands[key]:
+                continue
+
         if value is True:
             commands.append(key)
         elif value is False:
