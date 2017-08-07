@@ -3,6 +3,15 @@
   register: initial_state
   ignore_errors: True
 
+- name: debug inital_state
+  debug:
+    var: initial_state
+
+- name: debug inital_state when rc
+  debug:
+    var: initial_state
+  when: initial_state.rc == 0
+
 - name: Make sure the locale is not installed
   locale_gen:
     name: pt_BR
@@ -85,6 +94,10 @@
     that:
       - "post_check_output.rc == 1"
       - "not output.changed"
+
+- name: debug inital_state
+  debug:
+    var: initial_state
 
 # Cleanup
 - name: Reinstall the locale we tested against if it was initially installed

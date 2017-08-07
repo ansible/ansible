@@ -154,7 +154,7 @@ class TestConditional(unittest.TestCase):
         variables = {'some_defined_thing': True}
         when = [u"some_defined_thing is defined", u"some_defined_thing is undefined"]
         ret = self._eval_con(when, variables)
-        self.assertFalse(ret)
+        self.assertFalse(ret, repr(ret))
 
     def test_is_not_undefined(self):
         variables = {'some_defined_thing': True}

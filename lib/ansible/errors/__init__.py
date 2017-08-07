@@ -251,3 +251,8 @@ class AnsibleActionSkip(AnsibleRuntimeError):
 class AnsibleActionFail(AnsibleRuntimeError):
     ''' an action runtime failure'''
     pass
+
+
+class AnsibleConditionalError(AnsibleError):
+    ''' an error while evaluating a conditional'''
+    pass
