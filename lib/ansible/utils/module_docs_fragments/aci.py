@@ -42,6 +42,11 @@ options:
     description:
     - The socket level timeout in seconds.
     default: 30
+  use_proxy:
+    description:
+      - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+    default: 'yes'
+    type: bool
   use_ssl:
     description:
     - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
@@ -53,4 +58,13 @@ options:
     - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
+notes:
+- By default, if an environment variable C(<protocol>_proxy) is set on
+  the target host, requests will be sent through that proxy. This
+  behaviour can be overridden by setting a variable for this task
+  (see `setting the environment
+  <http://docs.ansible.com/playbooks_environment.html>`_),
+  or by using the C(use_proxy) option.
+- HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
+  your proxy environment for both protocols is correct.
 '''
