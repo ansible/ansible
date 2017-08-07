@@ -113,6 +113,12 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
 
+        # Do we want parameters to be interpreted if possible as JSON? (no by default)
+        try:
+            self.rich_params = config.getboolean('ansible', 'rich_params')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.rich_params = False
+
         try:
             self.host_filters = config.get('foreman', 'host_filters')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
@@ -209,7 +215,13 @@ class ForemanInventory(object):
 
         for param in host_params:
             name = param['name']
-            params[name] = param['value']
+            if self.rich_params:
+                try:
+                    params[name] = json.loads(param['value'])
+                except ValueError:
+                    params[name] = param['value']
+            else:
+                params[name] = param['value']
 
         return params
 
