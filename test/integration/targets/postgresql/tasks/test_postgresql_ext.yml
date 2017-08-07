@@ -47,8 +47,7 @@
 
 - assert:
     that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-      - "result.stdout_lines[-2].strip() == ext_version|default(ext_default_version)"
+      - "result.stdout.strip() == ext_version|default(ext_default_version)"
 
 - name: Disable extension
   become_user: "{{ pg_user }}"
