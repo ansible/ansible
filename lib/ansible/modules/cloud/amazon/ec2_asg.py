@@ -396,10 +396,24 @@ INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launc
 
 backoff_params = dict(tries=10, delay=3, backoff=1.5)
 
+
+def paginated_describe_asg(connection, group_name):
+    pg = connection.get_paginator('describe_auto_scaling_groups')
+    for page in pg.paginate(AutoScalingGroupNames=[group_name]):
+        for data in page.get('AutoScalingGroups', []):
+            yield data
+
+
+def paginated_describe_lc(connection, lc_name):
+    pg = connection.get_paginator('describe_launch_configurations')
+    for page in pg.paginate(LaunchConfigurationNames=[lc_name]):
+        for data in page.get('LaunchConfigurations', []):
+            yield data
+
+
 @AWSRetry.backoff(**backoff_params)
 def describe_autoscaling_groups(connection, group_name):
-    response = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])
-    return response['AutoScalingGroups']
+    return [page for page in paginated_describe_asg(connection, group_name)]
 
 
 @AWSRetry.backoff(**backoff_params)
@@ -432,7 +446,7 @@ def resume_asg_processes(connection, asg_name, processes):
 
 @AWSRetry.backoff(**backoff_params)
 def describe_launch_configurations(connection, launch_config_name):
-    return connection.describe_launch_configurations(LaunchConfigurationNames=[launch_config_name])
+    return {'LaunchConfigurations': [page for page in paginated_describe_lc(connection, launch_config_name)]}
 
 
 @AWSRetry.backoff(**backoff_params)
@@ -842,7 +856,7 @@ def create_autoscaling_group(connection, module):
                     wait_for_target_group(connection, module, group_name)
             if notification_topic:
                 put_notification_config(connection, group_name, notification_topic, notification_types)
-            as_group = describe_autoscaling_groups(connection, group_name)
+            as_group = describe_autoscaling_groups(connection, group_name)[0]
             asg_properties = get_properties(as_group, module)
             changed = True
             return changed, asg_properties
@@ -1004,11 +1018,11 @@ def delete_autoscaling_group(connection, module):
     groups = describe_autoscaling_groups(connection, group_name)
     if groups:
         if not wait_for_instances:
-            delete_asg(group_name, force_delete=True)
+            delete_asg(connection, group_name, force_delete=True)
             return True
 
         wait_timeout = time.time() + wait_timeout
-        updated_params = dict(AutoscalingGroupName=group_name, MinSize=0, MazSize=0, DesiredCapacity=0)
+        updated_params = dict(AutoScalingGroupName=group_name, MinSize=0, MaxSize=0, DesiredCapacity=0)
         update_asg(connection, **updated_params)
         instances = True
         while instances and wait_for_instances and wait_timeout >= time.time():
@@ -1023,7 +1037,7 @@ def delete_autoscaling_group(connection, module):
             # waiting took too long
             module.fail_json(msg="Waited too long for old instances to terminate. %s" % time.asctime())
 
-        delete_asg(group_name, force_delete=False)
+        delete_asg(connection, group_name, force_delete=False)
         while describe_autoscaling_groups(connection, group_name):
             time.sleep(5)
         return True
