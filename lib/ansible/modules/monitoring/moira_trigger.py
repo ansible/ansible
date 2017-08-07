@@ -277,7 +277,7 @@ class MoiraAnsible(object):
             for tag in self.moira_api.tag.stats():
                 if not tag.triggers:
                     unused.add(self.moira_api.tag.delete(tag.name))
-            assert bool(0) not in unused
+            assert False not in unused
         except Exception as tag_cleanup_exception:
             self.exception_handler(
                 occurred=tag_cleanup_exception,
