@@ -543,8 +543,8 @@
     state: absent
 
 - name: lock file in the background for next task
-  win_command: powershell.exe "$data = 'abcdefghijklmnopqrstuvwxyz' * 1024; $file = [System.IO.File]::Open('{{win_stat_dir}}\in_use', 'OpenOrCreate', 'ReadWrite', 'None'); $writer = New-Object IO.StreamWriter($file); $start = Get-Date; while (((Get-Date) - $start).TotalSeconds -lt 10) { $writer.WriteLine($data) }; $writer.Close(); $file.Close()"
-  async: 15
+  win_command: powershell.exe "$data = 'abcdefghijklmnopqrstuvwxyz' * 1024; $file = [System.IO.File]::Open('{{win_stat_dir}}\in_use', 'OpenOrCreate', 'ReadWrite', 'None'); $writer = New-Object IO.StreamWriter($file); $start = Get-Date; while (((Get-Date) - $start).TotalSeconds -lt 15) { $writer.WriteLine($data) }; $writer.Close(); $file.Close()"
+  async: 20
   poll: 0
   register: a
 
