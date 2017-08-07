@@ -219,7 +219,7 @@ def main():
             module.fail_json(msg="Failed during the restart of the cluster, the cluster can't be stopped")
 
     if state in ['cleanup']:
-        set_cluster(module, state, timeout, force)
+        clean_cluster(module, timeout)
         module.exit_json(changed=True,
                  out=cluster_state)
 
