@@ -17,7 +17,7 @@
 
   - set_fact:
       pg_extension_dir: '{{ sql_features_path.files[0].path | dirname }}/extension'
-  when: pg_extension_dir is not set
+  when: pg_extension_dir is undefined
 
 - name: retrieve fact for extension directory
   stat:
