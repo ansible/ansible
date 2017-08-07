@@ -215,9 +215,18 @@ def main():
 
     commands = []
     if state == 'absent':
-        if vtp_password is not None:
+        # if vtp_password is not set, some devices returns '\\'
+        if not existing['vtp_password'] or existing['vtp_password'] == '\\':
+            pass
+        elif vtp_password is not None:
             if existing['vtp_password'] == proposed['vtp_password']:
                 commands.append(['no vtp password'])
+            else:
+                module.fail_json(msg="Proposed vtp password doesn't match "
+                                     "current vtp password. It cannot be "
+                                     "removed when state=absent. If you are "
+                                     "trying to change the vtp password, use "
+                                     "state=present.")
         else:
             if not existing.get('domain'):
                 module.fail_json(msg='Cannot remove a vtp password '
