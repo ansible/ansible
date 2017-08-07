@@ -1282,7 +1282,7 @@ class CloudFrontValidationManager(object):
                         streaming_distribution_id = self.validate_distribution_id_from_alias(alias, aliases)
             return distribution_id, streaming_distribution_id
         except Exception as e:
-            self.module.fail_json(msg="Error validating distribution_id from caller reference, alias and aliases - " + str(e) + "\n" + traceback.format_exc())
+            self.module.fail_json(msg="Error validating distribution_id from alias, aliases and caller reference - " + str(e) + "\n" + traceback.format_exc())
 
     def validate_distribution_exists(self, distribution_id, streaming_distribution_id, streaming_distribution):
         if not streaming_distribution:
