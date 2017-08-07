@@ -85,7 +85,7 @@ user_data:
     type: string
     sample: "ZXhwb3J0IENMT1VE"
 name:
-    description: Name of the AMI
+    description: Name of the Launch Configuration
     returned: when Launch Configuration was found
     type: string
     sample: "myapp-v123"
