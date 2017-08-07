@@ -1,0 +1,119 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_interface_ospf sanity test"
+
+- set_fact: testint="{{ nxos_int1 }}"
+
+- name: "Setup - Disable feature OSPF"
+  nxos_feature: &disable
+    feature: ospf
+    state: disabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Setup - Enable feature OSPF"
+  nxos_feature: &enable
+    feature: ospf
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Put interface into default state"
+  nxos_config: &intdefault
+    lines:
+      - "default interface {{ testint }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Remove switchport config"
+  nxos_config: &removeswitchport
+    commands:
+      - no switchport
+    parents:
+      - "interface {{ testint }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: configure ospf interface
+    nxos_interface_ospf: &configure
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 1
+      cost: 55
+      passive_interface: true
+      hello_interval: 15
+      dead_interval: 75
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Modify properties
+    nxos_interface_ospf: &modify
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 1
+      cost: 66
+      passive_interface: false
+      hello_interval: 17
+      dead_interval: 70
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *modify
+    register: result
+
+  - assert: *false
+
+  - name: remove ospf interface config
+    nxos_interface_ospf: &removeconfig
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 1
+      cost: 55
+      passive_interface: true
+      hello_interval: 15
+      dead_interval: 75
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *removeconfig
+    register: result
+
+  - assert: *false
+
+  - name: "Disable feature OSPF"
+    nxos_feature: *disable
+    ignore_errors: yes
+
+  - name: "Interface cleanup"
+    nxos_config: *intdefault
+
+  rescue:
+  - name: "Disable feature OSPF"
+    nxos_feature: *disable
+
+  - name: "Interface cleanup"
+    nxos_config: *intdefault
+
+  always:
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_interface_ospf sanity test"

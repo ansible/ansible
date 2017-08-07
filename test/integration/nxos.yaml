@@ -242,6 +242,15 @@
 
     - block:
       - include_role:
+          name: nxos_interface_ospf
+        when: "limit_to in ['*', 'nxos_interface_ospf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_interface_ospf' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
