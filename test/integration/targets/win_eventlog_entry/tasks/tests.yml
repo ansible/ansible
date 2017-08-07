@@ -1,0 +1,196 @@
+# Test code for win_eventlog_entry
+
+# (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Add entry to fake log
+  win_eventlog_entry:
+    log: FakeLogName
+    source: "{{ win_test_log_source.source }}"
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry_to_fake_log
+  failed_when: add_entry_to_fake_log.changed != false or add_entry_to_fake_log.msg != "Log FakeLogName does not exist and cannot be written to"
+
+
+- name: Add entry from fake source
+  win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+    source: FakeSourceName
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry_from_fake_source
+  failed_when: add_entry_from_fake_source.changed != false or add_entry_from_fake_source.msg != "Source FakeSourceName does not exist"
+
+
+- name: Add entry with invalid event_id
+  win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+    source: "{{ win_test_log_source.source }}"
+    event_id: 67000
+    message: This is a test log entry message
+  register: add_entry_with_invalid_event_id
+  failed_when: add_entry_with_invalid_event_id.changed != false or add_entry_with_invalid_event_id.msg != "Event ID must be between 0 and 65535"
+
+
+- name: Add entry from other log source
+  win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+    source: "{{ win_test_log_source_extra.source }}"
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry_from_other_log_source
+  failed_when: add_entry_from_other_log_source.changed != false or add_entry_from_other_log_source.msg != "Source {{ win_test_log_source_extra.source }} does not belong to log {{ win_test_log_source.log }} and cannot be written to"
+
+
+- name: Add entry
+  win_eventlog_entry: &wele
+    log: "{{ win_test_log_source.log }}"
+    source: "{{ win_test_log_source.source }}"
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry
+
+- name: Test add_entry
+  assert:
+    that:
+    - add_entry.changed == true
+    - add_entry.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+
+- name: Test add_entry count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_count
+  failed_when: add_entry_count.stdout_lines[0] != "1"
+  when: not in_check_mode
+
+- name: Test add_entry source (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Source).Source
+  register: add_entry_source
+  failed_when: add_entry_source.stdout_lines[0] != win_test_log_source.source
+  when: not in_check_mode
+
+- name: Test add_entry event_id (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property EventID).EventID
+  register: add_entry_event_id
+  failed_when: add_entry_event_id.stdout_lines[0] != "12345"
+  when: not in_check_mode
+
+- name: Test add_entry message (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Message).Message
+  register: add_entry_message
+  failed_when: add_entry_message.stdout_lines[0] != "This is a test log entry message"
+  when: not in_check_mode
+
+
+- name: Add entry (again)
+  win_eventlog_entry: *wele
+  register: add_entry_again
+
+- name: Test add_entry_again
+  assert:
+    that:
+    - add_entry_again.changed == true
+    - add_entry_again.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+  when: not in_check_mode
+
+- name: Test add_entry_again count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_again_count
+  failed_when: add_entry_again_count.stdout_lines[0] != "2"
+  when: not in_check_mode
+
+
+- name: Add entry all options
+  win_eventlog_entry: &wele_ao
+    <<: *wele
+    event_id: 500
+    message: This is a test error message
+    entry_type: Error
+    category: 5
+    raw_data: 10,20
+  register: add_entry_all_options
+
+- name: Test add_entry_all_options
+  assert:
+    that:
+    - add_entry_all_options.changed == true
+    - add_entry_all_options.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+
+- name: Test add_entry_all_options count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_all_options_count
+  failed_when: add_entry_all_options_count.stdout_lines[0] != "3"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options source (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Source).Source
+  register: add_entry_all_options_source
+  failed_when: add_entry_all_options_source.stdout_lines[0] != win_test_log_source.source
+  when: not in_check_mode
+
+- name: Test add_entry_all_options event_id (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property EventID).EventID
+  register: add_entry_all_options_event_id
+  failed_when: add_entry_all_options_event_id.stdout_lines[0] != "500"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options message (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Message).Message
+  register: add_entry_all_options_message
+  failed_when: add_entry_all_options_message.stdout_lines[0] != "This is a test error message"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options entry_type (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property EntryType).EntryType
+  register: add_entry_all_options_entry_type
+  failed_when: add_entry_all_options_entry_type.stdout_lines[0] != "Error"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options category (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Category).Category
+  register: add_entry_all_options_category
+  failed_when: add_entry_all_options_category.stdout_lines[0] != "(5)"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options raw_data (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Data).Data
+  register: add_entry_all_options_raw_data
+  failed_when: add_entry_all_options_raw_data.stdout_lines[0] != "10" and add_entry_all_options_raw_data.stdout_lines[1] != "20"
+  when: not in_check_mode
+
+
+- name: Add entry all options (again)
+  win_eventlog_entry: *wele_ao
+  register: add_entry_all_options_again
+
+- name: Test add_entry_all_options_again
+  assert:
+    that:
+    - add_entry_all_options_again.changed == true
+    - add_entry_all_options_again.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options_again count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_all_options_again_count
+  failed_when: add_entry_all_options_again_count.stdout_lines[0] != "4"
+  when: not in_check_mode
+
+
+- name: Clear event log entries
+  win_shell: Clear-EventLog -LogName "{{ win_test_log_source.log }}"
+  when: not in_check_mode
