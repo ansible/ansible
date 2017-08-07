@@ -138,6 +138,9 @@ network_info:
 """
 
 
+from __future__ import (absolute_import, division)
+__metaclass__ = type
+
 from ansible.module_utils.basic import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
