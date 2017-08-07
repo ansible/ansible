@@ -10,6 +10,10 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -137,9 +141,6 @@ network_info:
     "network_type": "lan","network_name": "'reserve_new_ansible_network'"}
 """
 
-
-from __future__ import (absolute_import, division)
-__metaclass__ = type
 
 from ansible.module_utils.basic import json
 from ansible.module_utils.basic import AnsibleModule
