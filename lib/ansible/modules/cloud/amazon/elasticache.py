@@ -208,24 +208,23 @@ class ElastiCacheManager(object):
             else:
                 msg = "'%s' is currently deleting. Cannot create."
                 self.module.fail_json(msg=msg % self.name)
-        if self.cache_port is None:
-            if self.engine == "redis":
-                self.cache_port = 6379
-            elif self.engine == "memcached":
-                self.cache_port = 11211
+
+        kwargs = dict(CacheClusterId=self.name,
+                      NumCacheNodes=self.num_nodes,
+                      CacheNodeType=self.node_type,
+                      Engine=self.engine,
+                      EngineVersion=self.cache_engine_version,
+                      CacheSecurityGroupNames=self.cache_security_groups,
+                      SecurityGroupIds=self.security_group_ids,
+                      CacheParameterGroupName=self.cache_parameter_group,
+                      CacheSubnetGroupName=self.cache_subnet_group,
+                      PreferredAvailabilityZone=self.zone)
+        if self.cache_port is not None:
+            kwargs['Port'] = self.cache_port
 
         try:
-            self.conn.create_cache_cluster(CacheClusterId=self.name,
-                                           NumCacheNodes=self.num_nodes,
-                                           CacheNodeType=self.node_type,
-                                           Engine=self.engine,
-                                           EngineVersion=self.cache_engine_version,
-                                           CacheSecurityGroupNames=self.cache_security_groups,
-                                           SecurityGroupIds=self.security_group_ids,
-                                           CacheParameterGroupName=self.cache_parameter_group,
-                                           CacheSubnetGroupName=self.cache_subnet_group,
-                                           PreferredAvailabilityZone=self.zone,
-                                           Port=self.cache_port)
+            self.conn.create_cache_cluster(**kwargs)
+
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg=e.message, exception=format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
