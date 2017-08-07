@@ -440,6 +440,7 @@ class Ec2Inventory(object):
             'group_by_ami_id',
             'group_by_instance_type',
             'group_by_instance_state',
+            'group_by_platform',
             'group_by_key_pair',
             'group_by_vpc_id',
             'group_by_security_group',
@@ -929,6 +930,16 @@ class Ec2Inventory(object):
             self.push(self.inventory, state_name, hostname)
             if self.nested_groups:
                 self.push_group(self.inventory, 'instance_states', state_name)
+
+        # Inventory: Group by platform
+        if self.group_by_platform:
+            if instance.platform:
+                platform = self.to_safe('platform_' + instance.platform)
+            else:
+                platform = self.to_safe('platform_undefined')
+            self.push(self.inventory, platform, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'platforms', platform)
 
         # Inventory: Group by key pair
         if self.group_by_key_pair and instance.key_name:
