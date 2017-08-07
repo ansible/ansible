@@ -325,7 +325,7 @@ def create_bucket(module, s3, bucket, location=None):
 
 
 def paginated_list(s3, bucket):
-    pg = s3.get_paginator('list_objects')
+    pg = s3.get_paginator('list_objects_v2')
     for page in pg.paginate(Bucket=bucket):
         for data in page.get('Contents', {}):
             yield data['Key']
