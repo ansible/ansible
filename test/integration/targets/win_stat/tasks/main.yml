@@ -537,29 +537,7 @@
       - win_stat_no_args.msg
       - not win_stat_no_args|changed
 
-- name: ensure file that will be in use is deleted before test
-  win_file:
-    path: '{{win_stat_dir}}\in_use'
-    state: absent
-
-- name: lock file in the background for next task
-  win_command: powershell.exe "$data = 'abcdefghijklmnopqrstuvwxyz' * 1024; $file = [System.IO.File]::Open('{{win_stat_dir}}\in_use', 'OpenOrCreate', 'ReadWrite', 'None'); $writer = New-Object IO.StreamWriter($file); $start = Get-Date; while (((Get-Date) - $start).TotalSeconds -lt 15) { $writer.WriteLine($data) }; $writer.Close(); $file.Close()"
-  async: 20
-  poll: 0
-  register: a
-
-- name: fail to get stat of file in use
-  win_stat:
-    path: '{{win_stat_dir}}\in_use'
-    get_md5: False
-  register: fail_file_in_use
-  failed_when: "'failed to get hash of file' not in fail_file_in_use.msg"
-
 - name: remove testing folder
   win_file:
     path: "{{win_output_dir}}\\win_stat"
     state: absent
-  register: cleanup
-  retries: 3 # in case async task is still running, try 3 times
-  delay: 5
-  until: not cleanup|failed
