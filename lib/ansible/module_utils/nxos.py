@@ -348,6 +348,7 @@ class Nxapi:
         """
         commands = to_list(commands)
         self.send_request(commands, output='config')
+        return []
 
 
 def is_json(cmd):
