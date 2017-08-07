@@ -552,7 +552,18 @@ def state_present(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
     for key, value in proposed_commands.items():
-        if key.startswith('maximum-prefix'):
+        if value in ['inherit', 'default']:
+            command = get_default_command(key, value, existing_commands)
+
+            if isinstance(command, str):
+                if command and command not in commands:
+                    commands.append(command)
+            elif isinstance(command, list):
+                for cmd in command:
+                    if cmd not in commands:
+                        commands.append(cmd)
+
+        elif key.startswith('maximum-prefix'):
             command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
             if module.params['max_prefix_threshold']:
                 command += ' {0}'.format(module.params['max_prefix_threshold'])
@@ -566,17 +577,6 @@ def state_present(module, existing, proposed, candidate):
             commands.append(key)
         elif value is False:
             commands.append('no {0}'.format(key))
-        elif value in ['inherit', 'default']:
-            command = get_default_command(key, value, existing_commands)
-
-            if isinstance(command, str):
-                if command and command not in commands:
-                    commands.append(command)
-            elif isinstance(command, list):
-                for cmd in command:
-                    if cmd not in commands:
-                        commands.append(cmd)
-
         elif key == 'address-family':
             commands.append("address-family {0} {1}".format(module.params['afi'], module.params['safi']))
         elif key.startswith('capability additional-paths'):
