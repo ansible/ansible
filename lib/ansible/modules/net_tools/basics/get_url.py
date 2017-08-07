@@ -526,9 +526,10 @@ def main():
             if backup:
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
-            shutil.copyfile(tmpsrc, dest)
+            module.atomic_move(tmpsrc, dest)
         except Exception as e:
-            os.remove(tmpsrc)
+            if os.path.exists(tmpsrc):
+                os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
                              exception=traceback.format_exc())
         changed = True
@@ -541,8 +542,6 @@ def main():
         if checksum != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum))
-
-    os.remove(tmpsrc)
 
     # allow file attribute changes
     module.params['path'] = dest
