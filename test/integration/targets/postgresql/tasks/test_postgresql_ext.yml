@@ -3,6 +3,7 @@
   become: True
   postgresql_ext:
     db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
     state: present
     name: "{{ ext_name }}"
     version: "{{ ext_version }}"
@@ -18,6 +19,7 @@
   become: True
   postgresql_ext:
     db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
     state: present
     name: "{{ ext_name }}"
     version: "{{ ext_version }}"
@@ -54,6 +56,7 @@
   become: True
   postgresql_ext:
     db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
     state: absent
     name: "{{ ext_name }}"
   register: result
@@ -68,6 +71,7 @@
   become: True
   postgresql_ext:
     db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
     state: absent
     name: "{{ ext_name }}"
   register: result
