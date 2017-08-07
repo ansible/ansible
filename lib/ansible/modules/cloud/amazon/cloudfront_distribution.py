@@ -1129,10 +1129,6 @@ class CloudFrontValidationManager(object):
         try:
             distribution_response = None
             streaming_distribution_response = None
-            if alias is not None and (distribution_id is not None or streaming_distribution_id is not None):
-                self.module.fail_json(msg="Both alias and a distribution id have been specified for tagging a resource. Please only specify one.")
-            if distribution_id is not None and streaming_distribution_id is not None:
-                self.module.fail_json(msg="Both distribution_id and streaming_distribution_id have been specified. Please only specify one.")
             if alias is not None:
                 distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
             if distribution_id is not None:
@@ -1217,11 +1213,8 @@ class CloudFrontValidationManager(object):
             self.module.fail_json(msg="Error validating attribute with allowed values - " + str(e) + "\n" + traceback.format_exc())
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
-        try:
-            if attribute is not None and attribute not in allowed_list:
-                self.module.fail_json(msg='The attribute {0} must be one of [{1}]'.format(attribute_name, ' '.join(str(a) for a in allowed_list)))
-        except Exception as e:
-            self.module.fail_json(msg="Error validating attribute with allowed values - " + str(e) + "\n" + traceback.format_exc())
+        if attribute is not None and attribute not in allowed_list:
+            self.module.fail_json(msg='The attribute {0} must be one of [{1}]'.format(attribute_name, ' '.join(str(a) for a in allowed_list)))
 
     def validate_presigned_url_expire_date(self, datetime_string):
         try:
