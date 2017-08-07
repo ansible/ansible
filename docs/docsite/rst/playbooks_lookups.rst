@@ -313,6 +313,12 @@ If you use the context feature when putting your secret, you can get it by passi
       - name: "Test credstash lookup plugin -- get the password with a context defined here"
         debug: msg="{{ lookup('credstash', 'some-password', context=dict(app='my_app', environment='production')) }}"
 
+AWS profiles may also be specified with a ``profile`` parameter::
+
+      ---
+      - name: "Test credstash lookup plugin -- use an AWS profile"
+        debug: msg="{{ lookup('credstash', 'some-password', profile='alternate_profile') }}"
+
 If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 
     debug: msg="Poor man's credstash lookup! {{ lookup('pipe', 'credstash -r us-west-1 get my-other-password') }}"
