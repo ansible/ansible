@@ -139,7 +139,6 @@ def load_config(module, commands, warnings, commit=False, replace=False, comment
             cmd += ' comment {0}'.format(comment)
     else:
         cmd = 'abort'
-        diff = None
 
     rc, out, err = exec_command(module, cmd)
     if rc != 0:
