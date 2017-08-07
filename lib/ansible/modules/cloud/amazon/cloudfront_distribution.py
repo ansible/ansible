@@ -1210,7 +1210,7 @@ class CloudFrontValidationManager(object):
             if not matched_one:
                 self.module.fail_json(msg='The attribute list {0} must be one of [{1}]'.format(attribute_list_name, ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
-            self.module.fail_json(msg="Error validating attribute with allowed values - " + str(e) + "\n" + traceback.format_exc())
+            self.module.fail_json(msg="Error validating attribute list with allowed value list - " + str(e) + "\n" + traceback.format_exc())
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         if attribute is not None and attribute not in allowed_list:
@@ -1243,6 +1243,7 @@ class CloudFrontValidationManager(object):
                     distribution_config = distribution.get(distribution_config_name)
                     if distribution_config is not None and distribution_config.get('CallerReference') == caller_reference:
                         return distribution_id
+
         except Exception as e:
             self.module.fail_json(msg="Error validating (streaming)distribution_id from caller reference - " + str(e) + "\n" + traceback.format_exc())
 
@@ -1395,6 +1396,7 @@ def main():
             ['default_s3_origin_domain_name', 'alias']
         ]
     )
+
     service_mgr = CloudFrontServiceManager(module)
     validation_mgr = CloudFrontValidationManager(module)
 
