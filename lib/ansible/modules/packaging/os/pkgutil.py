@@ -102,7 +102,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def packages_not_installed(module, name):
     # check if each package is installed
-    # and store the ones that aren't in a list
+    # and return list of the ones absent
     pkgs = []
     for pkg in name:
         cmd = ['pkginfo']
@@ -115,7 +115,7 @@ def packages_not_installed(module, name):
     
 def packages_installed(module, name):
     # check if each package is installed
-    # and store the ones that are in a list
+    # and return list of the ones present
     pkgs = []
     for pkg in name:
         cmd = ['pkginfo']
@@ -128,7 +128,7 @@ def packages_installed(module, name):
     
 def packages_not_latest(module, name, site, update_catalog):
     # check status of each package
-    # and store the ones needing an upgrade in a list
+    # and return list of the ones with an upgrade available
     cmd = [ 'pkgutil' ]
     if update_catalog:
         cmd += [ '-U' ]
@@ -140,7 +140,7 @@ def packages_not_latest(module, name, site, update_catalog):
             cmd.append(package)
     rc, out, err = run_command(module, cmd)
     packages = []
-    # find packages in the catalog and not up to date
+    # find packages in the catalog which are not up to date
     for line in out.split('\n')[1:-1]:
         if 'catalog' not in line:
             if 'SAME' not in line:
@@ -220,6 +220,7 @@ def main():
 
     if state in ['installed', 'present']:
         if name != ['*']:
+            # Build list of packages that are actually not installed from the ones requested
             pkgs = packages_not_installed(module, name)
             if pkgs != []:
                 (rc, out, err) = package_install(module, state, pkgs, site, update_catalog, force)
@@ -229,13 +230,16 @@ def main():
                     else:
                         msg = out
                     module.fail_json(msg=msg)
+            # f the package list is empty then all packages are already present
             else:
                 module.exit_json(changed=False)
+        # Fail with an explicit error when trying to "install" '*'
         else:
             module.fail_json(msg="Can not use state: present with name: *")
 
     elif state in ['latest']:
         if name != ['*']:
+            # Build list of packages that are either outdated or not installed
             pkgs = packages_not_installed(module, name)
             pkgs += packages_not_latest(module, name, site, update_catalog)
             if pkgs != []:
@@ -246,11 +250,16 @@ def main():
                     else:
                         msg = out
                     module.fail_json(msg=msg)
+            # If the package list is empty that means all packages are installed and up to date
             else:
                 module.exit_json(changed=False)
+        # When using latest for *
         else:
+            # Check for packages that are actually outdated
             pkgs = packages_not_latest(module, name, site, update_catalog)
             if pkgs != []:
+                # If there are packages to update, just empty the list and run the command without it
+                # pkgutil logic is to update all when run without packages names
                 pkgs == []
                 (rc, out, err) = package_upgrade(module, pkgs, site, update_catalog, force)
                 if rc != 0:
@@ -259,11 +268,13 @@ def main():
                     else:
                         msg = out
                     module.fail_json(msg=msg)
+            # If the package list comes up empty, everything is already up to date
             else:
                 module.exit_json(changed=False)
         
 
     elif state in ['absent', 'removed']:
+        # Build list of packages requested for removal that are actually present
         pkgs = packages_installed(module, name)
         if pkgs != []:
             (rc, out, err) = package_uninstall(module, pkgs)
@@ -273,11 +284,12 @@ def main():
                 else:
                     msg = out
                 module.fail_json(msg=msg)
+        # If the list is empty, no packages need to be removed
         else:
             module.exit_json(changed=False)
 
     if rc is None:
-        # pkgutil was not executed because the package was already present/absent
+        # pkgutil was not executed because the package was already present/absent/up to date
         result['changed'] = False
     elif rc == 0:
         result['changed'] = True
