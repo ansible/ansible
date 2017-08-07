@@ -168,11 +168,19 @@ If (Test-Path -Path $path)
         $result.stat.size = $info.Length
 
         If ($get_md5) {
-            $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
+            try {
+                $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
+            } catch {
+                Fail-Json -obj $result -message "failed to get MD5 hash of file, set get_md5 to False to ignore this error: $($_.Exception.Message)"
+            }
         }
 
         If ($get_checksum) {
-            $result.stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+            try {
+                $result.stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+            } catch {
+                Fail-Json -obj $result -message "failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)"
+            }
         }
     }
 }
