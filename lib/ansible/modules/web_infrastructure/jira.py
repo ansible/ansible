@@ -31,7 +31,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit, fetch, transition ]
+    choices: [ create, comment, edit, fetch, transition , link ]
     description:
       - The operation to perform.
 
@@ -201,13 +201,15 @@ EXAMPLES = """
     name: '{{ issue.meta.fields.creator.name }}'
     comment: '{{ issue.meta.fields.creator.displayName }}'
 
+# You can get list of valid linktypes at /rest/api/2/issueLinkType
+# url of your jira installation.
 - name: Create link from HSP-1 to MKY-1
   jira:
     uri: '{{ server }}'
     username: '{{ user }}'
     password: '{{ pass }}'
     operation: link
-    linktype: Relate
+    linktype: Relates
     inwardissue: HSP-1
     outwardissue: MKY-1
 
