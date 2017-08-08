@@ -56,6 +56,8 @@ options:
             CA certificate store is used. Default value is set by I(OVIRT_CAFILE) environment variable."
             - "C(kerberos) - A boolean flag indicating if Kerberos authentication
             should be used instead of the default basic authentication."
+            - "C(filter) - A boolean flag that indicates if a 'Filter: true' http header
+            should be added to each API call."
     timeout:
         description:
             - "The amount of time in seconds the module should wait for the instance to
