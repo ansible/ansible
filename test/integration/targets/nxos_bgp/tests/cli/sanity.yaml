@@ -1,8 +1,11 @@
 ---
 - debug: msg="START TRANSPORT:CLI nxos_bgp sanity test"
 
-- set_fact: suppress_fib_pending="true"
-  when: (titanium is defined) and ((titanium | search('true')) != 'true')
+- set_fact: log_neighbor_changes="true"
+  when: (titanium is defined) and not ((titanium | search('true')))
+
+- set_fact: reconnect_interval="55"
+  when: (titanium is defined) and not ((titanium | search('true')))
 
 - name: "Enable feature BGP"
   nxos_feature: 
@@ -73,10 +76,10 @@
       graceful_restart_timers_restart: 130
       graceful_restart_timers_stalepath_time: 310
       isolate: false
-      log_neighbor_changes: true
+      log_neighbor_changes: "{{log_neighbor_changes|default(omit)}}"
       maxas_limit: 50
       neighbor_down_fib_accelerate: true
-      reconnect_interval: 55
+      reconnect_interval: "{{reconnect_interval|default(omit)}}"
       shutdown: true
       timer_bestpath_limit: 255
       timer_bgp_hold: 110
@@ -85,7 +88,7 @@
       event_history_detail: size_large
       event_history_events: size_medium
       event_history_periodic: size_small
-      suppress_fib_pending: "{{suppress_fib_pending|default(omit)}}"
+      suppress_fib_pending: true
       state: present
       provider: "{{ cli }}"
     register: result
