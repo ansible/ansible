@@ -215,7 +215,10 @@ def main():
 
     commands = []
     if state == 'absent':
-        if vtp_password is not None:
+        # if vtp_password is not set, some devices returns '\\'
+        if not existing['vtp_password'] or existing['vtp_password'] == '\\':
+            pass
+        elif vtp_password is not None:
             if existing['vtp_password'] == proposed['vtp_password']:
                 commands.append(['no vtp password'])
             else:
