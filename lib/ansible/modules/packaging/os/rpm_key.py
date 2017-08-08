@@ -113,13 +113,13 @@ class RpmKey(object):
             else:
                 if not keyfile:
                     self.module.fail_json(msg="When importing a key, a valid file must be given")
-                self.import_key(keyfile, dryrun=module.check_mode)
+                self.import_key(keyfile)
                 if should_cleanup_keyfile:
                     self.module.cleanup(keyfile)
                 module.exit_json(changed=True)
         else:
             if self.is_key_imported(keyid):
-                self.drop_key(keyid, dryrun=module.check_mode)
+                self.drop_key(keyid)
                 module.exit_json(changed=True)
             else:
                 module.exit_json(changed=False)
@@ -134,6 +134,7 @@ class RpmKey(object):
         if not is_pubkey(key):
             self.module.fail_json(msg="Not a public key: %s" % url)
         tmpfd, tmpname = tempfile.mkstemp()
+        self.module.add_cleanup_file(tmpname)
         tmpfile = os.fdopen(tmpfd, "w+b")
         tmpfile.write(key)
         tmpfile.close()
@@ -176,13 +177,13 @@ class RpmKey(object):
                     return True
         return False
 
-    def import_key(self, keyfile, dryrun=False):
-        if not dryrun:
+    def import_key(self, keyfile):
+        if not self.module.check_mode:
             self.execute_command([self.rpm, '--import', keyfile])
 
-    def drop_key(self, key, dryrun=False):
-        if not dryrun:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % key])
+    def drop_key(self, keyid):
+        if not self.module.check_mode:
+            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[8:].lower()])
 
 
 def main():
