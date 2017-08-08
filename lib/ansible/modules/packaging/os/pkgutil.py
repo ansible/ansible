@@ -112,7 +112,7 @@ def packages_not_installed(module, name):
         if rc != 0:
             pkgs += [ pkg ]
     return pkgs
-    
+
 def packages_installed(module, name):
     # check if each package is installed
     # and return list of the ones present
@@ -125,7 +125,7 @@ def packages_installed(module, name):
         if rc == 0 and 'CSW' in pkg:
             pkgs += [ pkg ]
     return pkgs
-    
+
 def packages_not_latest(module, name, site, update_catalog):
     # check status of each package
     # and return list of the ones with an upgrade available
@@ -271,7 +271,6 @@ def main():
             # If the package list comes up empty, everything is already up to date
             else:
                 module.exit_json(changed=False)
-        
 
     elif state in ['absent', 'removed']:
         # Build list of packages requested for removal that are actually present
