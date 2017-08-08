@@ -30,6 +30,16 @@ def get_db_instance(conn, instancename):
             raise
 
 
+def rds_instance_to_facts(instance):
+    d = camel_dict_to_snake_dict(instance)
+    d.update({
+        'id': instance.get('DBInstanceIdentifier'),
+        'instance_id': instance.get('DBInstanceIdentifier'),
+        'create_time': instance.get('InstanceCreateTime', ''),
+    })
+    return d
+
+
 def get_db_snapshot(conn, snapshotid):
     try:
         response = conn.describe_db_snapshots(DBSnapshotIdentifier=snapshotid)
@@ -101,6 +111,20 @@ class RDSDBInstance(object):
 
     def __ne__(self, other):
         return not self == other
+
+
+def rds_snap_to_facts(snapshot):
+    d = camel_dict_to_snake_dict(snapshot)
+    d.update({
+        'id': snapshot.get('DBSnapshotIdentifier'),
+        'instance_id': snapshot.get('DBInstanceIdentifier'),
+        'create_time': snapshot.get('SnapshotCreateTime', ''),
+    })
+    return d
+
+
+def rds_facts_diff():
+    pass
 
 
 class RDSSnapshot(object):

@@ -19,7 +19,7 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
-from ansible.module_utils.aws.core import get_db_instance, rds_instance_to_facts, rds_snapshot_to_facts, rds_facts_diff
+from ansible.module_utils.aws.rds import get_db_instance, rds_instance_to_facts, rds_snap_to_facts, rds_facts_diff
 import unittest
 
 
@@ -27,11 +27,11 @@ class FakeResource():
 
     def describe_db_instances(DBInstanceIdentifier=None):
         assert DBInstanceIdentifier == "fakeDBIDstring", "no RDS instance identifier"
-        return
+        return {}
 
     def describe_db_snapshot(DBSnapshotIdentifier=None):
         assert DBSnapshotIdentifier == "fakeSnapshotIDstring", "no RDS snapshot identifier"
-        return
+        return {}
 
 
 class RDSUtilsTestCase(unittest.TestCase):
@@ -45,19 +45,24 @@ class RDSUtilsTestCase(unittest.TestCase):
     def test_get_db_snapshot_should_return_camel_dict(self):
         conn = FakeResource()
         db_snap = get_db_instance(conn, "fakeDBIDstring")
-        assert id not in db_snap
+        for i in "id", "wait", "wait_timeout":
+            assert i not in db_snap
         assert db_snap["DBSnapshotIdentifier"] == "fakeSnapshotIDstring"
 
     def test_instance_facts_gives_sensible_values(self):
         conn = FakeResource()
         db_facts = rds_instance_to_facts(get_db_instance(conn, "fakeDBIDstring"))
         assert db_facts['id'] == "fakeDBIDstring"
+        assert db_facts['size'] == "fakeSnapshotIDString"
+        assert db_facts['region'] == "fakeawsregion"
+        assert db_facts['port'] == "3210"
 
     def test_snapshot_facts_gives_sensible_values(self):
         conn = FakeResource()
-        db_facts = rds_snapshot_to_facts(get_db_instance(conn, "fakeDBIDstring"))
+        db_facts = rds_snap_to_facts(get_db_instance(conn, "fakeDBIDstring"))
         assert id in db_facts
         assert db_facts['id'] == "fakeSnapshotIDString"
+        assert db_facts['instance_id'] == "fakeBackedUpIDString"
 
     def test_diff_should_compare_important_rds_attributes(self):
         conn = FakeResource()
