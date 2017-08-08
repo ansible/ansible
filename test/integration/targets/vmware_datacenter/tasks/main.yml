@@ -27,6 +27,12 @@
 
 - debug: var=vcsim
 
+- name: Wait for vcsim controller to come online {{ vcsim }}
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
 - name: kill vcsim
   uri:
     url: "{{ 'http://' + vcsim + ':5000/killall' }}"
@@ -35,6 +41,12 @@
   uri:
     url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
   register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
 - name: get a list of Datacenter from vcsim
   uri:
