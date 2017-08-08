@@ -591,7 +591,7 @@ def main():
     sql_log_bin = module.params["sql_log_bin"]
 
     if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+        module.fail_json(msg="The MySQL-python module is required.")
 
     cursor = None
     try:
