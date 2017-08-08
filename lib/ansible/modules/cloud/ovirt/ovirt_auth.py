@@ -90,6 +90,7 @@ options:
         description:
             - "A boolean flag that indicates if a 'Filter: true' http header
                should be added to each API call."
+        version_added: "2.4"
 
 requirements:
   - python >= 2.7
@@ -176,7 +177,7 @@ ovirt_auth:
             type: bool
             sample: False
         filter:
-            description: Flag indicating if 'Filter: true' http header is added to each API call.
+            description: Flag indicating if a Filter http header should be added to each API call.
             returned: success
             type: bool
             sample: False
