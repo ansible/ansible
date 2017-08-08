@@ -38,11 +38,9 @@ options:
   instance_name:
     description:
       - Database instance identifier. Required when state is present
-    required: false
   wait:
     description:
       - Whether or not to wait for snapshot creation or deletion
-    required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -52,8 +50,6 @@ options:
   tags:
     description:
       - tags dict to apply to a snapshot.
-    required: false
-    default: null
 requirements:
     - "python >= 2.6"
     - "boto3"
@@ -86,12 +82,16 @@ snapshot:
   type: dict
 '''
 
-import botocore
+try:
+    import botocore
+except ImportError:
+    pass  # protected by AnsibleAWSModule
+
 import time
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 from ansible.module_utils.aws.rds import RDSSnapshot, get_db_snapshot
 
 # FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
@@ -105,9 +105,7 @@ def await_resource(conn, resource, status, module):
             module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
         # Temporary until all the rds2 commands have their responses parsed
         if resource.name is None:
-            module.fail_json(
-                msg="There was a problem waiting for RDS snapshot %s" %
-                resource.snapshot)
+            module.fail_json(msg="Failed waiting for RDS snapshot %s" % resource.snapshot)
         resource = get_db_snapshot(conn, resource.name)
     return resource
 
@@ -123,7 +121,7 @@ def delete_snapshot(module, conn):
     try:
         result = conn.delete_db_snapshot(DBSnapshotIdentifier=snapshot)
     except Exception as e:
-        module.fail_json(msg="Failed to delete snapshot: %s" % e.message)
+        module.fail_json_aws(e, msg="trying to delete snapshot")
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
@@ -136,7 +134,7 @@ def delete_snapshot(module, conn):
         if e.response['Error']['Code'] == 'DBSnapshotNotFound':
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json_aws(e, "awaiting snapshot deletion")
 
 
 def create_snapshot(module, conn):
@@ -153,7 +151,7 @@ def create_snapshot(module, conn):
             snapshot = RDSSnapshot(resource['DBSnapshot'])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json_aws(e, msg="trying to create db snapshot")
 
     if module.params.get('wait'):
         snapshot = await_resource(conn, snapshot, 'available', module)
@@ -164,20 +162,15 @@ def create_snapshot(module, conn):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
+    module = AnsibleAWSModule(
+        argument_spec=dict(
             state=dict(choices=['present', 'absent'], default='present'),
             snapshot=dict(required=True),
             instance_name=dict(),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='int', default=300),
-            tags=dict(type='dict', required=False),
+            tags=dict(type='dict'),
         )
-    )
-
-    module = AnsibleModule(
-        argument_spec=argument_spec,
     )
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -185,7 +178,10 @@ def main():
         module.fail_json(msg="Region not specified. Unable to determine region from EC2_REGION.")
 
     # connect to the rds endpoint
-    conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
+    try:
+        conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
+    except Exception as e:
+        module.fail_json_aws(e, msg="trying to create db snapshot")
 
     if module.params['state'] == 'absent':
         delete_snapshot(module, conn)
