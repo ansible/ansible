@@ -4,7 +4,7 @@
     name: FailRight
     users: Administrator
   register: fail_invalid_right
-  failed_when: fail_invalid_right.msg != 'Failed to modify right FailRight, invalid right name'
+  failed_when: fail_invalid_right.msg != 'the specified right FailRight is not a valid right'
 
 - name: fail with invalid username
   win_user_right:

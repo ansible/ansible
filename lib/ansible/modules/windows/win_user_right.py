@@ -42,7 +42,7 @@ options:
     description:
     - The name of the User Right as shown by the C(Constant Name) value from
       U(https://technet.microsoft.com/en-us/library/dd349804.aspx).
-    - If this right is not a valid entry then the module will return an error.
+    - The module will return an error if the right is invalid.
     required: True
   users:
     description:
@@ -100,33 +100,10 @@ added:
   returned: success
   type: list
   sample: ["NT AUTHORITY\\SYSTEM", "DOMAIN\\User"]
-import_log:
-  description: The log of the SecEdit.exe /configure job that configured the
-    user rights. This is used for debugging purposes on failures.
-  returned: change occurred
-  type: string
-  sample: Completed 6 percent (0/15) \tProcess Privilege Rights area.
-rc:
-  description: The return code after a failure when running SecEdit.exe.
-  returned: failure with secedit calls
-  type: int
-  sample: -1
 removed:
   description: A list of accounts that were removed from the right, this is
     empty if no accounts were removed.
   returned: success
   type: list
   sample: ["SERVERNAME\\Administrator", "BUILTIN\\Administrators"]
-stderr:
-  description: The output of the STDERR buffer after a failure when running
-    SecEdit.exe.
-  returned: failure with secedit calls
-  type: string
-  sample: failed to import security policy
-stdout:
-  description: The output of the STDOUT buffer after a failure when running
-    SecEdit.exe.
-  returned: failure with secedit calls
-  type: string
-  sample: check log for error details
 '''

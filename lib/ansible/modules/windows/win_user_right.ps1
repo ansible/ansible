@@ -1,24 +1,10 @@
 #!powershell
 # This file is part of Ansible
-#
-# Copyright 2017, Jordan Borean <jborean93@gmail.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
 $ErrorActionPreference = 'Stop'
 
 $params = Parse-Args $args -supports_check_mode $true
@@ -39,11 +25,248 @@ if ($diff_mode) {
     $result.diff = @{}
 }
 
+Add-Type -TypeDefinition @"
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+
+namespace Ansible
+{
+    public class LsaRightHelper : IDisposable
+    {
+        // Code modified from https://gallery.technet.microsoft.com/scriptcenter/Grant-Revoke-Query-user-26e259b0
+
+        enum Access : int
+        {
+            POLICY_READ = 0x20006,
+            POLICY_ALL_ACCESS = 0x00F0FFF,
+            POLICY_EXECUTE = 0X20801,
+            POLICY_WRITE = 0X207F8
+        }
+
+        IntPtr lsaHandle;
+
+        const string LSA_DLL = "advapi32.dll";
+        const CharSet DEFAULT_CHAR_SET = CharSet.Unicode;
+
+        const uint STATUS_NO_MORE_ENTRIES = 0x8000001a;
+        const uint STATUS_NO_SUCH_PRIVILEGE = 0xc0000060;
+
+        internal sealed class Sid : IDisposable
+        {
+            public IntPtr pSid = IntPtr.Zero;
+            public SecurityIdentifier sid = null;
+
+            public Sid(string sidString)
+            {
+                try
+                {
+                    sid = new SecurityIdentifier(sidString);
+                } catch
+                {
+                    throw new ArgumentException(String.Format("SID string {0} could not be converted to SecurityIdentifier", sidString));
+                }                    
+
+                Byte[] buffer = new Byte[sid.BinaryLength];
+                sid.GetBinaryForm(buffer, 0);
+
+                pSid = Marshal.AllocHGlobal(sid.BinaryLength);
+                Marshal.Copy(buffer, 0, pSid, sid.BinaryLength);
+            }
+
+            public void Dispose()
+            {
+                if (pSid != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(pSid);
+                    pSid = IntPtr.Zero;
+                }
+                GC.SuppressFinalize(this);
+            }
+            ~Sid() { Dispose(); }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct LSA_OBJECT_ATTRIBUTES
+        {
+            public int Length;
+            public IntPtr RootDirectory;
+            public IntPtr ObjectName;
+            public int Attributes;
+            public IntPtr SecurityDescriptor;
+            public IntPtr SecurityQualityOfService;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = DEFAULT_CHAR_SET)]
+        private struct LSA_UNICODE_STRING
+        {
+            public ushort Length;
+            public ushort MaximumLength;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string Buffer;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct LSA_ENUMERATION_INFORMATION
+        {
+            public IntPtr Sid;
+        }
+
+        [DllImport(LSA_DLL, CharSet = DEFAULT_CHAR_SET, SetLastError = true)]
+        private static extern uint LsaOpenPolicy(
+            LSA_UNICODE_STRING[] SystemName,
+            ref LSA_OBJECT_ATTRIBUTES ObjectAttributes,
+            int AccessMask,
+            out IntPtr PolicyHandle
+        );
+
+        [DllImport(LSA_DLL, CharSet = DEFAULT_CHAR_SET, SetLastError = true)]
+        private static extern uint LsaAddAccountRights(
+            IntPtr PolicyHandle,
+            IntPtr pSID,
+            LSA_UNICODE_STRING[] UserRights,
+            int CountOfRights
+        );
+
+        [DllImport(LSA_DLL, CharSet = DEFAULT_CHAR_SET, SetLastError = true)]
+        private static extern uint LsaRemoveAccountRights(
+            IntPtr PolicyHandle,
+            IntPtr pSID,
+            bool AllRights,
+            LSA_UNICODE_STRING[] UserRights,
+            int CountOfRights
+        );
+
+        [DllImport(LSA_DLL, CharSet = DEFAULT_CHAR_SET, SetLastError = true)]
+        private static extern uint LsaEnumerateAccountsWithUserRight(
+            IntPtr PolicyHandle,
+            LSA_UNICODE_STRING[] UserRights,
+            out IntPtr EnumerationBuffer,
+            out ulong CountReturned
+        );
+
+        [DllImport(LSA_DLL)]
+        private static extern int LsaNtStatusToWinError(int NTSTATUS);
+
+        [DllImport(LSA_DLL)]
+        private static extern int LsaClose(IntPtr PolicyHandle);
+
+        [DllImport(LSA_DLL)]
+        private static extern int LsaFreeMemory(IntPtr Buffer);
+
+        public LsaRightHelper()
+        {
+            LSA_OBJECT_ATTRIBUTES lsaAttr;
+            lsaAttr.RootDirectory = IntPtr.Zero;
+            lsaAttr.ObjectName = IntPtr.Zero;
+            lsaAttr.Attributes = 0;
+            lsaAttr.SecurityDescriptor = IntPtr.Zero;
+            lsaAttr.SecurityQualityOfService = IntPtr.Zero;
+            lsaAttr.Length = Marshal.SizeOf(typeof(LSA_OBJECT_ATTRIBUTES));
+
+            lsaHandle = IntPtr.Zero;
+
+            LSA_UNICODE_STRING[] system = new LSA_UNICODE_STRING[1];
+            system[0] = InitLsaString("");
+
+            uint ret = LsaOpenPolicy(system, ref lsaAttr, (int)Access.POLICY_ALL_ACCESS, out lsaHandle);
+            if (ret != 0)
+                throw new Win32Exception(LsaNtStatusToWinError((int)ret));
+        }
+
+        public void AddPrivilege(string sidString, string privilege)
+        {
+            uint ret = 0;
+            using (Sid sid = new Sid(sidString))
+            {
+                LSA_UNICODE_STRING[] privileges = new LSA_UNICODE_STRING[1];
+                privileges[0] = InitLsaString(privilege);
+                ret = LsaAddAccountRights(lsaHandle, sid.pSid, privileges, 1);
+            }
+            if (ret != 0)
+                throw new Win32Exception(LsaNtStatusToWinError((int)ret));
+        }
+
+        public void RemovePrivilege(string sidString, string privilege)
+        {
+            uint ret = 0;
+            using (Sid sid = new Sid(sidString))
+            {
+                LSA_UNICODE_STRING[] privileges = new LSA_UNICODE_STRING[1];
+                privileges[0] = InitLsaString(privilege);
+                ret = LsaRemoveAccountRights(lsaHandle, sid.pSid, false, privileges, 1);
+            }
+            if (ret != 0)
+                throw new Win32Exception(LsaNtStatusToWinError((int)ret));
+        }
+
+        public string[] EnumerateAccountsWithUserRight(string privilege)
+        {
+            uint ret = 0;
+            ulong count = 0;
+            LSA_UNICODE_STRING[] rights = new LSA_UNICODE_STRING[1];
+            rights[0] = InitLsaString(privilege);
+            IntPtr buffer = IntPtr.Zero;
+
+            ret = LsaEnumerateAccountsWithUserRight(lsaHandle, rights, out buffer, out count);
+            switch (ret)
+            {
+                case 0:
+                    string[] accounts = new string[count];
+                    for (int i = 0; i < (int)count; i++)
+                    {
+                        LSA_ENUMERATION_INFORMATION LsaInfo = (LSA_ENUMERATION_INFORMATION)Marshal.PtrToStructure(
+                            IntPtr.Add(buffer, i * Marshal.SizeOf(typeof(LSA_ENUMERATION_INFORMATION))),
+                            typeof(LSA_ENUMERATION_INFORMATION));
+
+                        accounts[i] = new SecurityIdentifier(LsaInfo.Sid).ToString();
+                    }
+                    LsaFreeMemory(buffer);
+                    return accounts;
+
+                case STATUS_NO_MORE_ENTRIES:
+                    return new string[0];
+
+                case STATUS_NO_SUCH_PRIVILEGE:
+                    throw new ArgumentException(String.Format("Invalid privilege {0} not found in LSA database", privilege));
+
+                default:
+                    throw new Win32Exception(LsaNtStatusToWinError((int)ret));
+            }
+        }
+
+        static LSA_UNICODE_STRING InitLsaString(string s)
+        {
+            // Unicode strings max. 32KB
+            if (s.Length > 0x7ffe)
+                throw new ArgumentException("String too long");
+
+            LSA_UNICODE_STRING lus = new LSA_UNICODE_STRING();
+            lus.Buffer = s;
+            lus.Length = (ushort)(s.Length * sizeof(char));
+            lus.MaximumLength = (ushort)(lus.Length + sizeof(char));
+
+            return lus;
+        }
+
+        public void Dispose()
+        {
+            if (lsaHandle != IntPtr.Zero)
+            {
+                LsaClose(lsaHandle);
+                lsaHandle = IntPtr.Zero;
+            }
+            GC.SuppressFinalize(this);
+        }
+        ~LsaRightHelper() { Dispose(); }
+    }
+}
+"@
+
 Function Get-Username($sid) {
     # converts the SID (if it is one) to a username
-    # this sid is in the form exported by the SecEdit ini file (*S-.-..)
 
-    $sid = $sid.substring(1)
     $object = New-Object System.Security.Principal.SecurityIdentifier($sid)
     $user = $object.Translate([System.Security.Principal.NTAccount])
     return $user.Value
@@ -113,124 +336,6 @@ Function Get-SID($account_name) {
     return $account_sid.Value
 }
 
-Function Run-SecEdit($arguments) {
-    $rc = $null
-    $stdout = $null
-    $stderr = $null
-    $log_path = [IO.Path]::GetTempFileName()
-    $arguments = $arguments + @("/log", $log_path, "/areas", "USER_RIGHTS")
-
-    try {
-        $stdout = &SecEdit.exe $arguments | Out-String
-    } catch {
-        $stderr = $_.Exception.Message
-    }
-    $log = Get-Content -Path $log_path
-    Remove-Item -Path $log_path -Force
-
-    $return = @{
-        log = ($log -join "`n").Trim()
-        stdout = $stdout
-        stderr = $stderr
-        rc = $LASTEXITCODE
-    }
-
-    return $return
-}
-
-Function Export-SecEdit() {
-    $secedit_ini_path = [IO.Path]::GetTempFileName()
-    # while this will technically make a change to the system in check mode by
-    # creating a new file, we need these values to be able to do anything
-    # substantial in check mode
-    $export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
-
-    # check the return code and if the file has been populated, otherwise error out
-    if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
-        Remove-Item -Path $secedit_ini_path -Force
-        $result.rc = $export_result.rc
-        $result.stdout = $export_result.stdout
-        $result.stderr = $export_result.stderr
-        Fail-Json $result "Failed to export secedit.ini file to $($secedit_ini_path)"
-    }
-    $secedit_ini = ConvertFrom-Ini -file_path $secedit_ini_path
-
-    return $secedit_ini
-}
-
-Function Import-SecEdit($ini) {
-    $secedit_ini_path = [IO.Path]::GetTempFileName()
-    $secedit_db_path = [IO.Path]::GetTempFileName()
-    Remove-Item -Path $secedit_db_path -Force # needs to be deleted for SecEdit.exe /import to work
-
-    $ini_contents = ConvertTo-Ini -ini $ini
-    Set-Content -Path $secedit_ini_path -Value $ini_contents
-
-    $import_result = Run-SecEdit -arguments @("/configure", "/db", $secedit_db_path, "/cfg", $secedit_ini_path, "/quiet")
-    $result.import_log = $import_result.log
-    Remove-Item -Path $secedit_ini_path -Force
-    if ($import_result.rc -ne 0) {
-        $result.rc = $import_result.rc
-        $result.stdout = $import_result.stdout
-        $result.stderr = $import_result.stderr
-        Fail-Json $result "Failed to import secedit.ini file from $($secedit_ini_path)"
-    }
-}
-
-Function ConvertTo-Ini($ini) {
-    $content = @()
-    foreach ($key in $ini.GetEnumerator()) {
-        $section = $key.Name
-        $values = $key.Value
-
-        $content += "[$section]"
-        foreach ($value in $values.GetEnumerator()) {
-            $value_key = $value.Name
-            $value_value = $value.Value
-
-            $content += "$value_key = $value_value"
-        }
-    }
-
-    return $content -join "`r`n"
-}
-
-Function ConvertFrom-Ini($file_path) {
-    $ini = @{}
-    $contents = Get-Content -Path $file_path -Encoding Unicode
-    foreach ($line in $contents) {
-        switch -Regex ($line) {
-            "^\[(.+)\]" {
-                $section = $matches[1]
-                $ini.$section = @{}
-            }
-            "(.+?)\s*=(.*)" {
-                $name = $matches[1].Trim()
-                $value = $matches[2].Trim()
-                $ini.$section.$name = $value
-            }
-        }
-    }
-
-    return $ini
-}
-
-Function Get-ExistingUsers($secedit_right_entry, $right) {
-    $existing_users = @()
-    if ($secedit_right_entry.ContainsKey($right)) {
-        foreach ($existing_user in ($secedit_right_entry.$right -split ",")) {
-            if ($existing_user.StartsWith("*S")) {
-                $existing_users += $existing_user
-            } else {
-                $user_sid = Get-SID -account_name $existing_user
-                $existing_users += "*$user_sid"
-            }
-        }
-    }
-    
-    return ,$existing_users
-}
-
 Function Compare-UserList($existing_users, $new_users) {  
     $added_users = [String[]]@()
     $removed_users = [String[]]@()
@@ -251,66 +356,57 @@ Function Compare-UserList($existing_users, $new_users) {
     return $change_result
 }
 
-$ini_right_key = "Privilege Rights"
+# C# class we can use to enumerate/add/remove rights
+$lsa_helper = New-Object -TypeName Ansible.LsaRightHelper
 
 $new_users = [System.Collections.ArrayList]@()
 foreach ($user in $users) {
-    $new_users.Add("*$(Get-SID -account_name $user)")
+    $new_users.Add((Get-SID -account_name $user))
 }
 $new_users = [String[]]$new_users.ToArray()
+try {
+    $existing_users = $lsa_helper.EnumerateAccountsWithUserRight($name)
+} catch [ArgumentException] {
+    Fail-Json -obj $result -message "the specified right $name is not a valid right"
+} catch {
+    Fail-Json -obj $result -message "failed to enumerate existing accounts with right: $($_.Exception.Message)"
+}
 
-$secedit_ini = Export-SecEdit
-$existing_users = [String[]](Get-ExistingUsers -secedit_right_entry $secedit_ini.$ini_right_key -right $name)
-$change_result = Compare-UserList -existing_users $existing_users -new_users $new_users
-
+$change_result = Compare-UserList -existing_users $existing_users -new_user $new_users
 if (($change_result.added.Length -gt 0) -or ($change_result.removed.Length -gt 0)) {
+    $result.changed = $true
     $diff_text = "[$name]`n"
 
+    # used in diff mode calculation
     $new_user_list = [System.Collections.ArrayList]$existing_users
     foreach ($user in $change_result.removed) {
+        if (-not $check_mode) {
+            $lsa_helper.RemovePrivilege($user, $name)
+        }
         $user_name = Get-Username -sid $user
         $result.removed += $user_name
         $diff_text += "-$user_name`n"
         $new_user_list.Remove($user)
     }
     foreach ($user in $change_result.added) {
+        if (-not $check_mode) {
+            $lsa_helper.AddPrivilege($user, $name)
+        }
         $user_name = Get-Username -sid $user
         $result.added += $user_name
         $diff_text += "+$user_name`n"
         $new_user_list.Add($user)
     }
     
-    if ($new_user_list.Count -eq 0) {
-        $diff_text = "-$diff_text"
-        $secedit_ini.$ini_right_key.$name = $null
-    } else {
-        if ($existing_users.Count -eq 0) {
-            $diff_text = "+$diff_text"
-        }
-        $secedit_ini.$ini_right_key.$name = $new_user_list -join ","
-    }
-
-    $result.changed = $true
     if ($diff_mode) {
-        $result.diff.prepared = $diff_text
-    }
-    if (-not $check_mode) {
-        Import-SecEdit -ini $secedit_ini
-
-        # verify the changes were applied successfully
-        $secedit_ini = Export-SecEdit
-        if ($secedit_ini.$ini_right_key.ContainsKey($name)) {
-            $existing_users = [String[]] (Get-ExistingUsers -secedit_right_entry $secedit_ini.$ini_right_key -right $name)
-            $change_result = Compare-UserList -existing_users $existing_users -new_users $new_users
-
-            if (($change_result.added.Length -gt 0) -or ($change_result.removed.Length -gt 0)) {
-                Fail-Json $result "Failed to modify right $name, right membership does not match expected membership"
-            }
+        if ($new_user_list.Count -eq 0) {
+            $diff_text = "-$diff_text"
         } else {
-            if ($new_user_list.Count -gt 0) {
-                Fail-Json $result "Failed to modify right $name, invalid right name"
+            if ($existing_users.Count -eq 0) {
+                $diff_text = "+$diff_text"
             }
         }
+        $result.diff.prepared = $diff_text
     }
 }
 
