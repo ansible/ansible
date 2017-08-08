@@ -212,7 +212,7 @@ class AnsibleEnvironment(Environment):
     values for the Template and Context classes used by jinja2 internally.
     '''
     context_class = AnsibleContext
-    template_class = AnsibleJ2Template
+    # template_class = AnsibleJ2Template
 
 
 class Templar:
