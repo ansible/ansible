@@ -199,7 +199,8 @@ def main():
         result['session_name'] = response.get('session')
         result['changed'] = True
 
-    check_declarative_intent_params(module)
+    if result['changed'] == True:
+        check_declarative_intent_params(module)
 
     module.exit_json(**result)
 
