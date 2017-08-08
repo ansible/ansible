@@ -329,9 +329,11 @@ state:
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule
-    from azure.mgmt.network.models.network_management_client_enums import (SecurityRuleAccess,
-                                                                           SecurityRuleDirection,
-                                                                           SecurityRuleProtocol)
+    from azure.mgmt.network.models import (
+        SecurityRuleAccess,
+        SecurityRuleDirection,
+        SecurityRuleProtocol
+    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
