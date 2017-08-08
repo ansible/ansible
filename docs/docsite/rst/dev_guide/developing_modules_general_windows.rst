@@ -47,7 +47,7 @@ A very basic powershell module template can be found found below:
 
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-    #Requires -Module Ansible.ModuleUtils.Legacy
+    #Requires -Module Ansible.ModuleUtils.Legacy.psm1
 
     $ErrorActionPreference = 'Stop'
 
@@ -129,12 +129,12 @@ extremely useful when developing a new module or looking at bug fixes. These
 are some steps that need to be followed to set this up.
 
 - Copy the module script to the Windows server
-- Copy ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.PowerShellLegacy.psm1`` to the same directory as the script above
+- Copy ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1`` to the same directory as the script above
 - To stop the script from exiting the editor on a successful run, in ``Ansible.ModuleUtils.Legacy.psm1`` under the function ``Exit-Json``, replace the last two lines of the function with::
 
     ConvertTo-Json -InputObject $obj -Depth 99
 
-- To stop the script from exiting the editor on a failed run, in ``Ansible.ModuleUtils.PowerShellLegacy.psm1`` under the function ``Fail-Json``, replace the last two lines of the function with::
+- To stop the script from exiting the editor on a failed run, in ``Ansible.ModuleUtils.Legacy.psm1`` under the function ``Fail-Json``, replace the last two lines of the function with::
 
     Write-Error -Message (ConvertTo-Json -InputObject $obj -Depth 99)
 
@@ -148,7 +148,7 @@ are some steps that need to be followed to set this up.
         "state" = "present"
     }
 
-    Import-Module -Name .\Ansible.ModuleUtils.PowershellLegacy.psm1
+    Import-Module -Name .\Ansible.ModuleUtils.Legacy.psm1
     ### end setup code
 
 You can add more args to ``$complex_args`` as required by the module. The
