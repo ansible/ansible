@@ -1,22 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2017 Marc Sensenich <hello@marc-sensenich.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# (c) 2017, Marc Sensenich <hello@marc-sensenich.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function) 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'status': ['preview'],
@@ -211,8 +200,7 @@ def build_section(section):
     return section_payload
 
 
-def build_payload_for_connector_card(module, summary, color,
-                                     title, text, actions, sections):
+def build_payload_for_connector_card(module, summary, color, title, text, actions, sections):
     payload = dict()
     payload['@context'] = OFFICE_365_CARD_CONTEXT
     payload['@type'] = OFFICE_365_CARD_TYPE
@@ -264,11 +252,11 @@ def do_notify_connector_card_webhook(module, webhook, payload):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            webhook=dict(type='str', required=True, no_log=True),
-            summary=dict(type='str'),
-            color=dict(type='str'),
-            title=dict(type='str'),
-            text=dict(type='str'),
+            webhook=dict(required=True, no_log=True),
+            summary=dict(),
+            color=dict(),
+            title=dict(),
+            text=dict(),
             actions=dict(type='list'),
             sections=dict(type='list')
         ),
@@ -294,7 +282,7 @@ def main():
 
     if module.check_mode:
         # In check mode, exit before actually sending the message
-        module.exit_json(changed=False, msg=payload)
+        module.exit_json(changed=True, msg=payload)
 
     do_notify_connector_card_webhook(module, webhook, payload)
 
