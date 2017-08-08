@@ -162,7 +162,6 @@ def main():
     argument_spec.update(eos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           fail_on_invalid_arguments=False,
                            supports_check_mode=True)
 
     warnings = list()
