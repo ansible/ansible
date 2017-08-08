@@ -243,7 +243,7 @@ def main():
     config_file = module.params['config_file']
 
     if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+        module.fail_json(msg="The MySQL-python module is required.")
     else:
         warnings.filterwarnings('error', category=MySQLdb.Warning)
 

@@ -276,7 +276,7 @@ def main():
     )
 
     if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+        module.fail_json(msg="The MySQL-python module is required.")
 
     db = module.params["name"]
     encoding = module.params["encoding"]
