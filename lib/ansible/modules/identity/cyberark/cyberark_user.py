@@ -405,8 +405,8 @@ def main():
     fields = {
         "username": {"required": True, "type": "str"},
         "state": {"type": "str",
-                  "choices": ["details", "present", "update", "addtogroup", "absent"],
-                  "default": "details"},
+                  "choices": ["present", "absent"],
+                  "default": "present"},
         "cyberark_session": {"required": True, "type": "dict"},
         "initial_password": {"type": "str", "no_log": True},
         "new_password": {"type": "str", "no_log": True},
