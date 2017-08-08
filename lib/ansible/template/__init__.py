@@ -647,7 +647,7 @@ class Templar:
                 data = _escape_backslashes(data, myenv)
 
             try:
-                t = myenv.from_string(data)
+                t = myenv.from_string(data, template_class=AnsibleJ2Template)
             except TemplateSyntaxError as e:
                 raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)))
             except Exception as e:
