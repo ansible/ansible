@@ -220,8 +220,9 @@ def main():
 
     if state in ['cleanup']:
         clean_cluster(module, timeout)
+        cluster_state = get_cluster_status(module)
         module.exit_json(changed=True,
-                 out=cluster_state)
+                         out=cluster_state)
 
 
 if __name__ == '__main__':
