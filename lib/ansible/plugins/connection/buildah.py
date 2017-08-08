@@ -127,8 +127,7 @@ class Connection(ConnectionBase):
         """ run specified command in a running OCI container using buildah """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        cmd_bytes = to_bytes(cmd, errors='surrogate_or_strict')
-        cmd_args_list = shlex.split(cmd_bytes)
+        cmd_args_list = shlex.split(cmd)
 
         rc, stdout, stderr = self._buildah("run", cmd_args_list)
 
