@@ -277,8 +277,6 @@ def main():
 
         # normalize stack description API output
         facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
-        # camel2snake doesn't handle NotificationARNs properly, so let's fix that
-        facts['stack_description']['notification_arns'] = facts['stack_description'].pop('notification_ar_ns', [])
 
         # Create optional stack outputs
         all_facts = module.params.get('all_facts')
