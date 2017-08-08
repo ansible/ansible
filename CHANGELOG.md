@@ -28,6 +28,8 @@ Ansible Changes By Release
 * Fix rabbitmq modules to give a helpful error if requests is not installed
 * Fix yum module not deleting rpms that it downloaded
 * Fix yum module failing with a URL to an rpm
+* Fix file module inappropriately expanding literal dollar signs in a path read
+  from the filesystem as an environment variable.
 
 <a id="2.3.2"></a>
 
