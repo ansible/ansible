@@ -1,7 +1,6 @@
 #!powershell
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
 
 # basic script to get the lsit of users in a particular right
 # this is quite complex to put as a simple script so this is
