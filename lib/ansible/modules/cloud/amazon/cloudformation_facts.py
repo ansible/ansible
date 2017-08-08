@@ -153,7 +153,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, camel_dict_to_snake_dict, \
-    AWSRetry
+    AWSRetry, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.basic import AnsibleModule
 from functools import partial
 import json
@@ -274,6 +274,7 @@ def main():
         if facts['stack_description']:
             facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')
             facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')
+            facts['stack_tags'] = boto3_tag_list_to_ansible_dict(facts['stack_description'].get('Tags'))
 
         # normalize stack description API output
         facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
