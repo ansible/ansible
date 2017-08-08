@@ -36,6 +36,8 @@ options:
             - Limit results to a resource group. Required when filtering by name.
         required: false
         default: null
+        aliases:
+            - resource_group_name
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -112,7 +114,7 @@ class AzureRMStorageAccountFacts(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             name=dict(type='str'),
-            resource_group=dict(type='str'),
+            resource_group=dict(type='str', aliases=['resource_group_name']),
             tags=dict(type='list'),
         )
 
