@@ -24,20 +24,49 @@
  - include: 'apt-builddep.yml'
    when: ansible_distribution in ('Ubuntu', 'Debian')
 
- - name: Check if aptitude is installed
-   command: dpkg-query -l aptitude
-   register: deb_check
-   when: ansible_distribution in ('Ubuntu', 'Debian')
-
  - include: upgrade.yml upgrade_type=dist
    when: ansible_distribution in ('Ubuntu', 'Debian')
 
- - include: upgrade.yml upgrade_type=safe
-   when:
-     - ansible_distribution in ('Ubuntu', 'Debian')
-     - deb_check.stdout.find('no packages found') != -1
+ - name: Check if aptitude is installed
+   command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
+   register: aptitude_status
+   when: ansible_distribution in ('Ubuntu', 'Debian')
 
- - include: upgrade.yml upgrade_type=full
+ - debug: var=aptitude_status.stdout
+
+ - name: Remove aptitude, if installed, to test fall-back to apt-get
+   apt:
+     pkg: aptitude
+     state: absent
+   when:
+     - aptitude_status.stdout.find('ii') != -1
+
+ - include: "upgrade.yml aptitude_present={{ False | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
    when:
      - ansible_distribution in ('Ubuntu', 'Debian')
-     - deb_check.stdout.find('no packages found') != -1
+   with_items:
+     - { upgrade_type: safe, force_apt_get: False }
+     - { upgrade_type: full, force_apt_get: False }
+     - { upgrade_type: safe, force_apt_get: True }
+     - { upgrade_type: full, force_apt_get: True }
+
+ - name: (Re-)Install aptitude, run same tests again
+   apt:
+     pkg: aptitude
+     state: present
+
+ - include: upgrade.yml upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}
+   when:
+     - ansible_distribution in ('Ubuntu', 'Debian')
+   with_items:
+     - { upgrade_type: safe, force_apt_get: False }
+     - { upgrade_type: full, force_apt_get: False }
+     - { upgrade_type: safe, force_apt_get: True }
+     - { upgrade_type: full, force_apt_get: True }
+
+ - name: Remove aptitude if not originally present
+   apt:
+     pkg: aptitude
+     state: absent
+   when:
+     - aptitude_status.stdout.find('ii') == -1
