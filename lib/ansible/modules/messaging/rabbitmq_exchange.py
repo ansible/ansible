@@ -105,14 +105,15 @@ EXAMPLES = '''
 '''
 
 import json
+
 try:
     import requests
     HAS_REQUESTS = True
-except ImportError as e:
+except ImportError:
     HAS_REQUESTS = False
-import urllib
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 
 
 def main():
@@ -137,8 +138,8 @@ def main():
     url = "http://%s:%s/api/exchanges/%s/%s" % (
         module.params['login_host'],
         module.params['login_port'],
-        urllib.quote(module.params['vhost'],''),
-        urllib.quote(module.params['name'],'')
+        urllib_parse.quote(module.params['vhost'],''),
+        urllib_parse.quote(module.params['name'],'')
     )
 
     if not HAS_REQUESTS:
