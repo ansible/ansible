@@ -45,10 +45,10 @@ The Password Lookup
     A great alternative to the password lookup plugin, if you don't need to generate random passwords on a per-host basis, would be to use :doc:`playbooks_vault`.  Read the documentation there and consider using it first, it will be more desirable for most applications.
 
 ``password`` generates a random plaintext password and stores it in
-a file at a given filepath.  
+a file at a given filepath.
 
 (Docs about crypted save modes are pending)
- 
+
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (which simplifies password management in 'host_vars' variables).
 
@@ -145,6 +145,35 @@ The location of the password-store directory can be specified in the following w
   - Can be overruled by PASSWORD_STORE_DIR environment variable
   - Can be overruled by 'passwordstore: path/to/.password-store' ansible setting
   - Can be overruled by 'directory=path' argument in the lookup call
+
+.. _cyberarkpassword:
+
+CyberArk Password Lookup
+````````````````````````
+
+The CyberArk Password Lookup ``cyberarkpassword`` retrieves password/credential from CyberArk vault
+matching the criteria specified by the ``query`` parameter. It Requires CyberArk AIM Installed, and
+``/opt/CARKaim/sdk/clipasswordsdk`` in place or set environment variable AIM_CLIPASSWORDSDK_CMD to the
+AIM CLI Password SDK executable.
+
+Usage Syntax
+------------
+
+  password = "{{lookup('cyberarkpassword', appid='Application1', query='safe=Safe1;Folder=root;Object=User1',
+                        output='password,passprops.username,passprops.address' [, extra_parms])}}"
+
+   Args:
+       appid (str): Defines the unique ID of the application that is issuing the password request.
+       query (str): Describes the filter criteria for the password retrieval.
+       output (str): Specifies the desired output fields separated by commas. They could be: Password, PassProps.<property>, PasswordChangeInProcess
+       Optionally, you can specify extra parameters recognized by clipasswordsdk (like FailRequestOnPasswordChange, Queryformat, Reason, etc.)
+
+   Returns:
+       dict: A dictionary with 'password' as key for the credential, passprops.<property>, passwordchangeinprocess
+             If the specified property does not exist for this password, the value <na> will be returned for this property.
+             If the value of the specified property is empty, <null> will be returned.
+
+.. note:: cyberarkpassword lookup can not be used as a source for loop
 
 .. _csvfile_lookup:
 
@@ -609,6 +638,3 @@ These macros are evaluated each time they are used in a task (or template)::
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-
