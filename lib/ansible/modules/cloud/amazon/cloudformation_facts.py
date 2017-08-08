@@ -33,8 +33,9 @@ author: Justin Menga (@jmenga)
 options:
     stack_name:
         description:
-          - The name or id of the CloudFormation stack
-        required: true
+          - The name or id of the CloudFormation stack. Gathers facts for all stacks by default.
+        required: false
+        default: null
     all_facts:
         description:
             - Get all stack information for the stack
@@ -174,15 +175,16 @@ class CloudFormationServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc())
 
-    def describe_stack(self, stack_name):
+    def describe_stacks(self, stack_name):
         try:
-            func = partial(self.client.describe_stacks,StackName=stack_name)
+            kwargs = {'StackName': stack_name} if stack_name else {}
+            func = partial(self.client.describe_stacks, **kwargs)
             response = self.paginated_response(func, 'Stacks')
             if response:
-                return response[0]
-            self.module.fail_json(msg="Error describing stack - an empty response was returned")
+                return response
+            self.module.fail_json(msg="Error describing stack(s) - an empty response was returned")
         except Exception as e:
-            self.module.fail_json(msg="Error describing stack - " + str(e), exception=traceback.format_exc())
+            self.module.fail_json(msg="Error describing stack(s) - " + str(e), exception=traceback.format_exc())
 
     def list_stack_resources(self, stack_name):
         try:
@@ -240,7 +242,7 @@ def to_dict(items, key, value):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        stack_name=dict(required=True, type='str' ),
+        stack_name=dict(type='str'),
         all_facts=dict(required=False, default=False, type='bool'),
         stack_policy=dict(required=False, default=False, type='bool'),
         stack_events=dict(required=False, default=False, type='bool'),
@@ -253,36 +255,37 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    # Describe the stack
     service_mgr = CloudFormationServiceManager(module)
-    stack_name = module.params.get('stack_name')
-    result = {
-        'ansible_facts': { 'cloudformation': { stack_name:{} } }
-    }
-    facts = result['ansible_facts']['cloudformation'][stack_name]
-    facts['stack_description'] = service_mgr.describe_stack(stack_name)
 
-    # Create stack output and stack parameter dictionaries
-    if facts['stack_description']:
-        facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')
-        facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')
+    result = {'ansible_facts': {'cloudformation': {}}}
 
-    # normalize stack description API output
-    facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
-    # camel2snake doesn't handle NotificationARNs properly, so let's fix that
-    facts['stack_description']['notification_arns'] = facts['stack_description'].pop('notification_ar_ns', [])
+    for stack_description in service_mgr.describe_stacks(module.params.get('stack_name')):
+        facts = {'stack_description': stack_description}
+        stack_name = stack_description.get('StackName')
 
-    # Create optional stack outputs
-    all_facts = module.params.get('all_facts')
-    if all_facts or module.params.get('stack_resources'):
-        facts['stack_resource_list'] = service_mgr.list_stack_resources(stack_name)
-        facts['stack_resources'] = to_dict(facts.get('stack_resource_list'), 'LogicalResourceId', 'PhysicalResourceId')
-    if all_facts or module.params.get('stack_template'):
-        facts['stack_template'] = service_mgr.get_template(stack_name)
-    if all_facts or module.params.get('stack_policy'):
-        facts['stack_policy'] = service_mgr.get_stack_policy(stack_name)
-    if all_facts or module.params.get('stack_events'):
-        facts['stack_events'] = service_mgr.describe_stack_events(stack_name)
+        # Create stack output and stack parameter dictionaries
+        if facts['stack_description']:
+            facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')
+            facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')
+
+        # normalize stack description API output
+        facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
+        # camel2snake doesn't handle NotificationARNs properly, so let's fix that
+        facts['stack_description']['notification_arns'] = facts['stack_description'].pop('notification_ar_ns', [])
+
+        # Create optional stack outputs
+        all_facts = module.params.get('all_facts')
+        if all_facts or module.params.get('stack_resources'):
+            facts['stack_resource_list'] = service_mgr.list_stack_resources(stack_name)
+            facts['stack_resources'] = to_dict(facts.get('stack_resource_list'), 'LogicalResourceId', 'PhysicalResourceId')
+        if all_facts or module.params.get('stack_template'):
+            facts['stack_template'] = service_mgr.get_template(stack_name)
+        if all_facts or module.params.get('stack_policy'):
+            facts['stack_policy'] = service_mgr.get_stack_policy(stack_name)
+        if all_facts or module.params.get('stack_events'):
+            facts['stack_events'] = service_mgr.describe_stack_events(stack_name)
+
+        result['ansible_facts']['cloudformation'][stack_name] = facts
 
     result['changed'] = False
     module.exit_json(**result)
