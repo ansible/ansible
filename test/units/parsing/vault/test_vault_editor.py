@@ -104,7 +104,7 @@ class TestVaultEditor(unittest.TestCase):
             vault_secrets = self._secrets(self.vault_password)
         return VaultEditor(VaultLib(vault_secrets))
 
-    @patch('ansible.parsing.vault.call')
+    @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_helper_empty_target(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -118,7 +118,7 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertNotEqual(src_contents, b_ciphertext)
 
-    @patch('ansible.parsing.vault.call')
+    @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_helper_call_exception(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -136,7 +136,7 @@ class TestVaultEditor(unittest.TestCase):
                                 src_file_path,
                                 self.vault_secret)
 
-    @patch('ansible.parsing.vault.call')
+    @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_helper_symlink_target(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -170,7 +170,7 @@ class TestVaultEditor(unittest.TestCase):
     def _faux_command(self, tmp_path):
         pass
 
-    @patch('ansible.parsing.vault.call')
+    @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_helper_no_change(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
 
@@ -308,7 +308,7 @@ class TestVaultEditor(unittest.TestCase):
 
         self._assert_file_is_link(src_file_link_path, src_file_path)
 
-    @patch('ansible.parsing.vault.call')
+    @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
@@ -333,9 +333,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
 
-        new_stat = os.stat(src_file_path)
-
-    @patch('ansible.parsing.vault.call')
+    @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_symlink(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
@@ -371,7 +369,7 @@ class TestVaultEditor(unittest.TestCase):
         # self.assertEqual(src_file_plaintext, new_src_contents,
         #                 'The decrypted plaintext of the editted file is not the expected contents.')
 
-    @patch('ansible.parsing.vault.call')
+    @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_not_encrypted(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
