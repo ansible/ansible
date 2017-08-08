@@ -477,7 +477,7 @@ class ConsulService():
 class ConsulCheck(object):
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                    script=None, interval=None, ttl=None, notes=None, http=None, tcp=None, timeout=None, service_id=None):
+                script=None, interval=None, ttl=None, notes=None, http=None, tcp=None, timeout=None, service_id=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
@@ -517,7 +517,6 @@ class ConsulCheck(object):
             tcp_host, tcp_port = tcp.split(':')
 
             self.check = consul.Check.tcp(tcp_host, int(tcp_port), self.interval, self.timeout)
-
 
     def validate_duration(self, name, duration):
         if duration:
