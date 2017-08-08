@@ -78,6 +78,7 @@ from ansible.module_utils.eos import eos_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 import re
+import time
 
 
 def map_obj_to_commands(updates, module):
@@ -147,12 +148,24 @@ def map_params_to_obj(module):
     }
 
 
+def check_declarative_intent_params(module):
+    if module.params['interfaces']:
+        time.sleep(module.params['delay'])
+        have = map_config_to_obj(module)
+        vrf = module.params['name']
+
+        for i in module.params['interfaces']:
+            if i not in have['interfaces']:
+                module.fail_json(msg="Interface %s not configured on vrf %s" % (i, vrf))
+
+
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
         name=dict(required=True),
         interfaces=dict(type='list'),
+        delay=dict(default=10, type='int'),
         rd=dict(),
         aggregate=dict(),
         purge=dict(default=False, type='bool'),
@@ -185,6 +198,9 @@ def main():
             result['diff'] = {'prepared': response.get('diff')}
         result['session_name'] = response.get('session')
         result['changed'] = True
+
+    if result['changed']:
+        check_declarative_intent_params(module)
 
     module.exit_json(**result)
 
