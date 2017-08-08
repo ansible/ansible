@@ -72,6 +72,10 @@ options:
         description:
             - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the name of disk
                to be imported as template."
+    template_image_disk_name:
+        description:
+            - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the new name for imported disk.
+               This parameter is used only in case of importing disk image from Glance domain."
     storage_domain:
         description:
             - "When C(state) is I(imported) this parameter specifies the name of the destination data storage domain.
@@ -229,6 +233,7 @@ def main():
         exclusive=dict(type='bool'),
         image_provider=dict(default=None),
         image_disk=dict(default=None),
+        template_image_disk_name=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -279,7 +284,7 @@ def main():
                 if module.params['image_provider']:
                     kwargs.update(
                         disk=otypes.Disk(
-                            name=module.params['image_disk']
+                            name=module.params['template_image_disk_name'] or module.params['image_disk']
                         ),
                         template=otypes.Template(
                             name=module.params['name'],
