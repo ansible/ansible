@@ -139,7 +139,7 @@ def main():
         existing_list = existing['ospf']
 
     candidate = CustomNetworkConfig(indent=3)
-    if state == 'present':
+    if state == 'present' and ospf not in existing_list:
         state_present(module, proposed, candidate)
     if state == 'absent' and ospf in existing_list:
         state_absent(module, proposed, candidate)
