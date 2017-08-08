@@ -11,6 +11,7 @@
     ec2_secret_key: "{{ ec2_secret_key }}"
     region: "{{ ec2_region }}"
     state: present
+    security_group_names: ansible-testing-lb-sg
     zones:
       - "{{ ec2_region }}b"
       - "{{ ec2_region }}c"
@@ -76,7 +77,7 @@
     instance_id: "{{ item }}"
     state: present
     wait_timeout: 300
-  with_items: "ec2_provision_result.instance_ids[1:]"
+  with_items: "{{ec2_provision_result.instance_ids[1:]}}"
   register: result
 
 - name: assert the other instances were added ok
@@ -84,7 +85,7 @@
     that:
       - 'item.changed == True'
       - '"{{resource_prefix}}" in item.ansible_facts.ec2_elbs'
-  with_items: result.results
+  with_items: "{{result.results}}"
 
 # ============================================================
 # shutdown http first instance so it goes out of service
@@ -176,7 +177,7 @@
     instance_id: "{{ item }}"
     state: absent
     wait_timeout: 300
-  with_items: "ec2_provision_result.instance_ids[1:]"
+  with_items: "{{ec2_provision_result.instance_ids[1:]}}"
   register: result
 
 - name: assert the other instances were removed
@@ -184,4 +185,4 @@
     that:
       - 'item.changed == True'
       - '"{{resource_prefix}}" in item.ansible_facts.ec2_elbs'
-  with_items: result.results
+  with_items: "{{result.results}}"

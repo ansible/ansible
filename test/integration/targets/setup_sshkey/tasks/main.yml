@@ -45,3 +45,94 @@
     fingerprint: '{{fingerprint.stdout.split()[1]}}'
   tags:
     - prepare
+
+- name: Create VPC for use in testing
+  ec2_vpc_net:
+    name: ansible_test
+    cidr_block: 10.55.77.0/24
+    region: "{{ ec2_region }}"
+    tags:
+      Name: Ansible Testing VPC
+    tenancy: default
+  register: testing_vpc
+  tags:
+    - prepare
+
+- name: Create internet gateway for use in testing
+  ec2_vpc_igw:
+    vpc_id: "{{testing_vpc.vpc.id}}"
+    state: present
+    region: "{{ ec2_region }}"
+  register: igw
+  tags:
+    - prepare
+
+- name: Create subnet for use in testing
+  ec2_vpc_subnet:
+    tags: create_subnet
+    state: present
+    vpc_id: "{{testing_vpc.vpc.id}}"
+    cidr: 10.55.77.0/24
+    region: "{{ ec2_region }}"
+    resource_tags:
+      Name: Ansible Testing Subnet
+  register: testing_subnet
+  tags:
+    - prepare
+
+- name: record testing subnet
+  set_fact:
+    test_subnet_id: "{{testing_subnet.subnet.id}}"
+  tags:
+    - prepare
+
+- name: debug subnet
+  debug:
+    msg: "testing subnet: {{testing_subnet.subnet.id}} from subnet data: {{testing_subnet}}"
+  tags:
+    - prepare
+
+# test_subnet_id: 'subnet-123456789'
+
+- name: create routing rules
+  ec2_vpc_route_table:
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    region: "{{ ec2_region }}"
+    tags:
+      created: "{{ resource_prefix }}-route"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+    subnets:
+      - "{{ testing_subnet.subnet.id }}"
+  tags:
+    - prepare
+
+- name: discover public IP address of ansible host
+  shell: dig +short myip.opendns.com @resolver1.opendns.com
+  register: ip_dig_result
+
+- name: create a security group for use in various tests
+  ec2_group:
+    name: "{{ resource_prefix }}-sg"
+    description: a security group for ansible tests
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    region: "{{ ec2_region }}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: "{{ip_dig_result.stdout}}/32"
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: "{{ip_dig_result.stdout}}/32"
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        group_name: "{{ resource_prefix }}-sg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+  register: sg

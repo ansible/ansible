@@ -1,6 +1,6 @@
 - name: Launching NAT Gateway and allocate a new eip.
   ec2_vpc_nat_gateway:
-    region: us-west-2
+    region: '{{ec2_region}}'
     state: present
     subnet_id: "{{ test_subnet_id }}"
     wait: yes
@@ -15,8 +15,8 @@
 
 - name: Launch a new gateway only if one does not exist already in this subnet.
   ec2_vpc_nat_gateway:
+    region: '{{ec2_region}}'
     if_exist_do_not_create: yes
-    region: us-west-2
     state: present
     subnet_id: "{{ test_subnet_id }}"
     wait: yes
@@ -31,7 +31,7 @@
 
 - name: Launching NAT Gateway and allocate a new eip even if one already exists in the subnet.
   ec2_vpc_nat_gateway:
-    region: us-west-2
+    region: '{{ec2_region}}'
     state: present
     subnet_id: "{{ test_subnet_id }}"
     wait: yes
@@ -46,12 +46,12 @@
 
 - name: Launching NAT Gateway with allocation id, this call is idempotent and will not create anything.
   ec2_vpc_nat_gateway:
-    allocation_id: eipalloc-1234567
-    region: us-west-2
+    region: '{{ec2_region}}'
+    allocation_id: "{{new_nat.nat_gateway_addresses[0].allocation_id}}"
     state: present
     subnet_id: "{{ test_subnet_id }}"
     wait: yes
-    wait_timeout: 600
+    wait_timeout: 800
   register: nat_with_eipalloc
 
 - debug:
@@ -62,13 +62,13 @@
 
 - name: Delete the 1st nat gateway and do not wait for it to finish
   ec2_vpc_nat_gateway:
-    region: us-west-2
+    region: '{{ec2_region}}'
     nat_gateway_id: "{{ nat.nat_gateway_id }}"
     state: absent
 
 - name: Delete the nat_with_eipalloc and release the eip
   ec2_vpc_nat_gateway:
-    region: us-west-2
+    region: '{{ec2_region}}'
     nat_gateway_id: "{{ new_nat.nat_gateway_id }}"
     release_eip: yes
     state: absent

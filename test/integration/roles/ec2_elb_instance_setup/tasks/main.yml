@@ -4,6 +4,9 @@
 # ============================================================
 # install apache on the ec2 instances
 
+- name: reload setup
+  setup:
+
 - name: install apache on new ec2 instances
   package: name=httpd
   when: ansible_os_family == 'RedHat'

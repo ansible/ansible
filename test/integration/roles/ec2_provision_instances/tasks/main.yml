@@ -21,8 +21,9 @@
 - name: create ec2 instances for testing
   ec2:
     instance_type: t1.micro
+    assign_public_ip: yes
     image: ami-fb8e9292
-    group: default
+    group: "{{ resource_prefix }}-sg"
     region: "{{ ec2_region }}"
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
@@ -33,6 +34,8 @@
     exact_count: "{{ count }}"
     count_tag:
         Name: "{{ resource_prefix }}"
+    vpc_subnet_id: "{{ testing_subnet.subnet.id }}"
+    wait_timeout: 800
   register: ec2_provision_result
 
 - name: add ec2 instances to a new group
@@ -40,10 +43,10 @@
     hostname: "{{ item.public_ip }}"
     groups: "ec2"
     ansible_ssh_private_key_file: "{{ sshkey }}"
-  with_items: ec2_provision_result.instances
+  with_items: "{{ ec2_provision_result.instances }}"
 
 - name: wait for the instances to become available
   wait_for:
     port: 22
     host: "{{ item.public_ip }}"
-  with_items: ec2_provision_result.instances
+  with_items: "{{ ec2_provision_result.instances }}"
