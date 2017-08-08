@@ -76,7 +76,6 @@ from ansible.module_utils.eos import eos_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 import re
-import time
 
 
 def map_obj_to_commands(updates, module):
@@ -158,7 +157,6 @@ def main():
         vlan_id=dict(required=True, type='int'),
         name=dict(),
         interfaces=dict(),
-        delay=(default=30, type=int)
         aggregate=dict(),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
@@ -191,13 +189,6 @@ def main():
             result['diff'] = {'prepared': response.get('diff')}
         result['session_name'] = response.get('session')
         result['changed'] = True
-
-    if interfaces:
-        time.sleep(module.params['delay'])
-
-        if False:
-            module.fail_json("Interface foo does not have VLAN configured")
-
 
     module.exit_json(**result)
 
