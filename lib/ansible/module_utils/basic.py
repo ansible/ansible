@@ -778,7 +778,7 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None):
+                 required_if=None, fail_on_invalid_arguments=True):
 
         '''
         common code for quickly building an ansible module in Python
@@ -793,6 +793,7 @@ class AnsibleModule(object):
         self.bypass_checks = bypass_checks
         self.no_log = no_log
         self.check_invalid_arguments = check_invalid_arguments
+        self.fail_on_invalid_arguments = fail_on_invalid_arguments
         self.mutually_exclusive = mutually_exclusive
         self.required_together = required_together
         self.required_one_of = required_one_of
@@ -839,7 +840,7 @@ class AnsibleModule(object):
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
-        self._check_arguments(check_invalid_arguments)
+        self._check_arguments(check_invalid_arguments, fail_on_invalid_arguments)
 
         # check exclusive early
         if not bypass_checks:
@@ -1576,7 +1577,7 @@ class AnsibleModule(object):
                     'version': arg_opts.get('removed_in_version')
                 })
 
-    def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
+    def _check_arguments(self, check_invalid_arguments, fail_on_invalid_arguments, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
         unsupported_parameters = set()
         if spec is None:
@@ -1630,7 +1631,10 @@ class AnsibleModule(object):
             if self._options_context:
                 msg += " found in %s." % " -> ".join(self._options_context)
             msg += " Supported parameters include: %s" % (','.join(sorted(spec.keys())))
-            self.fail_json(msg=msg)
+            if fail_on_invalid_arguments:
+                self.fail_json(msg=msg)
+            else:
+                self.exit_json(msg=msg)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
@@ -1947,7 +1951,7 @@ class AnsibleModule(object):
                     self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
-                    self._check_arguments(self.check_invalid_arguments, spec, param, options_legal_inputs)
+                    self._check_arguments(self.check_invalid_arguments, self.fail_on_invalid_arguments, spec, param, options_legal_inputs)
 
                     # check exclusive early
                     if not self.bypass_checks:
