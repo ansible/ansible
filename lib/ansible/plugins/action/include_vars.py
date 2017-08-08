@@ -210,7 +210,6 @@ class ActionModule(ActionBase):
             Bool
         """
         file_ext = path.splitext(source_file)
-        print(file_ext[-1][2:])
         return bool(len(file_ext) > 1 and file_ext[-1][1:] in self.valid_extensions)
 
     def _load_files(self, filename, validate_extensions=False):
