@@ -126,8 +126,6 @@ diff.prepared:
 """
 import collections
 
-from copy import copy
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
@@ -222,7 +220,7 @@ def main():
 
     requests = list()
     for param in params:
-        item = copy(param)
+        item = param.copy()
         dest = item.get('dest')
         if dest == 'console' and item.get('name'):
             module.fail_json(msg="%s and %s are mutually exclusive" % ('console', 'name'))
