@@ -26,7 +26,7 @@ options:
         description:
             - The name of the user who will be queried (for details), added, updated or deleted.
     state:
-        default: details
+        default: present
         choices: [present, absent]
         description:
             - Specifies the state needed for the user
@@ -34,7 +34,8 @@ options:
     cyberark_session:
         required: True
         description:
-            - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session.
+            - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session,
+              please see cyberark_authentication module for an example of cyberark_session.
     initial_password:
         description:
             - The password that the new user will use to log on the first time. This password must meet the password policy requirements.
@@ -129,6 +130,8 @@ status_code:
 '''
 
 import json
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import http_client as httplib
@@ -136,7 +139,7 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 
 
-def userDetails(module):
+def user_details(module):
 
     # Get username from module parameters, and api base url
     # along with validate_certs from the cyberark_session established
@@ -169,7 +172,7 @@ def userDetails(module):
             return (False, None, http_exception.code)
         else:
             module.fail_json(
-                msg=("Error while performing userDetails."
+                msg=("Error while performing user_details."
                      "Please validate parameters provided."
                      "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
                 headers=headers,
@@ -178,9 +181,10 @@ def userDetails(module):
     except Exception as unknown_exception:
 
         module.fail_json(
-            msg=("Unknown error while performing userDetails."
+            msg=("Unknown error while performing user_details."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             headers=headers,
+            exception=traceback.format_exc(),
             status_code=-1)
 
 
@@ -192,10 +196,6 @@ def userAddOrUpdate(module, HTTPMethod):
     cyberark_session = module.params["cyberark_session"]
     api_base_url = cyberark_session["api_base_url"]
     validate_certs = cyberark_session["validate_certs"]
-
-    if module.check_mode:
-        # return if case of check_mode
-        module.exit_json(change=False)
 
     # Prepare result, paylod, and headers
     result = {}
@@ -282,6 +282,7 @@ def userAddOrUpdate(module, HTTPMethod):
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             payload=payload,
             headers=headers,
+            exception=traceback.format_exc(),
             status_code=-1)
 
 
@@ -293,10 +294,6 @@ def userDelete(module):
     cyberark_session = module.params["cyberark_session"]
     api_base_url = cyberark_session["api_base_url"]
     validate_certs = cyberark_session["validate_certs"]
-
-    if module.check_mode:
-        # return if case of check_mode
-        module.exit_json(change=False)
 
     # Prepare result, end_point, and headers
     result = {}
@@ -340,6 +337,7 @@ def userDelete(module):
             msg=("Unknown error while performing userDelete."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             headers=headers,
+            exception=traceback.format_exc(),
             status_code=-1)
 
 
@@ -352,10 +350,6 @@ def userAddToGroup(module):
     cyberark_session = module.params["cyberark_session"]
     api_base_url = cyberark_session["api_base_url"]
     validate_certs = cyberark_session["validate_certs"]
-
-    if module.check_mode:
-        # return if case of check_mode
-        module.exit_json(change=False)
 
     # Prepare result, end_point, headers and payload
     result = {}
@@ -393,6 +387,7 @@ def userAddToGroup(module):
                      "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, exception_text)),
                 payload=payload,
                 headers=headers,
+                exception=traceback.format_exc(),
                 status_code=http_exception.code)
 
     except Exception as unknown_exception:
@@ -434,7 +429,7 @@ def main():
     result = {}
 
     if (state == "present"):
-        (changed, result, status_code) = userDetails(module)
+        (changed, result, status_code) = user_details(module)
         if (status_code == 200):  # user already exists
             if ("new_password" in module.params):
                 # if new_password specified, proceed to update user credential
