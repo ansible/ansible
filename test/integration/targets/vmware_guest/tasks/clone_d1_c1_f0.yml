@@ -1,3 +1,9 @@
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
 - name: kill vcsim
   uri:
     url: "{{ 'http://' + vcsim + ':5000/killall' }}"
@@ -5,6 +11,12 @@
   uri:
     url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
   register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
 - name: get a list of VMS from vcsim   
   uri:
