@@ -96,10 +96,11 @@ $disks = Get-disk|select signature,number,model,location,manufacturer,numberofpa
 $devs = @{}
 
 foreach ($dev in $disks) {
+    $partitions = @{}
+
     if ($dev.numberofpartitions -gt 0) {
         $parts = Get-Partition -DiskNumber $dev.number|select uniqueid,isboot,isactive,ishidden,isreadonly,issystem,driveletter,offset,partitionnumber,size
 
-        $partitions = @{}
 
         foreach ($part in $parts) {
             $partInfo = @{
