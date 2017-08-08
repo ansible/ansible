@@ -26,6 +26,8 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+        aliases:
+            - resource_group_name
     name:
         description:
             - Name of the storage account to update or create.
@@ -142,7 +144,7 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from azure.common import AzureMissingResourceHttpError
-    from azure.mgmt.storage.models.storage_management_client_enums import ProvisioningState, SkuName, SkuTier, Kind
+    from azure.mgmt.storage.models import ProvisioningState, SkuName, SkuTier, Kind
     from azure.mgmt.storage.models import StorageAccountUpdateParameters, CustomDomain, \
                                           StorageAccountCreateParameters, Sku
 except ImportError:
@@ -161,7 +163,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             custom_domain=dict(type='dict'),
             location=dict(type='str'),
             name=dict(type='str', required=True),
-            resource_group=dict(required=True, type='str'),
+            resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
