@@ -249,7 +249,7 @@ def to_dict(items, key, value):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        stack_name=dict(type='str'),
+        stack_name=dict(),
         all_facts=dict(required=False, default=False, type='bool'),
         stack_policy=dict(required=False, default=False, type='bool'),
         stack_events=dict(required=False, default=False, type='bool'),
