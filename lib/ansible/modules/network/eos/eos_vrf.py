@@ -81,100 +81,152 @@ import re
 import time
 
 
+def search_obj_in_list(name, lst):
+    for o in lst:
+        if o['name'] == name:
+            return o
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent':
-        if have:
-            commands.append('no vrf definition %s' % want['name'])
-    elif state == 'present':
-        if not have:
-            commands.append('vrf definition %s' % want['name'])
+    for w in want:
+        name = w['name']
+        rd = w['rd']
+        interfaces = w['interfaces']
 
-            if want['rd'] is not None:
-                commands.append('rd %s' % want['rd'])
+        obj_in_have = search_obj_in_list(name, have)
 
-            if want['interfaces']:
-                for i in want['interfaces']:
-                    commands.append('interface %s' % i)
-                    commands.append('vrf forwarding %s' % want['name'])
-        else:
-            if want['rd'] is not None and want['rd'] != have['rd']:
-                commands.append('vrf definition %s' % want['name'])
-                commands.append('rd %s' % want['rd'])
+        if state == 'absent':
+            if have:
+                commands.append('no vrf definition %s' % name)
+        elif state == 'present':
+            if not obj_in_have:
+                commands.append('vrf definition %s' % name)
 
-            if want['interfaces']:
-                if not have['interfaces']:
-                    for i in want['interfaces']:
+                if rd is not None:
+                    commands.append('rd %s' % rd)
+
+                if w['interfaces']:
+                    for i in w['interfaces']:
                         commands.append('interface %s' % i)
-                        commands.append('vrf forwarding %s' % want['name'])
-                elif set(want['interfaces']) != have['interfaces']:
-                    missing_interfaces = list(set(want['interfaces']) - set(have['interfaces']))
+                        commands.append('vrf forwarding %s' % w['name'])
+            else:
+                if w['rd'] is not None and w['rd'] != obj_in_have['rd']:
+                    commands.append('vrf definition %s' % w['name'])
+                    commands.append('rd %s' % w['rd'])
 
-                    for i in missing_interfaces:
-                        commands.append('interface %s' % i)
-                        commands.append('vrf forwarding %s' % want['name'])
+                if w['interfaces']:
+                    if not obj_in_have['interfaces']:
+                        for i in w['interfaces']:
+                            commands.append('interface %s' % i)
+                            commands.append('vrf forwarding %s' % w['name'])
+                    elif set(w['interfaces']) != obj_in_have['interfaces']:
+                        missing_interfaces = list(set(w['interfaces']) - set(obj_in_have['interfaces']))
+
+                        for i in missing_interfaces:
+                            commands.append('interface %s' % i)
+                            commands.append('vrf forwarding %s' % w['name'])
 
     return commands
 
 
 def map_config_to_obj(module):
-    obj = {}
+    objs = []
     output = run_commands(module, ['show vrf %s' % module.params['name']])
-    lines = output[0].strip().splitlines()
+    lines = output[0].strip().splitlines()[2:]
 
-    if len(lines) > 2:
-        splitted_line = re.split(r'\s{2,}', lines[2].strip())
-        obj['name'] = splitted_line[0]
-        obj['rd'] = splitted_line[1]
-        obj['interfaces'] = None
+    for l in lines:
+        if not l:
+            continue
 
-        if len(splitted_line) > 4:
-            obj['interfaces'] = []
-            for i in splitted_line[4].split(','):
-                obj['interfaces'].append(i.strip())
+        splitted_line = re.split(r'\s{2,}', l.strip())
+
+        if len(splitted_line) == 1:
+            continue
+        else:
+            obj = {}
+            obj['name'] = splitted_line[0]
+            obj['rd'] = splitted_line[1]
+            obj['interfaces'] = None
+
+            if len(splitted_line) > 4:
+                obj['interfaces'] = []
+
+                for i in splitted_line[4].split(','):
+                    obj['interfaces'].append(i.strip())
+
+            objs.append(obj)
+
+    return objs
+
+
+def map_params_to_obj(module):
+    obj = []
+
+    if 'aggregate' in module.params and module.params['aggregate']:
+        for c in module.params['aggregate']:
+            d = c.copy()
+
+            if 'state' not in d:
+                d['state'] = module.params['state']
+            if 'rd' not in d:
+                d['rd'] = module.params['rd']
+            if 'interfaces' not in d:
+                d['interfaces'] = module.params['interfaces']
+
+            obj.append(d)
+    else:
+        name = module.params['name'],
+        state = module.params['state'],
+        rd = module.params['rd'],
+        interfaces = module.params['interfaces']
+
+        obj.append({
+            'name': module.params['name'],
+            'state': module.params['state'],
+            'rd': module.params['rd'],
+            'interfaces': module.params['interfaces']
+        })
 
     return obj
 
 
-def map_params_to_obj(module):
-    return {
-        'name': module.params['name'],
-        'state': module.params['state'],
-        'rd': module.params['rd'],
-        'interfaces': module.params['interfaces']
-    }
-
-
-def check_declarative_intent_params(module):
+def check_declarative_intent_params(want, module):
     if module.params['interfaces']:
         time.sleep(module.params['delay'])
         have = map_config_to_obj(module)
-        vrf = module.params['name']
 
-        for i in module.params['interfaces']:
-            if i not in have['interfaces']:
-                module.fail_json(msg="Interface %s not configured on vrf %s" % (i, vrf))
+        for w in want:
+            for i in w['interfaces']:
+                obj_in_have = search_obj_in_list(w['name'], have)
+
+                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+                    module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        name=dict(required=True),
+        name=dict(),
         interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         rd=dict(),
-        aggregate=dict(),
+        aggregate=dict(type='list'),
         purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
     argument_spec.update(eos_argument_spec)
 
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -200,7 +252,7 @@ def main():
         result['changed'] = True
 
     if result['changed']:
-        check_declarative_intent_params(module)
+        check_declarative_intent_params(want, module)
 
     module.exit_json(**result)
 
