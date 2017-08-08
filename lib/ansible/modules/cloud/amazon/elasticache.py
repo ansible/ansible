@@ -484,21 +484,21 @@ def main():
     """ elasticache ansible module """
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state={'required': True, 'choices': ['present', 'absent', 'rebooted']},
-        name={'required': True},
-        engine={'required': False, 'default': 'memcached'},
-        cache_engine_version={'required': False, 'default': ""},
-        node_type={'required': False, 'default': 'cache.t2.small'},
-        num_nodes={'required': False, 'default': 1, 'type': 'int'},
+        state=dict(required=True, choices=['present', 'absent', 'rebooted']),
+        name=dict(required=True),
+        engine=dict(default='memcached'),
+        cache_engine_version=dict(default=""),
+        node_type=dict(default='cache.t2.small'),
+        num_nodes=dict(default=1, type='int'),
         # alias for compat with the original PR 1950
-        cache_parameter_group={'required': False, 'default': "", 'aliases': ['parameter_group']},
-        cache_port={'required': False, 'type': 'int', 'default': None},
-        cache_subnet_group={'required': False, 'default': ""},
-        cache_security_groups={'required': False, 'default': [], 'type': 'list'},
-        security_group_ids={'required': False, 'default': [], 'type': 'list'},
-        zone={'required': False, 'default': ""},
-        wait={'required': False, 'default': True, 'type': 'bool'},
-        hard_modify={'required': False, 'default': False, 'type': 'bool'}
+        cache_parameter_group=dict(default="", aliases=['parameter_group']),
+        cache_port=dict(type='int'),
+        cache_subnet_group=dict(default=""),
+        cache_security_groups=dict(default=[], type='list'),
+        security_group_ids=dict(default=[], type='list'),
+        zone=dict(default=""),
+        wait=dict(default=True, type='bool'),
+        hard_modify=dict(type='bool')
     ))
 
     module = AnsibleModule(
