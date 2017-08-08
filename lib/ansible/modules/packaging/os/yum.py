@@ -128,7 +128,7 @@ options:
 
   security:
     description:
-      - If set to C(yes), then installs all security updates.
+      - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
     default: "no"
     choices: ["yes", "no"]
     version_added: "2.4"
