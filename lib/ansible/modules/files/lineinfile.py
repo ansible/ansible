@@ -106,7 +106,7 @@ options:
     choices: [ 'BOF', '*regex*' ]
   findfirst:
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
     choices: [ "yes", "no" ]
     default: "no"
     description:
