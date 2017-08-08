@@ -165,7 +165,7 @@ def main():
     argument_spec = dict(
         name=dict(required=True),
         interfaces=dict(type='list'),
-        delay=dict(default=30, type='int'),
+        delay=dict(default=10, type='int'),
         rd=dict(),
         aggregate=dict(),
         purge=dict(default=False, type='bool'),
