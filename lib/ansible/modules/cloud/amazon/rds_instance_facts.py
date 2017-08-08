@@ -1,18 +1,6 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -41,6 +29,7 @@ requirements:
     - "boto3"
 author:
     - "Will Thames (@willthames)"
+    - "Michael De La Rue (@mikedlr)"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -83,12 +72,10 @@ instances:
        ]
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, ansible_dict_to_boto3_filter_list
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
 from ansible.module_utils.aws.rds import RDSDBInstance
-
-import traceback
 
 try:
     import botocore
@@ -116,8 +103,7 @@ def instance_facts(module, conn):
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'DBInstanceNotFound':
                 break
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, "trying to get instance information")
         if not marker:
             break
 
@@ -133,21 +119,13 @@ def instance_facts(module, conn):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
+    module = AnsibleAWSModule(
+        argument_spec=dict(
             name=dict(aliases=['instance_name']),
             filters=dict(type='list', default=[])
-        )
-    )
-
-    module = AnsibleModule(
-        argument_spec=argument_spec,
+        ),
         supports_check_mode=True,
     )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg="botocore and boto3 are required for rds_facts module")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     if not region:
@@ -155,7 +133,10 @@ def main():
             msg="Region not specified. Unable to determine region from configuration.")
 
     # connect to the rds endpoint
-    conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
+    try:
+        conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
+    except Exception as e:
+        module.fail_json_aws(e, msg="trying to connect to AWS")
 
     instance_facts(module, conn)
 
