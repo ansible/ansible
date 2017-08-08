@@ -285,7 +285,7 @@
     that:
     - add_firewall_rule_with_interface_type_any.changed == true
 
-- name: Add firewall rule with edge traversal options 'deferapp' should not throw
+- name: Add firewall rule with edge traversal option 'deferapp'
   win_firewall_rule:
     name: http
     enabled: yes
@@ -295,8 +295,19 @@
     direction: in
     protocol: tcp
     edge: deferapp
+  register: add_firewall_rule_with_edge_traversal
 
-- name: Add firewall rule with 'authenticate' secure flags should not throw
+# Setup action creates ansible_distribution_version variable
+- action: setup
+
+- name: Check that creating firewall rule with enge traversal option 'deferapp' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_edge_traversal.changed == true
+  # Works on windows >= Windows 7/Windows Server 2008 R2
+  when: ansible_distribution_version | version_compare('6.1', '>=')
+
+- name: Add firewall rule with 'authenticate' secure flag
   win_firewall_rule:
     name: http
     enabled: yes
@@ -306,3 +317,11 @@
     direction: in
     protocol: tcp
     security: authenticate
+  register: add_firewall_rule_with_secure_flags
+
+- name: Check that creating firewall rule with secure flag 'authenticate' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_secure_flags.changed == true
+  # Works on windows >= Windows 8/Windows Server 2012
+  when: ansible_distribution_version | version_compare('6.2', '>=')
