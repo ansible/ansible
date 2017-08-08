@@ -1,21 +1,7 @@
 # Test code for win_eventlog_entry
 
 # (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Add entry to fake log
   win_eventlog_entry:
@@ -77,22 +63,18 @@
   failed_when: add_entry_count.stdout_lines[0] != "1"
   when: not in_check_mode
 
-- name: Test add_entry source (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Source).Source
-  register: add_entry_source
-  failed_when: add_entry_source.stdout_lines[0] != win_test_log_source.source
+- name: Test add_entry result (normal mode)
+  test_win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+  register: add_entry_result
   when: not in_check_mode
 
-- name: Test add_entry event_id (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property EventID).EventID
-  register: add_entry_event_id
-  failed_when: add_entry_event_id.stdout_lines[0] != "12345"
-  when: not in_check_mode
-
-- name: Test add_entry message (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Message).Message
-  register: add_entry_message
-  failed_when: add_entry_message.stdout_lines[0] != "This is a test log entry message"
+- name: Test add_entry_result (normal mode)
+  assert:
+    that:
+    - add_entry_result.source == win_test_log_source.source
+    - add_entry_result.event_id == 12345
+    - add_entry_result.message == "This is a test log entry message"
   when: not in_check_mode
 
 
@@ -100,7 +82,7 @@
   win_eventlog_entry: *wele
   register: add_entry_again
 
-- name: Test add_entry_again
+- name: Test add_entry_again (normal mode)
   assert:
     that:
     - add_entry_again.changed == true
@@ -136,40 +118,21 @@
   failed_when: add_entry_all_options_count.stdout_lines[0] != "3"
   when: not in_check_mode
 
-- name: Test add_entry_all_options source (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Source).Source
-  register: add_entry_all_options_source
-  failed_when: add_entry_all_options_source.stdout_lines[0] != win_test_log_source.source
+- name: Test add_entry_all_options result (normal mode)
+  test_win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+  register: add_entry_all_options_result
   when: not in_check_mode
 
-- name: Test add_entry_all_options event_id (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property EventID).EventID
-  register: add_entry_all_options_event_id
-  failed_when: add_entry_all_options_event_id.stdout_lines[0] != "500"
-  when: not in_check_mode
-
-- name: Test add_entry_all_options message (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Message).Message
-  register: add_entry_all_options_message
-  failed_when: add_entry_all_options_message.stdout_lines[0] != "This is a test error message"
-  when: not in_check_mode
-
-- name: Test add_entry_all_options entry_type (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property EntryType).EntryType
-  register: add_entry_all_options_entry_type
-  failed_when: add_entry_all_options_entry_type.stdout_lines[0] != "Error"
-  when: not in_check_mode
-
-- name: Test add_entry_all_options category (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Category).Category
-  register: add_entry_all_options_category
-  failed_when: add_entry_all_options_category.stdout_lines[0] != "(5)"
-  when: not in_check_mode
-
-- name: Test add_entry_all_options raw_data (normal mode)
-  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}" | Select-Object -First 1 -Property Data).Data
-  register: add_entry_all_options_raw_data
-  failed_when: add_entry_all_options_raw_data.stdout_lines[0] != "10" and add_entry_all_options_raw_data.stdout_lines[1] != "20"
+- name: Test add_entry_all_options_result (normal mode)
+  assert:
+    that:
+    - add_entry_all_options_result.source == win_test_log_source.source
+    - add_entry_all_options_result.event_id == 500
+    - add_entry_all_options_result.message == "This is a test error message"
+    - add_entry_all_options_result.entry_type == "Error"
+    - add_entry_all_options_result.category == 5
+    - add_entry_all_options_result.raw_data == "10,20"
   when: not in_check_mode
 
 
@@ -177,7 +140,7 @@
   win_eventlog_entry: *wele_ao
   register: add_entry_all_options_again
 
-- name: Test add_entry_all_options_again
+- name: Test add_entry_all_options_again (normal mode)
   assert:
     that:
     - add_entry_all_options_again.changed == true
