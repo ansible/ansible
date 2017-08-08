@@ -149,7 +149,7 @@ def main():
     if match('^[0-9a-z_]+$', mysqlvar) is None:
         module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
     if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+        module.fail_json(msg="The MySQL-python module is required.")
     else:
         warnings.filterwarnings('error', category=MySQLdb.Warning)
 
