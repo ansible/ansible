@@ -1,0 +1,6 @@
+
+- hosts: windows
+  gather_facts: False
+  roles:
+    - { role: win_copy }
+    

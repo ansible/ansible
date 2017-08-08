@@ -43,7 +43,7 @@
     dest: '{{test_win_copy_path}}\target\file\foo.txt'
     remote_src: yes
   register: fail_remote_file_parent_dir_file
-  failed_when: "'object at dest parent dir is not a folder' not in fail_remote_file_parent_dir_file.msg"
+  failed_when: fail_remote_file_parent_dir_file.msg != 'object at destination parent dir ' + test_win_copy_path + '\\target\\file is currently a file'
 
 - name: fail source is a folder dest parent dir is also a file
   win_copy:
@@ -53,10 +53,23 @@
   register: fail_remote_folder_parent_dir_file
   failed_when: "'object at dest parent dir is not a folder' not in fail_remote_folder_parent_dir_file.msg"
 
+- name: fail to copy a remote file with parent dir that doesn't exist and filename is set
+  win_copy:
+    src: '{{test_win_copy_path}}\source\foo.txt'
+    dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
+    remote_src: yes
+  register: fail_remote_missing_parent_dir
+  failed_when: "'Destination directory ' + test_win_copy_path + '\\missing-dir does not exist' not in fail_remote_missing_parent_dir.msg"
+
 - name: remove target after remote failure tests
   win_file:
     path: '{{test_win_copy_path}}\target'
     state: absent
+
+- name: create remote target after cleaning
+  win_file:
+    path: '{{test_win_copy_path}}\target'
+    state: directory
 
 - name: copy single file remote (check mode)
   win_copy:
@@ -165,6 +178,48 @@
   assert:
     that:
     - not remote_copy_file_to_folder_again|changed
+
+- name: copy single file to missing folder (check mode)
+  win_copy:
+    src: '{{test_win_copy_path}}\source\foo.txt'
+    dest: '{{test_win_copy_path}}\target\missing\'
+    remote_src: yes
+  register: remote_copy_file_to_missing_folder_check
+  check_mode: yes
+
+- name: get result of copy single file to missing folder remote (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\target\missing\foo.txt'
+  register: remote_copy_file_to_missing_folder_actual_check
+
+- name: assert copy single file to missing folder remote (check mode)
+  assert:
+    that:
+    - remote_copy_file_to_missing_folder_check|changed
+    - remote_copy_file_to_missing_folder_check.operation == 'file_copy'
+    - remote_copy_file_to_missing_folder_actual_check.stat.exists == False
+
+- name: copy single file to missing folder remote
+  win_copy:
+    src: '{{test_win_copy_path}}\source\foo.txt'
+    dest: '{{test_win_copy_path}}\target\missing\'
+    remote_src: yes
+  register: remote_copy_file_to_missing_folder
+
+- name: get result of copy single file to missing folder remote
+  win_stat:
+    path: '{{test_win_copy_path}}\target\missing\foo.txt'
+  register: remote_copy_file_to_missing_folder_actual
+
+- name: assert copy single file to missing folder remote
+  assert:
+    that:
+    - remote_copy_file_to_missing_folder|changed
+    - remote_copy_file_to_missing_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_file_to_missing_folder.operation == 'file_copy'
+    - remote_copy_file_to_missing_folder.size == 8
+    - remote_copy_file_to_missing_folder_actual.stat.exists == True
+    - remote_copy_file_to_missing_folder_actual.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
 
 - name: clear target for folder to folder test
   win_file:

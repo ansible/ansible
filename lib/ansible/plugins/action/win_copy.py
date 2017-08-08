@@ -245,6 +245,94 @@ class ActionModule(ActionBase):
 
         return zip_file_path
 
+    def _remove_tempfile_if_content_defined(self, content, content_tempfile):
+        if content is not None:
+            os.remove(content_tempfile)
+
+    def _create_directory(self, dest, source_rel, task_vars):
+        dest_path = self._connection._shell.join_path(dest, source_rel)
+        file_args = self._task.args.copy()
+        file_args.update(
+            dict(
+                path=dest_path,
+                state="directory"
+            )
+        )
+        file_args.pop('content', None)
+
+        file_result = self._execute_module(module_name='file', module_args=file_args, task_vars=task_vars)
+        return file_result
+
+    def _copy_single_file(self, local_file, dest, source_rel, task_vars):
+        if self._play_context.check_mode:
+            module_return = dict(changed=True)
+            return module_return
+
+        # copy the file across to the server
+        tmp_path = self._make_tmp_path()
+        tmp_src = self._connection._shell.join_path(tmp_path, 'source')
+        self._transfer_file(local_file, tmp_src)
+
+        copy_args = self._task.args.copy()
+        copy_args.update(
+            dict(
+                dest=dest,
+                src=tmp_src,
+                original_basename=source_rel,
+                mode="single"
+            )
+        )
+        copy_args.pop('content', None)
+
+        copy_result = self._execute_module(module_name="copy", module_args=copy_args, task_vars=task_vars)
+        self._remove_tmp_path(tmp_path)
+
+        return copy_result
+
+    def _copy_zip_file(self, dest, files, directories, task_vars):
+        # create local zip file containing all the files and directories that
+        # need to be copied to the server
+        try:
+            zip_file = self._create_zip_tempfile(files, directories)
+        except Exception as e:
+            module_return = dict(
+                changed=False,
+                failed=True,
+                msg="failed to create tmp zip file: %s" % to_text(e),
+                exception=traceback.format_exc()
+            )
+            return module_return
+
+        zip_path = self._loader.get_real_file(zip_file)
+
+        if self._play_context.check_mode:
+            module_return = dict(changed=True)
+            os.remove(zip_path)
+            os.removedirs(os.path.dirname(zip_path))
+            return module_return
+
+        # send zip file to remote
+        tmp_path = self._make_tmp_path()
+        tmp_src = self._connection._shell.join_path(tmp_path, 'source')
+        self._transfer_file(zip_path, tmp_src)
+
+        # run the explode operation of win_copy on remote
+        copy_args = self._task.args.copy()
+        copy_args.update(
+            dict(
+                src=tmp_src,
+                dest=dest,
+                mode="explode"
+            )
+        )
+        copy_args.pop('content', None)
+        os.remove(zip_path)
+        os.removedirs(os.path.dirname(zip_path))
+
+        module_return = self._execute_module(module_args=copy_args, task_vars=task_vars)
+        self._remove_tmp_path(tmp_path)
+        return module_return
+
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
         if task_vars is None:
@@ -277,6 +365,7 @@ class ActionModule(ActionBase):
             return result
 
         # If content is defined make a temp file and write the content into it
+        content_tempfile = None
         if content is not None:
             try:
                 # if content comes to us as a dict it should be decoded json.
@@ -338,11 +427,9 @@ class ActionModule(ActionBase):
             # If it's recursive copy, destination is always a dir,
             # explicitly mark it so (note - win_copy module relies on this).
             if not self._connection._shell.path_has_trailing_slash(dest):
-                dest = self._connection._shell.join_path(dest, '')
-            # FIXME: Can we optimize cases where there's only one file, no
-            # symlinks and any number of directories?  In the original code,
-            # empty directories are not copied....
-            parent_dest = dest
+                dest = "%s%s" % (dest, self.WIN_PATH_SEPARATOR)
+
+            check_dest = dest
         # Source is a file, add details to source_files dict
         else:
             result['operation'] = 'file_copy'
@@ -351,15 +438,15 @@ class ActionModule(ActionBase):
             result['original_basename'] = original_basename
 
             # check if dest ends with / or \ and append source filename to dest
-            if dest.endswith(os.path.sep) or dest.endswith(self.WIN_PATH_SEPARATOR):
-                parent_dest = dest
+            if self._connection._shell.path_has_trailing_slash(dest):
+                check_dest = dest
                 filename = original_basename
                 result['dest'] = self._connection._shell.join_path(dest, filename)
             else:
                 # replace \\ with / so we can use os.path to get the filename or dirname
                 unix_path = dest.replace(self.WIN_PATH_SEPARATOR, os.path.sep)
                 filename = os.path.basename(unix_path)
-                parent_dest = os.path.dirname(unix_path)
+                check_dest = os.path.dirname(unix_path)
 
             file_checksum = _get_local_checksum(force, source)
             source_files['files'].append(
@@ -373,11 +460,11 @@ class ActionModule(ActionBase):
             result['size'] = os.path.getsize(to_bytes(source, errors='surrogate_or_strict'))
 
         # find out the files/directories/symlinks that we need to copy to the server
-        new_module_args = self._task.args.copy()
-        new_module_args.update(
+        query_args = self._task.args.copy()
+        query_args.update(
             dict(
                 mode="query",
-                dest=parent_dest,
+                dest=check_dest,
                 force=force,
                 files=source_files['files'],
                 directories=source_files['directories'],
@@ -385,102 +472,51 @@ class ActionModule(ActionBase):
             )
         )
 
-        new_module_args.pop('content', None)
-        module_return = self._execute_module(module_args=new_module_args, task_vars=task_vars)
+        query_args.pop('content', None)
+        query_return = self._execute_module(module_args=query_args, task_vars=task_vars)
 
-        if module_return.get('failed', False) is True:
-            result.update(module_return)
+        if query_return.get('failed', False) is True:
+            result.update(query_return)
             return result
 
-        if module_return['will_change'] is False:
+        if query_return['will_change'] is False:
             # no changes need to occur
             result['failed'] = False
             result['changed'] = False
             return result
 
-        if module_return['zip_available'] is True and result['operation'] != 'file_copy':
+        if query_return['zip_available'] is True and result['operation'] != 'file_copy':
             # if the PS zip utils are available and we need to copy more than a
             # single file/folder, create a local zip file of all the changed
             # files and send that to the server to be expanded
-            try:
-                # TODO: handle symlinks
-                zip_file = self._create_zip_tempfile(module_return['files'], module_return['directories'])
-            except Exception as e:
-                result['failed'] = True
-                result['msg'] = "failed to create tmp zip file: %s" % to_text(e)
-                result['exception'] = traceback.format_exc()
-                return result
-
-            # create a zipfile with the files/folders to send and send that to
-            # a temp directory
-            zip_file = self._loader.get_real_file(zip_file)
-            try:
-                tmp_path = self._make_tmp_path()
-                tmp_src = self._connection._shell.join_path(tmp_path, 'source')
-                remote_path = self._transfer_file(zip_file, tmp_src)
-            finally:
-                os.remove(zip_file)
-                os.removedirs(os.path.dirname(zip_file))
-
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=remote_path,
-                    dest=parent_dest,
-                    mode="explode"
-                )
-            )
-            new_module_args.pop('content', None)
-
-            # run the explosion action through the win_copy module
-            result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
-            self._remove_tmp_path(tmp_path)
+            # TODO: handle symlinks
+            result.update(self._copy_zip_file(dest, source_files['files'], source_files['directories'], task_vars))
         else:
             # the PS zip assemblies are not available or only a single file
             # needs to be copied. Instead of zipping up into one task this
             # will handle each file/folder as an individual task
             # TODO: Handle symlinks
 
-            for directory in module_return['directories']:
-                dest_directory_path = self._connection._shell.join_path(parent_dest, directory['dest'])
-                file_module_args = self._task.args.copy()
-                file_module_args.update(
-                    dict(
-                        path=dest_directory_path,
-                        state="directory"
-                    )
-                )
-                file_module_args.pop('content', None)
-                file_result = self._execute_module(module_name='file', module_args=file_module_args, task_vars=task_vars)
+            for directory in query_return['directories']:
+                file_result = self._create_directory(dest, directory['dest'], task_vars)
 
                 result['changed'] = file_result.get('changed', False)
                 if file_result.get('failed', False) is True:
+                    self._remove_tempfile_if_content_defined(content, content_tempfile)
                     result['failed'] = True
                     result['msg'] = "failed to create directory %s" % file_result['msg']
                     return result
 
-            for file in module_return['files']:
-                tmp_path = self._make_tmp_path()
-                tmp_src = self._connection._shell.join_path(tmp_path, 'source')
-                remote_path = self._transfer_file(file['src'], tmp_src)
-
-                dest_file_path = self._connection._shell.join_path(parent_dest, file['dest'])
-                copy_module_args = self._task.args.copy()
-                copy_module_args.update(
-                    dict(
-                        dest=dest_file_path,
-                        src=remote_path,
-                        mode="single"
-                    )
-                )
-                copy_module_args.pop('content', None)
-                copy_result = self._execute_module(module_name='copy', module_args=copy_module_args, task_vars=task_vars)
-                self._remove_tmp_path(tmp_path)
+            for file in query_return['files']:
+                copy_result = self._copy_single_file(file['src'], dest, file['dest'], task_vars)
 
                 result['changed'] = copy_result.get('changed', False)
                 if copy_result.get('failed', False) is True:
+                    self._remove_tempfile_if_content_defined(content, content_tempfile)
                     result['failed'] = True
                     result['msg'] = "failed to copy file %s: %s" % (file['src'], copy_result['msg'])
                     return result
 
+        # remove the content temp file if it was created
+        self._remove_tempfile_if_content_defined(content, content_tempfile)
         return result

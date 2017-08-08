@@ -19,6 +19,13 @@
   register: fail_dest_not_file_windows
   failed_when: fail_dest_not_file_windows.msg != 'dest must be a file if content is defined'
 
+- name: fail to copy a file with parent dir that doesn't exist and filename is set
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
+  register: fail_missing_parent_dir
+  failed_when: "'Destination directory ' + test_win_copy_path + '\\missing-dir does not exist' not in fail_missing_parent_dir.msg"
+
 - name: copy with content (check mode)
   win_copy:
     content: a
@@ -189,6 +196,48 @@
   assert:
     that:
     - not copy_file_to_folder_again|changed
+
+- name: copy single file to missing folder (check mode)
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\missing\'
+  register: copy_file_to_missing_folder_check
+  check_mode: yes
+
+- name: get result of copy single file to missing folder (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\missing\foo.txt'
+  register: copy_file_to_missing_folder_actual_check
+
+- name: assert copy single file to missing folder (check mode)
+  assert:
+    that:
+    - copy_file_to_missing_folder_check|changed
+    - copy_file_to_missing_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_missing_folder_check.operation == 'file_copy'
+    - copy_file_to_missing_folder_check.size == 8
+    - copy_file_to_missing_folder_actual_check.stat.exists == False
+
+- name: copy single file to missing folder
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\missing\'
+  register: copy_file_to_missing_folder
+
+- name: get result of copy single file to missing folder
+  win_stat:
+    path: '{{test_win_copy_path}}\missing\foo.txt'
+  register: copy_file_to_missing_folder_actual
+
+- name: assert copy single file to missing folder
+  assert:
+    that:
+    - copy_file_to_missing_folder|changed
+    - copy_file_to_missing_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_missing_folder.operation == 'file_copy'
+    - copy_file_to_missing_folder.size == 8
+    - copy_file_to_missing_folder_actual.stat.exists == True
+    - copy_file_to_missing_folder_actual.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
 
 - name: copy folder (check mode)
   win_copy:

@@ -24,6 +24,9 @@ $mode = Get-AnsibleParam -obj $params -name "mode" -type "str" -default "single"
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($mode -in @("explode","process","single"))
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 
+# used in single mode
+$original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str"
+
 # used in query and remote mode
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
 
@@ -69,7 +72,7 @@ Function Copy-File($source, $dest) {
         } elseif (-not (Test-Path -Path $file_dir)) {
             # directory doesn't exist, need to create
             New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
-            $diff += "+$file_dir`n"
+            $diff += "+$file_dir\`n"
         }
 
         if (Test-Path -Path $dest -PathType Leaf) {
@@ -113,8 +116,8 @@ Function Copy-Folder($source, $dest) {
             Fail-Json -obj $result -message "cannot copy folder from $source to $($dest): dest is already a file"
         }
 
-        $diff += "+$dest`n"
         New-Item -Path $dest -ItemType Container -WhatIf:$check_mode | Out-Null
+        $diff += "+$dest\`n"
         $result.changed = $true
 
         if (-not $check_mode) {
@@ -285,6 +288,15 @@ if ($mode -eq "query") {
         if ($dest.EndsWith("/") -or $dest.EndsWith("`\")) {
             $dest = Join-Path -Path $dest -ChildPath (Get-Item -Path $src -Force).Name
             $result.dest = $dest
+        } else {
+            # check if the parent dir exists, this is only done if src is a
+            # file and dest if the path to a file (doesn't end with \ or /)
+            $parent_dir = Split-Path -Path $dest
+            if (Test-Path -Path $parent_dir -PathType Leaf) {
+                Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+            } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+                Fail-Json -obj $result -message "Destination directory $parent_dir does not exist"
+            }
         }
         $copy_result = Copy-File -source $src -dest $dest
         $diff = $copy_result.diff
@@ -303,12 +315,35 @@ if ($mode -eq "query") {
 } elseif ($mode -eq "single") {
     # a single file is located in src and we need to copy to dest, this will
     # always result in a change as the calculation is done on the Ansible side
-    # before this is run
+    # before this is run. This should also never run in check mode
     if (-not (Test-Path -Path $src -PathType Leaf)) {
         Fail-Json -obj $result -message "Cannot copy src file: $src as it does not exist"
     }
 
-    Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode | Out-Null
+    # the dest parameter is a directory, we need to append original_basename
+    if ($dest.EndsWith("/") -or $dest.EndsWith("`\")) {
+        $remote_dest = Join-Path -Path $dest -ChildPath $original_basename
+        $parent_dir = Split-Path -Path $remote_dest
+
+        # when dest ends with /, we need to create the destination directories
+        if (Test-Path -Path $parent_dir -PathType Leaf) {
+            Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+        } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+            New-Item -Path $parent_dir -ItemType Directory | Out-Null
+        }
+    } else {
+        $remote_dest = $dest
+        $parent_dir = Split-Path -Path $remote_dest
+
+        # check if the dest parent dirs exist, need to fail if they don't
+        if (Test-Path -Path $parent_dir -PathType Leaf) {
+            Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+        } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+            Fail-Json -obj $result -message "Destination directory $parent_dir does not exist"
+        }
+    }
+
+    Copy-Item -Path $src -Destination $remote_dest -Force | Out-Null
     $result.changed = $true
 }
 

@@ -35,13 +35,16 @@ options:
     - Use \ for path separators or \\ when in "double quotes".
     - If C(dest) ends with \ then source or the contents of source will be
       copied to the directory without renaming.
+    - If C(dest) is a nonexistent path, it will only be created if C(dest) ends
+      with "/" or "\", or C(src) is a directory.
+    - If C(src) and C(dest) are files and if the parent directory of C(dest)
+      doesn't exist, then the task will fail.
     required: true
   force:
     version_added: "2.3"
     description:
     - If set to C(yes), the file will only be transferred if the content
       is different than destination.
-      different than the source.
     - If set to C(no), the file will only be transferred if the
       destination does not exist.
     default: 'yes'
