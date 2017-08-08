@@ -579,10 +579,11 @@ def update_image(module, ec2, image_id):
             elif ('user_ids' in set_permissions and set_permissions['user_ids']) or ('group_names' in set_permissions and set_permissions['group_names']):
                 res = img.remove_launch_permissions(**set_permissions)
             else:
-                module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
-            module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True)
+                module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False, **get_ami_info(img))
+            module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions,
+                             set_perms=set_permissions, changed=True, **get_ami_info(img))
         else:
-            module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
+            module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False, **get_ami_info(img))
 
     except boto.exception.BotoServerError as e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
