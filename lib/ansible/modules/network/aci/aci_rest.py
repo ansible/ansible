@@ -1,13 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2017 Dag Wieers <dag@wieers.com>
-# Copyright 2017 Swetha Chunduri (@schunduri)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -223,7 +220,7 @@ def main():
         if os.path.isfile(src):
             file_exists = True
         else:
-            module.fail_json(msg='Cannot find/access src:\n%s' % src)
+            module.fail_json(msg="Cannot find/access src '%s'" % src)
 
     # Find request type
     if path.find('.xml') != -1:
@@ -240,7 +237,7 @@ def main():
     aci = ACIModule(module)
 
     if method == 'get':
-        aci.request()
+        aci.request(path)
         module.exit_json(**aci.result)
     elif module.check_mode:
         # In check_mode we assume it works, but we don't actually perform the requested change
