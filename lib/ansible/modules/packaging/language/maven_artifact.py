@@ -385,7 +385,8 @@ def main():
             dest = dict(type="path", default=None),
             validate_certs = dict(required=False, default=True, type='bool'),
             keep_name = dict(required=False, default=False, type='bool'),
-        )
+        ),
+        add_file_common_args=True
     )
 
     repository_url = module.params["repository_url"]
@@ -429,12 +430,17 @@ def main():
         path = os.path.dirname(dest)
         if not os.path.exists(path):
             os.makedirs(path)
+    
+    module.params['dest'] = dest
+    file_args = module.load_file_common_arguments(module.params)
 
     if prev_state == "present":
-        module.exit_json(dest=dest, state=state, changed=False)
+        changed = module.set_fs_attributes_if_different(file_args, False)
+        module.exit_json(dest=dest, state=state, changed=changed)
 
     try:
         if downloader.download(artifact, dest):
+            changed = module.set_fs_attributes_if_different(file_args, True)
             module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,
                              extension=extension, repository_url=repository_url, changed=True)
         else:
