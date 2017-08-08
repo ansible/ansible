@@ -84,38 +84,19 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"enforce_rtr_alert": true, "flush_routes": true}
-existing:
-    description: k/v pairs of existing IGMP configuration
-    returned: verbose mode
-    type: dict
-    sample: {"enforce_rtr_alert": true, "flush_routes": false}
-end_state:
-    description: k/v pairs of IGMP configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"enforce_rtr_alert": true, "flush_routes": true}
 updates:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["ip igmp flush-routes"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
-
 import re
+
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
+
 
 PARAM_TO_COMMAND_KEYMAP = {
     'flush_routes': 'ip igmp flush-routes',
@@ -241,12 +222,6 @@ def main():
 
     if restart:
         proposed['restart'] = restart
-    result['connected'] = module.connected
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed
 
     result['warnings'] = warnings
 
@@ -255,4 +230,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
