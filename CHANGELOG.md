@@ -147,6 +147,7 @@ Ansible Changes By Release
   case, lnk_target will remain relative while lnk_source will be expanded to an
   absolute path.
 - The archive module has a new parameter exclude_path which lists paths to exclude from the archive
+- The yum module has a new parameter security which limits state=latest to security updates
 
 ### New Modules
 - aci
