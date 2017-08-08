@@ -3,6 +3,12 @@
 #    name: pyvmomi
 #    state: latest
 
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
 - name: store the vcenter container ip
   set_fact:
     vcsim: "{{ lookup('env', 'vcenter_host') }}"
@@ -15,6 +21,12 @@
   uri:
     url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
   register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
 - name: get a list of VMS from vcsim   
   uri:
