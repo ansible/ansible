@@ -77,8 +77,7 @@ def get_value_by_path(source_dict, key_path, ignore_key_error=False):
         if ignore_key_error:
             key_output = None
         else:
-            print("The key %s is not found. Please remember, Python is case sensitive." % key_name)
-            sys.exit(1)
+            sys.exit("The key %s is not found. Please remember, Python is case sensitive." % key_name)
     return key_output
 
 
@@ -98,11 +97,9 @@ def open_yaml_file(yaml_file):
             try:
                 yaml_file_content = yaml.safe_load(config_yaml_file)
             except yaml.YAMLError as yaml_error:
-                print(yaml_error)
-                sys.exit(1)
+                sys.exit(yaml_error)
     except IOError as io_error:
-        print("Cannot open YAML file.\n%s" % (io_error))
-        sys.exit(1)
+        sys.exit("Cannot open YAML file.\n%s" % io_error)
     return yaml_file_content
 
 
@@ -129,8 +126,7 @@ class NetboxAsInventory(object):
             self.group_by = script_config.setdefault("group_by", {})
             self.hosts_vars = script_config.setdefault("hosts_vars", {})
         else:
-            print("The key '%s' is not found in config file." % main_config_key)
-            sys.exit(1)
+            sys.exit("The key '%s' is not found in config file." % main_config_key)
 
         # Get value based on key.
         self.key_map = {
@@ -149,8 +145,7 @@ class NetboxAsInventory(object):
         """
 
         if not api_url:
-            print("Please check API URL in script configuration file.")
-            sys.exit(1)
+            sys.exit("Please check API URL in script configuration file.")
 
         if specific_host:
             data_source = "{}?name={}".format(api_url, specific_host)
