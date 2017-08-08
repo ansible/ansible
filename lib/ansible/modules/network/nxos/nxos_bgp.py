@@ -460,7 +460,7 @@ def get_value(arg, config):
 
 def get_existing(module, args, warnings):
     existing = {}
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
     asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
     asn_match = asn_re.match(str(netcfg))
