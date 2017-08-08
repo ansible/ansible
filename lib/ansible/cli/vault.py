@@ -211,10 +211,9 @@ class VaultCLI(CLI):
             self.new_encrypt_secret = new_encrypt_secret[1]
 
         loader.set_vault_secrets(vault_secrets)
-        self.secrets = vault_secrets
 
         # FIXME: do we need to create VaultEditor here? its not reused
-        vault = VaultLib(self.secrets)
+        vault = VaultLib(vault_secrets)
         self.editor = VaultEditor(vault)
 
         self.execute()

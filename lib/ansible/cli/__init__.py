@@ -227,7 +227,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                                         vault_password_files,
                                         ask_vault_pass)
 
-        for index, vault_id_slug in enumerate(vault_ids):
+        for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
 
