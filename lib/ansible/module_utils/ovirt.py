@@ -143,6 +143,7 @@ def create_connection(auth):
         insecure=auth.get('insecure', False),
         token=auth.get('token', None),
         kerberos=auth.get('kerberos', None),
+        headers=dict(filter=auth.get('filter', False)),
     )
 
 

@@ -84,6 +84,13 @@ options:
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
+
+    filter:
+        required: False
+        description:
+            - "A boolean flag that indicates if a 'Filter: true' http header
+               should be added to each API call."
+
 requirements:
   - python >= 2.7
   - ovirt-engine-sdk-python >= 4.0.0
@@ -168,6 +175,11 @@ ovirt_auth:
             returned: success
             type: bool
             sample: False
+        filter:
+            description: Flag indicating if 'Filter: true' http header is added to each API call.
+            returned: success
+            type: bool
+            sample: False
 '''
 
 import traceback
@@ -192,6 +204,7 @@ def main():
             timeout=dict(required=False, type='int', default=0),
             compress=dict(required=False, type='bool', default=True),
             kerberos=dict(required=False, type='bool', default=False),
+            filter=dict(required=False, type='bool', default=False),
             state=dict(default='present', choices=['present', 'absent']),
             ovirt_auth=dict(required=None, type='dict'),
         ),
@@ -218,6 +231,7 @@ def main():
         timeout=params.get('timeout'),
         compress=params.get('compress'),
         kerberos=params.get('kerberos'),
+        filter=params.get('filter'),
         token=params.get('token'),
     )
     try:
@@ -233,6 +247,7 @@ def main():
                     timeout=params.get('timeout'),
                     compress=params.get('compress'),
                     kerberos=params.get('kerberos'),
+                    filter=params.get('filter'),
                 ) if state == 'present' else dict()
             )
         )
