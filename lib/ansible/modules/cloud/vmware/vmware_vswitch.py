@@ -16,11 +16,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: vmware_vswitch
-short_description: Add a VMware Standard Switch to an ESXi host
+short_description: Add or remove a VMware Standard Switch to an ESXi host
 description:
-    - Add a VMware Standard Switch to an ESXi host
+    - Add or remove a VMware Standard Switch to an ESXi host
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac), Russell Teague (@mtnbikenc)"
+author:
+    - Joseph Callen (@jcpowermac)
+    - Russell Teague (@mtnbikenc)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -31,18 +33,20 @@ options:
         description:
             - vSwitch name to add
         required: True
+        aliases: ['switch']
     nic_name:
         description:
-            - vmnic name to attach to vswitch
+            - A list of vmnic names or vmnic name to attach to vSwitch
         required: False
+        aliases: ['nics']
     number_of_ports:
         description:
-            - Number of port to configure on vswitch
+            - Number of port to configure on vSwitch
         default: 128
         required: False
     mtu:
         description:
-            - MTU to configure on vswitch
+            - MTU to configure on vSwitch
         required: False
     state:
         description:
@@ -74,6 +78,14 @@ EXAMPLES = '''
     switch_name: vswitch_0001
     mtu: 9000
 
+- name: Add a VMWare vSwitch with multiple NICs
+  vmware_vswitch:
+    hostname: esxi_hostname
+    username: esxi_username
+    password: esxi_password
+    switch_name: vmware_vswitch_0004
+    nic_name: ['vmnic1', 'vmnic2']
+    mtu: 9000
 '''
 
 try:
@@ -138,7 +150,11 @@ class VMwareHostVirtualSwitch(object):
         vss_spec.numPorts = self.number_of_ports
         vss_spec.mtu = self.mtu
         if self.nic_name:
-            vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=[self.nic_name])
+            if isinstance(self.nic_name, list):
+                # Multiple Physical NICs
+                vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=self.nic_name)
+            else:
+                vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=[self.nic_name])
         self.host_system.configManager.networkSystem.AddVirtualSwitch(vswitchName=self.switch_name, spec=vss_spec)
         self.module.exit_json(changed=True)
 
@@ -183,8 +199,8 @@ class VMwareHostVirtualSwitch(object):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(switch_name=dict(required=True, type='str'),
-                              nic_name=dict(required=False, type='str'),
+    argument_spec.update(dict(switch=dict(required=True, type='str', aliases=['switch_name']),
+                              nics=dict(required=False, type='list', aliases=['nic_name']),
                               number_of_ports=dict(required=False, type='int', default=128),
                               mtu=dict(required=False, type='int', default=1500),
                               state=dict(default='present', choices=['present', 'absent'], type='str')))
