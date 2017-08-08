@@ -154,7 +154,6 @@ class ActionModule(ActionBase):
             resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
-            raise
             result['failed'] = True
             result['msg'] = "%s: %s" % (type(e).__name__, to_text(e))
             return result
