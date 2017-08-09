@@ -134,10 +134,6 @@ def main():
     current = get_current(module)
     desired = get_desired(module)
 
-    import q
-    q(current)
-    q(desired)
-
     state = module.params['state']
     restart = module.params['restart']
 
@@ -156,7 +152,6 @@ def main():
             commands.append('ip igmp enforce-router-alert')
 
     result = {'changed': False, 'updates': commands, 'warnings': warnings}
-    q(commands)
 
     if commands:
         if not module.check_mode:
