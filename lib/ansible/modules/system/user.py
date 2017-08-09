@@ -1870,7 +1870,7 @@ class AIX(User):
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
             cmd.append('-c')
-            self.execute_command(' '.join(cmd), data="%s:%s" % (self.name, self.password))
+            self.execute_command(cmd, data="%s:%s" % (self.name, self.password))
 
         return (rc, out, err)
 
@@ -1942,7 +1942,7 @@ class AIX(User):
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
             cmd.append('-c')
-            (rc2, out2, err2) = self.execute_command(' '.join(cmd), data="%s:%s" % (self.name, self.password))
+            (rc2, out2, err2) = self.execute_command(cmd, data="%s:%s" % (self.name, self.password))
         else:
             (rc2, out2, err2) = (None, '', '')
 
