@@ -407,7 +407,7 @@ class ActionModule(ActionBase):
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
 
         result['failed'] = True
-        if (source is None and content is None) or dest is None:
+        if ((not source or source is None) and content is None) or dest is None:
             result['msg'] = "src (or content) and dest are required"
         elif source is not None and content is not None:
             result['msg'] = "src and content are mutually exclusive"
