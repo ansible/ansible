@@ -88,6 +88,65 @@ EXAMPLES = '''
     start_time: 1395940006
     end_time: 1395954407
 '''
+
+RETURN = '''
+annotation:
+    description: details about the created annotation
+    returned: success
+    type: complex
+    contains:
+        _cid:
+            description: annotation identifier
+            returned: success
+            type: string
+            sample: /annotation/100000
+        _created:
+            description: creation timestamp
+            returned: success
+            type: int
+            sample: 1502236928
+        _last_modified:
+            description: last modification timestamp
+            returned: success
+            type: int
+            sample: 1502236928
+        _last_modified_by:
+            description: last modified by
+            returned: success
+            type: string
+            sample: /user/1000
+        category:
+            description: category of the created annotation
+            returned: success
+            type: string
+            sample: alerts
+        title:
+            description: title of the created annotation
+            returned: success
+            type: string
+            sample: WARNING
+        description:
+            description: description of the created annotation
+            returned: success
+            type: string
+            sample: Host is down.
+        start:
+            description: timestamp, since annotation applies
+            returned: success
+            type: int
+            sample: Host is down.
+        stop:
+            description: timestamp, since annotation ends
+            returned: success
+            type: string
+            sample: Host is down.
+        rel_metrics:
+            description: Array of metrics related to this annotation, each metrics is a string.
+            returned: success
+            type: list
+            sample:
+                - 54321_kbps
+'''
 import json
 import time
 
