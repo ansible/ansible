@@ -1,26 +1,37 @@
 # -*- coding: utf-8 -*-
 
+# This code is part of Ansible, but is an independent component
+
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
+
 # Copyright 2017 Dag Wieers <dag@wieers.com>
 # Copyright 2017 Swetha Chunduri (@schunduri)
+# All rights reserved.
 
-# This file is part of Ansible by Red Hat
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
 
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
 
@@ -68,8 +79,7 @@ def aci_response_json(result, rawoutput):
     ''' Handle APIC JSON response output '''
     try:
         result.update(json.loads(rawoutput))
-    except:
-        e = get_exception()
+    except Exception as e:
         # Expose RAW output for troubleshooting
         result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as JSON, see 'raw' output. %s" % e)
         return
@@ -85,8 +95,7 @@ def aci_response_xml(result, rawoutput):
     try:
         xml = lxml.etree.fromstring(to_bytes(rawoutput))
         xmldata = cobra.data(xml)
-    except:
-        e = get_exception()
+    except Exception as e:
         # Expose RAW output for troubleshooting
         result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as XML, see 'raw' output. %s" % e)
         return
@@ -128,7 +137,9 @@ class ACIModule(object):
 
         # Handle deprecated method/action parameter
         if self.params['method']:
-            self.module.deprecate("Parameter 'method' or 'action' is deprecated, please use 'state' instead", '2.6')
+            # Deprecate only if state was a valid option (not for aci_rest)
+            if self.module.argument_spec('state', False):
+                self.module.deprecate("Parameter 'method' or 'action' is deprecated, please use 'state' instead", '2.6')
             method_map = dict(delete='absent', get='query', post='present')
             self.params['state'] = method_map[self.params['method']]
         else:
