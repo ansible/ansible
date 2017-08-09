@@ -4,7 +4,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function) 
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -140,6 +140,8 @@ from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 
 OFFICE_365_CARD_CONTEXT = "http://schema.org/extensions"
 OFFICE_365_CARD_TYPE = "MessageCard"
+OFFICE_365_CARD_EMPTY_PAYLOAD_MSG = "Summary or Text is required."
+OFFICE_365_INVALID_WEBHOOK_MSG = "The Incoming Webhook was not reachable."
 
 
 def build_actions(actions):
@@ -200,7 +202,7 @@ def build_section(section):
     return section_payload
 
 
-def build_payload_for_connector_card(module, summary, color, title, text, actions, sections):
+def build_payload_for_connector_card(module, summary=None, color=None, title=None, text=None, actions=None, sections=None):
     payload = dict()
     payload['@context'] = OFFICE_365_CARD_CONTEXT
     payload['@type'] = OFFICE_365_CARD_TYPE
@@ -242,6 +244,11 @@ def do_notify_connector_card_webhook(module, webhook, payload):
 
     if info['status'] == 200:
         module.exit_json(changed=True)
+    elif info['status'] == 400 and module.check_mode:
+        if info['body'] == OFFICE_365_CARD_EMPTY_PAYLOAD_MSG:
+            module.exit_json(changed=True)
+        else:
+            module.fail_json(msg=OFFICE_365_INVALID_WEBHOOK_MSG)
     else:
         module.fail_json(
             msg="failed to send %s as a connector card to Incoming Webhook: %s"
@@ -253,10 +260,10 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             webhook=dict(required=True, no_log=True),
-            summary=dict(),
-            color=dict(),
-            title=dict(),
-            text=dict(),
+            summary=dict(type='str'),
+            color=dict(type='str'),
+            title=dict(type='str'),
+            text=dict(type='str'),
             actions=dict(type='list'),
             sections=dict(type='list')
         ),
@@ -281,8 +288,9 @@ def main():
         sections)
 
     if module.check_mode:
-        # In check mode, exit before actually sending the message
-        module.exit_json(changed=True, msg=payload)
+        # In check mode, send an empty payload to validate connection
+        check_mode_payload = build_payload_for_connector_card(module)
+        do_notify_connector_card_webhook(module, webhook, check_mode_payload)
 
     do_notify_connector_card_webhook(module, webhook, payload)
 
