@@ -35,6 +35,8 @@ requirements:
     - urllib3
     - requests
     - time
+notes:
+    - Check mode isn’t supported.
 options:
     api_key:
         description:
