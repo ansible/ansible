@@ -53,7 +53,7 @@ options:
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
-        device. This wait is applicable for operatinal state argument which are
+        device. This wait is applicable for operational state argument which are
         I(enabled), I(tx_rate) and I(rx_rate).
   aggregate:
     description: List of Interfaces definitions.

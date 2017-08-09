@@ -1,5 +1,5 @@
 ---
-- debug: msg="START net_interface junos/intend.yaml"
+- debug: msg="START net_interface junos/intent.yaml"
 
 - name: get facts
   junos_facts:
