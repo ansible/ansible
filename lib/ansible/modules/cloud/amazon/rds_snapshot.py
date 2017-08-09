@@ -91,32 +91,36 @@ import time
 
 # import module snippets
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.aws.rds import RDSSnapshot, get_db_snapshot
-
-# FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.aws.rds import get_db_snapshot
 
 
-def await_resource(conn, resource, status, module):
+def await_snapshot(conn, snapshot, status, module):
     wait_timeout = module.params.get('wait_timeout') + time.time()
-    while wait_timeout > time.time() and resource.status != status:
+    while wait_timeout > time.time() and snapshot['status'] != status:
         time.sleep(5)
         if wait_timeout <= time.time():
-            module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
+            module.fail_json(msg="Timeout waiting for RDS snapshot %s" % snapshot['db_snapshot_identifier'])
         # Temporary until all the rds2 commands have their responses parsed
-        if resource.name is None:
-            module.fail_json(msg="Failed waiting for RDS snapshot %s" % resource.snapshot)
-        resource = get_db_snapshot(conn, resource.name)
-    return resource
+        if snapshot['db_snapshot_identifier'] is None:
+            module.fail_json(msg="Failed waiting for RDS snapshot %s" % snapshot['db_snapshot_identifier'])
+        try:
+            snapshot = get_db_snapshot(conn, snapshot['db_snapshot_identifier'])
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, msg="Couldn't retrieve snapshot")
+    return snapshot
 
 
 def delete_snapshot(module, conn):
     snapshot = module.params.get('snapshot')
 
-    result = get_db_snapshot(conn, snapshot)
+    try:
+        result = get_db_snapshot(conn, snapshot)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e, msg="Couldn't retrieve snapshot")
     if not result:
         module.exit_json(changed=False)
-    if result.status == 'deleting':
+    if result['status'] == 'deleting':
         module.exit_json(changed=False)
     try:
         result = conn.delete_db_snapshot(DBSnapshotIdentifier=snapshot)
@@ -128,7 +132,7 @@ def delete_snapshot(module, conn):
     if not module.params.get('wait'):
         module.exit_json(changed=True)
     try:
-        await_resource(conn, result, 'deleted', module)
+        await_snapshot(conn, result, 'deleted', module)
         module.exit_json(changed=True)
     except Exception as e:
         if e.response['Error']['Code'] == 'DBSnapshotNotFound':
@@ -143,22 +147,28 @@ def create_snapshot(module, conn):
         module.fail_json(msg='instance_name is required for rds_snapshot when state=present')
     snapshot_name = module.params.get('snapshot')
     changed = False
-    snapshot = get_db_snapshot(conn, snapshot_name)
+    try:
+        snapshot = get_db_snapshot(conn, snapshot_name)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e, msg="Couldn't retrieve snapshot")
     if not snapshot:
         try:
             resource = conn.create_db_snapshot(DBSnapshotIdentifier=snapshot_name,
                                                DBInstanceIdentifier=instance_name)
-            snapshot = RDSSnapshot(resource['DBSnapshot'])
+            snapshot = camel_dict_to_snake_dict(resource['DBSnapshot'])
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e, msg="trying to create db snapshot")
 
     if module.params.get('wait'):
-        snapshot = await_resource(conn, snapshot, 'available', module)
+        snapshot = await_snapshot(conn, snapshot, 'available', module)
     else:
-        snapshot = get_db_snapshot(conn, snapshot_name)
+        try:
+            snapshot = get_db_snapshot(conn, snapshot_name)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, msg="Couldn't retrieve snapshot")
 
-    module.exit_json(changed=changed, snapshot=snapshot.data)
+    module.exit_json(changed=changed, snapshot=snapshot)
 
 
 def main():
