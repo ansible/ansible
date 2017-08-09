@@ -260,7 +260,7 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/module_utils/'):
-            if ext == '.ps1':
+            if ext in ('.ps1', '.psm1'):
                 return {
                     'windows-integration': self.integration_all_target,
                 }
