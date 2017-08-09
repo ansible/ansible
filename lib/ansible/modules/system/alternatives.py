@@ -110,7 +110,9 @@ def main():
                                         re.MULTILINE)
         alternative_regex = re.compile(r'^(\/.*)\s-\spriority', re.MULTILINE)
 
-        current_path = current_path_regex.search(display_output).group(1)
+        match = current_path_regex.search(display_output)
+        if match:
+            current_path = match.group(1)
         all_alternatives = alternative_regex.findall(display_output)
 
         if not link:
