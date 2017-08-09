@@ -1,20 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright (c) 2017 Philippe Dellaert <philippe@dellaert.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -28,8 +17,8 @@ DOCUMENTATION = '''
 module: vmware_guest_tools_wait
 short_description: Wait for VMware tools to become available and return facts
 description:
-    - Wait for VMware tools to become available on the VM and return facts
-version_added: 2.4
+    - Wait for VMware tools to become available on the VM and return facts.
+version_added: '2.4'
 author:
     - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 notes:
@@ -40,18 +29,18 @@ requirements:
 options:
    name:
         description:
-            - Name of the VM for which to wait until the tools become available
+            - Name of the VM for which to wait until the tools become available.
             - This is required if uuid is not supplied.
    name_match:
         description:
-            - If multiple VMs matching the name, use the first or last found
+            - If multiple VMs match the name, use the first or last found.
         default: 'first'
         choices: ['first', 'last']
    folder:
         description:
             - Destination folder, absolute or relative path to find an existing guest.
-            - This is required if name is supplied.
-            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+            - This is required if C(name) is supplied.
+            - The folder should include the datacenter. ESX's datacenter is C(ha-datacenter).
             - 'Examples:'
             - '   folder: /ha-datacenter/vm'
             - '   folder: ha-datacenter/vm'
@@ -66,7 +55,7 @@ options:
    uuid:
         description:
             - UUID of the VM  for which to wait until the tools become available, if known. This is VMware's unique identifier.
-            - This is required if name is not supplied.
+            - This is required if C(name) is not supplied.
 extends_documentation_fragment: vmware.documentation
 '''
 
