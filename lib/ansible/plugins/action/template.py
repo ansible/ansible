@@ -20,11 +20,13 @@ __metaclass__ = type
 import os
 import shutil
 import tempfile
+import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.basic import TOUCH_DATETIME_FORMAT
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
 from ansible.utils.hashing import checksum_s
@@ -62,6 +64,7 @@ class ActionModule(ActionBase):
         force = boolean(self._task.args.get('force', True), strict=False)
         follow = boolean(self._task.args.get('follow', False), strict=False)
         state = self._task.args.get('state', None)
+        archive = boolean(self._task.args.get('archive', False), strict=False)
         newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
         variable_start_string = self._task.args.get('variable_start_string', None)
         variable_end_string = self._task.args.get('variable_end_string', None)
@@ -156,6 +159,22 @@ class ActionModule(ActionBase):
         new_task.args.pop('variable_start_string', None)
         new_task.args.pop('variable_end_string', None)
         new_task.args.pop('trim_blocks', None)
+
+        # check if we need to retain exact permissions and ownership of the created/touched file
+        if (archive is True):
+            source_stat = os.stat(source)
+            new_task.args.update(
+                dict(
+                    mode=oct(source_stat.st_mode & 0o777),
+                    owner=str(source_stat.st_uid),
+                    group=str(source_stat.st_gid),
+                    mtime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_mtime)),
+                    atime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_atime)),
+                )
+            )
+            # we need to remove archive - copy would consider locally templated temp result rather than source
+            new_task.args.pop('archive', None)
+
         try:
             tempdir = tempfile.mkdtemp()
             result_file = os.path.join(tempdir, os.path.basename(source))

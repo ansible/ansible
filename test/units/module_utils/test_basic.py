@@ -712,6 +712,8 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with patch('os.path.islink', return_value=True):
             with patch('os.path.realpath', return_value='/path/to/real_file'):
                 res = am.load_file_common_arguments(params=extended_params)
+                res.pop('mtime')  # just fail on non-existent mtime/atime as we can hardly test exact values
+                res.pop('atime')
                 self.assertEqual(res, final_params)
 
     def test_module_utils_basic_ansible_module_selinux_mls_enabled(self):

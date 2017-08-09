@@ -25,12 +25,14 @@ import os
 import os.path
 import stat
 import tempfile
+import time
 import traceback
 from itertools import chain
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.basic import TOUCH_DATETIME_FORMAT
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
 
@@ -246,6 +248,21 @@ class ActionModule(ActionBase):
             # remote_file exists so continue to next iteration.
             return None
 
+        # check if we need to retain exact permissions and ownership of the source file
+        new_module_args = self._task.args.copy()
+        archive = boolean(self._task.args.get('archive', False), strict=False)
+        if (archive is True):
+            source_stat = os.stat(source_full)
+            new_module_args.update(
+                dict(
+                    mode=oct(source_stat.st_mode & 0o777),
+                    owner=str(source_stat.st_uid),
+                    group=str(source_stat.st_gid),
+                    mtime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_mtime)),
+                    atime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_atime))
+                )
+            )
+
         # Generate a hash of the local file.
         local_checksum = checksum(source_full)
 
@@ -286,7 +303,6 @@ class ActionModule(ActionBase):
 
             # src and dest here come after original and override them
             # we pass dest only to make sure it includes trailing slash in case of recursive copy
-            new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
                     src=tmp_src,
@@ -326,7 +342,6 @@ class ActionModule(ActionBase):
                     dest = dest_status_nofollow['lnk_source']
 
             # Build temporary module_args.
-            new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
                     src=source_rel,
@@ -364,6 +379,12 @@ class ActionModule(ActionBase):
             new_module_args['mode'] = self._task.args['mode']
         if 'owner' in self._task.args:
             new_module_args['owner'] = self._task.args['owner']
+        if 'atime' in self._task.args:
+            new_module_args['atime'] = self._task.args['atime']
+        if 'mtime' in self._task.args:
+            new_module_args['mtime'] = self._task.args['mtime']
+        if 'archive' in self._task.args:
+            new_module_args['archive'] = self._task.args['archive']
         if 'selevel' in self._task.args:
             new_module_args['selevel'] = self._task.args['selevel']
         if 'serole' in self._task.args:

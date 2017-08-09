@@ -176,6 +176,8 @@ from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
+# datetime format used by touch on unix, here utilized by file/copy/template Ansible modules
+TOUCH_DATETIME_FORMAT = "%Y%m%d%H%M.%S"
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
@@ -920,6 +922,8 @@ class AnsibleModule(object):
         mode = params.get('mode', None)
         owner = params.get('owner', None)
         group = params.get('group', None)
+        atime = params.get('atime', None)
+        mtime = params.get('mtime', None)
 
         # selinux related options
         seuser = params.get('seuser', None)
@@ -939,6 +943,7 @@ class AnsibleModule(object):
         attributes = params.get('attributes', None)
         return dict(
             path=path, mode=mode, owner=owner, group=group,
+            atime=atime, mtime=mtime,
             seuser=seuser, serole=serole, setype=setype,
             selevel=selevel, secontext=secontext, attributes=attributes,
         )
@@ -1435,6 +1440,37 @@ class AnsibleModule(object):
 
         return reduce(or_reduce, perms, 0)
 
+    def set_times_if_different(self, path, atime, mtime, changed):
+        path = os.path.expanduser(path)
+        if mtime is None and atime is None:
+            return changed
+
+        st = os.lstat(path)
+        prev_mtime = time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(st.st_mtime))
+        prev_atime = time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(st.st_atime))
+        if prev_mtime != mtime or prev_atime != atime:
+            if self.check_mode:
+                return True
+            try:
+                # self.fail_json(path=path, msg='touching with atime {}, mtime {}'.format(atime, mtime), details='')
+                os.utime(path, (time.mktime(time.strptime(atime, TOUCH_DATETIME_FORMAT)), time.mktime(time.strptime(mtime, TOUCH_DATETIME_FORMAT))))
+            except OSError as e:
+                if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set time on symbolic links
+                    pass
+                elif e.errno == errno.ENOENT:  # Can't set time on broken symbolic links
+                    pass
+                else:
+                    raise e
+            except Exception as e:
+                self.fail_json(path=path, msg='touch failed', details=str(e))
+
+            # we won't be detecting changes on atime as we are interested in write-only changes
+            st = os.lstat(path)
+            new_mtime = time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(st.st_mtime))
+            if new_mtime != prev_mtime:
+                changed = True
+        return changed
+
     def set_fs_attributes_if_different(self, file_args, changed, diff=None, expand=True):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
@@ -1451,6 +1487,9 @@ class AnsibleModule(object):
         )
         changed = self.set_attributes_if_different(
             file_args['path'], file_args['attributes'], changed, diff, expand
+        )
+        changed = self.set_times_if_different(
+            file_args['path'], file_args['atime'], file_args['mtime'], changed
         )
         return changed
 
