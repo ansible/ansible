@@ -440,6 +440,7 @@ class Ec2Inventory(object):
             'group_by_ami_id',
             'group_by_instance_type',
             'group_by_instance_state',
+            'group_by_platform',
             'group_by_key_pair',
             'group_by_vpc_id',
             'group_by_security_group',
