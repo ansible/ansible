@@ -79,7 +79,7 @@ from ansible.module_utils.aws.rds import RDSDBInstance
 
 try:
     import botocore
-except BaseException:
+except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 
@@ -113,6 +113,8 @@ def instance_facts(module, conn):
             conn.list_tags_for_resource(
                 ResourceName=instance['DBInstanceArn'])['TagList'])
 
+    # FIXME - this needs to be simplified to do one snakify as we get rid of the
+    # RDSDBInstance class - see https://github.com/ansible/ansible/pull/26598
     module.exit_json(
         changed=False, db_instances=[
             RDSDBInstance(instance).data for instance in results])
