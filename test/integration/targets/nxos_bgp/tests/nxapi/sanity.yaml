@@ -1,7 +1,7 @@
 ---
 - debug: msg="START TRANSPORT:NXAPI nxos_bgp sanity test"
 
-- set_fact: log_neighbor_changes="true"
+- set_fact: neighbor_down_fib_accelerate="true"
   when: (titanium is defined) and not ((titanium | search('true')))
 
 - set_fact: reconnect_interval="55"
@@ -76,9 +76,9 @@
       graceful_restart_timers_restart: 130
       graceful_restart_timers_stalepath_time: 310
       isolate: false
-      log_neighbor_changes: "{{log_neighbor_changes|default(omit)}}"
+      log_neighbor_changes: true
       maxas_limit: 50
-      neighbor_down_fib_accelerate: true
+      neighbor_down_fib_accelerate: "{{neighbor_down_fib_accelerate|default(omit)}}"
       reconnect_interval: "{{reconnect_interval|default(omit)}}"
       shutdown: true
       timer_bestpath_limit: 255
