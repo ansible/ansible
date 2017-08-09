@@ -38,7 +38,7 @@ The following is a list of module_utils files and a general description. The mod
 - network.py - Functions for running commands on networking devices
 - nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices
 - openstack.py - Utilities for modules that work with Openstack instances.
-- openswitch.py - Definitions and helper functions for modules that manage OpenSwitch devices
+- libreswitch.py - Definitions and helper functions for modules that manage libreswitch devices
 - powershell.ps1 - Utilities for working with Microsoft Windows clients
 - pure.py - Functions and utilities for modules that work with the Pure Storage storage platforms.
 - pycompat24.py - Exception workaround for Python 2.4.

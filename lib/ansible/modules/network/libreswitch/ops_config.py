@@ -17,13 +17,13 @@ DOCUMENTATION = """
 module: ops_config
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage OpenSwitch configuration using CLI
+short_description: Manage LibreSwitch configuration using CLI
 description:
-  - OpenSwitch configurations use a simple block indent file syntax
+  - LibreSwitch configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
     an implementation for working with ops configuration sections in
     a deterministic way.
-extends_documentation_fragment: openswitch
+extends_documentation_fragment: libreswitch
 options:
   lines:
     description:
@@ -175,7 +175,7 @@ backup_path:
 """
 import traceback
 
-from ansible.module_utils.openswitch import NetworkModule, NetworkError
+from ansible.module_utils.libreswitch import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils._text import to_native
 

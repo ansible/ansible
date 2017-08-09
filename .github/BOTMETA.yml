@@ -466,7 +466,7 @@ files:
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
-  $modules/network/openswitch/: $team_openswitch
+  $modules/network/libreswitch/: $team_libreswitch
   $modules/network/openvswitch/:
     ignored: stygstra
     maintainers: $team_networking
@@ -478,7 +478,7 @@ files:
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
   $modules/network/routing/: $team_networking
-  $modules/network/sros/: $team_openswitch
+  $modules/network/sros/: $team_libreswitch
   $modules/network/system/: $team_networking
   $modules/network/vyos/: Qalthos
   $modules/notification/bearychat.py: tonyseek
@@ -1060,7 +1060,7 @@ macros:
   team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha
   team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee
-  team_openswitch: Qalthos gundalow privateip
+  team_libreswitch: Qalthos gundalow privateip
   team_rabbitmq: chrishoffman manuel-sousa romanek-adam
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3

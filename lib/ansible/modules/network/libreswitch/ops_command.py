@@ -17,13 +17,13 @@ DOCUMENTATION = """
 module: ops_command
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Run arbitrary commands on OpenSwitch devices.
+short_description: Run arbitrary commands on LibreSwitch devices.
 description:
-  - Sends arbitrary commands to an OpenSwitch node and returns the results
+  - Sends arbitrary commands to an LibreSwitch node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-extends_documentation_fragment: openswitch
+extends_documentation_fragment: libreswitch
 options:
   commands:
     description:
@@ -95,7 +95,7 @@ vars:
     commands:
       - show version
     wait_for:
-      - "result[0] contains OpenSwitch"
+      - "result[0] contains LibreSwitch"
     provider: "{{ cli }}"
 
 - ops_command:
@@ -126,7 +126,7 @@ failed_conditions:
 """
 import traceback
 
-import ansible.module_utils.openswitch
+import ansible.module_utils.libreswitch
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
 from ansible.module_utils.network import NetworkModule, NetworkError
