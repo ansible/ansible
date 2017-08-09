@@ -283,7 +283,8 @@ def main():
         intf_name = SubElement(element, 'interface-name')
         intf_name.text = item.get('name')
 
-        sleep(item.get('delay'))
+        if result['changed']:
+            sleep(item.get('delay'))
 
         reply = send_request(module, element, ignore_warning=False)
 
