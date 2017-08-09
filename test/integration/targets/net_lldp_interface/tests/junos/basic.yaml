@@ -17,7 +17,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'+    interface ge-0/0/5;' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *interface ge-0/0/5")
 
 - name: lldp interface configuration (idempotent)
   net_lldp_interface:
@@ -40,7 +40,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'[edit protocols lldp interface ge-0/0/5]\n+    disable;' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *disable")
 
 - name: Enable lldp on particular interface
   net_lldp_interface:
@@ -52,7 +52,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'[edit protocols lldp interface ge-0/0/5]\n-    disable;' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *disable")
 
 - name: Delete lldp on particular interface
   net_lldp_interface:
@@ -64,7 +64,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'[edit protocols lldp]\n-    interface ge-0/0/5;' in result.diff.prepared"
+      - result.diff.prepared | search("\- *interface ge-0/0/5")
 
 - name: Delete lldp on particular interface (idempotent)
   net_lldp_interface:
