@@ -6,8 +6,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import telnetlib
+from time import sleep
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import text_type
 from ansible.plugins.action import ActionBase
 
 
@@ -71,7 +73,7 @@ class ActionModule(ActionBase):
                 finally:
                     if tn:
                         tn.close()
-                    resut['output'] = output
+                    result['output'] = output
             else:
                 result['failed'] = True
                 result['msg'] = 'Telnet requries a command to execute'
