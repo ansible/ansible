@@ -165,16 +165,21 @@ class Cli:
     def load_config(self, config):
         """Sends configuration commands to the remote device
         """
+
         rc, out, err = self.exec_command('configure')
         if rc != 0:
             self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
+        msgs = []
         for cmd in config:
             rc, out, err = self.exec_command(cmd)
             if rc != 0:
                 self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            elif out:
+                msgs.append(out)
 
         self.exec_command('end')
+        return msgs
 
 
 class Nxapi:
@@ -343,6 +348,7 @@ class Nxapi:
         """
         commands = to_list(commands)
         self.send_request(commands, output='config')
+        return []
 
 
 def is_json(cmd):

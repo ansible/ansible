@@ -43,7 +43,7 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
 
     def load_fixtures(self, commands=None, device=''):
         self.get_config.return_value = load_fixture('', 'nxos_bgp_config.cfg')
-        self.load_config.return_value = None
+        self.load_config.return_value = []
 
     def test_nxos_bgp_neighbor_af(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.3', afi='ipv4',
