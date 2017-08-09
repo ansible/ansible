@@ -76,6 +76,7 @@ options:
         description:
             - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the new name for imported disk.
                This parameter is used only in case of importing disk image from Glance domain."
+        version_added: "2.4"
     storage_domain:
         description:
             - "When C(state) is I(imported) this parameter specifies the name of the destination data storage domain.
