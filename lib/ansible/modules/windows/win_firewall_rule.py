@@ -88,18 +88,6 @@ options:
             - The profile this rule applies to
         default: 'domain,private,public'
         aliases: [ 'profile' ]
-    force:
-        description:
-            - Replace any existing rule by removing it first.
-        default: 'no'
-        choices: [ 'no', 'yes' ]
-notes:
-- The implementation uses C(netsh advfirewall) underneath, a pure-Powershell
-  reimplementation would be more powerful.
-- Modifying existing firewall rules is not possible, the module does allow
-  replacing complete rules based on name, but that works by removing the
-  existing rule completely, and recreating it with provided information
-  (when using C(force)).
 '''
 
 EXAMPLES = r'''
