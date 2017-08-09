@@ -32,7 +32,6 @@
 # Lenovo Networking
 
 import time
-import ftplib
 import socket
 import re
 try:
@@ -3089,41 +3088,7 @@ def doSecureImageTransfer(
     return retVal
 # EOM
 
-# Method to find whether image is there in server or not
-# This is not complete. Need to figure out How to do for SCP and SFTP
-
-
-def checkServerForImage(protocol, ipaddress, folder, username, password):
-    # server = "10.241.105.214"
-    server = ipaddress
-    # username = "pbhosale"
-    username = username
-    # password = "Lab4man1"
-    password = password
-    imageDir = "cnos_images"
-    output = 0
-    try:
-        ftp = ftplib.FTP(server)
-        ftp.login(username, password)
-    except Exception:
-        # debugOutput e
-        return 1
-    else:
-        filelist = []  # to store all files
-        ftp.retrlines('NLST', filelist.append)  # append to list
-        num = 0
-        for f in filelist:
-            # debugOutput f
-            if(f == imageDir):
-                num = 1
-        if(num == 0):
-            resp = ftp.mkd(imageDir)
-        if(resp != imageDir):
-            return 1
-    return output
-# EOM
-
-# Method for device response than time delay
+# Method for enter enable mnode
 #
 
 
@@ -3179,7 +3144,7 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
     return retVal
 # EOM
 
-# Method for device response than time delay
+# Method for device response wait for a time delay
 #
 
 
