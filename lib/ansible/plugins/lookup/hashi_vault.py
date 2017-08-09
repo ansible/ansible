@@ -68,10 +68,6 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
 
-        self.token = kwargs.get('token')
-        if self.token is None:
-            raise AnsibleError("No Hashicorp Vault Token specified for hash_vault lookup")
-
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s is None:
