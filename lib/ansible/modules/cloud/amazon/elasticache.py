@@ -135,21 +135,21 @@ EXAMPLES = """
 
 # Create cache cluster with Tags
 - elasticache:
-    name:·"test-please-delete"
-    state:·present
-    engine:·redis
-    tags:·[
+    name: "test-please-delete"
+    state: present
+    engine: redis
+    tags: [
             {
-                'Key':·'test',
-                'Value':·'testa'
+                'Key': 'test',
+                'Value': 'testa'
             },
             {
-                'Key':·'testb',
-                'Value':·'testc'
+                'Key': 'testb',
+                'Value': 'testc'
             },
             {
-                'Key':·'testd',
-                'Value':·'testf'
+                'Key': 'testd',
+                'Value': 'testf'
             },
           ]
 """
