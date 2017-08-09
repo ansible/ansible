@@ -148,11 +148,11 @@ class NetboxAsInventory(object):
             sys.exit("Please check API URL in script configuration file.")
 
         if specific_host:
-            data_source = "{}?name={}".format(api_url, specific_host)
+            api_url_params = {"name": specific_host}
         else:
-            data_source = api_url
+            api_url_params = {}
 
-        hosts_list = requests.get(data_source).json()
+        hosts_list = requests.get(api_url, params=api_url_params).json()
         return hosts_list
 
     @staticmethod
