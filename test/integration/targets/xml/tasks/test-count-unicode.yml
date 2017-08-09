@@ -1,0 +1,13 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: '{{ role_path }}/fixtures/ansible-xml-beers-unicode.xml'
+      dest: /tmp/ansible-xml-beers-unicode.xml
+
+  - name: Count child element
+    xml:
+      path: /tmp/ansible-xml-beers-unicode.xml
+      xpath: /business/beers/beer
+      count: true
+    register: beers
+    failed_when: beers.count != 2

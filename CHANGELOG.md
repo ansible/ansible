@@ -302,6 +302,7 @@ Ansible Changes By Release
   * win_route
   * win_security_policy
   * win_wakeonlan
+- xml
 
 <a id="2.3"></a>
 

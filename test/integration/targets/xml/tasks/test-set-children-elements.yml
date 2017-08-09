@@ -1,0 +1,27 @@
+---
+  - name: Setup test fixture
+    command: cp {{ role_path }}/fixtures/ansible-xml-beers.xml /tmp/ansible-xml-beers.xml
+
+  - name: Set child elements
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business/beers
+      set_children:
+        - beer: "90 Minute IPA"
+        - beer: "Harvest Pumpkin Ale"
+
+  - name: Test expected result
+    command: diff -u {{ role_path }}/results/test-set-children-elements.xml /tmp/ansible-xml-beers.xml
+
+  - name: Set child elements
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business/beers
+      set_children:
+        - beer: "90 Minute IPA"
+        - beer: "Harvest Pumpkin Ale"
+    register: set_children_again
+
+  - fail:
+      msg: "Setting children is not idempotent!"
+    when: set_children_again.changed

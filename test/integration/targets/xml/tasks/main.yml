@@ -1,0 +1,68 @@
+- name: Gather facts
+  setup:
+
+- name: Install lxml (FreeBSD)
+  pkgng:
+    name: py27-lxml
+    state: present
+  when: ansible_os_family == "FreeBSD"
+
+# Needed for MacOSX !
+- name: Install lxml
+  pip:
+    name: lxml
+    state: present
+#  when: ansible_os_family == "Darwin"
+
+- name: Get lxml major version
+  shell: python -c 'from lxml import etree; print(etree.LXML_VERSION[0])'
+  register: lxml_major_version
+
+- name: Get lxml minor version
+  shell: python -c 'from lxml import etree; print(etree.LXML_VERSION[1])'
+  register: lxml_minor_version
+
+- name: Set lxml capabilities as variables
+  set_fact:
+    # NOTE: Some tests require predictable element attribute order,
+    #       which is only guaranteed starting from lxml v3.0alpha1
+    lxml_predictable_attribute_order: '{{ lxml_major_version.stdout|int >= 3 }}'
+
+    # NOTE: The xml module requires at least lxml v2.3.0
+    lxml_xpath_attribute_result_attrname: '{{ lxml_major_version.stdout|int >= 2 and lxml_minor_version.stdout|int >= 3 }}'
+
+- name: Only run the tests when lxml v2.3.0+
+  when: lxml_xpath_attribute_result_attrname
+  block:
+
+  - include: test-add-children-elements.yml
+  - include: test-add-children-from-groupvars.yml
+  - include: test-add-children-with-attributes.yml
+  - include: test-add-element-implicitly.yml
+  - include: test-count.yml
+  - include: test-mutually-exclusive-attributes.yml
+  - include: test-remove-attribute.yml
+  - include: test-remove-element.yml
+  - include: test-set-attribute-value.yml
+  - include: test-set-children-elements.yml
+  - include: test-set-children-elements-level.yml
+  - include: test-set-element-value.yml
+  - include: test-set-element-value-empty.yml
+  - include: test-pretty-print.yml
+  - include: test-pretty-print-only.yml
+  - include: test-add-namespaced-children-elements.yml
+  - include: test-remove-namespaced-attribute.yml
+  - include: test-set-namespaced-attribute-value.yml
+  - include: test-set-namespaced-element-value.yml
+  - include: test-get-element-content.yml
+  - include: test-xmlstring.yml
+  - include: test-children-elements-xml.yml
+
+  # Unicode tests
+  - include: test-add-children-elements-unicode.yml
+  - include: test-add-children-with-attributes-unicode.yml
+  - include: test-set-attribute-value-unicode.yml
+  - include: test-count-unicode.yml
+  - include: test-get-element-content.yml
+  - include: test-set-children-elements-unicode.yml
+  - include: test-set-element-value-unicode.yml
