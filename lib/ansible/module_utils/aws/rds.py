@@ -14,7 +14,7 @@ except:
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
-def get_rds_instance(conn, instancename):
+def get_rds_db_instance(conn, instancename):
     try:
         response = conn.describe_db_instances(DBInstanceIdentifier=instancename)
     except botocore.exceptions.ClientError as e:
@@ -26,6 +26,7 @@ def get_rds_instance(conn, instancename):
 
 
 def rds_instance_to_facts(instance):
+    assert 'DBInstanceIdentifier' in instance, "instance argument was not a valid instance"
     d = camel_dict_to_snake_dict(instance)
     d.update({
         'id': instance.get('DBInstanceIdentifier'),
@@ -47,6 +48,7 @@ def get_rds_snapshot(conn, snapshotid):
 
 
 def rds_snap_to_facts(snapshot):
+    assert 'DBSnapshotIdentifier' in snapshot, "snapshot argument was not a valid snapshot"
     d = camel_dict_to_snake_dict(snapshot)
     d.update({
         'id': snapshot.get('DBSnapshotIdentifier'),
@@ -56,7 +58,7 @@ def rds_snap_to_facts(snapshot):
     return d
 
 
-def rds_facts_diff(self, state_a, state_b):
+def rds_facts_diff(state_a, state_b):
     """compare two fact dictionaries for rds instances
 
     This function takes two dictionaries of facts related to an RDS
@@ -77,13 +79,13 @@ def rds_facts_diff(self, state_a, state_b):
     #               'db_name',  'db_engine', 'engine_version',
     #               'instance_type', 'iops', 'license_model',
     #               'maint_window', 'multi_zone', 'new_instance_name',
-    #               'option_group', 'parameter_group', 'password', 'size',
+    #               'option_group', 'parameter_group', 'password', 'allocated_storage',
     #               'storage_type', 'subnet', 'tags', 'upgrade', 'username',
     #               'vpc_security_groups']
     compare_keys = ['backup_retention', 'instance_type', 'iops',
                     'maintenance_window', 'multi_zone',
                     'replication_source',
-                    'size', 'storage_type', 'tags', 'zone']
+                    'allocated_storage', 'storage_type', 'tags', 'zone']
     leave_if_null = ['maintenance_window', 'backup_retention']
     before = dict()
     after = dict()
@@ -101,6 +103,6 @@ def rds_facts_diff(self, state_a, state_b):
         after['port'] = new_port
     result = dict()
     if before:
-        result = dict(before_header=self.name, before=before, after=after)
-        result['after_header'] = state_b.get('new_instance_name', state_a.get('instance_name'))
+        result = dict(before_header=state_a.get('instance_id'), before=before, after=after)
+        result['after_header'] = state_b.get('instance_id', state_a.get('instance_id'))
     return result
