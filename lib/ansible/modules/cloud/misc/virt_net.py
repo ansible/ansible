@@ -258,8 +258,8 @@ class LibvirtConnection(object):
                     return True
             else:
                 # change the host
-                if host.get('name') == new_data.get('name')
-                and host.get('ip') == new_data.get('ip'):
+                if (host.get('name') == new_data.get('name')
+                and host.get('ip') == new_data.get('ip')):
                     return False
                 else:
                     if not self.module.check_mode:
