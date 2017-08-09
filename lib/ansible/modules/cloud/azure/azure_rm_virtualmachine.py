@@ -112,6 +112,14 @@ options:
               the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
         aliases:
             - storage_blob
+    managed_disk_type:
+            description:
+            - Managed OS disk type
+        choices:
+            - Standard_LRS
+            - Premium_LRS
+        default:
+            - Standard_LRS
     os_disk_caching:
         description:
             - Type of OS disk caching.
