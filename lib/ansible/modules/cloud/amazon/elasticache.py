@@ -133,6 +133,25 @@ EXAMPLES = """
     name: "test-please-delete"
     state: rebooted
 
+# Create cache cluster with Tags
+- elasticache:
+····name:·"test-please-delete"
+····state:·present
+····engine:·redis
+····tags:·[
+················{
+····················'Key':·'test',
+····················'Value':·'testa'
+················},
+················{
+····················'Key':·'testb',
+····················'Value':·'testc'
+················},
+················{
+····················'Key':·'testd',
+····················'Value':·'testf'
+················},
+··········]
 """
 from time import sleep
 from traceback import format_exc
