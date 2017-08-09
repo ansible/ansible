@@ -397,23 +397,10 @@ INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launc
 backoff_params = dict(tries=10, delay=3, backoff=1.5)
 
 
-def paginated_describe_asg(connection, group_name):
-    pg = connection.get_paginator('describe_auto_scaling_groups')
-    for page in pg.paginate(AutoScalingGroupNames=[group_name]):
-        for data in page.get('AutoScalingGroups', []):
-            yield data
-
-
-def paginated_describe_lc(connection, lc_name):
-    pg = connection.get_paginator('describe_launch_configurations')
-    for page in pg.paginate(LaunchConfigurationNames=[lc_name]):
-        for data in page.get('LaunchConfigurations', []):
-            yield data
-
-
 @AWSRetry.backoff(**backoff_params)
 def describe_autoscaling_groups(connection, group_name):
-    return [page for page in paginated_describe_asg(connection, group_name)]
+    pg = connection.get_paginator('describe_auto_scaling_groups')
+    return pg.paginate(AutoScalingGroupNames=[group_name]).build_full_result().get('AutoScalingGroups', [])
 
 
 @AWSRetry.backoff(**backoff_params)
@@ -446,7 +433,8 @@ def resume_asg_processes(connection, asg_name, processes):
 
 @AWSRetry.backoff(**backoff_params)
 def describe_launch_configurations(connection, launch_config_name):
-    return {'LaunchConfigurations': [page for page in paginated_describe_lc(connection, launch_config_name)]}
+    pg = connection.get_paginator('describe_launch_configurations')
+    return pg.paginate(LaunchConfigurationNames=[launch_config_name]).build_full_result()
 
 
 @AWSRetry.backoff(**backoff_params)
