@@ -20,7 +20,7 @@
 - name: Check intent arguments
   net_interface:
     name: "{{ name }}"
-    enabled: eq(up)
+    state: up
     tx_rate: ge(0)
     rx_rate: le(0)
     provider: "{{ netconf }}"
@@ -33,7 +33,7 @@
 - name: Check intent arguments (failed condition)
   net_interface:
     name: "{{ name }}"
-    enabled: neq(up)
+    state: down
     tx_rate: gt(0)
     rx_rate: lt(0)
     provider: "{{ netconf }}"
@@ -43,15 +43,15 @@
 - assert:
     that:
       - "result.failed == true"
-      - "'enabled neq(up)' in result.failed_conditions"
+      - "'state eq(down)' in result.failed_conditions"
       - "'tx_rate gt(0)' in result.failed_conditions"
       - "'rx_rate lt(0)' in result.failed_conditions"
 
 - name: Config + intent
   net_interface:
     name: "{{ name }}"
+    enabled: False
     state: down
-    enabled: eq(down)
     provider: "{{ netconf }}"
   register: result
 
@@ -63,8 +63,8 @@
 - name: Config + intent (fail)
   net_interface:
     name: "{{ name }}"
+    enabled: False
     state: up
-    enabled: eq(down)
     provider: "{{ netconf }}"
   ignore_errors: yes
   register: result
@@ -72,14 +72,14 @@
 - assert:
     that:
       - "result.failed == true"
-      - "'enabled eq(down)' in result.failed_conditions"
+      - "'state eq(up)' in result.failed_conditions"
 
 - name: Aggregate config + intent (pass)
   net_interface:
     aggregate:
     - name: "{{ name }}"
+      enabled: True
       state: up
-      enabled: eq(up)
     provider: "{{ netconf }}"
   ignore_errors: yes
   register: result
