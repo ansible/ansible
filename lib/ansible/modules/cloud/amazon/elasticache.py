@@ -16,7 +16,6 @@ description:
   - Manage cache clusters in Amazon Elasticache.
   - Returns information about the specified cache cluster.
 version_added: "1.4"
-requirements: [ boto3 ]
 author: "Jim Dalton (@jsdalton)"
 options:
   state:
@@ -77,6 +76,11 @@ options:
       - Whether to destroy and recreate an existing cache cluster if necessary in order to modify its state
     type: bool
     default: 'no'
+ tags:
+    description:
+      - Set instance tags
+    required: false
+    default: none
 extends_documentation_fragment:
     - aws
     - ec2
@@ -132,7 +136,7 @@ class ElastiCacheManager(object):
     def __init__(self, module, name, engine, cache_engine_version, node_type,
                  num_nodes, cache_port, cache_parameter_group, cache_subnet_group,
                  cache_security_groups, security_group_ids, zone, wait,
-                 hard_modify, region, **aws_connect_kwargs):
+                 tags, hard_modify, region, **aws_connect_kwargs):
         self.module = module
         self.name = name
         self.engine = engine.lower()
@@ -147,6 +151,7 @@ class ElastiCacheManager(object):
         self.zone = zone
         self.wait = wait
         self.hard_modify = hard_modify
+        self.tags = tags
 
         self.region = region
         self.aws_connect_kwargs = aws_connect_kwargs
@@ -199,9 +204,12 @@ class ElastiCacheManager(object):
                       CacheSecurityGroupNames=self.cache_security_groups,
                       SecurityGroupIds=self.security_group_ids,
                       CacheParameterGroupName=self.cache_parameter_group,
-                      CacheSubnetGroupName=self.cache_subnet_group)
+                      CacheSubnetGroupName=self.cache_subnet_group,
+                      PreferredAvailabilityZone=self.zone)
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
+        if self.tags in not None:
+            kwargs['Tags'] = self.tags
         if self.zone is not None:
             kwargs['PreferredAvailabilityZone'] = self.zone
 
@@ -481,7 +489,8 @@ def main():
         security_group_ids=dict(default=[], type='list'),
         zone=dict(),
         wait=dict(default=True, type='bool'),
-        hard_modify=dict(type='bool')
+        hard_modify=dict(type='bool'),
+        tags=dict(type='list')
     ))
 
     module = AnsibleModule(
@@ -507,6 +516,7 @@ def main():
     wait = module.params['wait']
     hard_modify = module.params['hard_modify']
     cache_parameter_group = module.params['cache_parameter_group']
+    tags = module.params['tags']
 
     if cache_subnet_group and cache_security_groups:
         module.fail_json(msg="Can't specify both cache_subnet_group and cache_security_groups")
@@ -520,7 +530,7 @@ def main():
                                              cache_parameter_group,
                                              cache_subnet_group,
                                              cache_security_groups,
-                                             security_group_ids, zone, wait,
+                                             security_group_ids, zone, wait, tags,
                                              hard_modify, region, **aws_connect_kwargs)
 
     if state == 'present':
