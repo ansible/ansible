@@ -57,6 +57,22 @@ class AnsibleJ2Vars:
                     elif key not in ('context', 'environment', 'template'):
                         self._locals[key] = val
 
+    def __iter__(self):
+        for k in self._templar._available_variables:
+            yield k, self._templar._available_variables
+
+        for k in self._locals:
+            yield k, self._locals[k]
+
+        for k in self._extras:
+            print('k: %s' % k)
+            for j in k:
+                print('j: %s' % j)
+                yield j
+
+        for k in self._globals:
+            yield k, self._globals[k]
+
     def __contains__(self, k):
         if k in self._templar._available_variables:
             return True
@@ -76,10 +92,7 @@ class AnsibleJ2Vars:
             for i in self._extras:
                 if varname in i:
                     return i[varname]
-            if varname in self._globals:
-                return self._globals[varname]
-            else:
-                raise KeyError("undefined variable: %s" % varname)
+            return self._globals[varname]
 
         variable = self._templar._available_variables[varname]
 
