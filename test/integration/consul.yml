@@ -16,7 +16,6 @@
       register: consul_running
 
   roles:
-
     - {role: test_consul_service,
        when: not consul_running.failed is defined}
 
@@ -30,7 +29,6 @@
        when: not consul_running.failed is defined}
 
   tasks:
-
     - name: setup services with passing check for consul inventory test
       consul:
         service_name: nginx
@@ -41,7 +39,6 @@
         tags:
           - dev
           - master
-
 
     - name: setup failing service for inventory test
       consul:
@@ -69,7 +66,6 @@
         rules:
           - key: ''
             policy: write
-      register: inventory_token
 
     - name: add metadata for the node through kv_store
       consul_kv: "key=ansible/metadata/dc1/consul-1 value='{{metadata_json}}'"
