@@ -82,6 +82,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 user:
+    description: dictionary containing all the user information
     returned: success
     type: complex
     contains:
