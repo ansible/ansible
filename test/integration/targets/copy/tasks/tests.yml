@@ -169,6 +169,22 @@
       - "failed_copy.failed"
       - "'invalid_file_location_does_not_exist' in failed_copy.msg"
 
+- name: Try empty source to ensure it fails
+  copy:
+    src: ''
+    dest: "{{ remote_dir }}"
+  ignore_errors: True
+  register: failed_copy
+
+- debug:
+    var: failed_copy
+    verbosity: 1
+
+- name: Assert that empty source failed
+  assert:
+    that:
+      - failed_copy | failed
+
 - name: Clean up
   file:
     path: "{{ remote_file }}"
