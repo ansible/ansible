@@ -502,7 +502,7 @@ def main():
         module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'])
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source %s not readable" % (tmpsrc))
+        module.fail_json(msg="Source %s is not readable" % (tmpsrc))
     checksum_src = module.sha1(tmpsrc)
 
     # check if there is no dest file
@@ -510,15 +510,18 @@ def main():
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not writable" % (dest))
+            module.fail_json(msg="Destination %s is not writable" % (dest))
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not readable" % (dest))
+            module.fail_json(msg="Destination %s is not readable" % (dest))
         checksum_dest = module.sha1(dest)
     else:
+        if not os.path.exists(os.path.dirname(dest)):
+            os.remove(tmpsrc)
+            module.fail_json(msg="Destination %s does not exist" % (os.path.dirname(dest)))
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
+            module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)))
 
     backup_file = None
     if checksum_src != checksum_dest:
