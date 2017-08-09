@@ -10,7 +10,7 @@ development.
 ## Choose Boto3 not Boto
 
 Starting from Ansible 2.0, it has been required that all new AWS modules are written to use boto3.
-Please do not add new dependencies to the old boto library.
+Please do not add new dependencies on the old boto library.
 
 Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to
 boto3 has begun.  From Ansible 2.4 it is permissible for modules which previously required boto to
@@ -27,7 +27,7 @@ ported to use boto3.
 Base the name of the module on the part of AWS that you actually use. (A good rule of thumb is to
 take whatever module you use with boto as a starting point).  Don't further abbreviate names - if
 something is a well known abbreviation due to it being a major component of AWS, that's fine, but
-don't create new ones independently (e.g. VPC, ELB, etc. are fine).
+don't create new ones independently (e.g. VPC, ELB, and similar abbreviations are fine).
 
 Unless the name of your service is quite unique, please consider using "aws_" as a prefix.  For
 example "aws_lambda".
@@ -36,7 +36,8 @@ example "aws_lambda".
 
 Try to keep backward compatibility with relatively recent versions of boto3. That means that if you
 want to implement some functionality that uses a new feature of boto3, it should only fail if that
-feature actually needs to be run, with a message saying which version of boto3 is needed.
+feature actually needs to be run, with a message stating the missing feature and minimum required
+version of boto3.
 
 Use feature testing (e.g. `hasattr('boto3.module', 'shiny_new_method')`) to check whether boto3
 supports a feature rather than version checking
@@ -189,8 +190,7 @@ are a number of possibilities for handling it.
 * use fail_json() to report the failure without using `ansible.module_utils.aws.core`
 * do something custom in the case where you know how to handle the exception
 
-For more information on botocore exception handling see
-[http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling]
+For more information on botocore exception handling see [the botocore error documentation](http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling).
 
 #### using fail_json_aws()
 
@@ -296,7 +296,7 @@ module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 ### Dealing with IAM JSON policy
 
 If your module accepts IAM JSON policies then set the type to 'json' in the module spec. For
-example as follows:
+example:
 
 ```python
 argument_spec.update(
@@ -330,8 +330,8 @@ untagging a resource.  For example, the ec2 API has a create_tags and delete_tag
 It is common practice in Ansible AWS modules to have a `purge_tags` parameter that defaults to
 true.
 
-The `purge_tags` parameter means that existing tags will be deleted if they are not specified in by
-the Ansible playbook.
+The `purge_tags` parameter means that existing tags will be deleted if they are not specified by
+the Ansible task.
 
 There is a helper function `compare_aws_tags` to ease dealing with tags. It can compare two dicts
 and return the tags to set and the tags to delete.  See the Helper function section below for more
