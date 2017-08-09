@@ -236,7 +236,7 @@ class NetboxAsInventory(object):
             host_vars: Dict, it has selected fields to be used as host vars.
 
         Returns:
-            A dict has all vars are associate with the host.
+            A dict has all vars are associated with the host.
         """
 
         host_vars_dict = dict()
