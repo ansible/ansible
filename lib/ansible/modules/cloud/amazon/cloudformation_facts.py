@@ -182,7 +182,7 @@ class CloudFormationServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc())
 
-    def describe_stacks(self, stack_name):
+    def describe_stacks(self, stack_name=None):
         try:
             kwargs = {'StackName': stack_name} if stack_name else {}
             func = partial(self.client.describe_stacks, **kwargs)
