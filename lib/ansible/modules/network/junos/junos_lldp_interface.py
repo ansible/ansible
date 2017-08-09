@@ -149,8 +149,8 @@ def main():
     if state in ('enabled', 'disabled'):
         item['state'] = 'present'
 
-    want = map_params_to_obj(module, param_to_xpath_map)
-    ele = map_obj_to_ele(module, want, top)
+    want = map_params_to_obj(module, param_to_xpath_map, param=item)
+    ele = map_obj_to_ele(module, want, top, param=item)
 
     with locked_config(module):
         diff = load_config(module, tostring(ele), warnings, action='replace')
