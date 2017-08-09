@@ -288,7 +288,10 @@ Ansible Changes By Release
 - rundeck
   * rundeck_acl_policy
   * rundeck_project
-- sensu_silence
+- sensu
+  * sensu_client
+  * sensu_silence
+  * sensu_handler
 - vmware
   * vcenter_license
   * vmware_guest_find
