@@ -12,31 +12,41 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vmware_vm_facts
 short_description: Return basic facts pertaining to a vSphere virtual machine guest
 description:
-    - Return basic facts pertaining to a vSphere virtual machine guest
-version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+- Return basic facts pertaining to a vSphere virtual machine guest.
+version_added: '2.0'
+author:
+- Joseph Callen (@jcpowermac)
 notes:
-    - Tested on vSphere 5.5
-    - Tested on vSphere 6.5
+- Tested on vSphere 5.5 and vSphere 6.5
 requirements:
-    - "python >= 2.6"
-    - PyVmomi
+- python >= 2.6
+- PyVmomi
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Gather all registered virtual machines
-  local_action:
-    module: vmware_vm_facts
+  vmware_vm_facts:
     hostname: esxi_or_vcenter_ip_or_hostname
     username: username
     password: password
+  delegate_to: localhost
+  register: vmfacts
+
+- debug:
+    var: vmfacts.virtual_machines
+'''
+
+RETURN = r'''
+virtual_machines:
+  description: dictionary of virtual machines and their facts
+  returned: success
+  type: dict
 '''
 
 try:
