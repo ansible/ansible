@@ -13,14 +13,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vmware_vm_facts
-short_description: Return basic facts pertaining to a vSphere virtual machine guest
+short_description: Return basic facts pertaining to vSphere virtual machines
 description:
-    - Return basic facts pertaining to a vSphere virtual machine guest
-version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+    - Return basic facts pertaining to vSphere virtual machines.
+version_added: "2.0"
+author:
+    - Joseph Callen (@jcpowermac)
 notes:
     - Tested on vSphere 5.5
     - Tested on vSphere 6.5
@@ -30,7 +31,7 @@ requirements:
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Gather all registered virtual machines
   local_action:
     module: vmware_vm_facts
@@ -38,6 +39,17 @@ EXAMPLES = '''
     username: username
     password: password
 '''
+
+RETURN = r'''
+virtual_machines:
+    description: metadata about virtual machines
+    returned: always
+    type: dict
+    sample: None
+'''
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.vmware import *
 
 try:
     from pyVmomi import vim, vmodl
