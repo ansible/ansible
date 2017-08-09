@@ -29,10 +29,10 @@ module: azure_rm_virtualmachine_extension
 
 version_added: "2.4"
 
-short_description:
+short_description: Managed Azure Virtual Machine extension
 
 description:
-    - C
+    - Create, update and delete Azure Virtual Machine Extension
 
 options:
     resource_group:
@@ -40,7 +40,7 @@ options:
             - Name of a resource group where the vm extension exists or will be created.
         required: true
     name:
-        description:a
+        description:
             - Name of the vm extension
         required: true
     state:
@@ -56,6 +56,34 @@ options:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
+        required: false
+    virtual_machine_name:
+        description:
+            - The name of the virtual machine where the extension should be create or updated.
+        required: false
+    publisher:
+        description:
+            - The name of the extension handler publisher.
+        required: false
+    virtual_machine_extension_type:
+        description:
+            - The type of the extension handler.
+        required: false
+    type_handler_version:
+        description:
+            - The type version of the extension handler.
+        required: false
+    settings:
+        description:
+            - Json formatted public settings for the extension.
+        required: false
+    protected_settings:
+        description:
+            - Json formatted protected settings for the extension.
+        required: false
+    auto_upgrade_minor_version:
+        description:
+            - Whether the extension handler should be automatically upgraded across minor versions.
         required: false
 extends_documentation_fragment:
     - azure
@@ -112,6 +140,7 @@ except ImportError:
 
 def vmextension_to_dict(extension):
     return dict(
+        id=extension.id,
         name=extension.name,
         location=extension.location,
         publisher=extension.publisher,
