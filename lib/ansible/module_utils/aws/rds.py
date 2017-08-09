@@ -13,7 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-import botocore
+try:
+    import botocore
+except:
+    pass  # it is assumed that calling modules will detect and provide an appropriate nice error.
 
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
