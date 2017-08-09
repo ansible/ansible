@@ -36,14 +36,20 @@ class ActionModule(ActionBase):
             # FIXME, default to play_context?
             port = self._task.args.get('port', '23')
             timeout = self._task.args.get('timeout', 120)
+            pause = self._task.args.get('pause', 1)
 
             login_prompt = self._task.args.get('login_prompt', "login: ")
             password_prompt =  self._task.args.get('password_prompt', "Password: ")
-            command = self._task.args.get('command')
+            commands = self._task.args.get('command')
 
-            if command:
+            if isinstance(commands, text_type):
+                commands = commands.split(',')
+
+            if isinstance(commands, list) and commands:
+
                 tn = telnetlib.Telnet(host, port, timeout)
 
+                output = []
                 try:
                     tn.read_until(login_prompt)
                     tn.write('%s\n' % user)
@@ -52,8 +58,10 @@ class ActionModule(ActionBase):
                         tn.read_until(password_prompt)
                         tn.write('%s\n' % password)
 
-                    tn.write(command)
-                    result['stdout'] = tn.read_all()
+                    for cmd in commands:
+                        tn.write(cmd)
+                        output.append(tn.read_until(''))
+                        sleep(pause)
 
                     tn.write("exit\n")
 
@@ -63,6 +71,7 @@ class ActionModule(ActionBase):
                 finally:
                     if tn:
                         tn.close()
+                    resut['output'] = output
             else:
                 result['failed'] = True
                 result['msg'] = 'Telnet requries a command to execute'

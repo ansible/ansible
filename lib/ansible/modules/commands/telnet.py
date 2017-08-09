@@ -15,9 +15,9 @@ description:
      - Executes a low-down and dirty telnet command, not going through the module subsystem.
      - This is mostly to be used for enabling ssh on devices that only have telnet enabled by default.
 options:
-  command:
+  commands:
     description:
-      - This task takes a command to run.
+      - List of commands to be executed in the telnet session.
     required: True
   host:
     description:
@@ -44,6 +44,11 @@ options:
     description:
         - Command to execute in telnet session
     required: True
+  pause:
+    description:
+        - Seconds to pause between each command issued
+    required: False
+    default: 1
 notes:
     - The C(environment) keyword does not work with this task
 author:
@@ -56,4 +61,13 @@ EXAMPLES = '''
     command: transport input ssh
     user: cisco
     password: cisco
+'''
+
+RETURN= '''
+output:
+    description: output of each command is an element in this list
+    type: list
+    returned: always
+    sample: [ 'success' ]
+
 '''
