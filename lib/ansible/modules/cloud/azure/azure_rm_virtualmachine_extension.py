@@ -73,6 +73,11 @@ EXAMPLES = '''
         location: eastus
         resource_group: Testing
         virtual_machine_name: myvm
+        publisher: Microsoft.Azure.Extensions
+        virtual_machine_extension_type: CustomScript
+        type_handler_version: 2.0
+        settings: '{"commandToExecute": "hostname"}'
+        auto_upgrade_minor_version: true
 
     - name: Delete VM Extension
       azure_rm_virtualmachine_extension:
@@ -112,7 +117,9 @@ def vmextension_to_dict(extension):
         publisher=extension.publisher,
         virtual_machine_extension_type=extension.virtual_machine_extension_type,
         type_handler_version=extension.type_handler_version,
+        auto_upgrade_minor_version=extension.auto_upgrade_minor_version,
         settings=extension.settings,
+        protected_settings=extension.protected_settings,
         tags=extension.tags
     )
 
@@ -155,7 +162,15 @@ class AzureRMVMExtension(AzureRMModuleBase):
                 type='str',
                 required=False
             ),
+            auto_upgrade_minor_version=dict(
+                type='bool',
+                required=False
+            ),
             settings=dict(
+                type='dict',
+                required=False
+            ),
+            protected_settings=dict(
                 type='dict',
                 required=False
             )
@@ -168,7 +183,9 @@ class AzureRMVMExtension(AzureRMModuleBase):
         self.publisher = None
         self.virtual_machine_extension_type = None
         self.type_handler_version = None
+        self.auto_upgrade_minor_version = None
         self.settings = None
+        self.protected_settings = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -218,7 +235,9 @@ class AzureRMVMExtension(AzureRMModuleBase):
                 publisher=self.publisher,
                 virtual_machine_extension_type=self.virtual_machine_extension_type,
                 type_handler_version=self.type_handler_version,
-                settings=self.settings
+                auto_upgrade_minor_version=self.auto_upgrade_minor_version,
+                settings=self.settings,
+                protected_settings=self.protected_settings
                 )
             response = self.compute_client.virtual_machine_extensions.create_or_update(self.resource_group, self.virtual_machine_name, self.name, params)
         except AzureHttpError as e:
