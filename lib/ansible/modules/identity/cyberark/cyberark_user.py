@@ -35,7 +35,7 @@ options:
         required: True
         description:
             - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session,
-              please see cyberark_authentication module for an example of cyberark_session.
+              please see M(cyberark_authentication) module for an example of cyberark_session.
     initial_password:
         description:
             - The password that the new user will use to log on the first time. This password must meet the password policy requirements.
@@ -188,7 +188,7 @@ def user_details(module):
             status_code=-1)
 
 
-def userAddOrUpdate(module, HTTPMethod):
+def user_add_or_update(module, HTTPMethod):
 
     # Get username from module parameters, and api base url
     # along with validate_certs from the cyberark_session established
@@ -268,7 +268,7 @@ def userAddOrUpdate(module, HTTPMethod):
     except (HTTPError, httplib.HTTPException) as http_exception:
 
         module.fail_json(
-            msg=("Error while performing userAddOrUpdate."
+            msg=("Error while performing user_add_or_update."
                  "Please validate parameters provided."
                  "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, to_text(http_exception))),
             payload=payload,
@@ -278,7 +278,7 @@ def userAddOrUpdate(module, HTTPMethod):
     except Exception as unknown_exception:
 
         module.fail_json(
-            msg=("Unknown error while performing userAddOrUpdate."
+            msg=("Unknown error while performing user_add_or_update."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             payload=payload,
             headers=headers,
@@ -286,7 +286,7 @@ def userAddOrUpdate(module, HTTPMethod):
             status_code=-1)
 
 
-def userDelete(module):
+def user_delete(module):
 
     # Get username from module parameters, and api base url
     # along with validate_certs from the cyberark_session established
@@ -325,7 +325,7 @@ def userDelete(module):
             return (False, result, http_exception.code)
         else:
             module.fail_json(
-                msg=("Error while performing userDelete."
+                msg=("Error while performing user_delete."
                      "Please validate parameters provided."
                      "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, exception_text)),
                 headers=headers,
@@ -334,14 +334,14 @@ def userDelete(module):
     except Exception as unknown_exception:
 
         module.fail_json(
-            msg=("Unknown error while performing userDelete."
+            msg=("Unknown error while performing user_delete."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             headers=headers,
             exception=traceback.format_exc(),
             status_code=-1)
 
 
-def userAddToGroup(module):
+def user_add_to_group(module):
 
     # Get username, and groupname from module parameters, and api base url
     # along with validate_certs from the cyberark_session established
@@ -382,7 +382,7 @@ def userAddToGroup(module):
             return (False, None, http_exception.code)
         else:
             module.fail_json(
-                msg=("Error while performing userAddToGroup."
+                msg=("Error while performing user_add_to_group."
                      "Please validate parameters provided."
                      "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, exception_text)),
                 payload=payload,
@@ -393,7 +393,7 @@ def userAddToGroup(module):
     except Exception as unknown_exception:
 
         module.fail_json(
-            msg=("Unknown error while performing userAddToGroup."
+            msg=("Unknown error while performing user_add_to_group."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             payload=payload,
             headers=headers,
@@ -433,18 +433,18 @@ def main():
         if (status_code == 200):  # user already exists
             if ("new_password" in module.params):
                 # if new_password specified, proceed to update user credential
-                (changed, result, status_code) = userAddOrUpdate(module, "PUT")
+                (changed, result, status_code) = user_add_or_update(module, "PUT")
             if ("group_name" in module.params and module.params["group_name"] is not None):
                 # if user exists, add to group if needed
-                (changed, ignored_result, ignored_status_code) = userAddToGroup(module)
+                (changed, ignored_result, ignored_status_code) = user_add_to_group(module)
         elif (status_code == 404):
             # user does not exist, proceed to create it
-            (changed, result, status_code) = userAddOrUpdate(module, "POST")
+            (changed, result, status_code) = user_add_or_update(module, "POST")
             if (status_code == 201 and "group_name" in module.params and module.params["group_name"] is not None):
                 # if user was created, add to group if needed
-                (changed, ignored_result, ignored_status_code) = userAddToGroup(module)
+                (changed, ignored_result, ignored_status_code) = user_add_to_group(module)
     elif (state == "absent"):
-        (changed, result, status_code) = userDelete(module)
+        (changed, result, status_code) = user_delete(module)
 
     module.exit_json(
         changed=changed,
