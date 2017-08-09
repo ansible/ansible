@@ -7,6 +7,20 @@
     authorize: yes
     provider: "{{ cli }}"
 
+- name: setup - remove vrf
+  eos_vrf:
+    name: test2
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: setup - remove vrf
+  eos_vrf:
+    name: test3
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
 - name: Create vrf
   eos_vrf:
     name: test
