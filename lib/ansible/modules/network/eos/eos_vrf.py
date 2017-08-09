@@ -135,7 +135,7 @@ def map_obj_to_commands(updates, module):
 
 def map_config_to_obj(module):
     objs = []
-    output = run_commands(module, ['show vrf %s' % module.params['name']])
+    output = run_commands(module, ['show vrf'])
     lines = output[0].strip().splitlines()[2:]
 
     for l in lines:
