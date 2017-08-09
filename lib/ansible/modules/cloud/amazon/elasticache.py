@@ -100,6 +100,8 @@ options:
       - Set instance tags
     required: false
     default: none
+    version_added: "2.4"
+
 extends_documentation_fragment:
     - aws
     - ec2
