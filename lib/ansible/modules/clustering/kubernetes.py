@@ -198,6 +198,7 @@ from ansible.module_utils.urls import fetch_url
 
 KIND_URL = {
     "binding": "/api/v1/namespaces/{namespace}/bindings",
+    "configmap": "/api/v1/namespaces/{namespace}/configmaps",
     "endpoints": "/api/v1/namespaces/{namespace}/endpoints",
     "limitrange": "/api/v1/namespaces/{namespace}/limitranges",
     "namespace": "/api/v1/namespaces",
