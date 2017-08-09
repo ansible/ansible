@@ -70,7 +70,7 @@ class HashiVault:
 
         self.token = kwargs.get('token')
         if self.token is None:
-            raise AnsibleError("No Hashicorp Vault Token specified for hash_vault lookup")
+            raise AnsibleError("No Hashicorp Vault Token specified for hashi_vault lookup")
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
