@@ -111,7 +111,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         if 'ansible_search_path' in myvars:
             paths = myvars['ansible_search_path']
         else:
-            paths = self.get_basedir(myvars)
+            paths = [self.get_basedir(myvars)]
 
         result = None
         try:
