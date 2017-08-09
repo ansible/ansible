@@ -152,8 +152,15 @@ class NetboxAsInventory(object):
         else:
             api_url_params = {}
 
-        hosts_list = requests.get(api_url, params=api_url_params).json()
-        return hosts_list
+        # Get hosts list.
+        hosts_list = requests.get(api_url, params=api_url_params)
+
+        # Check that a request is 200 and not something else like 404, 401, 500 ... etc.
+        hosts_list.raise_for_status()
+
+        # Get hosts list.
+        hosts_list_json = hosts_list.json()
+        return hosts_list_json
 
     @staticmethod
     def add_host_to_group(server_name, group_value, inventory_dict):
