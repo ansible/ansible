@@ -201,7 +201,23 @@ EXAMPLES = '''
       sku: '7.1'
       version: latest
 
-- name: Create a VM with exiting storage account and NIC
+- name: Create a VM with managed disk
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm001
+    vm_size: Standard_D4
+    managed_disk_type: Standard_LRS
+    admin_username: adminUser
+    ssh_public_keys:
+      - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+
+- name: Create a VM with existing storage account and NIC
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
@@ -410,8 +426,8 @@ try:
     from azure.mgmt.compute.models import NetworkInterfaceReference, \
                                           VirtualMachine, HardwareProfile, \
                                           StorageProfile, OSProfile, OSDisk, \
-                                          VirtualHardDisk, ImageReference,\
-                                          NetworkProfile, LinuxConfiguration, \
+                                          VirtualHardDisk, ManagedDiskParameters, \
+                                          ImageReference, NetworkProfile, LinuxConfiguration, \
                                           SshConfiguration, SshPublicKey
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
                                           NetworkInterfaceIPConfiguration, Subnet
@@ -461,6 +477,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
+            managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS'], default='Standard_LRS'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Static',
                                              aliases=['public_ip_allocation']),
@@ -491,6 +508,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.storage_blob_name = None
         self.os_type = None
         self.os_disk_caching = None
+        self.managed_disk_type = None
         self.network_interface_names = None
         self.remove_on_absent = set()
         self.tags = None
@@ -568,10 +586,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.image['version'] = image_version.name
                     self.log("Using image version {0}".format(self.image['version']))
 
-            if not self.storage_blob_name:
+            if not self.storage_blob_name and not self.managed_disk_type:
                 self.storage_blob_name = self.name + '.vhd'
+            elif self.managed_disk_type:
+                self.storage_blob_name = self.name
 
-            if self.storage_account_name:
+            if self.storage_account_name and not self.managed_disk_type:
                 self.get_storage_account(self.storage_account_name)
 
                 requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(self.storage_account_name,
@@ -686,7 +706,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         self.log(self.serialize_obj(default_nic, 'NetworkInterface'), pretty_print=True)
                         network_interfaces = [default_nic.id]
 
-                    if not self.storage_account_name:
+                    if not self.storage_account_name and not self.managed_disk_type:
                         storage_account = self.create_default_storage_account()
                         self.log("storage account:")
                         self.log(self.serialize_obj(storage_account, 'StorageAccount'), pretty_print=True)
@@ -700,7 +720,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         self.short_hostname = self.name
 
                     nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
-                    vhd = VirtualHardDisk(uri=requested_vhd_uri)
+
+                    if not self.managed_disk_type:
+                        vhd = VirtualHardDisk(uri=requested_vhd_uri)
+                    else:
+                        vhd = None
+                        managed_disk = ManagedDiskParameters(storage_account_type=self.managed_disk_type)
+
                     vm_resource = VirtualMachine(
                         self.location,
                         tags=self.tags,
@@ -715,6 +741,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             os_disk=OSDisk(
                                 name=self.storage_blob_name,
                                 vhd=vhd,
+                                managed_disk=managed_disk,
                                 create_option=DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
                             ),
@@ -754,7 +781,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     nics = [NetworkInterfaceReference(id=interface['id'])
                             for interface in vm_dict['properties']['networkProfile']['networkInterfaces']]
-                    vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
+
+                    if not self.managed_disk_type:
+                        vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
+                    else:
+                        vhd = None
+
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
                         os_profile=OSProfile(
