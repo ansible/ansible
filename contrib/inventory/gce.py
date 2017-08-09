@@ -477,6 +477,13 @@ class GceInventory(object):
             else:
                 groups[stat] = [name]
 
+            for private_ip in node.private_ips:
+                groups[private_ip] = [name]
+
+            if len(node.public_ips) >= 1:
+                for public_ip in node.public_ips:
+                    groups[public_ip] = [name]
+
         groups["_meta"] = meta
 
         return groups
