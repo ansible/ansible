@@ -217,3 +217,23 @@
 
 - name: remove the previously created file
   file: path={{output_dir_test}}/afile.txt state=absent
+
+- name: execute a command with a password in the args
+  command: true --password=supersecret
+  register: command_result
+
+- name: check for password in the cmd
+  assert:
+    that:
+      - "'--password=supersecret' not in command_result.cmd"
+      - "'--password=********' in command_result.cmd"
+
+- name: execute a command via shell with a password in the args
+  shell: true --password=supersecret
+  register: shell_result
+
+- name: check for password in the cmd
+  assert:
+    that:
+      - "'--password=supersecret' not in shell_result.cmd"
+      - "'--password=********' in shell_result.cmd"

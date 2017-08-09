@@ -185,7 +185,7 @@ def main():
         err = b''
 
     result = dict(
-        cmd=args,
+        cmd=module.to_clean_args(args),
         stdout=out.rstrip(b"\r\n"),
         stderr=err.rstrip(b"\r\n"),
         rc=rc,

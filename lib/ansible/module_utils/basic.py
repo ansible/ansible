@@ -2132,7 +2132,7 @@ class AnsibleModule(object):
                     param_val = str(param_val)
                 elif isinstance(param_val, text_type):
                     param_val = param_val.encode('utf-8')
-                log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
+                log_args[param] = self.to_clean_args(param_val)
 
         msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
         if msg:
@@ -2567,6 +2567,40 @@ class AnsibleModule(object):
 
         return data
 
+    def to_clean_args(self, args):
+        # create a printable version of the command for use
+        # in reporting later, which strips out things like
+        # passwords from the args list
+        to_clean_args = args
+        if PY2:
+            if isinstance(args, text_type):
+                to_clean_args = to_bytes(args)
+        else:
+            if isinstance(args, binary_type):
+                to_clean_args = to_text(args)
+        if isinstance(args, (text_type, binary_type)):
+            to_clean_args = shlex.split(to_clean_args)
+
+        clean_args = []
+        is_passwd = False
+        for arg in (to_native(a) for a in to_clean_args):
+            if is_passwd:
+                is_passwd = False
+                clean_args.append('********')
+                continue
+            if PASSWD_ARG_RE.match(arg):
+                sep_idx = arg.find('=')
+                if sep_idx > -1:
+                    clean_args.append('%s=********' % arg[:sep_idx])
+                    continue
+                else:
+                    is_passwd = True
+            arg = heuristic_log_sanitize(arg, self.no_log_values)
+            clean_args.append(arg)
+        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
+
+        return clean_args
+
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
         '''
@@ -2690,36 +2724,7 @@ class AnsibleModule(object):
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
 
-        # create a printable version of the command for use
-        # in reporting later, which strips out things like
-        # passwords from the args list
-        to_clean_args = args
-        if PY2:
-            if isinstance(args, text_type):
-                to_clean_args = to_bytes(args)
-        else:
-            if isinstance(args, binary_type):
-                to_clean_args = to_text(args)
-        if isinstance(args, (text_type, binary_type)):
-            to_clean_args = shlex.split(to_clean_args)
-
-        clean_args = []
-        is_passwd = False
-        for arg in (to_native(a) for a in to_clean_args):
-            if is_passwd:
-                is_passwd = False
-                clean_args.append('********')
-                continue
-            if PASSWD_ARG_RE.match(arg):
-                sep_idx = arg.find('=')
-                if sep_idx > -1:
-                    clean_args.append('%s=********' % arg[:sep_idx])
-                    continue
-                else:
-                    is_passwd = True
-            arg = heuristic_log_sanitize(arg, self.no_log_values)
-            clean_args.append(arg)
-        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
+        clean_args = self.to_clean_args(args)
 
         if data:
             st_in = subprocess.PIPE
