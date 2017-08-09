@@ -112,6 +112,7 @@ EXAMPLES = '''
         name: myvmextension
         location: eastus
         resource_group: Testing
+        virtual_machine_name: myvm
         state: absent
 '''
 
@@ -268,22 +269,20 @@ class AzureRMVMExtension(AzureRMModuleBase):
                 settings=self.settings,
                 protected_settings=self.protected_settings
                 )
-            response = self.compute_client.virtual_machine_extensions.create_or_update(self.resource_group, self.virtual_machine_name, self.name, params)
+            poller = self.compute_client.virtual_machine_extensions.create_or_update(self.resource_group, self.virtual_machine_name, self.name, params)
+            self.get_poller_result(poller)
         except AzureHttpError as e:
             self.log('Error attempting to create the vmextension.')
             self.fail("Error creating the vmextension: {0}".format(str(e)))
 
-        return vmextension_to_dict(response)
-
     def delete_vmextension(self):
         self.log("Deleting vmextension {0}".format(self.name))
         try:
-            response = self.compute_client.virtual_machine_extensions.delete(self.resource_group, self.virtual_machine_name, self.name)
+            poller = self.compute_client.virtual_machine_extensions.delete(self.resource_group, self.virtual_machine_name, self.name)
+            self.get_poller_result(poller)
         except AzureHttpError as e:
             self.log('Error attempting to delete the vmextension.')
             self.fail("Error deleting the vmextension: {0}".format(str(e)))
-
-        return True
 
     def get_vmextension(self):
         self.log("Checking if the vm extension {0} is present".format(self.name))
