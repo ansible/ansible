@@ -5,6 +5,7 @@
       - no switchport
     parents: int Ethernet1
     authorize: yes
+    provider: "{{ cli }}"
   connection: local
 
 - name: Enable Ethernet2 interface and disable switchport
@@ -14,4 +15,5 @@
       - no switchport
     parents: int Ethernet2
     authorize: yes
+    provider: "{{ cli }}"
   connection: local
