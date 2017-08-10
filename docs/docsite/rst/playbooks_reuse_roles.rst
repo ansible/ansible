@@ -141,9 +141,9 @@ Or, using the newer syntax::
       tasks:
       - include_role:
            name: foo_app_instance
-           args:
-             dir: '/opt/a'
-             app_port: 5000
+        vars:
+          dir: '/opt/a'
+          app_port: 5000
       ...
 
 You can conditionally execute a role. This is not generally recommended with the classic syntax, but is common when using ``import_role`` or ``include_role``::
