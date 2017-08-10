@@ -77,7 +77,7 @@ options:
 
     ignore_final_newline:
         description:
-            - Strip any final newlines C(\n) and C(\r) for diff output.
+            - Strip any final newlines C(\\n) and C(\\r) for diff output.
         required: false
         default: false
         aliases: []
@@ -398,6 +398,8 @@ def get_json_or_yaml(data, output_format='json'):
 
     # Sort python dict
     data = SortedDict(**data)
+
+    # Quote keys
     data = quote_json(data)
 
     # Return json or yaml
@@ -500,7 +502,7 @@ def main():
     # So the user can request to ignore it.
     if output_choice == 'template':
 
-        if ignore_template_desc == True:
+        if ignore_template_desc:
             # Need json Dict for .pop()
             cloud_dict = get_json_or_yaml(cloud_template, 'json')
             local_dict = get_json_or_yaml(local_template, 'json')
@@ -547,7 +549,7 @@ def main():
         local_params = templ_def_params.copy()
         local_params.update(param_params)
 
-        if ignore_hidden_params == True:
+        if ignore_hidden_params:
             hidden_params = cfn_get_noecho_param_names(templ_params)
             cloud_params = get_json_or_yaml(cloud_params, 'json')
             for key in hidden_params:
