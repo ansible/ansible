@@ -298,7 +298,7 @@ def quote_json(obj):
     if isinstance(obj, (list, tuple)):
         return [quote_json(item) for item in obj]
     if isinstance(obj, dict):
-        return {quote_json(key): quote_json(value) for key, value in obj.items()}
+        return dict((quote_json(key), quote_json(value)) for key, value in obj.items())
     return obj
 
 
@@ -311,7 +311,7 @@ def del_newline_json(obj):
     if isinstance(obj, (list, tuple)):
         return [del_newline_json(item) for item in obj]
     if isinstance(obj, dict):
-        return {del_newline_json(key): del_newline_json(value) for key, value in obj.items()}
+        return dict((del_newline_json(key), del_newline_json(value)) for key, value in obj.items())
     return str(obj).rstrip('\r\n')
 
 
