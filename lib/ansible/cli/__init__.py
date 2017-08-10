@@ -218,6 +218,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         if create_new_password:
             prompt_formats['prompt'] = ['New vault password (%(vault_id)s): ',
                                         'Confirm vew vault password (%(vault_id)s): ']
+            # 2.3 format prompts for --ask-vault-pass
+            prompt_formats['prompt_ask_vault_pass'] = ['New Vault password: ',
+                                                       'Confirm New Vault password: ']
         else:
             prompt_formats['prompt'] = ['Vault password (%(vault_id)s): ']
             # The format when we use just --ask-vault-pass needs to match 'Vault password:\s*?$'
