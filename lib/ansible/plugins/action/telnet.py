@@ -41,7 +41,7 @@ class ActionModule(ActionBase):
             pause = self._task.args.get('pause', 1)
 
             login_prompt = self._task.args.get('login_prompt', "login: ")
-            password_prompt =  self._task.args.get('password_prompt', "Password: ")
+            password_prompt = self._task.args.get('password_prompt', "Password: ")
             commands = self._task.args.get('command')
 
             if isinstance(commands, text_type):

@@ -63,7 +63,7 @@ EXAMPLES = '''
     password: cisco
 '''
 
-RETURN= '''
+RETURN = '''
 output:
     description: output of each command is an element in this list
     type: list
