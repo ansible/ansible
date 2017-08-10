@@ -51,60 +51,40 @@ options:
 EXAMPLES = '''
 - nxos_smu:
     pkg: "nxos.CSCuz65185-n9k_EOR-1.0.0-7.0.3.I2.2d.lib32_n9000.rpm"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-file_system:
-    description: The remote file system of the device.
-    returned: always
-    type: string
-    sample: "bootflash:"
-pkg:
-    description: Name of the remote package
-    type: string
-    returned: always
-    sample: "nxos.CSCuz65185-n9k_EOR-1.0.0-7.0.3.I2.2d.lib32_n9000.rpm"
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["install add bootflash:nxos.CSCuz65185-n9k_EOR-1.0.0-7.0.3.I2.2d.lib32_n9000.rpm",
-            "install activate bootflash:nxos.CSCuz65185-n9k_EOR-1.0.0-7.0.3.I2.2d.lib32_n9000.rpm force",
-            "install commit bootflash:nxos.CSCuz65185-n9k_EOR-1.0.0-7.0.3.I2.2d.lib32_n9000.rpm"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+             "install activate bootflash:nxos.CSCuz65185-n9k_EOR-1.0.0-7.0.3.I2.2d.lib32_n9000.rpm force",
+             "install commit bootflash:nxos.CSCuz65185-n9k_EOR-1.0.0-7.0.3.I2.2d.lib32_n9000.rpm"]
 '''
+
+
+import collections
+import re
+import time
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-import time
-import collections
 
-import re
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if command_type == 'cli_show_ascii':
-        cmds = [{
-            'command': command,
-            'output': 'text',
-        }]
-    else:
-        cmds = [command]
+def execute_show_command(command, module):
+    cmds = [{
+        'command': command,
+        'output': 'text',
+    }]
 
     return run_commands(module, cmds)
 
 
 def remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    body = execute_show_command(command, module)
     if 'No such file' in body[0]:
         return False
     return True
@@ -122,18 +102,10 @@ def get_commands(module, pkg, file_system):
     fixed_pkg = '.'.join(splitted_pkg[0:-1])
 
     command = 'show install inactive'
-    inactive_body = execute_show_command(
-        command,
-        module,
-        command_type='cli_show_ascii'
-    )
+    inactive_body = execute_show_command(command, module)
 
     command = 'show install active'
-    active_body = execute_show_command(
-        command,
-        module,
-        command_type='cli_show_ascii'
-    )
+    active_body = execute_show_command(command, module)
 
     if fixed_pkg not in inactive_body[0] and fixed_pkg not in active_body[0]:
         commands.append('install add {0}{1}'.format(file_system, pkg))
@@ -154,9 +126,6 @@ def main():
     argument_spec = dict(
         pkg=dict(required=True),
         file_system=dict(required=False, default='bootflash:'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -166,11 +135,11 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
 
     pkg = module.params['pkg']
     file_system = module.params['file_system']
-    changed = False
     remote_exists = remote_file_exists(module, pkg, file_system=file_system)
 
     if not remote_exists:
@@ -179,19 +148,15 @@ def main():
         )
 
     commands = get_commands(module, pkg, file_system)
-    if not module.check_mode and commands:
-        apply_patch(module, commands)
-        changed = True
+    if commands:
+        results['changed'] = True
+        if not module.check_mode:
+            apply_patch(module, commands)
+        if 'configure' in commands:
+            commands.pop(0)
+        results['commands'] = commands
 
-    if 'configure' in commands:
-        commands.pop(0)
-
-    module.exit_json(
-        changed=changed,
-        pkg=pkg,
-        file_system=file_system,
-        updates=commands
-    )
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
