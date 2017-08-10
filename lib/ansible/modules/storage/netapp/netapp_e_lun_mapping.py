@@ -224,7 +224,7 @@ def main():
         state=dict(required=True, choices=['present', 'absent']),
         target=dict(required=False, default=None),
         target_type=dict(required=False, choices=['host', 'group']),
-        lun=dict(required=False, type='int', default=0),
+        lun=dict(required=False, type='int'),
         volume_name=dict(required=True),
     ))
 
