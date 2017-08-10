@@ -183,7 +183,11 @@ from functools import partial
 # Python Custom libraries
 # requires 'cfn_flip'
 # $ pip install cfn_flip
-from cfn_flip import flip, to_yaml, to_json
+try:
+    from cfn_flip import flip, to_yaml, to_json
+    HAS_CFN_FLIP = True
+except ImportError:
+    HAS_CFN_FLIP = False
 
 try:
     import boto3
@@ -394,7 +398,11 @@ def cfndiff_module_validation(module):
     '''
     # Boto3 is required!
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+        module.fail_json(msg='boto3 is required. Try pip install boto3')
+
+    # cfn_flip is required!
+    if not HAS_CFN_FLIP:
+        module.fail_json(msg='cfn_flip is required. Try pip install cfn_flip')
 
     template = module.params['template']
     b_template = to_bytes(template, errors='surrogate_or_strict')
