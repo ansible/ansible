@@ -1,6 +1,6 @@
 #!powershell
 
-#Requires -Module Ansible.ModuleUtils.PowerShellLegacy
+#Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.SID
 
 Function Assert-Equals($actual, $expected) {
