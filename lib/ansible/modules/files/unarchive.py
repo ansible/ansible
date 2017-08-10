@@ -114,7 +114,7 @@ EXAMPLES = r'''
     remote_src: yes
 
 - name: Unarchive a file that needs to be downloaded (added in 2.0)
-- unarchive:
+  unarchive:
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
