@@ -169,7 +169,7 @@ def command_coverage_html(args):
         dir_name = 'test/results/reports/%s' % os.path.basename(output_file)
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'html', '-d', dir_name])
+        run_command(args, env=env, cmd=['coverage', 'html', '-i', '-d', dir_name])
 
 
 def command_coverage_xml(args):
@@ -182,7 +182,7 @@ def command_coverage_xml(args):
         xml_name = 'test/results/reports/%s.xml' % os.path.basename(output_file)
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'xml', '-o', xml_name])
+        run_command(args, env=env, cmd=['coverage', 'xml', '-i', '-o', xml_name])
 
 
 def command_coverage_erase(args):
