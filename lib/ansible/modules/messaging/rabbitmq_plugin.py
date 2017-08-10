@@ -57,11 +57,14 @@ EXAMPLES = '''
 '''
 
 import os
+from ansible.module_utils.basic import AnsibleModule
+
 
 from ansible.module_utils.basic import AnsibleModule
 
 
 class RabbitMqPlugins(object):
+
     def __init__(self, module):
         self.module = module
 
@@ -73,7 +76,7 @@ class RabbitMqPlugins(object):
             else:
                 # No such path exists.
                 raise Exception("No binary folder in prefix %s" %
-                        module.params['prefix'])
+                                module.params['prefix'])
 
             self._rabbitmq_plugins = bin_path + "/rabbitmq-plugins"
 
@@ -116,6 +119,7 @@ def main():
         supports_check_mode=True
     )
 
+    result = dict()
     names = module.params['names'].split(',')
     new_only = module.params['new_only']
     state = module.params['state']
@@ -142,8 +146,10 @@ def main():
                 rabbitmq_plugins.disable(plugin)
                 disabled.append(plugin)
 
-    changed = len(enabled) > 0 or len(disabled) > 0
-    module.exit_json(changed=changed, enabled=enabled, disabled=disabled)
+    result['changed'] = len(enabled) > 0 or len(disabled) > 0
+    result['enabled'] = enabled
+    result['disabled'] = disabled
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

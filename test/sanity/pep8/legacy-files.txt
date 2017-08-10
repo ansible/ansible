@@ -216,12 +216,6 @@ lib/ansible/modules/files/replace.py
 lib/ansible/modules/files/synchronize.py
 lib/ansible/modules/files/tempfile.py
 lib/ansible/modules/files/xattr.py
-lib/ansible/modules/messaging/rabbitmq_binding.py
-lib/ansible/modules/messaging/rabbitmq_exchange.py
-lib/ansible/modules/messaging/rabbitmq_parameter.py
-lib/ansible/modules/messaging/rabbitmq_plugin.py
-lib/ansible/modules/messaging/rabbitmq_queue.py
-lib/ansible/modules/messaging/rabbitmq_user.py
 lib/ansible/modules/monitoring/airbrake_deployment.py
 lib/ansible/modules/monitoring/bigpanda.py
 lib/ansible/modules/monitoring/boundary_meter.py
