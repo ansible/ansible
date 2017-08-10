@@ -96,7 +96,8 @@ def execute_show_command(command, module, command_type='cli_show'):
             'command': command,
             'output': 'text',
         }]
-    else: cmds = [command]
+    else:
+        cmds = [command]
 
     return run_commands(module, cmds)
 
