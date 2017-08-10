@@ -28,7 +28,8 @@ author: cytopia (@cytopia)
 
 short_description: Diff compare changes that would occur when submitting local cloudformation template to AWS remote.
 description:
-    -  Shows the changes of the cloudformation template, parameters and tags that would occur in case you actually submit the changes to AWS remote. The diff output is only viewable when using Ansible's C(--diff) mode. Diffs will be marked as C(changed).
+    -  Shows the changes of the cloudformation template, parameters and tags that would occur in case you actually submit the changes to AWS remote.
+    - The diff output is only viewable when using Ansible's C(--diff) mode. Diffs will be marked as C(changed).
     - More examples at U(https://github.com/cytopia/ansible-modules)
 version_added: "2.4"
 options:
@@ -229,13 +230,13 @@ class CloudFormationServiceManager:
 
     def describe_stack(self, stack_name):
         try:
-            func = partial(self.client.describe_stacks,StackName=stack_name)
+            func = partial(self.client.describe_stacks, StackName=stack_name)
             response = self.paginated_response(func, 'Stacks')
             if response:
                 return response[0]
             self.module.fail_json(msg="Error describing stack - an empty response was returned")
         except Exception as e:
-            #self.module.fail_json(msg="Error describing stack - " + str(e), exception=traceback.format_exc())
+            # self.module.fail_json(msg="Error describing stack - " + str(e), exception=traceback.format_exc())
             # Do not raise an erroy here, but return an empty response.
             # We will take care about this in a later stage in the module run.
             return dict()
@@ -245,7 +246,7 @@ class CloudFormationServiceManager:
             response = self.client.get_template(StackName=stack_name)
             return response.get('TemplateBody')
         except Exception as e:
-            #self.module.fail_json(msg="Error getting stack template - " + str(e), exception=traceback.format_exc())
+            # self.module.fail_json(msg="Error getting stack template - " + str(e), exception=traceback.format_exc())
             # Do not raise an erroy here, but return an empty response.
             # We will take care about this in a later stage in the module run.
             return dict()
@@ -255,7 +256,7 @@ class CloudFormationServiceManager:
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
         '''
-        args=dict()
+        args = dict()
         if next_token:
             args['NextToken'] = next_token
         response = func(**args)
@@ -297,8 +298,9 @@ def quote_json(obj):
     if isinstance(obj, (list, tuple)):
         return [quote_json(item) for item in obj]
     if isinstance(obj, dict):
-        return {quote_json(key):quote_json(value) for key, value in obj.items()}
+        return {quote_json(key): quote_json(value) for key, value in obj.items()}
     return obj
+
 
 def del_newline_json(obj):
     '''
@@ -309,8 +311,9 @@ def del_newline_json(obj):
     if isinstance(obj, (list, tuple)):
         return [del_newline_json(item) for item in obj]
     if isinstance(obj, dict):
-        return {del_newline_json(key):del_newline_json(value) for key, value in obj.items()}
+        return {del_newline_json(key): del_newline_json(value) for key, value in obj.items()}
     return str(obj).rstrip('\r\n')
+
 
 def to_dict(items, key, value):
     '''
@@ -376,7 +379,6 @@ def get_json_or_yaml(data, output_format='json'):
     except ValueError:
         data = to_yaml(data)
         data = to_json(data)
-
 
     # Create python dict
     data = json.loads(data)
@@ -471,13 +473,12 @@ def main():
     #
     # When yes, then we remove final newlines
     if ignore_final_newline:
-         cloud_template = del_newline_json(get_json_or_yaml(cloud_template, 'json'))
-         local_template = del_newline_json(get_json_or_yaml(local_template, 'json'))
-         cloud_params = del_newline_json(get_json_or_yaml(cloud_params, 'json'))
-         local_params = del_newline_json(get_json_or_yaml(local_params, 'json'))
-         cloud_tags = del_newline_json(get_json_or_yaml(cloud_tags, 'json'))
-         local_tags = del_newline_json(get_json_or_yaml(local_tags, 'json'))
-
+        cloud_template = del_newline_json(get_json_or_yaml(cloud_template, 'json'))
+        local_template = del_newline_json(get_json_or_yaml(local_template, 'json'))
+        cloud_params = del_newline_json(get_json_or_yaml(cloud_params, 'json'))
+        local_params = del_newline_json(get_json_or_yaml(local_params, 'json'))
+        cloud_tags = del_newline_json(get_json_or_yaml(cloud_tags, 'json'))
+        local_tags = del_newline_json(get_json_or_yaml(local_tags, 'json'))
 
     # Get diff output
     #
@@ -544,12 +545,10 @@ def main():
         local_dict = get_json_or_yaml(local_params, output_format)
         cloud_dict = get_json_or_yaml(cloud_params, output_format)
 
-
     elif output_choice == 'tags':
         # Convert to nice yaml/json output
         cloud_dict = get_json_or_yaml(cloud_tags, output_format)
         local_dict = get_json_or_yaml(local_tags, output_format)
-
 
     # Ansible diff output
     diff = {
@@ -561,8 +560,8 @@ def main():
 
     # Ansible module returned variables
     result = dict(
-        diff = diff,
-        changed = changed
+        diff=diff,
+        changed=changed
     )
 
     # Exit ansible module call
