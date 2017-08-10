@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: vmware_guest_tools_wait
-short_description: Wait for VMware tools to become available and return facts
+short_description: Wait for VMware tools to become available
 description:
     - Wait for VMware tools to become available on the VM and return facts.
 version_added: '2.4'
@@ -92,15 +92,9 @@ instance:
 
 import time
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import connect_to_api, gather_vm_facts, vmware_argument_spec, find_vm_by_id
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 HAS_PYVMOMI = False
 try:
@@ -182,23 +176,19 @@ def main():
                    folder=module.params['folder'],
                    uuid=module.params['uuid'])
 
-    # VM exists
-    if vm:
-        try:
-            result = pyv.wait_for_tools(vm)
-            if result['failed']:
-                module.fail_json(**result)
-            else:
-                module.exit_json(**result)
-        except Exception as exc:
-            module.fail_json(msg="Waiting for tools failed with exception: %s" % to_native(exc))
+    if not vm:
+        vm_id = module.params.get('name') or module.params.get('uuid')
+        module.fail_json(msg="Unable to wait for tools for non-existing VM {0:s}".format(vm_id))
+
+    try:
+        result = pyv.wait_for_tools(vm)
+    except Exception as e:
+        module.fail_json(msg="Waiting for tools failed with exception: {0:s}".format(to_native(e)))
+
+    if result['failed']:
+        module.fail_json(**result)
     else:
-        msg = "Unable to wait for tools for non-existing VM "
-        if module.params['name']:
-            msg += "%(name)s" % module.params
-        elif module.params['uuid']:
-            msg += "%(uuid)s" % module.params
-        module.fail_json(msg=msg)
+        module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
