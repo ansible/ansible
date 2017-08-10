@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -314,9 +317,6 @@ cert_path:
     type: string
     sample: /etc/ssl/crt/www.ansible.com.crt
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import datetime
 import subprocess
