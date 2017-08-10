@@ -85,11 +85,10 @@ options:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
 
-    filter:
+    headers:
         required: False
         description:
-            - "A boolean flag that indicates if a 'Filter: true' http header
-               should be added to each API call."
+            - "A dictionary of HTTP headers to be added to each API call."
         version_added: "2.4"
 
 requirements:
@@ -176,11 +175,10 @@ ovirt_auth:
             returned: success
             type: bool
             sample: False
-        filter:
-            description: Flag indicating if a Filter http header should be added to each API call.
+        headers:
+            description: Dictionary of HTTP headers to be added to each API call.
             returned: success
-            type: bool
-            sample: False
+            type: dict
 '''
 
 import traceback
@@ -205,7 +203,7 @@ def main():
             timeout=dict(required=False, type='int', default=0),
             compress=dict(required=False, type='bool', default=True),
             kerberos=dict(required=False, type='bool', default=False),
-            filter=dict(required=False, type='bool', default=False),
+            headers=dict(required=False, type='dict'),
             state=dict(default='present', choices=['present', 'absent']),
             ovirt_auth=dict(required=None, type='dict'),
         ),
@@ -232,7 +230,7 @@ def main():
         timeout=params.get('timeout'),
         compress=params.get('compress'),
         kerberos=params.get('kerberos'),
-        filter=params.get('filter'),
+        headers=params.get('headers'),
         token=params.get('token'),
     )
     try:
@@ -248,7 +246,7 @@ def main():
                     timeout=params.get('timeout'),
                     compress=params.get('compress'),
                     kerberos=params.get('kerberos'),
-                    filter=params.get('filter'),
+                    headers=params.get('headers'),
                 ) if state == 'present' else dict()
             )
         )
