@@ -59,11 +59,6 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Create a file
-  win_file:
-    path: C:\Temp\foo.conf
-    state: file
-
 - name: Touch a file (creates if not present, updates modification time if present)
   win_file:
     path: C:\Temp\foo.conf
