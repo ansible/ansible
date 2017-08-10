@@ -302,6 +302,8 @@ def quote_json(obj):
     Treat all json key/values as strings and therefore
     quote them to be consistent
     '''
+
+    # possible nicer way: https://docs.scipy.org/doc/numpy/reference/arrays.scalars.html
     if isinstance(obj, (bool, str, int, float, long, complex)):
         return str(obj)
     if isinstance(obj, (list, tuple)):
@@ -315,6 +317,8 @@ def del_newline_json(obj):
     '''
     Remove final newline
     '''
+
+    # possible nicer way: https://docs.scipy.org/doc/numpy/reference/arrays.scalars.html
     if isinstance(obj, (bool, str, int, float, long, complex)):
         return str(obj).rstrip('\r\n')
     if isinstance(obj, (list, tuple)):
