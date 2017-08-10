@@ -12,28 +12,28 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-
 module: aci_aep
 short_description: Direct access to the Cisco ACI APIC API
 description:
-    - Offers direct access to the Cisco ACI APIC API
+- Offers direct access to the Cisco ACI APIC API
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
 requirements:
-    - ACI Fabric 1.0(3f)+
+- ACI Fabric 1.0(3f)+
 options:
     aep_name:
       description:
-      - The name of the Attachable Access Entity Profile
+      - The name of the Attachable Access Entity Profile.
       required: yes
     description:
       description:
-      - Description for the AEP
+      - Description for the AEP.
     state:
       description:
-      - present, absent, query
+      - Ensure that the Attachable entity profile  with this C(aep_name) exists or does not exist. 
+      - Query for retrieving information of existing managed objects.
       default: present
       choices: [ absent, present, query ]
 extends_documentation_fragment: aci
@@ -45,8 +45,8 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    aep_name: Name of the AEP
-    description: Description for the profile
+    aep_name: ACI-AEP
+    description: default
     state: present
 
 - name: Remove an existing AEP
@@ -54,7 +54,7 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    aep_name: Name of the AEP
+    aep_name: ACI-AEP
     state: absent
 
 - name: Query an AEP
@@ -62,7 +62,7 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    aep_name: Name of the AEP
+    aep_name: ACI-AEP
     state: query
 
 - name: Query all AEPs
@@ -71,8 +71,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
-
 '''
+
 RETURN = r'''
 status:
   description: The status code of the http request
@@ -94,7 +94,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
- 
     argument_spec = aci_argument_spec
     argument_spec.update(
         aep_name=dict(type='str'),
@@ -103,7 +102,7 @@ def main():
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec, 
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
@@ -116,7 +115,7 @@ def main():
     if aep_name is not None:
         # Work with a specific attachable entitiy profile
         path = 'api/mo/uni/infra/attentp-%(aep_name)s.json' % module.params
-    elif state == 'query': 
+    elif state == 'query':
         # Query all AEPs
         path = 'api/node/class/infraAttEntityP.json'
     else:
