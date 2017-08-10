@@ -296,6 +296,7 @@ Ansible Changes By Release
 - vmware
   * vcenter_license
   * vmware_guest_find
+  * vmware_guest_tools_wait
 - windows
   * win_defrag
   * win_domain_group
