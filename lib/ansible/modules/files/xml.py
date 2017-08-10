@@ -114,6 +114,7 @@ author:
 - Tim Bielawa (@tbielawa)
 - Magnus Hedemark (@magnus919)
 - Dag Wieers (@dagwieers)
+- Marko Stanković (@sm4rk0)
 '''
 
 EXAMPLES = r'''
