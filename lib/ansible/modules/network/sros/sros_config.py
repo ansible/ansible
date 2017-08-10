@@ -210,18 +210,8 @@ backup_path:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.sros import sros_argument_spec, check_args, load_config, run_commands, get_config
-
-
-def sanitize_config(lines):
-    commands = list()
-    for line in lines:
-        for index, entry in enumerate(commands):
-            if line.startswith(entry):
-                del commands[index]
-                break
-        commands.append(line)
-    return commands
+from ansible.module_utils.sros import sros_argument_spec, check_args
+from ansible.module_utils.sros import load_config, run_commands, get_config
 
 
 def get_active_config(module):
@@ -258,7 +248,7 @@ def run(module, result):
 
     if configobjs:
         commands = dumps(configobjs, 'commands')
-        commands = sanitize_config(commands.split('\n'))
+        commands = commands.split('\n')
 
         result['commands'] = commands
         result['updates'] = commands
