@@ -114,11 +114,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: True if a volume was attached or detached.
-    type: bool
-    sample: True
-    returned: success
 volume_id:
     description: UUID of volume addressed by the module call.
     type: string
