@@ -187,7 +187,12 @@ diff:
 import os
 import json
 import traceback
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+    HAS_ORDERED_DICT = True
+except ImportError:
+    HAS_ORDERED_DICT = False
+
 from functools import partial
 
 # Python Custom libraries
@@ -304,7 +309,7 @@ def quote_json(obj):
     '''
 
     # possible nicer way: https://docs.scipy.org/doc/numpy/reference/arrays.scalars.html
-    if isinstance(obj, (bool, str, int, float, long, complex)):
+    if isinstance(obj, (bool, str, int, float, complex)):
         return str(obj)
     if isinstance(obj, (list, tuple)):
         return [quote_json(item) for item in obj]
@@ -319,7 +324,7 @@ def del_newline_json(obj):
     '''
 
     # possible nicer way: https://docs.scipy.org/doc/numpy/reference/arrays.scalars.html
-    if isinstance(obj, (bool, str, int, float, long, complex)):
+    if isinstance(obj, (bool, str, int, float, complex)):
         return str(obj).rstrip('\r\n')
     if isinstance(obj, (list, tuple)):
         return [del_newline_json(item) for item in obj]
@@ -420,6 +425,9 @@ def cfndiff_module_validation(module):
     # cfn_flip is required!
     if not HAS_CFN_FLIP:
         module.fail_json(msg='cfn_flip is required. Try pip install cfn_flip')
+
+    if not HAS_ORDERED_DICT:
+        module.fail_json(msg='ordereddict is required. Try pip install ordereddict')
 
     template = module.params['template']
     b_template = to_bytes(template, errors='surrogate_or_strict')
