@@ -755,7 +755,6 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
         if module.check_mode:
             module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
 
-        changed = True
 
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         rc, out, err = module.run_command(cmd, environ_update=lang_env)
@@ -765,26 +764,24 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 # Fail on invalid urls:
                 if '://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err):
                     module.fail_json(msg='Package at %s could not be installed' % spec, rc=1, changed=False)
-        if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
-            # avoid failing in the 'Nothing To Do' case
-            # this may happen with an URL spec.
-            # for an already installed group,
-            # we get rc = 0 and 'Nothing to do' in out, not in err.
-            rc = 0
-            err = ''
-            out = '%s: Nothing to do' % spec
-            changed = False
 
         res['rc'] = rc
         res['results'].append(out)
         res['msg'] += err
+        res['changed'] = True
+
+        # special case for groups
+        if spec.startswith('@'):
+            if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
+                res['changed'] = False
+
+        if rc != 0:
+            res['changed'] = False
+            module.fail_json(**res)
 
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for each pkg in rpmdb
         # look for each pkg via obsoletes
-
-        # Record change
-        res['changed'] = changed
 
     return res
 
