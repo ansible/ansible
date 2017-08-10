@@ -91,6 +91,7 @@ def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
     state = module.params['state']
+    purge = module.params['purge']
 
     for w in want:
         name = w['name']
@@ -100,7 +101,7 @@ def map_obj_to_commands(updates, module):
         obj_in_have = search_obj_in_list(name, have)
 
         if state == 'absent':
-            if have:
+            if obj_in_have:
                 commands.append('no vrf definition %s' % name)
         elif state == 'present':
             if not obj_in_have:
@@ -129,6 +130,12 @@ def map_obj_to_commands(updates, module):
                         for i in missing_interfaces:
                             commands.append('interface %s' % i)
                             commands.append('vrf forwarding %s' % w['name'])
+
+    if purge:
+        for h in have:
+            obj_in_want = search_obj_in_list(h['name'], want)
+            if not obj_in_want:
+                commands.append('no vrf definition %s' % h['name'])
 
     return commands
 
