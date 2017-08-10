@@ -17,7 +17,7 @@ module: aci_aep
 short_description: Direct access to the Cisco ACI APIC API
 description:
     - Offers direct access to the Cisco ACI APIC API
-author: 
+author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -26,7 +26,7 @@ requirements:
 options:
     aep_name:
       description:
-      - The name of the Attachable Access Entity Profile 
+      - The name of the Attachable Access Entity Profile
       required: yes
     description:
       description:
@@ -39,8 +39,7 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES =  '''
-
+EXAMPLES = r'''
 - name: Add a new AEP
   aci_aep:
     hostname: apic
@@ -93,8 +92,9 @@ import json
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
-        
+ 
     argument_spec = aci_argument_spec
     argument_spec.update(
         aep_name=dict(type='str'),
@@ -103,11 +103,10 @@ def main():
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec,    
+        argument_spec=argument_spec, 
         supports_check_mode=True,
     )
 
- 
     aep_name = module.params['aep_name']
     description = str(module.params['description'])
     state = module.params['state']
@@ -117,7 +116,7 @@ def main():
     if aep_name is not None:
         # Work with a specific attachable entitiy profile
         path = 'api/mo/uni/infra/attentp-%(aep_name)s.json' % module.params
-    elif state == 'query':    
+    elif state == 'query': 
         # Query all AEPs
         path = 'api/node/class/infraAttEntityP.json'
     else:
@@ -126,7 +125,7 @@ def main():
     if state == 'query':
         aci.request(path)
     else:
-        payload = {"infraAttEntityP": {"attributes": {"descr": description,"name": aep_name}}}
+        payload = {"infraAttEntityP": {"attributes": {"descr": description, "name": aep_name}}}
         aci.request_diff(path, payload=json.dumps(payload))
 
     module.exit_json(**aci.result)
