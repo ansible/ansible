@@ -634,7 +634,12 @@ class AzureRMModuleBase(object):
         self.log('Getting storage client...')
         if not self._storage_client:
             self.check_client_version('storage', storage_client_version, AZURE_EXPECTED_VERSIONS['storage_client_version'])
-            self._storage_client = StorageManagementClient(self.azure_credentials, self.subscription_id, base_url=self.base_url)
+            self._storage_client = StorageManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self.base_url,
+                api_version='2017-06-01'
+            )
             self._register('Microsoft.Storage')
         return self._storage_client
 
@@ -643,7 +648,12 @@ class AzureRMModuleBase(object):
         self.log('Getting network client')
         if not self._network_client:
             self.check_client_version('network', network_client_version, AZURE_EXPECTED_VERSIONS['network_client_version'])
-            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id, base_url=self.base_url)
+            self._network_client = NetworkManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self.base_url,
+                api_version='2017-06-01'
+            )
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -652,9 +662,12 @@ class AzureRMModuleBase(object):
         self.log('Getting resource manager client')
         if not self._resource_client:
             self.check_client_version('resource', resource_client_version, AZURE_EXPECTED_VERSIONS['resource_client_version'])
-            self._resource_client = ResourceManagementClient(self.azure_credentials,
-                                                             self.subscription_id,
-                                                             base_url=self.base_url)
+            self._resource_client = ResourceManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self.base_url,
+                api_version='2017-05-10'
+            )
         return self._resource_client
 
     @property
@@ -662,6 +675,11 @@ class AzureRMModuleBase(object):
         self.log('Getting compute client')
         if not self._compute_client:
             self.check_client_version('compute', compute_client_version, AZURE_EXPECTED_VERSIONS['compute_client_version'])
-            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id, base_url=self.base_url)
+            self._compute_client = ComputeManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self.base_url,
+                api_version='2017-03-30'
+            )
             self._register('Microsoft.Compute')
         return self._compute_client
