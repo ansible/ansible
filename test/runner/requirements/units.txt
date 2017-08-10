@@ -1,6 +1,5 @@
 boto
 boto3
-idna < 2.6 # requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
 placebo
 cryptography
 pycrypto
