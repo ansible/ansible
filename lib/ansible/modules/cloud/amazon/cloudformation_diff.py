@@ -189,9 +189,8 @@ import json
 import traceback
 try:
     from collections import OrderedDict
-    HAS_ORDERED_DICT = True
 except ImportError:
-    HAS_ORDERED_DICT = False
+    OrderedDict = dict
 
 from functools import partial
 
@@ -425,9 +424,6 @@ def cfndiff_module_validation(module):
     # cfn_flip is required!
     if not HAS_CFN_FLIP:
         module.fail_json(msg='cfn_flip is required. Try pip install cfn_flip')
-
-    if not HAS_ORDERED_DICT:
-        module.fail_json(msg='ordereddict is required. Try pip install ordereddict')
 
     template = module.params['template']
     b_template = to_bytes(template, errors='surrogate_or_strict')
