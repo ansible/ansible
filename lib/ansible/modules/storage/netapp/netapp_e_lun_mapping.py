@@ -4,12 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -85,13 +85,15 @@ HEADERS = {
     "Accept": "application/json"
 }
 
-def get_host_and_group_map(module, ssid, api_url, user, pwd):
+
+def get_host_and_group_map(module, ssid, api_url, user, pwd, validate_certs):
     mapping = dict(host=dict(), group=dict())
 
     hostgroups = 'storage-systems/%s/host-groups' % ssid
     groups_url = api_url + hostgroups
     try:
-        hg_rc, hg_data = request(groups_url, headers=HEADERS, url_username=user, url_password=pwd)
+        hg_rc, hg_data = request(groups_url, headers=HEADERS, url_username=user, url_password=pwd,
+                                 validate_certs=validate_certs)
     except:
         err = get_exception()
         module.fail_json(msg="Failed to get host groups. Id [%s]. Error [%s]" % (ssid, str(err)))
@@ -102,7 +104,8 @@ def get_host_and_group_map(module, ssid, api_url, user, pwd):
     hosts = 'storage-systems/%s/hosts' % ssid
     hosts_url = api_url + hosts
     try:
-        h_rc, h_data = request(hosts_url, headers=HEADERS, url_username=user, url_password=pwd)
+        h_rc, h_data = request(hosts_url, headers=HEADERS, url_username=user, url_password=pwd,
+                               validate_certs=validate_certs)
     except:
         err = get_exception()
         module.fail_json(msg="Failed to get hosts. Id [%s]. Error [%s]" % (ssid, str(err)))
@@ -131,22 +134,22 @@ def get_volume_id(module, data, ssid, name, api_url, user, pwd):
         module.fail_json(msg="No volume with the name: %s, was found" % (name))
 
 
-def get_hostgroups(module, ssid, api_url, user, pwd):
+def get_hostgroups(module, ssid, api_url, user, pwd, validate_certs):
     groups = "storage-systems/%s/host-groups" % ssid
     url = api_url + groups
     try:
-        rc, data = request(url, headers=HEADERS, url_username=user, url_password=pwd)
+        rc, data = request(url, headers=HEADERS, url_username=user, url_password=pwd, validate_certs=validate_certs)
         return data
     except Exception:
         module.fail_json(msg="There was an issue with connecting, please check that your"
                              "endpoint is properly defined and your credentials are correct")
 
 
-def get_volumes(module, ssid, api_url, user, pwd, mappable):
+def get_volumes(module, ssid, api_url, user, pwd, mappable, validate_certs):
     volumes = 'storage-systems/%s/%s' % (ssid, mappable)
     url = api_url + volumes
     try:
-        rc, data = request(url, url_username=user, url_password=pwd)
+        rc, data = request(url, url_username=user, url_password=pwd, validate_certs=validate_certs)
     except Exception:
         err = get_exception()
         module.fail_json(
@@ -154,10 +157,10 @@ def get_volumes(module, ssid, api_url, user, pwd, mappable):
     return data
 
 
-def get_lun_mappings(ssid, api_url, user, pwd, get_all=None):
+def get_lun_mappings(ssid, api_url, user, pwd, validate_certs, get_all=None):
     mappings = 'storage-systems/%s/volume-mappings' % ssid
     url = api_url + mappings
-    rc, data = request(url, url_username=user, url_password=pwd)
+    rc, data = request(url, url_username=user, url_password=pwd, validate_certs=validate_certs)
 
     if not get_all:
         remove_keys = ('ssid', 'perms', 'lunMappingRef', 'type', 'id')
@@ -169,20 +172,27 @@ def get_lun_mappings(ssid, api_url, user, pwd, get_all=None):
     return data
 
 
-def create_mapping(module, ssid, lun_map, vol_name, api_url, user, pwd):
+def create_mapping(module, ssid, lun_map, vol_name, api_url, user, pwd, validate_certs):
     mappings = 'storage-systems/%s/volume-mappings' % ssid
     url = api_url + mappings
-    post_body = json.dumps(dict(
-        mappableObjectId=lun_map['volumeRef'],
-        targetId=lun_map['mapRef'],
-        lun=lun_map['lun']
-    ))
+
+    if lun_map is not None:
+        post_body = json.dumps(dict(
+            mappableObjectId=lun_map['volumeRef'],
+            targetId=lun_map['mapRef'],
+            lun=lun_map['lun']
+        ))
+    else:
+        post_body = json.dumps(dict(
+            mappableObjectId=lun_map['volumeRef'],
+            targetId=lun_map['mapRef'],
+        ))
 
     rc, data = request(url, data=post_body, method='POST', url_username=user, url_password=pwd, headers=HEADERS,
-                       ignore_errors=True)
+                       ignore_errors=True, validate_certs=validate_certs)
 
-    if rc == 422:
-        data = move_lun(module, ssid, lun_map, vol_name, api_url, user, pwd)
+    if rc == 422 and lun_map['lun'] is not None:
+        data = move_lun(module, ssid, lun_map, vol_name, api_url, user, pwd, validate_certs)
         # module.fail_json(msg="The volume you specified '%s' is already "
         #                      "part of a different LUN mapping. If you "
         #                      "want to move it to a different host or "
@@ -191,17 +201,18 @@ def create_mapping(module, ssid, lun_map, vol_name, api_url, user, pwd):
     return data
 
 
-def move_lun(module, ssid, lun_map, vol_name, api_url, user, pwd):
-    lun_id = get_lun_id(module, ssid, lun_map, api_url, user, pwd)
+def move_lun(module, ssid, lun_map, vol_name, api_url, user, pwd, validate_certs):
+    lun_id = get_lun_id(module, ssid, lun_map, api_url, user, pwd, validate_certs)
     move_lun = "storage-systems/%s/volume-mappings/%s/move" % (ssid, lun_id)
     url = api_url + move_lun
     post_body = json.dumps(dict(targetId=lun_map['mapRef'], lun=lun_map['lun']))
-    rc, data = request(url, data=post_body, method='POST', url_username=user, url_password=pwd, headers=HEADERS)
+    rc, data = request(url, data=post_body, method='POST', url_username=user, url_password=pwd, headers=HEADERS,
+                       validate_certs=validate_certs)
     return data
 
 
-def get_lun_id(module, ssid, lun_mapping, api_url, user, pwd):
-    data = get_lun_mappings(ssid, api_url, user, pwd, get_all=True)
+def get_lun_id(module, ssid, lun_mapping, api_url, user, pwd, validate_certs):
+    data = get_lun_mappings(ssid, api_url, user, pwd, validate_certs, get_all=True)
 
     for lun_map in data:
         if lun_map['volumeRef'] == lun_mapping['volumeRef']:
@@ -210,11 +221,12 @@ def get_lun_id(module, ssid, lun_mapping, api_url, user, pwd):
     module.fail_json(msg="No LUN map found.")
 
 
-def remove_mapping(module, ssid, lun_mapping, api_url, user, pwd):
+def remove_mapping(module, ssid, lun_mapping, api_url, user, pwd, validate_certs):
     lun_id = get_lun_id(module, ssid, lun_mapping, api_url, user, pwd)
     lun_del = "storage-systems/%s/volume-mappings/%s" % (ssid, lun_id)
     url = api_url + lun_del
-    rc, data = request(url, method='DELETE', url_username=user, url_password=pwd, headers=HEADERS)
+    rc, data = request(url, method='DELETE', url_username=user, url_password=pwd, headers=HEADERS,
+                       validate_certs=validate_certs)
     return data
 
 
@@ -235,6 +247,7 @@ def main():
     target_type = module.params['target_type']
     lun = module.params['lun']
     ssid = module.params['ssid']
+    validate_certs = module.params['validate_certs']
     vol_name = module.params['volume_name']
     user = module.params['api_username']
     pwd = module.params['api_password']
@@ -243,8 +256,8 @@ def main():
     if not api_url.endswith('/'):
         api_url += '/'
 
-    volume_map = get_volumes(module, ssid, api_url, user, pwd, "volumes")
-    thin_volume_map = get_volumes(module, ssid, api_url, user, pwd, "thin-volumes")
+    volume_map = get_volumes(module, ssid, api_url, user, pwd, "volumes", validate_certs)
+    thin_volume_map = get_volumes(module, ssid, api_url, user, pwd, "thin-volumes", validate_certs)
     volref = None
 
     for vol in volume_map:
@@ -259,7 +272,7 @@ def main():
     if not volref:
         module.fail_json(changed=False, msg="No volume with the name %s was found" % vol_name)
 
-    host_and_group_mapping = get_host_and_group_map(module, ssid, api_url, user, pwd)
+    host_and_group_mapping = get_host_and_group_map(module, ssid, api_url, user, pwd, validate_certs)
 
     desired_lun_mapping = dict(
         mapRef=host_and_group_mapping[target_type][target],
@@ -267,18 +280,18 @@ def main():
         volumeRef=volref
     )
 
-    lun_mappings = get_lun_mappings(ssid, api_url, user, pwd)
+    lun_mappings = get_lun_mappings(ssid, api_url, user, pwd, validate_certs)
 
     if state == 'present':
         if desired_lun_mapping in lun_mappings:
             module.exit_json(changed=False, msg="Mapping exists")
         else:
-            result = create_mapping(module, ssid, desired_lun_mapping, vol_name, api_url, user, pwd)
+            result = create_mapping(module, ssid, desired_lun_mapping, vol_name, api_url, user, pwd, validate_certs)
             module.exit_json(changed=True, **result)
 
     elif state == 'absent':
         if desired_lun_mapping in lun_mappings:
-            result = remove_mapping(module, ssid, desired_lun_mapping, api_url, user, pwd)
+            result = remove_mapping(module, ssid, desired_lun_mapping, api_url, user, pwd, validate_certs)
             module.exit_json(changed=True, msg="Mapping removed")
         else:
             module.exit_json(changed=False, msg="Mapping absent")
