@@ -150,8 +150,8 @@ Windows
 
   - Split "Windows" category into multiple subs
   - Domain user/group management modules **(in progress)**
-  - win_mapped_drive module **(in progress)**
-  - win_hotfix
+  - win_mapped_drive module **(done)**
+  - win_hotfix **(done)**
   - win_updates rewrite to require become
   - win_package changes required to deprecate win_msi
   - win_copy re-write

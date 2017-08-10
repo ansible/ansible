@@ -303,9 +303,12 @@ Ansible Changes By Release
   * win_dsc
   * win_firewall
   * win_group_membership
+  * win_hotfix
+  * win_mapped_drive
   * win_psmodule
   * win_route
   * win_security_policy
+  * win_user_right
   * win_wakeonlan
 - xml
 

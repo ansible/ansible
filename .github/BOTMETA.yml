@@ -737,6 +737,8 @@ files:
   $modules/windows/win_group_membership.py: andrewsaraceni
   $modules/windows/win_group.ps1: chrishoffman
   $modules/windows/win_group.py: chrishoffman
+  $modules/windows/win_hotfix.ps1: jborean93
+  $modules/windows/win_hotfix.py: jborean93
   $modules/windows/win_iis_virtualdirectory.ps1: $team_ansible
   $modules/windows/win_iis_virtualdirectory.py: $team_ansible
   $modules/windows/win_iis_webapplication.ps1: $team_windows
@@ -749,6 +751,8 @@ files:
   $modules/windows/win_iis_website.py: $team_windows
   $modules/windows/win_lineinfile.ps1: brianlloyd
   $modules/windows/win_lineinfile.py: brianlloyd
+  $modules/windows/win_mapped_drive.ps1: jborean93
+  $modules/windows/win_mapped_drive.py: jborean93
   $modules/windows/win_msg.ps1: $team_windows
   $modules/windows/win_msg.py: $team_windows
   $modules/windows/win_msi.ps1: sivel
@@ -821,6 +825,8 @@ files:
   $modules/windows/win_uri.py: blakfeld
   $modules/windows/win_user.ps1: angstwad cchurch nitzmahone
   $modules/windows/win_user.py: angstwad cchurch nitzmahone
+  $modules/windows/win_user_right.ps1: jborean93
+  $modules/windows/win_user_right.py: jborean93
   $modules/windows/win_wakeonlan.ps1: dagwieers
   $modules/windows/win_wakeonlan.py: dagwieers
   $modules/windows/win_webpicmd.ps1: petemounce
