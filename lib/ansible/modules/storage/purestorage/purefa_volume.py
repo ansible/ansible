@@ -157,7 +157,7 @@ def main():
         )
     )
 
-    required_if = [('state', 'present', ('size'))]
+    required_if = [('state', 'present', ['size'])]
 
     module = AnsibleModule(argument_spec,
                            required_if=required_if,
