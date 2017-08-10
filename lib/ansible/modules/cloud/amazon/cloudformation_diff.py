@@ -174,6 +174,15 @@ EXAMPLES = '''
   check_mode: no
 '''
 
+RETURN = '''
+diff:
+    description: diff in yaml or json depending on the choice
+    returned: success
+    type: string
+    sample: + this line was added
+
+'''
+
 # Python default imports
 import os
 import json
