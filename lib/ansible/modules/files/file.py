@@ -156,7 +156,7 @@ def list_files_in_directory(fileName):
         except Exception:
                 e = get_exception()
         for file in files_list:
-                path = fileName+file
+                path = fileName + file
                 if os.path.isdir(path):
                         list_files_in_directory(add_delimiter_to_path(path))
                 else:
@@ -465,10 +465,10 @@ def main():
         changed = module.set_fs_attributes_if_different(file_args, changed, diff)
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
     if state == 'absent_secure':
-        if os.path.isfile(b_path):
-            os.system("shred -u " + b_path)
+        if os.path.isfile(path):
+            os.system("shred -u " + path)
         else:
-            list_files_in_directory(add_delimiter_to_path(b_path))
+            list_files_in_directory(add_delimiter_to_path(path))
         module.exit_json(dest=path, changed=True, diff=diff)
     elif state == 'absent':
         try:
