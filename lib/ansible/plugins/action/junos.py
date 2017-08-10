@@ -28,6 +28,7 @@ from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
 from ansible.plugins import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.module_utils.connection import Connection
 
 try:
     from __main__ import display
@@ -59,9 +60,10 @@ class ActionModule(_ActionModule):
 
         pc.remote_addr = provider['host'] or self._play_context.remote_addr
 
-        if self._task.action == 'junos_netconf':
+        if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
             pc.connection = 'network_cli'
             pc.port = int(provider['port'] or self._play_context.port or 22)
+
         else:
             pc.connection = 'netconf'
             pc.port = int(provider['port'] or self._play_context.port or 830)
