@@ -498,6 +498,9 @@ Ansible Changes By Release
   * github_issue
 
 #### Storage
+  * nuage_vpsk
+- panos
+  * panos_sag
 - purestorage
   * purefa_hg
   * purefa_host
