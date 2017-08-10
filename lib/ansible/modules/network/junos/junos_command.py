@@ -365,7 +365,7 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    if module.params['provider']['transport'] == 'cli':
+    if module.params['provider'] and module.params['provider']['transport'] == 'cli':
         if any((module.params['wait_for'], module.params['match'], module.params['rpcs'])):
             module.warn('arguments wait_for, match, rpcs are not supported when using transport=cli')
         commands = module.params['commands']
