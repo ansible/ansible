@@ -354,7 +354,9 @@ def get_remove_ip_config_commands(interface, addr, mask, existing, version):
                     commands.append('no ip address {0}/{1}'.format(addr, mask))
                 break
     else:
-        commands.append('no ipv6 address {0}/{1}'.format(addr, mask))
+        for address in existing['addresses']:
+            if address['addr'] == addr:
+                commands.append('no ipv6 address {0}/{1}'.format(addr, mask))
 
     return commands
 
