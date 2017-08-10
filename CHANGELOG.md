@@ -280,6 +280,8 @@ Ansible Changes By Release
 - gunicorn
 - nuage
   * nuage_vpsk
+- panos
+  * panos_object
 - purestorage
   * purefa_hg
   * purefa_host
