@@ -115,9 +115,9 @@ NoneType = type(None)
 # this matters, make sure to check for strings before checking for sequencetype
 try:
     from collections.abc import KeysView
-    SEQUENCETYPE = (Sequence, KeysView)
+    SEQUENCETYPE = (Sequence, frozenset, KeysView)
 except:
-    SEQUENCETYPE = Sequence
+    SEQUENCETYPE = (Sequence, frozenset)
 
 try:
     import json
@@ -2044,7 +2044,7 @@ class AnsibleModule(object):
                     else:
                         fallback_args = item
                 try:
-                    param = fallback_strategy(*fallback_args, **fallback_kwargs)
+                    param[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
                 except AnsibleFallbackNotFound:
                     continue
 

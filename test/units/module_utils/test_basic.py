@@ -260,6 +260,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_creation(self):
         from ansible.module_utils import basic
+        from ansible.module_utils.parsing.convert_bool import BOOLEANS
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
@@ -269,7 +270,8 @@ class TestModuleUtilsBasic(ModuleTestCase):
             foo=dict(required=True),
             bar=dict(),
             bam=dict(),
-            baz=dict(),
+            baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
+            bar1=dict(type='bool', choices=BOOLEANS)
         )
         mut_ex = (('bar', 'bam'),)
         req_to = (('bam', 'baz'),)
@@ -342,16 +344,50 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 supports_check_mode=True,
             )
 
+        # test fallback, should test ok as value of param required due to another param
+        # is set by environment variable
+        os.environ['BAZ'] = 'bad'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bam": "bad"}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+        os.environ.pop('BAZ', None)
+
+        # should test ok, check for boolean values
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bar1": "yes"}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
     def test_module_utils_basic_ansible_module_with_options_creation(self):
         from ansible.module_utils import basic
+        from ansible.module_utils.parsing.convert_bool import BOOLEANS
 
         options_spec = dict(
             foo=dict(required=True, aliases=['dup']),
             bar=dict(),
             bam=dict(),
-            baz=dict(),
+            baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
             bam1=dict(),
-            bam2=dict(default='test')
+            bam2=dict(default='test'),
+            bam3=dict(type='bool', choices=BOOLEANS)
         )
         arg_spec = dict(
             foobar=dict(
@@ -507,6 +543,34 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 check_invalid_arguments=True,
                 add_file_common_args=True,
                 supports_check_mode=True
+            )
+
+        # test fallback, should test ok as value of param required due to another param
+        # is set by environment variable
+        os.environ['BAZ'] = 'bad'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bam": "bad"}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+        os.environ.pop('BAZ', None)
+
+        # should test ok, check for boolean values
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bam3": "yes"}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
             )
 
     def test_module_utils_basic_ansible_module_type_check(self):
