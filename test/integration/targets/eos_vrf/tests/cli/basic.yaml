@@ -7,6 +7,20 @@
     authorize: yes
     provider: "{{ cli }}"
 
+- name: setup - remove vrf
+  eos_vrf:
+    name: test2
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: setup - remove vrf
+  eos_vrf:
+    name: test3
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
 - name: Create vrf
   eos_vrf:
     name: test
@@ -110,6 +124,74 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'session_name' not in result.commands"
 
+- name: Create aggregate of VRFs
+  eos_vrf:
+    aggregate:
+      - { name: test2, rd: "1:202" }
+      - { name: test3, rd: "1:203" }
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf definition test2' in result.commands"
+      - "'rd 1:202' in result.commands"
+      - "'vrf definition test3' in result.commands"
+      - "'rd 1:203' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Create aggregate of VRFs again (idempotent)
+  eos_vrf:
+    aggregate:
+      - { name: test2, rd: "1:202" }
+      - { name: test3, rd: "1:203" }
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
+
+- name: Delete VRFs
+  eos_vrf:
+    name: test
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: Delete VRFs again (idempotent)
+  eos_vrf:
+    name: test
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: Delete aggregate of VRFs
+  eos_vrf:
+    aggregate:
+      - { name: test2 }
+      - { name: test3 }
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
+- name: Delete VRFs again (idempotent)
+  eos_vrf:
+    aggregate:
+      - { name: test2 }
+      - { name: test3 }
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:
