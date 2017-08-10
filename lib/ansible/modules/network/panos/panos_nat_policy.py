@@ -30,6 +30,7 @@ author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - pan-python
+deprecated: In 2.4 use M(panos_nat_rule) instead.
 options:
     ip_address:
         description:
