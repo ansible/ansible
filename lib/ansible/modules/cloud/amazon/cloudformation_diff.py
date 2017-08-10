@@ -24,63 +24,66 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: cloudformation_diff
+author: cytopia (@cytopia)
+
 short_description: Diff compare changes that would occur when submitting local cloudformation template to AWS remote.
 description:
     -  Shows the changes of the cloudformation template, parameters and tags that would occur in case you actually submit the changes to AWS remote. The diff output is only viewable when using Ansible's C(--diff) mode. Diffs will be marked as C(changed).
-version_added: 2.4
+    - More examples at U(https://github.com/cytopia/ansible-modules)
+version_added: "2.4"
 options:
     stack_name:
         description:
-            - name of the cloudformation stack
+            - Name of the cloudformation stack.
         required: true
         default: null
         aliases: []
 
     template:
         description:
-            - path to local cloudformation template file (yaml or json)
+            - Path to local cloudformation template file (yaml or json).
         required: true
         default: null
         aliases: []
 
     template_parameters:
         description:
-            - dict of variable template parameters to add to the stack.
+            - Dict of variable template parameters to add to the stack.
         required: false
         default: {}
         aliases: []
 
     template_tags:
         description:
-            - dict of tags to asign to the stack.
+            - Dict of tags to asign to the stack.
         required: false
         default: {}
         aliases: []
 
     ignore_template_desc:
         description:
-            - In template diff mode, ignore the template description
+            - In template diff mode, ignore the template description.
         required: false
         default: false
         aliases: []
 
     ignore_hidden_params:
         description:
-            - In parameter diff mode, ignore any template parameters with 'NoEcho: true'
+            - In parameter diff mode, ignore any template parameters with 'NoEcho: true'.
         required: false
         default: false
         aliases: []
 
     output_format:
         description:
-            - Specify in what format to view the diff output ('json' or 'yaml')
+            - Specify in what format to view the diff output ('json' or 'yaml').
         required: false
         default: 'json'
         aliases: []
 
     output_choice:
         description:
-            - Specify what to diff ('template', 'parameters' or 'tags')
+            - Specify what to diff ('template', 'parameters' or 'tags').
         required: false
         default: 'template'
         aliases: []
@@ -88,14 +91,12 @@ options:
 requirements:
     - python >= 2.6
     - boto3 >= 1.0.0
-    - cfn_flip python module: C(pip install cfn_flip)
+    - cfn_flip
 extends_documentation_fragment:
     - aws
     - ec2
-author: cytopia (@cytopia)
-notes:
-    - The "cfndiff" compares (diffs) two cloudformation template files regardless of being json or yaml.
 '''
+
 EXAMPLES = '''
 # By using the following:
 #   when: ansible_check_mode
