@@ -35,6 +35,7 @@ description:
       traffic is applied, the more specific rules must precede the more general ones.
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
+deprecated: In 2.4 use M(panos_security_rule) instead.
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
