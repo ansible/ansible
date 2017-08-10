@@ -66,6 +66,7 @@ options:
     description:
       - Time in seconds to wait before checking for the operational state on remote
         device.
+    version_added: "2.4"
   purge:
     description:
       - Instructs the module to consider the
@@ -330,7 +331,7 @@ def update_objects(want, have):
 def check_declarative_intent_params(want, module):
     if module.params['interfaces']:
         name = module.params['name']
-        rc, out, err = exec_command(module, 'show vrf | include {}'.format(name))
+        rc, out, err = exec_command(module, 'show vrf | include {0}'.format(name))
 
         if rc == 0:
             data = out.strip().split()
@@ -362,11 +363,9 @@ def main():
 
     argument_spec.update(ios_argument_spec)
 
-    required_one_of = [['name', 'vrfs']]
-    mutually_exclusive = [['name', 'vrfs']]
+    mutually_exclusive = [('name', 'vrfs')]
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
