@@ -16,6 +16,7 @@ You should also consult the :doc:`modules` section, various modules like 'ec2_el
 You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
 
 Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
+
 .. _rolling_update_batch_size:
 
 Rolling Update Batch Size
