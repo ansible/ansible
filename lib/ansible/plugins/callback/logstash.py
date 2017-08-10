@@ -22,6 +22,7 @@ import os
 import json
 import socket
 import uuid
+from datetime import datetime
 
 import logging
 
@@ -86,6 +87,7 @@ class CallbackModule(CallbackBase):
             self.hostname = socket.gethostname()
             self.session = str(uuid.uuid1())
             self.errors = 0
+        self.start_time = datetime.utcnow()
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
@@ -99,6 +101,8 @@ class CallbackModule(CallbackBase):
         self.logger.info("ansible start", extra=data)
 
     def v2_playbook_on_stats(self, stats):
+        end_time = datetime.utcnow()
+        runtime = end_time - self.start_time
         summarize_stat = {}
         for host in stats.processed.keys():
             summarize_stat[host] = stats.summarize(host)
@@ -114,6 +118,7 @@ class CallbackModule(CallbackBase):
             'session': self.session,
             'ansible_type': "finish",
             'ansible_playbook': self.playbook,
+            'ansible_playbook_duration': runtime.total_seconds(),
             'ansible_result': json.dumps(summarize_stat),
         }
         self.logger.info("ansible stats", extra=data)
