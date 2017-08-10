@@ -318,7 +318,7 @@ def check_declarative_intent_params(module, want, result):
         want_state = w.get('state')
         want_tx_rate = w.get('tx_rate')
         want_rx_rate = w.get('rx_rate')
-        if not want_state in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
             continue
 
         if result['changed']:
@@ -356,6 +356,7 @@ def check_declarative_intent_params(module, want, result):
                 failed_conditions.append('rx_rate ' + want_rx_rate)
 
     return failed_conditions
+
 
 def main():
     """ main entry point for module execution

@@ -237,7 +237,7 @@
   net_interface:
     aggregate:
     - { name: GigabitEthernet0/1, enabled: True }
-    - { name: GigabitEthernet0/2, enabled: True  }
+    - { name: GigabitEthernet0/2, enabled: True }
     state: present
     authorize: yes
     provider: "{{ cli }}"
