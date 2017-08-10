@@ -583,7 +583,7 @@ def main():
 
         ret = None
         # First take care of creating the VM, if needed:
-        if state in ('present', 'detached', 'attached', 'exported'):
+        if state in ('present', 'detached', 'attached'):
             ret = disks_module.create(
                 entity=disk,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
@@ -613,7 +613,17 @@ def main():
                     action_condition=lambda d: module.params['sparsify'],
                     wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
                 )
-                # Export disk as image to glance domain
+
+        # Export disk as image to glance domain
+        elif state == 'exported':
+            disk = disks_module.search_entity()
+            if disk is None:
+                module.fail_json(
+                    msg="Can not export given disk '%s', it doesn't exist" %
+                        module.params.get('name') or module.params.get('id')
+                )
+            disk = disks_service.disk_service(disk.id).get()
+            if disk.storage_type == otypes.DiskStorageType.IMAGE:
                 ret = disks_module.action(
                     action='export',
                     action_condition=lambda d: module.params['image_provider'],
