@@ -3,13 +3,13 @@
 
 - name: setup
   nxos_config:
-    lines: no feature vn-segment-vlan-based
+    lines: no feature bgp
     match: none
     provider: "{{ nxapi }}"
 
-- name: enable vn-segment-vlan-based
+- name: enable bgp
   nxos_feature:
-    feature: vn-segment-vlan-based
+    feature: bgp
     state: enabled
     provider: "{{ nxapi }}"
   register: result
@@ -18,9 +18,9 @@
     that:
       - "result.changed == true"
 
-- name: verify vn-segment-vlan-based
+- name: verify bgp
   nxos_feature:
-    feature: vn-segment-vlan-based
+    feature: bgp
     state: enabled
     provider: "{{ nxapi }}"
   register: result
@@ -29,9 +29,9 @@
     that:
       - "result.changed == false"
 
-- name: disable vn-segment-vlan-based
+- name: disable bgp
   nxos_feature:
-    feature: vn-segment-vlan-based
+    feature: bgp
     state: disabled
     provider: "{{ nxapi }}"
   register: result
@@ -40,9 +40,9 @@
     that:
       - "result.changed == true"
 
-- name: verify vn-segment-vlan-based
+- name: verify bgp
   nxos_feature:
-    feature: vn-segment-vlan-based
+    feature: bgp
     state: disabled
     provider: "{{ nxapi }}"
   register: result
@@ -53,7 +53,7 @@
 
 - name: teardown
   nxos_config:
-    lines: no feature vn-segment-vlan-based
+    lines: no feature bgp
     match: none
     provider: "{{ nxapi }}"
 
