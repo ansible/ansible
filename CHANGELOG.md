@@ -50,6 +50,8 @@ Ansible Changes By Release
 #### Deprecated Modules:
 * ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
 * cs_nic (removed in 2.7), replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+* panos_address (use M(panos_object) instead)
+* panos_service (use M(panos_object) instead)
 
 #### Removed Deprecated Modules:
 * eos_template (use eos_config instead)
