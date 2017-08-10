@@ -17,21 +17,25 @@ DOCUMENTATION = '''
 ---
 module: purefa_volume
 version_added: "2.4"
-short_description:  Create, Delete or Extend a volume on Pure Storage FlashArray
+short_description:  Create, Delete Copy or Extend a volume on Pure Storage FlashArray
 description:
-    - This module creates, deletes or extends the capacity of a volume on Pure Storage FlashArray.
+    - This module creates, deletes, copies or extends the capacity of a volume on Pure Storage FlashArray.
 author: Simon Dodsley (@simondodsley)
 options:
   name:
     description:
       - Volume Name.
     required: true
+  target:
+    description:
+      - Target Volume Name if copying.
+    required: false
   state:
     description:
-      - Create, delete or extend capacity of a volume.
+      - Create, delete, copy or extend capacity of a volume.
     required: false
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "copy" ]
   eradicate:
     description:
       - Define whether to eradicate the volume on delete or leave in trash.
@@ -69,19 +73,28 @@ EXAMPLES = '''
     eradicate: true
     state: absent
     fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+- name: Overwrite volume bar wath volume foo
+  purefa_volume:
+    name: foo
+    target: bar
+    overwrite: true
+    state: copy
+    fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592'''
 
 RETURN = '''
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 HAS_PURESTORAGE = True
 try:
     from purestorage import purestorage
 except ImportError:
     HAS_PURESTORAGE = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
 def human_to_bytes(size):
@@ -116,6 +129,14 @@ def get_volume(module, array):
         return None
 
 
+def get_target(module, array):
+    """Return Volume or None"""
+    try:
+        return array.get_volume(module.params['target'])
+    except:
+        return None
+
+
 def create_volume(module, array):
     """Create Volume"""
     size = module.params['size']
@@ -123,6 +144,24 @@ def create_volume(module, array):
     if not module.check_mode:
         array.create_volume(module.params['name'], size)
     module.exit_json(changed=True)
+
+
+def copy_from_volume(module, array):
+    """Create Volume Clone"""
+    if not module.check_mode:
+        tgt = get_target(module, array)
+        if tgt is None:
+            changed = True
+            array.copy_volume(module.params['name'],
+                              module.params['target'])
+        elif tgt is not None and module.params['overwrite']:
+            changed = True
+            array.copy_volume(module.params['name'],
+                              module.params['target'],
+                              overwrite=module.params['overwrite'])
+        elif tgt is not None and not module.params['overwrite']:
+            changed = False
+    module.exit_json(changed=changed)
 
 
 def update_volume(module, array):
@@ -141,7 +180,7 @@ def delete_volume(module, array):
     """ Delete Volume"""
     if not module.check_mode:
         array.destroy_volume(module.params['name'])
-        if module.params['eradicate'] == 'true':
+        if module.params['eradicate']:
             array.eradicate_volume(module.params['name'])
     module.exit_json(changed=True)
 
@@ -151,13 +190,15 @@ def main():
     argument_spec.update(
         dict(
             name=dict(required=True),
+            target=dict(),
+            overwrite=dict(default='false', type='bool'),
             eradicate=dict(default='false', type='bool'),
-            state=dict(default='present', choices=['present', 'absent']),
+            state=dict(default='present', choices=['present', 'absent', 'copy']),
             size=dict()
         )
     )
 
-    required_if = [('state', 'present', ['size'])]
+    required_if = [('state', 'present', ['size']), ('state', 'copy', ['target'])]
 
     module = AnsibleModule(argument_spec,
                            required_if=required_if,
@@ -169,11 +210,14 @@ def main():
     state = module.params['state']
     array = get_system(module)
     volume = get_volume(module, array)
+    target = get_target(module, array)
 
     if state == 'present' and not volume:
         create_volume(module, array)
     elif state == 'present' and volume:
         update_volume(module, array)
+    elif state == 'copy' and volume:
+        copy_from_volume(module, array)
     elif state == 'absent' and volume:
         delete_volume(module, array)
     elif state == 'absent' and not volume:
