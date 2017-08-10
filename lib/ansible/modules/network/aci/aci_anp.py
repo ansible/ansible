@@ -18,7 +18,7 @@ short_description: Manage top level application network profile objects
 description:
     -  Manage top level application network profile object, i.e. this does
       not manage EPGs.
-author: 
+author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieesrs)
 version_added: '2.4'
@@ -37,12 +37,12 @@ options:
    description:
      description:
      - Description for the ANP
-   state: 
+   state:
      description:
      - present, absent, query
-     default: present 
+     default: present
      choices: [ absent, present, query ]
-extends_documentation_fragment: aci    
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
@@ -102,11 +102,12 @@ import json
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         tenant_name=dict(type='str'),
-        application_profile_name = dict(type='str'),
+        application_profile_name=dict(type='str'),
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -114,28 +115,28 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-    )    
+    )
 
     tenant_name = module.params['tenant_name']
     application_profile_name = module.params['application_profile_name']
     description = str(module.params['description'])
     state = module.params['state']
-   
+ 
     aci = ACIModule(module)
-  
-    if (tenant_name,application_profile_name) is not None:
-       # Work with specific anp 
-       path = 'api/mo/uni/tn-%(tenant_name)s/ap-%(application_profile_name)s.json' % module.params
+
+    if (tenant_name, application_profile_name) is not None:
+        # Work with specific anp
+        path = 'api/mo/uni/tn-%(tenant_name)s/ap-%(application_profile_name)s.json' % module.params
     elif state == 'query':
-       # Query all anps
-       path = 'api/node/class/fvAp.json'
+        # Query all anps
+        path = 'api/node/class/fvAp.json'
     else:
         module.fail_json(msg="Parameters 'tenant_name' and 'applcation_profile_name' are required for state 'absent' or 'present'")
 
     if state == 'query':
         aci.request(path)
     else:
-        payload = {"fvAp":{"attributes":{"name": application_profile_name, "descr": description }}}
+        payload = {"fvAp": {"attributes": {"name": application_profile_name, "descr": description}}}
         aci.request_diff(path, payload=json.dumps(payload))
 
     module.exit_json(**aci.result)
