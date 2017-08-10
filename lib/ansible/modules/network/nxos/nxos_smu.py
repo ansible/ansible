@@ -89,17 +89,17 @@ import time
 import collections
 
 import re
-import re
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    if command_type == 'cli_show_ascii':
+        cmds = [{
+            'command': command,
+            'output': 'text',
+        }]
+    else:
         cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
-    return body
+    return run_commands(module, cmds)
 
 
 def remote_file_exists(module, dst, file_system='bootflash:'):
@@ -122,11 +122,18 @@ def get_commands(module, pkg, file_system):
     fixed_pkg = '.'.join(splitted_pkg[0:-1])
 
     command = 'show install inactive'
-    inactive_body = execute_show_command(command, module,
-                                                command_type='cli_show_ascii')
+    inactive_body = execute_show_command(
+        command,
+        module,
+        command_type='cli_show_ascii'
+    )
+
     command = 'show install active'
-    active_body = execute_show_command(command, module,
-                                                command_type='cli_show_ascii')
+    active_body = execute_show_command(
+        command,
+        module,
+        command_type='cli_show_ascii'
+    )
 
     if fixed_pkg not in inactive_body[0] and fixed_pkg not in active_body[0]:
         commands.append('install add {0}{1}'.format(file_system, pkg))
@@ -167,8 +174,9 @@ def main():
     remote_exists = remote_file_exists(module, pkg, file_system=file_system)
 
     if not remote_exists:
-        module.fail_json(msg="The requested package doesn't exist "
-                             "on the device")
+        module.fail_json(
+            msg="The requested package doesn't exist on the device"
+        )
 
     commands = get_commands(module, pkg, file_system)
     if not module.check_mode and commands:
@@ -178,12 +186,13 @@ def main():
     if 'configure' in commands:
         commands.pop(0)
 
-    module.exit_json(changed=changed,
-                     pkg=pkg,
-                     file_system=file_system,
-                     updates=commands)
+    module.exit_json(
+        changed=changed,
+        pkg=pkg,
+        file_system=file_system,
+        updates=commands
+    )
 
 
 if __name__ == '__main__':
     main()
-
