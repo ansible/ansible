@@ -41,7 +41,7 @@ options:
 
     template:
         description:
-            - Path to local cloudformation template file (yaml or json).
+            - Path to local cloudformation template file C(yaml) or C(json).
         required: true
         default: null
         aliases: []
@@ -69,28 +69,28 @@ options:
 
     ignore_hidden_params:
         description:
-            - In parameter diff mode, ignore any template parameters with 'NoEcho: true'.
+            - In parameter diff mode, ignore any template parameters with C(NoEcho:true).
         required: false
         default: false
         aliases: []
 
     ignore_final_newline:
         description:
-            - Strip any final newlines (\n) and (\r) for diff output.
+            - Strip any final newlines C(\n) and C(\r) for diff output.
         required: false
         default: false
         aliases: []
 
     output_format:
         description:
-            - Specify in what format to view the diff output ('json' or 'yaml').
+            - Specify in what format to view the diff output I(json) or I(yaml).
         required: false
         default: 'json'
         aliases: []
 
     output_choice:
         description:
-            - Specify what to diff ('template', 'parameters' or 'tags').
+            - Specify what to diff I(template), I(parameters) or I(tags).
         required: false
         default: 'template'
         aliases: []
@@ -105,7 +105,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# By using the following:
+# By using the following
 #   when: ansible_check_mode
 #   check_mode: no
 # you can make sure to only run the cloudformation_diff in ansible --check mode
@@ -133,7 +133,7 @@ EXAMPLES = '''
   check_mode: no
 
 # Get changes for the parameters and ignore any
-# NoEcho: true parameters.
+# NoEcho:true parameters.
 # Input stack is yaml (can also be json).
 # Diff is shown in json.
 # Run: ansible-playbook playbook.yml --diff --check
