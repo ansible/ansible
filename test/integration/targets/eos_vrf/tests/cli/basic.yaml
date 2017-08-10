@@ -161,6 +161,30 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
 
+- name: Create aggregate of VRFs with purge
+  eos_vrf:
+    aggregate:
+      - { name: test4, rd: "1:204" }
+      - { name: test5, rd: "1:205" }
+    state: present
+    purge: yes
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf definition test4' in result.commands"
+      - "'rd 1:204' in result.commands"
+      - "'vrf definition test5' in result.commands"
+      - "'rd 1:205' in result.commands"
+      - "'no vrf definition test' in result.commands"
+      - "'no vrf definition test2' in result.commands"
+      - "'no vrf definition test3' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
 - name: Delete VRFs
   eos_vrf:
     name: test
@@ -180,6 +204,8 @@
     aggregate:
       - { name: test2 }
       - { name: test3 }
+      - { name: test4 }
+      - { name: test5 }
     state: absent
     authorize: yes
     provider: "{{ cli }}"
@@ -189,6 +215,8 @@
     aggregate:
       - { name: test2 }
       - { name: test3 }
+      - { name: test4 }
+      - { name: test5 }
     state: absent
     authorize: yes
     provider: "{{ cli }}"
