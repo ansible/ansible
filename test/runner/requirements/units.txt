@@ -1,5 +1,6 @@
 boto
 boto3
+idna < 2.6 # requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
 placebo
 cryptography
 pycrypto
@@ -18,6 +19,11 @@ setuptools > 0.6 # pytest-xdist installed via requirements does not work with ve
 unittest2 ; python_version < '2.7'
 netaddr
 ipaddress
+
+# requirements for F5 specific modules
+f5-sdk ; python_version >= '2.7'
+f5-icontrol-rest ; python_version >= '2.7'
+deepdiff
 
 # requirement for modules using Netconf protocol
 ncclient
