@@ -302,7 +302,7 @@ def quote_json(obj):
     Treat all json key/values as strings and therefore
     quote them to be consistent
     '''
-    if type(obj) in (bool, str, int, float, long, complex):
+    if isinstance(obj, (bool, str, int, float, long, complex)):
         return str(obj)
     if isinstance(obj, (list, tuple)):
         return [quote_json(item) for item in obj]
@@ -315,7 +315,7 @@ def del_newline_json(obj):
     '''
     Remove final newline
     '''
-    if type(obj) in (bool, str, int, float, long, complex):
+    if isinstance(obj, (bool, str, int, float, long, complex)):
         return str(obj).rstrip('\r\n')
     if isinstance(obj, (list, tuple)):
         return [del_newline_json(item) for item in obj]
