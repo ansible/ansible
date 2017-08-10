@@ -22,7 +22,8 @@
     csr_path: '{{ output_dir }}/csr.csr'
     provider: assertonly
     version: 3
-    subject: www.ansible.com
+    subject:
+      CN: www.ansible.com
     signature_algorithms:
       - sha256WithRSAEncryption
 
