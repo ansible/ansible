@@ -174,6 +174,7 @@ from ansible.module_utils.junos import junos_argument_spec, check_args, get_conf
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types, iteritems
+from ansible.module_utils.connection import Connection
 
 try:
     from lxml.etree import Element, SubElement, tostring
@@ -363,6 +364,16 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
+
+    if module.params['provider']['transport'] == 'cli':
+        commands = module.params['commands']
+        conn = Connection(module)
+        output = list()
+        for cmd in commands:
+            output.append(conn.get(cmd))
+        lines = [out.split('\n') for out in output]
+        result = {'changed': False, 'stdout': output, 'stdout_lines': lines}
+        module.exit_json(**result)
 
     items = list()
     items.extend(parse_commands(module, warnings))
