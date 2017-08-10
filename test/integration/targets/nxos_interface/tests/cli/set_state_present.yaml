@@ -6,6 +6,7 @@
     lines:
       - no interface Loopback1
     provider: "{{ cli }}"
+  ignore_errors: yes # Fails if the interface is already absent
 
 - name: set state=present
   nxos_interface:
