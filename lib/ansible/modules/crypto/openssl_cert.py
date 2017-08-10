@@ -315,8 +315,11 @@ cert_path:
     sample: /etc/ssl/crt/www.ansible.com.crt
 '''
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import datetime
+import subprocess
 from random import randint
 import re
 import os
@@ -842,7 +845,7 @@ class SelfSignedCertificate(Certificate):
         self.backupdest = ""
         if self.changed and not self.module.check_mode:
             if self.backup and os.path.exists(self.path):
-                self.backupdest = module.backup_local(self.path)
+                self.backupdest = self.module.backup_local(self.path)
             try:
                 with open(self.path, 'w') as cert_file:
                     cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.certificate))
@@ -903,7 +906,7 @@ class LetsEncryptCertificate(Certificate):
         self.backupdest = ""
         if self.changed and not self.module.check_mode:
             if self.backup and os.path.exists(self.path):
-                self.backupdest = module.backup_local(self.path)
+                self.backupdest = self.module.backup_local(self.path)
 
             # TODO (spredzy): Ugly part should be done directly by interacting
             # with the acme protocol through python-acme
