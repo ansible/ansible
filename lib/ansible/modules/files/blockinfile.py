@@ -167,6 +167,7 @@ from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 
+
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
@@ -188,10 +189,10 @@ def write_changes(module, contents, path):
         module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 
 
-def check_file_attrs(module, changed, message):
+def check_file_attrs(module, changed, message, diff):
 
     file_args = module.load_file_common_arguments(module.params)
-    if module.set_file_attributes_if_different(file_args, False):
+    if module.set_file_attributes_if_different(file_args, False, diff=diff):
 
         if changed:
             message += " and "
@@ -240,6 +241,14 @@ def main():
         original = f.read()
         f.close()
         lines = original.splitlines()
+
+    diff = {'before': '',
+            'after': '',
+            'before_header': '%s (content)' % path,
+            'after_header': '%s (content)' % path}
+
+    if module._diff and original:
+        diff['before'] = original
 
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
@@ -305,6 +314,10 @@ def main():
             result += b('\n')
     else:
         result = ''
+
+    if module._diff:
+        diff['after'] = result
+
     if original == result:
         msg = ''
         changed = False
@@ -324,10 +337,16 @@ def main():
         write_changes(module, result, path)
 
     if module.check_mode and not path_exists:
-        module.exit_json(changed=changed, msg=msg)
+        module.exit_json(changed=changed, msg=msg, diff=diff)
 
-    msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, msg=msg)
+    attr_diff = {}
+    msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+
+    attr_diff['before_header'] = '%s (file attributes)' % path
+    attr_diff['after_header'] = '%s (file attributes)' % path
+
+    difflist = [diff, attr_diff]
+    module.exit_json(changed=changed, msg=msg, diff=difflist)
 
 
 if __name__ == '__main__':
