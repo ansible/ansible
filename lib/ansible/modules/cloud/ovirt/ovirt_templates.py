@@ -40,7 +40,7 @@ options:
     state:
         description:
             - "Should the template be present/absent/exported/imported/registered.
-               When C(state) is R(registered) and the unregistered template's name
+               When C(state) is I(registered) and the unregistered template's name
                belongs to an already registered in engine template then we fail
                to register the unregistered template."
         choices: ['present', 'absent', 'exported', 'imported', 'registered']
@@ -82,7 +82,7 @@ options:
     storage_domain:
         description:
             - "When C(state) is I(imported) this parameter specifies the name of the destination data storage domain.
-               When C(state) is R(registered) this parameter specifies the name of the data storage domain of the unregistered template."
+               When C(state) is I(registered) this parameter specifies the name of the data storage domain of the unregistered template."
     clone_permissions:
         description:
             - "If I(True) then the permissions of the VM (only the direct ones, not the inherited ones)
