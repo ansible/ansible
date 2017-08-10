@@ -263,7 +263,7 @@ class PromptVaultSecret(VaultSecret):
             try:
                 vault_pass = display.prompt(prompt, private=True)
             except EOFError:
-                pass
+                break
             b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
             b_vault_passwords.append(b_vault_pass)
 
@@ -358,10 +358,10 @@ class ScriptVaultSecret(FileVaultSecret):
 
             raise AnsibleError(msg)
 
-        stdout, dummy = p.communicate()
+        stdout, stderr = p.communicate()
 
         if p.returncode != 0:
-            raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, p.stderr))
+            raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, stderr))
 
         vault_pass = stdout.strip(b'\r\n')
         return vault_pass

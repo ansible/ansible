@@ -30,6 +30,7 @@ from binascii import hexlify
 import pytest
 
 from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils import six
@@ -59,6 +60,34 @@ class TestPromptVaultSecret(unittest.TestCase):
         secret = vault.PromptVaultSecret(vault_id='test_id', prompt_formats=[])
         secret.load()
         self.assertIsNone(secret._bytes)
+
+    @patch('ansible.parsing.vault.display.prompt', return_value='the_password')
+    def test_prompt_formats_none(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id')
+        secret.load()
+        self.assertEqual(secret._bytes, b'the_password')
+
+    @patch('ansible.parsing.vault.display.prompt', return_value='the_password')
+    def test_custom_prompt(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id',
+                                         prompt_formats=['The cow flies at midnight: '])
+        secret.load()
+        self.assertEqual(secret._bytes, b'the_password')
+
+    @patch('ansible.parsing.vault.display.prompt', side_effect=EOFError)
+    def test_prompt_eoferror(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id')
+        secret.load()
+        self.assertEqual(secret._bytes, None)
+
+    @patch('ansible.parsing.vault.display.prompt', side_effect=['first_password', 'second_password'])
+    def test_prompt_passwords_dont_match(self, mock_display_prompt):
+        secret = vault.PromptVaultSecret(vault_id='test_id',
+                                         prompt_formats=['Vault password: ',
+                                                         'Confirm Vault password: '])
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'Passwords do not match',
+                                secret.load)
 
 
 class TestFileVaultSecret(unittest.TestCase):
@@ -127,6 +156,55 @@ class TestScriptVaultSecret(unittest.TestCase):
         secret = vault.ScriptVaultSecret()
         self.assertIsNone(secret._bytes)
         self.assertIsNone(secret._text)
+
+    def _mock_popen(self, mock_popen, return_code=0, stdout=b'', stderr=b''):
+        def communicate():
+            return stdout, stderr
+        mock_popen.return_value = MagicMock(returncode=return_code)
+        mock_popen_instance = mock_popen.return_value
+        mock_popen_instance.communicate = communicate
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file(self, mock_popen):
+        self._mock_popen(mock_popen)
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            secret.load()
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_os_error(self, mock_popen):
+        self._mock_popen(mock_popen)
+        mock_popen.side_effect = OSError('That is not an executable')
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            self.assertRaisesRegexp(errors.AnsibleError,
+                                    'Problem running vault password script.*',
+                                    secret.load)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_not_executable(self, mock_popen):
+        self._mock_popen(mock_popen)
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=False)
+            self.assertRaisesRegexp(vault.AnsibleVaultError,
+                                    'The vault password script .* was not executable',
+                                    secret.load)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_non_zero_return_code(self, mock_popen):
+        stderr = b'That did not work for a random reason'
+        rc = 37
+
+        self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
+        secret = vault.ScriptVaultSecret(filename='/dev/null/some_vault_secret')
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            self.assertRaisesRegexp(errors.AnsibleError,
+                                    'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
+                                    secret.load)
 
 
 class TestGetFileVaultSecret(unittest.TestCase):
