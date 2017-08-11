@@ -29,6 +29,7 @@ options:
         required: true
         aliases:
             - account_name
+            - storage_account
     blob:
         description:
             - Name of a blob object within the container.
@@ -89,6 +90,8 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+        aliases:
+            - resource_group_name
     src:
         description:
             - Source file path. Use with state 'present' to upload a blob.
@@ -207,12 +210,12 @@ class AzureRMStorageBlob(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            storage_account_name=dict(required=True, type='str', aliases=['account_name']),
+            storage_account_name=dict(required=True, type='str', aliases=['account_name', 'storage_account']),
             blob=dict(type='str', aliases=['blob_name']),
             container=dict(required=True, type='str', aliases=['container_name']),
             dest=dict(type='str'),
             force=dict(type='bool', default=False),
-            resource_group=dict(required=True, type='str'),
+            resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
             src=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             public_access=dict(type='str', choices=['container', 'blob']),
