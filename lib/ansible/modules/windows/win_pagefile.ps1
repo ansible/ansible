@@ -78,7 +78,7 @@ if ($state -eq "absent") {
         }
         $result.changed = $true
     }
-} elseif ($state -eq "present") {   
+} elseif ($state -eq "present") {
     # Remove current pagefile
     if ($override) {
         if ((Get-Pagefile $fullPath) -ne $null)
