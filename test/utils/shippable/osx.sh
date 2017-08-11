@@ -7,8 +7,8 @@ IFS='/:' read -ra args <<< "${TEST}"
 
 platform="${args[0]}"
 version="${args[1]}"
-target="ping"
+target="posix/ci/"
 
 # shellcheck disable=SC2086
-ansible-test integration --color -v --retry-on-error "${target}" --remote "${platform}/${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+ansible-test integration --color -v --retry-on-error "${target}" --remote "${platform}/${version}" ${COVERAGE:+"$COVERAGE"} \
     --exclude "posix/ci/cloud/" --remote-terminate always
