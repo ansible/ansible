@@ -721,26 +721,18 @@ def update_shard_count(client, stream_name, number_of_shards=1, check_mode=False
     Returns:
         Tuple (bool, str)
     """
-    success = False
+    success = True
     err_msg = ''
     params = {
         'StreamName': stream_name,
         'ScalingType': 'UNIFORM_SCALING'
     }
-    try:
-        if not check_mode:
-            params['TargetShardCount'] = number_of_shards
-            res = client.update_shard_count(**params)
-            success = True
-            err_msg = (
-                'Number of shards changed successfully from {0} to {1}'
-                .format(res['CurrentShardCount'], res['TargetShardCount'])
-            )
-        else:
-            success = True
-
-    except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+    if not check_mode:
+        params['TargetShardCount'] = number_of_shards
+        try:
+            client.update_shard_count(**params)
+        except botocore.exceptions.ClientError as e:
+            return False, str(e)
 
     return success, err_msg
 
