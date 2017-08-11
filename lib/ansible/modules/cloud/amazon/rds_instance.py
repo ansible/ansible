@@ -15,6 +15,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -291,88 +292,19 @@ operation:
     "operation": "create"
 '''
 
-# from __future__ import (absolute_import, division, print_function)
-# import sys
 import time
 import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.aws.rds import RDSDBInstance, get_db_instance
+from ansible.module_utils.aws.rds import get_db_instance, instance_facts_diff
+from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS, PARAMETER_MAP
 
 try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
-
-DEFAULT_PORTS = {
-    'aurora': 3306,
-    'mariadb': 3306,
-    'mysql': 3306,
-    'oracle': 1521,
-    'sqlserver': 1433,
-    'postgres': 5432,
-}
-
-DB_ENGINES = [
-    'MySQL',
-    'aurora'
-    'mariadb',
-    'oracle-ee',
-    'oracle-se',
-    'oracle-se1',
-    'oracle-se2',
-    'postgres',
-    'sqlserver-ee',
-    'sqlserver-ex',
-    'sqlserver-se',
-    'sqlserver-web',
-]
-
-
-LICENSE_MODELS = [
-    'bring-your-own-license',
-    'general-public-license',
-    'license-included',
-    'postgresql-license'
-]
-
-PARAMETER_MAP = {
-    'apply_immediately': 'ApplyImmediately',
-    'backup_retention': 'BackupRetentionPeriod',
-    'backup_window': 'PreferredBackupWindow',
-    'character_set_name': 'CharacterSetName',
-    'cluster': 'DBClusterIdentifer',
-    'db_engine': 'Engine',
-    'db_name': 'DBName',
-    'engine_version': 'EngineVersion',
-    'force_failover': 'ForceFailover',
-    'instance_name': 'DBInstanceIdentifier',
-    'instance_type': 'DBInstanceClass',
-    'iops': 'Iops',
-    'license_model': 'LicenseModel',
-    'maint_window': 'PreferredMaintenanceWindow',
-    'multi_zone': 'MultiAZ',
-    'new_instance_name': 'NewDBInstanceIdentifier',
-    'option_group': 'OptionGroupName',
-    'parameter_group': 'DBParameterGroupName',
-    'password': 'MasterUserPassword',
-    'port': 'Port',
-    'publicly_accessible': 'PubliclyAccessible',
-    'security_groups': 'DBSecurityGroups',
-    'size': 'AllocatedStorage',
-    'skip_final_snapshot': 'SkipFinalSnapshot"',
-    'source_instance': 'SourceDBInstanceIdentifier',
-    'snapshot': 'DBSnapshotIdentifier',
-    'storage_type': 'StorageType',
-    'subnet': 'DBSubnetGroupName',
-    'tags': 'Tags',
-    'upgrade': 'AutoMinorVersionUpgrade',
-    'username': 'MasterUsername',
-    'vpc_security_groups': 'VpcSecurityGroupIds',
-    'zone': 'AvailabilityZone',
-}
 
 
 def eprint(*args, **kwargs):
@@ -380,15 +312,15 @@ def eprint(*args, **kwargs):
 #    print(args, file=sys.stderr, **kwargs)
 
 
-def await_resource(conn, resource, status, module, await_pending=None):
+def await_resource(conn, instance_name, status, module, await_pending=None):
     wait_timeout = module.params.get('wait_timeout') + time.time()
     # Refresh the resource immediately in case we just changed it's state;
     # should we sleep first?
-    resource = get_db_instance(conn, resource.name)
+    resource = get_db_instance(conn, instance_name)
     eprint(str(resource))
     eprint("wait is {0} {1} await_pending is {2} status is {3}".format(
         str(wait_timeout), str(time.time()), str(await_pending), str(resource.status)))
-    rdat = resource.data["pending_modified_values"]
+    rdat = resource["pending_modified_values"]
     eprint("wait timeout repr: " + repr(wait_timeout) + "\n")
     while ((await_pending and rdat) or resource.status != status) and wait_timeout > time.time():
         time.sleep(5)
@@ -399,7 +331,7 @@ def await_resource(conn, resource, status, module, await_pending=None):
         resource = get_db_instance(conn, resource.name)
         if resource is None:
             break
-        rdat = resource.data["pending_modified_values"]
+        rdat = resource["pending_modified_values"]
         eprint(str(resource))
     # resource will be none if it has actually been removed - e.g. we were waiting for deleted
     # status; maybe that should be an error in other situations?
@@ -441,25 +373,22 @@ def create_db_instance(module, conn):
 
     instance_name = module.params.get('instance_name')
 
+    changed = False
     instance = get_db_instance(conn, instance_name)
-    if instance:
-        changed = False
-    else:
+    if instance is None:
         try:
             response = conn.create_db_instance(**params)
-            instance = RDSDBInstance(response['DBInstance'])
+            instance = get_db_instance(conn, instance_name)
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to create instance: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except Exception as e:
+            module.fail_json_aws(e, msg="trying to create instance")
 
     if module.params.get('wait'):
-        resource = await_resource(conn, instance, 'available', module)
+        resource = await_resource(conn, instance_name, 'available', module)
     else:
         resource = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=resource.data,
-                     operation="create")
+    module.exit_json(changed=changed, instance=resource, response=response)
 
 
 def replicate_db_instance(module, conn):
@@ -476,19 +405,17 @@ def replicate_db_instance(module, conn):
     else:
         try:
             response = conn.create_db_instance_read_replica(**params)
-            instance = RDSDBInstance(response['DBInstance'])
+            instance = get_db_instance(conn, instance_name)
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to create replica instance: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except Exception as e:
+            module.fail_json_aws(e, msg="trying to create read replica of instance")
 
     if module.params.get('wait'):
         resource = await_resource(conn, instance, 'available', module)
     else:
         resource = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=resource.data,
-                     operation="replicate")
+    module.exit_json(changed=changed, instance=resource, response=response)
 
 
 def delete_db_instance(module, conn):
@@ -519,26 +446,25 @@ def delete_db_instance(module, conn):
         else:
             params["SkipFinalSnapshot"] = True
         response = conn.delete_db_instance(**params)
-        instance = RDSDBInstance(response['DBInstance'])
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to delete instance: %s " % str(e),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        instance = result
+    except Exception as e:
+        module.fail_json_aws(e, msg="trying to delete instance")
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
     if not module.params.get('wait'):
-        module.exit_json(changed=True, operation="delete")
+        module.exit_json(changed=True, response=response)
     try:
         instance = await_resource(conn, instance, 'deleted', module)
-        module.exit_json(changed=True)
     except botocore.exceptions.ClientError as e:
         if e.code == 'DBInstanceNotFound':
-            module.exit_json(changed=True, operation="delete")
+            module.exit_json(changed=True)
         else:
-            module.fail_json(msg="Failure waiting for deletion to complete: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="waiting for rds deletion to complete")
+    except Exception as e:
+            module.fail_json_aws(e, msg="waiting for rds deletion to complete")
 
-    assert(False), "error in module logic - this should not be reached"
+    module.exit_json(changed=True, response=response)
 
 
 def update_rds_tags(module, conn, resource, current_tags, desired_tags):
@@ -558,22 +484,19 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
 
     if to_delete:
         try:
-            conn.remove_tags_from_resource(
-                ResourceName=resource, TagKeys=list(to_delete))
-            changed = True
+            conn.remove_tags_from_resource(ResourceName=resource, TagKeys=list(to_delete))
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failure removing instance tags: %s" % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="trying to remove old tags from instance")
+        changed = True
 
     if to_add:
+        tag_map = [{'Key': k, 'Value': desired_tags[k]} for k in to_add]
         try:
-            conn.add_tags_to_resource(ResourceName=resource,
-                                      Tags=[{'Key': k, 'Value': desired_tags[k]}
-                                            for k in to_add])
-            changed = True
+            conn.add_tags_to_resource(ResourceName=resource, Tags=tag_map)
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failure adding instance tags: %s" % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="trying to add new tags to instance")
+        changed = True
+
     return changed
 
 
@@ -592,7 +515,7 @@ def modify_db_instance(module, conn):
     for immutable_key in ['username', 'db_engine', 'db_name']:
         if immutable_key in module.params:
             try:
-                keys_different = module.params[immutable_key] != before_instance.data[immutable_key]
+                keys_different = module.params[immutable_key] != before_instance[immutable_key]
             except KeyError:
                 keys_different = False
 
@@ -604,10 +527,9 @@ def modify_db_instance(module, conn):
     params = validate_parameters(required_vars, valid_vars, module)
     after_instance_name = module.params.get('new_instance_name')
 
-    will_change = before_instance.diff(module.params)
+    will_change = instance_facts_diff(module.params, before_instance)
     if not will_change:
-        module.exit_json(
-            changed=False, instance=before_instance.data, operation="modify")
+        module.exit_json(changed=False, instance=before_instance)
 
     # modify_db_instance takes DBPortNumber in contrast to
     # create_db_instance which takes Port
@@ -622,9 +544,12 @@ def modify_db_instance(module, conn):
         tags = {}
 
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
-    if before_instance.instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get(
-            'DBSubnetGroupName'):
-        del(params['DBSubnetGroupName'])
+    try:
+        if (before_instance['DBSubnetGroup']['DBSubnetGroupName']
+            == params.get('DBSubnetGroupName')):
+            del(params['DBSubnetGroupName'])
+    except KeyError:
+        pass
     if not force_password_update:
         try:
             del(params['MasterUserPassword'])
@@ -633,10 +558,9 @@ def modify_db_instance(module, conn):
 
     try:
         response = conn.modify_db_instance(**params)
-        return_instance = RDSDBInstance(response['DBInstance'])
+        return_instance = response['DBInstance']
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to modify instance: %s " % str(e),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, msg="trying to modify RDS instance")
 
     if params.get('apply_immediately'):
         if after_instance_name:
@@ -650,8 +574,7 @@ def modify_db_instance(module, conn):
             # Found instance but it briefly flicks to available
             # before rebooting so let's wait until we see it rebooting
             # before we check whether to 'wait'
-            after_instance = await_resource(
-                conn, after_instance, 'rebooting', module)
+            after_instance = await_resource(conn, after_instance, 'rebooting', module)
     else:
         after_instance = get_db_instance(conn, before_instance_name)
 
@@ -674,8 +597,8 @@ def modify_db_instance(module, conn):
         return_instance = after_instance
 
     # guess that this changed the DB, need a way to check
-    diff = before_instance.diff(return_instance.data)
-    changed = not not diff
+    diff = instance_facts_diff(before_instance, return_instance)
+    changed = not not diff  # not not casts from dict to boolean!
 
     # boto3 modify_db_instance can't modify tags directly
     current_tags = conn.list_tags_for_resource(
@@ -683,8 +606,7 @@ def modify_db_instance(module, conn):
     if update_rds_tags(module, conn, response['DBInstance']['DBInstanceArn'],
                        current_tags, tags):
         changed = True
-    module.exit_json(changed=changed, instance=return_instance.data, operation="modify",
-                     diff=diff)
+    module.exit_json(changed=changed, instance=return_instance, diff=diff)
 
 
 def promote_db_instance(module, conn):
@@ -697,10 +619,10 @@ def promote_db_instance(module, conn):
     if not result:
         module.fail_json(msg="DB Instance %s does not exist" % instance_name)
 
-    if result.data.get('replication_source'):
+    if result.get('replication_source'):
         try:
             response = conn.promote_read_replica(**params)
-            instance = RDSDBInstance(response['DBInstance'])
+            instance = response['DBInstance']
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to promote replica instance: %s " % str(e),
@@ -713,8 +635,7 @@ def promote_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=instance.data,
-                     operation="promote")
+    module.exit_json(changed=changed, instance=instance)
 
 
 def reboot_db_instance(module, conn):
@@ -726,7 +647,7 @@ def reboot_db_instance(module, conn):
     instance = get_db_instance(conn, instance_name)
     try:
         response = conn.reboot_db_instance(**params)
-        instance = RDSDBInstance(response['DBInstance'])
+        instance = response['DBInstance']
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to reboot instance: %s " % str(e),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -735,7 +656,7 @@ def reboot_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=True, instance=instance.data, operation="reboot")
+    module.exit_json(changed=True, instance=instance)
 
 
 def restore_db_instance(module, conn):
@@ -751,7 +672,7 @@ def restore_db_instance(module, conn):
     if not instance:
         try:
             response = conn.restore_db_instance_from_db_snapshot(**params)
-            instance = RDSDBInstance(response['DBInstance'])
+            instance = response['DBInstance']
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to restore instance: %s " % str(e),
@@ -762,8 +683,7 @@ def restore_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=instance.data,
-                     operation="restore")
+    module.exit_json(changed=changed, instance=instance)
 
 
 def ensure_db_state(module, conn):
@@ -771,11 +691,11 @@ def ensure_db_state(module, conn):
     instance = get_db_instance(conn, instance_name)
     if not instance:
         create_db_instance(module, conn)
-    if instance.data.get('replication_source') and not module.params.get('source_instance'):
+    if instance.get('replication_source') and not module.params.get('source_instance'):
         promote_db_instance(module, conn)
     modify_db_instance(module, conn)
     # not reached!
-    module.exit_json(changed=False, instance=instance.data)
+    module.exit_json(changed=False, instance=instance)
 
 
 def validate_parameters(required_vars, valid_vars, module):
@@ -784,10 +704,11 @@ def validate_parameters(required_vars, valid_vars, module):
             module.fail_json(msg="Parameter %s required" % v)
 
     params = {}
+    mod_params = module.params
     for (k, v) in PARAMETER_MAP.items():
-        if module.params.get(k):
+        if k in mod_params:
             if k in valid_vars or k in required_vars:
-                params[v] = module.params[k]
+                params[v] = mod_params[k]
             else:
                 raise Exception("Parameter %s is not valid" % k)
 
@@ -799,9 +720,8 @@ def validate_parameters(required_vars, valid_vars, module):
             module.fail_json(msg="unexpected module parameter" +
                              str(e), exception=traceback.format_exc())
 
-    if module.params.get('security_groups'):
-        params['DBSecurityGroups'] = module.params.get(
-            'security_groups').split(',')
+    if mod_params('security_groups'):
+        params['DBSecurityGroups'] = mod_params.get('security_groups').split(',')
 
     # Convert tags dict to list of tuples that boto expects
     if 'Tags' in params:
