@@ -47,6 +47,9 @@
 #                has failed (for example, bad credentials or being offline).
 #                When set to False, the inventory will return hosts from
 #                whichever other clouds it can contact. (Default: True)
+#
+# Also it is possible to pass the correct user by setting an ansible_user: $myuser
+# metadata attribute.
 
 import argparse
 import collections
@@ -126,6 +129,11 @@ def append_hostvars(hostvars, groups, key, server, namegroup=False):
         ansible_ssh_host=server['interface_ip'],
         ansible_host=server['interface_ip'],
         openstack=server)
+
+    metadata = server.get('metadata', {})
+    if 'ansible_user' in metadata:
+        hostvars[key]['ansible_user'] = metadata['ansible_user']
+
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)
 
