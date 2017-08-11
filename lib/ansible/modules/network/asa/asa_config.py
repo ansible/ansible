@@ -222,24 +222,24 @@ responses:
   type: list
   sample: ['...', '...']
 """
-import traceback
-
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.asa import asa_argument_spec, check_args
+from ansible.module_utils.asa import run_commands, load_config, get_config
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils._text import to_native
 
 
-def get_config(module):
-    contents = module.params['config']
+def get_running_config(module):
+    contents = module.params['running_config']
     if not contents:
         if module.params['defaults']:
-            include = 'defaults'
+            flags = ['defaults']
         elif module.params['passwords']:
-            include = 'passwords'
+            flags = ['passwords']
         else:
-            include = None
-        contents = module.config.get_config(include=include)
+            flags = []
+        contents = get_config(module, flags=flags)
     return NetworkConfig(indent=1, contents=contents)
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -250,42 +250,6 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def run(module, result):
-    match = module.params['match']
-    replace = module.params['replace']
-    path = module.params['parents']
-
-    candidate = get_candidate(module)
-
-    if match != 'none':
-        config = get_config(module)
-        configobjs = candidate.difference(config, path=path, match=match,
-                                          replace=replace)
-    else:
-        configobjs = candidate.items
-
-    if configobjs:
-        commands = dumps(configobjs, 'commands').split('\n')
-
-        if module.params['lines']:
-            if module.params['before']:
-                commands[:0] = module.params['before']
-
-            if module.params['after']:
-                commands.extend(module.params['after'])
-
-        result['updates'] = commands
-
-        # send the configuration commands to the device and merge
-        # them with the current running config
-        if not module.check_mode:
-            result['responses'] = module.config.load_config(commands)
-        result['changed'] = True
-
-    if module.params['save']:
-        if not module.check_mode:
-            module.config.save_config()
-        result['changed'] = True
 
 def main():
     """ main entry point for module execution
@@ -302,13 +266,17 @@ def main():
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
 
-        config=dict(),
+        running_config=dict(aliases=['config']),
+
         defaults=dict(type='bool', default=False),
         passwords=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
-        save=dict(type='bool', default=False),
+
+        save=dict(type='bool', default=False, removed_in_version='2.4'),
     )
+
+    argument_spec.update(asa_argument_spec)
 
     mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
 
@@ -316,21 +284,51 @@ def main():
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
 
-    result = dict(changed=False)
+    result = {'changed': False}
+
+    check_args(module)
+
+    config = None
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        contents = get_config(module)
+        config = NetworkConfig(indent=1, contents=contents)
+        result['__backup__'] = contents
 
-    try:
-        run(module, result)
-    except NetworkError as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **e.kwargs)
+    if any((module.params['lines'], module.params['src'])):
+        match = module.params['match']
+        replace = module.params['replace']
+        path = module.params['parents']
+
+        candidate = get_candidate(module)
+
+        if match != 'none':
+            if not config:
+                config = get_running_config(module)
+            configobjs = candidate.difference(config, path=path, match=match, replace=replace)
+        else:
+            configobjs = candidate.items
+
+        if configobjs:
+            commands = dumps(configobjs, 'commands').split('\n')
+
+            if module.params['before']:
+                commands[:0] = module.params['before']
+
+            if module.params['after']:
+                commands.extend(module.params['after'])
+
+            result['commands'] = commands
+
+            if commands:
+                if not module.check_mode:
+                    load_config(module, commands)
+                result['changed'] = True
 
     module.exit_json(**result)
 
