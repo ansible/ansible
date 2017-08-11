@@ -29,7 +29,8 @@ DOCUMENTATION = '''
 module: panos_object
 short_description: create/read/update/delete object in PAN-OS or Panorama
 description:
-    - Policy objects form the match criteria for policy rules and many other functions in PAN-OS.  These may include address object, address groups, service objects, service groups, and tag.
+    - Policy objects form the match criteria for policy rules and many other functions in PAN-OS. These may include
+    address object, address groups, service objects, service groups, and tag.
 author: "Bob Hagen (@rnh556)"
 version_added: "1.0"
 requirements:
@@ -103,10 +104,12 @@ options:
             - The name of an object or rule tag.
     color:
         description:
-            - The color of the tag object.  Valid values are I(red, green, blue, yellow, copper, orange, purple, gray, light green, cyan, light gray, blue gray, lime, black, gold, and brown).
+            - The color of the tag object.  Valid values are I(red, green, blue, yellow, copper, orange, purple, gray,
+            light green, cyan, light gray, blue gray, lime, black, gold, and brown).
     devicegroup:
         description:
-            - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined it is assumed that we are contacting a firewall.
+            - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined it
+            is assumed that we are contacting a firewall.
         required: false
         default: None
 '''
@@ -176,6 +179,7 @@ try:
     from pandevice import objects
     import xmltodict
     import json
+
     HAS_LIB = True
 except ImportError:
     HAS_LIB = False
@@ -206,6 +210,7 @@ def find_object(device, dev_group, obj_name, obj_type):
         return addr
     else:
         return False
+
 
 def create_object(**kwargs):
     if kwargs['addressobject']:
@@ -283,7 +288,7 @@ def main():
         password=dict(no_log=True),
         username=dict(default='admin'),
         api_key=dict(no_log=True),
-        operation=dict(required=True, choices=['add','update','delete','find']),
+        operation=dict(required=True, choices=['add', 'update', 'delete', 'find']),
         addressobject=dict(default=None),
         addressgroup=dict(default=None),
         serviceobject=dict(default=None),
@@ -298,9 +303,9 @@ def main():
         services=dict(type='list', default=None),
         description=dict(default=None),
         tag_name=dict(default=None),
-        color=dict(default=None, choices=['red','green','blue','yellow','copper','orange','purple',
-                                          'gray','light green','cyan','light gray','blue gray',
-                                          'lime','black','gold','brown']),
+        color=dict(default=None, choices=['red', 'green', 'blue', 'yellow', 'copper', 'orange', 'purple',
+                                          'gray', 'light green', 'cyan', 'light gray', 'blue gray',
+                                          'lime', 'black', 'gold', 'brown']),
         devicegroup=dict(default=None)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
@@ -429,21 +434,21 @@ def main():
         if match:
             try:
                 new_object = create_object(
-                    addressobject = addressobject,
-                    addressgroup = addressgroup,
-                    serviceobject = serviceobject,
-                    servicegroup = servicegroup,
-                    address = address,
-                    address_type = address_type,
-                    static_value = static_value,
-                    dynamic_value = dynamic_value,
-                    protocol = protocol,
-                    source_port = source_port,
-                    destination_port = destination_port,
-                    services = services,
-                    description = description,
-                    tag_name = tag_name,
-                    color = color
+                    addressobject=addressobject,
+                    addressgroup=addressgroup,
+                    serviceobject=serviceobject,
+                    servicegroup=servicegroup,
+                    address=address,
+                    address_type=address_type,
+                    static_value=static_value,
+                    dynamic_value=dynamic_value,
+                    protocol=protocol,
+                    source_port=source_port,
+                    destination_port=destination_port,
+                    services=services,
+                    description=description,
+                    tag_name=tag_name,
+                    color=color
                 )
                 changed = add_object(device, dev_group, new_object)
             except PanXapiError:
