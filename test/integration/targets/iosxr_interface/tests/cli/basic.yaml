@@ -210,7 +210,7 @@
   iosxr_interface:
     aggregate:
     - { name: GigabitEthernet0/0/0/3, enabled: True }
-    - { name: GigabitEthernet0/0/0/2, enabled: True  }
+    - { name: GigabitEthernet0/0/0/2, enabled: True }
     state: present
     provider: "{{ cli }}"
   register: result
