@@ -43,6 +43,11 @@ class IncludeRole(TaskInclude):
     circumstances related to the `- include_role: ...`
     """
 
+    BASE = set(['name', 'role'])
+    FROM_ARGS = set(['tasks_from', 'vars_from', 'defaults_from'])
+    OTHER_ARGS = set(['private', 'allow_duplicates'])
+    VALID_ARGS = frozenset(BASE.union(FROM_ARGS.union(OTHER_ARGS)))
+
     # =================================================================================
     # ATTRIBUTES
 
@@ -100,23 +105,27 @@ class IncludeRole(TaskInclude):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        # Process options
+        # Validate options
+        my_arg_names = set(ir.args.keys())
+
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for include_role.")
 
-        # build options for role includes
-        for key in ['tasks', 'vars', 'defaults']:
-            from_key = '%s_from' % key
-            if ir.args.get(from_key):
-                ir._from_files[key] = basename(ir.args.get(from_key))
+        # validate bad args, otherwise we silently ignore
+        bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
+        if bad_opts:
+            raise AnsibleParserError('Invalid options for include_role: %s' % bad_opts)
 
-        # FIXME: find a way to make this list come from object ( attributes does not work as per below)
+        # build options for role includes
+        for key in IncludeRole.FROM_ARGS.intersection(my_arg_names):
+            from_key = key.replace('_from','')
+            ir._from_files[from_key] = basename(ir.args.get(key))
+
         # manual list as otherwise the options would set other task parameters we don't want.
-        for option in ['private', 'allow_duplicates']:
-            if option in ir.args:
-                setattr(ir, option, ir.args.get(option))
+        for option in IncludeRole.OTHER_ARGS.intersection(my_arg_names):
+            setattr(ir, option, ir.args.get(option))
 
         return ir
 
