@@ -4,6 +4,9 @@
 # Copyright: (c) 2017, Stefan Midjich <swehack at gmail dot com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
     'status': ['preview'],
@@ -71,7 +74,7 @@ tasks:
       path: server.group.add
       args:
         - "{{sid.returned}}"
-        - Dev environment web server group - Sweden, Malmö
+        - Dev environment web server group - Sweden, Malmoe
         - web
     register: server_group_id
     when: sid|changed
