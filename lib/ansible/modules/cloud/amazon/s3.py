@@ -327,8 +327,7 @@ def create_bucket(module, s3, bucket, location=None):
 def paginated_list(s3, **pagination_params):
     pg = s3.get_paginator('list_objects_v2')
     for page in pg.paginate(**pagination_params):
-        for data in page.get('Contents', {}):
-            yield data['Key']
+        yield [data['Key'] for data in page.get('Contents', [])]
 
 
 def list_keys(module, s3, bucket, prefix, marker, max_keys):
@@ -336,7 +335,7 @@ def list_keys(module, s3, bucket, prefix, marker, max_keys):
     for param_name, param_value in (('Prefix', prefix), ('StartAfter', marker), ('MaxKeys', max_keys)):
         pagination_params[param_name] = param_value
     try:
-        keys = [key for key in paginated_list(s3, **pagination_params)]
+        keys = sum(paginated_list(s3, **pagination_params), [])
         module.exit_json(msg="LIST operation complete", s3_keys=keys)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed while listing the keys in the bucket {0}".format(bucket),
@@ -352,9 +351,9 @@ def delete_bucket(module, s3, bucket):
         if exists is False:
             return False
         # if there are contents then we need to delete them before we can delete the bucket
-        keys = [{'Key': key} for key in paginated_list(s3, Bucket=bucket)]
-        if keys:
-            s3.delete_objects(Bucket=bucket, Delete={'Objects': keys})
+        for keys in paginated_list(s3, Bucket=bucket):
+            formatted_keys = [{'Key': key} for key in keys]
+            s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
         s3.delete_bucket(Bucket=bucket)
         return True
     except botocore.exceptions.ClientError as e:
