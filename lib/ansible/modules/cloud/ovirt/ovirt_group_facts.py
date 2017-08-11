@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_groups_fact
+module: ovirt_group_facts
 short_description: Retrieve facts about one or more oVirt/RHV groups
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
@@ -48,7 +48,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Gather facts about all groups which names start with C(admin):
-- ovirt_groups_fact:
+- ovirt_group_facts:
     pattern: name=admin*
 - debug:
     var: ovirt_groups
@@ -80,7 +80,7 @@ def main():
     module = AnsibleModule(argument_spec)
 
     if module._name == 'ovirt_groups_facts':
-        module.deprecate("The 'ovirt_groups_facts' module is being renamed 'ovirt_groups_fact'", version=2.8)
+        module.deprecate("The 'ovirt_groups_facts' module is being renamed 'ovirt_group_facts'", version=2.8)
 
     check_sdk(module)
 
