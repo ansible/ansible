@@ -116,7 +116,7 @@ class IncludeRole(TaskInclude):
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
         if bad_opts:
-            raise AnsibleParserError('Invalid options for include_role: %s' % bad_opts)
+            raise AnsibleParserError('Invalid options for include_role: %s' % ','.join(list(bad_opts)))
 
         # build options for role includes
         for key in IncludeRole.FROM_ARGS.intersection(my_arg_names):
