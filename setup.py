@@ -154,7 +154,7 @@ extra_requirements_dir = 'packaging/requirements'
 for extra_requirements_filename in os.listdir(extra_requirements_dir):
     filename_match = re.search(r'^requirements-(\w*).txt$', extra_requirements_filename)
     if filename_match:
-        with open('{}/{}'.format(extra_requirements_dir, extra_requirements_filename)) as extra_requirements_file:
+        with open(os.path.join(extra_requirements_dir, extra_requirements_filename)) as extra_requirements_file:
             extra_requirements[filename_match.group(1)] = extra_requirements_file.read().splitlines()
 
 
