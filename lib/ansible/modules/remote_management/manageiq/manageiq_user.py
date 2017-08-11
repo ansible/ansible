@@ -84,6 +84,18 @@ EXAMPLES = '''
       password: 'smartvm'
       verify_ssl: False
 
+- name: Create a new user in ManageIQ using a token
+  manageiq_user:
+    userid: 'jdoe'
+    name: 'Jane Doe'
+    password: 'VerySecret'
+    group: 'EvmGroup-user'
+    email: 'jdoe@example.com'
+    manageiq_connection:
+      url: 'http://127.0.0.1:3000'
+      token: 'sometoken'
+      verify_ssl: False
+
 - name: Delete a user in ManageIQ
   manageiq_user:
     state: 'absent'
@@ -94,6 +106,15 @@ EXAMPLES = '''
       password: 'smartvm'
       verify_ssl: False
 
+- name: Delete a user in ManageIQ using a token
+  manageiq_user:
+    state: 'absent'
+    userid: 'jdoe'
+    manageiq_connection:
+      url: 'http://127.0.0.1:3000'
+      token: 'sometoken'
+      verify_ssl: False
+
 - name: Update email of user in ManageIQ
   manageiq_user:
     userid: 'jdoe'
@@ -102,6 +123,15 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
+      verify_ssl: False
+
+- name: Update email of user in ManageIQ using a token
+  manageiq_user:
+    userid: 'jdoe'
+    email: 'jaustine@example.com'
+    manageiq_connection:
+      url: 'http://127.0.0.1:3000'
+      token: 'sometoken'
       verify_ssl: False
 '''
 
