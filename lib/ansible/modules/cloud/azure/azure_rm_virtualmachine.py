@@ -242,6 +242,25 @@ EXAMPLES = '''
       sku: '7.1'
       version: latest
 
+- name: Create a VM with OS and data managed disks
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm001
+    vm_size: Standard_D4
+    managed_disk_type: Standard_LRS
+    admin_username: adminUser
+    ssh_public_keys:
+      - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disk_lun: 0
+    data_disk_size_gb: 64
+    data_disk_managed_disk_type: Standard_LRS
+
 - name: Power Off
   azure_rm_virtualmachine:
     resource_group: Testing
@@ -1064,6 +1083,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             # store the attached vhd info so we can nuke it after the VM is gone
             self.log('Storing VHD URI for deletion')
             vhd_uris.append(vm.storage_profile.os_disk.vhd.uri)
+
+            data_disks = vm.storage_profile.data_disks
+            for data_disk in data_disks:
+                vhd_uris.append(data_disk.vhd.uri)
+
             self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))
             self.results['deleted_vhd_uris'] = vhd_uris
 
@@ -1189,7 +1213,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                           name)
             return account
         except Exception as exc:
-            self.fail("Error fetching storage account {0} - {1}".format(self.storage_account_name, str(exc)))
+            self.fail("Error fetching storage account {0} - {1}".format(name, str(exc)))
 
     def create_or_update_vm(self, params):
         try:
