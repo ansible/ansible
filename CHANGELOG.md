@@ -53,6 +53,7 @@ Ansible Changes By Release
 * Fix the issue SSL verification can not be disabled for Tower modules
 * Use safe_load instead on load to read a yaml document
 * Fix for win_file to respect check mode when deleting directories
+* Include_role now complains about invalid arguments
 
 
 <a id="2.3.2"></a>
