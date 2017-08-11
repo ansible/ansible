@@ -12,7 +12,7 @@ except ImportError:
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
-                    'supported_by': 'community'}a
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 module: infoblox
