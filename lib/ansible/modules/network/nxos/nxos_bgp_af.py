@@ -460,13 +460,14 @@ def get_existing(module, args, warnings):
 
         if config:
             for arg in args:
-                if arg not in ['asn', 'afi', 'safi', 'vrf']:
+                if arg not in ['asn', 'afi', 'safi', 'vrf', 'networks']:
                     existing[arg] = get_value(arg, config, module)
 
             existing['asn'] = existing_asn
             existing['afi'] = module.params['afi']
             existing['safi'] = module.params['safi']
             existing['vrf'] = module.params['vrf']
+            existing['networks'] = module.params['networks']
     else:
         warnings.append("The BGP process {0} didn't exist but the task just created it.".format(module.params['asn']))
 
