@@ -23,7 +23,7 @@ import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
