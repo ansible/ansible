@@ -222,8 +222,7 @@ class ModuleValidator(Validator):
     PS_DOC_BLACKLIST = frozenset((
         'async_status.ps1',
         'slurp.ps1',
-        'setup.ps1',
-        'rabbitmq_plugin.ps1'
+        'setup.ps1'
     ))
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
