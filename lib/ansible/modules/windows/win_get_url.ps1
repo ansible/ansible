@@ -93,6 +93,15 @@ Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $
     }
 }
 
+# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
+$security_protcols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
+if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
+    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls11
+}
+if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
+    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
+}
+[Net.ServicePointManager]::SecurityProtocol = $security_protcols
 
 If ($force -or -not (Test-Path -Path $dest)) {
     
