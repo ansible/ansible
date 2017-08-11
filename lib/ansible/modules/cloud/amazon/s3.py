@@ -352,7 +352,7 @@ def delete_bucket(module, s3, bucket):
         if exists is False:
             return False
         # if there are contents then we need to delete them before we can delete the bucket
-        keys = [{'Key': key} for key in paginated_list(s3, **{'Bucket': bucket})]
+        keys = [{'Key': key} for key in paginated_list(s3, Bucket=bucket)]
         if keys:
             s3.delete_objects(Bucket=bucket, Delete={'Objects': keys})
         s3.delete_bucket(Bucket=bucket)
