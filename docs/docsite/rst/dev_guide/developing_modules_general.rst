@@ -82,7 +82,7 @@ working on a whole new file. Here is an example:
                 - Control to demo if the result of this module is changed or not
             required: false
 
-    extends_documentation_fragment
+    extends_documentation_fragment:
         - azure
 
     author:
