@@ -15,7 +15,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+# from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -545,8 +545,7 @@ def modify_db_instance(module, conn):
 
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
     try:
-        if (before_instance['DBSubnetGroup']['DBSubnetGroupName']
-            == params.get('DBSubnetGroupName')):
+        if (before_instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get('DBSubnetGroupName')):
             del(params['DBSubnetGroupName'])
     except KeyError:
         pass
