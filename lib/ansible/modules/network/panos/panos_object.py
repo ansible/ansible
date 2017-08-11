@@ -32,7 +32,7 @@ description: >
     - Policy objects form the match criteria for policy rules and many other functions in PAN-OS. These may include
     address object, address groups, service objects, service groups, and tag.
 author: "Bob Hagen (@rnh556)"
-version_added: "1.0"
+version_added: "2.4"
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
