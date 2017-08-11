@@ -125,6 +125,7 @@ import codecs
 import datetime
 import grp
 import os
+import platform
 import pwd
 import re
 import stat
@@ -180,6 +181,7 @@ class ZipArchive(object):
         self.excludes = module.params['exclude']
         self.includes = []
         self.cmd_path = self.module.get_bin_path('unzip')
+        self.zipinfocmd_path = self.module.get_bin_path('zipinfo')
         self._files_in_archive = []
         self._infodict = dict()
 
@@ -261,7 +263,8 @@ class ZipArchive(object):
         return self._files_in_archive
 
     def is_unarchived(self):
-        cmd = [self.cmd_path, '-ZT', '-s', self.src]
+        # BSD unzip doesn't support zipinfo listings with timestamp.
+        cmd = [self.zipinfocmd_path, '-T', '-s', self.src]
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
         rc, out, err = self.module.run_command(cmd)
@@ -277,6 +280,7 @@ class ZipArchive(object):
         # Get some information related to user/group ownership
         umask = os.umask(0)
         os.umask(umask)
+        systemtype = platform.system()
 
         # Get current user and group information
         groups = os.getgroups()
@@ -376,6 +380,12 @@ class ZipArchive(object):
                 ftype = 'f'
 
             # Some files may be storing FAT permissions, not Unix permissions
+            # For FAT permissions, we will use a base permissions set of 777 if the item is a directory or has the execute bit set.  Otherwise, 666.
+            #     This permission will then be modified by the system UMask.
+            # BSD always applies the Umask, even to Unix permissions.
+            # For Unix style permissions on Linux or Mac, we want to use them directly.
+            #     So we set the UMask for this file to zero.  That permission set will then be unchanged when calling _permstr_to_octal
+
             if len(permstr) == 6:
                 if path[-1] == '/':
                     permstr = 'rwxrwxrwx'
@@ -383,6 +393,11 @@ class ZipArchive(object):
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
+                file_umask = umask
+            elif 'bsd' in systemtype.lower():
+                file_umask = umask
+            else:
+                file_umask = 0
 
             # Test string conformity
             if len(permstr) != 9 or not ZIP_FILE_MODE_RE.match(permstr):
@@ -484,7 +499,7 @@ class ZipArchive(object):
                 elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)
                 else:
-                    mode = self._permstr_to_octal(permstr, umask)
+                    mode = self._permstr_to_octal(permstr, file_umask)
 
                 if mode != stat.S_IMODE(st.st_mode):
                     change = True
