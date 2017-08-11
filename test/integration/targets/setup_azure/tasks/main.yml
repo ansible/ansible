@@ -1,0 +1,2 @@
+- pip:
+    requirements: '{{ role_path }}/../../../../packaging/requirements/requirements-azure.txt'
