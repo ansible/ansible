@@ -172,7 +172,6 @@ vars:
     password: cisco
     authorize: yes
     auth_pass: cisco
-    transport: cli
 
 ---
 - asa_config:
@@ -216,30 +215,14 @@ backup_path:
   returned: when backup is yes
   type: string
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
-responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
-  type: list
-  sample: ['...', '...']
 """
-import traceback
-
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.asa import asa_argument_spec, check_args
+from ansible.module_utils.asa import get_config, load_config, run_commands
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils._text import to_native
 
 
-def get_config(module):
-    contents = module.params['config']
-    if not contents:
-        if module.params['defaults']:
-            include = 'defaults'
-        elif module.params['passwords']:
-            include = 'passwords'
-        else:
-            include = None
-        contents = module.config.get_config(include=include)
-    return NetworkConfig(indent=1, contents=contents)
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -256,11 +239,14 @@ def run(module, result):
     path = module.params['parents']
 
     candidate = get_candidate(module)
-
     if match != 'none':
-        config = get_config(module)
-        configobjs = candidate.difference(config, path=path, match=match,
-                                          replace=replace)
+        contents = module.params['config']
+        if not contents:
+            contents = get_config(module)
+            config = NetworkConfig(indent=1, contents=contents)
+            configobjs = candidate.difference(config, path=path, match=match,
+                                              replace=replace)
+
     else:
         configobjs = candidate.items
 
@@ -279,7 +265,7 @@ def run(module, result):
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
-            result['responses'] = module.config.load_config(commands)
+            load_config(module, commands)
         result['changed'] = True
 
     if module.params['save']:
@@ -310,27 +296,30 @@ def main():
         save=dict(type='bool', default=False),
     )
 
+    argument_spec.update(asa_argument_spec)
+
     mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
 
-    result = dict(changed=False)
+    result = {'changed': False}
+
+    check_args(module)
+
+    config = None
+
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module)
 
-    try:
-        run(module, result)
-    except NetworkError as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **e.kwargs)
+    run(module, result)
 
     module.exit_json(**result)
 

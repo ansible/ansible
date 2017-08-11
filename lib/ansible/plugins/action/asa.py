@@ -77,11 +77,6 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        # take the shell out of enable mode
-        if pc.become:
-            req = json.dumps(request_builder('get', 'disable'))
-            out = connection.exec_command(req)
-
         return result
 
     def load_provider(self):

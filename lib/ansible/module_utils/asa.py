@@ -103,8 +103,9 @@ def to_commands(module, commands):
 
 
 def run_commands(module, commands, check_rc=True):
-    commands = to_commands(module, to_list(commands))
     connection = get_connection(module)
+
+    commands = to_commands(module, to_list(commands))
 
     responses = list()
 
@@ -116,9 +117,13 @@ def run_commands(module, commands, check_rc=True):
 
 
 def get_config(module, flags=[]):
-    cmd = 'show running-config '
-    cmd += ' '.join(flags)
-    cmd = cmd.strip()
+    passwords = module.params['passwords']
+    if passwords:
+        cmd = 'more system:running-config'
+    else:
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
 
     try:
         return _DEVICE_CONFIGS[cmd]
