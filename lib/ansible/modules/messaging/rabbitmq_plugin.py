@@ -16,44 +16,53 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_plugin
-short_description: Adds or removes plugins to RabbitMQ
+short_description: Manage RabbitMQ plugins
 description:
-  - Enables or disables RabbitMQ plugins
+  - Manage RabbitMQ plugins.
 version_added: "1.1"
-author: '"Chris Hoffman (@chrishoffman)"'
+author:
+  - Chris Hoffman (@chrishoffman)
 options:
   names:
     description:
       - Comma-separated list of plugin names
     required: true
-    default: null
     aliases: [name]
   new_only:
     description:
       - Only enable missing plugins
       - Does not disable plugins that are not in the names list
-    required: false
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
   state:
     description:
       - Specify if plugins are to be enabled or disabled
-    required: false
     default: enabled
     choices: [enabled, disabled]
   prefix:
     description:
       - Specify a custom install prefix to a Rabbit
-    required: false
     version_added: "1.3"
-    default: null
 '''
 
 EXAMPLES = '''
-# Enables the rabbitmq_management plugin
-- rabbitmq_plugin:
+- name: Enables the rabbitmq_management plugin
+  rabbitmq_plugin:
     names: rabbitmq_management
     state: enabled
+'''
+
+RETURN = '''
+enabled:
+  description: list of plugins enabled during task run
+  returned: always
+  type: list
+  sample: ["rabbitmq_management"]
+disabled:
+  description: list of plugins disabled during task run
+  returned: always
+  type: list
+  sample: ["rabbitmq_management"]
 '''
 
 import os
