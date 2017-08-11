@@ -46,5 +46,14 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-# Default return values
+enabled:
+  description: list of plugins enabled during task run
+  returned: always
+  type: list
+  sample: ["rabbitmq_management"]
+disabled:
+  description: list of plugins disabled during task run
+  returned: always
+  type: list
+  sample: ["rabbitmq_management"]
 '''
