@@ -29,7 +29,9 @@ DOCUMENTATION = '''
 module: panos_security_rule
 short_description: Create security rule policy on PAN-OS devices or Panorama management console.
 description:
-    - Security policies allow you to enforce rules and take action, and can be as general or specific as needed. The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the traffic is applied, the more specific rules must precede the more general ones.
+    - Security policies allow you to enforce rules and take action, and can be as general or specific as needed. The
+    policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the
+    traffic is applied, the more specific rules must precede the more general ones.
 author: "Ivan Bojer (@ivanbojer), Robert Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
@@ -93,7 +95,9 @@ options:
         default: "any"
     hip_profiles:
         description:
-            - If you are using GlobalProtect with host information profile (HIP) enabled, you can also base the policy on information collected by GlobalProtect. For example, the user access level can be determined HIP that notifies the firewall about the user's local configuration.
+            - If you are using GlobalProtect with host information profile (HIP) enabled, you can also base the policy
+            on information collected by GlobalProtect. For example, the user access level can be determined HIP that
+            notifies the firewall about the user's local configuration.
         default: "any"
     destination_ip:
         description:
@@ -121,7 +125,8 @@ options:
         default: "allow"
     group_profile:
         description:
-            - Security profile group that is already defined in the system. This property supersedes antivirus, vulnerability, spyware, url_filtering, file_blocking, data_filtering, and wildfire_analysis properties.
+            - Security profile group that is already defined in the system. This property supersedes antivirus,
+            vulnerability, spyware, url_filtering, file_blocking, data_filtering, and wildfire_analysis properties.
         default: None
     antivirus:
         description:
@@ -153,7 +158,8 @@ options:
         default: None
     devicegroup:
         description:
-            - Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama. If device group is not define we assume that we are contacting Firewall.
+            - Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
+            If device group is not define we assume that we are contacting Firewall.
         default: None
     commit:
         description:
@@ -294,6 +300,7 @@ def find_rule(rulebase, rule_name):
     else:
         return False
 
+
 def rule_is_match(propose_rule, current_rule):
 
     match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability'
@@ -313,6 +320,7 @@ def rule_is_match(propose_rule, current_rule):
         if set(propose_check) != set(current_check):
             return False
     return True
+
 
 def create_security_rule(**kwargs):
     security_rule = policies.SecurityRule(
@@ -381,7 +389,7 @@ def main():
         password=dict(no_log=True),
         username=dict(default='admin'),
         api_key=dict(no_log=True),
-        operation=dict(default='add', choices=['add','update','delete','find']),
+        operation=dict(default='add', choices=['add', 'update', 'delete', 'find']),
         rule_name=dict(required=True),
         description=dict(default=''),
         tag_name=dict(type='list'),
