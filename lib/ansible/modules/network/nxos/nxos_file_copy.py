@@ -102,7 +102,7 @@ except ImportError:
 
 def remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
     if 'No such file' in body:
         return False
     return True
@@ -110,7 +110,7 @@ def remote_file_exists(module, dst, file_system='bootflash:'):
 
 def verify_remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
     if 'No such file' in body:
         return 0
     return body.split()[0].strip()
@@ -122,7 +122,7 @@ def local_file_exists(module):
 
 def get_flash_size(module):
     command = 'dir {}'.format(module.params['file_system'])
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
 
     match = re.search(r'(\d+) bytes free', body)
     bytes_free = match.group(1)
@@ -181,9 +181,6 @@ def main():
         local_file=dict(required=True),
         remote_file=dict(required=False),
         file_system=dict(required=False, default='bootflash:'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
