@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: panos_object
 short_description: create/read/update/delete object in PAN-OS or Panorama
-description:
+description: >
     - Policy objects form the match criteria for policy rules and many other functions in PAN-OS. These may include
     address object, address groups, service objects, service groups, and tag.
 author: "Bob Hagen (@rnh556)"
@@ -103,11 +103,11 @@ options:
         description:
             - The name of an object or rule tag.
     color:
-        description:
+        description: >
             - The color of the tag object.  Valid values are I(red, green, blue, yellow, copper, orange, purple, gray,
             light green, cyan, light gray, blue gray, lime, black, gold, and brown).
     devicegroup:
-        description:
+        description: >
             - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined it
             is assumed that we are contacting a firewall.
         required: false
