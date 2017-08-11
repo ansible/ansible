@@ -28,7 +28,8 @@ import ansible.module_utils.aws.rds as rds_u
 
 from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.basic as basic
-from ansible.module_utils.aws.rds import RDSDBInstance
+import ansible.module_utils.aws.rds as rds
+# from ansible.module_utils.aws.rds import
 from ansible.module_utils._text import to_bytes
 import pytest
 import time
@@ -43,48 +44,46 @@ def diff_return_a_populated_dict(junk, junktoo):
 
 def test_modify_should_return_changed_if_param_changes():
     basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "instance_name":"fred", "port": 242} }')
-    params = {"port": 342, "force_password_update": True, "instance_name": "fred"}
+    old_params = {"endpoint": {"port": 242}, "force_password_update": True, "instance_name": "fred"}
+    params = {"endpoint": {"port": 342}, "force_password_update": True, "instance_name": "fred"}
     rds_client_double = MagicMock()
-    module_double = MagicMock(AnsibleModule(argument_spec=rds_i.argument_spec,
-                                            required_if=rds_i.required_if), params=params)
-    with patch.object(RDSDBInstance, 'diff', diff_return_a_populated_dict):
+    module_double = MagicMock(AnsibleModule(argument_spec=rds_i.argument_spec, required_if=rds_i.required_if))
+    params_mock = module_double.params
+    params_mock.__getitem__.side_effect = [old_params, params]
+    rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__.return_value = params
+    with patch.object(rds, 'instance_facts_diff', diff_return_a_populated_dict):
         rds_i.modify_db_instance(module_double, rds_client_double)
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
-    module_double.exit_json.assert_called_with(changed=True, diff=ANY, instance=ANY,
-                                               operation='modify')
+    module_double.exit_json.assert_called_with(changed=True, diff=ANY, instance=ANY)
 
 
 def test_modify_should_return_false_in_changed_if_param_same():
     basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "instance_name":"fred", "port": 342} }')
     params = {"port": 342, "force_password_update": True, "instance_name": "fred"}
     rds_client_double = MagicMock()
+    rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__.return_value = params
     module_double = MagicMock(AnsibleModule(argument_spec=rds_i.argument_spec,
                                             required_if=rds_i.required_if), params=params)
     rds_i.modify_db_instance(module_double, rds_client_double)
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
-    module_double.exit_json.assert_called_with(changed=False, diff=ANY, instance=ANY,
-                                               operation='modify')
+    module_double.exit_json.assert_called_with(changed=False, diff=ANY, instance=ANY)
 
 
 def test_diff_should_be_true_if_something_changed():
-    dbinstance_double = MagicMock()
-    rdi = rds_u.RDSDBInstance(dbinstance_double)
-    params = {"port": 342, "iops": 3924, "instance_name": "fred"}
-    diff = rdi.diff(params)
+    instance_before = {"endpoint": {"port": 342}, "port": 111, "iops": 1234, "instance_name": "fred"}
+    instance_after = {"endpoint": {"port": 342}, "port": 342, "iops": 3924, "instance_name": "fred"}
+    diff = rds_u.instance_facts_diff(instance_before, instance_after)
     print("diff:\n" + str(diff))
-    print("dbinstance calls:\n" + str(dbinstance_double.mock_calls))
     assert(not not diff)
 
 
 def test_diff_should_be_true_if_only_the_port_changed():
-    dbinstance_double = MagicMock()
-    rdi = rds_u.RDSDBInstance(dbinstance_double)
-    params = {"endpoint": {"port": 342}}
-    diff = rdi.diff(params)
+    params_a = {"endpoint": {"port": 342}}
+    params_b = {"endpoint": {"port": 345}}
+    diff = rds_u.instance_facts_diff(params_a, params_b)
     print("diff:\n" + str(diff))
-    print("dbinstance calls:\n" + str(dbinstance_double.mock_calls))
     assert(not not diff)
 
 
