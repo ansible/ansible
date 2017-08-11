@@ -1,4 +1,8 @@
 #!/usr/bin/python
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or
+# https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -110,23 +114,20 @@ EXAMPLES = """
 - hosts: localhost
   connection: local
   gather_facts: False
-  
-  tasks:
-    - name: Add host
-      infoblox:
-        server: 192.168.1.1
-        username: admin
-        password: admin
-        action; add_host
-        network: 192.168.1.0/24
-        host: {{ item }}
-      with_items:
-        - test01.local
-        - test02.local
-      register: infoblox
 
-    - name: Do awesome stuff with the result
-      debug: msg: "Get crazy!"
+  tasks:
+  - name: Add host
+    infoblox:
+      server: 192.168.1.1
+      username: admin
+      password: admin
+      action: add_host
+      network: 192.168.1.0/24
+      host: "{{ item }}"
+    with_items:
+      - test01.local
+      - test02.local
+    register: infoblox
 """
 
 RETURN = """
@@ -138,22 +139,8 @@ hostname:
 result:
   description: result returned by the infoblox web API
   returned: success
-  type: json
-  samble:
-    {
-      "_ref": "record:host/DSFRerZfeSDRFWEC2RzLm5hZ2lvcw:test1.local/Private",
-      "extattrs": {},
-      "ipv4addrs": [
-        {
-          "_ref": "record:host_ipv4addr/ZG5zLmhvc3RdsDFSAfwRCwrcBNyamniMIOtMOMRNsdEwLjE2Mi4yMzguMjMyLg:192.168.1.1002/test1.local/Private",
-          "configure_for_dhcp": false,
-          "host": "test1.local",
-          "ipv4addr": "192.168.1.100"
-        }
-      ],
-      "name": "test1.local",
-      "view": "Private"
-    }
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -999,6 +986,8 @@ class Infoblox(object):
 # ---------------------------------------------------------------------------
 # add_attr()
 # ---------------------------------------------------------------------------
+
+
 def add_attr(attributes):
     if isinstance(attributes, dict) and len(attributes.keys()) > 1:
         self.module.exit_json(
@@ -1014,6 +1003,7 @@ def add_attr(attributes):
             self.module.exit_json(
                 msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
     return attr
+
 
 def _are_records_equivalent(a_record_1, a_record_2):
     """
