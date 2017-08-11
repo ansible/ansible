@@ -264,7 +264,7 @@ class ZipArchive(object):
 
     def is_unarchived(self):
         # BSD unzip doesn't support zipinfo listings with timestamp.
-        cmd = [self.zipinfocmd_path, '-T', '-s', self.src ]
+        cmd = [self.zipinfocmd_path, '-T', '-s', self.src]
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
         rc, out, err = self.module.run_command(cmd)
