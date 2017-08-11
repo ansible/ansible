@@ -107,26 +107,26 @@ options:
 
 EXAMPLES = """
 ---
- - hosts: localhost
-    connection: local
-       gather_facts: False
-
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  
   tasks:
-  - name: Add host
-    infoblox:
-      server=192.168.1.1
-      username=admin
-      password=admin
-      action=add_host
-      network=192.168.1.0/24
-      host={{ item }}
-    with_items:
-      - test01.local
-      - test02.local
-    register: infoblox
+    - name: Add host
+      infoblox:
+        server: 192.168.1.1
+        username: admin
+        password: admin
+        action; add_host
+        network: 192.168.1.0/24
+        host: {{ item }}
+      with_items:
+        - test01.local
+        - test02.local
+      register: infoblox
 
-  - name: Do awesome stuff with the result
-    debug: msg="Get crazy!"
+    - name: Do awesome stuff with the result
+      debug: msg: "Get crazy!"
 """
 
 RETURN = """
@@ -193,6 +193,8 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Infoblox
 # ---------------------------------------------------------------------------
+
+
 class Infoblox(object):
     """
     Class for manage all the REST API calls with the Infoblox appliances
@@ -994,46 +996,46 @@ class Infoblox(object):
         payload = {"extattrs": {attr_name: {"value": attr_value}}}
         return self.invoke("put", object_ref, json=payload)
 
-    # ---------------------------------------------------------------------------
-    # add_attr()
-    # ---------------------------------------------------------------------------
-    def add_attr(attributes):
-        if isinstance(attributes, dict) and len(attributes.keys()) > 1:
+# ---------------------------------------------------------------------------
+# add_attr()
+# ---------------------------------------------------------------------------
+def add_attr(attributes):
+    if isinstance(attributes, dict) and len(attributes.keys()) > 1:
+        self.module.exit_json(
+            msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
+    elif isinstance(attributes, dict):
+        attributes = [{attributes.keys()[0]: attributes.values()[0]}]
+
+    attr = {}
+    for item in attributes:
+        if len(item.keys()) == 1 and len(item.values()) == 1:
+            attr[item.keys()[0]] = {'value': item.values()[0]}
+        else:
             self.module.exit_json(
                 msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
-        elif isinstance(attributes, dict):
-            attributes = [{attributes.keys()[0]: attributes.values()[0]}]
+    return attr
 
-        attr = {}
-        for item in attributes:
-            if len(item.keys()) == 1 and len(item.values()) == 1:
-                attr[item.keys()[0]] = {'value': item.values()[0]}
-            else:
-                self.module.exit_json(
-                    msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
-        return attr
+def _are_records_equivalent(a_record_1, a_record_2):
+    """
+    Checks whether the given records are equivalent (ignoring irrelevant properties).
+    :param a_record_1: first A record
+    :param a_record_2: second A record
+    :return: whether the records are equivalent
+    """
+    a_record_1 = copy(a_record_1)
+    a_record_2 = copy(a_record_2)
 
-    def _are_records_equivalent(a_record_1, a_record_2):
-        """
-        Checks whether the given records are equivalent (ignoring irrelevant properties).
-        :param a_record_1: first A record
-        :param a_record_2: second A record
-        :return: whether the records are equivalent
-        """
-        a_record_1 = copy(a_record_1)
-        a_record_2 = copy(a_record_2)
+    ignore_properties = {_ID_PROPERTY}
+    if not (a_record_1.get(_USE_TTL_PROPERTY, True) or a_record_2.get(_USE_TTL_PROPERTY, True)):
+        # Not using TTL property therefore we don't care what the TTL value
+        # is
+        ignore_properties.add(_TTL_PROPERTY)
 
-        ignore_properties = {_ID_PROPERTY}
-        if not (a_record_1.get(_USE_TTL_PROPERTY, True) or a_record_2.get(_USE_TTL_PROPERTY, True)):
-            # Not using TTL property therefore we don't care what the TTL value
-            # is
-            ignore_properties.add(_TTL_PROPERTY)
+    for property in ignore_properties:
+        for a_record in [a_record_1, a_record_2]:
+            a_record.pop(property, None)
 
-        for property in ignore_properties:
-            for a_record in [a_record_1, a_record_2]:
-                a_record.pop(property, None)
-
-        return a_record_1 == a_record_2
+    return a_record_1 == a_record_2
 
 
 # ---------------------------------------------------------------------------
