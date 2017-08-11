@@ -130,6 +130,7 @@ import pwd
 import re
 import stat
 import time
+import traceback
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
@@ -494,7 +495,10 @@ class ZipArchive(object):
                         try:
                             mode = int(self.file_args['mode'], 8)
                         except Exception as e:
-                            self.module.fail_json(path=path, msg="mode %(mode)s must be in octal form" % self.file_args, details=to_native(e))
+                            try:
+                                mode = AnsibleModule._symbolic_mode_to_octal(st, self.file_args['mode'])
+                            except ValueError as e:
+                                self.module.fail_json(path=path, msg="%s" % to_native(e), exception=traceback.format_exc())
                 # Only special files require no umask-handling
                 elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)
