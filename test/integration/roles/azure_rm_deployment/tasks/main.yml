@@ -25,4 +25,3 @@
     ansible_ssh_pass: password123!
     groupname: azure_vms
   with_items: "{{ output.deployment.instances }}"
-

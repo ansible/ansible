@@ -170,4 +170,3 @@
 - assert:
       that:
           - azure_securitygroups | length == 0
-
