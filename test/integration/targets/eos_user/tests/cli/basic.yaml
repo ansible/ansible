@@ -1,7 +1,7 @@
 ---
 - name: Create user
   eos_user:
-    username: netend
+    name: netend
     privilege: 15
     role: network-operator
     state: present
@@ -17,8 +17,8 @@
 - name: Collection of users
   eos_user:
     aggregate:
-      - username: test1
-      - username: test2
+      - name: test1
+      - name: test2
     authorize: yes
     state: present
     role: network-operator
