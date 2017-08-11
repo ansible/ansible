@@ -346,6 +346,11 @@ class PathMapper(object):
             return all_tests(self.args)  # broad impact, run all tests
 
         if path.startswith('packaging/'):
+            if path.startswith('packaging/requirements/'):
+                return {
+                    'integration': 'ansible',
+                }
+
             return minimal
 
         if path.startswith('test/compile/'):
@@ -452,7 +457,6 @@ class PathMapper(object):
                     'COPYING',
                     'VERSION',
                     'Makefile',
-                    'setup.py',
             ):
                 return minimal
 
@@ -461,6 +465,11 @@ class PathMapper(object):
                     '.coveragerc',
             ):
                 return all_tests(self.args)  # test infrastructure, run all tests
+
+            if path == 'setup.py':
+                return {
+                    'integration': 'ansible',
+                }
 
             if path == '.yamllint':
                 return {
