@@ -36,6 +36,26 @@
     state: present
     provider: "{{ nxapi }}"
 
+# For titanium
+- name: Clear interface v4
+  nxos_ip_interface:
+    interface: "{{ testint1 }}"
+    version: v4
+    state: absent
+    addr: 20.20.20.20
+    mask: 24
+    provider: "{{ nxapi }}"
+
+# For titanium
+- name: Clear interface v6
+  nxos_ip_interface:
+    interface: "{{ testint2 }}"
+    version: v6
+    state: absent
+    addr: 'fd56:31f7:e4ad:5585::1'
+    mask: 64
+    provider: "{{ nxapi }}"
+
 - name: Ensure ipv4 address is configured
   nxos_ip_interface: &ipv4
     interface: "{{ testint1 }}"
