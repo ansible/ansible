@@ -1,27 +1,20 @@
 #!/usr/bin/python
-from copy import copy
 
-from ansible.module_utils.basic import AnsibleModule 
-
-try:
-    import requests
-    requests.packages.urllib3.disable_warnings()
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = """
+---
 module: infoblox
-author:
-  - "Joan Miquel Luque (@xoanmi)"
+author: "Joan Miquel Luque (@xoanmi)"
 short_description: Manage Infoblox via Web API
 description:
   - Manage Infoblox IPAM and DNS via Web API
-version_added: "2.3"
+version_added: "2.4"
 requirements:
   - "requests >= 2.9.1"
 options:
@@ -112,6 +105,30 @@ options:
     default: None
 """
 
+EXAMPLES = """
+---
+ - hosts: localhost
+    connection: local
+       gather_facts: False
+
+  tasks:
+  - name: Add host
+    infoblox:
+      server=192.168.1.1
+      username=admin
+      password=admin
+      action=add_host
+      network=192.168.1.0/24
+      host={{ item }}
+    with_items:
+      - test01.local
+      - test02.local
+    register: infoblox
+
+  - name: Do awesome stuff with the result
+    debug: msg="Get crazy!"
+"""
+
 RETURN = """
 hostname:
   description: Hostname of the object
@@ -139,29 +156,8 @@ result:
     }
 """
 
-EXAMPLES = """
----
- - hosts: localhost
-    connection: local
-       gather_facts: False
-
-  tasks:
-  - name: Add host
-    infoblox:
-      server=192.168.1.1
-      username=admin
-      password=admin
-      action=add_host
-      network=192.168.1.0/24
-      host={{ item }}
-    with_items:
-      - test01.local
-      - test02.local
-    register: infoblox
-
-  - name: Do awesome stuff with the result
-    debug: msg="Get crazy!"
-"""
+from ansible.module_utils.basic import AnsibleModule
+from copy import copy
 
 _RETURN_FIELDS_PROPERTY = "_return_fields"
 _COMMENT_PROPERTY = "comment"
@@ -187,6 +183,12 @@ _FQDN_PROPERTY = "fqdn"
 _FORWARD_TO_PROPERTY = "forward_to"
 _NETWORK_PROPERTY = "network"
 
+try:
+    import requests
+    requests.packages.urllib3.disable_warnings()
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 # ---------------------------------------------------------------------------
 # Infoblox
@@ -903,7 +905,6 @@ class Infoblox(object):
                  _VIEW_PROPERTY: self.dns_view, _COMMENT_PROPERTY: comment,
                  _EXT_ATTR_PROPERTY: extattrs}
         model = self._make_model(model)
-        print model
         return self.invoke("post", "zone_forward", ok_codes=(200, 201, 400), json=model)
 
     # ---------------------------------------------------------------------------
