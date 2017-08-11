@@ -61,8 +61,9 @@ options:
         required: true
         default: null
     devicegroup:
-        description:
-            - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined it is assumed that we are contacting a firewall.
+        description: >
+            - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined
+            it is assumed that we are contacting a firewall.
         required: false
         default: None
     description:
@@ -117,6 +118,7 @@ try:
 except ImportError:
     HAS_LIB = False
 
+
 def find_object(device, dev_group, obj_name, obj_type):
     # Get the firewall objects
     obj_type.refreshall(device)
@@ -133,6 +135,7 @@ def find_object(device, dev_group, obj_name, obj_type):
         return addr
     else:
         return False
+
 
 def create_address_group_object(**kwargs):
     """
@@ -179,6 +182,7 @@ def add_address_group(device, dev_group, ag_object):
     else:
         return (True, exc)
 
+
 def delete_address_group(device, dev_group, obj_name):
     """
     
@@ -196,9 +200,10 @@ def delete_address_group(device, dev_group, obj_name):
         except Exception:
             exc = get_exception()
             return (False, exc)
-        return (True, None)
+        return True, None
     else:
-        return (False, None)
+        return False, None
+
 
 def main():
     argument_spec = dict(
