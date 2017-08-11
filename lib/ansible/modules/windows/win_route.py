@@ -39,7 +39,8 @@ options:
     required: true
   gateway:
     description:
-        - Gateway used by the static route. If the gateway is not provided it will be set to "0.0.0.0"
+        - The gateway used by the static route.
+        - If C(gateway) is not provided it will be set to C(0.0.0.0).
   metric:
     description:
         - Metric used by the static route.
@@ -50,7 +51,7 @@ options:
         If absent, it removes a network static route.
     default: present
 notes:
-  - Works only with Windows 2012 R2 or newer.
+  - Works only with Windows 2012 R2 and newer.
 author: Daniele Lazzari
 '''
 
