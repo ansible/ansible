@@ -43,10 +43,10 @@ class IncludeRole(TaskInclude):
     circumstances related to the `- include_role: ...`
     """
 
-    BASE = frozenset(['name', 'role']) # directly assigned
-    FROM_ARGS = frozenset(['tasks_from', 'vars_from', 'defaults_from']) # used to populate from dict in role
-    OTHER_ARGS = frozenset(['private', 'allow_duplicates']) # assigned to matching property
-    VALID_ARGS = frozenset(BASE.union(FROM_ARGS.union(OTHER_ARGS))) # all valid args
+    BASE = frozenset(['name', 'role'])  # directly assigned
+    FROM_ARGS = frozenset(['tasks_from', 'vars_from', 'defaults_from'])  # used to populate from dict in role
+    OTHER_ARGS = frozenset(['private', 'allow_duplicates'])  # assigned to matching property
+    VALID_ARGS = frozenset(BASE.union(FROM_ARGS.union(OTHER_ARGS)))  # all valid args
 
     # =================================================================================
     # ATTRIBUTES
@@ -119,7 +119,7 @@ class IncludeRole(TaskInclude):
 
         # build options for role includes
         for key in IncludeRole.FROM_ARGS.intersection(my_arg_names):
-            from_key = key.replace('_from','')
+            from_key = key.replace('_from', '')
             ir._from_files[from_key] = basename(ir.args.get(key))
 
         # manual list as otherwise the options would set other task parameters we don't want.
