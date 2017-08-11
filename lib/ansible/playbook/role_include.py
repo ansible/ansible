@@ -43,10 +43,10 @@ class IncludeRole(TaskInclude):
     circumstances related to the `- include_role: ...`
     """
 
-    BASE = set(['name', 'role'])
-    FROM_ARGS = set(['tasks_from', 'vars_from', 'defaults_from'])
-    OTHER_ARGS = set(['private', 'allow_duplicates'])
-    VALID_ARGS = frozenset(BASE.union(FROM_ARGS.union(OTHER_ARGS)))
+    BASE = frozenset(['name', 'role']) # directly assigned
+    FROM_ARGS = frozenset(['tasks_from', 'vars_from', 'defaults_from']) # used to populate from dict in role
+    OTHER_ARGS = frozenset(['private', 'allow_duplicates']) # assigned to matching property
+    VALID_ARGS = frozenset(BASE.union(FROM_ARGS.union(OTHER_ARGS))) # all valid args
 
     # =================================================================================
     # ATTRIBUTES
@@ -105,7 +105,7 @@ class IncludeRole(TaskInclude):
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
         # Validate options
-        my_arg_names = set(ir.args.keys())
+        my_arg_names = frozenset(ir.args.keys())
 
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
