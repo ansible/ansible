@@ -23,8 +23,9 @@ DOCUMENTATION = '''
 ---
 module: panos_nat_rule
 short_description: create a policy NAT rule
-description:
-    - Create a policy nat rule. Keep in mind that we can either end up configuring source NAT, destination NAT, or both. Instead of splitting it into two we will make a fair attempt to determine which one the user wants.
+description: >
+    - Create a policy nat rule. Keep in mind that we can either end up configuring source NAT, destination NAT, or
+    both. Instead of splitting it into two we will make a fair attempt to determine which one the user wants.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer), Robert Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
@@ -285,13 +286,14 @@ def update_rule(rulebase, nat_rule):
     else:
         return False
 
+
 def main():
     argument_spec = dict(
         ip_address=dict(required=True),
         username=dict(default='admin'),
         password=dict(required=True, no_log=True),
         api_key=dict(no_log=True),
-        operation=dict(required=True, choices=['add','update','delete','find']),
+        operation=dict(required=True, choices=['add', 'update', 'delete', 'find']),
         rule_name=dict(required=True),
         description=dict(),
         tag_name=dict(),
@@ -301,7 +303,7 @@ def main():
         destination_ip=dict(type='list', default=['any']),
         service=dict(default='any'),
         to_interface=dict(default='any'),
-        snat_type=dict(choices=['static-ip','dynamic-ip-and-port','dynamic-ip']),
+        snat_type=dict(choices=['static-ip', 'dynamic-ip-and-port', 'dynamic-ip']),
         snat_address_type=dict(choices=['interface-address', 'translated-address'], default='interface-address'),
         snat_static_address=dict(),
         snat_dynamic_address=dict(type='list'),
@@ -415,7 +417,7 @@ def main():
                     to_interface=to_interface,
                     nat_type=nat_type,
                     snat_type=snat_type,
-                    snat_address_type = snat_address_type,
+                    snat_address_type=snat_address_type,
                     snat_static_address=snat_static_address,
                     snat_dynamic_address=snat_dynamic_address,
                     snat_interface=snat_interface,
@@ -470,4 +472,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
