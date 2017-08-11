@@ -37,7 +37,7 @@ description:
 options:
   name:
     description:
-      - Name of the package to be installed.
+      - Name of the package to be installed. This must be a signle package name if state: absent is specified.
     required: yes
   state:
     description:
@@ -147,4 +147,21 @@ EXAMPLES = r'''
   win_chocolatey:
     name: git
     state: absent
+
+- name: install multiple packages
+  win_chocolatey:
+    name: >-
+      pscx
+      windirstat
+    state: latest
+
+- win_chocolatey:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - pscx
+    - windirstat
+  
+
+
 '''
