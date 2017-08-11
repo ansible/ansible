@@ -53,6 +53,7 @@ options:
             CA certificate store is used. Default value is set by I(OVIRT_CAFILE) environment variable."
             - "C(kerberos) - A boolean flag indicating if Kerberos authentication
             should be used instead of the default basic authentication."
+            - "C(headers) - Dictionary of HTTP headers to be added to each API call."
 requirements:
   - python >= 2.7
   - ovirt-engine-sdk-python >= 4.0.0
