@@ -1,0 +1,12 @@
+- name: test include_role
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: verify that include_role works
+      include_role:
+        name: some_role1
+
+    - name: verify that include_role warns with bogus options
+      include_role:
+        name: some_role2
+        allow_duplicates: true

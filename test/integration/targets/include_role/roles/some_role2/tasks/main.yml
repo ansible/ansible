@@ -1,0 +1,5 @@
+---
+- name: some_role2 debug task
+  debug:
+    msg: 'some_role2 debug task ran'
+# tasks file for some_role1
