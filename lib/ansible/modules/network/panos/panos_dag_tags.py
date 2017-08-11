@@ -79,6 +79,7 @@ try:
 except ImportError:
     HAS_LIB = False
 
+
 def register_ip_to_tag_map(device, ip_addresses, tag):
     """
     
@@ -92,12 +93,13 @@ def register_ip_to_tag_map(device, ip_addresses, tag):
     try:
         device.userid.register(ip_addresses, tag)
     except Exception, e:
-            exc = get_exception()
+        exc = get_exception()
 
     if exc:
-        return (False, exc)
+        return False, exc
     else:
-        return (True, exc)
+        return True, exc
+
 
 def get_all_address_group_mapping(device):
     """
@@ -113,9 +115,10 @@ def get_all_address_group_mapping(device):
         exc = get_exception()
 
     if exc:
-        return (False, exc)
+        return False, exc
     else:
-        return (ret, exc)
+        return ret, exc
+
 
 def delete_address_from_mapping(device, ip_address, tags):
     """
@@ -133,12 +136,12 @@ def delete_address_from_mapping(device, ip_address, tags):
         exc = get_exception()
 
     if exc:
-        return (False, exc)
+        return False, exc
     else:
-        return (True, exc)
+        return True, exc
+
 
 def main():
-
     argument_spec = dict(
         ip_address=dict(required=True),
         password=dict(required=True),
@@ -179,16 +182,16 @@ def main():
     result = None
     if operation == 'add':
         result, exc = register_ip_to_tag_map(device,
-                               ip_addresses=module.params.get('ip_to_register', None),
-                               tag=module.params.get('tag_names', None)
-                      )
+                                             ip_addresses=module.params.get('ip_to_register', None),
+                                             tag=module.params.get('tag_names', None)
+                                             )
     elif operation == 'list':
         result, exc = get_all_address_group_mapping(device)
     elif operation == 'delete':
         result, exc = delete_address_from_mapping(device,
                                                   ip_address=module.params.get('ip_to_register', None),
                                                   tags=module.params.get('tag_names', [])
-                      )
+                                                  )
     else:
         module.fail_json(msg="Unsupported option")
 
@@ -202,6 +205,7 @@ def main():
             module.fail_json(get_exception())
 
     module.exit_json(changed=True, msg=result)
+
 
 if __name__ == "__main__":
     main()
