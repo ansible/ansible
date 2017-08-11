@@ -18,8 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# this is a windows documentation stub.  actual code lives in the .ps1
-# file of the same name
+# This is a windows documentation stub.  Actual code lives in the .ps1
+# file of the same name.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -35,11 +35,11 @@ description:
 options:
   destination:
     description:
-      - Destination IP address in CIDR format (ip address/prefix lenght)
+      - Destination IP address in CIDR format (ip address/prefix length)
     required: true
   gateway:
     description:
-        - Gateway used by the static route. If gateway is not provided it will be set to "0.0.0.0"
+        - Gateway used by the static route. If the gateway is not provided it will be set to "0.0.0.0"
   metric:
     description:
         - Metric used by the static route.
@@ -50,7 +50,7 @@ options:
         If absent, it removes a network static route.
     default: present
 notes:
-  - Works only with Windows 2012 R2 or latest.
+  - Works only with Windows 2012 R2 or newer.
 author: Daniele Lazzari
 '''
 
@@ -70,7 +70,7 @@ EXAMPLES = r'''
     state: absent
 '''
 RETURN = r'''
-outpot:
+output:
     description: A message describing the task result.
     returned: always
     type: string
