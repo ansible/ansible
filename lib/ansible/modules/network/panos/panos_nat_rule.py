@@ -97,7 +97,7 @@ options:
         default: None
     snat_dynamic_address:
         description:
-            - Source NAT translated address. Used with Dynamic-IP and Dynamic-IP-and-Port.  
+            - Source NAT translated address. Used with Dynamic-IP and Dynamic-IP-and-Port.
         required: false
         default: None
     snat_interface:
