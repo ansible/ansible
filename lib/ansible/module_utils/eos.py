@@ -296,7 +296,7 @@ class Eapi:
         return self._session_support
 
     def _request_builder(self, commands, output, reqid=None):
-        params = dict(version=1, cmds=commands, format=output)
+        params = dict(version=1, cmds=commands, format=output, autoComplete=True)
         return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
     def send_request(self, commands, output='text'):
