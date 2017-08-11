@@ -9,7 +9,7 @@
 
 ########
 
-Function Remove-Pagefile($path, $whatif) 
+Function Remove-Pagefile($path, $whatif)
 {
     Get-WmiObject Win32_PageFileSetting | WHERE { $_.Name -eq $path } | Remove-WmiObject -WhatIf:$whatif
 }
