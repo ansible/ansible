@@ -82,22 +82,22 @@ tasks:
   # Use previous value in more API calls.
   - name: create new server
     xmlrpc_client:
-        url: "{{api_url}}"
-        path: server.add
-        args:
-            - "{{sid.returned}}"
-            - vm-web01
-            - 80
-            - "{{server_group_id.returned}}"
+      url: "{{api_url}}"
+      path: server.add
+      args:
+        - "{{sid.returned}}"
+        - vm-web01
+        - 80
+        - "{{server_group_id.returned}}"
     register: server_id
     when: server_group_id.returned
 '''
 
 RETURN = '''
 returned:
-    description: The output value that the RPC call returns
-    type: string
-    returned: success, changed
+  description: The output value that the RPC call returns
+  type: string
+  returned: success, changed
 '''
 
 
