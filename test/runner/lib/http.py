@@ -15,10 +15,10 @@ except ImportError:
 
 try:
     # noinspection PyCompatibility
-    from urlparse import urlparse
+    from urlparse import urlparse, urlunparse, parse_qs
 except ImportError:
     # noinspection PyCompatibility, PyUnresolvedReferences
-    from urllib.parse import urlparse  # pylint: disable=locally-disabled, ungrouped-imports
+    from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
 
 from lib.util import (
     CommonConfig,

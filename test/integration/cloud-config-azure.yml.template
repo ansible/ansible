@@ -6,13 +6,26 @@
 # 2) Using the automatically provisioned Azure credentials in ansible-test.
 #
 # If you do not want to use the automatically provisioned temporary Azure credentials,
-# fill in the @VAR placeholders below and save this file without the .template extension.
+# fill in the values below and save this file without the .template extension.
 # This will cause ansible-test to use the given configuration instead of temporary credentials.
 #
-# NOTE: Automatic provisioning of Azure credentials requires an ansible-core-ci API key.
+# NOTE: Automatic provisioning of Azure credentials requires one of:
+#       1) ansible-core-ci API key in ~/.ansible-core-ci.key
+#       2) Sherlock URL (including API key) in ~/.ansible-sherlock-ci.cfg
 
-azure_client_id: @CLIENT_ID
-azure_client_secret: @CLIENT_SECRET
-azure_subscription_id: @SUBSCRIPTION_ID
-azure_tenant_id: @TENANT_ID
-azure_resource_groups: @RESOURCE_GROUPS
+# Provide either Service Principal or Active Directory credentials below.
+
+# Service Principal
+AZURE_CLIENT_ID=
+AZURE_SECRET=
+AZURE_SUBSCRIPTION_ID=
+AZURE_TENANT=
+
+# Active Directory
+AZURE_AD_USER=
+AZURE_PASSWORD=
+AZURE_SUBSCRIPTION_ID=
+
+# Resource Groups
+RESOURCE_GROUP=
+RESOURCE_GROUP_SECONDARY=
