@@ -859,7 +859,7 @@ files:
   $module_utils/aci.py:
     maintainers: dagwieers schunduri jmcgill298
     labels: networking
-$module_utils/aireos.py:
+  $module_utils/aireos.py:
     maintainers: jmighion
     labels: networking
   $module_utils/eos.py:
