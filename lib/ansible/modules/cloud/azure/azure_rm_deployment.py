@@ -371,6 +371,13 @@ import time
 
 try:
     from azure.common.credentials import ServicePrincipalCredentials
+    import time
+    import yaml
+except ImportError as exc:
+    IMPORT_ERROR = "Error importing module prerequisites: %s" % exc
+
+try:
+    from itertools import chain
     from azure.common.exceptions import CloudError
     from azure.mgmt.resource.resources.models import (DeploymentProperties,
                                                       ParametersLink,

@@ -416,8 +416,8 @@ try:
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
                                           NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
-    from azure.mgmt.storage.models.storage_management_client_enums import Kind, SkuTier, SkuName
-    from azure.mgmt.compute.models.compute_management_client_enums import VirtualMachineSizeTypes, DiskCreateOptionTypes
+    from azure.mgmt.storage.models import Kind, SkuTier, SkuName
+    from azure.mgmt.compute.models import VirtualMachineSizeTypes, DiskCreateOptionTypes
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -427,7 +427,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
 
-AZURE_ENUM_MODULES = ['azure.mgmt.compute.models.compute_management_client_enums']
+AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
 def extract_names_from_blob_uri(blob_uri):
@@ -711,9 +711,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         ),
                         storage_profile=StorageProfile(
                             os_disk=OSDisk(
-                                self.storage_blob_name,
-                                vhd,
-                                DiskCreateOptionTypes.from_image,
+                                name=self.storage_blob_name,
+                                vhd=vhd,
+                                create_option=DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
                             ),
                             image_reference=ImageReference(

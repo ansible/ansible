@@ -50,7 +50,7 @@ options:
         description:
             - Assert the state of the subnet. Use 'present' to create or update a subnet and
               'absent' to delete a subnet.
-        required: true
+        required: false
         default: present
         choices:
             - absent

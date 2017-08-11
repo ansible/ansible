@@ -57,7 +57,7 @@ options:
               when creating a network interface.
         aliases:
             - virtual_network
-        required: false
+        required: true
         default: null
     subnet_name:
         description:
@@ -65,7 +65,7 @@ options:
               interface
         aliases:
             - subnet
-        required: false
+        required: true
         default: null
     os_type:
         description:

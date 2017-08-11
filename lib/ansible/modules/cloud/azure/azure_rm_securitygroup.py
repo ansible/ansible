@@ -328,11 +328,12 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureHttpError
     from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule
-    from azure.mgmt.network.models.network_management_client_enums import (SecurityRuleAccess,
-                                                                           SecurityRuleDirection,
-                                                                           SecurityRuleProtocol)
+    from azure.mgmt.network.models import (
+        SecurityRuleAccess,
+        SecurityRuleDirection,
+        SecurityRuleProtocol
+    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -694,7 +695,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                                                   self.name,
                                                                                   parameters)
             result = self.get_poller_result(poller)
-        except AzureHttpError as exc:
+        except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
         return create_network_security_group_dict(result)
 
@@ -702,7 +703,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         try:
             poller = self.network_client.network_security_groups.delete(self.resource_group, self.name)
             result = self.get_poller_result(poller)
-        except AzureHttpError as exc:
+        except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))
         return result
 
