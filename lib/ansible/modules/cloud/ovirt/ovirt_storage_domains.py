@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the storage domain to manage."
+            - "Name of the storage domain to manage. (Not required when imported == True)"
     state:
         description:
             - "Should the storage domain be present/absent/maintenance/unattached"
@@ -116,6 +116,11 @@ options:
         description:
             - "If I(True) storage domain will be formatted after removing it from oVirt/RHV."
             - "This parameter is relevant only when C(state) is I(absent)."
+    imported:
+        description:
+            - "If I(True) the preconfigured storage domain existing in address:path will be imported to oVirt/RHV."
+            - "This parameter is relevant only when C(state) is I(present)."
+        version_added: "2.4"
 extends_documentation_fragment: ovirt
 '''
 
@@ -140,6 +145,15 @@ EXAMPLES = '''
     localfs:
       path: /path/to/data
 
+# Import a preconfigured data NFS storage domain
+- ovirt_storage_domains:
+    host: myhost
+    data_center: mydatacenter
+    nfs:
+      address: 10.34.63.199
+      path: /path/data
+    imported: True
+
 # Add data iSCSI storage domain:
 - ovirt_storage_domains:
     name: data_iscsi
@@ -161,7 +175,7 @@ EXAMPLES = '''
       address: 10.10.10.10
       path: /path/data
 
-# Import export NFS storage domain:
+# Add export NFS storage domain:
 - ovirt_storage_domains:
     domain_function: export
     host: myhost
@@ -259,6 +273,7 @@ class StorageDomainModule(BaseModule):
             type=otypes.StorageDomainType(
                 self._module.params['domain_function']
             ),
+            import_=self._module.params['imported'],
             host=otypes.Host(
                 name=self._module.params['host'],
             ),
@@ -426,7 +441,7 @@ def main():
             choices=['present', 'absent', 'maintenance', 'unattached'],
             default='present',
         ),
-        name=dict(required=True),
+        name=dict(default=None),
         description=dict(default=None),
         comment=dict(default=None),
         data_center=dict(required=True),
@@ -440,6 +455,7 @@ def main():
         fcp=dict(default=None, type='dict'),
         destroy=dict(type='bool', default=False),
         format=dict(type='bool', default=False),
+        imported=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -458,6 +474,7 @@ def main():
         )
 
         state = module.params['state']
+        imported = module.params['imported']
         control_state(storage_domains_module)
         if state == 'absent':
             ret = storage_domains_module.remove(
@@ -473,6 +490,7 @@ def main():
                 action_condition=lambda s: s.status == sdstate.MAINTENANCE,
                 wait_condition=lambda s: s.status == sdstate.ACTIVE,
                 fail_condition=failed_state,
+                search_params={'id': sd_id} if imported else None
             )
         elif state == 'maintenance':
             sd_id = storage_domains_module.create()['id']
