@@ -5,7 +5,7 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-from ansible.module_utils.aws.rds import get_rds_db_instance, rds_instance_to_facts, get_rds_snapshot, rds_snap_to_facts, rds_facts_diff
+from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, get_snapshot, snapshot_to_facts, instance_facts_diff
 import unittest
 import datetime
 import copy
@@ -33,27 +33,16 @@ class FakeResource():
                   u'LicenseModel': 'postgresql-license',
                   u'VpcSecurityGroups': [{u'Status': 'active',
                                           u'VpcSecurityGroupId': 'sg-123456deadbeef'}],
-                  u'InstanceCreateTime': datetime.datetime(2016,
-                                                           6,
-                                                           11,
-                                                           12,
-                                                           22,
-                                                           5,
-                                                           123456,
-                                                           tzinfo=tzutc()),
+                  u'InstanceCreateTime': datetime.datetime(2016, 6, 11, 12, 22, 5,
+                                                           123456, tzinfo=tzutc()),
                   u'CopyTagsToSnapshot': False,
                   u'OptionGroupMemberships': [{u'Status': 'in-sync',
                                                u'Opti50onGroupName': 'default:postgres-9-5'}],
                   u'PendingModifiedValues': {},
                   u'Engine': 'postgres',
                   u'MultiAZ': False,
-                  u'LatestRestorableTime': datetime.datetime(2018,
-                                                             4,
-                                                             2,
-                                                             11,
-                                                             7,
-                                                             22,
-                                                             tzinfo=tzutc()),
+                  u'LatestRestorableTime': datetime.datetime(2018, 4, 2, 11, 7,
+                                                             22, tzinfo=tzutc()),
                   u'DBSecurityGroups': [],
                   u'DBParameterGroups': [{u'DBParameterGroupName': 'default.postgres9.5',
                                           u'ParameterApplyStatus': 'in-sync'}],
@@ -117,15 +106,8 @@ class FakeResource():
             u'DBSnapshots': [
                 {
                     u'Engine': 'postgres',
-                    u'SnapshotCreateTime': datetime.datetime(
-                        2018,
-                        3,
-                        2,
-                        1,
-                        11,
-                        0o1,
-                        0o12345,
-                        tzinfo=tzutc()),
+                    u'SnapshotCreateTime': datetime.datetime(2018, 3, 2, 1, 11, 1,
+                                                             12345, tzinfo=tzutc()),
                     u'AvailabilityZone': 'eu-west-1a',
                     u'DBSnapshotArn':
                     'arn:aws:rds:eu-west-1:123456789:snapshot:rds:fakeSnapshotIDstring',
@@ -137,15 +119,8 @@ class FakeResource():
                     u'Status': 'available',
                     u'VpcId': 'vpc-0deadbeef',
                     u'DBSnapshotIdentifier': 'rds:fakeSnapshotIDstring',
-                    u'InstanceCreateTime': datetime.datetime(
-                        2016,
-                        6,
-                        11,
-                        12,
-                        22,
-                        5,
-                        123456,
-                        tzinfo=tzutc()),
+                    u'InstanceCreateTime': datetime.datetime(2016, 6, 11, 12, 22, 5,
+                                                             123456, tzinfo=tzutc()),
                     u'OptionGroupName': 'default:postgres-9-5',
                     u'AllocatedStorage': 5,
                     u'EngineVersion': '9.5.4',
@@ -158,20 +133,20 @@ class RDSUtilsTestCase(unittest.TestCase):
 
     def test_get_db_instance_should_return_camel_dict(self):
         conn = FakeResource()
-        db_inst = get_rds_db_instance(conn, "fakeDBIDstring")
+        db_inst = get_db_instance(conn, "fakeDBIDstring")
         assert 'id' not in db_inst
         assert db_inst["DBInstanceIdentifier"] == "fakeDBIDstring"
 
     def test_get_db_snapshot_should_return_camel_dict(self):
         conn = FakeResource()
-        db_snap = get_rds_snapshot(conn, "rds:fakeSnapshotIDstring")
+        db_snap = get_snapshot(conn, "rds:fakeSnapshotIDstring")
         for i in "id", "wait", "wait_timeout":
             assert i not in db_snap
         assert db_snap["DBSnapshotIdentifier"] == "rds:fakeSnapshotIDstring"
 
     def test_instance_facts_gives_sensible_values(self):
         conn = FakeResource()
-        db_facts = rds_instance_to_facts(get_rds_db_instance(conn, "fakeDBIDstring"))
+        db_facts = instance_to_facts(get_db_instance(conn, "fakeDBIDstring"))
         assert db_facts['id'] == "fakeDBIDstring"
 #  FIXME - we need to agree which of these need to go
 #        assert db_facts['size'] == "fakeSnapshotIDString"
@@ -180,7 +155,7 @@ class RDSUtilsTestCase(unittest.TestCase):
 
     def test_snapshot_facts_gives_sensible_values(self):
         conn = FakeResource()
-        snap_facts = rds_snap_to_facts(get_rds_snapshot(conn, "rds:fakeSnapshotIDstring"))
+        snap_facts = snapshot_to_facts(get_snapshot(conn, "rds:fakeSnapshotIDstring"))
         assert 'id' in snap_facts
 #  FIXME - we need to agree which of these need to go
 #        assert snap_facts['id'] == "fakeSnapshotIDString"
@@ -188,12 +163,12 @@ class RDSUtilsTestCase(unittest.TestCase):
 
     def test_diff_should_compare_important_rds_attributes(self):
         conn = FakeResource()
-        db_inst = rds_instance_to_facts(get_rds_db_instance(conn, "fakeDBIDstring"))
-        assert len(rds_facts_diff(db_inst, db_inst)
+        db_inst = instance_to_facts(get_db_instance(conn, "fakeDBIDstring"))
+        assert len(instance_facts_diff(db_inst, db_inst)
                    ) == 0, "comparison of identical instances shows difference!"
-        assert not (rds_facts_diff(db_inst, db_inst)
+        assert not (instance_facts_diff(db_inst, db_inst)
                     ), "comparsion of identical instances is not false!"
         bigger_inst = copy.deepcopy(db_inst)
         bigger_inst["allocated_storage"] = db_inst["allocated_storage"] + 5
-        assert len(rds_facts_diff(db_inst, bigger_inst)
+        assert len(instance_facts_diff(db_inst, bigger_inst)
                    ) > 0, "comparison of differing instances is empty!"
