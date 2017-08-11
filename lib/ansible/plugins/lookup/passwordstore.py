@@ -20,8 +20,10 @@ __metaclass__ = type
 import os
 import subprocess
 import time
+
 from distutils import util
 from ansible.errors import AnsibleError
+from ansible.utils.encrypt import random_password
 from ansible.plugins.lookup import LookupBase
 
 
@@ -118,10 +120,7 @@ class LookupModule(LookupBase):
         if self.paramvals['userpass']:
             newpass = self.paramvals['userpass']
         else:
-            try:
-                newpass = check_output2(['pwgen', '-cns', str(self.paramvals['length']), '1']).rstrip()
-            except (subprocess.CalledProcessError) as e:
-                raise AnsibleError(e)
+            newpass = random_password(length=self.paramvals['length'])
         return newpass
 
     def update_password(self):
