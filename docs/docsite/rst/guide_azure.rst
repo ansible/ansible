@@ -7,13 +7,19 @@ and orchestrate infrastructure on the Microsoft Azure Cloud.
 Requirements
 ------------
 
-Using the Azure Resource Manager modules requires having specific `Azure SDK modules <https://github.com/tstringer/azure-ansible-base>`_
+Using the Azure Resource Manager modules requires having specific Azure SDK modules
 installed on the host running Ansible.
 
 .. code-block:: bash
 
-    $ pip install azure-ansible-base
+    $ pip install ansible[azure]
 
+If you are running Ansible from source, you can install the dependencies from the
+root directory of the Ansible repo.
+
+.. code-block:: bash
+
+    $ pip install .[azure]
 
 Authenticating with Azure
 -------------------------
