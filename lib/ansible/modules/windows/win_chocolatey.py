@@ -38,6 +38,7 @@ options:
   name:
     description:
       - Name of the package to be installed.
+      - This must be a single package name.
     required: yes
   state:
     description:
@@ -147,4 +148,20 @@ EXAMPLES = r'''
   win_chocolatey:
     name: git
     state: absent
+
+- name: install multiple packages
+  win_chocolatey:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - pscx
+    - windirstat
+
+- name: uninstall multiple packages
+  win_chocolatey:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - pscx
+    - windirstat
 '''
