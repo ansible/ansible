@@ -347,9 +347,20 @@ class PathMapper(object):
 
         if path.startswith('packaging/'):
             if path.startswith('packaging/requirements/'):
-                return {
-                    'integration': 'ansible',
-                }
+                if name.startswith('requirements-') and ext == '.txt':
+                    component = name.split('-', 1)[1]
+
+                    candidates = (
+                        'cloud/%s/' % component,
+                    )
+
+                    for candidate in candidates:
+                        if candidate in self.integration_targets_by_alias:
+                            return {
+                                'integration': candidate,
+                            }
+
+                return all_tests(self.args)  # broad impact, run all tests
 
             return minimal
 
@@ -467,9 +478,7 @@ class PathMapper(object):
                 return all_tests(self.args)  # test infrastructure, run all tests
 
             if path == 'setup.py':
-                return {
-                    'integration': 'ansible',
-                }
+                return all_tests(self.args)  # broad impact, run all tests
 
             if path == '.yamllint':
                 return {
