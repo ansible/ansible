@@ -38,7 +38,7 @@ options:
   name:
     description:
       - Name of the package to be installed.
-      - This must be a signle package name.
+      - This must be a single package name.
     required: yes
   state:
     description:
