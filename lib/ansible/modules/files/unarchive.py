@@ -393,11 +393,11 @@ class ZipArchive(object):
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
-                file_umask=umask
+                file_umask = umask
             elif 'bsd' in systemtype.lower():
-                file_umask=umask
+                file_umask = umask
             else:
-                file_umask=0
+                file_umask = 0
 
             # Test string conformity
             if len(permstr) != 9 or not ZIP_FILE_MODE_RE.match(permstr):
@@ -869,6 +869,7 @@ def main():
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
+
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
 
