@@ -11,11 +11,77 @@ try:
 except:
     pass  # it is assumed that calling modules will detect and provide an appropriate nice error.
 
-
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
+DEFAULT_PORTS = {
+    'aurora': 3306,
+    'mariadb': 3306,
+    'mysql': 3306,
+    'oracle': 1521,
+    'sqlserver': 1433,
+    'postgres': 5432,
+}
 
-def get_rds_db_instance(conn, instancename):
+DB_ENGINES = [
+    'MySQL',
+    'aurora'
+    'mariadb',
+    'oracle-ee',
+    'oracle-se',
+    'oracle-se1',
+    'oracle-se2',
+    'postgres',
+    'sqlserver-ee',
+    'sqlserver-ex',
+    'sqlserver-se',
+    'sqlserver-web',
+]
+
+LICENSE_MODELS = [
+    'bring-your-own-license',
+    'general-public-license',
+    'license-included',
+    'postgresql-license'
+]
+
+PARAMETER_MAP = {
+    'apply_immediately': 'ApplyImmediately',
+    'backup_retention': 'BackupRetentionPeriod',
+    'backup_window': 'PreferredBackupWindow',
+    'character_set_name': 'CharacterSetName',
+    'cluster': 'DBClusterIdentifer',
+    'db_engine': 'Engine',
+    'db_name': 'DBName',
+    'engine_version': 'EngineVersion',
+    'force_failover': 'ForceFailover',
+    'instance_name': 'DBInstanceIdentifier',
+    'instance_type': 'DBInstanceClass',
+    'iops': 'Iops',
+    'license_model': 'LicenseModel',
+    'maint_window': 'PreferredMaintenanceWindow',
+    'multi_zone': 'MultiAZ',
+    'new_instance_name': 'NewDBInstanceIdentifier',
+    'option_group': 'OptionGroupName',
+    'parameter_group': 'DBParameterGroupName',
+    'password': 'MasterUserPassword',
+    'port': 'Port',
+    'publicly_accessible': 'PubliclyAccessible',
+    'security_groups': 'DBSecurityGroups',
+    'size': 'AllocatedStorage',
+    'skip_final_snapshot': 'SkipFinalSnapshot"',
+    'source_instance': 'SourceDBInstanceIdentifier',
+    'snapshot': 'DBSnapshotIdentifier',
+    'storage_type': 'StorageType',
+    'subnet': 'DBSubnetGroupName',
+    'tags': 'Tags',
+    'upgrade': 'AutoMinorVersionUpgrade',
+    'username': 'MasterUsername',
+    'vpc_security_groups': 'VpcSecurityGroupIds',
+    'zone': 'AvailabilityZone',
+}
+
+
+def get_db_instance(conn, instancename):
     try:
         response = conn.describe_db_instances(DBInstanceIdentifier=instancename)
     except botocore.exceptions.ClientError as e:
@@ -26,7 +92,7 @@ def get_rds_db_instance(conn, instancename):
     return response['DBInstances'][0]
 
 
-def rds_instance_to_facts(instance):
+def instance_to_facts(instance):
     assert 'DBInstanceIdentifier' in instance, "instance argument was not a valid instance"
     d = camel_dict_to_snake_dict(instance)
     d.update({
@@ -37,7 +103,7 @@ def rds_instance_to_facts(instance):
     return d
 
 
-def get_rds_snapshot(conn, snapshotid):
+def get_snapshot(conn, snapshotid):
     try:
         response = conn.describe_db_snapshots(DBSnapshotIdentifier=snapshotid)
     except botocore.exceptions.ClientError as e:
@@ -48,7 +114,7 @@ def get_rds_snapshot(conn, snapshotid):
     return response['DBSnapshots'][0]
 
 
-def rds_snap_to_facts(snapshot):
+def snapshot_to_facts(snapshot):
     assert 'DBSnapshotIdentifier' in snapshot, "snapshot argument was not a valid snapshot"
     d = camel_dict_to_snake_dict(snapshot)
     d.update({
@@ -59,7 +125,7 @@ def rds_snap_to_facts(snapshot):
     return d
 
 
-def rds_facts_diff(state_a, state_b):
+def instance_facts_diff(state_a, state_b):
     """compare two fact dictionaries for rds instances
 
     This function takes two dictionaries of facts related to an RDS
@@ -97,8 +163,17 @@ def rds_facts_diff(state_a, state_b):
             else:
                 before[k] = state_a.get(k)
                 after[k] = state_b.get(k)
-    old_port = state_a.get("endpoint").get("port")
-    new_port = state_b.get("endpoint").get("port")
+
+    # FIXME - verify that we actually should accept a lack of port
+    try:
+        old_port = state_a.get("endpoint").get("port")
+    except AttributeError:
+        old_port = None
+    try:
+        new_port = state_b.get("endpoint").get("port")
+    except AttributeError:
+        new_port = None
+
     if old_port != new_port:
         before['port'] = old_port
         after['port'] = new_port
