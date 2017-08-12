@@ -372,7 +372,7 @@ def convert_tg_name_to_arn(connection, module, tg_name):
 
 def wait_for_status(connection, module, elb_arn, status):
     polling_increment_secs = 15
-    max_retries = module.params.get('wait_timeout') / polling_increment_secs
+    max_retries = module.params.get('wait_timeout') // polling_increment_secs
     status_achieved = False
 
     for x in range(0, max_retries):

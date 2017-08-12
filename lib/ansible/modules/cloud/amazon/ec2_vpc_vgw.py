@@ -149,7 +149,7 @@ def get_vgw_info(vgws):
 
 def wait_for_status(client, module, vpn_gateway_id, status):
     polling_increment_secs = 15
-    max_retries = (module.params.get('wait_timeout') / polling_increment_secs)
+    max_retries = (module.params.get('wait_timeout') // polling_increment_secs)
     status_achieved = False
 
     for x in range(0, max_retries):
