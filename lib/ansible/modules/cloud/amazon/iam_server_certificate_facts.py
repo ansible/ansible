@@ -147,6 +147,7 @@ def get_server_certs(iam, name=None):
 
     return results
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
