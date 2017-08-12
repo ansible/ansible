@@ -1,20 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -284,17 +275,17 @@ iam_roles:
     sample: []
 '''
 
-import traceback
 import re
-# Import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
+import traceback
 
 try:
     from botocore.exception import ClientError
 except ImportError:
     pass  # will be picked up from imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 
 
 def match_tags(tags_to_match, cluster):
