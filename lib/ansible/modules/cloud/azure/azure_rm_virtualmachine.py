@@ -877,10 +877,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     nics = [NetworkInterfaceReference(id=interface['id'])
                             for interface in vm_dict['properties']['networkProfile']['networkInterfaces']]
 
+                    # os disk
                     if not self.managed_disk_type:
+                        managed_disk = None
                         vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
                     else:
                         vhd = None
+                        managed_disk = ManagedDiskParameters(storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk'])['storageAccountType']
+
+                    # data disk
+                    if not self.data_disk_managed_disk_type:
+                        data_disk_managed_disk = None
+                        data_disk_vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['dataDisks']['vhd']['uri'])
+                    else:
+                        data_disk_vhd = None
+                        data_disk_managed_disk = ManagedDiskParameters(storage_account_type=self.data_disk_managed_disk_type)
 
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
@@ -893,17 +904,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         ),
                         storage_profile=StorageProfile(
                             os_disk=OSDisk(
-                                vm_dict['properties']['storageProfile']['osDisk']['name'],
-                                vhd,
-                                vm_dict['properties']['storageProfile']['osDisk']['createOption'],
-                                vm_dict['properties']['storageProfile']['osDisk']['osType'],
-                                caching=vm_dict['properties']['storageProfile']['osDisk']['caching']
+                                name=vm_dict['properties']['storageProfile']['osDisk']['name'],
+                                vhd=vhd,
+                                createOption=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
+                                os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
+                                caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
+                                managed_disk=managed_disk
                             ),
                             data_disk=DataDisk(
-                                vm_dict['properties']['storageProfile']['dataDisk']['name'],
-                                # vhd,
-                                vm_dict['properties']['storageProfile']['osDisk']['createOption'],
-                                caching=vm_dict['properties']['storageProfile']['osDisk']['caching']
+                                lun=vm_dict['properties']['storageProfile']['dataDisk']['lun'],
+                                name=vm_dict['properties']['storageProfile']['dataDisk']['name'],
+                                vhd=data_disk_vhd,
+                                caching=vm_dict['properties']['storageProfile']['dataDisk']['caching'],
+                                create_option=vm_dict['properties']['storageProfile']['dataDisk']['createOption'],
+                                disk_size_gb=vm_dict['properties']['storageProfile']['dataDisk']['diskSizeGb'],
+                                managed_disk=data_disk_managed_disk
                             ),
                             image_reference=ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
