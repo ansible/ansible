@@ -237,6 +237,7 @@ class RabbitMqUser(object):
     def set_password(self):
         self._exec(['change_password', self.username, self.password])
 
+
 def main():
     arg_spec = dict(
         user=dict(required=True, aliases=['username', 'name']),
