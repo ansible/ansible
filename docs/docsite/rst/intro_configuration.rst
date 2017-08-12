@@ -1166,15 +1166,15 @@ pipelining
 ==========
 
 Enabling pipelining reduces the number of SSH operations required to
-execute a module on the remote server, by executing many ansible modules without actual file transfer.
-This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
+execute a module on the remote server by executing many ansible modules without actual file transfer.
+This can result in a very significant performance improvement when enabled. When using "sudo:" operations you must
 first disable 'requiretty' in /etc/sudoers on all managed hosts.
 
-By default, this option is disabled to preserve compatibility with
-sudoers configurations that have requiretty (the default on many distros), but is highly
-recommended if you can enable it.
+While this option is disabled by default to preserve compatibility with
+sudoers configurations that have requiretty (the default on many distros),
+it is recommended that this option is enabled when possible because it eliminates the need for :doc:`playbooks_acceleration`::
 
-    pipelining = False
+    pipelining = True
 
 .. _ssh_executable:
 
