@@ -430,8 +430,7 @@ def main():
                 module.fail_json_aws(e, msg="Trying to upload new code")
 
         # Describe function code and configuration
-        response = get_current_function(
-            client, name, qualifier=current_version)
+        response = get_current_function(client, name, qualifier=current_version)
         if not response:
             module.fail_json(msg='Unable to get function information after updating')
 
@@ -457,8 +456,7 @@ def main():
                 module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         else:
-            module.fail_json(
-                msg='Either S3 object or path to zipfile required')
+            module.fail_json(msg='Either S3 object or path to zipfile required')
 
         func_kwargs = {'FunctionName': name,
                        'Publish': True,
@@ -498,8 +496,7 @@ def main():
         except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to create function")
 
-        response = get_current_function(
-            client, name, qualifier=current_version)
+        response = get_current_function(client, name, qualifier=current_version)
         if not response:
             module.fail_json(msg='Unable to get function information after creating')
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
