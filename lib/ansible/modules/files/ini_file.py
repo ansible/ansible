@@ -126,16 +126,16 @@ from ansible.module_utils.basic import AnsibleModule
 
 def match_opt(option, line):
     option = re.escape(option)
-    return re.match(' *%s( |\t)*=' % option, line) \
-      or re.match('# *%s( |\t)*=' % option, line) \
-      or re.match('; *%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*=' % option, line) \
+      or re.match('#( |\t)*%s( |\t)*=' % option, line) \
+      or re.match(';( |\t)*%s( |\t)*=' % option, line)
 
 # ==============================================================
 # match_active_opt
 
 def match_active_opt(option, line):
     option = re.escape(option)
-    return re.match(' *%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*=' % option, line)
 
 # ==============================================================
 # do_ini
