@@ -294,7 +294,6 @@ def check_declarative_intent_params(module, want, result):
             if have_state is None or not conditional(want_state, have_state.strip().lower()):
                 failed_conditions.append('state ' + 'eq(%s)' % want_state)
 
-
     return failed_conditions
 
 
