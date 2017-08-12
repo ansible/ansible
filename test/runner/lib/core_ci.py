@@ -56,6 +56,7 @@ class AnsibleCoreCI(object):
 
         aws_platforms = (
             'aws',
+            'azure',
             'windows',
             'freebsd',
             'rhel',
