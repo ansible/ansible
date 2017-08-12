@@ -1,21 +1,9 @@
-- name: Create resource group
-  azure_rm_resourcegroup:
-      name: "{{ resource_group }}"
-      location: "{{ location }}"
-  register: output
-
-- debug: var=output
-  when: playbook_debug
-
 - name: Create virtual network
   azure_rm_virtualnetwork:
       name: vnet001
       resource_group: "{{ resource_group }}"
       address_prefixes_cidr: "10.10.0.0/16"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Create subnet
   azure_rm_subnet:
@@ -25,18 +13,12 @@
       address_prefix_cidr: "10.10.0.0/24"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Create second virtual network
   azure_rm_virtualnetwork:
       name: vnet002
       resource_group: "{{ resource_group }}"
       address_prefixes_cidr: "10.20.0.0/16"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Create second subnet
   azure_rm_subnet:
@@ -46,26 +28,17 @@
       address_prefix_cidr: "10.20.0.0/24"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Create security group
   azure_rm_securitygroup:
       name: secgroup001
       resource_group: "{{ resource_group }}"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Create second security group
   azure_rm_securitygroup:
       name: secgroup002
       resource_group: "{{ resource_group }}"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Create a public ip
   azure_rm_publicipaddress:
@@ -74,9 +47,6 @@
       allocation_method: "Static"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Create second public ip
   azure_rm_publicipaddress:
       name: publicip002
@@ -84,18 +54,12 @@
       allocation_method: "Static"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Delete network interface, if it exists
   azure_rm_networkinterface:
       name: nic003
       resource_group: "{{ resource_group }}"
       state: absent
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Should require subnet when creating nic
   azure_rm_networkinterface:
@@ -106,9 +70,6 @@
       public_ip_address_name: publicip001
   register: output
   ignore_errors: yes
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -125,9 +86,6 @@
   register: output
   ignore_errors: yes
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.failed
@@ -143,9 +101,6 @@
       public_ip_address_name: publicip001
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Should be idempotent
   azure_rm_networkinterface:
       name: nic003
@@ -155,9 +110,6 @@
       security_group_name: secgroup001
       public_ip_address_name: publicip001
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: not output.changed
@@ -173,9 +125,6 @@
       security_group_name: secgroup001
       public_ip_address_name: publicip001
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -194,9 +143,6 @@
       public_ip_address_name: publicip002
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.changed
@@ -213,9 +159,6 @@
           testing: testing
           foo: bar
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -260,9 +203,6 @@
         testing: testing
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.changed
@@ -274,9 +214,6 @@
       resource_group: "{{ resource_group }}"
       tags: {}
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -292,10 +229,6 @@
   with_items:
       - nic004
       - nic005
-
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Remove publicip, if it exists
   azure_rm_publicipaddress:
@@ -323,9 +256,6 @@
       subnet: subnet001
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.state.ip_configuration.public_ip_address.name == 'nic00401'
@@ -336,9 +266,6 @@
       resource_group: "{{ resource_group }}"
       name: nic00401
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -356,9 +283,6 @@
           - '9005-9010'
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.state.ip_configuration.public_ip_address.name == 'nic00501'
@@ -369,9 +293,6 @@
       resource_group: "{{ resource_group }}"
       name: nic00501
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Security group should allow RDP access on custom port
   assert:
@@ -385,9 +306,6 @@
       name: nic003
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - azure_networkinterfaces | length == 1
@@ -397,9 +315,6 @@
       resource_group: "{{ resource_group }}"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - azure_networkinterfaces | length >= 3
@@ -407,9 +322,6 @@
 - name: Gather facts for all nics
   azure_rm_networkinterface_facts:
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:

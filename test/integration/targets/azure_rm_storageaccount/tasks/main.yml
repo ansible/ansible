@@ -1,8 +1,7 @@
- - name: Create resource group
-   azure_rm_resourcegroup:
-       name: "{{ resource_group }}"
-       location: "{{ location }}"
-       
+ - name: Create storage account name
+   set_fact:
+       storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
  - name: Test invalid account name
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}" 
@@ -17,25 +16,18 @@
  - name: Delete storage account
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}" 
-       name: teststorageacct002
+       name: "{{ storage_account }}"
        state: absent
-   register: output
-
- - debug: var=output
-   when: playbook_debug
 
  - name: Create new storage account
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}" 
-       name: teststorageacct002
+       name: "{{ storage_account }}"
        account_type: Standard_LRS
        tags:
            test: test
            galaxy: galaxy
    register: output
-
- - debug: var=output
-   when: playbook_debug
 
  - name: Assert status succeeded and results include an Id value 
    assert:
@@ -49,10 +41,6 @@
        tags:
          - test
          - galaxy
-   register: output
-
- - debug: var=output
-   when: playbook_debug
 
  - assert:
        that: azure_storageaccounts | length >= 1
@@ -60,13 +48,10 @@
  - name: Change account type 
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}" 
-       name: teststorageacct002
+       name: "{{ storage_account }}"
        account_type: Premium_LRS
    register: change_account
    ignore_errors: yes 
-
- - debug: var=change_account
-   when: playbook_debug
 
  - name: Assert account type change failed 
    assert: { that: "change_account['failed'] == True" }
@@ -74,15 +59,11 @@
  - name: Change account type and add custom domain
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}"
-       name: teststorageacct002
+       name: "{{ storage_account }}"
        account_type: Standard_GRS
        custom_domain: { name: ansible.com, use_sub_domain: no }
    register: change_account
    ignore_errors: yes
-
- - name: Debug
-   debug: var=change_account
-   when: playbook_debug
 
  - name: Assert CNAME failure
    assert: { that: "'custom domain name could not be verified' in  change_account['msg']" }
@@ -90,15 +71,12 @@
  - name: Update account tags
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}"
-       name: teststorageacct002
+       name: "{{ storage_account }}"
        tags:
            testing: testing
            delete: never
            galaxy: 'no'
    register: output
-
- - debug: var=output
-   when: playbook_debug
 
  - assert:
        that:
@@ -108,14 +86,11 @@
  - name: Update account tags
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}"
-       name: teststorageacct002
+       name: "{{ storage_account }}"
        tags:
            testing: testing
            delete: never
    register: output
-
- - debug: var=output
-   when: playbook_debug
 
  - assert:
        that:
@@ -126,11 +101,7 @@
  - name: Gather facts
    azure_rm_storageaccount_facts:
        resource_group: "{{ resource_group }}"
-       name: teststorageacct002
-   register: output
-
- - debug: var=output
-   when: playbook_debug
+       name: "{{ storage_account }}"
 
  - assert:
        that:
@@ -139,10 +110,6 @@
  - name: Gather facts
    azure_rm_storageaccount_facts:
        resource_group: "{{ resource_group }}"
-   register: output
-
- - debug: var=output
-   when: playbook_debug
 
  - assert:
        that:
@@ -151,9 +118,5 @@
  - name: Delete acccount
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}" 
-       name: teststorageacct002
+       name: "{{ storage_account }}"
        state: absent
-   register: output
-
- - debug: var=output
-   when: playbook_debug

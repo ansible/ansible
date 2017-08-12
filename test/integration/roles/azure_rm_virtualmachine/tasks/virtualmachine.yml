@@ -1,23 +1,19 @@
-- name: Create resource group
-  azure_rm_resourcegroup:
-      name: Testing
-      location: "{{ location }}"
-
 - name: Delete virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
       state: absent
+      vm_size: Standard_A0
   register: output
-  when: remove_vm
 
-- debug: var=output
-  when: playbook_debug
+- name: Create storage account name
+  set_fact:
+      storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
 
 - name: Create storage account
   azure_rm_storageaccount:
       resource_group: "{{ resource_group }}"
-      name: testingstorageacct001
+      name: "{{ storage_account }}"
       account_type: Standard_LRS
 
 - name: Create virtual network
@@ -57,8 +53,8 @@
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
-      vm_size: Standard_D1
-      storage_account: testingstorageacct001 
+      vm_size: Standard_A0
+      storage_account: "{{ storage_account }}"
       storage_container: testvm001
       storage_blob: testvm001.vhd
       admin_username: adminuser
@@ -66,21 +62,20 @@
       short_hostname: testvm
       os_type: Linux
       network_interfaces: testvm001
-      image: "{{ image }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
       restarted: yes
+      vm_size: Standard_A0
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -92,10 +87,8 @@
       resource_group: "{{ resource_group }}"
       name: testvm002
       allocated: no 
+      vm_size: Standard_A0
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -106,10 +99,8 @@
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
+      vm_size: Standard_A0
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -120,8 +111,8 @@
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
-      vm_size: Standard_D1
-      storage_account: testingstorageacct001 
+      vm_size: Standard_A0
+      storage_account: "{{ storage_account }}"
       storage_container: testvm001
       storage_blob: testvm001.vhd
       admin_username: adminuser
@@ -129,7 +120,11 @@
       short_hostname: testvm
       os_type: Linux
       network_interfaces: testvm001
-      image: "{{ image }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
   register: output
 
 - assert:
@@ -140,19 +135,14 @@
       resource_group: "{{ resource_group }}"
       name: testvm002
       state: absent
+      vm_size: Standard_A0
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: NIC should be gone
   azure_rm_networkinterface_facts:
       resource_group: "{{ resource_group }}"
       name: testvm001
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_networkinterfaces | length == 0
@@ -162,9 +152,6 @@
       resource_group: "{{ resource_group }}"
       name: testvm001
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_publicipaddresses | length == 0
