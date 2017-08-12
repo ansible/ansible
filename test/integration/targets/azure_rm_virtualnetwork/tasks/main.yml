@@ -1,21 +1,8 @@
-- name: Create resource group
-  azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
-    location: westus
-  register: output
-
-- debug: var=output
-  when: playbook_debug
-
 - name: Delete virtual network, if it exists
   azure_rm_virtualnetwork:
     name: my_test_network
     resource_group: "{{ resource_group }}"
     state: absent
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
@@ -32,9 +19,6 @@
     resource_group: "{{ resource_group }}"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
     that:
       - "output.state.address_prefixes | length == 2"
@@ -48,10 +32,6 @@
     name: my_test_network
     tags:
       - testing
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
     that: "azure_virtualnetworks | length == 1"
@@ -61,10 +41,6 @@
     resource_group: "{{ resource_group }}"
     tags:
       - testing
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
     that: "azure_virtualnetworks | length == 1"
@@ -73,10 +49,6 @@
   azure_rm_virtualnetwork_facts:
     tags:
       - testing
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
     that: "azure_virtualnetworks | length >= 1"
@@ -96,9 +68,6 @@
     resource_group: "{{ resource_group }}"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
     that: not output.changed
 
@@ -112,9 +81,6 @@
     resource_group: "{{ resource_group }}"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
      that: output.state.tags | length == 3
 
@@ -125,9 +91,6 @@
       testing: 'always'
     resource_group: "{{ resource_group }}"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
      that:
@@ -142,9 +105,6 @@
   register: output
   ignore_errors: yes
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that: output.failed
 
@@ -155,9 +115,6 @@
     purge_address_prefixes: true
     resource_group: "{{ resource_group }}"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
     that:
@@ -173,9 +130,6 @@
     resource_group: "{{ resource_group }}"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
     that: output.state['dns_servers'] is undefined
 
@@ -183,7 +137,6 @@
   azure_rm_virtualnetwork_facts:
     resource_group: "{{ resource_group }}"
     name: my_test_network
-  register: output
 
 - assert:
     that: "azure_virtualnetworks | length == 1"
@@ -193,4 +146,3 @@
     name: my_test_network
     resource_group: "{{ resource_group }}"
     state: absent
-  register: output

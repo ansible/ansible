@@ -1,57 +1,45 @@
-- name: Create resource group
-  azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
-    location: "{{ location }}"
-      
+- name: Create storage account name
+  set_fact:
+      storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
 - name: Create storage account
   azure_rm_storageaccount:
     resource_group: "{{ resource_group }}" 
-    name: testgroup03blobs
+    name: "{{ storage_account }}"
     account_type: Standard_LRS
     state: present
 
 - name: Create container
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs 
+    resource_group: "{{ resource_group }}"
+    account_name: "{{ storage_account }}"
     container_name: my-blobs
-  register: create_facts
-
-- debug: var=create_facts
-  when: playbook_debug
 
 - name: Force upload blob
   azure_rm_storageblob:
     resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs
+    account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
-    src: './roles/azure_rm_storageblob/files/Ratings.png'
+    src: './targets/azure_rm_storageblob/files/Ratings.png'
     content_type: image/png
     tags:
         val1: foo
         val2: bar
     force: yes 
-  register: upload_facts
-
-- debug: var=upload_facts
-  when: playbook_debug
 
 - name: Upload blob idempotence
   azure_rm_storageblob:
     resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs
+    account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
-    src: './roles/azure_rm_storageblob/files/Ratings.png'
+    src: './targets/azure_rm_storageblob/files/Ratings.png'
     content_type: image/png
     tags:
         val1: foo
         val2: bar
   register: upload_facts
-
-- debug: var=upload_facts
-  when: playbook_debug
 
 - assert:
       that: "not upload_facts.changed"
@@ -59,14 +47,11 @@
 - name: Download file idempotence 
   azure_rm_storageblob:
     resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs
+    account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
-    dest: './roles/azure_rm_storageblob/files/Ratings.png'
+    dest: './targets/azure_rm_storageblob/files/Ratings.png'
   register: download_results
-
-- debug: var=download_results 
-  when: playbook_debug
 
 - assert: 
       that: not download_results.changed
@@ -76,7 +61,7 @@
 - name: Download file 
   azure_rm_storageblob:
     resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs
+    account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
     dest: '/tmp/Ratings.png'
@@ -92,14 +77,11 @@
 
 - name: Do not delete container that has blobs 
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs 
+    resource_group: "{{ resource_group }}"
+    account_name: "{{ storage_account }}"
     container_name: my-blobs 
     state: absent
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: "not output.changed"
@@ -107,28 +89,22 @@
 - name: Delete blob object
   azure_rm_storageblob:
     resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs
+    account_name: "{{ storage_account }}"
     container_name: my-blobs 
     blob: "Ratings.png"
     state: absent
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: "output.changed"
 
 - name: Delete container 
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
-    account_name: testgroup03blobs 
+    resource_group: "{{ resource_group }}"
+    account_name: "{{ storage_account }}"
     container_name: my-blobs 
     state: absent
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: "output.changed"
@@ -136,10 +112,5 @@
 - name: Delete storage account
   azure_rm_storageaccount:
     resource_group: "{{ resource_group }}" 
-    location: "{{ location }}"
-    name: testgroup03blobs
+    name: "{{ storage_account }}"
     state: absent 
-  register: output
-
-- debug: var=output
-  when: playbook_debug
