@@ -149,6 +149,9 @@ Ansible Changes By Release
   absolute path.
 - The archive module has a new parameter exclude_path which lists paths to exclude from the archive
 - The yum module has a new parameter security which limits state=latest to security updates
+- The template module gained a follow parameter to match with copy and file.
+  Like those modules, template defaults this parameter to False.  Previously,
+  template hardcoded this to true.
 
 ### New Modules
 - aci
