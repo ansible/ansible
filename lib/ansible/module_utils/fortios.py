@@ -28,15 +28,15 @@
 #
 import os
 import time
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 # check for pyFG lib
 try:
     from pyFG import FortiOS, FortiConfig
-    from pyFG.exceptions import CommandExecutionException, FailedCommit
+    from pyFG.exceptions import FailedCommit
     HAS_PYFG = True
 except ImportError:
     HAS_PYFG = False
@@ -115,9 +115,9 @@ class AnsibleFortios(object):
 
             try:
                 self.forti_device.open()
-            except Exception:
-                e = get_exception()
-                self.module.fail_json(msg='Error connecting device. %s' % e)
+            except Exception as e:
+                self.module.fail_json(msg='Error connecting device. %s' % to_native(e),
+                                      exception=traceback.format_exc())
 
     def load_config(self, path):
         self.path = path
@@ -128,19 +128,19 @@ class AnsibleFortios(object):
                 f = open(self.module.params['config_file'], 'r')
                 running = f.read()
                 f.close()
-            except IOError:
-                e = get_exception()
-                self.module.fail_json(msg='Error reading configuration file. %s' % e)
+            except IOError as e:
+                self.module.fail_json(msg='Error reading configuration file. %s' % to_native(e),
+                                      exception=traceback.format_exc())
             self.forti_device.load_config(config_text=running, path=path)
 
         else:
             # get  config
             try:
                 self.forti_device.load_config(path=path)
-            except Exception:
+            except Exception as e:
                 self.forti_device.close()
-                e = get_exception()
-                self.module.fail_json(msg='Error reading running config. %s' % e)
+                self.module.fail_json(msg='Error reading running config. %s' % to_native(e),
+                                      exception=traceback.format_exc())
 
         # set configs in object
         self.result['running_config'] = self.forti_device.running_config.to_text()
@@ -163,16 +163,15 @@ class AnsibleFortios(object):
                     f = open(self.module.params['config_file'], 'w')
                     f.write(self.candidate_config.to_text())
                     f.close()
-                except IOError:
-                    e = get_exception()
-                    self.module.fail_json(msg='Error writing configuration file. %s' % e)
+                except IOError as e:
+                    self.module.fail_json(msg='Error writing configuration file. %s' %
+                                          to_native(e), exception=traceback.format_exc())
             else:
                 try:
                     self.forti_device.commit()
-                except FailedCommit:
+                except FailedCommit as e:
                     # Something's wrong (rollback is automatic)
                     self.forti_device.close()
-                    e = get_exception()
                     error_list = self.get_error_infos(e)
                     self.module.fail_json(msg_error_list=error_list, msg="Unable to commit change, check your args, the error was %s" % e.message)
 

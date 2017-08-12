@@ -19,9 +19,7 @@
 import os
 import re
 import socket
-import time
 import signal
-import json
 
 try:
     import paramiko
@@ -30,7 +28,6 @@ try:
 except ImportError:
     HAS_PARAMIKO = False
 
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkError
 from ansible.module_utils.six import BytesIO
 from ansible.module_utils._text import to_native
@@ -105,8 +102,7 @@ class Shell(object):
             raise ShellError('Unable to authenticate to remote device')
         except socket.timeout:
             raise ShellError("timeout trying to connect to remote device")
-        except socket.error:
-            exc = get_exception()
+        except socket.error as exc:
             if exc.errno == 60:
                 raise ShellError('timeout trying to connect to host')
             raise
@@ -147,8 +143,7 @@ class Shell(object):
                     if cmd:
                         resp = self.sanitize(cmd, resp)
                     return resp
-            except ShellError:
-                exc = get_exception()
+            except ShellError as exc:
                 exc.command = cmd['command']
                 raise
 
@@ -167,8 +162,7 @@ class Shell(object):
             signal.alarm(0)
 
             return (0, out, '')
-        except ShellError:
-            exc = get_exception()
+        except ShellError as exc:
             return (1, '', to_native(exc))
 
     def close(self):
@@ -236,8 +230,7 @@ class CliBase(object):
             self.shell.open(host, port=port, username=username,
                             password=password, key_filename=key_file)
 
-        except ShellError:
-            exc = get_exception()
+        except ShellError as exc:
             raise NetworkError(msg='failed to connect to %s:%s' % (host, port),
                                exc=to_native(exc))
 
@@ -277,8 +270,7 @@ class CliBase(object):
                     raise ShellError(err)
                 responses.append(out)
             return responses
-        except ShellError:
-            exc = get_exception()
+        except ShellError as exc:
             raise NetworkError(to_native(exc))
 
     def run_commands(self, x):

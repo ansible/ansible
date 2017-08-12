@@ -34,9 +34,6 @@ try:
 except ImportError:
     HAS_PSYCOPG2 = False
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.six import iteritems
-
 
 class LibraryError(Exception):
     pass

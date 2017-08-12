@@ -32,12 +32,12 @@ This module adds shared support for Apstra AOS modules
 
 In order to use this module, include it as part of your module
 
-from ansible.module_utils.aos import *
+from ansible.module_utils.aos import (check_aos_version, get_aos_session, find_collection_item,
+                                      content_to_dict, do_load_resource)
 
 """
 import json
 
-from ansible.module_utils.pycompat24 import get_exception
 from distutils.version import LooseVersion
 
 try:
@@ -52,6 +52,8 @@ try:
     HAS_AOS_PYEZ = True
 except ImportError:
     HAS_AOS_PYEZ = False
+
+from ansible.module_utils._text import to_native
 
 
 def check_aos_version(module, min=False):
@@ -172,8 +174,7 @@ def do_load_resource(module, collection, name):
         try:
             item.datum = module.params['content']
             item.write()
-        except:
-            e = get_exception()
-            module.fail_json(msg="Unable to write item content : %r" % e)
+        except Exception as e:
+            module.fail_json(msg="Unable to write item content : %r" % to_native(e))
 
     module.exit_json(changed=True, name=item.name, id=item.id, value=item.value)
