@@ -1,3 +1,7 @@
+- name: Create domain name
+  set_fact:
+      domain_name: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
 - name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
@@ -9,7 +13,7 @@
       resource_group: "{{ resource_group }}"
       name: testing01
       allocation_method: Static
-      domain_name: autotest01
+      domain_name: "{{ domain_name }}"
       tags:
           testing: testing
           delete: on-exit
@@ -18,7 +22,7 @@
 - assert:
       that:
           - output.state.public_ip_allocation_method == 'Static'
-          - output.state.dns_settings.domain_name_label == 'autotest01'
+          - output.state.dns_settings.domain_name_label == domain_name
           - output.state.tags | length == 2
           - output.state.tags.testing == 'testing'
 
@@ -27,7 +31,7 @@
       resource_group: "{{ resource_group }}"
       name: testing01
       allocation_method: Static
-      domain_name: autotest01
+      domain_name: "{{ domain_name }}"
       tags:
           testing: testing
           delete: on-exit
