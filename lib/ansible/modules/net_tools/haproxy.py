@@ -49,7 +49,8 @@ options:
     description:
       - Wait until the server has no active connections or until the timeout
         determined by wait_interval and wait_retries is reached.  Continue only
-        after the status changes to 'MAINT'."
+        after the status changes to 'MAINT'.  This overrides the
+        shutdown_sessions option.
     default: false
     version_added: "2.4"
   host:
@@ -61,7 +62,8 @@ options:
     description:
       - When disabling a server, immediately terminate all the sessions attached
         to the specified server. This can be used to terminate long-running
-        sessions after a server is put into maintenance mode.
+        sessions after a server is put into maintenance mode. Overridden by the
+        drain option.
     required: false
     default: false
   socket:
@@ -354,7 +356,7 @@ class HAProxy(object):
 
             # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
             if state[0]['status'] == status:
-                if not self.drain or (state[0]['scur'] == '0' and status == 'MAINT'):
+                if not self.drain or (state[0]['scur'] == '0' and state == 'MAINT'):
                     return True
             else:
                 time.sleep(self.wait_interval)
@@ -383,7 +385,7 @@ class HAProxy(object):
             cmd += "; shutdown sessions server $pxname/$svname"
         self.execute_for_backends(cmd, backend, host, 'MAINT')
 
-    def drain(self, host, backend):
+    def drain(self, host, backend, status='DRAIN'):
         """
         Drain action, sets the server to DRAIN mode.
         In this mode mode, the server will not accept any new connections
@@ -394,7 +396,7 @@ class HAProxy(object):
         # check if haproxy version suppots DRAIN state (starting with 1.5)
         if haproxy_version and (1, 5) <= haproxy_version:
             cmd = "set server $pxname/$svname state drain"
-            self.execute_for_backends(cmd, backend, host, 'DRAIN')
+            self.execute_for_backends(cmd, backend, host, status)
 
     def act(self):
         """
@@ -407,6 +409,8 @@ class HAProxy(object):
         # toggle enable/disbale server
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
+        elif self.state == 'disabled' and self.drain:
+            self.drain(self.host, self.backend, status='MAINT')
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
         elif self.state == 'drain':
