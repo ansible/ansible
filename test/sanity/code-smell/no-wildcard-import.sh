@@ -21,7 +21,6 @@ wildcard_imports=$(find . -path ./test/runner/.tox -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
-        -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/network/f5 -prune \
         -o -path ./lib/ansible/modules/network/nxos -prune \
         -o -path ./lib/ansible/modules/packaging/os -prune \

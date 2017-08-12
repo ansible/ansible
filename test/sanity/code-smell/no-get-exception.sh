@@ -9,7 +9,6 @@ get_exception=$(find . -path ./test/runner/.tox -prune \
         -o -path ./lib/ansible/module_utils/basic.py -prune \
         -o -path ./lib/ansible/modules/storage/netapp -prune \
         -o -path ./lib/ansible/modules/packaging/os -prune \
-        -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/network/panos -prune \
         -o -path ./lib/ansible/modules/network/nxos -prune \
         -o -path ./lib/ansible/modules/network/junos -prune \

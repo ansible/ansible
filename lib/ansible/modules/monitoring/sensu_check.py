@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Anders Ingemann <aim@secoya.dk>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -207,14 +196,11 @@ EXAMPLES = '''
     state: absent
 '''
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+import json
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def sensu_check(module, path, name, state='present', backup=False):
@@ -226,15 +212,14 @@ def sensu_check(module, path, name, state='present', backup=False):
         try:
             stream = open(path, 'r')
             config = json.load(stream)
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             if e.errno is 2:  # File not found, non-fatal
                 if state == 'absent':
                     reasons.append('file did not exist and state is `absent\'')
                     return changed, reasons
                 config = {}
             else:
-                module.fail_json(msg=str(e))
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         except ValueError:
             msg = '{path} contains invalid JSON'.format(path=path)
             module.fail_json(msg=msg)
@@ -349,9 +334,8 @@ def sensu_check(module, path, name, state='present', backup=False):
             try:
                 stream = open(path, 'w')
                 stream.write(json.dumps(config, indent=2) + '\n')
-            except IOError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except IOError as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         finally:
             if stream:
                 stream.close()
@@ -404,8 +388,6 @@ def main():
 
     module.exit_json(path=path, changed=changed, msg='OK', name=name, reasons=reasons)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

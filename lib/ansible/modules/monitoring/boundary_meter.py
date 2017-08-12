@@ -1,26 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# (c) 2013, curtis <curtis@serverascode.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-Ansible module to add boundary meters.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-(c) 2013, curtis <curtis@serverascode.com>
-
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -162,7 +147,7 @@ def create_meter(module, name, apiid, apikey):
         for cert_type in types:
             try:
                 # If we can't open the file it's not there, so we should download it
-                cert_file = open('%s/%s.pem' % (config_directory,cert_type))
+                dummy = open('%s/%s.pem' % (config_directory,cert_type))
             except IOError:
                 # Now download the file...
                 rc = download_request(module, name, apiid, apikey, cert_type)
