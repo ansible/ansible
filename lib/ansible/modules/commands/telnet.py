@@ -43,10 +43,11 @@ options:
     description:
         - timeout for remote operations
     default: 120
-  command:
+  prompts:
     description:
-        - Command to execute in telnet session
-    required: True
+      - List of prompts expected before sending next command
+    required: False
+    default: ['$']
   pause:
     description:
         - Seconds to pause between each command issued
@@ -59,11 +60,27 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Force ssh on IOS
+- name: send configuration commands to IOS
   telnet:
-    command: transport input ssh
     user: cisco
     password: cisco
+    login_prompt: "Username: "
+    prompts:
+      - "[>|#]"
+    commands:
+      - terminal length 0
+      - configure terminal
+      - hostname ios01
+
+- name: run show commands
+  telnet:
+    user: cisco
+    password: cisco
+    login_prompt: "Username: "
+    prompts:
+      - "[>|#]"
+    commands:
+      - terminal length 0
 '''
 
 RETURN = '''
