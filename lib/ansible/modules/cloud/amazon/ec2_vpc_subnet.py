@@ -1,17 +1,10 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -89,15 +82,15 @@ EXAMPLES = '''
 import time
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list, ec2_argument_spec
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_aws_connection_info
-from ansible.module_utils.ec2 import boto3_conn, boto3_tag_list_to_ansible_dict, HAS_BOTO3
-
 try:
     import botocore
 except ImportError:
     pass  # caught by imported boto3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list,
+                                      ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info,
+                                      boto3_conn, boto3_tag_list_to_ansible_dict, HAS_BOTO3)
 
 
 def get_subnet_info(subnet):

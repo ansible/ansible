@@ -1,8 +1,11 @@
 #!/usr/bin/python
 #
 # Copyright (c) 2017 Ansible Project
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -153,14 +156,9 @@ result:
 '''
 
 import hashlib
-import traceback
-import re
 import json
 import time
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils._text import to_bytes, to_text
+import traceback
 
 try:
     import boto3
@@ -168,6 +166,10 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils._text import to_text
 
 
 DP_ACTIVE_STATES = ['ACTIVE', 'SCHEDULED']
