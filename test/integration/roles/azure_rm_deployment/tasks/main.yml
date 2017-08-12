@@ -11,11 +11,7 @@
         value: testvm9910001
       ubuntuOSVersion:
         value: "14.04.2-LTS"
-    # debug: "{{ playbook_debug }}" 
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Add new instance to host group
   add_host:
