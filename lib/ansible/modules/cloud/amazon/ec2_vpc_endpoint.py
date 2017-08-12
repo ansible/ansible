@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -181,15 +173,15 @@ import json
 import time
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.six import string_types
-
 try:
     import botocore
 except ImportError:
     pass  # will be picked up by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3,
+                                      camel_dict_to_snake_dict)
+from ansible.module_utils.six import string_types
 
 
 def date_handler(obj):
@@ -198,7 +190,7 @@ def date_handler(obj):
 
 def wait_for_status(client, module, resource_id, status):
     polling_increment_secs = 15
-    max_retries = (module.params.get('wait_timeout') / polling_increment_secs)
+    max_retries = (module.params.get('wait_timeout') // polling_increment_secs)
     status_achieved = False
 
     for x in range(0, max_retries):
