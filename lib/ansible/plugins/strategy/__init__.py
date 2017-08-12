@@ -327,7 +327,7 @@ class StrategyBase:
         while True:
             try:
                 self._results_lock.acquire()
-                task_result = self._results.pop()
+                task_result = self._results.popleft()
             except IndexError:
                 break
             finally:
