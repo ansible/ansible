@@ -1,6 +1,6 @@
 - name: Create domain name
   set_fact:
-      domain_name: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+      domain_name: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
 
 - name: Remove public ip
   azure_rm_publicipaddress:
