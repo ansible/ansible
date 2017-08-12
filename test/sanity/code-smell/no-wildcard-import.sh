@@ -17,9 +17,6 @@ wildcard_imports=$(find . -path ./test/runner/.tox -prune \
         -o -path ./test/units/plugins/action/test_action.py \
         -o -path ./lib/ansible/compat/tests/mock.py -prune \
         -o -path ./lib/ansible/compat/tests/unittest.py \
-        -o -path ./lib/ansible/module_utils/api.py -prune \
-        -o -path ./lib/ansible/module_utils/cloud.py -prune \
-        -o -path ./lib/ansible/module_utils/aos.py -prune \
         -o -path ./test/units/modules/network/cumulus/test_nclu.py -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -path ./lib/ansible/modules/cloud/openstack -prune \

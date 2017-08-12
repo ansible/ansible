@@ -26,15 +26,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import signal
+import os
 import socket
 import struct
-import os
+import traceback
 import uuid
 
 from functools import partial
 
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
@@ -72,10 +71,9 @@ def exec_command(module, command):
         rc = int(recv_data(sf), 10)
         stdout = recv_data(sf)
         stderr = recv_data(sf)
-    except socket.error:
-        exc = get_exception()
+    except socket.error as e:
         sf.close()
-        module.fail_json(msg='unable to connect to socket', err=str(exc))
+        module.fail_json(msg='unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
 
     sf.close()
 
@@ -128,9 +126,9 @@ class Connection:
             data = self._module.jsonify(req)
             rc, out, err = exec_command(self._module, data)
 
-        except socket.error:
-            exc = get_exception()
-            self._module.fail_json(msg='unable to connect to socket', err=str(exc))
+        except socket.error as e:
+            self._module.fail_json(msg='unable to connect to socket', err=to_native(e),
+                                   exception=traceback.format_exc())
 
         try:
             response = self._module.from_json(to_text(out, errors='surrogate_then_replace'))
