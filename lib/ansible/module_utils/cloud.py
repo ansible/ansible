@@ -22,7 +22,7 @@ This module adds shared support for generic cloud modules
 In order to use this module, include it as part of a custom
 module as shown below.
 
-from ansible.module_utils.cloud import *
+from ansible.module_utils.cloud import CloudRetry
 
 The 'cloud' module provides the following common classes:
 
@@ -43,8 +43,6 @@ import random
 from functools import wraps
 import syslog
 import time
-
-from ansible.module_utils.pycompat24 import get_exception
 
 
 def _exponential_backoff(retries=10, delay=2, backoff=2, max_delay=60):
@@ -140,8 +138,7 @@ class CloudRetry(object):
                 for delay in backoff_strategy():
                     try:
                         return f(*args, **kwargs)
-                    except Exception:
-                        e = get_exception()
+                    except Exception as e:
                         if isinstance(e, cls.base_class):
                             response_code = cls.status_code_from_exception(e)
                             if cls.found(response_code):
