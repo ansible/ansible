@@ -1,7 +1,0 @@
-- block:
-  - name: create a virtual network
-    azure_rm_virtualnetwork:
-      resource_group: '{{ resource_group }}'
-      name: test
-      address_prefixes_cidr:
-        - "10.1.0.0/16"
