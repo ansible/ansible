@@ -219,6 +219,12 @@ class ActionModule(ActionBase):
         else:
             dest_file = self._connection._shell.join_path(dest)
 
+        # Create a tmp path if missing only if this is not recursive.
+        # If this is recursive we already have a tmp path.
+        if delete_remote_tmp:
+            if tmp is None or "-tmp-" not in tmp:
+                tmp = self._make_tmp_path()
+
         # Attempt to get remote file info
         dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=force)
 
@@ -246,19 +252,13 @@ class ActionModule(ActionBase):
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
-            # Create a tmp path if missing only if this is not recursive.
-            # If this is recursive we already have a tmp path.
-            if delete_remote_tmp:
-                if tmp is None or "-tmp-" not in tmp:
-                    tmp = self._make_tmp_path()
-
             if self._play_context.diff and not raw:
                 result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars))
 
             if self._play_context.check_mode:
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
-                module_return = dict(changed=True)
-                return module_return
+                result['changed'] = True
+                return result
 
             # Define a remote directory that we will copy the file to.
             tmp_src = self._connection._shell.join_path(tmp, 'source')
@@ -321,7 +321,7 @@ class ActionModule(ActionBase):
             # If checksums match, and follow = True, find out if 'dest' is a link. If so,
             # change it to point to the source of the link.
             if follow:
-                dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=False)
+                dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, tmp=tmp, follow=False)
                 if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow.keys():
                     dest = dest_status_nofollow['lnk_source']
 
@@ -345,7 +345,8 @@ class ActionModule(ActionBase):
         if not module_return.get('checksum'):
             module_return['checksum'] = local_checksum
 
-        return module_return
+        result.update(module_return)
+        return result
 
     def _get_file_args(self):
         new_module_args = {'recurse': False}
