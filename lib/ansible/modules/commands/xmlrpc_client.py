@@ -39,11 +39,9 @@ options:
     args:
         description:
             - A list of arguments for the RPC call. Placed first in any RPC call.
-        required: false
     kwargs:
         description:
             - A dictionary of arguments for the RPC call. Comes after the args list.
-        required: false
 
 author:
     - Stefan Midjich (@stemid)
@@ -113,8 +111,8 @@ def run_module():
     module_args = dict(
         url=dict(type='str', required=True),
         path=dict(type='str', required=True),
-        args=dict(type='list', required=False, default=[]),
-        kwargs=dict(type='dict', required=False, default={})
+        args=dict(type='list', default=[]),
+        kwargs=dict(type='dict', default={})
     )
 
     result = dict(
@@ -130,6 +128,7 @@ def run_module():
     try:
         server = ServerProxy(module.params['url'])
     except Exception as e:
+        # Perhaps handle this with fail_json, that's why it's in a try block.
         raise
 
     # Only check if the RPC path exists in dry run
