@@ -42,6 +42,7 @@ class ActionModule(ActionBase):
 
             login_prompt = self._task.args.get('login_prompt', "login: ")
             password_prompt = self._task.args.get('password_prompt', "Password: ")
+            prompts = self._task.args.get('prompts', "$ ")
             commands = self._task.args.get('command')
 
             if isinstance(commands, text_type):
@@ -54,15 +55,18 @@ class ActionModule(ActionBase):
                 output = []
                 try:
                     tn.read_until(login_prompt)
-                    tn.write('%s\n' % user)
+                    tn.write('%s\n' % to_native(user))
 
                     if password:
                         tn.read_until(password_prompt)
-                        tn.write('%s\n' % password)
+                        tn.write('%s\n' % to_native(password))
+
+                    tn.expect(prompts)
 
                     for cmd in commands:
-                        tn.write(cmd)
-                        output.append(tn.read_until(''))
+                        tn.write('%s\n' % to_native(cmd))
+                        index, match, out = tn.expect(prompts)
+                        output.append(out)
                         sleep(pause)
 
                     tn.write("exit\n")
@@ -76,6 +80,6 @@ class ActionModule(ActionBase):
                     result['output'] = output
             else:
                 result['failed'] = True
-                result['msg'] = 'Telnet requries a command to execute'
+                result['msg'] = 'Telnet requires a command to execute'
 
         return result
