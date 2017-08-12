@@ -25,23 +25,23 @@ author:
 options:
   names:
     description:
-      - Comma-separated list of plugin names
+      - Comma-separated list of plugin names.
     required: true
     aliases: [name]
   new_only:
     description:
-      - Only enable missing plugins
-      - Does not disable plugins that are not in the names list
+      - Only enable missing plugins.
+      - Does not disable plugins that are not in the names list.
     type: bool
     default: "no"
   state:
     description:
-      - Specify if plugins are to be enabled or disabled
+      - Specify if plugins are to be enabled or disabled.
     default: enabled
     choices: [enabled, disabled]
   prefix:
     description:
-      - Specify a custom install prefix to a Rabbit
+      - Specify a custom install prefix to a Rabbit.
     version_added: "1.3"
 '''
 
