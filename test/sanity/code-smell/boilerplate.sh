@@ -24,7 +24,6 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
-        -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/network/aos -prune \
         -o -path ./lib/ansible/modules/network/avi -prune \
         -o -path ./lib/ansible/modules/network/cloudengine -prune \
@@ -44,7 +43,6 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
         -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
-        -o -path ./lib/ansible/modules/monitoring -prune \
         -o -path ./lib/ansible/modules/network/aos -prune \
         -o -path ./lib/ansible/modules/network/avi -prune \
         -o -path ./lib/ansible/modules/network/cloudengine -prune \

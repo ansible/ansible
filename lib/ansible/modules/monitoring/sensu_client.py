@@ -171,9 +171,10 @@ file:
   sample: "/etc/sensu/conf.d/client.json"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 import json
 import os
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
