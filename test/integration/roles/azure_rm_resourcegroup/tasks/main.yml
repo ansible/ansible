@@ -1,14 +1,15 @@
+- name: Get resource group
+  azure_rm_resourcegroup_facts:
+    name: "{{ resource_group }}"
+
 - name: Create resource group
   azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
-    location: "{{ location }}"
+    name: "{{ resource_prefix }}"
+    location: "{{ azure_resourcegroups[0].location }}"
     tags:
       testing: testing
       delete: never
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -18,29 +19,23 @@
 
 - name: Should be idempotent
   azure_rm_resourcegroup:
-    name: Testing
-    location: "{{ location }}"
+    name: "{{ resource_prefix }}"
     tags:
       testing: testing
       delete: never
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
     that: not output.changed
 
 - name: Change resource group tags
   azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
+    name: "{{ resource_prefix }}"
     tags:
       testing: 'no'
       delete: 'on-exit'
       foo: 'bar'
   register: output
-
-- debug: var=output
 
 - assert:
    that:
@@ -56,22 +51,17 @@
       - foo:bar
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that: azure_resourcegroups | length == 1
 
 - name: Purge one tag
   azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
+    name: "{{ resource_prefix }}"
     tags:
       testing: 'no'
       delete: 'on-exit'
     debug: yes
   register: output
-
-- debug: var=output
 
 - assert:
     that:
@@ -81,10 +71,8 @@
 
 - name: Purge no tags
   azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
+    name: "{{ resource_prefix }}"
   register: output
-
-- debug: var=output
 
 - assert:
     that:
@@ -92,11 +80,9 @@
 
 - name: Purge all tags
   azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
+    name: "{{ resource_prefix }}"
     tags: {}
   register: output
-
-- debug: var=output
 
 - assert:
     that:
@@ -104,14 +90,14 @@
 
 - name: Add a resource
   azure_rm_virtualnetwork:
-    resource_group: "{{ resource_group }}"
+    resource_group: "{{ resource_prefix }}"
     name: "virtualnet01"
     address_prefixes_cidr: '10.1.0.0/16'
   register: output
 
 - name: Remove resource group should fail
   azure_rm_resourcegroup:
-    name: "{{ resource_group }}"
+    name: "{{ resource_prefix }}"
     state: absent
   register: output
   ignore_errors: yes
@@ -127,16 +113,10 @@
       location: "{{ location }}"
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Gather facts for a resource group
   azure_rm_resourcegroup_facts:
       name: "{{ resource_group }}"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_resourcegroups | length == 1
@@ -144,9 +124,6 @@
 - name: Gather facts for all resource groups
   azure_rm_resourcegroup_facts:
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_resourcegroups | length > 1
@@ -158,14 +135,8 @@
     force: yes
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - name: Remove second resource group
   azure_rm_resourcegroup:
     name: Testing2
     state: absent
   register: output
-
-- debug: var=output
-  when: playbook_debug

@@ -7,9 +7,6 @@
     version: '7.1.20150731'
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that: azure_vmimages | length == 1
 
@@ -21,9 +18,6 @@
     sku: '7.1'
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that: azure_vmimages | length > 0
 
@@ -33,20 +27,13 @@
     publisher: OpenLogic
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that: azure_vmimages | length > 0
-
 
 - name: List available publishers
   azure_rm_virtualmachineimage_facts:
     location: "{{ location }}"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_vmimages | length > 0

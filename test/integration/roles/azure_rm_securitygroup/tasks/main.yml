@@ -1,8 +1,3 @@
-- name: Create resource group
-  azure_rm_resourcegroup:
-      name: "{{ resource_group }}"
-      location: "{{ location }}"
-
 - name: Create security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
@@ -28,9 +23,6 @@
             direction: Inbound
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert: { that: "{{ output.state.rules | length }} == 2" }
 
 - name: Gather facts by tags
@@ -40,9 +32,6 @@
         - testing
         - foo:bar
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_securitygroups | length == 1
@@ -64,9 +53,6 @@
             priority: 102
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert: { that: "{{ output.state.rules | length }} == 3" }
 
 - name: Test idempotence
@@ -86,9 +72,6 @@
             priority: 102
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that: not output.changed
 
@@ -101,9 +84,6 @@
           delete: never
           baz: bar
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -119,9 +99,6 @@
           delete: on-exit
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.state.tags | length == 2
@@ -133,9 +110,6 @@
       name: mysecgroup
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - azure_securitygroups | length == 1
@@ -144,9 +118,6 @@
   azure_rm_securitygroup_facts:
       resource_group: "{{ resource_group }}"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -163,9 +134,6 @@
   azure_rm_securitygroup_facts:
       resource_group: "{{ resource_group }}"
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:

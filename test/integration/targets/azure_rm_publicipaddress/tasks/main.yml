@@ -1,17 +1,8 @@
-- name: Create resource group
-  azure_rm_resourcegroup:
-      name: "{{ resource_group }}"
-      location: "{{ location }}"
-
 - name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       name: testing01
       state:  absent
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - name: Create public ip
   azure_rm_publicipaddress:
@@ -23,9 +14,6 @@
           testing: testing
           delete: on-exit
   register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that:
@@ -45,9 +33,6 @@
           delete: on-exit
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that: not output.changed
 
@@ -61,9 +46,6 @@
           foo: bar
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.state.tags | length == 3
@@ -75,10 +57,6 @@
       tags:
           - testing
           - foo:bar
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_publicipaddresses | length == 1
@@ -90,9 +68,6 @@
       tags: {}
   register: output
 
-- debug: var=output
-  when: playbook_debug
-
 - assert:
       that:
           - output.state.tags | length == 0
@@ -101,10 +76,6 @@
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
       name: testing01
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_publicipaddresses | length == 1
@@ -112,28 +83,20 @@
 - name: Gather facts for all public ips
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-  register: output
-
-- debug: var=output
-  when: playbook_debug
 
 - assert:
       that: azure_publicipaddresses | length > 0
 
-- name: Remove all public ips
+- name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: "{{ item.name }}"
+      name: testing01
       state:  absent
-  with_items: "{{ azure_publicipaddresses }}"
 
-- name: Gather facts for all public ips
+- name: Gather facts for a public ip
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-  register: output
-
-- debug: var=output
-  when: playbook_debug
+      name: testing01
 
 - assert:
       that: azure_publicipaddresses | length == 0
