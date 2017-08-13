@@ -109,7 +109,8 @@ requirements:
 - lxml >= 2.3.0
 notes:
 - This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
-- Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter on all children of an element where namespace is defined, unless another namespace is defined.
+- Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter.
+- Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
 author:
 - Tim Bielawa (@tbielawa)
 - Magnus Hedemark (@magnus919)
