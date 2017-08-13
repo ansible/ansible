@@ -926,3 +926,15 @@
     - stat_file_in_dir_result.stat.isreg
     - stat_circular_symlink_result.stat.exists
     - stat_circular_symlink_result.stat.islnk
+
+# src is a file, dest is a non-existent directory: checks that dest is created
+- include: dest_in_non_existent_dir.yml
+  with_items:
+    - { src: 'foo.txt', dest: 'sub_dir2/', check: 'foo.txt' }
+    - { src: 'subdir', dest: 'sub_dir2/', check: 'subdir/bar.txt' }
+    - { src: 'subdir/', dest: 'sub_dir2/', check: 'bar.txt' }
+    - { src: 'subdir', dest: 'sub_dir2', check: 'subdir/bar.txt' }
+    - { src: 'subdir/', dest: 'sub_dir2', check: 'bar.txt' }
+
+# src is a file, dest is file in a non-existent directory: checks that a failure occurs
+- include: src_file_dest_file_in_non_existent_dir.yml
