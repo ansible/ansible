@@ -45,41 +45,39 @@ EXAMPLES = '''
 
 RETURN = '''
 # Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#floating-ips
-data:
+floating_ips:
     description: a DigitalOcean Floating IP resource
     returned: success and no resource constraint
-    type: dict
-    result: {
-      "floating_ips": [
-        {
-          "ip": "45.55.96.47",
-          "droplet": null,
-          "region": {
-            "name": "New York 3",
-            "slug": "nyc3",
-            "sizes": [
-              "512mb",
-              "1gb",
-              "2gb",
-              "4gb",
-              "8gb",
-              "16gb",
-              "32gb",
-              "48gb",
-              "64gb"
-            ],
-            "features": [
-              "private_networking",
-              "backups",
-              "ipv6",
-              "metadata"
-            ],
-            "available": true
-          },
-          "locked": false
-        }
-      ],
-    }
+    type: list
+    sample: [
+      {
+        "ip": "45.55.96.47",
+        "droplet": null,
+        "region": {
+          "name": "New York 3",
+          "slug": "nyc3",
+          "sizes": [
+            "512mb",
+            "1gb",
+            "2gb",
+            "4gb",
+            "8gb",
+            "16gb",
+            "32gb",
+            "48gb",
+            "64gb"
+          ],
+          "features": [
+            "private_networking",
+            "backups",
+            "ipv6",
+            "metadata"
+          ],
+          "available": true
+        },
+        "locked": false
+      }
+    ]
 '''
 
 import json
