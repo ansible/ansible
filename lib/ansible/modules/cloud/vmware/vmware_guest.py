@@ -25,6 +25,7 @@ version_added: '2.2'
 author:
 - James Tanner (@jctanner) <tanner.jc@gmail.com>
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
+- Steve Jacobs (@stevejacobs) <sjacobs@brokencrew.com>
 notes:
 - Tested on vSphere 5.5 and 6.0
 requirements:
@@ -99,7 +100,7 @@ options:
     - A list of disks to add.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
-    - ' - C(type) (string): Valid value is C(thin) (default: None).'
+    - ' - C(type) (string): Valid value is C(thin) or C(eagerzeroedthick) (default: None).'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore.'
   resource_pool:
@@ -971,6 +972,8 @@ class PyVmomiHelper(object):
             if 'type' in expected_disk_spec:
                 if expected_disk_spec.get('type', '').lower() == 'thin':
                     diskspec.device.backing.thinProvisioned = True
+                if expected_disk_spec.get('type', '').lower() == 'eagerzeroedthick':
+                    diskspec.device.backing.eagerlyScrub = True
 
             # which datastore?
             if expected_disk_spec.get('datastore'):
