@@ -32,11 +32,11 @@ All software has bugs, and Ansible is no exception. When you find a bug, you can
 If you should discover that the bug you're trying to file already exists in an issue, you can help by verifying the behavior of the reported bug with a comment in that issue, or by reporting any additional information.
 
 Review and submit pull requests
-----------------------------
+-------------------------------
 
 As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you've got a solution to a bug you've found in Ansible, or if you've got a new feature that you've written and would like to share with millions of Ansible users, read all about the `Ansible development process <http://docs.ansible.com/ansible/latest/community/development_process.rst>` to learn how to get your code accepted into Ansible.
 
-Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/byfile.html>`, so if there's a particular module or plug-in that particularly interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback. 
+Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/byfile.html>`, so if there's a particular module or plug-in that particularly interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback.
 
 Become a module maintainer
 --------------------------
