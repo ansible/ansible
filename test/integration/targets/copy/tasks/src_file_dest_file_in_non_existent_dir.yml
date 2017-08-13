@@ -6,7 +6,7 @@
 - name: Copy file, dest is a file in non-existing target directory
   copy:
     src: foo.txt
-    dest: '{{ remote_dir }}/new_sub_dir1/sub_dir2/foo.txt'
+    dest: '{{ dest }}'
   register: copy_result
   ignore_errors: True
 
