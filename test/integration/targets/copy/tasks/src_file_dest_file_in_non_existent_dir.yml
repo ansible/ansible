@@ -1,0 +1,26 @@
+- name: Ensure that dest directory doesn't exist
+  file:
+    path: '{{ remote_dir }}/new_sub_dir1'
+    state: absent
+
+- name: Copy file, dest is a file in non-existing target directory
+  copy:
+    src: foo.txt
+    dest: '{{ remote_dir }}/new_sub_dir1/sub_dir2/foo.txt'
+  register: copy_result
+  ignore_errors: True
+
+- name: Assert copy failed
+  assert:
+    that:
+      - 'copy_result|failed'
+
+- name: Stat the dest
+  stat:
+    path: '{{ remote_dir }}/new_sub_dir1'
+  register: stat_file_in_dir_result
+
+- name: assert that dest doesn't exist
+  assert:
+    that:
+      - 'not stat_file_in_dir_result.stat.exists'
