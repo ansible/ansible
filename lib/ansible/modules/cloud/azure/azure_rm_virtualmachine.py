@@ -113,13 +113,11 @@ options:
         aliases:
             - storage_blob
     managed_disk_type:
-            description:
+        description:
             - Managed OS disk type
         choices:
             - Standard_LRS
             - Premium_LRS
-        default:
-            - Standard_LRS
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -137,6 +135,34 @@ options:
             - Linux
         default:
             - Linux
+    data_disk_lun:
+        description:
+            - The logical unit number for data disk
+        default: 0
+    data_disk_size_gb:
+        description:
+            - The initial disk size in GB for blank data disks
+    data_disk_managed_disk_type:
+        description:
+            - Managed data disk type
+        choices:
+            - Standard_LRS
+            - Premium_LRS
+    data_disk_storage_account_name:
+        description:
+            - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
+              a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+    data_disk_storage_container_name:
+        description:
+            - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
+              default container will created.
+        default: vhds
+    data_disk_storage_blob_name:
+        description:
+            - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
+              the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
+        aliases:
+            - data_disk_storage_blob
     public_ip_allocation_method:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
@@ -912,12 +938,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 managed_disk=managed_disk
                             ),
                             data_disk=DataDisk(
-                                lun=vm_dict['properties']['storageProfile']['dataDisk']['lun'],
-                                name=vm_dict['properties']['storageProfile']['dataDisk']['name'],
+                                lun=vm_dict['properties']['storageProfile']['dataDisks']['lun'],
+                                name=vm_dict['properties']['storageProfile']['dataDisks']['name'],
                                 vhd=data_disk_vhd,
-                                caching=vm_dict['properties']['storageProfile']['dataDisk']['caching'],
-                                create_option=vm_dict['properties']['storageProfile']['dataDisk']['createOption'],
-                                disk_size_gb=vm_dict['properties']['storageProfile']['dataDisk']['diskSizeGb'],
+                                caching=vm_dict['properties']['storageProfile']['dataDisks']['caching'],
+                                create_option=vm_dict['properties']['storageProfile']['dataDisks']['createOption'],
+                                disk_size_gb=vm_dict['properties']['storageProfile']['dataDisks']['diskSizeGb'],
                                 managed_disk=data_disk_managed_disk
                             ),
                             image_reference=ImageReference(
