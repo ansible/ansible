@@ -110,6 +110,7 @@ requirements:
 notes:
 - This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
 - Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter.
+- Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
 author:
 - Tim Bielawa (@tbielawa)
 - Magnus Hedemark (@magnus919)
@@ -177,6 +178,26 @@ EXAMPLES = r'''
     path: /foo/bar.xml
     xpath: /business/website
     children: []
+
+# In case of namespaces, like in below XML, they have to be explicitely stated
+# Note: there's the prefix "x" in front of the "bar", too
+#<?xml version='1.0' encoding='UTF-8'?>
+#<foo xmlns="http://x.test" xmlns:attr="http://z.test">
+#  <bar>
+#    <baz xmlns="http://y.test" attr:my_namespaced_attribute="true" />
+#  </bar>
+#</foo>
+
+- name: Set namespaced '/x:foo/x:bar/y:baz/@z:my_namespaced_attribute' to 'false'
+  xml:
+    path: foo.xml
+    xpath: /x:foo/x:bar/y:baz
+    namespaces:
+      x: http://x.test
+      y: http://y.test
+      z: http://z.test
+    attribute: z:my_namespaced_attribute
+    value: "false"
 '''
 
 RETURN = r'''
