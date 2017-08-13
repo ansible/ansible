@@ -40,20 +40,25 @@ class CallbackModule(CallbackBase):
 
 
     def _get_task_display_name(self, task):
+        self.task_display_name = None
         display_name = task.get_name().strip().split(" : ")
 
         if len(display_name) > 1:
             display_name_index = 1
         else:
             display_name_index = 0
-
-        self.task_display_name = display_name[display_name_index].capitalize()
+        task_display_name = display_name[display_name_index]
+        if task_display_name == "include" or task_display_name == "include_vars":
+            return
+        else:
+            self.task_display_name = task_display_name
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         # TODO only display task if it will not be skipped for any hosts
         # Should be able to achieve this by only running display on ok, changed, and failed
         self._get_task_display_name(task)
-        self._display.display("%s..." % self.task_display_name)
+        if self.task_display_name is not None:
+            self._display.display("%s..." % self.task_display_name)
 
     def v2_playbook_on_handler_task_start(self, task):
         self._get_task_display_name(task)
@@ -192,7 +197,7 @@ class CallbackModule(CallbackBase):
                         self._display.vvvv('%s: %s' % (option, val))
 
     def v2_runner_retry(self, result):
-        msg = "Retrying... (%d of %d)" % (result._result['attempts'], result._result['retries'])
+        msg = "  Retrying... (%d of %d)" % (result._result['attempts'], result._result['retries'])
         if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
