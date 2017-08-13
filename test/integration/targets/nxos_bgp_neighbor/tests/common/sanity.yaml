@@ -1,5 +1,5 @@
 ---
-- debug: msg="START TRANSPORT:CLI nxos_bgp_neighbor sanity test"
+- debug: msg="START TRANSPORT:{{ connection.transport}} nxos_bgp_neighbor sanity test"
 
 - set_fact: intname="{{ nxos_int1 }}"
 
@@ -13,19 +13,19 @@
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp: &remove
     asn: 65535
     state: absent
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
   - name: "Configure BGP neighbor defaults"
-    nxos_bgp_neighbor: &configure_default 
+    nxos_bgp_neighbor: &configure_default
       asn: 65535
       neighbor: 3.3.3.3
       local_as: 20
@@ -33,7 +33,7 @@
       description: "just a description"
       update_source: "{{ intname.capitalize() }}"
       state: present
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -79,7 +79,7 @@
       timers_holdtime: 270
       update_source: loopback151
       state: present
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -103,7 +103,7 @@
       remote_as: 30
       pwd: '386c0565965f89de'
       pwd_type: 3des
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -127,7 +127,7 @@
       remote_as: 30
       pwd: '386c0565965f89de'
       pwd_type: cisco_type_7
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -150,7 +150,7 @@
       neighbor: 3.3.3.3
       remote_as: 30
       transport_passive_only: true
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
   - assert: *true
 
@@ -172,7 +172,7 @@
       neighbor: 3.3.3.3
       remote_as: 30
       transport_passive_only: false
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
   - assert: *true
 
@@ -198,6 +198,6 @@
     nxos_feature: &disable_bgp
       feature: bgp
       state: disabled
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
 
-- debug: msg="END TRANSPORT:CLI nxos_bgp_neighbor sanity test"
+- debug: msg="END TRANSPORT:{{ connection.transport}} nxos_bgp_neighbor sanity test"
