@@ -1,19 +1,7 @@
 #!/usr/bin/python
-# (c) 2016, Pierre Jodouin <pjodouin@virtualcomputing.solutions>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+# Copyright (c) 2016, Pierre Jodouin <pjodouin@virtualcomputing.solutions>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -32,15 +20,17 @@ description:
 
 version_added: "2.4"
 
-author: Pierre Jodouin (@pjodouin)
+author:
+  - Pierre Jodouin (@pjodouin)
+  - Michael De La Rue (@mikedlr)
 options:
   function_name:
     description:
-      - Name of the Lambda function whose resource policy you are updating by adding a new permission.
-      - "You can specify a function name (for example, Thumbnail ) or you can specify Amazon Resource Name (ARN) of the
-        function (for example, arn:aws:lambda:us-west-2:account-id:function:ThumbNail ). AWS Lambda also allows you to
-        specify partial ARN (for example, account-id:Thumbnail ). Note that the length constraint applies only to the
-        ARN. If you specify only the function name, it is limited to 64 character in length."
+      - "Name of the Lambda function whose resource policy you are updating by adding a new permission."
+      - "You can specify a function name (for example, Thumbnail ) or you can specify Amazon Resource Name (ARN) of the"
+      - "function (for example, arn:aws:lambda:us-west-2:account-id:function:ThumbNail ). AWS Lambda also allows you to"
+      - "specify partial ARN (for example, account-id:Thumbnail ). Note that the length constraint applies only to the"
+      - "ARN. If you specify only the function name, it is limited to 64 character in length."
     required: true
     aliases: ['lambda_function_arn', 'function_arn']
 
@@ -54,18 +44,16 @@ options:
   alias:
     description:
       - Name of the function alias. Mutually exclusive with C(version).
-    required: false
 
   version:
     description:
       -  Version of the Lambda function. Mutually exclusive with C(alias).
-    required: false
+    default: 0
 
   statement_id:
     description:
       -  A unique statement identifier.
     required: true
-    default: none
     aliases: ['sid']
 
   action:
@@ -74,7 +62,6 @@ options:
          lambda: followed by the API name (see Operations ). For example, lambda:CreateFunction . You can use wildcard
          (lambda:* ) to grant permission for all AWS Lambda actions."
     required: true
-    default: none
 
   principal:
     description:
@@ -83,15 +70,12 @@ options:
          any valid AWS service principal such as sns.amazonaws.com . For example, you might want to allow a custom
          application in another AWS account to push events to AWS Lambda by invoking your function."
     required: true
-    default: none
 
   source_arn:
     description:
       -  This is optional; however, when granting Amazon S3 permission to invoke your function, you should specify this
          field with the bucket Amazon Resource Name (ARN) as its value. This ensures that only events generated from
          the specified bucket can invoke the function.
-    required: false
-    default: none
 
   source_account:
     description:
@@ -100,14 +84,10 @@ options:
          specify is owned by a specific account (it is possible the bucket owner deleted the bucket and some other AWS
          account created the bucket). You can also use this condition to specify all sources (that is, you don't
          specify the SourceArn ) owned by a specific account.
-    required: false
-    default: none
 
   event_source_token:
     description:
       -  Token string representing source ARN or account. Mutually exclusive with C(source_arn) or C(source_account).
-    required: false
-    default: none
 
 requirements:
     - boto3
@@ -149,53 +129,13 @@ lambda_policy_action:
 
 import json
 import re
-import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, get_aws_connection_info, boto3_conn, ec2_argument_spec, camel_dict_to_snake_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
-
-# ---------------------------------------------------------------------------------------------------
-#
-#   Helper Functions & classes
-#
-# ---------------------------------------------------------------------------------------------------
-
-class AWSConnectionException(Exception):
-    pass
-
-
-class AWSConnection:
-    """
-    Create the connection object and client objects as required.
-    """
-
-    def __init__(self, ansible_obj, resources, boto3=True):
-
-        try:
-            self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(
-                ansible_obj, boto3=boto3)
-            if not self.region:
-                raise AWSConnectionException('region must be specified')
-
-            self.resource_client = dict()
-            if not resources:
-                resources = ['lambda']
-
-            resources.append('iam')
-
-            for resource in resources:
-                aws_connect_kwargs.update(dict(region=self.region,
-                                               endpoint=self.endpoint,
-                                               conn_type='client',
-                                               resource=resource
-                                               ))
-                self.resource_client[resource] = boto3_conn(ansible_obj, **aws_connect_kwargs)
-
-        except Exception as e:
-            fail_json_aws(ansible_obj, e, msg="setting up AWS connection")
-
-    def client(self, resource='lambda'):
-        return self.resource_client[resource]
+try:
+    from botocore.exceptions import ClientError
+except:
+    pass  # will be protected by AnsibleAWSModule
 
 
 def pc(key):
@@ -233,33 +173,40 @@ def set_api_params(module, module_params):
     api_params = dict()
 
     for param in module_params:
-        module_param = module.params.get(param, None)
+        module_param = module.params.get(param)
         if module_param is not None:
             api_params[pc(param)] = module_param
 
     return api_params
 
 
-def validate_params(module, aws):
+def validate_params(module):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
     :return:
     """
 
     function_name = module.params['function_name']
 
     # validate function name
-    if not re.search('^[\w\-:]+$', function_name):
-        module.fail_json(
-            msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(
-                function_name)
-        )
-    if len(function_name) > 64:
-        module.fail_json(
-            msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
+    if function_name.startswith('arn:'):
+        if not re.search('^[\w\-]+$', function_name):
+            module.fail_json(
+                msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(
+                    function_name)
+            )
+        if len(function_name) > 64:
+            module.fail_json(
+                msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
+    else:
+        if not re.search('^[\w\-:]+$', function_name):
+            module.fail_json(
+                msg='ARN {0} is invalid. ARNs must contain only alphanumeric characters, hyphens and colons.'.format(function_name)
+            )
+        if len(function_name) > 140:
+            module.fail_json(msg='ARN name "{0}" exceeds 140 character limit'.format(function_name))
 
     return
 
@@ -281,55 +228,48 @@ def get_qualifier(module):
     return qualifier
 
 
-# There is a PR open to merge fail_json_aws this into the standard module code;
-# see https://github.com/ansible/ansible/pull/23882
-def fail_json_aws(module, exception, msg=None):
-    """call fail_json with processed exception
-    function for converting exceptions thrown by AWS SDK modules,
-    botocore, boto3 and boto, into nice error messages.
+def extract_statement(policy, sid):
+    """return flattened single policy statement from a policy
+
+    If a policy statement is present in the policy extract it and
+    return it in a flattened form.  Otherwise return an empty
+    dictionary.
     """
-    last_traceback = traceback.format_exc()
+    if 'Statement' not in policy:
+        return {}
+    policy_statement = {}
+    # Now that we have the policy, check if required permission statement is present and flatten to
+    # simple dictionary if found.
+    for statement in policy['Statement']:
+        if statement['Sid'] == sid:
+            policy_statement['action'] = statement['Action']
+            policy_statement['principal'] = statement['Principal']['Service']
+            try:
+                policy_statement['source_arn'] = statement['Condition']['ArnLike']['AWS:SourceArn']
+            except KeyError:
+                pass
+            try:
+                policy_statement['source_account'] = statement['Condition']['StringEquals']['AWS:SourceAccount']
+            except KeyError:
+                pass
+            try:
+                policy_statement['event_source_token'] = statement['Condition']['StringEquals']['lambda:EventSourceToken']
+            except KeyError:
+                pass
+            break
 
-    try:
-        except_msg = exception.message
-    except AttributeError:
-        except_msg = str(exception)
-
-    if msg is not None:
-        message = '{0}: {1}'.format(msg, except_msg)
-    else:
-        message = except_msg
-
-    try:
-        response = exception.response
-    except AttributeError:
-        response = None
-
-    if response is None:
-        module.fail_json(msg=message, exception=last_traceback)
-    else:
-        module.fail_json(msg=message, exception=last_traceback,
-                         **camel_dict_to_snake_dict(response))
+    return policy_statement
 
 
-# ---------------------------------------------------------------------------------------------------
-#
-#   Lambda policy permission functions
-#
-# ---------------------------------------------------------------------------------------------------
-
-def get_policy_statement(module, aws):
-    """
-    Checks that policy exists and if so, that statement ID is present or absent.
+def get_policy_statement(module, client):
+    """Checks that policy exists and if so, that statement ID is present or absent.
 
     :param module:
-    :param aws:
+    :param client:
     :return:
     """
 
-    client = aws.client('lambda')
     policy = dict()
-    policy_statement = dict()
     sid = module.params['statement_id']
 
     # set API parameters
@@ -338,45 +278,26 @@ def get_policy_statement(module, aws):
     if qualifier:
         api_params.update(Qualifier=qualifier)
 
+    policy_results = None
     # check if function policy exists
     try:
-        # get_policy returns a JSON string so must convert to dict before reassigning to its key
         policy_results = client.get_policy(**api_params)
-        policy = json.loads(policy_results.get('Policy', '{}'))
-
-    except Exception as e:
+    except ClientError as e:
         try:
-            rc = e.response['Error']['Code']
-            if rc != 'ResourceNotFoundException':
-                fail_json_aws(module, e, msg="retrieving function policy")
-        except Exception:
-            fail_json_aws(module, e, msg="retrieving function policy")
+            if e.response['Error']['Code'] == 'ResourceNotFoundException':
+                return {}
+        except:  # catches ClientErrors without response, e.g. fail before connect
+            pass
+        module.fail_json_aws(e, msg="retrieving function policy")
+    except Exception as e:
+        module.fail_json_aws(e, msg="retrieving function policy")
 
-    if 'Statement' in policy:
-        # Now that we have the policy, check if required permission statement is present and flatten to
-        # simple dictionary if found.
-        for statement in policy['Statement']:
-            if statement['Sid'] == sid:
-                policy_statement['action'] = statement['Action']
-                policy_statement['principal'] = statement['Principal']['Service']
-                try:
-                    policy_statement['source_arn'] = statement['Condition']['ArnLike']['AWS:SourceArn']
-                except KeyError:
-                    pass
-                try:
-                    policy_statement['source_account'] = statement['Condition']['StringEquals']['AWS:SourceAccount']
-                except KeyError:
-                    pass
-                try:
-                    policy_statement['event_source_token'] = statement['Condition']['StringEquals']['lambda:EventSourceToken']
-                except KeyError:
-                    pass
-                break
-
-    return policy_statement
+    # get_policy returns a JSON string so must convert to dict before reassigning to its key
+    policy = json.loads(policy_results.get('Policy', '{}'))
+    return extract_statement(policy, sid)
 
 
-def add_policy_permission(module, aws):
+def add_policy_permission(module, client):
     """
     Adds a permission statement to the policy.
 
@@ -385,7 +306,6 @@ def add_policy_permission(module, aws):
     :return:
     """
 
-    client = aws.client('lambda')
     changed = False
 
     # set API parameters
@@ -402,17 +322,17 @@ def add_policy_permission(module, aws):
     if qualifier:
         api_params.update(Qualifier=qualifier)
 
-    try:
-        if not module.check_mode:
+    if not module.check_mode:
+        try:
             client.add_permission(**api_params)
+        except Exception as e:
+            module.fail_json_aws(e, msg="adding permission to policy")
         changed = True
-    except Exception as e:
-        fail_json_aws(module, e, msg="adding permission to policy")
 
     return changed
 
 
-def remove_policy_permission(module, aws):
+def remove_policy_permission(module, client):
     """
     Removed a permission statement from the policy.
 
@@ -421,7 +341,6 @@ def remove_policy_permission(module, aws):
     :return:
     """
 
-    client = aws.client('lambda')
     changed = False
 
     # set API parameters
@@ -433,21 +352,21 @@ def remove_policy_permission(module, aws):
     try:
         if not module.check_mode:
             client.remove_permission(**api_params)
-        changed = True
+            changed = True
     except Exception as e:
-        fail_json_aws(module, e, msg="removing permission from policy")
+        module.fail_json_aws(e, msg="removing permission from policy")
 
     return changed
 
 
-def manage_state(module, aws):
+def manage_state(module, lambda_client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
     action_taken = 'none'
 
     # check if the policy exists
-    current_policy_statement = get_policy_statement(module, aws)
+    current_policy_statement = get_policy_statement(module, lambda_client)
     if current_policy_statement:
         current_state = 'present'
 
@@ -456,27 +375,65 @@ def manage_state(module, aws):
             # check if policy has changed and update if necessary
             # since there's no API to update a policy statement, it must first be removed
             if not policy_equal(module, current_policy_statement):
-                remove_policy_permission(module, aws)
-                changed = add_policy_permission(module, aws)
+                remove_policy_permission(module, lambda_client)
+                changed = add_policy_permission(module, lambda_client)
                 action_taken = 'updated'
         else:
             # add policy statement
-            changed = add_policy_permission(module, aws)
+            changed = add_policy_permission(module, lambda_client)
             action_taken = 'added'
     else:
         if current_state == 'present':
             # remove the policy statement
-            changed = remove_policy_permission(module, aws)
+            changed = remove_policy_permission(module, lambda_client)
             action_taken = 'deleted'
 
     return dict(changed=changed, ansible_facts=dict(lambda_policy_action=action_taken))
 
 
-# ---------------------------------------------------------------------------------------------------
-#
-#   MAIN
-#
-# ---------------------------------------------------------------------------------------------------
+def setup_clients(module):
+    try:
+        region, endpoint, aws_connect_kwargs = get_aws_connection_info(module)
+    except Exception as e:
+        module.fail_json_aws(e, msg="setting up AWS connection")
+
+    if not region:
+        module.fail_json(msg='region must be specified')
+
+    lambda_client_args = aws_connect_kwargs.update(dict(region=region,
+                                                        endpoint=endpoint,
+                                                        conn_type='client',
+                                                        resource='iam'))
+    try:
+        lambda_client = boto3_conn(module, **lambda_client_args)
+    except Exception as e:
+        module.fail_json_aws(e, msg="setting up AWS lambda client")
+
+    return lambda_client
+
+
+def setup_module_object():
+    argument_spec = dict(
+        state=dict(default='present', choices=['present', 'absent']),
+        function_name=dict(required=True, aliases=['lambda_function_arn', 'function_arn']),
+        statement_id=dict(required=True, aliases=['sid']),
+        alias=dict(),
+        version=dict(type='int', default=0),
+        action=dict(required=True, ),
+        principal=dict(required=True, ),
+        source_arn=dict(),
+        source_account=dict(),
+        event_source_token=dict(),
+    )
+
+    return AnsibleAWSModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        mutually_exclusive=[['alias', 'version'],
+                            ['event_source_token', 'source_arn'],
+                            ['event_source_token', 'source_account']],
+    )
+
 
 def main():
     """
@@ -485,42 +442,10 @@ def main():
     :return dict: ansible facts
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            function_name=dict(required=True, aliases=['lambda_function_arn', 'function_arn']),
-            statement_id=dict(required=True, aliases=['sid']),
-            alias=dict(),
-            version=dict(type='int', default=0),
-            action=dict(required=True, ),
-            principal=dict(required=True, ),
-            source_arn=dict(),
-            source_account=dict(),
-            event_source_token=dict(),
-        )
-    )
-
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
-        mutually_exclusive=[['alias', 'version'],
-                            ['event_source_token', 'source_arn'],
-                            ['event_source_token', 'source_account']],
-    )
-
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required for this module.')
-
-    try:
-        aws = AWSConnection(module, ['lambda'])
-    except AWSConnectionException as e:
-        module.fail_json(msg=str(e))
-
-    validate_params(module, aws)
-
-    results = manage_state(module, aws)
+    module = setup_module_object()
+    client = setup_clients()
+    validate_params(module)
+    results = manage_state(module, client)
 
     module.exit_json(**results)
 
