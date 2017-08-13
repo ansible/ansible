@@ -28,7 +28,7 @@ short_description: DigitalOcean Floating IPs facts
 description:
      - Fetch DigitalOcean Floating IPs facts.
 version_added: "2.4"
-author: "Patrick Marques (@patrickfmarques)"
+author: "Patrick Marques (@pmarques)"
 options:
   oauth_token:
     description:
