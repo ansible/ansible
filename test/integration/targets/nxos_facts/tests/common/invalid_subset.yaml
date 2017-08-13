@@ -1,10 +1,10 @@
 ---
-- debug: msg="START cli/invalid_subset.yaml"
+- debug: msg="START {{ connection.transport }}/invalid_subset.yaml"
 
 
 - name: test invalid subset (foobar)
   nxos_facts:
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
     gather_subset:
       - "foobar"
   register: result
@@ -26,7 +26,7 @@
 
 - name: test subset specified multiple times
   nxos_facts:
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
     gather_subset:
       - "!hardware"
       - "hardware"
@@ -45,4 +45,4 @@
 
 
 
-- debug: msg="END cli/invalid_subset.yaml"
+- debug: msg="END {{ connection.transport }}/invalid_subset.yaml"

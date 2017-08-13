@@ -1,10 +1,10 @@
 ---
-- debug: msg="START cli/default_facts.yaml"
+- debug: msg="START {{ connection.transport }}/default_facts.yaml"
 
 
 - name: test getting default facts
   nxos_facts:
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
