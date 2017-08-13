@@ -118,6 +118,7 @@ options:
         choices:
             - Standard_LRS
             - Premium_LRS
+        version_added: "2.4"
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -139,30 +140,36 @@ options:
         description:
             - The logical unit number for data disk
         default: 0
+        version_added: "2.4"
     data_disk_size_gb:
         description:
             - The initial disk size in GB for blank data disks
+        version_added: "2.4"
     data_disk_managed_disk_type:
         description:
             - Managed data disk type
         choices:
             - Standard_LRS
             - Premium_LRS
+        version_added: "2.4"
     data_disk_storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
               a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+        version_added: "2.4"
     data_disk_storage_container_name:
         description:
             - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
               default container will created.
         default: vhds
+        version_added: "2.4"
     data_disk_storage_blob_name:
         description:
             - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
               the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
         aliases:
             - data_disk_storage_blob
+        version_added: "2.4"
     public_ip_allocation_method:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
@@ -688,7 +695,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if self.data_disk_storage_account_name and not self.data_disk_managed_disk_type:
                 self.get_storage_account(self.data_disk_storage_account_name)
 
-                data_disk_requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(self.data_disk_storage_account_name, self.data_disk_storage_container_name,self.data_disk_storage_blob_name)
+                data_disk_requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(
+                                                                            self.data_disk_storage_account_name,
+                                                                            self.data_disk_storage_container_name,
+                                                                            self.data_disk_storage_blob_name)
 
             disable_ssh_password = not self.ssh_password_enabled
 
@@ -909,7 +919,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
                     else:
                         vhd = None
-                        managed_disk = ManagedDiskParameters(storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk'])['storageAccountType']
+                        managed_disk = ManagedDiskParameters(
+                            storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk']['storageAccountType']
+                        )
 
                     # data disk
                     if not self.data_disk_managed_disk_type:
