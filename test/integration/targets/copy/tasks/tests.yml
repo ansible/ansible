@@ -927,8 +927,9 @@
     - stat_circular_symlink_result.stat.exists
     - stat_circular_symlink_result.stat.islnk
 
-# src is a file, dest is a non-existent directory: checks that dest is created
-- include: dest_in_non_existent_dir.yml
+# src is a file, dest is a non-existent directory (2 levels of directories):
+# checks that dest is created
+- include: dest_in_non_existent_directories.yml
   with_items:
     - { src: 'foo.txt', dest: 'sub_dir2/', check: 'foo.txt' }
     - { src: 'subdir', dest: 'sub_dir2/', check: 'subdir/bar.txt' }
