@@ -8,14 +8,20 @@ Roadmaps
 
 The Ansible Core team provides a roadmap for each upcoming release. These roadmaps can be found `here <http://docs.ansible.com/ansible/latest/roadmap/>`.
 
-The Triage Bot
-==============
+Pull Requests
+=============
 
+Ansible accepts code via pull requests ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>` in general.
+
+Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by the Ansibot.
+
+The Ansibot
+===========
 
 Overview
 --------
 
-The `Ansibull PR Triage Bot`_ serves many functions: \* Responds quickly
+The `Ansibot`_ serves many functions: \* Responds quickly
 to PR submitters to thank them for submitting their PR; \* Identifies
 the community maintainer responsible for reviewing PRs for any files
 affected; \* Tracks the current status of PRs; \* Pings responsible
@@ -45,7 +51,7 @@ but the better our reviewers are, and the better our guidelines are, the
 more likely it will be that a PR that reaches “shipit” will be
 mergeable.
 
-.. _Ansibull PR Triage Bot: https://github.com/ansible/ansibullbot/blob/master/triage.py
+.. _Ansibot: https://github.com/ansible/ansibullbot/blob/master/triage.py
 .. _Core: https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS-CORE.txt
 .. _Extras: https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS-CORE.txt
 
