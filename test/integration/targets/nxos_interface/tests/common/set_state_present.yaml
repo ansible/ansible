@@ -1,18 +1,18 @@
 ---
-- debug: msg="START cli/set_state_present.yaml"
+- debug: msg="START {{ connection.transport }}/set_state_present.yaml"
 
 - name: setup
   nxos_config:
     lines:
       - no interface Loopback1
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   ignore_errors: yes # Fails if the interface is already absent
 
 - name: set state=present
   nxos_interface:
     interface: Loopback1
     state: present
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -23,11 +23,11 @@
   nxos_interface:
     interface: Loopback1
     state: present
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- debug: msg="END cli/set_state_present.yaml"
+- debug: msg="END {{ connection.transport }}/set_state_present.yaml"
