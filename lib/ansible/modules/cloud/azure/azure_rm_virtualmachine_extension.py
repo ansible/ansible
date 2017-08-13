@@ -1,22 +1,12 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Sertac Ozercan, <seozerca@microsoft.com>
+# Copyright (c) 2017 Sertac Ozercan <seozerca@microsoft.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -139,6 +129,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 def vmextension_to_dict(extension):
     return dict(
         id=extension.id,
@@ -152,6 +143,7 @@ def vmextension_to_dict(extension):
         protected_settings=extension.protected_settings,
         tags=extension.tags
     )
+
 
 class AzureRMVMExtension(AzureRMModuleBase):
     """Configuration class for an Azure RM VM Extension resource"""
@@ -220,9 +212,8 @@ class AzureRMVMExtension(AzureRMModuleBase):
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMVMExtension, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                    supports_check_mode=True,
-                                                    supports_tags=True)
-
+                                                 supports_check_mode=True,
+                                                 supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -232,7 +223,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
 
         results = dict()
         resource_group = None
-        response= None
+        response = None
 
         try:
             resource_group = self.get_resource_group(self.resource_group)
@@ -268,7 +259,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
                 auto_upgrade_minor_version=self.auto_upgrade_minor_version,
                 settings=self.settings,
                 protected_settings=self.protected_settings
-                )
+            )
             poller = self.compute_client.virtual_machine_extensions.create_or_update(self.resource_group, self.virtual_machine_name, self.name, params)
             self.get_poller_result(poller)
         except AzureHttpError as e:
@@ -292,10 +283,11 @@ class AzureRMVMExtension(AzureRMModuleBase):
             found = True
         except CloudError as e:
             self.log('Did not find vm extension')
-        if found==True:
+        if found:
             return vmextension_to_dict(response)
         else:
             return False
+
 
 def main():
     """Main execution"""
