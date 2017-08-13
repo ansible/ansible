@@ -3,6 +3,11 @@ The Ansible Development Process
 
 This section discusses how the Ansible development and triage process works.
 
+Roadmaps
+========
+
+The Ansible Core team provides a roadmap for each upcoming release. These roadmaps can be found `here <http://docs.ansible.com/ansible/latest/roadmap/>`.
+
 The Triage Bot
 ==============
 
