@@ -308,7 +308,7 @@ def script_is_client(filename):
 
     # if password script is 'something-client' or 'something-client.[sh|py|rb|etc]'
     # script_name can still have '.' or could be entire filename if there is no ext
-    script_name, ext = os.path.splitext(filename)
+    script_name, dummy = os.path.splitext(filename)
 
     # TODO: for now, this is entirely based on filename
     if script_name.endswith('-client'):
@@ -329,11 +329,10 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
             # TODO: pass vault_id_name to script via cli
             return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id,
                                            encoding=encoding, loader=loader)
-        else:
-            # just a plain vault password script. No args, returns a byte array
-            return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
-    else:
-        return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+        # just a plain vault password script. No args, returns a byte array
+        return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+
+    return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
 
 # TODO: mv these classes to a seperate file so we don't pollute vault with 'subprocess' etc
@@ -411,7 +410,7 @@ class ScriptVaultSecret(FileVaultSecret):
         except OSError as e:
             msg_format = "Problem running vault password script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
-            msg = msg_format % (filename, e)
+            msg = msg_format % (self.filename, e)
 
             raise AnsibleError(msg)
 
@@ -443,9 +442,9 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
         except OSError as e:
-            msg_format = "Problem running vault password client script %s (%s)."
-            "If this is not a script, remove the executable bit from the file."
-            msg = msg_format % (' '.join(self.filename), e)
+            msg_format = "Problem running vault password client script %s (%s)." \
+                " If this is not a script, remove the executable bit from the file."
+            msg = msg_format % (self.filename, e)
 
             raise AnsibleError(msg)
 
