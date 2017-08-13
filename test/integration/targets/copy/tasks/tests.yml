@@ -938,3 +938,8 @@
 
 # src is a file, dest is file in a non-existent directory: checks that a failure occurs
 - include: src_file_dest_file_in_non_existent_dir.yml
+  with_items:
+    - '{{ remote_dir }}/new_sub_dir1/sub_dir2/foo.txt'
+    - '{{ remote_dir }}/new_sub_dir1/foo.txt'
+  loop_control:
+    loop_var: 'dest'
