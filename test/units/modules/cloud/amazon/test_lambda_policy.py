@@ -118,8 +118,8 @@ def test_manage_state_adds_missing_permissions():
     fake_module_params = copy.deepcopy(fake_module_params_present)
     module_double.params = fake_module_params
     lambda_policy.manage_state(module_double, lambda_client_double)
-    lambda_client_double.get_policy.assert_called_once()
-    lambda_client_double.add_permission.assert_called_once()
+    assert lambda_client_double.get_policy.call_count > 0
+    assert lambda_client_double.add_permission.call_count > 0
     lambda_client_double.remove_permission.assert_not_called()
 
 
@@ -130,7 +130,7 @@ def test_manage_state_leaves_existing_permissions():
     fake_module_params = copy.deepcopy(fake_module_params_present)
     module_double.params = fake_module_params
     lambda_policy.manage_state(module_double, lambda_client_double)
-    lambda_client_double.get_policy.assert_called_once()
+    assert lambda_client_double.get_policy.call_count > 0
     lambda_client_double.add_permission.assert_not_called()
     lambda_client_double.remove_permission.assert_not_called()
 
@@ -142,9 +142,9 @@ def test_manage_state_updates_nonmatching_permissions():
     fake_module_params = copy.deepcopy(fake_module_params_different)
     module_double.params = fake_module_params
     lambda_policy.manage_state(module_double, lambda_client_double)
-    lambda_client_double.get_policy.assert_called_once()
-    lambda_client_double.add_permission.assert_called_once()
-    lambda_client_double.remove_permission.assert_called_once()
+    assert lambda_client_double.get_policy.call_count > 0
+    assert lambda_client_double.add_permission.call_count > 0
+    assert lambda_client_double.remove_permission.call_count > 0
 
 
 def test_manage_state_removes_unwanted_permissions():
@@ -154,9 +154,9 @@ def test_manage_state_removes_unwanted_permissions():
     fake_module_params = copy.deepcopy(fake_module_params_absent)
     module_double.params = fake_module_params
     lambda_policy.manage_state(module_double, lambda_client_double)
-    lambda_client_double.get_policy.assert_called_once()
+    assert lambda_client_double.get_policy.call_count > 0
     lambda_client_double.add_permission.assert_not_called()
-    lambda_client_double.remove_permission.assert_called_once()
+    assert lambda_client_double.remove_permission.call_count > 0
 
 
 def test_manage_state_leaves_already_removed_permissions():
@@ -166,6 +166,6 @@ def test_manage_state_leaves_already_removed_permissions():
     fake_module_params = copy.deepcopy(fake_module_params_absent)
     module_double.params = fake_module_params
     lambda_policy.manage_state(module_double, lambda_client_double)
-    lambda_client_double.get_policy.assert_called_once()
+    assert lambda_client_double.get_policy.call_count > 0
     lambda_client_double.add_permission.assert_not_called()
     lambda_client_double.remove_permission.assert_not_called()
