@@ -171,14 +171,14 @@ def core(module):
     has_next = True
     floating_ips = []
     while has_next or 200 != status_code:
-      response = rest.get("floating_ips?page={0}&per_page=20".format(page))
-      status_code = response.status_code
-      # stop if any error during pagination
-      if 200 != status_code:
-        break
-      page = page + 1
-      floating_ips.extend(response.json["floating_ips"])
-      has_next = "pages" in response.json["links"] and "next" in response.json["links"]["pages"]
+        response = rest.get("floating_ips?page={0}&per_page=20".format(page))
+        status_code = response.status_code
+        # stop if any error during pagination
+        if 200 != status_code:
+            break
+        page = page + 1
+        floating_ips.extend(response.json["floating_ips"])
+        has_next = "pages" in response.json["links"] and "next" in response.json["links"]["pages"]
 
     if status_code == 200:
         module.exit_json(changed=False, floating_ips=floating_ips)
