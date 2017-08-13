@@ -45,7 +45,10 @@ requirements:
 EXAMPLES = '''
 - name: "Gather facts about all Floating IPs"
   digital_ocean_floating_ip_facts:
-    register: result
+  register: result
+
+- name: "List of current floating ips"
+  debug: var=result.floating_ips
 '''
 
 
@@ -55,7 +58,7 @@ data:
     description: a DigitalOcean Floating IP resource
     returned: success and no resource constraint
     type: dict
-    sample: {
+    result: {
       "floating_ips": [
         {
           "ip": "45.55.96.47",
@@ -85,11 +88,6 @@ data:
           "locked": false
         }
       ],
-      "links": {
-      },
-      "meta": {
-        "total": 1
-      }
     }
 '''
 
