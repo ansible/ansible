@@ -46,8 +46,8 @@ more likely it will be that a PR that reaches “shipit” will be
 mergeable.
 
 .. _Ansibull PR Triage Bot: https://github.com/ansible/ansibullbot/blob/master/triage.py
-.. _Core: https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS-CORE.txt
-.. _Extras: https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS-CORE.txt
+.. _Core: https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml
+.. _Extras: https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml
 
 Some modules have no community maintainers assigned. In this case, the
 maintainer is listed as “ansible”. Ultimately, it’s our goal to have at
