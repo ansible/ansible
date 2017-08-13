@@ -1,24 +1,24 @@
 ---
-- debug: msg="START TRANSPORT:NXAPI nxos_evpn_vni sanity test"
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_evpn_vni sanity test"
 
 - name: "Setup"
   nxos_config: &remove_evpn
     lines: no nv overlay evpn
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     match: none
   ignore_errors: yes
 
 - block:
   - name: "Enable feature BGP"
-    nxos_feature: 
+    nxos_feature:
       feature: bgp
       state: enabled
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
 
   - name: "Enable nv overlay evpn"
-    nxos_config: 
+    nxos_config:
       lines: nv overlay evpn
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
       match: none
 
   - name: "Configure nxos_evpn_vni"
@@ -29,7 +29,7 @@
           - "5000:10"
           - "4100:100"
       route_target_export: auto
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -48,7 +48,7 @@
     nxos_evpn_vni: &rvni
       vni: 6000
       state: absent
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -65,10 +65,10 @@
     ignore_errors: yes
 
   - name: "Disable feature bgp"
-    nxos_feature: 
+    nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:NXAPI nxos_evpn_vni sanity test"
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_evpn_vni sanity test"
