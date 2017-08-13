@@ -1,11 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
+#
+# This file is part of Ansible (sort of)
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -62,7 +72,8 @@ options:
       'args_present' any args listed in module_arguments are added if
       missing from the existing rule.  Furthermore, if the module argument
       takes a value denoted by '=', the value will be changed to that specified
-      in module_arguments.
+      in module_arguments.  Note that module_arguments is a list.  Please see
+      the examples for usage.
   state:
     default: updated
     choices:
@@ -157,7 +168,7 @@ EXAMPLES = """
     name: system-auth
     type: session control='[success=1 default=ignore]'
     module_path: pam_succeed_if.so
-    module_arguments: 'crond quiet'
+    module_arguments: crond,quiet
     state: args_absent
 
 - name: Ensure specific arguments are present in a rule
@@ -166,7 +177,28 @@ EXAMPLES = """
     type: session
     control: '[success=1 default=ignore]'
     module_path: pam_succeed_if.so
-    module_arguments: 'crond quiet'
+    module_arguments: crond,quiet
+    state: args_present
+
+- name: Ensure specific arguments are present in a rule (alternative)
+  pamd:
+    name: system-auth
+    type: session
+    control: '[success=1 default=ignore]'
+    module_path: pam_succeed_if.so
+    module_arguments:
+    - crond
+    - quiet
+    state: args_present
+
+- name: Module arguments require commas must be listed as a Yaml list
+  pamd:
+    name: special-module
+    type: account
+    control: required
+    module_path: pam_access.so
+    module_arguments:
+    - listsep=,
     state: args_present
 
 - name: Update specific argument value in a rule
@@ -259,10 +291,10 @@ class PamdRule(object):
 
         if '[' in stringline:
             pattern = re.compile(
-                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
-                    \[([A-Za-z0-9_=\s]+)\]\s*   # Rule Control
-                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
-                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                r"""([\-A-Za-z0-9_]+)\s*         # Rule Type
+                    \[([A-Za-z0-9_=\s]+)\]\s*    # Rule Control
+                    ([A-Za-z0-9_\.]+)\s*         # Rule Path
+                    ([A-Za-z0-9,_=<>\-\s]*)""",  # Rule Args
                 re.X)
             complicated = True
         else:
@@ -270,7 +302,7 @@ class PamdRule(object):
                 r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
                     ([A-Za-z0-9_]+)\s*          # Rule Control
                     ([A-Za-z0-9_\.]+)\s*        # Rule Path
-                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                    ([A-Za-z0-9,_=<>\-\s]*)""",  # Rule Args
                 re.X)
 
         result = pattern.match(stringline)
