@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/defaults.yaml"
+- debug: msg="START {{ connection.transport }}/defaults.yaml"
 
 - name: setup
   nxos_config:
@@ -9,13 +9,13 @@
     parents:
       - interface Ethernet2/5
     match: none
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
 
 - name: configure device with defaults included
   nxos_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - debug: var=result
@@ -29,7 +29,7 @@
   nxos_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - debug: var=result
@@ -39,4 +39,4 @@
       - "result.changed == false"
       - "result.updates is not defined"
 
-- debug: msg="END cli/defaults.yaml"
+- debug: msg="END {{ connection.transport }}/defaults.yaml"
