@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -73,6 +62,17 @@ EXAMPLES = """
     name: bond0
     state: absent
 
+- name: Create aggregate of linkagg definitions
+  vyos_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
+
+- name: Remove aggregate of linkagg definitions
+  vyos_linkagg:
+    aggregate:
+      - { name: bond0, state: absent }
+      - { name: bond1, state: absent }
 """
 
 RETURN = """
@@ -172,51 +172,52 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module):
-    obj = []
-
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
-            if 'mode' not in d:
-                d['mode'] = module.params['mode']
-
-            obj.append(d)
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        return aggregate
     else:
-        obj.append({
+        return [{
             'name': module.params['name'],
             'mode': module.params['mode'],
             'members': module.params['members'],
             'state': module.params['state']
-        })
-
-    return obj
+        }]
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         mode=dict(choices=['802.3ad', 'active-backup', 'broadcast',
                            'round-robin', 'transmit-load-balance',
                            'adaptive-load-balance', 'xor-hash', 'on'],
                   default='802.3ad'),
         members=dict(type='list'),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate'],
+                          ['mode', 'aggregate'],
+                          ['members', 'aggregate'],
+                          ['state', 'aggregate']]
+
+    aggregate_spec = element_spec.copy()
+    aggregate_spec['name'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
-    required_one_of = [['name', 'aggregate']]
-    mutually_exclusive = [['name', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()

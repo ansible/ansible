@@ -4,6 +4,15 @@
     dest: console
     facility: all
     level: info
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- name: Configure logging
+  vyos_logging:
+    dest: console
+    facility: all
+    level: info
     state: present
     provider: "{{ cli }}"
   register: result
@@ -13,7 +22,7 @@
       - 'result.changed == true'
       - '"set system syslog console facility all level info" in result.commands'
 
-- name: set-up logging again (idempotent)
+- name: Configure logging again (idempotent)
   vyos_logging:
     dest: console
     facility: all
@@ -84,12 +93,18 @@
     that:
       - 'result.changed == false'
 
-- name: Add logging collections
+- name: Add logging collections (setup)
   vyos_logging:
     aggregate:
-      - { dest: file, name: test1, facility: all, level: info }
-      - { dest: file, name: test2, facility: news, level: debug }
-    state: present
+      - { dest: file, name: test1, facility: all, level: info, state: absent }
+      - { dest: file, name: test2, facility: news, level: debug, state: absent }
+    provider: "{{ cli }}"
+
+- name: Add logging aggregate
+  vyos_logging:
+    aggregate:
+      - { dest: file, name: test1, facility: all, level: info, state: present }
+      - { dest: file, name: test2, facility: news, level: debug, state: present }
     provider: "{{ cli }}"
   register: result
 
@@ -99,13 +114,12 @@
       - '"set system syslog file test1 facility all level info" in result.commands'
       - '"set system syslog file test2 facility news level debug" in result.commands'
 
-- name: Add and remove logging collections with overrides
+- name: Add and remove logging aggregate with overrides
   vyos_logging:
     aggregate:
-      - { dest: console, facility: all, level: info }
+      - { dest: console, facility: all, level: info, state: present }
       - { dest: file, name: test1, facility: all, level: info, state: absent }
       - { dest: console, facility: daemon, level: warning }
-    state: present
     provider: "{{ cli }}"
   register: result
 
@@ -115,13 +129,12 @@
       - '"delete system syslog file test1 facility all level info" in result.commands'
       - '"set system syslog console facility daemon level warning" in result.commands'
 
-- name: Remove logging collections
+- name: Remove logging aggregate
   vyos_logging:
     aggregate:
-      - { dest: console, facility: all, level: info }
-      - { dest: console, facility: daemon, level: warning }
-      - { dest: file, name: test2, facility: news, level: debug }
-    state: absent
+      - { dest: console, facility: all, level: info, state: absent }
+      - { dest: console, facility: daemon, level: warning, state: absent }
+      - { dest: file, name: test2, facility: news, level: debug, state: absent }
     provider: "{{ cli }}"
   register: result
 

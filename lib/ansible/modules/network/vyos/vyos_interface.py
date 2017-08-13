@@ -2,22 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -104,6 +93,18 @@ EXAMPLES = """
     speed: 100
     mtu: 256
     duplex: full
+
+- name: Configure interface using aggregate
+  vyos_interface:
+    aggregate:
+      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512}
+      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256}
+
+- name: Delete interface using aggregate
+  vyos_interface:
+    aggregate:
+      - { name: eth1, state: absent}
+      - { name: eth2, state: absent}
 """
 
 RETURN = """
@@ -220,31 +221,15 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
-
-    params = ['speed', 'description', 'duplex', 'mtu']
     aggregate = module.params.get('aggregate')
-
     if aggregate:
         for c in aggregate:
             d = c.copy()
-            if 'name' not in d:
-                module.fail_json(msg="missing required arguments: %s" % 'name')
-
-            for item in params:
-                if item not in d:
-                    d[item] = None
-
-            d['description'] = DEFAULT_DESCRIPTION
-            if not d.get('state'):
-                d['state'] = module.params['state']
 
             if d['state'] in ('present', 'up'):
                 d['disable'] = False
             else:
                 d['disable'] = True
-
-            if d.get('speed'):
-                d['speed'] = str(d['speed'])
 
             obj.append(d)
     else:
@@ -270,7 +255,7 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         description=dict(default=DEFAULT_DESCRIPTION),
         speed=dict(),
@@ -278,18 +263,33 @@ def main():
         duplex=dict(choices=['full', 'half', 'auto']),
         tx_rate=dict(),
         rx_rate=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
-    argument_spec.update(vyos_argument_spec)
-
     required_one_of = [['name', 'aggregate']]
-    mutually_exclusive = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate'],
+                          ['description', 'aggregate'],
+                          ['speed', 'aggregate'],
+                          ['mtu', 'aggregate'],
+                          ['duplex', 'aggregate'],
+                          ['tx_rate', 'aggregate'],
+                          ['rx_rate', 'aggregate'],
+                          ['state', 'aggregate']]
 
     required_together = (['speed', 'duplex'])
+
+    aggregate_spec = element_spec.copy()
+    aggregate_spec['name'] = dict(required=True)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, required_together=required_together),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(vyos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,
