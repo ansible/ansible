@@ -1,10 +1,10 @@
 ---
-- debug: msg="START nxapi/invalid.yaml"
+- debug: msg="START {{ connection.transport }}/invalid.yaml"
 
 - name: configure invalid feature name
   nxos_feature:
     feature: invalid
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -12,4 +12,4 @@
     that:
       - result.failed == true
 
-- debug: msg="END nxapi/invalid.yaml"
+- debug: msg="END {{ connection.transport }}/invalid.yaml"
