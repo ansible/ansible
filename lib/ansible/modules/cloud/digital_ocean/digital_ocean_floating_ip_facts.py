@@ -169,12 +169,21 @@ def core(module):
     rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
                          'Content-type': 'application/json'})
 
-    # TODO: recursive fetch!
-    response = rest.get("floating_ips?page=1&per_page=20")
-    status_code = response.status_code
-    json = response.json
+    page = 1
+    has_next = True
+    floating_ips = []
+    while has_next or 200 != status_code:
+      response = rest.get("floating_ips?page={0}&per_page=20".format(page))
+      status_code = response.status_code
+      # stop if any error during pagination
+      if 200 != status_code:
+        break
+      page = page + 1
+      floating_ips.extend(response.json["floating_ips"])
+      has_next = "pages" in response.json["links"] and "next" in response.json["links"]["pages"]
+
     if status_code == 200:
-        module.exit_json(changed=False, ansible_facts=json)
+        module.exit_json(changed=False, floating_ips=floating_ips)
     else:
         module.fail_json(msg="Error fecthing facts [{0}: {1}]".format(
             status_code, response.json["message"]))
