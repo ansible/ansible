@@ -20,7 +20,6 @@ author:
 short_description: Manage FreeIPA host
 description:
 - Add, modify and delete an IPA host using IPA API
-version_added: '2.3'
 options:
   fqdn:
     description:
