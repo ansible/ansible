@@ -32,7 +32,7 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Interface link status.
+      - Configure interface link status.
   speed:
     description:
       - Interface link speed.
@@ -59,8 +59,8 @@ options:
     default: no
   state:
     description:
-      - State of the Interface configuration, C(up) means present and
-        operationally up and C(down) means present and operationally C(down)
+      - State of the Interface configuration, C(up) indicates present and
+        operationally up and C(down) indicates present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
 """
@@ -80,13 +80,13 @@ EXAMPLES = """
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: up
+    enabled: True
 
 - name: make interface down
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: down
+    enabled: False
 """
 
 RETURN = """

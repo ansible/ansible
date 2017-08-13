@@ -70,7 +70,7 @@
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: down
+    enabled: False
     provider: "{{ netconf }}"
   register: result
 
@@ -90,7 +90,7 @@
   net_interface:
     name: ge-0/0/1
     description: test-interface
-    state: up
+    enabled: True
     provider: "{{ netconf }}"
   register: result
 
@@ -175,8 +175,8 @@
 - name: Disable interface on aggregate
   net_interface:
     aggregate:
-      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, duplex: full, mtu: 512, state: down}
-      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, duplex: full, mtu: 256, state: down}
+      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, duplex: full, mtu: 512, enabled: False}
+      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, duplex: full, mtu: 256, enabled: False}
     provider: "{{ netconf }}"
   register: result
 
@@ -188,8 +188,8 @@
 - name: Enable interface on aggregate
   net_interface:
     aggregate:
-      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, duplex: full, mtu: 512, state: up}
-      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, duplex: full, mtu: 256, state: up}
+      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, duplex: full, mtu: 512, enabled: True}
+      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, duplex: full, mtu: 256, enabled: True}
     provider: "{{ netconf }}"
   register: result
 

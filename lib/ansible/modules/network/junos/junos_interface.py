@@ -32,7 +32,7 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Interface link status.
+      - Configure interface link status.
   speed:
     description:
       - Interface link speed.
@@ -46,21 +46,21 @@ options:
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate.
+      - Transmit rate in bits per second (bps).
   rx_rate:
     description:
-      - Receiver rate.
+      - Receiver rate in bits per second (bps).
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
   aggregate:
     description: List of Interfaces definitions.
-  purge:
-    description:
-      - Purge Interfaces not defined in the aggregate parameter.
-        This applies only for logical interface.
-    default: no
   state:
     description:
-      - State of the Interface configuration, C(up) means present and
-        operationally up and C(down) means present and operationally C(down)
+      - State of the Interface configuration, C(up) idicates present and
+        operationally up and C(down) indicates present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
   active:
@@ -89,12 +89,12 @@ EXAMPLES = """
 - name: make interface down
   junos_interface:
     name: ge-0/0/1
-    state: down
+    enabled: False
 
 - name: make interface up
   junos_interface:
     name: ge-0/0/1
-    state: up
+    enabled: True
 
 - name: Deactivate interface config
   junos_interface:
@@ -127,6 +127,19 @@ EXAMPLES = """
     aggregate:
       - { name: ge-0/0/1, description: test-interface-1, state: absent}
       - { name: ge-0/0/2, description: test-interface-2, state: absent}
+
+- name: Check intent arguments
+  junos_interface:
+    name: "{{ name }}"
+    state: up
+    tx_rate: ge(0)
+    rx_rate: le(0)
+
+- name: Config + intent
+  junos_interface:
+    name: "{{ name }}"
+    enabled: False
+    state: down
 """
 
 RETURN = """
@@ -142,15 +155,19 @@ diff.prepared:
 """
 import collections
 
+from time import sleep
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network_common import conditional
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
 try:
-    from lxml.etree import tostring
+    from lxml.etree import Element, SubElement, tostring
 except ImportError:
-    from xml.etree.ElementTree import tostring
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -176,12 +193,13 @@ def main():
     element_spec = dict(
         name=dict(),
         description=dict(),
-        enabled=dict(),
+        enabled=dict(default=True, type='bool'),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
         tx_rate=dict(),
         rx_rate=dict(),
+        delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
@@ -192,7 +210,6 @@ def main():
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec),
-        purge=dict(default=False, type='bool')
     )
 
     argument_spec.update(element_spec)
@@ -238,12 +255,10 @@ def main():
     for param in params:
         item = param.copy()
         state = item.get('state')
-        item['disable'] = True if state == 'down' else False
+        item['disable'] = True if not item.get('enabled') else False
 
         if state in ('present', 'up', 'down'):
             item['state'] = 'present'
-        else:
-            item['disable'] = True
 
         validate_param_values(module, param_to_xpath_map, param=item)
         want = map_params_to_obj(module, param_to_xpath_map, param=item)
@@ -252,7 +267,7 @@ def main():
     diff = None
     with locked_config(module):
         for req in requests:
-            diff = load_config(module, tostring(req), warnings, action='replace')
+            diff = load_config(module, tostring(req), warnings, action='merge')
 
         # issue commit after last configuration change is done
         commit = not module.check_mode
@@ -265,6 +280,43 @@ def main():
 
             if module._diff:
                 result['diff'] = {'prepared': diff}
+
+    failed_conditions = []
+    for item in params:
+        state = item.get('state')
+        tx_rate = item.get('tx_rate')
+        rx_rate = item.get('rx_rate')
+
+        if state not in ('up', 'down') and tx_rate is None and rx_rate is None:
+            continue
+
+        element = Element('get-interface-information')
+        intf_name = SubElement(element, 'interface-name')
+        intf_name.text = item.get('name')
+
+        if result['changed']:
+            sleep(item.get('delay'))
+
+        reply = send_request(module, element, ignore_warning=False)
+
+        if state in ('up', 'down'):
+            admin_status = reply.xpath('interface-information/physical-interface/admin-status')
+            if not admin_status or not conditional(state, admin_status[0].text.strip()):
+                failed_conditions.append('state ' + 'eq(%s)' % state)
+
+        if tx_rate:
+            output_bps = reply.xpath('interface-information/physical-interface/traffic-statistics/output-bps')
+            if not output_bps or not conditional(tx_rate, output_bps[0].text.strip(), cast=int):
+                failed_conditions.append('tx_rate ' + tx_rate)
+
+        if rx_rate:
+            input_bps = reply.xpath('interface-information/physical-interface/traffic-statistics/input-bps')
+            if not input_bps or not conditional(rx_rate, input_bps[0].text.strip(), cast=int):
+                failed_conditions.append('rx_rate ' + rx_rate)
+
+    if failed_conditions:
+        msg = 'One or more conditional statements have not be satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
 
