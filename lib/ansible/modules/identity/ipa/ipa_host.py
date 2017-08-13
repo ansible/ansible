@@ -14,12 +14,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ipa_host
-author: 
+author:
     - Thomas Krahn (@Nosmoht)
     - Steve Jacobs (@stevejacobs) <sjacobs@brokencrew.com>
 short_description: Manage FreeIPA host
 description:
 - Add, modify and delete an IPA host using IPA API
+version_added: '2.3'
 options:
   fqdn:
     description:
@@ -280,7 +281,7 @@ def main():
             ipa_user=dict(type='str', required=False, default='admin'),
             ipa_pass=dict(type='str', required=True, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            userpassword=dict(type='str', required=False,no_log=True, aliases=['host_otp']),
+            userpassword=dict(type='str', required=False, no_log=True, aliases=['host_otp']),
         ),
         supports_check_mode=True,
     )
