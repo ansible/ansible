@@ -25,7 +25,7 @@ description:
     - This module has a dependency on packet >= 1.0.
     - API is documented at U(https://www.packet.net/developers/api/devices).
 
-version_added: 2.3
+version_added: "2.3"
 
 author: Tomas Karasek <tom.to.the.k@gmail.com>, Matt Baldwin <baldwin@stackpointcloud.com>, Thibaud Morel l'Horset <teebes@gmail.com>
 
@@ -73,6 +73,7 @@ options:
     description:
       - Whether to lock a created device.
     default: false
+    version_added: "2.4"
 
   operating_system:
     description:
@@ -111,6 +112,7 @@ options:
       - If set to 4, it will wait until IPv4 is assigned to the instance.
       - If set to 6, wait until public IPv6 is assigned to the instance.
     choices: [4,6]
+    version_added: "2.4"
 
   wait_timeout:
     description:
@@ -121,11 +123,13 @@ options:
     description:
       - URL of custom iPXE script for provisioning.
       - More about custome iPXE for Packet devices at U(https://help.packet.net/technical/infrastructure/custom-ipxe).
+    version_added: "2.4"
   always_pxe:
     description:
       - Persist PXE as the first boot option.
       - Normally, the PXE process happens only on the first boot. Set this arg to have your device continuously boot to iPXE.
     default: false
+    version_added: "2.4"
 
 
 requirements:
