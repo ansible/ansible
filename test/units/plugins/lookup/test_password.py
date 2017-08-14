@@ -245,31 +245,31 @@ class TestRandomPassword(unittest.TestCase):
             self.assertIn(res_char, chars)
 
     def test_default(self):
-        res = password._random_password()
+        res = password.random_password()
         self.assertEquals(len(res), password.DEFAULT_LENGTH)
         self.assertTrue(isinstance(res, text_type))
         self._assert_valid_chars(res, DEFAULT_CANDIDATE_CHARS)
 
     def test_zero_length(self):
-        res = password._random_password(length=0)
+        res = password.random_password(length=0)
         self.assertEquals(len(res), 0)
         self.assertTrue(isinstance(res, text_type))
         self._assert_valid_chars(res, u',')
 
     def test_just_a_common(self):
-        res = password._random_password(length=1, chars=u',')
+        res = password.random_password(length=1, chars=u',')
         self.assertEquals(len(res), 1)
         self.assertEquals(res, u',')
 
     def test_free_will(self):
         # A Rush and Spinal Tap reference twofer
-        res = password._random_password(length=11, chars=u'a')
+        res = password.random_password(length=11, chars=u'a')
         self.assertEquals(len(res), 11)
         self.assertEquals(res, 'aaaaaaaaaaa')
         self._assert_valid_chars(res, u'a')
 
     def test_unicode(self):
-        res = password._random_password(length=11, chars=u'くらとみ')
+        res = password.random_password(length=11, chars=u'くらとみ')
         self._assert_valid_chars(res, u'くらとみ')
         self.assertEquals(len(res), 11)
 
@@ -278,8 +278,8 @@ class TestRandomPassword(unittest.TestCase):
             params = testcase['params']
             candidate_chars = testcase['candidate_chars']
             params_chars_spec = password._gen_candidate_chars(params['chars'])
-            password_string = password._random_password(length=params['length'],
-                                                        chars=params_chars_spec)
+            password_string = password.random_password(length=params['length'],
+                                                       chars=params_chars_spec)
             self.assertEquals(len(password_string),
                               params['length'],
                               msg='generated password=%s has length (%s) instead of expected length (%s)' %
