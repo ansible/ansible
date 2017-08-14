@@ -146,7 +146,6 @@ from ansible.module_utils.netcfg import CustomNetworkConfig
 
 PARAM_TO_COMMAND_KEYMAP = {
     'vrf': 'vrf',
-    'ospf': 'ospf',
     'router_id': 'router-id',
     'default_metric': 'default-metric',
     'log_adjacency': 'log-adjacency-changes',
