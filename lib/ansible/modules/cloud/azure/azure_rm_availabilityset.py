@@ -68,10 +68,13 @@ options:
             - Fault domains define the group of virtual machines that share a common power source and network switch. Should be between 1 and 3. Default is 3
         default: 3
         required: false
-    managed:
+    sku:
         description:
-            - If the availability set supports managed disks.
-        default: true
+            - Define if the availability set supports managed disks.
+        default: Classic
+        choices:
+            -Classic
+            -Aligned
         required: false   
 extends_documentation_fragment:
     - azure
@@ -82,11 +85,20 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create an availability set
+    - name: Create an availability set with default options
       azure_rm_availabilityset:
         name: myavailabilityset
         location: eastus
         resource_group: Testing
+
+    - name: Create an availability set with advanced options
+      azure_rm_availabilityset:
+        name: myavailabilityset
+        location: eastus
+        resource_group: Testing
+        platform_update_domain_count: 3
+        platform_fault_domain_count: 5
+        sku: Aligned
     
     - name: Delete an availability set
       azure_rm_availabilityset:
