@@ -102,6 +102,10 @@
         zip_file="{{zip_res.dest}}"
       register: lambda_result
 
+    - name: install aws cli - FIXME temporary this should go for a lighterweight solution
+      command: pip install awscli
+      register: result
+
     - name: get the aws account ID for use in future commands
       command: env AWS_ACCESS_KEY_ID='{{aws_access_key}}' AWS_SECRET_ACCESS_KEY='{{aws_secret_key}}' aws sts get-caller-identity --output text --query 'Account'
       register: result
