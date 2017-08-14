@@ -170,10 +170,17 @@ PARAM_TO_COMMAND_KEYMAP = {
 
 
 def execute_show_command(command, module, text=False):
-    if text is False:
-        command += ' | json'
+    if text:
+        cmds = [{
+            'command': command,
+            'output': 'text'
+        }]
+    else:
+        cmds = [{
+            'command': command,
+            'output': 'json'
+        }]
 
-    cmds = [command]
     return run_commands(module, cmds)
 
 
