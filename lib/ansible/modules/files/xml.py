@@ -116,6 +116,7 @@ author:
 - Magnus Hedemark (@magnus919)
 - Dag Wieers (@dagwieers)
 - Marko Stanković (@sm4rk0)
+- Christopher Prescott (@cmprescott)
 '''
 
 EXAMPLES = r'''
