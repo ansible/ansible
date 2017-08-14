@@ -12,13 +12,13 @@
 
   - name: test login
     expect:
-      command: "ssh auth_user@{{ inventory_hostname }} show version"
+      command: "ssh auth_user@{{ inventory_hostname }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
       responses:
         (?i)password: "pass123"
 
   - name: test login with invalid password (shoul fail)
     expect:
-      command: "ssh auth_user@{{ inventory_hostname }} show version"
+      command: "ssh auth_user@{{ inventory_hostname }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
       responses:
         (?i)password: "badpass"
     ignore_errors: yes
