@@ -28,7 +28,7 @@ import traceback
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 try:
@@ -82,7 +82,7 @@ class Connection(ConnectionBase):
 
         stdout, stderr = p.communicate()
 
-        return stdout.split()
+        return to_native(stdout).split()
 
     def get_jail_path(self):
         p = subprocess.Popen([self.jls_cmd, '-j', to_bytes(self.jail), '-q', 'path'],
@@ -91,7 +91,7 @@ class Connection(ConnectionBase):
 
         stdout, stderr = p.communicate()
         # remove \n
-        return stdout[:-1]
+        return to_native(stdout)[:-1]
 
     def _connect(self):
         ''' connect to the jail; nothing to do here '''
@@ -167,7 +167,7 @@ class Connection(ConnectionBase):
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
-                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, to_native(stdout), to_native(stderr)))
         except IOError:
             raise AnsibleError("file or module does not exist at: %s" % in_path)
 
@@ -193,7 +193,7 @@ class Connection(ConnectionBase):
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, to_native(stdout), to_native(stderr)))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
