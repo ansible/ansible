@@ -172,9 +172,8 @@
   junos_vrf:
     aggregate:
     - name: test-1
-      state: absent
     - name: test-2
-      state: absent
+    state: absent
     provider: "{{ netconf }}"
   register: result
 
@@ -188,7 +187,6 @@
         - ge-0/0/2
       rd: 1.1.1.1:10
       target: target:65514:113
-      state: present
     - name: test-2
       description: test-vrf-2
       interfaces:
@@ -196,7 +194,6 @@
         - ge-0/0/5
       rd: 2.2.2.2:10
       target: target:65515:114
-      state: present
     provider: "{{ netconf }}"
   register: result
 
@@ -228,8 +225,6 @@
         - ge-0/0/2
       rd: 1.1.1.1:10
       target: target:65514:113
-      state: present
-      active: False
     - name: test-2
       description: test-vrf-2
       interfaces:
@@ -237,8 +232,7 @@
         - ge-0/0/5
       rd: 2.2.2.2:10
       target: target:65515:114
-      state: present
-      active: False
+    active: False
     provider: "{{ netconf }}"
   register: result
 
@@ -266,8 +260,6 @@
         - ge-0/0/2
       rd: 1.1.1.1:10
       target: target:65514:113
-      state: present
-      active: True
     - name: test-2
       description: test-vrf-2
       interfaces:
@@ -275,8 +267,7 @@
         - ge-0/0/5
       rd: 2.2.2.2:10
       target: target:65515:114
-      state: present
-      active: True
+    active: True
     provider: "{{ netconf }}"
   register: result
 
@@ -298,9 +289,8 @@
   junos_vrf:
     aggregate:
     - name: test-1
-      state: absent
     - name: test-2
-      state: absent
+    state: absent
     provider: "{{ netconf }}"
   register: result
 
@@ -326,9 +316,8 @@
   junos_vrf:
     aggregate:
     - name: test-1
-      state: absent
     - name: test-2
-      state: absent
+    state: absent
     provider: "{{ netconf }}"
   register: result
 

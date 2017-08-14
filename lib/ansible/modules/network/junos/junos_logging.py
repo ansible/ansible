@@ -40,10 +40,6 @@ options:
       - Set logging severity levels.
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
@@ -71,6 +67,11 @@ options:
       - Number of files to be archived, this is applicable if value
         of I(dest) is C(file). The acceptable value is in range from 1 to 1000.
     required: false
+requirements:
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed.
 """
 
 EXAMPLES = """
@@ -100,15 +101,22 @@ EXAMPLES = """
 
 - name: Configure file logging using aggregate
   junos_logging:
+    dest: file
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, active: True}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True}
+    - name: test-1
+      facility: pfe
+      level: critical
+    - name: test-2
+      facility: kernel
+      level: emergency
+    active: True
 
 - name: Delete file logging using aggregate
   junos_logging:
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, active: True, state: absent}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True, state: absent}
+    - { dest: file, name: test-1,  facility: pfe, level: critical }
+    - { dest: file, name: test-2,  facility: kernel, level: emergency }
+    state: absent
 """
 
 RETURN = """
@@ -126,7 +134,10 @@ diff.prepared:
 """
 import collections
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
@@ -180,23 +191,17 @@ def main():
         active=dict(default=True, type='bool')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=element_spec),
-        purge=dict(default=False, type='bool')
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
     )
 
     argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
-
-    mutually_exclusive = [['dest', 'aggregate'],
-                          ['name', 'aggregate'],
-                          ['facility', 'aggregate'],
-                          ['rotate_frequency', 'aggregate'],
-                          ['size', 'aggregate'],
-                          ['files', 'aggregate'],
-                          ['src_addr', 'aggregate'],
-                          ['state', 'aggregate'],
-                          ['active', 'aggregate']]
 
     required_if = [('dest', 'host', ['name', 'facility', 'level']),
                    ('dest', 'file', ['name', 'facility', 'level']),
@@ -205,7 +210,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
-                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -220,6 +224,13 @@ def main():
 
     requests = list()
     for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
+
+        module._check_required_if(required_if, param)
+
         item = param.copy()
         dest = item.get('dest')
         if dest == 'console' and item.get('name'):

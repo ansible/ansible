@@ -68,6 +68,28 @@ EXAMPLES = """
     name: 1.1.1.1
     facility: kernel
     level: critical
+
+- name: Configure file logging using aggregate
+  net_logging:
+    dest: file
+    aggregate:
+    - name: test-1
+      facility: pfe
+      level: critical
+    - name: test-2
+      facility: kernel
+      level: emergency
+- name: Delete file logging using aggregate
+  net_logging:
+    dest: file
+    aggregate:
+    - name: test-1
+      facility: pfe
+      level: critical
+    - name: test-2
+      facility: kernel
+      level: emergency
+    state: absent
 """
 
 RETURN = """

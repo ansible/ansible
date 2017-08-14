@@ -329,6 +329,12 @@ def ternary(value, true_val, false_val):
         return false_val
 
 
+def remove_default_spec(spec):
+    for item in spec:
+        if 'default' in spec[item]:
+            del spec[item]['default']
+
+
 class Template:
 
     def __init__(self):

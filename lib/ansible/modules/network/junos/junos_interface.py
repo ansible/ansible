@@ -72,7 +72,7 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
 """
 
 EXAMPLES = """
@@ -119,14 +119,20 @@ EXAMPLES = """
 - name: Create interface using aggregate
   junos_interface:
     aggregate:
-      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, duplex: half, mtu: 512}
-      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, duplex: full, mtu: 256}
+      - name: ge-0/0/1
+        description: test-interface-1
+      - name: ge-0/0/2
+        description: test-interface-2
+    speed: 1g
+    duplex: full
+    mtu: 512
 
 - name: Delete interface using aggregate
   junos_interface:
     aggregate:
-      - { name: ge-0/0/1, description: test-interface-1, state: absent}
-      - { name: ge-0/0/2, description: test-interface-2, state: absent}
+      - name: ge-0/0/1
+      - name: ge-0/0/2
+    state: absent
 
 - name: Check intent arguments
   junos_interface:
@@ -155,10 +161,12 @@ diff.prepared:
 """
 import collections
 
+from copy import deepcopy
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.network_common import conditional
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
@@ -200,13 +208,15 @@ def main():
         tx_rate=dict(),
         rx_rate=dict(),
         delay=dict(default=10, type='int'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'up', 'down']),
+        state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
     )
 
-    aggregate_spec = element_spec.copy()
+    aggregate_spec = deepcopy(element_spec)
     aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec),
@@ -216,9 +226,7 @@ def main():
     argument_spec.update(junos_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
-    mutually_exclusive = [['name', 'aggregate'],
-                          ['state', 'aggregate'],
-                          ['active', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
@@ -253,6 +261,11 @@ def main():
 
     requests = list()
     for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
+
         item = param.copy()
         state = item.get('state')
         item['disable'] = True if not item.get('enabled') else False
