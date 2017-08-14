@@ -31,47 +31,39 @@ options:
     description:
     - Determines if the Bridge Domain should flood ARP traffic.
     - The APIC defaults new Bridge Domains to "no".
-    type: str
     choices: [ no, yes ]
   bd:
     description:
     - The name of the Bridge Domain.
-    type: str
     aliases: [ bd_name, name ]
   bd_type:
     description:
     - The type of traffic on the Bridge Domain.
     - The APIC defaults new Bridge Domains to Ethernet.
-    type: str
     choices: [ ethernet, fc ]
   description:
     description:
     - Description for the Bridge Domain.
-    type: str
   enable_multicast:
     description:
     - Determines if PIM is enabled
     - The APIC defaults new Bridge Domains to disabled.
-    type: str
     choices: [ no, yes ]
   enable_routing:
     description:
     - Determines if IP forwarding should be allowed.
     - The APIC defaults new Bridge Domains to IP forwarding enabled.
-    type: str
     choices: [ no, yes ]
   endpoint_clear:
     description:
     - Clears all End Points in all Leaves when enabled.
     - The APIC defaults new Bridge Domains to disabled.
     - The value is not reset to disabled once End Points have been cleared; that requires a second task.
-    type: str
     choices: [ no, yes ]
   endpoint_move_detect:
     description:
     - Determines if GARP should be enabled to detect when End Points move.
     - The APIC defaults new Bridge Domains to not use GARP.
-    type: str
     choices: [ default, garp ]
   endpoint_retention_action:
    description:
@@ -82,64 +74,53 @@ options:
     description:
     - The name of the End Point Retention Policy the Bridge Domain should use when
       overriding the default End Point Retention Policy.
-    type: str
     choices: [ inherit, resolve ]
   igmp_snoop_policy:
     description:
     - The name of the IGMP Snooping Policy the Bridge Domain should use when
       overriding the default IGMP Snooping Policy.
-    type: str
   ip_learning:
     description:
     - Determines if the Bridge Domain should learn End Point IPs.
     - The APIC defaults new Bridge Domains to enable IP learning.
-    type: str
     choices: [ no, yes ]
   ipv6_nd_policy:
     description:
     - The name of the IPv6 Neighbor Discovery Policy the Bridge Domain should use when
       overridding teh default IPV6 ND Policy.
-    type: str
   l2_unknown_unicast:
     description:
     - Determines what forwarding method to use for unknown l2 destinations.
     - The APIC defaults new Bridge domains to use Hardware Proxy.
-    type: str
     choices: [ proxy, flood ]
   l3_unknown_multicast:
     description:
     - Determines the forwarding method to use for unknown multicast destinations.
     - The APCI defaults new Bridge Domains to use normal flooding.
-    type: str
     choices: [ flood, opt-flood ]
   limit_ip_learn:
     description:
     - Determines if the BD should limit IP learning to only subnets owned by the Bridge Domain.
     - The APIC defaults new Bridge Domains to learn all IP addresses.
-    type: str
     choices: [ no, yes ]
   multi_dest:
     description:
     - Determines the forwarding method for L2 multicast, broadcast, and link layer traffic.
     - The APIC defaults new Bridge Domains to use bd-flood.
-    type: str
     choices: [ bd-flood, drop, encap-flood ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
     choices: [ absent, present, query ]
-    type: str
     default: present
   tenant:
     description:
     - The name of the Tenant.
-    type: str
     aliases: [ tenant_name ]
   vrf:
     description:
     - The name of the VRF.
-    type: str
     aliases: [ vrf_name ]
 '''
 
