@@ -127,12 +127,12 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    cmds = [command]
-    if module.params['transport'] == 'cli':
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        body = run_commands(module, cmds)
-    return body
+    command = {
+        'command': command,
+        'output': 'text',
+    }
+
+    return run_commands(module, command)
 
 
 def flatten_list(command_lists):
