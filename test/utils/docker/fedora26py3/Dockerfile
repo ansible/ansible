@@ -26,6 +26,7 @@ RUN dnf clean all && \
     openssh-clients \
     openssh-server \
     openssl-devel \
+    pass \
     procps \
     python3-cryptography \
     python3-dbus \

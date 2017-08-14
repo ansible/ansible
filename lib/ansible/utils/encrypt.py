@@ -23,10 +23,13 @@ import stat
 import tempfile
 import time
 import warnings
+import random
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_text, to_bytes
+
 
 PASSLIB_AVAILABLE = False
 try:
@@ -162,3 +165,19 @@ def keyczar_decrypt(key, msg):
         return key.Decrypt(msg)
     except key_errors.InvalidSignatureError:
         raise AnsibleError("decryption failed")
+
+
+DEFAULT_PASSWORD_LENGTH = 20
+
+
+def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+    '''Return a random password string of length containing only chars
+
+    :kwarg length: The number of characters in the new password.  Defaults to 20.
+    :kwarg chars: The characters to choose from.  The default is all ascii
+        letters, ascii digits, and these symbols ``.,:-_``
+    '''
+    assert isinstance(chars, text_type), '%s (%s) is not a text_type' % (chars, type(chars))
+
+    random_generator = random.SystemRandom()
+    return u''.join(random_generator.choice(chars) for dummy in range(length))
