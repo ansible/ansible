@@ -30,9 +30,9 @@ In the example above, each of the 3 tasks will be executed after appending the `
 and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
 for all the enclosed tasks.
 
-. versionadded:: 2.3
+.. versionadded:: 2.3
 
-The `name:` keyword for `blocks:` was added in Ansible 2.3.
+  The `name:` keyword for `blocks:` was added in Ansible 2.3.
 
 .. _block_error_handling:
 
