@@ -59,7 +59,7 @@
 - name: Disable interface
   net_interface:
     name: eth1
-    state: down
+    enabled: False
   register: result
 
 - assert:
@@ -70,7 +70,7 @@
 - name: Enable interface
   net_interface:
     name: eth1
-    state: up
+    enabled: True
   register: result
 
 - assert:
@@ -138,8 +138,8 @@
 - name: Disable interface on aggregate
   net_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512, state: down}
-      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256, state: down}
+      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512, enabled: False}
+      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256, enabled: False}
   register: result
 
 - assert:
@@ -151,8 +151,8 @@
 - name: Enable interface on aggregate
   net_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512, state: present}
-      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256, state: present}
+      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512, enabled: True}
+      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256, enabled: True}
   register: result
 
 - assert:

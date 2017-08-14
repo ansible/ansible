@@ -84,7 +84,7 @@
 - name: Disable interface
   vyos_interface:
     name: eth1
-    state: down
+    enabled: False
   register: result
 
 - assert:
@@ -95,7 +95,7 @@
 - name: Enable interface
   vyos_interface:
     name: eth1
-    state: up
+    enabled: True
   register: result
 
 - assert:
@@ -167,8 +167,8 @@
 - name: Disable interface on aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1, state: down}
-      - { name: eth2, description: test-interface-2, state: down}
+      - { name: eth1, description: test-interface-1, enabled: False}
+      - { name: eth2, description: test-interface-2, enabled: False}
   register: result
 
 - assert:
@@ -180,8 +180,8 @@
 - name: Enable interface on aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1, state: present}
-      - { name: eth2, description: test-interface-2, state: present}
+      - { name: eth1, description: test-interface-1, enabled: True}
+      - { name: eth2, description: test-interface-2, enabled: True}
   register: result
 
 - assert:
