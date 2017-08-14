@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 - name: Setup
   vyos_config:
     lines:
@@ -8,6 +9,19 @@
     provider: "{{ cli }}"
 
 - name: Create user
+=======
+- name: tearDown
+  vyos_user:
+    users:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- name: Create user (SetUp)
+>>>>>>> [WIP] fix vyos_user password
   vyos_user:
     name: ansibletest1
     password: test
