@@ -48,7 +48,7 @@ options:
         This argument accepts a string value and is mutually exclusive
         with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
-  password:
+  configured_password:
     description:
       - The password to be configured on the Cisco IOS device. The
         password needs to be provided in clear and it will be encrypted
@@ -127,7 +127,7 @@ EXAMPLES = """
 - name: Change Password for User netop
   ios_user:
     name: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 
@@ -198,7 +198,12 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         if want['state'] == 'absent':
-            commands.append(user_del_cmd(want['name']))
+            cmd = json.dumps({
+                'command': 'no username %s' % want['name'],
+                'prompt': 'This operation will remove all username related configurations with same name',
+                'answer': 'y'
+            })
+            commands.append(cmd)
             continue
 
         if needs_update(want, have, 'view'):
@@ -207,9 +212,9 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'privilege'):
             add(commands, want, 'privilege %s' % want['privilege'])
 
-        if needs_update(want, have, 'password'):
+        if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'secret %s' % want['password'])
+                add(commands, want, 'secret %s' % want['configured_password'])
 
         if needs_update(want, have, 'nopassword'):
             if want['nopassword']:
@@ -249,7 +254,7 @@ def map_config_to_obj(module):
             'name': user,
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
-            'password': None,
+            'configured_password': None,
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
         }
@@ -301,7 +306,7 @@ def map_params_to_obj(module):
 
     for item in aggregate:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['view'] = get_value('view')
@@ -330,7 +335,7 @@ def main():
     element_spec = dict(
         name=dict(),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
