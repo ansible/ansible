@@ -153,7 +153,7 @@ def shred_implementation(fileName):
     random_bytes = os.urandom(300)
     f = open(fileName, 'w')
     for i in range(1, 3):
-       f.write(random_bytes)
+        f.write(random_bytes)
     f.close()
     os.remove(fileName)
 
