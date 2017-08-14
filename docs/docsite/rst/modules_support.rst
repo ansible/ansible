@@ -21,11 +21,17 @@ Core
 These are modules that the Ansible Core Team maintains and will always ship with Ansible itself.
 They will also receive slightly higher priority for all requests. Non-core modules are still fully usable.
 
+.. seealso::
+    List of :ref:`Core Supported<core_supported>` modules
+
 Network
 ```````
 
 These modules are supported by the Ansible Network Team in a relationship
 similar to how the Ansible Core Team maintains the Core modules.
+
+.. seealso::
+    List of :ref:`Network Supported<network_supported>` modules
 
 Certified
 `````````
@@ -37,6 +43,9 @@ Also, it is strongly recommended (but not presently required) for these types of
 
 These modules are currently shipped with Ansible, but might be shipped separately in the future.
 
+.. seealso::
+    List of :ref:`Certified<partner_supported>` modules
+
 Community
 `````````
 These modules **are not** supported by Core Committers or by companies/partners associated to the module. They are maintained by the community.
@@ -44,6 +53,10 @@ These modules **are not** supported by Core Committers or by companies/partners 
 They are still fully usable, but the response rate to issues is purely up to the community.  Best effort support will be provided but is not covered under any support contracts.
 
 These modules are currently shipped with Ansible, but will most likely be shipped separately in the future.
+
+.. seealso::
+    List of Core Supported modules
+    List of :ref:`Community Supported<community_supported>` modules
 
 
 .. seealso::
