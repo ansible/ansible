@@ -77,8 +77,9 @@ class TestPromptVaultSecret(unittest.TestCase):
     @patch('ansible.parsing.vault.display.prompt', side_effect=EOFError)
     def test_prompt_eoferror(self, mock_display_prompt):
         secret = vault.PromptVaultSecret(vault_id='test_id')
-        secret.load()
-        self.assertEqual(secret._bytes, None)
+        self.assertRaisesRegexp(vault.AnsibleVaultError,
+                                'EOFError.*test_id',
+                                secret.load)
 
     @patch('ansible.parsing.vault.display.prompt', side_effect=['first_password', 'second_password'])
     def test_prompt_passwords_dont_match(self, mock_display_prompt):
@@ -129,6 +130,21 @@ class TestFileVaultSecret(unittest.TestCase):
 
         self.assertEqual(secret.bytes, to_bytes(password))
 
+    def test_file_empty(self):
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file.write(to_bytes(''))
+        tmp_file.close()
+
+        fake_loader = DictDataLoader({tmp_file.name: ''})
+
+        secret = vault.FileVaultSecret(loader=fake_loader, filename=tmp_file.name)
+        self.assertRaisesRegexp(vault.AnsibleVaultPasswordError,
+                                'Invalid vault password was provided from file.*%s' % tmp_file.name,
+                                secret.load)
+
+        os.unlink(tmp_file.name)
+
     def test_file_not_a_directory(self):
         filename = '/dev/null/foobar'
         fake_loader = DictDataLoader({filename: 'sdfadf'})
@@ -166,11 +182,21 @@ class TestScriptVaultSecret(unittest.TestCase):
 
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file(self, mock_popen):
-        self._mock_popen(mock_popen)
+        self._mock_popen(mock_popen, stdout=b'some_password')
         secret = vault.ScriptVaultSecret()
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             secret.load()
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_read_file_empty(self, mock_popen):
+        self._mock_popen(mock_popen, stdout=b'')
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            self.assertRaisesRegexp(vault.AnsibleVaultPasswordError,
+                                    'Invalid vault password was provided from script',
+                                    secret.load)
 
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_os_error(self, mock_popen):

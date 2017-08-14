@@ -180,7 +180,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         return ret
 
     @staticmethod
-    def build_vault_ids(vault_ids, vault_password_files=None, ask_vault_pass=None):
+    def build_vault_ids(vault_ids, vault_password_files=None,
+                        ask_vault_pass=None, create_new_password=None):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 

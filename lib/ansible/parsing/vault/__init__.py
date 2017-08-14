@@ -222,15 +222,16 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
     return b_vaulttext
 
 
-def verify_secret_is_not_empty(secret):
+def verify_secret_is_not_empty(secret, msg=None):
     '''Check the secret against minimal requirements.
 
     Raises: AnsibleVaultPasswordError if the password does not meet requirements.
 
     Currently, only requirement is that the password is not None or an empty string.
     '''
+    msg = msg or 'Invalid vault password was provided'
     if not secret:
-        raise AnsibleVaultPasswordError('Invalid vault password was provided')
+        raise AnsibleVaultPasswordError(msg)
 
 
 class VaultSecret:
@@ -353,7 +354,8 @@ class FileVaultSecret(VaultSecret):
         except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
 
-        verify_secret_is_not_empty(vault_pass)
+        verify_secret_is_not_empty(vault_pass,
+                                   msg='Invalid vault password was provided from file (%s)' % filename)
 
         return vault_pass
 
@@ -384,7 +386,8 @@ class ScriptVaultSecret(FileVaultSecret):
             raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, stderr))
 
         vault_pass = stdout.strip(b'\r\n')
-        verify_secret_is_not_empty(vault_pass)
+        verify_secret_is_not_empty(vault_pass,
+                                   msg='Invalid vault password was provided from script (%s)' % filename)
         return vault_pass
 
 
