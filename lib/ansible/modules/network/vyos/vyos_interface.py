@@ -55,19 +55,8 @@ options:
       - Interface link status.
     default: auto
     choices: ['full', 'half', 'auto']
-  tx_rate:
-    description:
-      - Transmit rate.
-  rx_rate:
-    description:
-      - Receiver rate.
   aggregate:
     description: List of Interfaces definitions.
-  purge:
-    description:
-      - Purge Interfaces not defined in the aggregate parameter.
-        This applies only for logical interface.
-    default: no
   state:
     description:
       - State of the Interface configuration, C(up) means present and
@@ -90,12 +79,12 @@ EXAMPLES = """
 - name: make interface down
   vyos_interface:
     name: eth0
-    state: down
+    enabled: False
 
 - name: make interface up
   vyos_interface:
     name: eth0
-    state: up
+    enabled: True
 
 - name: Configure interface speed, mtu, duplex
   vyos_interface:
@@ -119,7 +108,12 @@ commands:
 """
 import re
 
+from time import sleep
+
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network_common import conditional
 from ansible.module_utils.vyos import load_config, get_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
@@ -194,7 +188,6 @@ def map_config_to_obj(module):
 
                 match = re.search(r'%s (\S+)' % name, line, re.M)
                 if match:
-
                     param = match.group(1)
                     if param == 'description':
                         match = re.search(r'description (\S+)', line, re.M)
@@ -234,14 +227,22 @@ def map_params_to_obj(module):
                 if item not in d:
                     d[item] = None
 
-            d['description'] = DEFAULT_DESCRIPTION
+            if d.get('description') is None:
+                d['description'] = DEFAULT_DESCRIPTION
+
             if not d.get('state'):
                 d['state'] = module.params['state']
 
-            if d['state'] in ('present', 'up'):
+            if d.get('enabled') is None:
+                d['enabled'] = module.params['enabled']
+
+            if d['enabled']:
                 d['disable'] = False
             else:
                 d['disable'] = True
+
+            if d.get('delay') is None:
+                d['delay'] = module.params['delay']
 
             if d.get('speed'):
                 d['speed'] = str(d['speed'])
@@ -254,17 +255,46 @@ def map_params_to_obj(module):
             'speed': module.params['speed'],
             'mtu': module.params['mtu'],
             'duplex': module.params['duplex'],
+            'delay': module.params['delay'],
             'state': module.params['state']
         }
 
-        state = module.params['state']
-        if state == 'present' or state == 'up':
+        if module.params['enabled']:
             params.update({'disable': False})
         else:
             params.update({'disable': True})
 
         obj.append(params)
     return obj
+
+
+def check_declarative_intent_params(module, want, result):
+    failed_conditions = []
+
+    for w in want:
+        want_state = w.get('state')
+        want_tx_rate = w.get('tx_rate')
+        want_rx_rate = w.get('rx_rate')
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+            continue
+
+        if result['changed']:
+            sleep(w['delay'])
+
+        command = 'show interfaces ethernet %s' % w['name']
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+        if want_state in ('up', 'down'):
+            match = re.search(r'%s (\w+)' % 'state', out, re.M)
+            have_state = None
+            if match:
+                have_state = match.group(1)
+            if have_state is None or not conditional(want_state, have_state.strip().lower()):
+                failed_conditions.append('state ' + 'eq(%s)' % want_state)
+
+    return failed_conditions
 
 
 def main():
@@ -276,10 +306,9 @@ def main():
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
-        tx_rate=dict(),
-        rx_rate=dict(),
+        enabled=dict(default=True, type='bool'),
+        delay=dict(default=10, type='int'),
         aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
@@ -318,6 +347,11 @@ def main():
                 result['diff'] = {'prepared': diff}
         result['changed'] = True
 
+    failed_conditions = check_declarative_intent_params(module, want, result)
+
+    if failed_conditions:
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
     module.exit_json(**result)
 
 if __name__ == '__main__':
