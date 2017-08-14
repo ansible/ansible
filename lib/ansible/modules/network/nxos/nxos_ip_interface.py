@@ -37,6 +37,7 @@ notes:
     - C(mask) must be inserted in decimal format (i.e. 24) for
       both IPv6 and IPv4.
     - A single interface can have multiple IPv6 configured.
+    - C(tag) is not idempotent for IPv6 addresses and I2 system image.
 options:
     interface:
         description:
@@ -168,9 +169,10 @@ def find_same_addr(existing, addr, mask, full=False, **kwargs):
             if full:
                 if kwargs['version'] == 'v4' and int(address['tag']) == kwargs['tag']:
                     return address
-                elif kwargs['version'] == 'v6':
+                elif kwargs['version'] == 'v6' and kwargs['tag'] == 0:
                     # Currently we don't get info about IPv6 address tag
-                    return False
+                    # But let's not break idempotence for the default case
+                    return address
             else:
                 return address
     return False
@@ -274,7 +276,7 @@ def parse_unstructured_data(body, interface_name, version, module):
                 address = each_line.strip().split(' ')[0]
                 if address not in address_list:
                     address_list.append(address)
-                    interface['prefixes'].append(str(ipaddress.ip_interface(address).network))
+                    interface['prefixes'].append(str(ipaddress.ip_interface(u"%s" % address).network))
 
             if address_list:
                 for ipv6 in address_list:
@@ -289,7 +291,7 @@ def parse_unstructured_data(body, interface_name, version, module):
             if "IP address" in splitted_body[index]:
                 regex = '.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:' + \
                         '\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?' + \
-                        '.+?tag:\s(?P<tag>\d+).*'
+                        '(.+?tag:\s(?P<tag>\d+).*)?'
                 match = re.match(regex, splitted_body[index])
                 if match:
                     match_dict = match.groupdict()
@@ -297,7 +299,10 @@ def parse_unstructured_data(body, interface_name, version, module):
                         match_dict['secondary'] = False
                     else:
                         match_dict['secondary'] = True
-                    match_dict['tag'] = int(match_dict['tag'])
+                    if match_dict['tag'] is None:
+                        match_dict['tag'] = 0
+                    else:
+                        match_dict['tag'] = int(match_dict['tag'])
                     interface['addresses'].append(match_dict)
                     prefix = str(ipaddress.ip_interface(u"%(addr)s/%(mask)s" % match_dict).network)
                     interface['prefixes'].append(prefix)
@@ -349,7 +354,9 @@ def get_remove_ip_config_commands(interface, addr, mask, existing, version):
                     commands.append('no ip address {0}/{1}'.format(addr, mask))
                 break
     else:
-        commands.append('no ipv6 address {0}/{1}'.format(addr, mask))
+        for address in existing['addresses']:
+            if address['addr'] == addr:
+                commands.append('no ipv6 address {0}/{1}'.format(addr, mask))
 
     return commands
 
