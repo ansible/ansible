@@ -105,14 +105,6 @@ EXAMPLES = '''
     peer_gw: true
     auto_recovery: true
 
-# peer-gateway might ask for confirmation to apply changes
-# Device should be configured with terminal dont-ask that makes
-# the device take default answer on confirmation prompt
-
-- name: Make device take default answer
-  nxos_command:
-    commands: terminal dont-ask
-
 - name: configure
   nxos_vpc:
     domain: 100
