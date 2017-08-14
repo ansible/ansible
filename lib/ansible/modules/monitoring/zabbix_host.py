@@ -398,29 +398,26 @@ class Host(object):
 
     # check the exist_interfaces whether it equals the interfaces or not
     def check_interface_properties(self, exist_interface_list, interfaces):
-        interfaces_port_list = []
+        # Construct two sorted lists of properties to compare them
+        properties = ["dns", "ip", "main", "port", "type", "useip", "bulk"]
+        defaults = {"bulk": "1"}
 
-        if interfaces is not None:
-            if len(interfaces) >= 1:
-                for interface in interfaces:
-                    interfaces_port_list.append(int(interface['port']))
+        interface_property_list = [
+            list( str(interface.get(property, defaults.get(property, None) )) for property in properties )
+            for interface in interfaces or []
+        ]
+        interface_property_list.sort()
 
-        exist_interface_ports = []
-        if len(exist_interface_list) >= 1:
-            for exist_interface in exist_interface_list:
-                exist_interface_ports.append(int(exist_interface['port']))
+        exist_interface_property_list = [
+            list( str(interface.get(property, defaults.get(property, None) )) for property in properties )
+            for interface in exist_interface_list or []
+        ]
+        exist_interface_property_list.sort()
 
-        if set(interfaces_port_list) != set(exist_interface_ports):
+        # Now simply compare these lists
+
+        if interface_property_list != exist_interface_property_list:
             return True
-
-        for exist_interface in exist_interface_list:
-            exit_interface_port = int(exist_interface['port'])
-            for interface in interfaces:
-                interface_port = int(interface['port'])
-                if interface_port == exit_interface_port:
-                    for key in interface.keys():
-                        if str(exist_interface[key]) != str(interface[key]):
-                            return True
 
         return False
 
