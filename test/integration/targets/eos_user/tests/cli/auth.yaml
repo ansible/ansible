@@ -1,0 +1,26 @@
+---
+- name: create user with password
+  eos_user:
+    name: netend
+    privilege: 15
+    role: network-operator
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+    configured_password: pass123
+  register: result
+
+- name: test auth with new user
+  eos_command:
+    commands: ['show version']
+    provider:
+      host: "{{ ansible_host }}"
+      transport: cli
+      authorize: yes
+      password: pass123
+      username: netend
+
+- name: delete user
+  eos_user:
+    name: netend
+    state: absent
