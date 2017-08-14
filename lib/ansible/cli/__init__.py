@@ -252,7 +252,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     prompted_vault_secret.load()
                 except AnsibleError as exc:
                     display.warning('Error in vault password prompt (%s): %s' % (vault_id_name, exc))
-                    continue
+                    raise
 
                 vault_secrets.append((built_vault_id, prompted_vault_secret))
 
