@@ -439,7 +439,7 @@ class ElastiCacheManager(object):
         if self.zone is not None:
             unmodifiable_data['zone'] = self.data['PreferredAvailabilityZone']
         for key, value in unmodifiable_data.items():
-            if getattr(self, key) is not None and getattr(self, key) != value:
+            if getattr(self, key) and getattr(self, key) != value:
                 return True
         return False
 
