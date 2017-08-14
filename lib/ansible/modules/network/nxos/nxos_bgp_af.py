@@ -359,7 +359,12 @@ def get_value(arg, config, module):
             if inject_re.search(config):
                 value.append('copy_attributes')
 
-    elif arg in ['networks', 'redistribute']:
+    elif arg == 'networks':
+        value = []
+        for network in command_val_re.findall(config):
+            value.append(network.split())
+
+    elif arg == 'redistribute':
         value = []
         if has_command_val:
             value = has_command_val.group('value').split()
@@ -367,9 +372,8 @@ def get_value(arg, config, module):
             if value:
                 if len(value) == 3:
                     value.pop(1)
-                elif arg == 'redistribute' and len(value) == 4:
-                    value = ['{0} {1}'.format(
-                        value[0], value[1]), value[3]]
+                elif len(value) == 4:
+                    value = ['{0} {1}'.format(value[0], value[1]), value[3]]
 
     elif command == 'distance':
         distance_re = r'.*distance\s(?P<d_ebgp>\w+)\s(?P<d_ibgp>\w+)\s(?P<d_local>\w+)'
