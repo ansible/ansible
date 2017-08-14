@@ -73,8 +73,8 @@ options:
             - Define if the availability set supports managed disks.
         default: Classic
         choices:
-            -Classic
-            -Aligned
+            - Classic
+            - Aligned
         required: false   
 extends_documentation_fragment:
     - azure
