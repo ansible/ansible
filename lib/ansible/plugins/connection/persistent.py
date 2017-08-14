@@ -18,10 +18,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
 import os
 import pty
 import subprocess
-import sys
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six.moves import cPickle
@@ -66,12 +66,11 @@ class Connection(ConnectionBase):
         (stdout, stderr) = p.communicate()
         stdin.close()
 
-        return (p, stdout, stderr)
+        return (p.returncode, stdout, stderr)
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        p, out, err = self._do_it('EXEC: ' + cmd)
-        return p.returncode, out, err
+        return self._do_it('EXEC: ' + cmd)
 
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)
@@ -91,16 +90,10 @@ class Connection(ConnectionBase):
         socket path exists. If the path exists (or the timeout has expired),
         returns the socket path.
         """
-        p, out, err = self._do_it('RUN:')
-        while True:
-            out = out.strip()
-            if out == b'':
-                # EOF file found
-                return None
-            elif out.startswith(b'#SOCKET_PATH#'):
-                break
-            else:
-                out = p.stdout.readline()
+        socket_path = None
+        rc, out, err = self._do_it('RUN:')
+        match = re.search(r"#SOCKET_PATH#: (\S+)", out)
+        if match:
+            socket_path = to_text(match.group(1).strip(), errors='surrogate_or_strict')
 
-        socket_path = out.split(b'#SOCKET_PATH#: ', 1)[1]
-        return to_text(socket_path, errors='surrogate_or_strict')
+        return socket_path
