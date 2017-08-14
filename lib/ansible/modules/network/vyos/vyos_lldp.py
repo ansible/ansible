@@ -78,7 +78,6 @@ def main():
     """
     argument_spec = dict(
         interfaces=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent',
                             'enabled', 'disabled'])
