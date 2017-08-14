@@ -26,6 +26,7 @@ import math
 
 from ansible import errors
 from ansible.module_utils import basic
+from ansible.module_utils.six.moves import zip, zip_longest
 
 
 def unique(a):
@@ -153,17 +154,10 @@ class FilterModule(object):
             'human_readable': human_readable,
             'human_to_bytes': human_to_bytes,
 
-        }
+            # zip
+            'zip': zip,
+            'zip_longest': zip_longest,
 
-        # py2 vs py3, reverse when py3 is predominant version
-        try:
-            filters['zip'] = itertools.izip
-            filters['zip_longest'] = itertools.izip_longest
-        except AttributeError:
-            try:
-                filters['zip'] = itertools.zip
-                filters['zip_longest'] = itertools.zip_longest
-            except:
-                pass
+        }
 
         return filters
