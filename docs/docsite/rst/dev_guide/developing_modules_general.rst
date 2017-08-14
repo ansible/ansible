@@ -219,21 +219,23 @@ If you want to test your new module, you can now consume it with an
 Ansible playbook.
 
 -  Create a playbook in any directory: ``$ touch testmod.yml``
--  Add the following to the new playbook file \`\`\`yaml ---
--  name: test my new module connection: local hosts: localhost
+-  Add the following to the new playbook file::
 
-tasks: - name: run the new module my\_new\_test\_module: name: 'hello'
-new: true register: testout
+    ---
+    - name: test my new module
+      connection: local
+      hosts: localhost
+      tasks:
+      - name: run the new module
+        my_new_test_module:
+          name: 'hello'
+          new: true
+        register: testout
+      - name: dump test output
+        debug:
+          msg: '{{ testout }}'
 
-::
-
-    - name: dump test output
-      debug:
-        msg: '{{ testout }}'
-
-::
-
-- Run the playbook and analyze the output: `$ ansible-playbook ./testmod.yml`
+- Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
 Debugging (local)
 =================   
@@ -241,7 +243,7 @@ Debugging (local)
 If you want to break into a module and step through with the debugger, locally running the module you can do:
 
 - Set a breakpoint in the module: `import pdb; pdb.set_trace()`
-- Run the module on the local machine: `$ python -m pdb ./my_new_test_module.py ./args.json`
+- Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
 
 Debugging (remote)
 ==================
@@ -254,7 +256,7 @@ In the event you want to debug a module that is running on a remote target (i.e.
 - SSH into the remote target after the completion of the playbook
 - Navigate to the directory (most likely it is going to be your ansible remote user defined or implied from the playbook: ``~/.ansible/tmp/ansible-tmp-...``)
 - Here you should see the module that you executed from your Ansible controller, but this is the zipped file that Ansible sent to the remote host. You can run this by specifying ``python my_test_module.py`` (not necessary)
-- To debug, though, we will want to extra this zip out to the original module format: ``python my_test_module.py explode`` (Ansible will expand the module into ``./debug-dir``)
+- To debug, though, we will want to extract this zip out to the original module format: ``python my_test_module.py explode`` (Ansible will expand the module into ``./debug-dir``)
 - Navigate to ``./debug-dir`` (notice that unzipping has caused the generation of ``ansible_module_my_test_module.py``)
 - Modify or set a breakpoint in the unzipped module
 - Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``
@@ -284,7 +286,7 @@ If you are starting new development or fixing a bug, create a new branch:
 
 If you are planning on contributing
 back to the main Ansible repository, fork the Ansible repository into
-your own GitHub account and developing against the new non-devel branch
+your own GitHub account and develop against the new non-devel branch
 in your fork. When you believe you have a good working code change,
 submit a pull request to the Ansible repository.
 
