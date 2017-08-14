@@ -630,7 +630,6 @@ def main():
 
             # get exist host's interfaces
             exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
-            exist_interfaces_copy = copy.deepcopy(exist_interfaces)
 
             # update host
             interfaces_len = len(interfaces) if interfaces else 0
@@ -649,7 +648,7 @@ def main():
                     module.exit_json(changed=False)
             else:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name):
+                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
                     host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
                                      visible_name, tls_connect_int, tls_accept_int, tls_psk_identity, tls_psk, tls_issuer,
                                      tls_subject)
