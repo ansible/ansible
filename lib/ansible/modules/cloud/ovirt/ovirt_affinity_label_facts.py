@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_affinity_labels_facts
+module: ovirt_affinity_label_facts
 short_description: Retrieve facts about one or more oVirt/RHV affinity labels
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
@@ -53,28 +53,28 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Gather facts about all affinity labels, which names start with C(label):
-- ovirt_affinity_labels_facts:
+- ovirt_affinity_label_facts:
     name: label*
 - debug:
     var: affinity_labels
 
 # Gather facts about all affinity labels, which are assigned to VMs
 # which names start with C(postgres):
-- ovirt_affinity_labels_facts:
+- ovirt_affinity_label_facts:
     vm: postgres*
 - debug:
     var: affinity_labels
 
 # Gather facts about all affinity labels, which are assigned to hosts
 # which names start with C(west):
-- ovirt_affinity_labels_facts:
+- ovirt_affinity_label_facts:
     host: west*
 - debug:
     var: affinity_labels
 
 # Gather facts about all affinity labels, which are assigned to hosts
 # which names start with C(west) or VMs which names start with C(postgres):
-- ovirt_affinity_labels_facts:
+- ovirt_affinity_label_facts:
     host: west*
     vm: postgres*
 - debug:
@@ -108,6 +108,10 @@ def main():
         vm=dict(default=None),
     )
     module = AnsibleModule(argument_spec)
+
+    if module._name == 'ovirt_affinity_labels_facts':
+        module.deprecate("The 'ovirt_affinity_labels_facts' module is being renamed 'ovirt_affinity_label_facts'", version=2.8)
+
     check_sdk(module)
 
     try:

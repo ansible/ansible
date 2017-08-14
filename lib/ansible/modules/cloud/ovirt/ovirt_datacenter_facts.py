@@ -26,20 +26,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_groups_facts
-short_description: Retrieve facts about one or more oVirt/RHV groups
+module: ovirt_datacenter_facts
+short_description: Retrieve facts about one or more oVirt/RHV datacenters
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt/RHV groups."
+    - "Retrieve facts about one or more oVirt/RHV datacenters."
 notes:
-    - "This module creates a new top-level C(ovirt_groups) fact, which
-       contains a list of groups."
+    - "This module creates a new top-level C(ovirt_datacenters) fact, which
+       contains a list of datacenters."
 options:
     pattern:
       description:
         - "Search term which is accepted by oVirt/RHV search backend."
-        - "For example to search group X use following pattern: name=X"
+        - "For example to search datacenter I(X) use following pattern: I(name=X)"
 extends_documentation_fragment: ovirt_facts
 '''
 
@@ -47,17 +47,17 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Gather facts about all groups which names start with C(admin):
-- ovirt_groups_facts:
-    pattern: name=admin*
+# Gather facts about all data centers which names start with C(production):
+- ovirt_datacenter_facts:
+    pattern: name=production*
 - debug:
-    var: ovirt_groups
+    var: ovirt_datacenters
 '''
 
 RETURN = '''
-ovirt_groups:
-    description: "List of dictionaries describing the groups. Group attribues are mapped to dictionary keys,
-                  all groups attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/group."
+ovirt_datacenters:
+    description: "List of dictionaries describing the datacenters. Datacenter attribues are mapped to dictionary keys,
+                  all datacenters attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/data_center."
     returned: On success.
     type: list
 '''
@@ -78,23 +78,27 @@ def main():
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)
+
+    if module._name == 'ovirt_datacenters_facts':
+        module.deprecate("The 'ovirt_datacenters_facts' module is being renamed 'ovirt_datacenter_facts'", version=2.8)
+
     check_sdk(module)
 
     try:
         auth = module.params.pop('auth')
         connection = create_connection(auth)
-        groups_service = connection.system_service().groups_service()
-        groups = groups_service.list(search=module.params['pattern'])
+        datacenters_service = connection.system_service().data_centers_service()
+        datacenters = datacenters_service.list(search=module.params['pattern'])
         module.exit_json(
             changed=False,
             ansible_facts=dict(
-                ovirt_groups=[
+                ovirt_datacenters=[
                     get_dict_of_struct(
-                        struct=c,
+                        struct=d,
                         connection=connection,
                         fetch_nested=module.params.get('fetch_nested'),
                         attributes=module.params.get('nested_attributes'),
-                    ) for c in groups
+                    ) for d in datacenters
                 ],
             ),
         )

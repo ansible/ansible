@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_affinity_groups
+module: ovirt_affinity_group
 short_description: Module to manage affinity groups in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
@@ -88,7 +88,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Create(if not exists) and assign affinity group to VMs vm1 and vm2 and host host1
-- ovirt_affinity_groups:
+- ovirt_affinity_group:
     name: mygroup
     cluster: mycluster
     vm_enforcing: true
@@ -102,7 +102,7 @@ EXAMPLES = '''
       - host1
 
 # Detach VMs from affinity group and disable VM rule:
-- ovirt_affinity_groups:
+- ovirt_affinity_group:
     name: mygroup
     cluster: mycluster
     vm_enforcing: false
@@ -115,7 +115,7 @@ EXAMPLES = '''
       - host2
 
 # Remove affinity group
-- ovirt_affinity_groups:
+- ovirt_affinity_group:
     state: absent
     cluster: mycluster
     name: mygroup
@@ -293,6 +293,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if module._name == 'ovirt_affinity_groups':
+        module.deprecate("The 'ovirt_affinity_groups' module is being renamed 'ovirt_affinity_group'", version=2.8)
+
     check_sdk(module)
     try:
         auth = module.params.pop('auth')

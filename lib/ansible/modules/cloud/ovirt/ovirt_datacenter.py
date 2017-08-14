@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_datacenters
+module: ovirt_datacenter
 short_description: Module to manage data centers in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
@@ -73,14 +73,14 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Create datacenter
-- ovirt_datacenters:
+- ovirt_datacenter:
     name: mydatacenter
     local: True
     compatibility_version: 4.0
     quota_mode: enabled
 
 # Remove datacenter
-- ovirt_datacenters:
+- ovirt_datacenter:
     state: absent
     name: mydatacenter
 '''
@@ -193,6 +193,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if module._name == 'ovirt_datacenters':
+        module.deprecate("The 'ovirt_datacenters' module is being renamed 'ovirt_datacenter'", version=2.8)
+
     check_sdk(module)
     check_params(module)
 
