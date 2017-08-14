@@ -140,25 +140,15 @@ EXAMPLES = """
     name: "test-please-delete"
     state: present
     engine: redis
-    tags: [
-            {
-                'Key': 'test',
-                'Value': 'testa'
-            },
-            {
-                'Key': 'testb',
-                'Value': 'testc'
-            },
-            {
-                'Key': 'testd',
-                'Value': 'testf'
-            },
-          ]
+    tags:
+      test: testa
+      testb: testc
+      testd: testf
 """
 from time import sleep
 from traceback import format_exc
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 
 try:
     import boto3
@@ -191,7 +181,7 @@ class ElastiCacheManager(object):
         self.zone = zone
         self.wait = wait
         self.hard_modify = hard_modify
-        self.tags = tags
+        self.tags = ansible_dict_to_boto3_tag_list(tags)
 
         self.region = region
         self.aws_connect_kwargs = aws_connect_kwargs
@@ -248,6 +238,7 @@ class ElastiCacheManager(object):
                       PreferredAvailabilityZone=self.zone)
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
+        if self.tags is not None:
             kwargs['Tags'] = self.tags
 
         try:
@@ -527,7 +518,7 @@ def main():
         zone=dict(default=""),
         wait=dict(default=True, type='bool'),
         hard_modify=dict(type='bool'),
-        tags=dict(type='list')
+        tags=dict(type='dict')
     ))
 
     module = AnsibleModule(
