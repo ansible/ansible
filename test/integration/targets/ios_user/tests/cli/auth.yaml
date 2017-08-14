@@ -30,7 +30,7 @@
         - results.failed
 
   always:
-  - name: Teardown old user
+  - name: delete user
     ios_user:
       name: auth_user
       state: absent

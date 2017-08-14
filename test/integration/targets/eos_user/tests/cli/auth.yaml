@@ -1,26 +1,39 @@
 ---
-- name: create user with password
-  eos_user:
-    name: netend
-    privilege: 15
-    role: network-operator
-    state: present
-    authorize: yes
-    provider: "{{ cli }}"
-    configured_password: pass123
-  register: result
-
-- name: test auth with new user
-  eos_command:
-    commands: ['show version']
-    provider:
-      host: "{{ ansible_host }}"
-      transport: cli
+- block:
+  - name: Create user with password
+    eos_user:
+      name: auth_user
+      privilege: 15
+      role: network-operator
+      state: present
       authorize: yes
-      password: pass123
-      username: netend
+      provider: "{{ cli }}"
+      configured_password: pass123
 
-- name: delete user
-  eos_user:
-    name: netend
-    state: absent
+  - name: test login
+    expect:
+      command: "ssh auth_user@{{ inventory_hostname }} show version"
+      responses:
+        (?i)password: "pass123"
+
+  - name: test login with invalid password (shoul fail)
+    expect:
+      command: "ssh auth_user@{{ inventory_hostname }} show version"
+      responses:
+        (?i)password: "badpass"
+    ignore_errors: yes
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  always:
+  - name: delete user
+    eos_user:
+      name: auth_user
+      state: absent
+      provider: "{{ cli }}"
+      authorize: yes
+    register: result
