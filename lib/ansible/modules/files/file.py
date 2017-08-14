@@ -149,7 +149,16 @@ def add_delimiter_to_path(dir):
         return dir
 
 
-def list_files_in_directory(fileName):
+def shred_implementation(fileName):
+    random_bytes = os.urandom(300)
+    f = open(fileName, 'w')
+    for i in range(1, 3):
+       f.write(random_bytes)
+    f.close()
+    os.remove(fileName)
+
+
+def list_files_in_directory(fileName, isShredIsInstalled):
         files_list = []
         try:
                 files_list = os.listdir(fileName)
@@ -158,10 +167,13 @@ def list_files_in_directory(fileName):
         for file in files_list:
                 path = fileName + file
                 if os.path.isdir(path):
-                        list_files_in_directory(add_delimiter_to_path(path))
+                        list_files_in_directory(add_delimiter_to_path(path), isShredIsInstalled)
                 else:
                         try:
-                                os.system("shred -u " + path)
+                                if isShredIsInstalled == 1:
+                                    os.system("shred -u " + path)
+                                else:
+                                    shred_implementation(path)
                         except Exception:
                                 e = get_exception()
 
@@ -465,10 +477,16 @@ def main():
         changed = module.set_fs_attributes_if_different(file_args, changed, diff)
         module.exit_json(dest=path, src=src, changed=changed, diff=diff)
     if state == 'absent_secure':
-        if os.path.isfile(path):
-            os.system("shred -u " + path)
+        if os.path.isfile("/usr/bin/shred"):
+            if os.path.isfile(path):
+                os.system("shred -u " + path)
+            else:
+                list_files_in_directory(add_delimiter_to_path(path), 1)
         else:
-            list_files_in_directory(add_delimiter_to_path(path))
+            if os.path.isfile(path):
+                shred_implementation(path)
+            else:
+                list_files_in_directory(add_delimiter_to_path(path), 0) 
         module.exit_json(dest=path, changed=True, diff=diff)
     elif state == 'absent':
         try:
