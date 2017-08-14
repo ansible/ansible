@@ -288,8 +288,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
 
-
-
         return vault_secrets
 
     def ask_passwords(self):

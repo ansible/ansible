@@ -48,29 +48,24 @@ class TestCliVersion(unittest.TestCase):
 class TestCliBuildVaultIds(unittest.TestCase):
     def test(self):
         res = cli.CLI.build_vault_ids(['foo@bar'])
-        print('res: %s' % res)
         self.assertEqual(res, ['foo@bar'])
 
     def test_create_new_password_no_vault_id(self):
         res = cli.CLI.build_vault_ids([], create_new_password=True)
-        print('res: %s' % res)
         self.assertEqual(res, ['default@prompt_ask_vault_pass'])
 
     def test_create_new_password_no_vault_id_ask_vault_pass(self):
         res = cli.CLI.build_vault_ids([], ask_vault_pass=True,
                                       create_new_password=True)
-        print('res: %s' % res)
         self.assertEqual(res, ['default@prompt_ask_vault_pass'])
 
     def test_create_new_password_with_vault_ids(self):
         res = cli.CLI.build_vault_ids(['foo@bar'], create_new_password=True)
-        print('res: %s' % res)
         self.assertEqual(res, ['foo@bar'])
 
     def test_create_new_password_no_vault_ids_password_files(self):
         res = cli.CLI.build_vault_ids([], vault_password_files=['some-password-file'],
                                       create_new_password=True)
-        print('res: %s' % res)
         self.assertEqual(res, ['default@some-password-file'])
 
     def test_everything(self):
@@ -80,12 +75,12 @@ class TestCliBuildVaultIds(unittest.TestCase):
                                                             'one-more-password-file'],
                                       ask_vault_pass=True,
                                       create_new_password=True)
-        print('res: %s' % res)
         self.assertEqual(set(res), set(['blip@prompt', 'baz@prompt_ask_vault_pass',
                                         'default@prompt_ask_vault_pass',
                                         'some-password-file', 'qux@another-password-file',
                                         'default@yet-another-password-file',
                                         'default@one-more-password-file']))
+
 
 class TestCliSetupVaultSecrets(unittest.TestCase):
     def setUp(self):
