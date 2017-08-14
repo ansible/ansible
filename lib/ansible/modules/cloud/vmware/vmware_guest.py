@@ -587,6 +587,11 @@ class PyVmomiHelper(PyVmomi):
             if 'iso_path' not in self.params['cdrom'] or not self.params['cdrom']['iso_path']:
                 self.module.fail_json(msg="cdrom.iso_path is mandatory")
 
+            if vm_obj and vm_obj.config.template:
+                # Changing CD-ROM settings on a template is not supported
+                return
+
+            cdrom_spec = None
             cdrom_device = self.get_vm_cdrom_device(vm=vm_obj)
             if cdrom_device is None:
                 # Creating new CD-ROM
@@ -600,19 +605,27 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
 
                 cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, iso_path=self.params['cdrom']['iso_path'])
-            else:
+            elif not ( isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.IsoBackingInfo) and \
+                    cdrom_device.backing.fileName == self.params['cdrom']['iso_path'] and \
+                    cdrom_device.connectable.allowGuestControl and \
+                    cdrom_device.connectable.startConnected and \
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected) ):
+
                 # Updating an existing CD-ROM
                 cdrom_device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=self.params['cdrom']['iso_path'])
                 cdrom_device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
                 cdrom_device.connectable.allowGuestControl = True
                 cdrom_device.connectable.startConnected = True
+                if vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    cdrom_device.connectable.connected = True
 
                 cdrom_spec = vim.vm.device.VirtualDeviceSpec()
                 cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                 cdrom_spec.device = cdrom_device
 
-            self.change_detected = True
-            self.configspec.deviceChange.append(cdrom_spec)
+            if cdrom_spec:
+                self.change_detected = True
+                self.configspec.deviceChange.append(cdrom_spec)
 
     def get_vm_cdrom_device(self, vm=None):
         if vm is None:
@@ -1392,7 +1405,7 @@ class PyVmomiHelper(PyVmomi):
                 return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
 
         # Mark VM as Template
-        if self.params['is_template']:
+        if self.params['is_template'] and not self.current_vm_obj.config.template:
             self.current_vm_obj.MarkAsTemplate()
             change_applied = True
 
