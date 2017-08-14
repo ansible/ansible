@@ -30,6 +30,8 @@ Ansible Changes By Release
 * Fix yum module failing with a URL to an rpm
 * Fix file module inappropriately expanding literal dollar signs in a path read
   from the filesystem as an environment variable.
+* Fix the ssh "smart" transport setting which automatically selects the best means of
+  transferring files over ssh (sftp, ssh, piped).
 
 <a id="2.3.2"></a>
 
