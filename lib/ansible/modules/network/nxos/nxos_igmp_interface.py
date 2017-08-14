@@ -242,15 +242,15 @@ from ansible.module_utils.basic import AnsibleModule
 import re
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
+    if command_type == 'cli_show_ascii':
+        cmds = [{
+            'command': command,
+            'output': 'text',
+        }]
+    else:
         cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
 
-    return body
+    return run_commands(module, cmds)
 
 
 def get_interface_mode(interface, intf_type, module):
@@ -695,4 +695,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
