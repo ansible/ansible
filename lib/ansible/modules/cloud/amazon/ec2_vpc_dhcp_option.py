@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 ---
-module: ec2_vpc_dhcp_options
+module: ec2_vpc_dhcp_option
 short_description: Manages DHCP Options, and can ensure the DHCP options for the given VPC match what's
   requested
 description:
@@ -140,7 +140,7 @@ changed:
 EXAMPLES = """
 # Completely overrides the VPC DHCP options associated with VPC vpc-123456 and deletes any existing
 # DHCP option set that may have been attached to that VPC.
-- ec2_vpc_dhcp_options:
+- ec2_vpc_dhcp_option:
     domain_name: "foo.example.com"
     region: us-east-1
     dns_servers:
@@ -160,7 +160,7 @@ EXAMPLES = """
 
 # Ensure the DHCP option set for the VPC has 10.0.0.4 and 10.0.1.4 as the specified DNS servers, but
 # keep any other existing settings. Also, keep the old DHCP option set around.
-- ec2_vpc_dhcp_options:
+- ec2_vpc_dhcp_option:
     region: us-east-1
     dns_servers:
       - "{{groups['dns-primary']}}"
@@ -172,7 +172,7 @@ EXAMPLES = """
 
 ## Create a DHCP option set with 4.4.4.4 and 8.8.8.8 as the specified DNS servers, with tags
 ## but do not assign to a VPC
-- ec2_vpc_dhcp_options:
+- ec2_vpc_dhcp_option:
     region: us-east-1
     dns_servers:
       - 4.4.4.4
@@ -182,7 +182,7 @@ EXAMPLES = """
       Environment: Test
 
 ## Delete a DHCP options set that matches the tags and options specified
-- ec2_vpc_dhcp_options:
+- ec2_vpc_dhcp_option:
     region: us-east-1
     dns_servers:
       - 4.4.4.4
@@ -193,7 +193,7 @@ EXAMPLES = """
   state: absent
 
 ## Associate a DHCP options set with a VPC by ID
-- ec2_vpc_dhcp_options:
+- ec2_vpc_dhcp_option:
     region: us-east-1
     dhcp_options_id: dopt-12345678
     vpc_id: vpc-123456

@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_external_providers_facts
+module: ovirt_external_provider_facts
 short_description: Retrieve facts about one or more oVirt/RHV external providers
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
@@ -52,7 +52,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Gather facts about all image external providers named C<glance>:
-- ovirt_external_providers_facts:
+- ovirt_external_provider_facts:
     type: os_image
     name: glance
 - debug:
@@ -118,6 +118,10 @@ def main():
         ),
     )
     module = AnsibleModule(argument_spec)
+
+    if module._name == 'ovirt_external_providers_facts':
+        module.deprecate("The 'ovirt_external_providers_facts' module is being renamed 'ovirt_external_provider_facts'", version=2.8)
+
     check_sdk(module)
 
     try:

@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_dhcp_options_facts
+module: ec2_vpc_dhcp_option_facts
 short_description: Gather facts about dhcp options sets in AWS
 description:
     - Gather facts about dhcp options sets in AWS
@@ -43,13 +43,13 @@ EXAMPLES = '''
 # # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 - name: Gather facts about all DHCP Option sets for an account or profile
-  ec2_vpc_dhcp_options_facts:
+  ec2_vpc_dhcp_option_facts:
     region: ap-southeast-2
     profile: production
   register: dhcp_facts
 
 - name: Gather facts about a filtered list of DHCP Option sets
-  ec2_vpc_dhcp_options_facts:
+  ec2_vpc_dhcp_option_facts:
     region: ap-southeast-2
     profile: production
     filters:
@@ -57,7 +57,7 @@ EXAMPLES = '''
   register: dhcp_facts
 
 - name: Gather facts about a specific DHCP Option set by DhcpOptionId
-  ec2_vpc_dhcp_options_facts:
+  ec2_vpc_dhcp_option_facts:
     region: ap-southeast-2
     profile: production
     DhcpOptionsIds: dopt-123fece2

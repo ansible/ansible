@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_external_providers
+module: ovirt_external_provider
 short_description: Module to manage external providers in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
@@ -92,7 +92,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Add image external provider:
-- ovirt_external_providers:
+- ovirt_external_provider:
     name: image_provider
     type: os_image
     url: http://10.34.63.71:9292
@@ -102,7 +102,7 @@ EXAMPLES = '''
     auth_url: http://10.34.63.71:35357/v2.0/
 
 # Add foreman provider:
-- ovirt_external_providers:
+- ovirt_external_provider:
     name: foreman_provider
     type: foreman
     url: https://foreman.example.com
@@ -110,14 +110,14 @@ EXAMPLES = '''
     password: 123456
 
 # Add external network provider for OVN:
-- ovirt_external_providers:
+- ovirt_external_provider:
     name: ovn_provider
     type: network
     network_type: external
     url: http://1.2.3.4:9696
 
 # Remove image external provider:
-- ovirt_external_providers:
+- ovirt_external_provider:
     state: absent
     name: image_provider
     type: os_image
@@ -244,6 +244,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if module._name == 'ovirt_external_providers':
+        module.deprecate("The 'ovirt_external_providers' module is being renamed 'ovirt_external_provider'", version=2.8)
+
     check_sdk(module)
     check_params(module)
 
