@@ -319,10 +319,10 @@ def await_resource(conn, instance_name, status, module, await_pending=None):
     resource = get_db_instance(conn, instance_name)
     eprint(str(resource))
     eprint("wait is {0} {1} await_pending is {2} status is {3}".format(
-        str(wait_timeout), str(time.time()), str(await_pending), str(resource.status)))
+        str(wait_timeout), str(time.time()), str(await_pending), str(resource['status'])))
     rdat = resource["pending_modified_values"]
     eprint("wait timeout repr: " + repr(wait_timeout) + "\n")
-    while ((await_pending and rdat) or resource.status != status) and wait_timeout > time.time():
+    while ((await_pending and rdat) or resource['status'] != status) and wait_timeout > time.time():
         time.sleep(5)
         # Temporary until all the rds2 commands have their responses parsed
         if resource.name is None:
@@ -335,9 +335,9 @@ def await_resource(conn, instance_name, status, module, await_pending=None):
         eprint(str(resource))
     # resource will be none if it has actually been removed - e.g. we were waiting for deleted
     # status; maybe that should be an error in other situations?
-    if wait_timeout <= time.time() and resource is not None and resource.status != status:
+    if wait_timeout <= time.time() and resource is not None and resource['status'] != status:
         module.fail_json(msg="Timeout waiting for RDS resource %s status is %s should be %s" % (
-            resource.name, resource.status, status))
+            resource.name, resource['status'], status))
     return resource
 
 
@@ -351,7 +351,7 @@ def create_db_instance(module, conn):
     else:
         required_vars = ['instance_name', 'db_engine', 'size', 'instance_type',
                          'username', 'password']
-        valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
+        valid_vars = ['backup_retention', 'backup_window',
                       'character_set_name', 'cluster', 'db_name', 'engine_version',
                       'instance_type', 'license_model', 'maint_window', 'multi_zone',
                       'option_group', 'parameter_group', 'port', 'publicly_accessible',
@@ -362,14 +362,7 @@ def create_db_instance(module, conn):
         valid_vars.append('vpc_security_groups')
     else:
         valid_vars.append('security_groups')
-    params = validate_parameters(required_vars, valid_vars, module)
-
-    # we accept apply_immediately for compatibility with modify but ignore it.  -
-    # FIXME should that not apply to _every_ variable which is extra in modify?
-    try:
-        del(params['ApplyImmediately'])
-    except KeyError:
-        pass
+    params = select_parameters(module, required_vars, valid_vars)
 
     instance_name = module.params.get('instance_name')
 
@@ -396,7 +389,7 @@ def replicate_db_instance(module, conn):
     valid_vars = ['instance_type', 'iops', 'option_group', 'port',
                   'publicly_accessible', 'storage_type',
                   'tags', 'upgrade', 'zone']
-    params = validate_parameters(required_vars, valid_vars, module)
+    params = select_parameters(module, required_vars, valid_vars)
     instance_name = module.params.get('instance_name')
 
     instance = get_db_instance(conn, instance_name)
@@ -429,14 +422,14 @@ def delete_db_instance(module, conn):
     except KeyError:
         pass
 
-    params = validate_parameters(required_vars, valid_vars, module)
+    params = select_parameters(module, required_vars, valid_vars)
     instance_name = module.params.get('instance_name')
     snapshot = module.params.get('snapshot')
 
     result = get_db_instance(conn, instance_name)
     if not result:
         module.exit_json(changed=False)
-    if result.status == 'deleting':
+    if result['status'] == 'deleting':
         module.exit_json(changed=False)
     try:
         if snapshot:
@@ -524,7 +517,7 @@ def modify_db_instance(module, conn):
                                  (immutable_key, before_instance_name))
             del(module.params[immutable_key])
 
-    params = validate_parameters(required_vars, valid_vars, module)
+    params = select_parameters(module, required_vars, valid_vars)
     after_instance_name = module.params.get('new_instance_name')
 
     will_change = instance_facts_diff(module.params, before_instance)
@@ -611,7 +604,7 @@ def modify_db_instance(module, conn):
 def promote_db_instance(module, conn):
     required_vars = ['instance_name']
     valid_vars = ['backup_retention', 'backup_window']
-    params = validate_parameters(required_vars, valid_vars, module)
+    params = select_parameters(module, required_vars, valid_vars)
     instance_name = module.params.get('instance_name')
 
     result = get_db_instance(conn, instance_name)
@@ -641,7 +634,7 @@ def reboot_db_instance(module, conn):
     required_vars = ['instance_name']
     valid_vars = ['force_failover']
 
-    params = validate_parameters(required_vars, valid_vars, module)
+    params = select_parameters(module, required_vars, valid_vars)
     instance_name = module.params.get('instance_name')
     instance = get_db_instance(conn, instance_name)
     try:
@@ -663,7 +656,7 @@ def restore_db_instance(module, conn):
     valid_vars = ['db_name', 'iops', 'license_model', 'multi_zone',
                   'option_group', 'port', 'publicly_accessible', 'storage_type',
                   'subnet', 'tags', 'upgrade', 'zone', 'instance_type']
-    params = validate_parameters(required_vars, valid_vars, module)
+    params = select_parameters(module, required_vars, valid_vars)
     instance_name = module.params.get('instance_name')
 
     changed = False
@@ -720,6 +713,35 @@ def validate_parameters(required_vars, valid_vars, module):
                              str(e), exception=traceback.format_exc())
 
     if mod_params('security_groups'):
+        params['DBSecurityGroups'] = mod_params.get('security_groups').split(',')
+
+    # Convert tags dict to list of tuples that boto expects
+    if 'Tags' in params:
+        params['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
+    return params
+
+
+def select_parameters(module, required_vars, valid_vars):
+    """select parameters for use in an update message converting the to boto3 naming
+
+    select_parameters takes a list of required variables and valid variables.  Each
+    variable is pulled from the module parameters.  If the required variables are missing
+    then execution is aborted with an error.  Extra parameters on the module are ignored.
+
+    """
+    params = {}
+    mod_params = module.params
+    for k in required_vars:
+        if not module.params.get(k):
+            raise Exception("Parameter %s required" % k)
+        v = PARAMETER_MAP[k]
+        params[v] = mod_params[k]
+
+    for k in valid_vars:
+        if k in mod_params:
+            params[v] = mod_params[k]
+
+    if mod_params.get('security_groups'):
         params['DBSecurityGroups'] = mod_params.get('security_groups').split(',')
 
     # Convert tags dict to list of tuples that boto expects
