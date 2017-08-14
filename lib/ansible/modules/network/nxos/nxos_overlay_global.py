@@ -72,11 +72,12 @@ def get_existing(module, args):
 
     for arg in args:
         command = PARAM_TO_COMMAND_KEYMAP[arg]
-        has_command = re.match(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+        has_command = re.findall(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
         value = ''
         if has_command:
-            value = has_command.group('value')
+            value = has_command[0]
         existing[arg] = value
+
     return existing
 
 
@@ -102,8 +103,10 @@ def get_commands(module, existing, proposed, candidate):
         else:
             if 'anycast-gateway-mac' in key:
                 value = normalize_mac(value, module)
-            command = '{0} {1}'.format(key, value)
-            commands.append(command)
+                existing_value = existing_commands.get(key)
+                if existing_value and value != existing_value:
+                    command = '{0} {1}'.format(key, value)
+                    commands.append(command)
 
     if commands:
         candidate.add(commands, parents=[])
