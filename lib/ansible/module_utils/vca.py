@@ -40,8 +40,10 @@ class VcaError(Exception):
 
 def vca_argument_spec():
     return dict(
-        username=dict(type='str', aliases=['user'], required=True),
-        password=dict(type='str', aliases=['pass', 'passwd'], required=True, no_log=True),
+        username=dict(type='str', aliases=['user'], required=False),
+        password=dict(type='str', aliases=['pass', 'passwd'], required=False, no_log=True),
+        token=dict(type='str', required=False, no_log=True),
+        org_url=dict(type='str', required=False),
         org=dict(),
         service_id=dict(),
         instance_id=dict(),
@@ -137,11 +139,19 @@ class VcaAnsibleModule(AnsibleModule):
         password = self.params['password']
 
         login_org = None
+        login_token = None
+        org_url = None
+
         if service_type == 'vcd':
             login_org = self.params['org']
+            login_token = self.params['token']
+            org_url = self.params['org_url']
 
-        if not self.vca.login(password=password, org=login_org):
+        if not self.vca.login(token=login_token, org_url=org_url, password=password, org=login_org):
             self.fail('Login to VCA failed', response=self.vca.response)
+
+        if login_token:
+            self.vca.token = login_token
 
         try:
             method_name = 'login_%s' % service_type
