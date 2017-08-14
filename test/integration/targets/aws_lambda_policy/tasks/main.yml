@@ -15,7 +15,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("missing required arguments: statement_id")'
+           - 'result.msg.startswith("missing required arguments: ")'
 
     # ============================================================
     - name: test with all required dummy parameters but no region
@@ -59,9 +59,9 @@
         statement_id: api-gateway-invoke-lambdas
         action: lambda:InvokeFunction
         principal: apigateway.amazonaws.com
-        source_arn: "arn:aws:execute-api:{{ ec2_region }}:{{ aws_account_id }}:*/*"
+        source_arn: "arn:aws:execute-api:no-north-0:1234567:*/*"
         ec2_url: https://noexist.example.com
-        ec2_region: '{{ec2_region}}'
+        ec2_region: 'no-north-0'
         ec2_access_key: 'iamnotreallyanaccesskey'
         ec2_secret_key: 'thisisabadsecretkey'
         security_token: 'andthisisabadsecuritytoken'

@@ -391,25 +391,13 @@ def manage_state(module, lambda_client):
     return dict(changed=changed, ansible_facts=dict(lambda_policy_action=action_taken))
 
 
-def setup_clients(module):
-    try:
-        region, endpoint, aws_connect_kwargs = get_aws_connection_info(module)
-    except Exception as e:
-        module.fail_json_aws(e, msg="setting up AWS connection")
-
-    if not region:
-        module.fail_json(msg='region must be specified')
-
-    lambda_client_args = aws_connect_kwargs.update(dict(region=region,
-                                                        endpoint=endpoint,
-                                                        conn_type='client',
-                                                        resource='iam'))
-    try:
-        lambda_client = boto3_conn(module, **lambda_client_args)
-    except Exception as e:
-        module.fail_json_aws(e, msg="setting up AWS lambda client")
-
-    return lambda_client
+def setup_client(module):
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    if region:
+        connection = boto3_conn(module, conn_type='client', resource='lambda', region=region, endpoint=ec2_url, **aws_connect_params)
+    else:
+        module.fail_json(msg="region must be specified")
+    return connection
 
 
 def setup_module_object():
@@ -443,7 +431,7 @@ def main():
     """
 
     module = setup_module_object()
-    client = setup_clients()
+    client = setup_client(module)
     validate_params(module)
     results = manage_state(module, client)
 
