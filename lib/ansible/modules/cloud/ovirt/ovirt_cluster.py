@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_clusters
+module: ovirt_cluster
 short_description: Module to manage clusters in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
@@ -216,7 +216,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Create cluster
-- ovirt_clusters:
+- ovirt_cluster:
     data_center: mydatacenter
     name: mycluster
     cpu_type: Intel SandyBridge Family
@@ -224,7 +224,7 @@ EXAMPLES = '''
     compatibility_version: 4.0
 
 # Create virt service cluster:
-- ovirt_clusters:
+- ovirt_cluster:
     data_center: mydatacenter
     name: mycluster
     cpu_type: Intel Nehalem Family
@@ -245,7 +245,7 @@ EXAMPLES = '''
       - random
 
 # Remove cluster
-- ovirt_clusters:
+- ovirt_cluster:
     state: absent
     name: mycluster
 '''
@@ -548,6 +548,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if module._name == 'ovirt_clusters':
+        module.deprecate("The 'ovirt_clusters' module is being renamed 'ovirt_cluster'", version=2.8)
+
     check_sdk(module)
 
     try:
