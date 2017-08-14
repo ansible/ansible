@@ -59,7 +59,6 @@ class TestNxosOspfVrfModule(TestNxosModule):
                          sorted(['router ospf 1',
                                  'vrf test',
                                  'timers throttle lsa 60 1100 3000',
-                                 'ospf 1',
                                  'timers throttle spf 50 1000 2000',
                                  'vrf test']))
 
