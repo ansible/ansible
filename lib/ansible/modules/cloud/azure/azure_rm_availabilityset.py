@@ -2,21 +2,10 @@
 #
 # Copyright (c) 2017 Julien Stroheker, <juliens@microsoft.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -75,7 +64,7 @@ options:
         choices:
             - Classic
             - Aligned
-        required: false   
+        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -99,7 +88,7 @@ EXAMPLES = '''
         platform_update_domain_count: 3
         platform_fault_domain_count: 5
         sku: Aligned
-    
+
     - name: Delete an availability set
       azure_rm_availabilityset:
         name: myavailabilityset
@@ -130,6 +119,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 def availability_set_to_dict(avaset):
     return dict(
         id=avaset.id,
@@ -140,6 +130,7 @@ def availability_set_to_dict(avaset):
         tags=avaset.tags,
         sku=avaset.sku.name
     )
+
 
 class AzureRMAvailabilitySet(AzureRMModuleBase):
     """Configuration class for an Azure RM availability set resource"""
@@ -193,8 +184,8 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMAvailabilitySet, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                    supports_check_mode=True,
-                                                    supports_tags=True)
+                                                     supports_check_mode=True,
+                                                     supports_tags=True)
 
 
     def exec_module(self, **kwargs):
@@ -205,7 +196,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
 
         results = dict()
         resource_group = None
-        response= None
+        response = None
 
         try:
             resource_group = self.get_resource_group(self.resource_group)
@@ -235,19 +226,19 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         try:
             paramsSku = Sku(
                 name=self.sku
-                )
+            )
             params = AvailabilitySet(
                 location=self.location,
                 tags=self.tags,
                 platform_update_domain_count=self.platform_update_domain_count,
                 platform_fault_domain_count=self.platform_fault_domain_count,
                 sku=paramsSku
-                )
+            )
             response = self.compute_client.availability_sets.create_or_update(self.resource_group, self.name, params)
         except CloudError as e:
             self.log('Error attempting to create the availability set.')
             self.fail("Error creating the availability set: {0}".format(str(e)))
-        
+
         return availability_set_to_dict(response)
 
     def delete_availabilityset(self):
@@ -268,10 +259,11 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
             found = True
         except CloudError as e:
             self.log('Did not find the Availability set.')
-        if found==True:
+        if found is True:
             return availability_set_to_dict(response)
         else:
             return False
+
 
 def main():
     """Main execution"""
