@@ -459,8 +459,7 @@ class Host(object):
         return False
 
     # link or clear template of the host
-    def link_or_clear_template(self, host_id, template_id_list, tls_connect, tls_accept, tls_psk_identity, tls_psk,
-                               tls_issuer, tls_subject):
+    def link_or_clear_template(self, host_id, template_id_list):
         # get host's exist template ids
         exist_template_id_list = self.get_host_templates_by_host_id(host_id)
 
@@ -471,16 +470,7 @@ class Host(object):
         # get unlink and clear templates
         templates_clear = exist_template_ids.difference(template_ids)
         templates_clear_list = list(templates_clear)
-        request_str = {'hostid': host_id, 'templates': template_id_list, 'templates_clear': templates_clear_list,
-                       'tls_connect': tls_connect, 'tls_accept': tls_accept}
-        if tls_psk_identity:
-            request_str['tls_psk_identity'] = tls_psk_identity
-        if tls_psk:
-            request_str['tls_psk'] = tls_psk
-        if tls_issuer:
-            request_str['tls_issuer'] = tls_issuer
-        if tls_subject:
-            request_str['tls_subject'] = tls_subject
+        request_str = {'hostid': host_id, 'templates': template_id_list, 'templates_clear': templates_clear_list}
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -648,8 +638,7 @@ def main():
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
                                              exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
-                    host.link_or_clear_template(host_id, template_ids, tls_connect_int, tls_accept_int, tls_psk_identity,
-                                                tls_psk, tls_issuer, tls_subject)
+                    host.link_or_clear_template(host_id, template_ids)
                     host.update_host(host_name, group_ids, status, host_id,
                                      interfaces, exist_interfaces, proxy_id, visible_name, tls_connect_int, tls_accept_int,
                                      tls_psk_identity, tls_psk, tls_issuer, tls_subject)
@@ -664,8 +653,7 @@ def main():
                     host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
                                      visible_name, tls_connect_int, tls_accept_int, tls_psk_identity, tls_psk, tls_issuer,
                                      tls_subject)
-                    host.link_or_clear_template(host_id, template_ids, tls_connect_int, tls_accept_int, tls_psk_identity,
-                                                tls_psk, tls_issuer, tls_subject)
+                    host.link_or_clear_template(host_id, template_ids)
                     host.update_inventory_mode(host_id, inventory_mode)
                     module.exit_json(changed=True,
                                      result="Successfully update host %s (%s) and linked with template '%s'"
@@ -692,8 +680,7 @@ def main():
         # create host
         host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id, visible_name, tls_connect_int,
                                 tls_accept_int, tls_psk_identity, tls_psk, tls_issuer, tls_subject)
-        host.link_or_clear_template(host_id, template_ids, tls_connect_int, tls_accept_int, tls_psk_identity,
-                                    tls_psk, tls_issuer, tls_subject)
+        host.link_or_clear_template(host_id, template_ids)
         host.update_inventory_mode(host_id, inventory_mode)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
             host_name, ip, link_templates))
