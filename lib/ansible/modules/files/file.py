@@ -163,7 +163,7 @@ def list_files_in_directory(fileName, isShredIsInstalled):
         try:
                 files_list = os.listdir(fileName)
         except Exception:
-                e = get_exception()
+                pass
         for file in files_list:
                 path = fileName + file
                 if os.path.isdir(path):
@@ -175,7 +175,7 @@ def list_files_in_directory(fileName, isShredIsInstalled):
                                 else:
                                     shred_implementation(path)
                         except Exception:
-                                e = get_exception()
+                                pass
 
 
 def get_state(b_path):
@@ -486,13 +486,12 @@ def main():
             if os.path.isfile(path):
                 shred_implementation(path)
             else:
-                list_files_in_directory(add_delimiter_to_path(path), 0) 
+                list_files_in_directory(add_delimiter_to_path(path), 0)
         module.exit_json(dest=path, changed=True, diff=diff)
     elif state == 'absent':
         try:
             os.system("shred -u " + b_path)
         except Exception:
-            e = get_exception()
             module.fail_json(path=b_path, msg='Couldnt remove')
     elif state == 'touch':
         if not module.check_mode:

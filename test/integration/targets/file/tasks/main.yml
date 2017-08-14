@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-- name : copy zip to /tmp
+- name: copy zip to /tmp
   copy: src=../files/test_folder.zip dest=/tmp/
 - name: unzip folder test_folder.zip
   shell: unzip /tmp/test_folder.zip -d /tmp/absent_secure
@@ -35,8 +35,8 @@
   assert:
     that:
     - out_result.stdout.replace(" ","") == "0"
-- name: clean up  task 
-  shell: rm -rf /tmp/absent_secure
+- name: clean up task  
+  shell: rm -rf /tmp/absent_secure/*
 
 - name: setup create test file
   file: path=/tmp/file  state=touch
