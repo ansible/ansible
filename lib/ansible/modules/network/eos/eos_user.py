@@ -48,6 +48,7 @@ options:
         device.  This argument accepts a stringv value and is mutually
         exclusive with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
+    version_added: "2.4"
   password:
     description:
       - The password to be configured on the remote Arista EOS device. The
@@ -256,7 +257,7 @@ def get_param_value(key, item, module):
 
     # validate the param value (if validator func exists)
     validator = globals().get('validate_%s' % key)
-    if all((value, validator)): 
+    if all((value, validator)):
         validator(value, module)
 
     return value
