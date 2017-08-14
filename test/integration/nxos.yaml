@@ -260,6 +260,15 @@
 
     - block:
       - include_role:
+          name: nxos_ip_interface
+        when: "limit_to in ['*', 'nxos_ip_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_ip_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
