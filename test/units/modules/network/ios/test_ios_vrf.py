@@ -38,12 +38,17 @@ class TestIosVrfModule(TestIosModule):
         self.mock_load_config = patch('ansible.modules.network.ios.ios_vrf.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_exec_command = patch('ansible.modules.network.ios.ios_vrf.exec_command')
+        self.exec_command = self.mock_exec_command.start()
+
     def tearDown(self):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_exec_command.stop()
 
     def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('ios_vrf_config.cfg')
+        self.exec_command.return_value = (0, load_fixture('ios_vrf_config.cfg').strip(), None)
         self.load_config.return_value = None
 
     def test_ios_vrf_name(self):

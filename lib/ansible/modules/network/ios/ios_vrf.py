@@ -62,6 +62,11 @@ options:
       - Identifies the set of interfaces that
         should be configured in the VRF.  Interfaces must be routed
         interfaces in order to be placed into a VRF.
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device.
+    version_added: "2.4"
   purge:
     description:
       - Instructs the module to consider the
@@ -127,14 +132,35 @@ delta:
   sample: "0:00:10.469466"
 """
 import re
-
+import time
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.ios import load_config, get_config
 from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import iteritems
+
+
+def get_interface_type(interface):
+
+    if interface.upper().startswith('ET'):
+        return 'ethernet'
+    elif interface.upper().startswith('VL'):
+        return 'svi'
+    elif interface.upper().startswith('LO'):
+        return 'loopback'
+    elif interface.upper().startswith('MG'):
+        return 'management'
+    elif interface.upper().startswith('MA'):
+        return 'management'
+    elif interface.upper().startswith('PO'):
+        return 'portchannel'
+    elif interface.upper().startswith('NV'):
+        return 'nve'
+    else:
+        return 'unknown'
 
 
 def add_command_to_vrf(name, cmd, commands):
@@ -149,7 +175,8 @@ def map_obj_to_commands(updates, module):
     for update in updates:
         want, have = update
 
-        needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
+        def needs_update(want, have, x):
+            return want.get(x) and (want.get(x) != have.get(x))
 
         if want['state'] == 'absent':
             commands.append('no vrf definition %s' % want['name'])
@@ -158,11 +185,11 @@ def map_obj_to_commands(updates, module):
         if not have.get('state'):
             commands.append('vrf definition %s' % want['name'])
 
-        if needs_update('description'):
+        if needs_update(want, have, 'description'):
             cmd = 'description %s' % want['description']
             add_command_to_vrf(want['name'], cmd, commands)
 
-        if needs_update('rd'):
+        if needs_update(want, have, 'rd'):
             cmd = 'rd %s' % want['rd']
             add_command_to_vrf(want['name'], cmd, commands)
 
@@ -300,18 +327,36 @@ def update_objects(want, have):
                             updates.append((entry, item))
     return updates
 
+
+def check_declarative_intent_params(want, module):
+    if module.params['interfaces']:
+        name = module.params['name']
+        rc, out, err = exec_command(module, 'show vrf | include {0}'.format(name))
+
+        if rc == 0:
+            data = out.strip().split()
+            vrf = data[0]
+            interface = data[-1]
+
+            for w in want:
+                if w['name'] == vrf:
+                    for i in w['interfaces']:
+                        if get_interface_type(i) is not get_interface_type(interface):
+                            module.fail_json(msg="Interface %s not configured on vrf %s" % (interface, name))
+
+
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
         vrfs=dict(type='list'),
-        name=dict(),
 
+        name=dict(),
         description=dict(),
         rd=dict(),
-
         interfaces=dict(type='list'),
 
+        delay=dict(default=10, type='int'),
         purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
@@ -349,6 +394,11 @@ def main():
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
+
+    if result['changed']:
+        time.sleep(module.params['delay'])
+
+    check_declarative_intent_params(want, module)
 
     module.exit_json(**result)
 
