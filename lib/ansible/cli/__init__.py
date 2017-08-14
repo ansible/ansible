@@ -246,6 +246,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                 prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
                                                           vault_id=built_vault_id)
 
+                # a empty or invalid password from the prompt will warn and continue to the next
+                # without erroring globablly
                 try:
                     prompted_vault_secret.load()
                 except AnsibleError as exc:
@@ -265,7 +267,14 @@ class CLI(with_metaclass(ABCMeta, object)):
             file_vault_secret = get_file_vault_secret(filename=vault_id_value,
                                                       vault_id_name=vault_id_name,
                                                       loader=loader)
-            file_vault_secret.load()
+
+            # an invalid password file will error globally
+            try:
+                file_vault_secret.load()
+            except AnsibleError as exc:
+                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, exc))
+                raise
+
             if vault_id_name:
                 vault_secrets.append((vault_id_name, file_vault_secret))
             else:

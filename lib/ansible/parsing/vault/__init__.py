@@ -222,6 +222,17 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
     return b_vaulttext
 
 
+def verify_secret_is_not_empty(secret):
+    '''Check the secret against minimal requirements.
+
+    Raises: AnsibleVaultPasswordError if the password does not meet requirements.
+
+    Currently, only requirement is that the password is not None or an empty string.
+    '''
+    if not secret:
+        raise AnsibleVaultPasswordError('Invalid vault password was provided')
+
+
 class VaultSecret:
     '''Opaque/abstract objects for a single vault secret. ie, a password or a key.'''
     def __init__(self, _bytes=None):
@@ -259,17 +270,6 @@ class PromptVaultSecret(VaultSecret):
     def load(self):
         self._bytes = self.ask_vault_passwords()
 
-    def _validate_password(self, password):
-        '''Check the password against minimal requirements.
-
-        Raises: AnsibleVaultPasswordError if the password does not meet requirements.
-
-        Currently, only requirement is that the password is not None or an empty string.
-        Note: That requirement is currently only for prompted passwords.
-        '''
-        if not password:
-            raise AnsibleVaultPasswordError('Invalid vault password was provided')
-
     def ask_vault_passwords(self):
         b_vault_passwords = []
 
@@ -280,7 +280,7 @@ class PromptVaultSecret(VaultSecret):
             except EOFError:
                 raise AnsibleVaultError('EOFError (ctrl-d) on prompt for (%s)' % self.vault_id)
 
-            self._validate_password(vault_pass)
+            verify_secret_is_not_empty(vault_pass)
 
             b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
             b_vault_passwords.append(b_vault_pass)
@@ -353,6 +353,8 @@ class FileVaultSecret(VaultSecret):
         except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
 
+        verify_secret_is_not_empty(vault_pass)
+
         return vault_pass
 
     def __repr__(self):
@@ -382,6 +384,7 @@ class ScriptVaultSecret(FileVaultSecret):
             raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, stderr))
 
         vault_pass = stdout.strip(b'\r\n')
+        verify_secret_is_not_empty(vault_pass)
         return vault_pass
 
 
