@@ -101,7 +101,10 @@ options:
     - A list of disks to add.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
-    - ' - C(type) (string): Valid value is C(thin) or C(eagerzeroedthick) (default: None).'
+    - ' - C(type) (string): Valid values are:
+    - '   C(thin) thin disk'
+    - '   C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.4'
+    - '   Default: C(None) thick disk, no eagerzero.
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore.'
   cdrom:
