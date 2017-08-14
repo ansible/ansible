@@ -34,12 +34,14 @@ options:
         non-deprecated image in the family will be used.
     required: false
     default: null
+    version_added: "2.4"
   external_projects:
     description:
       - A list of other projects (accessible with the provisioning credentials)
         to be searched for the image.
     required: false
     default: null
+    version_added: "2.4"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
@@ -319,6 +321,7 @@ EXAMPLES = '''
 '''
 
 import socket
+import logging
 
 try:
     from ast import literal_eval
