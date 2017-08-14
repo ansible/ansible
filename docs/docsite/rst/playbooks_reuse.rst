@@ -9,9 +9,9 @@ Creating Reusable Playbooks
 
 While it is possible to write a playbook in one very large file (and you might start out learning playbooks this way), eventually you'll want to reuse files and start to organize things. In Ansible, there are three ways to do this: includes, imports, and roles.
 
-Includes and imports allow users to break up large playbooks into smaller files, which can be used across multiple parent Playbooks or even multiple times within the same Playbook.
+Includes and imports allow users to break up large playbooks into smaller files, which can be used across multiple parent playbooks or even multiple times within the same Playbook.
 
-Roles allow more than just tasks to be packaged together and can include variables, handlers, or even modules and other plugins. Roles can also be uploaded and shared via Ansible Galaxy, unlike includes and imports.
+Roles allow more than just tasks to be packaged together and can include variables, handlers, or even modules and other plugins. Unlike includes and imports, roles can also be uploaded and shared via Ansible Galaxy.
 
 Dynamic vs. Static
 ``````````````````
@@ -39,7 +39,7 @@ When it comes to Ansible task options like ``tags`` and conditional statements (
 * For dynamic includes, the task options will *only* apply to the dynamic task as it is evaluated, and will not be copied to child tasks.
 
 .. note::
-    Roles are a somewhat special case. Prior to Ansible 2.3, Roles were always statically included via the special ``roles:`` option for a given Play and were always executed first before any other Play tasks (unless ``pre_tasks`` were used). Roles can still be used this way, however, Ansible 2.3 introduced the ``include_role`` option to allow Roles to be executed inline with other tasks.
+    Roles are a somewhat special case. Prior to Ansible 2.3, roles were always statically included via the special ``roles:`` option for a given play and were always executed first before any other play tasks (unless ``pre_tasks`` were used). Roles can still be used this way, however, Ansible 2.3 introduced the ``include_role`` option to allow roles to be executed inline with other tasks.
 
 Tradeoffs and Pitfalls Between Includes and Imports
 ```````````````````````````````````````````````````
