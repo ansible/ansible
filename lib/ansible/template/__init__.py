@@ -595,19 +595,21 @@ class Templar:
                                        "original message: %s" % (name, type(e), e))
                 ran = None
 
-            if ran and not allow_unsafe:
+            if ran:
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
                     try:
-                        ran = UnsafeProxy(",".join(ran))
+                        ran = ",".join(ran)
+                        if not allow_unsafe:
+                            ran = UnsafeProxy(ran)
                     except TypeError:
                         if isinstance(ran, list) and len(ran) == 1:
                             ran = wrap_var(ran[0])
                         else:
                             ran = wrap_var(ran)
 
-                if self.cur_context:
+                if self.cur_context and not allow_unsafe:
                     self.cur_context.unsafe = True
             return ran
         else:
