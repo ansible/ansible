@@ -34,9 +34,9 @@ There are three different ways to provide credentials to Ansible so that it can 
 
 .. note:: If you would like to use JSON credentials you must have libcloud >= 0.17.0
 
-* by providing to the modules directly, see :ref:`gce_credentials_passing`
-* by setting environment variables, see :ref:`gce_credentials_environment`
-* by populating a ``secrets.py`` file, see :ref:`gce_credentials_secrets`
+* by providing to the modules directly (see :ref:`gce_credentials_passing`)
+* by setting environment variables (see :ref:`gce_credentials_environment`)
+* by populating a ``secrets.py`` file (see :ref:`gce_credentials_secrets`)
 
 .. gce_credentials_passing:
 
