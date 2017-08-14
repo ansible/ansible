@@ -148,7 +148,7 @@ EXAMPLES = """
 from time import sleep
 from traceback import format_exc
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags, boto3_tag_list_to_ansible_dict, HAS_BOTO3
 
 try:
     import boto3
@@ -198,6 +198,26 @@ class ElastiCacheManager(object):
             self.sync()
         else:
             self.create()
+    def get_arn(self):
+        region, ec2_url, aws_connect_params = get_aws_connection_info(self.module, boto3=True)
+        if region:
+            client = boto3_conn(self.module, conn_type='client', resource='rds',
+                              region=region, endpoint=ec2_url, **aws_connect_params)
+        else:
+            self.module.fail_json(msg="region must be specified")
+        instance_counts = {}
+        response = client.describe_db_instances()
+        user_id = response['DBInstances'][0]['DBInstanceArn'].split(':')[4]
+        arn = "arn:aws:elasticache:" + region + ":" + user_id + ":cluster:" + self.name
+        return arn
+
+    def compare_and_update_tags(self):
+        tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
+        add, remove = compare_aws_tags(tags, boto3_tag_list_to_ansible_dict(self.tags), purge_tags=True)
+        if add:
+            self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
+        if remove:
+            self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=remove)
 
     def ensure_absent(self):
         """Ensure cache cluster is gone or delete it if not"""
@@ -310,6 +330,8 @@ class ElastiCacheManager(object):
 
         if self._requires_modification():
             self.modify()
+
+        self.compare_and_update_tags()
 
     def modify(self):
         """Modify the cache cluster. Note it's only possible to modify a few select options."""
