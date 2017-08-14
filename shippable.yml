@@ -58,6 +58,12 @@ matrix:
 
     - env: TEST=cloud/ubuntu1604
     - env: TEST=cloud/ubuntu1604py3
+
+branches:
+  except:
+    - "*-patch-*"
+    - "revert-*-*"
+
 build:
   pre_ci:
     - docker images drydock/u16pytall
