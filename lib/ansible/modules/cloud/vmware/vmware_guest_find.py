@@ -67,6 +67,16 @@ RETURN = """
 """
 
 import os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.vmware import (
+    connect_to_api,
+    gather_vm_facts,
+    get_all_objs,
+    compile_folder_path_for_object,
+    vmware_argument_spec,
+    find_datacenter_by_name
+)
 
 HAS_PYVMOMI = False
 try:
@@ -76,11 +86,6 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import (connect_to_api, gather_vm_facts, get_all_objs,
-                                         compile_folder_path_for_object, vmware_argument_spec)
 
 
 class PyVmomiHelper(object):
@@ -186,37 +191,31 @@ class PyVmomiHelper(object):
 
     def getfolders(self):
         if not self.datacenter:
-            self.get_datacenter()
+            self.datacenter = find_datacenter_by_name(self.content, self.params['datacenter'])
+
+        if self.datacenter is None:
+            self.module.fail_json(msg="Unable to find datacenter %(datacenter)s" % self.params)
+
         self.folders = self._build_folder_tree(self.datacenter.vmFolder)
         self._build_folder_map(self.folders)
 
-    def get_datacenter(self):
-        self.datacenter = get_obj(
-            self.content,
-            [vim.Datacenter],
-            self.params['datacenter']
-        )
+    @staticmethod
+    def compile_folder_path_for_object(vobj):
+        """ make a /vm/foo/bar/baz like folder path for an object """
 
+        paths = []
+        if isinstance(vobj, vim.Folder):
+            paths.append(vobj.name)
 
-def get_obj(content, vimtype, name):
-    """
-    Return an object by name, if name is None the
-    first found object is returned
-    """
-    obj = None
-    container = content.viewManager.CreateContainerView(
-        content.rootFolder, vimtype, True)
-    for c in container.view:
-        if name:
-            if c.name == name:
-                obj = c
-                break
-        else:
-            obj = c
-            break
-
-    container.Destroy()
-    return obj
+        thisobj = vobj
+        while hasattr(thisobj, 'parent'):
+            thisobj = thisobj.parent
+            if isinstance(thisobj, vim.Folder):
+                paths.append(thisobj.name)
+        paths.reverse()
+        if paths[0] == 'Datacenters':
+            paths.remove('Datacenters')
+        return '/' + '/'.join(paths)
 
 
 def main():
