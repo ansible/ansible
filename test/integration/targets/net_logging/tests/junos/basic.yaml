@@ -126,8 +126,14 @@
 - name: Configure file logging using aggregate
   net_logging:
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, active: True}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True}
+    - dest: file
+      name: test-1
+      facility: pfe
+      level: critical
+    - dest: file
+      name: test-2
+      facility: kernel
+      level: emergency
     provider: "{{ netconf }}"
   register: result
 
@@ -142,8 +148,15 @@
 - name: Delete file logging using aggregate
   net_logging:
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, state: absent}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, state: absent}
+    - dest: file
+      name: test-1
+      facility: pfe
+      level: critical
+    - dest: file
+      name: test-2
+      facility: kernel
+      level: emergency
+    state: absent
     provider: "{{ netconf }}"
   register: result
 
@@ -154,3 +167,22 @@
       - result.diff.prepared | search("\- *pfe critical")
       - result.diff.prepared | search("\- *file test-2")
       - result.diff.prepared | search("\- *kernel emergency")
+
+- name: Delete file logging using aggregate (idempotent)
+  net_logging:
+    aggregate:
+    - dest: file
+      name: test-1
+      facility: pfe
+      level: critical
+    - dest: file
+      name: test-2
+      facility: kernel
+      level: emergency
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

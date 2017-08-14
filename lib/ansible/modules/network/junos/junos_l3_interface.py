@@ -38,10 +38,6 @@ options:
     default: 0
   aggregate:
     description: List of L3 interfaces definitions
-  purge:
-    description:
-      - Purge L3 interfaces not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the L3 interface configuration.
@@ -56,7 +52,7 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
 """
 
 EXAMPLES = """
@@ -84,10 +80,9 @@ EXAMPLES = """
     aggregate:
     - name: ge-0/0/1
       ipv4: 1.1.1.1
-      state: absent
     - name: ge-0/0/2
       ipv4: 2.2.2.2
-      state: absent
+    state: absent
 """
 
 RETURN = """
@@ -103,7 +98,10 @@ diff:
 """
 import collections
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config, to_param_list
@@ -128,22 +126,21 @@ def main():
         active=dict(default=True, type='bool')
     )
 
-    aggregate_spec = element_spec.copy()
+    aggregate_spec = deepcopy(element_spec)
     aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec),
-        purge=dict(default=False, type='bool')
     )
 
     argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
-
-    mutually_exclusive = [['name', 'aggregate'],
-                          ['state', 'aggregate'],
-                          ['active', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
@@ -172,6 +169,11 @@ def main():
 
     requests = list()
     for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
+
         item = param.copy()
         if not item['ipv4'] and not item['ipv6']:
             module.fail_json(msg="one of the following is required: ipv4,ipv6")

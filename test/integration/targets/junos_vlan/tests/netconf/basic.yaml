@@ -106,15 +106,18 @@
 - name: Setup vlan configuration for aggregate
   junos_vlan:
     aggregate:
-      - { vlan_id: 159, name: test_vlan_1, state: absent }
-      - { vlan_id: 160, name: test_vlan_2, state: absent }
+      - vlan_id: 159
+        name: test_vlan_1
+      - vlan_id: 160
+        name: test_vlan_2
+    state: absent
     provider: "{{ netconf }}"
 
 - name: Create vlan configuration using aggregate
   junos_vlan:
     aggregate:
-      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1, state: present }
-      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2, state: present }
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1 }
+      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2 }
     provider: "{{ netconf }}"
   register: result
 
@@ -129,8 +132,9 @@
 - name: Deactivate vlan configuration using aggregate
   junos_vlan:
     aggregate:
-      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1, active: False }
-      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2, active: False }
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1 }
+      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2 }
+    active: False
     provider: "{{ netconf }}"
   register: result
 
@@ -143,8 +147,9 @@
 - name: activate vlan configuration using aggregate
   junos_vlan:
     aggregate:
-      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1, active: True }
-      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2, active: True }
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1 }
+      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2 }
+    active: True
     provider: "{{ netconf }}"
   register: result
 
@@ -157,8 +162,11 @@
 - name: Delete vlan configuration using aggregate
   junos_vlan:
     aggregate:
-      - { vlan_id: 159, name: test_vlan_1, state: absent }
-      - { vlan_id: 160, name: test_vlan_2, state: absent }
+      - vlan_id: 159
+        name: test_vlan_1
+      - vlan_id: 160
+        name: test_vlan_2
+    state: absent
     provider: "{{ netconf }}"
   register: result
 

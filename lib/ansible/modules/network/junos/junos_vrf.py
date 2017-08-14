@@ -55,11 +55,6 @@ options:
         JUNOS device.  Ths list entries can either be the VRF name or a hash
         of VRF definitions and attributes.  This argument is mutually
         exclusive with the C(name) argument.
-  purge:
-    description:
-      - Instructs the module to consider the VRF definition absolute.
-        It will remove any previously configured VRFs on the device.
-    default: false
   state:
     description:
       - Configures the state of the VRF definition
@@ -78,7 +73,7 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
 """
 EXAMPLES = """
 - name: Configure vrf configuration
@@ -135,7 +130,6 @@ EXAMPLES = """
          - ge-0/0/2
       rd: 1.1.1.1:10
       target: target:65514:113
-      state: present
     - name: test-2
       description: test-vrf-2
       interfaces:
@@ -143,7 +137,7 @@ EXAMPLES = """
         - ge-0/0/5
       rd: 2.2.2.2:10
       target: target:65515:114
-      state: present
+  state: present
 """
 
 RETURN = """
@@ -164,7 +158,10 @@ diff.prepared:
 """
 import collections
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
@@ -190,25 +187,21 @@ def main():
         active=dict(default=True, type='bool')
     )
 
-    aggregate_spec = element_spec.copy()
+    aggregate_spec = deepcopy(element_spec)
     aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec),
-        purge=dict(default=False, type='bool')
     )
 
     argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
     required_one_of = [['aggregate', 'name']]
-    mutually_exclusive = [['aggregate', 'name'],
-                          ['aggregate', 'description'],
-                          ['aggregate', 'rd'],
-                          ['aggregate', 'interfaces'],
-                          ['aggregate', 'target'],
-                          ['aggregate', 'state'],
-                          ['aggregate', 'active']]
+    mutually_exclusive = [['aggregate', 'name']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
@@ -239,8 +232,12 @@ def main():
     requests = list()
 
     for param in params:
-        item = param.copy()
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
 
+        item = param.copy()
         item['type'] = 'vrf'
 
         want = map_params_to_obj(module, param_to_xpath_map, param=item)
