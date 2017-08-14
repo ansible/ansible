@@ -311,9 +311,6 @@ class GalaxyCLI(CLI):
         if len(self.args) == 0 and role_file is None:
             # the user needs to specify one of either --role-file or specify a single user/role name
             raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
-        elif len(self.args) == 1 and role_file is not None:
-            # using a role file is mutually exclusive of specifying the role name on the command line
-            raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
         no_deps = self.options.no_deps
         force = self.options.force
@@ -368,11 +365,17 @@ class GalaxyCLI(CLI):
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
         for role in roles_left:
-            display.vvv('Installing role %s ' % role.name)
+            # only process roles in roles files when names matches if given
+            if role_file and self.args and role.name not in self.args:
+                display.vvv('Skipping role %s' % role.name)
+                continue
+
+            display.vvv('Processing role %s ' % role.name)
+
             # query the galaxy API for the role data
 
             if role.install_info is not None:
-                if role.install_info['version'] != role.version:
+                if role.install_info['version'] != role.version or force:
                     if force:
                         display.display('- changing role %s from %s to %s' %
                                         (role.name, role.install_info['version'], role.version or "unspecified"))
