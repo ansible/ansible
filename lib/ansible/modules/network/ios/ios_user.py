@@ -139,6 +139,7 @@ commands:
 """
 
 import re
+import json
 
 from functools import partial
 
@@ -168,7 +169,12 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         if want['state'] == 'absent':
-            commands.append('no username %s' % want['name'])
+            cmd = json.dumps({
+                'command': 'no username %s' % want['name'],
+                'prompt': 'This operation will remove all username related configurations with same name',
+                'answer': 'y'
+            })
+            commands.append(cmd)
             continue
 
         if needs_update(want, have, 'view'):
@@ -185,7 +191,12 @@ def map_obj_to_commands(updates, module):
             if want['nopassword']:
                 add(commands, want, 'nopassword')
             else:
-                add(commands, want, 'no username %s nopassword' % want['name'])
+                cmd = json.dumps({
+                    'command': 'no username %s nopassword' % want['name'],
+                    'prompt': 'This operation will remove all username related configurations with same name',
+                    'answer': 'y'
+                })
+                add(commands, want, cmd)
 
     return commands
 
@@ -336,14 +347,20 @@ def main():
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
-                commands.append('no username %s' % item)
+                cmd = json.dumps({
+                    'command': 'no username %s' % item,
+                    'prompt': 'This operation will remove all username related configurations with same name',
+                    'answer': 'y'
+                })
+                commands.append(cmd)
 
     result['commands'] = commands
 
     # the ios cli prevents this by rule so capture it and display
     # a nice failure message
-    if 'no username admin' in commands:
-        module.fail_json(msg='cannot delete the `admin` account')
+    for cmd in commands:
+        if 'no username admin' in cmd:
+            module.fail_json(msg='cannot delete the `admin` account')
 
     if commands:
         if not module.check_mode:
