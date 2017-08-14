@@ -144,15 +144,17 @@
 - name: Setup static route for aggegrate
   junos_static_route:
     aggregate:
-    - {address: 4.4.4.0/24, state: absent}
-    - {address: 5.5.5.0/24, state: absent}
+    - address: 4.4.4.0/24
+    - address: 5.5.5.0/24
+    state: absent
     provider: "{{ netconf }}"
 
 - name: Confgiure static route using aggegrate
   junos_static_route:
     aggregate:
-      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30}
-      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12}
+      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5}
+      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7}
+    qualified_preference: 30
     provider: "{{ netconf }}"
   register: result
 
@@ -167,14 +169,16 @@
       - result.diff.prepared | search("\+ *route 5.5.5.0/24")
       - result.diff.prepared | search("\+ *next-hop 6.6.6.6")
       - result.diff.prepared | search("\+ *qualified-next-hop 7.7.7.7")
-      - result.diff.prepared | search("\+ *preference 12")
+      - result.diff.prepared | search("\+ *preference 30")
       - result.diff.prepared | search("\+ *preference 11")
 
 - name: Deactivate static route configuration using aggegrate
   junos_static_route:
     aggregate:
-      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30, active: False}
-      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12, active: False}
+      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5}
+      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7}
+    qualified_preference: 30
+    active: False
     provider: "{{ netconf }}"
   register: result
 
@@ -191,8 +195,10 @@
 - name: Activate static route configuration using aggegrate
   junos_static_route:
     aggregate:
-      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30, active: True}
-      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12, active: True}
+      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5}
+      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7}
+    qualified_preference: 30
+    active: True
     provider: "{{ netconf }}"
   register: result
 
@@ -209,8 +215,9 @@
 - name: Delete static route configuration using aggegrate
   junos_static_route:
     aggregate:
-      - {address: 4.4.4.0/24, state: absent}
-      - {address: 5.5.5.0/24, state: absent}
+      - address: 4.4.4.0/24
+      - address: 5.5.5.0/24
+    state: absent
     provider: "{{ netconf }}"
   register: result
 
@@ -225,14 +232,15 @@
       - result.diff.prepared | search("\- *route 5.5.5.0/24")
       - result.diff.prepared | search("\- *next-hop 6.6.6.6")
       - result.diff.prepared | search("\- *qualified-next-hop 7.7.7.7")
-      - result.diff.prepared | search("\- *preference 12")
+      - result.diff.prepared | search("\- *preference 30")
       - result.diff.prepared | search("\- *preference 11")
 
 - name: Delete static route configuration using aggegrate (idempotent)
   junos_static_route:
     aggregate:
-      - {address: 4.4.4.0/24, state: absent}
-      - {address: 5.5.5.0/24, state: absent}
+      - address: 4.4.4.0/24
+      - address: 5.5.5.0/24
+    state: absent
     provider: "{{ netconf }}"
   register: result
 

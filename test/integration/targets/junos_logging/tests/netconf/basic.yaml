@@ -324,8 +324,15 @@
 - name: Deactivate file logging configuration using aggregate
   junos_logging:
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, active: False}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: False}
+    - dest: file
+      name: test-1
+      facility: pfe
+      level: critical
+    - dest: file
+      name: test-2
+      facility: kernel
+      level: emergency
+    active: False
     provider: "{{ netconf }}"
   register: result
 
@@ -340,8 +347,9 @@
 - name: activate file logging configuration using aggregate
   junos_logging:
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, active: True}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True}
+    - { dest: file, name: test-1,  facility: pfe, level: critical }
+    - { dest: file, name: test-2,  facility: kernel, level: emergency }
+    active: True
     provider: "{{ netconf }}"
   register: result
 
@@ -356,8 +364,9 @@
 - name: Delete file logging using aggregate
   junos_logging:
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, state: absent}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, state: absent}
+    - { dest: file, name: test-1,  facility: pfe, level: critical }
+    - { dest: file, name: test-2,  facility: kernel, level: emergency }
+    state: absent
     provider: "{{ netconf }}"
   register: result
 
@@ -372,8 +381,9 @@
 - name: Delete file logging using aggregate (idempotent)
   junos_logging:
     aggregate:
-    - {dest: file, name: test-1,  facility: pfe, level: critical, state: absent}
-    - {dest: file, name: test-2,  facility: kernel, level: emergency, state: absent}
+    - { dest: file, name: test-1,  facility: pfe, level: critical }
+    - { dest: file, name: test-2,  facility: kernel, level: emergency }
+    state: absent
     provider: "{{ netconf }}"
   register: result
 

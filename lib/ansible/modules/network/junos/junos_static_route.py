@@ -45,10 +45,6 @@ options:
       - Assign preference for qualified next hop.
   aggregate:
     description: List of static route definitions
-  purge:
-    description:
-      - Purge static routes not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the static route configuration.
@@ -63,7 +59,7 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
 """
 
 EXAMPLES = """
@@ -104,14 +100,16 @@ EXAMPLES = """
 - name: Configure static route using aggregate
   junos_static_route:
     aggregate:
-    - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30}
-    - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12}
+    - { address: 4.4.4.0/24, next_hop: 3.3.3.3, qualified_next_hop: 5.5.5.5, qualified_preference: 30 }
+    - { address: 5.5.5.0/24, next_hop: 6.6.6.6, qualified_next_hop: 7.7.7.7, qualified_preference: 12 }
+    preference: 10
 
 - name: Delete static route using aggregate
   junos_static_route:
     aggregate:
-    - {address: 4.4.4.0/24, state: absent}
-    - {address: 5.5.5.0/24, state: absent}
+    - address: 4.4.4.0/24
+    - address: 5.5.5.0/24
+    state: absent
 """
 
 RETURN = """
@@ -132,7 +130,10 @@ diff.prepared:
 """
 import collections
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
@@ -149,8 +150,8 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        address=dict(type='str', aliases=['prefix']),
-        next_hop=dict(type='str'),
+        address=dict(aliases=['prefix']),
+        next_hop=dict(),
         preference=dict(type='int', aliases=['admin_distance']),
         qualified_next_hop=dict(type='str'),
         qualified_preference=dict(type='int'),
@@ -158,8 +159,11 @@ def main():
         active=dict(default=True, type='bool')
     )
 
-    aggregate_spec = element_spec.copy()
+    aggregate_spec = deepcopy(element_spec)
     aggregate_spec['address'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec),
@@ -170,13 +174,7 @@ def main():
     argument_spec.update(junos_argument_spec)
 
     required_one_of = [['aggregate', 'address']]
-    mutually_exclusive = [['aggregate', 'address'],
-                          ['aggregate', 'next_hop'],
-                          ['aggregate', 'preference'],
-                          ['aggregate', 'qualified_next_hop'],
-                          ['aggregate', 'qualified_preference'],
-                          ['aggregate', 'state'],
-                          ['aggregate', 'active']]
+    mutually_exclusive = [['aggregate', 'address']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
@@ -206,6 +204,11 @@ def main():
     requests = list()
 
     for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
+
         item = param.copy()
         if item['state'] == 'present':
             if not item['address'] and item['next_hop']:

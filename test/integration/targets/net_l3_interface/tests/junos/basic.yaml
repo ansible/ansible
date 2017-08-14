@@ -29,8 +29,8 @@
       - "result.changed == true"
       - "'<name>1.1.1.1/32</name>' in config.xml"
       - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
-      - "'+       address 1.1.1.1/32;' in result.diff.prepared"
-      - "'+       address fd5d:12c9:2201:1::1/128;' in result.diff.prepared"
+      - result.diff.prepared | search("\+ *address 1.1.1.1/32")
+      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:1::1/128")
 
 - name: Configure interface address (idempotent)
   net_l3_interface:
@@ -65,8 +65,8 @@
       - "result.changed == true"
       - "'<name>1.1.1.1/32</name>' not in config.xml"
       - "'<name>fd5d:12c9:2201:1::1/128</name>' not in config.xml"
-      - "'-       address 1.1.1.1/32;' in result.diff.prepared"
-      - "'-       address fd5d:12c9:2201:1::1/128;' in result.diff.prepared"
+      - result.diff.prepared | search("\- *address 1.1.1.1/32")
+      - result.diff.prepared | search("\- *address fd5d:12c9:2201:1::1/128")
 
 - name: Delete interface address (idempotent)
   net_l3_interface:
@@ -129,11 +129,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      active: True
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      active: True
+    active: True
     provider: "{{ netconf }}"
   register: result
 
@@ -147,11 +146,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      state: absent
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      state: absent
+    state: absent
     provider: "{{ netconf }}"
   register: result
 
@@ -173,11 +171,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      state: absent
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      state: absent
+    state: absent
     provider: "{{ netconf }}"
   register: result
 

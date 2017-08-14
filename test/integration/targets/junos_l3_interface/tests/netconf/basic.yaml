@@ -159,11 +159,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      active: True
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      active: True
+    active: True
     provider: "{{ netconf }}"
   register: result
 
@@ -177,11 +176,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      active: False
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      active: False
+    active: False
     provider: "{{ netconf }}"
   register: result
 
@@ -199,11 +197,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      active: True
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      active: True
+    active: True
     provider: "{{ netconf }}"
   register: result
 
@@ -221,11 +218,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      state: absent
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      state: absent
+    state: absent
     provider: "{{ netconf }}"
   register: result
 
@@ -247,11 +243,10 @@
     - name: ge-0/0/1
       ipv4: 1.1.1.1
       ipv6: fd5d:12c9:2201:1::1
-      state: absent
     - name: ge-0/0/2
       ipv4: 2.2.2.2
       ipv6: fd5d:12c9:2201:2::2
-      state: absent
+    state: absent
     provider: "{{ netconf }}"
   register: result
 

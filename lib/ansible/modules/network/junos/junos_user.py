@@ -94,7 +94,7 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
 """
 
 EXAMPLES = """
@@ -142,7 +142,10 @@ diff.prepared:
 """
 from functools import partial
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import commit_configuration, discard_changes
 from ansible.module_utils.junos import load_config, locked_config
@@ -215,8 +218,6 @@ def map_params_to_obj(module):
     if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
-        elif not module.params['name']:
-            module.fail_json(msg='missing required argument: name')
         else:
             collection = [{'name': module.params['name']}]
     else:
@@ -224,8 +225,6 @@ def map_params_to_obj(module):
         for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
-            elif 'name' not in item:
-                module.fail_json(msg='missing required argument: name')
             else:
                 collection.append(item)
 
@@ -261,11 +260,17 @@ def main():
         role=dict(choices=ROLES, default='unauthorized'),
         sshkey=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
-        active=dict(default=True, type='bool')
+        active=dict(type='bool', default=True)
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=element_spec, aliases=['collection', 'users']),
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['collection', 'users']),
         purge=dict(default=False, type='bool')
     )
 
@@ -273,11 +278,7 @@ def main():
     argument_spec.update(junos_argument_spec)
 
     required_one_of = [['aggregate', 'name']]
-    mutually_exclusive = [['aggregate', 'name'],
-                          ['aggregate', 'full_name'],
-                          ['aggregate', 'sshkey'],
-                          ['aggregate', 'state'],
-                          ['aggregate', 'active']]
+    mutually_exclusive = [['aggregate', 'name']]
 
     argument_spec.update(junos_argument_spec)
 
