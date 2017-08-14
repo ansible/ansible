@@ -198,7 +198,7 @@ options:
         prefixes to advertise. The list must be in the form of an array.
         Each entry in the array must include a prefix address and an
         optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
-        ['192.168.1.1', 'Chicago'], ['192.168.2.0/24],
+        ['192.168.1.1', 'Chicago'], ['192.168.2.0/24'],
         ['192.168.3.0/24', 'routemap_NYC']].
     required: false
     default: null
