@@ -192,6 +192,7 @@ output:
       }
 '''
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
 import base64
@@ -221,6 +222,12 @@ def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
             iam_client = boto3_conn(module, conn_type='client', resource='iam',
                                     region=region, endpoint=endpoint, **aws_connect_kwargs)
             account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+        except ClientError as e:
+            if (e.response['Error']['Code'] == 'AccessDenied'):
+                except_msg = to_native(e.message)
+                account_id = except_msg.search("arn:aws:iam::([0-9]{12,32}):user/").group(1)
+            if account_id is None:
+                module.fail_json_aws(e, msg="getting account information")
         except Exception as e:
             module.fail_json_aws(e, msg="getting account information")
     return account_id
