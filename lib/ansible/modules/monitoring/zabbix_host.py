@@ -315,7 +315,7 @@ class Host(object):
             if tls_subject:
                 parameters['tls_subject'] = tls_subject
             self._zapi.host.update(parameters)
-            interface_list_copy = exist_interface_list
+            interface_list_copy = copy.deepcopy(exist_interface_list)
             if interfaces:
                 for interface in interfaces:
                     flag = False
