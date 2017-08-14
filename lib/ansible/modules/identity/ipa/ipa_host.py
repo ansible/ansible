@@ -43,6 +43,7 @@ options:
     description:
     - OTP Password to add this host to IPA
     required: false
+    version_added: "2.4"
   mac_address:
     description:
     - List of Hardware MAC address(es) off this host.
