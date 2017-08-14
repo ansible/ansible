@@ -622,7 +622,6 @@ def main():
                     msg="Can not export given disk '%s', it doesn't exist" %
                         module.params.get('name') or module.params.get('id')
                 )
-            disk = disks_service.disk_service(disk.id).get()
             if disk.storage_type == otypes.DiskStorageType.IMAGE:
                 ret = disks_module.action(
                     action='export',
