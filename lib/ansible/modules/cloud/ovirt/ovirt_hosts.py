@@ -103,6 +103,11 @@ options:
             - "If I(undeploy) it means this host should un-deploy hosted engine
                components and this host will not function as part of the High
                Availability cluster."
+    power_management_enabled:
+        description:
+            - "Enable or disable power management of the host."
+            - "For more comprehensive setup of PM use C(ovirt_host_pm) module."
+        version_added: 2.4
 extends_documentation_fragment: ovirt
 '''
 
@@ -227,6 +232,9 @@ class HostsModule(BaseModule):
             os=otypes.OperatingSystem(
                 custom_kernel_cmdline=' '.join(self._module.params['kernel_params']),
             ) if self._module.params['kernel_params'] else None,
+            power_management=otypes.PowerManagement(
+                enabled=self.param('power_management_enabled'),
+            ) if self.param('power_management_enabled') is not None else None,
         )
 
     def update_check(self, entity):
@@ -336,6 +344,7 @@ def main():
         override_display=dict(default=None),
         kernel_params=dict(default=None, type='list'),
         hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
+        power_management_enabled=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
