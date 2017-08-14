@@ -23,6 +23,7 @@ import os
 import sys
 
 from ansible.cli import CLI
+from ansible import constants as C
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
@@ -156,6 +157,9 @@ class VaultCLI(CLI):
         # ask for a new password and confirm it, and 'read/write (rekey) that asks for the
         # old password, then asks for a new one and confirms it.
 
+        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
+        vault_ids = default_vault_ids + vault_ids
+
         # TODO: instead of prompting for these before, we could let VaultEditor
         #       call a callback when it needs it.
         if self.action in ['decrypt', 'view', 'rekey']:
@@ -163,7 +167,6 @@ class VaultCLI(CLI):
                                                      vault_ids=vault_ids,
                                                      vault_password_files=self.options.vault_password_files,
                                                      ask_vault_pass=self.options.ask_vault_pass)
-
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
@@ -178,7 +181,6 @@ class VaultCLI(CLI):
                                          vault_password_files=self.options.vault_password_files,
                                          ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
-
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
