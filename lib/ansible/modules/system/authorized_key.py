@@ -159,7 +159,7 @@ key_option:
   type: string
   sample: null
 keyfile:
-  description: Path for authorzied key file.
+  description: Path for authorized key file.
   returned: success
   type: string
   sample: /home/user/.ssh/authorized_keys
