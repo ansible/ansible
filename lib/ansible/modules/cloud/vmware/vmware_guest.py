@@ -86,6 +86,7 @@ options:
     - ' - C(hotadd_cpu) (boolean): Allow cpus to be added while the VM is running.'
     - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
+    - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
@@ -746,6 +747,11 @@ class PyVmomiHelper(PyVmomi):
             if 'max_connections' in self.params['hardware']:
                 self.configspec.maxMksConnections = int(self.params['hardware']['max_connections'])
                 if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.hardware.maxMksConnections:
+                    self.change_detected = True
+
+            if 'nested_virt' in self.params['hardware']:
+                self.configspec.nestedHVEnabled = bool(self.params['hardware']['nested_virt'])
+                if vm_obj is None or self.configspec.nestedHVEnabled != bool(vm_obj.config.nestedHVEnabled):
                     self.change_detected = True
 
     def get_vm_cdrom_device(self, vm=None):
