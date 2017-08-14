@@ -605,11 +605,11 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
 
                 cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, iso_path=self.params['cdrom']['iso_path'])
-            elif not ( isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.IsoBackingInfo) and \
-                    cdrom_device.backing.fileName == self.params['cdrom']['iso_path'] and \
-                    cdrom_device.connectable.allowGuestControl and \
-                    cdrom_device.connectable.startConnected and \
-                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected) ):
+            elif not (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.IsoBackingInfo) and
+                      cdrom_device.backing.fileName == self.params['cdrom']['iso_path'] and
+                      cdrom_device.connectable.allowGuestControl and
+                      cdrom_device.connectable.startConnected and
+                      (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected)):
 
                 # Updating an existing CD-ROM
                 cdrom_device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=self.params['cdrom']['iso_path'])
