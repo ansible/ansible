@@ -184,6 +184,70 @@
   assert:
     that:
       - failed_copy | failed
+      - "'src (or content) is required' in failed_copy.msg"
+
+- name: Try without destination to ensure it fails
+  copy:
+    src: foo.txt
+  ignore_errors: True
+  register: failed_copy
+
+- debug:
+    var: failed_copy
+    verbosity: 1
+
+- name: Assert that missing destination failed
+  assert:
+    that:
+      - failed_copy | failed
+      - "'dest is required' in failed_copy.msg"
+
+- name: Try without source to ensure it fails
+  copy:
+    dest: "{{ remote_file }}"
+  ignore_errors: True
+  register: failed_copy
+
+- debug:
+    var: failed_copy
+    verbosity: 1
+
+- name: Assert that missing source failed
+  assert:
+    that:
+      - failed_copy | failed
+      - "'src (or content) is required' in failed_copy.msg"
+
+- name: Try with both src and content to ensure it fails
+  copy:
+    src: foo.txt
+    content: testing
+    dest: "{{ remote_file }}"
+  ignore_errors: True
+  register: failed_copy
+
+- name: Assert that mutually exclusive parameters failed
+  assert:
+    that:
+      - failed_copy | failed
+      - "'mutually exclusive' in failed_copy.msg"
+
+- name: Try with content and directory as destination to ensure it fails
+  copy:
+    content: testing
+    dest: "{{ remote_dir }}"
+  ignore_errors: True
+  register: failed_copy
+
+- debug:
+    var: failed_copy
+    verbosity: 1
+
+- name: Assert that content and directory as destination failed
+  assert:
+    that:
+      - failed_copy | failed
+      - "'can not use content with a dir as dest' in failed_copy.msg"
 
 - name: Clean up
   file:
@@ -252,7 +316,8 @@
   connection: local
 
 - name: Set the output subdirectory
-  set_fact: remote_subdir={{remote_dir}}/sub
+  set_fact:
+    remote_subdir: "{{ remote_dir }}/sub"
 
 - name: Make an output subdirectory
   file:
@@ -885,14 +950,14 @@
 #
 
 - name: Create a file with content and a literal multiline block
-  copy: |
-    content='this is the first line
-    this is the second line
+  copy:
+    content: |
+      this is the first line
+      this is the second line
 
-    this line is after an empty line
-    this line is the last line
-    '
-    dest={{remote_dir}}/multiline.txt
+      this line is after an empty line
+      this line is the last line
+    dest: "{{ remote_dir }}/multiline.txt"
   register: copy_result6
 
 - debug:
