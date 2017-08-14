@@ -4715,6 +4715,12 @@ span[id*='MathJax-Span'] {
     font-size: 20px;
 }
 
+.DocSiteProduct-CheckVersionPara {
+    padding-bottom: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
 .wy-menu-vertical a {
     padding: 0;
 }
