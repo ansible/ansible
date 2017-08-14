@@ -101,6 +101,10 @@ class AnsibleVaultError(AnsibleError):
     pass
 
 
+class AnsibleVaultPasswordError(AnsibleVaultError):
+    pass
+
+
 def is_encrypted(data):
     """ Test if this is vault encrypted data blob
 
@@ -255,6 +259,17 @@ class PromptVaultSecret(VaultSecret):
     def load(self):
         self._bytes = self.ask_vault_passwords()
 
+    def _validate_password(self, password):
+        '''Check the password against minimal requirements.
+
+        Raises: AnsibleVaultPasswordError if the password does not meet requirements.
+
+        Currently, only requirement is that the password is not None or an empty string.
+        Note: That requirement is currently only for prompted passwords.
+        '''
+        if not password:
+            raise AnsibleVaultPasswordError('Invalid vault password was provided')
+
     def ask_vault_passwords(self):
         b_vault_passwords = []
 
@@ -264,6 +279,8 @@ class PromptVaultSecret(VaultSecret):
                 vault_pass = display.prompt(prompt, private=True)
             except EOFError:
                 raise AnsibleVaultError('EOFError (ctrl-d) on prompt for (%s)' % self.vault_id)
+
+            self._validate_password(vault_pass)
 
             b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
             b_vault_passwords.append(b_vault_pass)
