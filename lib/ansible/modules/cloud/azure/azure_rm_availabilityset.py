@@ -187,7 +187,6 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
                                                      supports_check_mode=True,
                                                      supports_tags=True)
 
-
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
