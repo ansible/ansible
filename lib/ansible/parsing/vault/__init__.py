@@ -263,7 +263,8 @@ class PromptVaultSecret(VaultSecret):
             try:
                 vault_pass = display.prompt(prompt, private=True)
             except EOFError:
-                break
+                raise AnsibleVaultError('EOFError (ctrl-d) on prompt for (%s)' % self.vault_id)
+
             b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
             b_vault_passwords.append(b_vault_pass)
 
