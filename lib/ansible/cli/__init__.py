@@ -214,6 +214,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         # certain vault password prompt format, so 'promp_ask_vault_pass' vault_id gets the old format.
         prompt_formats = {}
 
+        # If there are configured default vault identities, they are considered 'first'
+        # so we prepend them to vault_ids (from cli) here
+        if C.DEFAULT_VAULT_IDENTITY_LIST:
+            default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
+            vault_ids = default_vault_ids + vault_ids
+
         vault_password_files = vault_password_files or []
         if C.DEFAULT_VAULT_PASSWORD_FILE:
             vault_password_files.append(C.DEFAULT_VAULT_PASSWORD_FILE)
