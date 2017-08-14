@@ -234,7 +234,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
-                                        ask_vault_pass)
+                                        ask_vault_pass,
+                                        create_new_password)
 
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
@@ -286,6 +287,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
+
+
 
         return vault_secrets
 
