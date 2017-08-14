@@ -19,5 +19,5 @@ of some of the most popular of these tools.
 - `Ansigenome <https://github.com/nickjj/ansigenome>` is a command line tool designed to help you manage 
   your Ansible roles.
 
-- `Awesome Ansible <https://github.com/jdauphant/awesome-ansible> is a collaboratively curated list of 
+- `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>` is a collaboratively curated list of 
   awesome Ansible resources.
