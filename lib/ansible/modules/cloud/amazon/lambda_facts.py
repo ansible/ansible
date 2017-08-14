@@ -97,7 +97,7 @@ lambda_facts.function.TheName:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn
 import json
 import datetime
 import sys
@@ -345,13 +345,10 @@ def main():
 
     :return dict: ansible facts
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            function_name=dict(required=False, default=None, aliases=['function', 'name']),
-            query=dict(required=False, choices=['aliases', 'all', 'config', 'mappings', 'policy', 'versions'], default='all'),
-            event_source_arn=dict(required=False, default=None)
-        )
+    argument_spec = dict(
+        function_name=dict(required=False, default=None, aliases=['function', 'name']),
+        query=dict(required=False, choices=['aliases', 'all', 'config', 'mappings', 'policy', 'versions'], default='all'),
+        event_source_arn=dict(required=False, default=None)
     )
 
     module = AnsibleAWSModule(
@@ -380,7 +377,7 @@ def main():
                                        ))
         client = boto3_conn(module, **aws_connect_kwargs)
     except ClientError as e:
-        module.fail_json(msg="Can't authorize connection - {0}".format(e))
+        module.fail_json_aws(e, "trying to set up boto connection")
 
     this_module = sys.modules[__name__]
 
