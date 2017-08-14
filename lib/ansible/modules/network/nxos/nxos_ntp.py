@@ -164,16 +164,15 @@ def get_ntp_source(module):
     output = execute_show_command(command, module, command_type='cli_show_ascii')
 
     if output:
-        if output[0]:
-            try:
-                if 'interface' in output[0]:
-                    source_type = 'source-interface'
-                else:
-                    source_type = 'source'
-                source = output[0].split()[2].lower()
-            except AttributeError:
-                source_type = None
-                source = None
+        try:
+            if 'interface' in output[0]:
+                source_type = 'source-interface'
+            else:
+                source_type = 'source'
+            source = output[0].split()[2].lower()
+        except (AttributeError, IndexError):
+            source_type = None
+            source = None
 
     return source_type, source
 
