@@ -727,7 +727,9 @@ important variables private.  Similarly, sometimes you may just
 want to keep certain information in different files, away from
 the main playbook.
 
-You can do this by using an external variables file, or files, just like this::
+You can do this by using an external variables files or directories.
+If you specify directories, Ansible will read all files in these directories.
+An example::
 
     ---
 
@@ -737,6 +739,7 @@ You can do this by using an external variables file, or files, just like this::
         favcolor: blue
       vars_files:
         - /vars/external_vars.yml
+        - /vars/external_vars_dir/
 
       tasks:
 
