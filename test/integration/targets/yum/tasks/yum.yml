@@ -8,9 +8,6 @@
   failed_when: False
   register: rpm_result
 
-- debug: var=yum_result
-- debug: var=rpm_result
-
 - name: verify uninstallation of sos
   assert:
     that:
@@ -36,9 +33,6 @@
   shell: rpm -q sos
   failed_when: False
   register: rpm_result
-
-- debug: var=yum_result
-- debug: var=rpm_result
 
 - name: verify installation of sos
   assert:
@@ -191,9 +185,6 @@
   failed_when: False
   register: rpm_result
 
-- debug: var=yum_result
-- debug: var=rpm_result
-
 - name: verify installation of sos
   assert:
     that:
@@ -247,6 +238,28 @@
     that:
         - "yum_result.rc == 0"
         - "not yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'rc' in yum_result"
+        - "'results' in yum_result"
+
+- name: install the group again but also with a package that is not yet installed
+  yum:
+    name:
+      - "@Development Tools"
+      - sos
+    state: present
+  register: yum_result
+
+- name: verify nothing changed
+  assert:
+    that:
+        - "yum_result.rc == 0"
+        - "yum_result.changed"
 
 - name: verify yum module outputs
   assert:
