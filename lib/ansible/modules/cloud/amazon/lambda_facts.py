@@ -361,10 +361,6 @@ def main():
         required_together=[]
     )
 
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
-
     # validate function_name if present
     function_name = module.params['function_name']
     if function_name:
