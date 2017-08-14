@@ -141,7 +141,7 @@ class VcaAnsibleModule(AnsibleModule):
             login_org = self.params['org']
 
         if not self.vca.login(password=password, org=login_org):
-            self.fail('Login to VCA failed', response=self.vca.response)
+            self.fail('Login to VCA failed', response=self.vca.response.content)
 
         try:
             method_name = 'login_%s' % service_type
@@ -150,7 +150,7 @@ class VcaAnsibleModule(AnsibleModule):
         except AttributeError:
             self.fail('no login method exists for service_type %s' % service_type)
         except VcaError as e:
-            self.fail(e.message, response=self.vca.response, **e.kwargs)
+            self.fail(e.message, response=self.vca.response.content, **e.kwargs)
 
     def login_vca(self):
         instance_id = self.params['instance_id']
