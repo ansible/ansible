@@ -98,9 +98,11 @@ EXAMPLES = """
     name: ansible
     sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
     state: present
+
 - name: remove all users except admin
   net_user:
     purge: yes
+
 - name: set multiple users to privilege level 15
   net_user:
     aggregate:
@@ -108,6 +110,7 @@ EXAMPLES = """
       - name: netend
     privilege: 15
     state: present
+
 - name: Change Password for User netop
   net_user:
     name: netop
