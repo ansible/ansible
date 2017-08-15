@@ -40,7 +40,6 @@ options:
     - date_size will upload if file sizes don't match or if local file modified date is newer than s3's version
     - checksum will compare etag values based on s3's implementation of chunked md5s.
     - force will always upload all files.
-    - delete will remove files that exist in the bucket but are not present in the file root.
     required: false
     default: 'date_size'
     choices: [ force, checksum, date_size ]
@@ -90,6 +89,11 @@ options:
     - Directives are separated by commmas.
     required: false
     version_added: "2.4"
+  delete:
+    description:
+    - Remove files that exist in bucket but are not present in the file root.
+    required: false
+    default: no
 
 requirements:
   - boto3 >= 1.4.4
@@ -391,7 +395,7 @@ def filter_list(s3, bucket, s3filelist, strategy):
         e['_strategy'] = strategy
 
     # init/fetch info from S3 if we're going to use it for comparisons
-    if not strategy == 'force' and not strategy == 'delete':
+    if not strategy == 'force':
         keeplist = head_s3(s3, bucket, s3filelist)
 
     # now actually run the strategies
@@ -429,10 +433,6 @@ def filter_list(s3, bucket, s3filelist, strategy):
                     entry['skip_flag'] = True
             else:
                 entry['why'] = "no s3_head"
-    elif strategy == 'delete':
-        current_keys = [to_text(object_key['Key']) for object_key in s3.list_objects(Bucket=bucket)['Contents']]
-        keep_keys = [to_text(keep_key['s3_path']) for keep_key in keeplist]
-        return [x for x in current_keys if x not in keep_keys]
     # else: probably 'force'. Basically we don't skip with any with other strategies.
     else:
         pass
@@ -457,11 +457,24 @@ def upload_files(s3, bucket, filelist, params):
     return ret
 
 
-def remove_files(s3, bucket, filelist, params):
+def remove_files(s3, sourcelist, params):
+    bucket = params.get('bucket')
+    key_prefix = params.get('key_prefix')
+    paginator = s3.get_paginator('list_objects')
+    response_iterator = paginator.paginate(Bucket=bucket, Prefix=key_prefix)
+
+    current_keys = []
+    for page in response_iterator:
+        current_keys += [to_text(item['Key']) for item in page['Contents']]
+
+    keep_keys = [to_text(source_file['s3_path']) for source_file in sourcelist]
+
     ret = []
-    for entry in filelist:
-        s3.delete_object(Bucket=bucket, Key=entry)
-        ret.append(entry)
+    for key in current_keys:
+        if key not in keep_keys:
+            s3.delete_object(Bucket=bucket, Key=key)
+            ret.append(key)
+
     return ret
 
 
@@ -469,7 +482,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         mode=dict(choices=['push'], default='push'),
-        file_change_strategy=dict(choices=['force', 'date_size', 'checksum', 'delete'], default='date_size'),
+        file_change_strategy=dict(choices=['force', 'date_size', 'checksum'], default='date_size'),
         bucket=dict(required=True),
         key_prefix=dict(required=False, default=''),
         file_root=dict(required=True, type='path'),
@@ -480,6 +493,7 @@ def main():
         exclude=dict(required=False, default=".*"),
         include=dict(required=False, default="*"),
         cache_control=dict(required=False, default=''),
+        delete=dict(required=False, type='bool', default=False),
         # future options: encoding, metadata, storage_class, retries
     )
     )
@@ -505,10 +519,10 @@ def main():
             result['filelist_s3'] = calculate_s3_path(result['filelist_typed'], module.params['key_prefix'])
             result['filelist_local_etag'] = calculate_local_etag(result['filelist_s3'])
             result['filelist_actionable'] = filter_list(s3, module.params['bucket'], result['filelist_local_etag'], module.params['file_change_strategy'])
-            if module.params['file_change_strategy'] == 'delete':
-                result['removed'] = remove_files(s3, module.params['bucket'], result['filelist_actionable'], module.params)
-            else:
-                result['uploads'] = upload_files(s3, module.params['bucket'], result['filelist_actionable'], module.params)
+            result['uploads'] = upload_files(s3, module.params['bucket'], result['filelist_actionable'], module.params)
+
+            if module.params['delete']:
+                result['removed'] = remove_files(s3, result['filelist_local_etag'], module.params)
 
             # mark changed if we actually upload something.
             if result.get('uploads') or result.get('removed'):
