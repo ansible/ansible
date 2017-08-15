@@ -408,12 +408,14 @@ class ActionModule(ActionBase):
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
 
         result['failed'] = True
-        if (source is None and content is None) or dest is None:
-            result['msg'] = "src (or content) and dest are required"
-        elif source is not None and content is not None:
-            result['msg'] = "src and content are mutually exclusive"
+        if not source and content is None:
+            result['msg'] = 'src (or content) is required'
+        elif not dest:
+            result['msg'] = 'dest is required'
+        elif source and content is not None:
+            result['msg'] = 'src and content are mutually exclusive'
         elif content is not None and dest is not None and dest.endswith("/"):
-            result['msg'] = "dest must be a file if content is defined"
+            result['msg'] = "can not use content with a dir as dest"
         else:
             del result['failed']
 
