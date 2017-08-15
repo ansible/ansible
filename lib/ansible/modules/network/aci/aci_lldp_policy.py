@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = r'''
 ---
-module: aci_lldp_interface_policy
+module: aci_lldp_policy
 short_description: Manage LLDP interface policies on Cisco ACI fabrics
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
@@ -35,13 +35,13 @@ options:
     aliases: [ descr ]
   receive_state:
     description:
-    - Enable or disable receive state.
+    - Enable or disable Receive state (FIXME!)
     required: yes
     choices: [ disabled, enabled ]
     default: enabled
   transmit_state:
     description:
-    - Enable or disable transmit state.
+    - Enable or Disable Transmit state (FIXME!)
     required: false
     choices: [ disabled, enabled ]
     default: enabled
@@ -55,7 +55,7 @@ options:
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_lldp_interface_policy:
+- aci_lldp_policy:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
@@ -76,7 +76,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        lldp_policy=dict(type='str', required=False, aliases=['name']),
+        lldp_policy=dict(type='str', require=False, aliases=['name']),
         description=dict(type='str', aliases=['descr']),
         receive_state=dict(type='str', choices=['disabled', 'enabled']),
         transmit_state=dict(type='str', choices=['disabled', 'enabled']),
