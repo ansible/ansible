@@ -26,12 +26,6 @@ options:
   name:
     description:
       - Name of the interface LLDP should be configured on.
-  aggregate:
-    description: List of interfaces LLDP should be configured on.
-  purge:
-    description:
-      - Purge interfaces not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - Value of C(present) ensures given LLDP configured on given I(interfaces)
@@ -115,8 +109,6 @@ def main():
     """
     argument_spec = dict(
         name=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
         active=dict(default=True, type='bool')
     )

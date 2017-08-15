@@ -145,7 +145,6 @@ def main():
         interval=dict(type='int'),
         transmit_delay=dict(type='int'),
         hold_multiplier=dict(type='int'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
         active=dict(default=True, type='bool')
     )
