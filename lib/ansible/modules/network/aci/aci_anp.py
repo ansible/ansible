@@ -40,7 +40,7 @@ options:
    descr:
      description:
      - Description for the ANP.
-  state:
+   state:
      description:
      - Use C(present) or C(absent) for adding or removing.
      - Use C(query) for listing an object or multiple objects.
