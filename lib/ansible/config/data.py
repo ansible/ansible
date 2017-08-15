@@ -17,11 +17,45 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils._text import to_text
+from ansible.errors import AnsibleOptionsError
 __metaclass__ = type
 
-from collections import namedtuple
 
-Setting = namedtuple('Setting','name value origin')
+class Setting(object):
+    def __init__(self, **kwargs):
+        self._attributes = [
+            'default',
+            'desc',
+            'env',
+            'ini',
+            'value_type',
+            'vars',
+            'yaml',
+        ]
+        self._values = [
+            'name',
+            'value',
+            'origin'
+        ]
+
+        for attribute in self._attributes + self._values:
+            setattr(self, attribute, kwargs.get(attribute, None))
+
+    def __repr__(self):
+        return to_text("%s: %s" % (self.name, self.value))
+
+
+class Plugin(object):
+    def __init__(self, name=None, type=None):
+        if not name or not type:
+            raise AnsibleOptionsError("Plugins must be instanciated with a name and a type attribute")
+        self.name = name
+        self.type = type
+
+    def __repr__(self):
+        return to_text("%s plugin: %s" % (self.type, self.name))
+
 
 class ConfigData(object):
 

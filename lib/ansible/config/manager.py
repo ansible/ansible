@@ -108,7 +108,9 @@ class ConfigManager(object):
     def update_config(self, configfile, defs, parser, ftype):
 
         # update the constant for config file
-        self.data.update_setting(Setting('CONFIG_FILE', configfile, ''))
+        self.data.update_setting(Setting(name='CONFIG_FILE',
+                                         value=configfile,
+                                         origin=''))
 
         origin = None
         # env and config defs can have several entries, ordered in list from lowest to highest precedence
@@ -153,8 +155,11 @@ class ConfigManager(object):
                 sys.stderr.write("Unable to set correct type for %s, skipping" %  config)
                 continue
 
-            # set the constant
-            self.data.update_setting(Setting(config, value, origin))
+            # Configure the setting
+            self.data.update_setting(Setting(name=config,
+                                             value=value,
+                                             origin=origin,
+                                             **defs[config]))
 
 
     def find_ini_config_file(self):
