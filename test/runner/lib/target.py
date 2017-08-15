@@ -7,6 +7,7 @@ import re
 import errno
 import itertools
 import abc
+import sys
 
 from lib.util import ApplicationError
 
@@ -21,7 +22,8 @@ def find_target_completion(target_func, prefix):
     """
     try:
         targets = target_func()
-        prefix = prefix.encode()
+        if sys.version_info[0] == 2:
+            prefix = prefix.encode()
         short = os.environ.get('COMP_TYPE') == '63'  # double tab completion from bash
         matches = walk_completion_targets(targets, prefix, short)
         return matches
