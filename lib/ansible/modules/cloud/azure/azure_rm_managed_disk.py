@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Bruno Medina Bolaños Cacho <bruno.medina@microsoft.com>
+# Copyright (c) 2017 Bruno Medina Bolanos Cacho <bruno.medina@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -88,6 +88,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 author:
     - "Bruno Medina (@brusmx)"
 '''
@@ -222,7 +223,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.disk_size_gb = None
         self.tags = None
 
-        super(AzureRMVMExtension, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMManagedDisk, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                  supports_check_mode=True,
                                                  supports_tags=True)
 
