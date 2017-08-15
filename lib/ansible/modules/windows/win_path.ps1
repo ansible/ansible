@@ -105,23 +105,16 @@ Function Set-RawPathVar($path_value, $scope) {
     return $path_value
 }
 
-$parsed_args = Parse-Args $args -supports_check_mode $true
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$result = @{changed=$false}
+$var_name = Get-AnsibleParam -obj $params -name "name" -type "string" -default "PATH"
+$elements = Get-AnsibleParam -obj $params -name "elements" -type "list" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "present","absent"
+$scope = Get-AnsibleParam -obj $params -name "scope" -type "string" -default "machine" -validateset "machine","user"
 
-$var_name = Get-AnsibleParam $parsed_args "name" -Default "PATH"
-$elements = Get-AnsibleParam $parsed_args "elements" -FailIfEmpty $result
-$state = Get-AnsibleParam $parsed_args "state" -Default "present" -ValidateSet "present","absent"
-$scope = Get-AnsibleParam $parsed_args "scope" -Default "machine" -ValidateSet "machine","user"
-
-$check_mode = Get-AnsibleParam $parsed_args "_ansible_check_mode" -Default $false
-
-If ($elements -is [string]) {
-    $elements = @($elements)
-}
-
-If ($elements -isnot [Array]) {
-    Fail-Json $result "elements must be a string or list of path strings"
+$result = @{
+  changed = $false
 }
 
 $current_value = Get-RawPathVar $scope

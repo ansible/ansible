@@ -51,6 +51,11 @@
     - multiout.path_value == "C:\\PathZ;C:\\PathA"
     - varout.stdout_lines[0] == "C:\\PathZ;C:\\PathA"
 
+- name: Create batch file
+  win_copy:
+    content: 'echo Success'
+    dest: '%ProgramFiles%/win_path-test.bat'
+
 - name: Add value to middle and end
   win_path:
     name: "{{ varname }}"
@@ -60,11 +65,16 @@
     - 'C:\PathWithTrailingBackslash\' # store with a trailing backslash
     - '"C:\Quoted;With;Semicolons"' # embedded semicolon, wrapped in quotes
     - '%SystemRoot%\stuff'
+    - '%TEMP%'
+    - '%ProgramFiles%'
   register: addout
 
 - name: Get path value
   raw: $env:{{ varname }}
   register: varout
+
+- name: Test batch file inside PATH
+  raw: win_path-test.bat
 
 - name: Test idempotence- retry values to middle and end, test case-insensitive comparison, backslash canonicalization
   win_path:
@@ -75,6 +85,8 @@
     - C:\pathwithtrailingbackslash # no trailing backslash, should be the same
     - '"C:\Quoted;With;Semicolons"'
     - '%SystemRoot%\stuff'
+    - '%TEMP%'
+    - '%ProgramFiles%'
   register: idemout
 
 - name: Get path value
@@ -85,11 +97,11 @@
   assert:
     that:
     - addout | changed
-    - addout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
-    - varout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff')
+    - addout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff;%TEMP%;%ProgramFiles%'
+    - varout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff;%TEMP%;%ProgramFiles%')
     - not idemout | changed
-    - idemout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
-    - idemvarout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff')
+    - idemout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff;%TEMP%;%ProgramFiles%'
+    - idemvarout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff;%TEMP%;%ProgramFiles%')
 
 - name: Remove single element
   win_path:
@@ -117,11 +129,11 @@
   assert:
     that:
     - removeout | changed
-    - removeout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
-    - varout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff'
+    - removeout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff;%TEMP%;%ProgramFiles%'
+    - varout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff;%TEMP%;%ProgramFiles%'
     - not idemremoveout | changed
-    - idemremoveout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
-    - idemvarout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff'
+    - idemremoveout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff;%TEMP%;%ProgramFiles%'
+    - idemvarout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff;%TEMP%;%ProgramFiles%'
 
 - name: Remove multiple elements
   win_path:
@@ -131,6 +143,8 @@
     - c:\pathz
     - '"C:\Quoted;With;Semicolons"'
     - '%SystemRoot%\stuff\' # add trailing backslash
+    - '%TEMP%'
+    - '%ProgramFiles%'
     state: absent
   register: removeout
 
