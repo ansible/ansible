@@ -141,6 +141,8 @@ def main():
             load_config(module, commands)
         result['changed'] = True
 
+    result['commands'] = commands
+
     module.exit_json(**result)
 
 
