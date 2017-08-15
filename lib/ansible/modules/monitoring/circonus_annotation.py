@@ -140,6 +140,7 @@ annotation:
 import json
 import time
 import traceback
+from distutils.version import LooseVersion
 
 try:
     import requests
@@ -148,7 +149,18 @@ except ImportError:
     HAS_REQUESTS = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_native
+
+
+def check_requests_dep(module):
+    """Check if an adequate requests version is available"""
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests is required for this module')
+    else:
+        required_version = '2.0.0' if PY3 else '1.0.0'
+        if LooseVersion(requests.__version__) < LooseVersion(required_version):
+            module.fail_json(msg="'requests' library version should be >= %s, found: %s." % (required_version, requests.__version__))
 
 
 def post_annotation(annotation, api_key):
@@ -203,8 +215,7 @@ def main():
         )
     )
 
-    if not HAS_REQUESTS:
-        module.fail_json(msg='requests is required for this module')
+    check_requests_dep(module)
 
     annotation = create_annotation(module)
     try:
