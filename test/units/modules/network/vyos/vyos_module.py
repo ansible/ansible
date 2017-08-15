@@ -35,6 +35,7 @@ def set_module_args(args):
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
+
 def load_fixture(name):
     path = os.path.join(fixture_path, name)
 
@@ -56,14 +57,14 @@ def load_fixture(name):
 class AnsibleExitJson(Exception):
     pass
 
+
 class AnsibleFailJson(Exception):
     pass
 
+
 class TestVyosModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True, defaults=False):
-
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
         self.load_fixtures(commands)
 
         if failed:
@@ -73,7 +74,7 @@ class TestVyosModule(unittest.TestCase):
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
 
-        if commands:
+        if commands is not None:
             if sort:
                 self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
             else:
@@ -110,4 +111,3 @@ class TestVyosModule(unittest.TestCase):
 
     def load_fixtures(self, commands=None):
         pass
-

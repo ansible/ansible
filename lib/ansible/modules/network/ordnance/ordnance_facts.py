@@ -1,20 +1,12 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -102,11 +94,12 @@ ansible_net_interfaces:
   type: dict
 """
 import re
-import itertools
+import traceback
 
 from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils._text import to_native
 
 
 class FactsBase(object):
@@ -121,6 +114,7 @@ class FactsBase(object):
             return self.module.cli(cmd)[0]
         except:
             self.failed_commands.append(cmd)
+
 
 class Config(FactsBase):
 
@@ -283,9 +277,8 @@ def main():
             inst.populate()
             failed_commands.extend(inst.failed_commands)
             facts.update(inst.facts)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except Exception as exc:
+        module.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
     ansible_facts = dict()
     for key, value in iteritems(facts):

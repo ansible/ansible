@@ -1,0 +1,53 @@
+---
+- name: Remove old entries of user
+  nxos_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    provider: "{{ cli }}"
+
+# Start tests
+- name: Create user
+  nxos_user:
+    name: ansibletest1
+    roles: network-operator
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"role network-operator" in result.commands[1]'
+
+- name: Collection of users
+  nxos_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    state: present
+    roles: network-admin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: tearDown
+  nxos_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no username" in result.commands[0]'

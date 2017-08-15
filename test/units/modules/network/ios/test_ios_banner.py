@@ -40,8 +40,7 @@ class TestIosBannerModule(TestIosModule):
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None):
-        self.exec_command.return_value = (0,
-                load_fixture('ios_banner_show_banner.txt').strip(), None)
+        self.exec_command.return_value = (0, load_fixture('ios_banner_show_banner.txt').strip(), None)
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_ios_banner_create(self):

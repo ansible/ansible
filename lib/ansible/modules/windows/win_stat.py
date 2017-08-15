@@ -28,7 +28,8 @@ module: win_stat
 version_added: "1.7"
 short_description: returns information about a Windows file
 description:
-     - Returns information about a Windows file
+     - Returns information about a Windows file.
+     - For non-Windows targets, use the M(stat) module instead.
 options:
     path:
         description:
@@ -59,6 +60,8 @@ options:
         default: sha1
         choices: ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
         version_added: "2.3"
+notes:
+     - For non-Windows targets, use the M(stat) module instead.
 author: "Chris Church (@cchurch)"
 '''
 
@@ -130,11 +133,21 @@ stat:
             returned: success, path exists
             type: float
             sample: 1477984205.15
+        exists:
+            description: if the path exists or not
+            returned: success
+            type: boolean
+            sample: True
         extension:
             description: the extension of the file at path
             returned: success, path exists, path is a file
             type: string
             sample: ".ps1"
+        filename:
+            description: the name of the file (without path)
+            returned: success, path exists, path is a file
+            type: string
+            sammple: foo.ini
         isarchive:
             description: if the path is ready for archiving or not
             returned: success, path exists
@@ -157,6 +170,11 @@ stat:
             sample: True
         isreadonly:
             description: if the path is read only or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        isreg:
+            description: if the path is a regular file
             returned: success, path exists
             type: boolean
             sample: True
@@ -192,9 +210,9 @@ stat:
             sample: BUILTIN\Administrators
         path:
             description: the full absolute path to the file
-            returned: success, path exists
+            returned: success, path exists, file exists
             type: string
-            sample: BUILTIN\Administrators
+            sample: C:\foo.ini
         sharename:
             description: the name of share if folder is shared
             returned: success, path exists, file is a directory and isshared == True

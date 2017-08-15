@@ -85,83 +85,22 @@ from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-NAME = r'.*IP?\s+access list\s+(?P<name>\S+).*'
-INTERFACE = r'.*\s+(?P<interface>\w+(\d+)?\/?(\d+)?)\s-\s(?P<direction>\w+)\s+\W(?P<acl_type>\w+\s\w+)\W.*'
-
-
-def get_acl_interface(module, acl):
-    command = ['show ip access-list summary']
-    acl_list = []
-
+def check_for_acl_int_present(module, name, intf, direction):
+    # Need to Captitalize the interface name as the nxos
+    # output has capitalization
+    command = [{
+        'command': 'show running-config aclmgr | section {0}'.format(intf.title()),
+        'output': 'text',
+    }]
     body = run_commands(module, command)
-    body_split = body[0].split('Active on interfaces:')
 
-    for each_acl in body_split:
-        temp = {}
-        try:
-            match_name = re.match(NAME, each_acl, re.DOTALL)
-            name_dict = match_name.groupdict()
-            name = name_dict['name']
-        except AttributeError:
-            name = ''
+    if direction == 'ingress':
+        mdir = 'in'
+    elif direction == 'egress':
+        mdir = 'out'
 
-        temp['interfaces'] = []
-        for line in each_acl.split('\n'):
-            try:
-                match_interface = re.match(INTERFACE, line, re.DOTALL)
-                interface_dict = match_interface.groupdict()
-                interface = interface_dict['interface']
-                direction = interface_dict['direction']
-                acl_type = interface_dict['acl_type']
-            except AttributeError:
-                interface = ''
-                direction = ''
-                acl_type = ''
-
-            intf_temp = {}
-            if interface:
-                intf_temp['interface'] = interface
-            if acl_type:
-                intf_temp['acl_type'] = acl_type
-            if direction:
-                intf_temp['direction'] = direction
-            if intf_temp:
-                temp['interfaces'].append(intf_temp)
-        if name:
-            temp['name'] = name
-
-        if temp:
-            acl_list.append(temp)
-
-    existing_no_null = []
-    for each in acl_list:
-        if each.get('name') == acl:
-            interfaces = each.get('interfaces')
-            for interface in interfaces:
-                new_temp = {}
-                new_temp['name'] = acl
-                new_temp.update(interface)
-                existing_no_null.append(new_temp)
-    return existing_no_null
-
-
-def other_existing_acl(get_existing, interface, direction):
-    # now we'll just get the interface in question
-    # needs to be a list since same acl could be applied in both dirs
-    acls_interface = []
-    this = {}
-
-    if get_existing:
-        for each in get_existing:
-            if each.get('interface').lower() == interface:
-                acls_interface.append(each)
-
-        if acls_interface:
-            for each in acls_interface:
-                if each.get('direction') == direction:
-                    this = each
-
-    return acls_interface, this
+    match = re.search('ip access-group {0} {1}'.format(name, mdir), str(body[0]))
+    return bool(match)
 
 
 def apply_acl(proposed):
@@ -227,14 +166,7 @@ def main():
 
     proposed = dict(name=name, interface=interface, direction=direction)
 
-    # includes all interfaces the ACL is applied to (list)
-    get_existing = get_acl_interface(module, name)
-
-    # interface_acls = includes entries of this ACL on the interface (list)
-    # this_dir_acl_intf = dict - not null if it already exists
-    interfaces_acls, existing = other_existing_acl(get_existing, interface, direction)
-
-    end_state_acls = get_existing
+    existing = check_for_acl_int_present(module, name, interface, direction)
 
     cmds = []
     commands = []
@@ -258,15 +190,12 @@ def main():
             else:
                 load_config(module, cmds)
                 results['changed'] = True
-                end_state_acls = get_acl_interface(module, name)
-                interfaces_acls, this_dir_acl_intf = other_existing_acl(end_state_acls, interface, direction)
                 if 'configure' in cmds:
                     cmds.pop(0)
     else:
         cmds = []
 
     results['commands'] = cmds
-    results['acl_applied_to'] = end_state_acls
 
     module.exit_json(**results)
 

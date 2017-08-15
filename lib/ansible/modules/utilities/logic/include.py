@@ -1,12 +1,11 @@
 #!/usr/bin/python
-# -*- mode: python -*-
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+# Copyright:  Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -26,6 +25,7 @@ description:
      - Static includes are not subject to most directives, for example, loops or conditionals, they are applied instead to each inherited task.
      - Since 2.0 task includes are dynamic and behave more like real tasks.  This means they can be looped, skipped and use variables from any source.
        Ansible tries to auto detect this, use the `static` directive (new in 2.1) to bypass autodetection.
+     - This module is also supported for Windows targets.
 version_added: "0.6"
 options:
   free-form:
@@ -34,6 +34,7 @@ options:
 notes:
     - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a
       module can.
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = """

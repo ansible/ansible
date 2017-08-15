@@ -32,11 +32,11 @@ from ansible.plugins.callback import CallbackBase
 def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
 
     if sender is None:
-        sender='<root>'
+        sender = '<root>'
     if to is None:
-        to='root'
+        to = 'root'
     if smtphost is None:
-        smtphost=os.getenv('SMTPHOST', 'localhost')
+        smtphost = os.getenv('SMTPHOST', 'localhost')
 
     if body is None:
         body = subject

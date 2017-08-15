@@ -1,19 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Virt management features
+# Copyright 2007, 2012 Red Hat, Inc
+# Michael DeHaan <michael.dehaan@gmail.com>
+# Seth Vidal <skvidal@fedoraproject.org>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Copyright 2007, 2012 Red Hat, Inc
-Michael DeHaan <michael.dehaan@gmail.com>
-Seth Vidal <skvidal@fedoraproject.org>
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-This software may be freely redistributed under the terms of the GNU
-general public license.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -119,11 +115,8 @@ status:
     sample: "success"
     returned: success
 '''
-VIRT_FAILED = 1
-VIRT_SUCCESS = 0
-VIRT_UNAVAILABLE=2
 
-import sys
+import traceback
 
 try:
     import libvirt
@@ -131,6 +124,14 @@ except ImportError:
     HAS_VIRT = False
 else:
     HAS_VIRT = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
+
+VIRT_FAILED = 1
+VIRT_SUCCESS = 0
+VIRT_UNAVAILABLE=2
 
 ALL_COMMANDS = []
 VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
@@ -207,10 +208,10 @@ class LibvirtConnection(object):
         return self.find_vm(vmid).shutdown()
 
     def pause(self, vmid):
-        return self.suspend(self.conn,vmid)
+        return self.suspend(vmid)
 
     def unpause(self, vmid):
-        return self.resume(self.conn,vmid)
+        return self.resume(vmid)
 
     def suspend(self, vmid):
         return self.find_vm(vmid).suspend()
@@ -514,7 +515,7 @@ def core(module):
             return VIRT_SUCCESS, res
 
         else:
-            module.fail_json(msg="Command %s not recognized" % basecmd)
+            module.fail_json(msg="Command %s not recognized" % command)
 
     module.fail_json(msg="expected state or command parameter to be specified")
 
@@ -537,19 +538,14 @@ def main():
     rc = VIRT_SUCCESS
     try:
         rc, result = core(module)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     if rc != 0: # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
     else:
         module.exit_json(**result)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

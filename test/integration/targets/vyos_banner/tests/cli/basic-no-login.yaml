@@ -1,0 +1,41 @@
+---
+- name: Setup
+  vyos_banner:
+    banner: pre-login
+    text: |
+      Junk pre-login banner
+      over multiple lines
+    state: present
+    provider: "{{ cli }}"
+
+- name: remove pre-login
+  vyos_banner:
+    banner: pre-login
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'delete system login banner pre-login' in result.commands"
+
+- name: remove pre-login (idempotent)
+  vyos_banner:
+    banner: pre-login
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

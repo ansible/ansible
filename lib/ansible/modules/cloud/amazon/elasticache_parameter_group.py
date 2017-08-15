@@ -28,6 +28,7 @@ description:
   - Returns information about the specified cache cluster.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
+requirements: [ boto3, botocore ]
 options:
   group_family:
     description:

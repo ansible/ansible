@@ -1,0 +1,112 @@
+---
+- debug: msg="START net_banner junos/basic.yaml"
+
+- name: setup - remove login banner
+  net_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create login banner
+  net_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message>this is my login banner</message>' in config.xml"
+
+- name: Create login banner (idempotent)
+  net_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: delete login banner
+  net_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message>this is my login banner</message>' not in config.xml"
+
+- name: setup - remove motd banner
+  net_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create motd banner
+  junos_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement>this is my motd banner</announcement>' in config.xml"
+
+- name: Create motd banner (idempotent)
+  net_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: delete motd banner
+  junos_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement>this is my motd banner</announcement>' not in config.xml"

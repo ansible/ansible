@@ -25,7 +25,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_say
@@ -37,69 +36,73 @@ description:
 options:
   msg:
     description:
-      - The text to be spoken.  Use either msg or msg_file.  Optional so that you can use this module just to play sounds.
-    required: false
-    default: none
+      - The text to be spoken.
+      - Use either C(msg) or C(msg_file).
+      - Optional so that you can use this module just to play sounds.
   msg_file:
     description:
-      - Full path to a windows format text file containing the text to be spokend.  Use either msg or msg_file.  Optional so that you can use this module
-        just to play sounds.
-    required: false
-    default: none
+      - Full path to a windows format text file containing the text to be spokend.
+      - Use either C(msg) or C(msg_file).
+      - Optional so that you can use this module just to play sounds.
   voice:
     description:
-      - Which voice to use. See notes for how to discover installed voices.  If the requested voice is not available the default voice will be used.
-        Example voice names from Windows 10 are 'Microsoft Zira Desktop' and 'Microsoft Hazel Desktop'.
-    required: false
+      - Which voice to use. See notes for how to discover installed voices.
+      - If the requested voice is not available the default voice will be used.
+        Example voice names from Windows 10 are C(Microsoft Zira Desktop) and C(Microsoft Hazel Desktop).
     default: system default voice
   speech_speed:
     description:
-      - How fast or slow to speak the text.  Must be an integer value in the range -10 to 10.  -10 is slowest, 10 is fastest.
-    required: false
+      - How fast or slow to speak the text.
+      - Must be an integer value in the range -10 to 10.
+      - -10 is slowest, 10 is fastest.
     default: 0
   start_sound_path:
     description:
-      - Full path to a C(.wav) file containing a sound to play before the text is spoken.  Useful on conference calls to alert other speakers that ansible
-        has something to say.
-    required: false
-    default: null
+      - Full path to a C(.wav) file containing a sound to play before the text is spoken.
+      - Useful on conference calls to alert other speakers that ansible has something to say.
   end_sound_path:
     description:
-      - Full path to a C(.wav) file containing a sound to play after the text has been spoken.  Useful on conference calls to alert other speakers that
-        ansible has finished speaking.
-    required: false
-    default: null
-author: "Jon Hawkesworth (@jhawkesworth)"
+      - Full path to a C(.wav) file containing a sound to play after the text has been spoken.
+      - Useful on conference calls to alert other speakers that ansible has finished speaking.
+author:
+- Jon Hawkesworth (@jhawkesworth)
 notes:
    - Needs speakers or headphones to do anything useful.
-   - To find which voices are installed, run the following powershell
-     Add-Type -AssemblyName System.Speech
-     $speech = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
-     $speech.GetInstalledVoices() | ForEach-Object { $_.VoiceInfo }
-     $speech.Dispose()
-   - Speech can be surprisingly slow, so its best to keep message text short.
+   - |
+     To find which voices are installed, run the following Powershell commands.
+
+                 Add-Type -AssemblyName System.Speech
+                 $speech = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+                 $speech.GetInstalledVoices() | ForEach-Object { $_.VoiceInfo }
+                 $speech.Dispose()
+
+   - Speech can be surprisingly slow, so it's best to keep message text short.
 '''
 
 EXAMPLES = r'''
-  # Warn of impending deployment
-- win_say:
+- name: Warn of impending deployment
+  win_say:
     msg: Warning, deployment commencing in 5 minutes, please log out.
-  # Using a different voice and a start sound
-- win_say:
+
+- name: Using a different voice and a start sound
+  win_say:
     start_sound_path: C:\Windows\Media\ding.wav
     msg: Warning, deployment commencing in 5 minutes, please log out.
     voice: Microsoft Hazel Desktop
-  # example with start and end sound
-- win_say:
+
+- name: With start and end sound
+  win_say:
     start_sound_path: C:\Windows\Media\Windows Balloon.wav
     msg: New software installed
     end_sound_path: C:\Windows\Media\chimes.wav
-  # text from file example
-- win_say:
+
+- name: Text from file example
+  win_say:
     start_sound_path: C:\Windows\Media\Windows Balloon.wav
     msg_file: AppData\Local\Temp\morning_report.txt
     end_sound_path: C:\Windows\Media\chimes.wav
 '''
+
 RETURN = r'''
 message_text:
     description: the text that the module attempted to speak

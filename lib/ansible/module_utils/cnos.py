@@ -32,7 +32,6 @@
 # Lenovo Networking
 
 import time
-import ftplib
 import socket
 import re
 try:
@@ -959,6 +958,10 @@ def interfaceLevel2Config(
 
     elif (interfaceL2Arg1 == "shutdown"):
         # debugOutput("shutdown")
+        command = interfaceL2Arg1
+
+    elif (interfaceL2Arg1 == "no shutdown"):
+        # debugOutput("no shutdown")
         command = interfaceL2Arg1
 
     elif (interfaceL2Arg1 == "snmp"):
@@ -1950,7 +1953,7 @@ def bgpConfig(
 
     elif(bgpArg1 == "log-neighbor-changes"):
         # debugOutput(bgpArg1)
-        command = command + bgpArg1f
+        command = command + bgpArg1
 
     elif(bgpArg1 == "maxas-limit"):
         # debugOutput(bgpArg1)
@@ -3085,41 +3088,7 @@ def doSecureImageTransfer(
     return retVal
 # EOM
 
-# Method to find whether image is there in server or not
-# This is not complete. Need to figure out How to do for SCP and SFTP
-
-
-def checkServerForImage(protocol, ipaddress, folder, username, password):
-    # server = "10.241.105.214"
-    server = ipaddress
-    # username = "pbhosale"
-    username = username
-    # password = "Lab4man1"
-    password = password
-    imageDir = "cnos_images"
-    output = 0
-    try:
-        ftp = ftplib.FTP(server)
-        ftp.login(username, password)
-    except Exception:
-        # debugOutput e
-        return 1
-    else:
-        filelist = []  # to store all files
-        ftp.retrlines('NLST', filelist.append)  # append to list
-        num = 0
-        for f in filelist:
-            # debugOutput f
-            if(f == imageDir):
-                num = 1
-        if(num == 0):
-            resp = ftp.mkd(imageDir)
-        if(resp != imageDir):
-            return 1
-    return output
-# EOM
-
-# Method for device response than time delay
+# Method for enter enable mnode
 #
 
 
@@ -3175,7 +3144,7 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
     return retVal
 # EOM
 
-# Method for device response than time delay
+# Method for device response wait for a time delay
 #
 
 
@@ -3257,15 +3226,14 @@ def checkSanityofVariable(deviceType, variableId, variableValue):
 def getRuleStringForVariable(deviceType, ruleFile, variableId):
     retVal = ""
     try:
-        # with open(ruleFile, 'r') as f:
-        f = open(errorFile, 'r')
-        for line in f:
-            # debugOutput(line)
-            if(':' in line):
-                data = line.split(':')
-                # debugOutput(data[0])
-                if(data[0].strip() == variableId):
-                    retVal = line
+        with open(ruleFile, 'r') as f:
+            for line in f:
+                # debugOutput(line)
+                if(':' in line):
+                    data = line.split(':')
+                    # debugOutput(data[0])
+                    if(data[0].strip() == variableId):
+                        retVal = line
     except Exception:
         ruleString = cnos_devicerules.getRuleString(deviceType, variableId)
         retVal = ruleString.strip()
@@ -3342,7 +3310,7 @@ def validateValueAgainstRule(ruleString, variableValue):
             return "Error-115"
 
     elif(variableType == "LONG"):
-        result = checkLong(variableValue)
+        result = checkInteger(variableValue)
         if(result is True):
             return "ok"
         else:
@@ -3350,11 +3318,11 @@ def validateValueAgainstRule(ruleString, variableValue):
 
     elif(variableType == "LONG_VALUE"):
         long_range = varRange.split('-')
-        r = range(long(long_range[0].strip()), long(long_range[1].strip()))
-        if(checkLong(variableValue) is not True):
+        r = range(int(long_range[0].strip()), int(long_range[1].strip()))
+        if(checkInteger(variableValue) is not True):
             # debugOutput(variableValue)
             return "Error-116"
-        result = long(variableValue) in r
+        result = int(variableValue) in r
         if(result is True):
             return "ok"
         else:
@@ -3362,10 +3330,10 @@ def validateValueAgainstRule(ruleString, variableValue):
 
     elif(variableType == "LONG_VALUE_RANGE"):
         long_range = varRange.split('-')
-        r = range(long(long_range[0].strip()), long(long_range[1].strip()))
+        r = range(int(long_range[0].strip()), int(long_range[1].strip()))
         val_range = variableValue.split('-')
-        if((checkLong(val_range[0]) is not True) or
-                (checkLong(val_range[1]) is not True)):
+        if((checkInteger(val_range[0]) is not True) or
+                (checkInteger(val_range[1]) is not True)):
             return "Error-117"
         result = (val_range[0] in r) and (
             val_range[1] in r) and (val_range[0] < val_range[1])
@@ -3375,7 +3343,7 @@ def validateValueAgainstRule(ruleString, variableValue):
             return "Error-113"
     elif(variableType == "LONG_OPTIONS"):
         long_options = varRange.split(',')
-        if(checkLong(variableValue) is not True):
+        if(checkInteger(variableValue) is not True):
             return "Error-116"
         for opt in long_options:
             if(opt.strip() == variableValue):
@@ -3529,14 +3497,6 @@ def checkFloat(s):
     except ValueError:
         return False
 # EOM
-
-
-def checkLong(s):
-    try:
-        long(s)
-        return True
-    except ValueError:
-        return False
 
 
 def debugOutput(command):

@@ -24,6 +24,10 @@
 
       # Items from those subsets are present
       - "result.ansible_facts.ansible_net_filesystems is defined"
+      - "result.ansible_facts.ansible_net_interfaces is defined"
+      - "result.ansible_facts.ansible_net_config is defined"
+      - "result.ansible_facts.ansible_net_model is defined"
+
       # Check that these facts not only are present, but are valid (positive integers)
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"

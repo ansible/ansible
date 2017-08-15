@@ -254,7 +254,8 @@ def walk_integration_targets():
     prefixes = load_integration_prefixes()
 
     for path in paths:
-        yield IntegrationTarget(path, modules, prefixes)
+        if os.path.isdir(path):
+            yield IntegrationTarget(path, modules, prefixes)
 
 
 def load_integration_prefixes():
@@ -307,6 +308,43 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
                 continue
 
             yield TestTarget(os.path.join(root, file_name), module_path, prefix, path)
+
+
+def analyze_integration_target_dependencies(integration_targets):
+    """
+    :type integration_targets: list[IntegrationTarget]
+    :rtype: dict[str,set[str]]
+    """
+    hidden_role_target_names = set(t.name for t in integration_targets if t.type == 'role' and 'hidden/' in t.aliases)
+    normal_role_targets = [t for t in integration_targets if t.type == 'role' and 'hidden/' not in t.aliases]
+    dependencies = dict((target_name, set()) for target_name in hidden_role_target_names)
+
+    # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
+    for role_target in normal_role_targets:
+        meta_dir = os.path.join(role_target.path, 'meta')
+
+        if not os.path.isdir(meta_dir):
+            continue
+
+        meta_paths = sorted([os.path.join(meta_dir, name) for name in os.listdir(meta_dir)])
+
+        for meta_path in meta_paths:
+            if os.path.exists(meta_path):
+                with open(meta_path, 'r') as meta_fd:
+                    meta_lines = meta_fd.read().splitlines()
+
+                for meta_line in meta_lines:
+                    if re.search(r'^ *#.*$', meta_line):
+                        continue
+
+                    if not meta_line.strip():
+                        continue
+
+                    for hidden_target_name in hidden_role_target_names:
+                        if hidden_target_name in meta_line:
+                            dependencies[hidden_target_name].add(role_target.name)
+
+    return dependencies
 
 
 class CompletionTarget(object):
@@ -434,7 +472,7 @@ class IntegrationTarget(CompletionTarget):
             self.script_path = os.path.join(path, runme_files[0])
         elif test_files:
             self.type = 'special'
-        elif os.path.isdir(os.path.join(path, 'tasks')):
+        elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
             self.type = 'role'
         else:
             self.type = 'unknown'

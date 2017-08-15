@@ -12,15 +12,16 @@ import lib.thread
 
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
+    create_shell_command,
+)
+
+from lib.config import (
+    TestConfig,
+    EnvironmentConfig,
     IntegrationConfig,
     ShellConfig,
     SanityConfig,
     UnitsConfig,
-    create_shell_command,
-)
-
-from lib.test import (
-    TestConfig,
 )
 
 from lib.core_ci import (
@@ -33,8 +34,9 @@ from lib.manage_ci import (
 
 from lib.util import (
     ApplicationError,
-    EnvironmentConfig,
     run_command,
+    common_environment,
+    pass_vars,
 )
 
 from lib.docker_util import (
@@ -129,7 +131,18 @@ def delegate_tox(args, exclude, require):
             if args.coverage and not args.coverage_label:
                 cmd += ['--coverage-label', 'tox-%s' % version]
 
-        run_command(args, tox + cmd)
+        env = common_environment()
+
+        # temporary solution to permit ansible-test delegated to tox to provision remote resources
+        optional = (
+            'SHIPPABLE',
+            'SHIPPABLE_BUILD_ID',
+            'SHIPPABLE_JOB_NUMBER',
+        )
+
+        env.update(pass_vars(required=[], optional=optional))
+
+        run_command(args, tox + cmd, env=env)
 
 
 def delegate_docker(args, exclude, require):
@@ -170,7 +183,7 @@ def delegate_docker(args, exclude, require):
 
     cmd_options = []
 
-    if isinstance(args, ShellConfig):
+    if isinstance(args, ShellConfig) or (isinstance(args, IntegrationConfig) and args.debug_strategy):
         cmd_options.append('-it')
 
     with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
@@ -198,6 +211,11 @@ def delegate_docker(args, exclude, require):
                 '--privileged=%s' % str(privileged).lower(),
             ]
 
+            docker_socket = '/var/run/docker.sock'
+
+            if os.path.exists(docker_socket):
+                test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
+
             if util_id:
                 test_options += [
                     '--link', '%s:ansible.http.tests' % util_id,
@@ -207,7 +225,7 @@ def delegate_docker(args, exclude, require):
                     '--env', 'HTTPTESTER=1',
                 ]
 
-            if isinstance(args, TestConfig):
+            if isinstance(args, IntegrationConfig):
                 cloud_platforms = get_cloud_providers(args)
 
                 for cloud_platform in cloud_platforms:
@@ -287,7 +305,7 @@ def delegate_remote(args, exclude, require):
 
         ssh_options = []
 
-        if isinstance(args, TestConfig):
+        if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)
 
             for cloud_platform in cloud_platforms:
@@ -297,7 +315,7 @@ def delegate_remote(args, exclude, require):
             manage.ssh(cmd, ssh_options)
             success = True
         finally:
-            manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results')
+            manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
             manage.download('/tmp/results', 'test')
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):

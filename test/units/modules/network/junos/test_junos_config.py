@@ -36,6 +36,15 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_load_config = patch('ansible.modules.network.junos.junos_config.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_lock_configuration = patch('ansible.module_utils.junos.lock_configuration')
+        self.lock_configuration = self.mock_lock_configuration.start()
+
+        self.mock_unlock_configuration = patch('ansible.module_utils.junos.unlock_configuration')
+        self.unlock_configuration = self.mock_unlock_configuration.start()
+
+        self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_config.commit_configuration')
+        self.commit_configuration = self.mock_commit_configuration.start()
+
         self.mock_get_diff = patch('ansible.modules.network.junos.junos_config.get_diff')
         self.get_diff = self.mock_get_diff.start()
 
@@ -45,6 +54,10 @@ class TestJunosConfigModule(TestJunosModule):
     def tearDown(self):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_lock_configuration.stop()
+        self.mock_unlock_configuration.stop()
+        self.mock_commit_configuration.stop()
+        self.mock_get_diff.stop()
         self.mock_send_request.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
@@ -83,8 +96,8 @@ class TestJunosConfigModule(TestJunosModule):
     def test_junos_config_confirm(self):
         src = load_fixture('junos_config.set', content='str')
         set_module_args(dict(src=src, confirm=40))
-        self.execute_module()
-        args, kwargs = self.load_config.call_args
+        self.execute_module(changed=True)
+        args, kwargs = self.commit_configuration.call_args
         self.assertEqual(kwargs['confirm_timeout'], 40)
 
     def test_junos_config_rollback(self):
@@ -144,3 +157,8 @@ class TestJunosConfigModule(TestJunosModule):
         self.execute_module()
         args, kwargs = self.load_config.call_args
         self.assertEqual(kwargs['format'], 'xml')
+
+    def test_junos_config_confirm_commit(self):
+        set_module_args(dict(confirm_commit=True))
+        self.execute_module(changed=True)
+        self.assertEqual(self.commit_configuration.call_count, 1)

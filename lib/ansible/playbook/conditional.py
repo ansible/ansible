@@ -29,8 +29,6 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
-from ansible.template import Templar
-from ansible.template.safe_eval import safe_eval
 
 try:
     from __main__ import display
@@ -42,6 +40,7 @@ except ImportError:
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
+
 
 class Conditional:
 
@@ -65,7 +64,7 @@ class Conditional:
 
     def _validate_when(self, attr, name, value):
         if not isinstance(value, list):
-            setattr(self, name, [ value ])
+            setattr(self, name, [value])
 
     def _get_attr_when(self):
         '''
@@ -129,6 +128,11 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
+        if templar.is_template(conditional):
+            display.warning('when statements should not include jinja2 '
+                            'templating delimiters such as {{ }} or {%% %%}. '
+                            'Found: %s' % conditional)
+
         # pull the "bare" var out, which allows for nested conditionals
         # and things like:
         # - assert:
@@ -138,11 +142,6 @@ class Conditional:
         #   - 1 == 1
         if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
             conditional = all_vars[conditional]
-
-        if templar.is_template(conditional):
-            display.warning('when statements should not include jinja2 '
-                            'templating delimiters such as {{ }} or {%% %%}. '
-                            'Found: %s' % conditional)
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
@@ -236,7 +235,4 @@ class Conditional:
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
             except Exception as new_e:
-                raise AnsibleUndefinedVariable(
-                    "error while evaluating conditional (%s): %s" % (original, e)
-                )
-
+                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))

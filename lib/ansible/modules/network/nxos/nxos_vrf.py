@@ -98,18 +98,20 @@ commands:
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
-    transport = module.params['transport']
-    if transport == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-
-    cmds = [command]
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
     body = run_commands(module, cmds)
     return body
 
@@ -190,6 +192,7 @@ def get_vrf(vrf, module):
         return {}
 
     parsed_vrf = apply_key_map(vrf_key, vrf_table)
+    parsed_vrf['admin_state'] = parsed_vrf['admin_state'].lower()
 
     command = 'show run all | section vrf.context.{0}'.format(vrf)
     body = execute_show_command(command, module)[0]
@@ -220,7 +223,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
-
 
     vrf = module.params['vrf']
     admin_state = module.params['admin_state'].lower()
@@ -255,17 +257,17 @@ def main():
             command = get_commands_to_config_vrf(delta, vrf)
             commands.extend(command)
 
-    if commands:
+    if state == 'present' and commands:
         if proposed.get('vni'):
             if existing.get('vni') and existing.get('vni') != '':
                 commands.insert(1, 'no vni {0}'.format(existing['vni']))
-        if module.check_mode:
-            module.exit_json(changed=True, commands=commands)
-        else:
-            load_config(module, commands)
-            results['changed'] = True
-            if 'configure' in commands:
-                commands.pop(0)
+
+    if commands and not module.check_mode:
+        load_config(module, commands)
+        results['changed'] = True
+
+        if 'configure' in commands:
+            commands.pop(0)
 
     results['commands'] = commands
 

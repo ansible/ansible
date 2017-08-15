@@ -342,3 +342,32 @@ class GCPUtilsTestCase(unittest.TestCase):
         # params1 has exclude fields, params2 doesn't. Should be equal
         actual = GCPUtils.are_params_equal(params1, params2)
         self.assertTrue(actual)
+
+    def test_filter_gcp_fields(self):
+        input_data = {
+            u'kind': u'compute#httpsHealthCheck',
+            u'description': u'',
+            u'timeoutSec': 5,
+            u'checkIntervalSec': 5,
+            u'port': 443,
+            u'healthyThreshold': 2,
+            u'host': u'',
+            u'requestPath': u'/',
+            u'unhealthyThreshold': 2,
+            u'creationTimestamp': u'2017-05-16T15:09:36.546-07:00',
+            u'id': u'8727093129334146639',
+            u'selfLink': u'https://www.googleapis.com/compute/v1/projects/myproject/global/httpsHealthChecks/myhealthcheck',
+            u'name': u'myhealthcheck'}
+
+        expected = {
+            'name': 'myhealthcheck',
+            'checkIntervalSec': 5,
+            'port': 443,
+            'unhealthyThreshold': 2,
+            'healthyThreshold': 2,
+            'host': '',
+            'timeoutSec': 5,
+            'requestPath': '/'}
+
+        actual = GCPUtils.filter_gcp_fields(input_data)
+        self.assertEquals(expected, actual)

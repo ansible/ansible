@@ -1,0 +1,142 @@
+- name: Get resource group
+  azure_rm_resourcegroup_facts:
+    name: "{{ resource_group }}"
+
+- name: Create resource group
+  azure_rm_resourcegroup:
+    name: "{{ resource_prefix }}"
+    location: "{{ azure_resourcegroups[0].location }}"
+    tags:
+      testing: testing
+      delete: never
+  register: output
+
+- assert:
+      that:
+          - output.state.tags.testing == 'testing'
+          - output.state.tags.delete == 'never'
+          - output.state.location == '{{ location }}'
+
+- name: Should be idempotent
+  azure_rm_resourcegroup:
+    name: "{{ resource_prefix }}"
+    tags:
+      testing: testing
+      delete: never
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Change resource group tags
+  azure_rm_resourcegroup:
+    name: "{{ resource_prefix }}"
+    tags:
+      testing: 'no'
+      delete: 'on-exit'
+      foo: 'bar'
+  register: output
+
+- assert:
+   that:
+     - output.state.tags | length == 3
+     - output.state.tags.testing == 'no'
+     - output.state.tags.delete == 'on-exit'
+     - output.state.tags.foo == 'bar'
+
+- name: Gather facts by tags
+  azure_rm_resourcegroup_facts:
+    tags:
+      - testing
+      - foo:bar
+  register: output
+
+- assert:
+      that: azure_resourcegroups | length == 1
+
+- name: Purge one tag
+  azure_rm_resourcegroup:
+    name: "{{ resource_prefix }}"
+    tags:
+      testing: 'no'
+      delete: 'on-exit'
+    debug: yes
+  register: output
+
+- assert:
+    that:
+      - output.state.tags | length == 2
+      - output.state.tags.testing == 'no'
+      - output.state.tags.delete == 'on-exit'
+
+- name: Purge no tags
+  azure_rm_resourcegroup:
+    name: "{{ resource_prefix }}"
+  register: output
+
+- assert:
+    that:
+      - output.state.tags | length == 2
+
+- name: Purge all tags
+  azure_rm_resourcegroup:
+    name: "{{ resource_prefix }}"
+    tags: {}
+  register: output
+
+- assert:
+    that:
+      - output.state.tags | length == 0
+
+- name: Add a resource
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_prefix }}"
+    name: "virtualnet01"
+    address_prefixes_cidr: '10.1.0.0/16'
+  register: output
+
+- name: Remove resource group should fail
+  azure_rm_resourcegroup:
+    name: "{{ resource_prefix }}"
+    state: absent
+  register: output
+  ignore_errors: yes
+
+- assert:
+    that:
+      - output.failed
+      - "'Resources exist' in output.msg"
+
+- name: Create a second resource group
+  azure_rm_resourcegroup:
+      name: Testing2
+      location: "{{ location }}"
+  register: output
+
+- name: Gather facts for a resource group
+  azure_rm_resourcegroup_facts:
+      name: "{{ resource_group }}"
+  register: output
+
+- assert:
+      that: azure_resourcegroups | length == 1
+
+- name: Gather facts for all resource groups
+  azure_rm_resourcegroup_facts:
+  register: output
+
+- assert:
+      that: azure_resourcegroups | length > 1
+
+- name: Force remove resource group
+  azure_rm_resourcegroup:
+    name: "{{ resource_group }}"
+    state: absent
+    force: yes
+  register: output
+
+- name: Remove second resource group
+  azure_rm_resourcegroup:
+    name: Testing2
+    state: absent
+  register: output

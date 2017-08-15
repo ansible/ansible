@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Ansible, a Red Hat company
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -31,6 +21,7 @@ description:
     - Meta tasks are a special kind of task which can influence Ansible internal execution or state. Prior to Ansible 2.0,
       the only meta option available was `flush_handlers`. As of 2.2, there are five meta tasks which can be used.
       Meta tasks can be used anywhere within your playbook.
+    - This module is also supported for Windows targets.
 options:
   free_form:
     description:
@@ -48,9 +39,9 @@ options:
         - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
     choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
     required: true
-    default: null
 notes:
-    - meta is not really a module nor action_plugin as such it cannot be overwritten.
+    - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
 '''

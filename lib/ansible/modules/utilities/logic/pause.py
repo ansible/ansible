@@ -1,19 +1,9 @@
-# -*- mode: python -*-
+# -*- coding: utf-8 -*-
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -33,6 +23,7 @@ description:
   - >
     The pause module integrates into async/parallelized playbooks without any special considerations (see also: Rolling Updates). When using pauses with
     the C(serial) playbook parameter (as in rolling updates) you are only prompted once for the current group of hosts.
+  - This module is also supported for Windows targets.
 version_added: "0.8"
 options:
   minutes:
@@ -53,6 +44,7 @@ options:
 author: "Tim Bielawa (@tbielawa)"
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
+      - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = '''

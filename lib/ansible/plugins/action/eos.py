@@ -19,16 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import sys
 import copy
 
+from ansible import constants as C
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.eos import ARGS_DEFAULT_VALUE, eos_argument_spec
 from ansible.module_utils.six import iteritems
-from ansible.plugins import connection_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -61,32 +59,27 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = provider['timeout'] or self._play_context.timeout
+            pc.timeout = provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
             pc.become = provider['authorize'] or False
             pc.become_pass = provider['auth_pass']
 
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-            socket_path = self._get_socket_path(pc)
+            socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+            if not socket_path:
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
-            if not os.path.exists(socket_path):
-                # start the connection if it isn't started
-                rc, out, err = connection.exec_command('open_shell()')
-                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
-                if not rc == 0:
-                    return {'failed': True,
-                            'msg': 'unable to open shell. Please see: ' +
-                                   'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
-            else:
-                # make sure we are in the right cli context which should be
-                # enable mode and not config module
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            rc, out, err = connection.exec_command('prompt()')
+            while str(out).strip().endswith(')#'):
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                connection.exec_command('exit')
                 rc, out, err = connection.exec_command('prompt()')
-                while str(out).strip().endswith(')#'):
-                    display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                    connection.exec_command('exit')
-                    rc, out, err = connection.exec_command('prompt()')
 
             task_vars['ansible_socket'] = socket_path
 
@@ -122,12 +115,6 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def _get_socket_path(self, play_context):
-        ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
-        path = unfrackpath("$HOME/.ansible/pc")
-        return cp % dict(directory=path)
 
     def load_provider(self):
         provider = self._task.args.get('provider', {})

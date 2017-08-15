@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Steve <yo@groks.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -34,7 +24,7 @@ options:
   name:
     description:
       - Name of the encrypted block device as it appears in the C(/etc/crypttab) file, or
-        optionaly prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
+        optionally prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
         will be stripped from I(name).
     required: true
     default: null
@@ -95,8 +85,11 @@ EXAMPLES = '''
   when: "'/dev/mapper/luks-' in {{ item.device }}"
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+import os
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 def main():
 
@@ -142,10 +135,9 @@ def main():
     try:
         crypttab = Crypttab(path)
         existing_line = crypttab.match(name)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="failed to open and parse crypttab file: %s" % e,
-                         **module.params)
+    except Exception as e:
+        module.fail_json(msg="failed to open and parse crypttab file: %s" % to_native(e),
+                         exception=traceback.format_exc(), **module.params)
 
     if 'present' in state and existing_line is None and backing_device is None:
         module.fail_json(msg="'backing_device' required to add a new entry",
@@ -374,6 +366,7 @@ class Options(dict):
             else:
                 ret.append('%s=%s' % (k, v))
         return ','.join(ret)
+
 
 if __name__ == '__main__':
     main()

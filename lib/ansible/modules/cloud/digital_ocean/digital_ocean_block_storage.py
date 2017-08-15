@@ -1,20 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -118,9 +110,9 @@ id:
 import json
 import os
 import time
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
 
 
@@ -338,12 +330,11 @@ def main():
     )
     try:
         handle_request(module)
-    except DOBlockStorageException:
-        e = get_exception()
-        module.fail_json(msg=e.message)
-    except KeyError:
-        e = get_exception()
-        module.fail_json(msg='Unable to load %s' % e.message)
+    except DOBlockStorageException as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc())
+    except KeyError as e:
+        module.fail_json(msg='Unable to load %s' % e.message, exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

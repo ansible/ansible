@@ -95,7 +95,7 @@
 - name: check fetch directory result
   assert:
     that:
-      - "failed_fetch_dir['failed']"
+      - "failed_fetch_dir|failed"
       - "fetch_dir.msg"
 
 - name: create symlink to a file that we can fetch
@@ -122,3 +122,17 @@
   assert:
     that:
       'diff.stdout == ""'
+
+- name: dest is an existing directory name without trailing slash and flat=yes, should fail
+  fetch:
+    src: "{{ output_dir }}/orig"
+    dest: "{{ output_dir }}"
+    flat: yes
+  register: failed_fetch_dest_dir
+  ignore_errors: true
+
+- name: check that it indeed failed
+  assert:
+    that:
+      - "failed_fetch_dest_dir|failed"
+      - "failed_fetch_dest_dir.msg"

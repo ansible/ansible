@@ -1,0 +1,169 @@
+---
+- name: Remove users prior to tests
+  iosxr_config:
+    lines:
+      - no username ansibletest1
+      - no username ansibletest2
+      - no username ansibletest3
+    provider: "{{ cli }}"
+
+- name: Create user (SetUp)
+  iosxr_user:
+    name: ansibletest1
+    password: test
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[1]'
+
+- name: Create user with update_password always (not idempotent)
+  iosxr_user:
+    name: ansibletest1
+    password: test
+    update_password: always
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[0]'
+
+- name: Create user again with update_password on_create (idempotent)
+  iosxr_user:
+    name: ansibletest1
+    password: test
+    update_password: on_create
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Modify user group
+  iosxr_user:
+    name: ansibletest1
+    password: test
+    update_password: on_create
+    group: sysadmin
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"group" in result.commands[0]'
+
+- name: Modify user group again (idempotent)
+  iosxr_user:
+    name: ansibletest1
+    password: test
+    update_password: on_create
+    group: sysadmin
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Collection of users (SetUp)
+  iosxr_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    password: test
+    state: present
+    group: sysadmin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[1]'
+      - '"group sysadmin" in result.commands[2]'
+      - '"username" in result.commands[3]'
+      - '"secret" in result.commands[4]'
+      - '"group sysadmin" in result.commands[5]'
+
+- name: Add collection of users again with update_password always (not idempotent)
+  iosxr_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    password: test
+    state: present
+    group: sysadmin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[0]'
+      - '"username" in result.commands[1]'
+      - '"secret" in result.commands[1]'
+
+- name: Add collection of users again with update_password on_create (idempotent)
+  iosxr_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    password: test
+    update_password: on_create
+    state: present
+    group: sysadmin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Delete collection of users
+  iosxr_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no username ansibletest1", "no username ansibletest2", "no username ansibletest3"]'
+
+- name: Delete collection of users again (idempotent)
+  iosxr_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'

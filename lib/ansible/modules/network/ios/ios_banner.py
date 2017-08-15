@@ -39,7 +39,7 @@ options:
         configured on the remote device.
     required: true
     default: null
-    choices: ['login', 'banner']
+    choices: ['login', 'motd']
   text:
     description:
       - The banner text that should be

@@ -19,7 +19,7 @@
 
 class ModuleDocFragment(object):
 
-    # Ansible Tower documention fragment
+    # Ansible Tower documentation fragment
     DOCUMENTATION = '''
 options:
     tower_host:

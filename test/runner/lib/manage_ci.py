@@ -78,7 +78,7 @@ class ManageNetworkCI(object):
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
         ]
 
-        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))
+        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
 
         env = ansible_environment(self.core_ci.args)
         cmd = [
@@ -110,12 +110,25 @@ class ManagePosixCI(object):
         :type core_ci: AnsibleCoreCI
         """
         self.core_ci = core_ci
-        self.ssh_args = ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no', '-i', self.core_ci.ssh_key.key]
+        self.ssh_args = ['-i', self.core_ci.ssh_key.key]
+
+        ssh_options = dict(
+            BatchMode='yes',
+            StrictHostKeyChecking='no',
+            UserKnownHostsFile='/dev/null',
+            ServerAliveInterval=15,
+            ServerAliveCountMax=4,
+        )
+
+        for ssh_option in sorted(ssh_options):
+            self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
         if self.core_ci.platform == 'freebsd':
             self.become = ['su', '-l', 'root', '-c']
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
+        elif self.core_ci.platform == 'rhel':
+            self.become = ['sudo', '-in', 'bash', '-c']
 
     def setup(self):
         """Start instance and wait for it to become ready and respond to an ansible ping."""

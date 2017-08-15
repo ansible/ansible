@@ -360,9 +360,9 @@ PARAM_TO_DEFAULT_KEYMAP = {
     'suppress_fib_pending': True,
     'fast_external_fallover': True,
     'enforce_first_as': True,
-    'event_history_periodic': True,
     'event_history_cli': True,
-    'event_history_events': True
+    'event_history_events': True,
+    'event_history_periodic': True,
 }
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -412,14 +412,16 @@ def get_value(arg, config):
 
     if command.split()[0] == 'event-history':
         command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+        has_size = re.search(r'^\s+{0} size\s(?P<value>.*)$'.format(command), config, re.M)
 
-        size_re = re.compile(r'(?:{0} size\s)(?P<value>.*)'.format(command), re.M)
-        value = False
+        if command == 'event-history detail':
+            value = False
+        else:
+            value = 'size_small'
 
         if command_re.search(config):
-            search = size_re.search(config)
-            if search:
-                value = search.group('value')
+            if has_size:
+                value = 'size_%s' % has_size.group('value')
             else:
                 value = True
 
@@ -431,10 +433,10 @@ def get_value(arg, config):
             value = False
 
     elif arg in BOOL_PARAMS:
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+        has_command = re.search(r'^\s+{0}\s*$'.format(command), config, re.M)
         value = False
 
-        if command_re.search(config):
+        if has_command:
             value = True
     else:
         command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)'.format(command), re.M)
@@ -460,7 +462,7 @@ def get_value(arg, config):
 
 def get_existing(module, args, warnings):
     existing = {}
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
     asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
     asn_match = asn_re.match(str(netcfg))

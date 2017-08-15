@@ -135,16 +135,16 @@ import re
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
 
-    return body
+    commands = [{
+        'command': command,
+        'output': output,
+    }]
+    return run_commands(module, commands)
 
 
 def flatten_list(command_lists):
@@ -170,7 +170,7 @@ def get_ntp_source(module):
             else:
                 source_type = 'source'
             source = output[0].split()[2].lower()
-        except AttributeError:
+        except (AttributeError, IndexError):
             source_type = None
             source = None
 
@@ -326,7 +326,6 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-
 
     server = module.params['server'] or None
     peer = module.params['peer'] or None

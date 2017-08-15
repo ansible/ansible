@@ -7,10 +7,171 @@
     limit_to: "*"
     debug: false
 
-  roles:
-    - { role: junos_command, when: "limit_to in ['*', 'junos_command']" }
-    - { role: junos_config, when: "limit_to in ['*', 'junos_config']" }
-    - { role: junos_facts, when: "limit_to in ['*', 'junos_facts']" }
-    - { role: junos_netconf, when: "limit_to in ['*', 'junos_netconf']" }
-    - { role: junos_rpc, when: "limit_to in ['*', 'junos_rpc']" }
-    - { role: junos_template, when: "limit_to in ['*', 'junos_template']" }
+
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
+
+
+  tasks:
+    - set_fact:
+        test_failed: false
+        failed_modules: []
+    - block:
+      - include_role:
+          name: junos_command
+        when: "limit_to in ['*', 'junos_command']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_command' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_config
+        when: "limit_to in ['*', 'junos_config']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_config' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_facts
+        when: "limit_to in ['*', 'junos_facts']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_facts' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_netconf
+        when: "limit_to in ['*', 'junos_netconf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_netconf' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_rpc
+        when: "limit_to in ['*', 'junos_rpc']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_rpc' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_vlan
+        when: "limit_to in ['*', 'junos_vlan']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_vlan' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_interface
+        when: "limit_to in ['*', 'junos_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_interface' ]"
+            test_failed: true
+    - block:
+      - include_role:
+          name: junos_banner
+        when: "limit_to in ['*', 'junos_banner']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_banner' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_system
+        when: "limit_to in ['*', 'junos_system']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_system' ]"
+            test_failed: true
+    - block:
+      - include_role:
+          name: junos_logging
+        when: "limit_to in ['*', 'junos_logging']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_logging' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_user
+        when: "limit_to in ['*', 'junos_user']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_user' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_static_route
+        when: "limit_to in ['*', 'junos_static_route']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_static_route' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_linkagg
+        when: "limit_to in ['*', 'junos_linkagg']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_linkagg' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_l3_interface
+        when: "limit_to in ['*', 'junos_l3_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_l3_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_lldp
+        when: "limit_to in ['*', 'junos_lldp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_lldp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_lldp_interface
+        when: "limit_to in ['*', 'junos_lldp_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_lldp_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: junos_vrf
+        when: "limit_to in ['*', 'junos_vrf']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'junos_vrf' ]"
+            test_failed: true
+
+###########
+    - debug: var=failed_modules
+      when: test_failed
+
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed

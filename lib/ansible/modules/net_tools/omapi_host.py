@@ -1,26 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to configure DHCPd hosts using OMAPI protocol
-(c) 2016, Loic Blot <loic.blot@unix-experience.fr>
-Sponsored by Infopro Digital. http://www.infopro-digital.com/
-Sponsored by E.T.A.I. http://www.etai.fr/
+# (c) 2016, Loic Blot <loic.blot@unix-experience.fr>
+# Sponsored by Infopro Digital. http://www.infopro-digital.com/
+# Sponsored by E.T.A.I. http://www.etai.fr/
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -115,7 +104,7 @@ changed:
     returned: success
     type: string
 lease:
-    description: dictionnary containing host informations
+    description: dictionary containing host information
     returned: success
     type: complex
     contains:
@@ -141,12 +130,10 @@ lease:
             sample: 'mydesktop'
 '''
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule, get_exception, to_bytes
-from ansible.module_utils.six import iteritems
+import binascii
 import socket
 import struct
-import binascii
+import traceback
 
 try:
     from pypureomapi import Omapi, OmapiMessage, OmapiError, OmapiErrorNotFound
@@ -155,6 +142,9 @@ try:
     pureomapi_found = True
 except ImportError:
     pureomapi_found = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_native
 
 
 class OmapiHostManager:
@@ -169,13 +159,11 @@ class OmapiHostManager:
                                self.module.params['key'])
         except binascii.Error:
             self.module.fail_json(msg="Unable to open OMAPI connection. 'key' is not a valid base64 key.")
-        except OmapiError:
-            e = get_exception()
+        except OmapiError as e:
             self.module.fail_json(msg="Unable to open OMAPI connection. Ensure 'host', 'port', 'key' and 'key_name' "
-                                      "are valid. Exception was: %s" % e)
-        except socket.error:
-            e = get_exception()
-            self.module.fail_json(msg="Unable to connect to OMAPI server: %s" % e)
+                                      "are valid. Exception was: %s" % to_native(e))
+        except socket.error as e:
+            self.module.fail_json(msg="Unable to connect to OMAPI server: %s" % to_native(e))
 
     def get_host(self, macaddr):
         msg = OmapiMessage.open(to_bytes("host", errors='surrogate_or_strict'))
@@ -225,9 +213,9 @@ class OmapiHostManager:
                 if len(self.module.params['statements']) > 0:
                     stmt_join += "; ".join(self.module.params['statements'])
                     stmt_join += "; "
-            except TypeError:
-                e = get_exception()
-                self.module.fail_json(msg="Invalid statements found: %s" % e)
+            except TypeError as e:
+                self.module.fail_json(msg="Invalid statements found: %s" % to_native(e),
+                                      exception=traceback.format_exc())
 
             if len(stmt_join) > 0:
                 msg.obj.append(('statements', stmt_join))
@@ -238,9 +226,8 @@ class OmapiHostManager:
                     self.module.fail_json(msg="Failed to add host, ensure authentication and host parameters "
                                               "are valid.")
                 self.module.exit_json(changed=True, lease=self.unpack_facts(response.obj))
-            except OmapiError:
-                e = get_exception()
-                self.module.fail_json(msg="OMAPI error: %s" % e)
+            except OmapiError as e:
+                self.module.fail_json(msg="OMAPI error: %s" % to_native(e), exception=traceback.format_exc())
         # Forge update message
         else:
             response_obj = self.unpack_facts(host_response.obj)
@@ -276,9 +263,8 @@ class OmapiHostManager:
                     self.module.fail_json(msg="Failed to modify host, ensure authentication and host parameters "
                                               "are valid.")
                 self.module.exit_json(changed=True)
-            except OmapiError:
-                e = get_exception()
-                self.module.fail_json(msg="OMAPI error: %s" % e)
+            except OmapiError as e:
+                self.module.fail_json(msg="OMAPI error: %s" % to_native(e), exception=traceback.format_exc())
 
     def remove_host(self):
         try:
@@ -286,9 +272,8 @@ class OmapiHostManager:
             self.module.exit_json(changed=True)
         except OmapiErrorNotFound:
             self.module.exit_json()
-        except OmapiError:
-            e = get_exception()
-            self.module.fail_json(msg="OMAPI error: %s" % e)
+        except OmapiError as e:
+            self.module.fail_json(msg="OMAPI error: %s" % to_native(e), exception=traceback.format_exc())
 
 
 def main():
@@ -323,9 +308,9 @@ def main():
             host_manager.setup_host()
         elif module.params['state'] == 'absent':
             host_manager.remove_host()
-    except ValueError:
-        e = get_exception()
-        module.fail_json(msg="OMAPI input value error: %s" % e)
+    except ValueError as e:
+        module.fail_json(msg="OMAPI input value error: %s" % to_native(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

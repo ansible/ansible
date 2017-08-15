@@ -2,19 +2,11 @@
 # coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -52,11 +44,6 @@ options:
     password:
       description:
         - Password of the user.
-      required: False
-      default: null
-    organization:
-      description:
-        - Organization the user should be made a member of.
       required: False
       default: null
     superuser:
@@ -149,7 +136,6 @@ def main():
             last_name=dict(),
             password=dict(no_log=True),
             email=dict(required=True),
-            organization=dict(),
             superuser=dict(type='bool', default=False),
             auditor=dict(type='bool', default=False),
             tower_host=dict(),
@@ -170,7 +156,6 @@ def main():
     last_name = module.params.get('last_name')
     password = module.params.get('password')
     email = module.params.get('email')
-    organization = module.params.get('organization')
     superuser = module.params.get('superuser')
     auditor = module.params.get('auditor')
     state = module.params.get('state')
@@ -184,8 +169,8 @@ def main():
         try:
             if state == 'present':
                 result = user.modify(username=username, first_name=first_name, last_name=last_name,
-                                     email=email, password=password, organization=organization,
-                                     is_superuser=superuser, is_auditor=auditor, create_on_missing=True)
+                                     email=email, password=password, is_superuser=superuser,
+                                     is_auditor=auditor, create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = user.delete(username=username)

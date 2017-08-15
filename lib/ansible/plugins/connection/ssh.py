@@ -111,15 +111,13 @@ from functools import wraps
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils.basic import BOOLEANS
 from ansible.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.path import unfrackpath, makedirs_safe
-
-boolean = C.mk_boolean
 
 try:
     from __main__ import display
@@ -134,6 +132,7 @@ SSHPASS_AVAILABLE = None
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
     ''' ControlPersist broken pipe '''
     pass
+
 
 def _ssh_retry(func):
     """
@@ -365,12 +364,14 @@ class Connection(ConnectionBase):
 
         user = self._play_context.remote_user
         if user:
-            self._add_args(b_command,
-                    (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
+            self._add_args(
+                b_command,
+                (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
-        self._add_args(b_command,
+        self._add_args(
+            b_command,
             (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
             u"ANSIBLE_TIMEOUT/timeout set"
         )
@@ -459,7 +460,7 @@ class Connection(ConnectionBase):
             display_line = to_text(b_line).rstrip('\r\n')
             suppress_output = False
 
-            #display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
+            # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
             if self._play_context.prompt and self.check_password_prompt(b_line):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
@@ -490,8 +491,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    @_ssh_retry
-    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
+    def _bare_run(self, cmd, in_data, sudoable=True, checkrc=True):
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -594,7 +594,7 @@ class Connection(ConnectionBase):
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-        ### TODO: bcoca would like to use SelectSelector() when open
+        # TODO: bcoca would like to use SelectSelector() when open
         # filehandles is low, then switch to more efficient ones when higher.
         # select is faster when filehandles is low.
         selector = selectors.DefaultSelector()
@@ -609,6 +609,7 @@ class Connection(ConnectionBase):
 
         try:
             while True:
+                poll = p.poll()
                 events = selector.select(timeout)
 
                 # We pay attention to timeouts only while negotiating a prompt.
@@ -618,7 +619,7 @@ class Connection(ConnectionBase):
                     if state <= states.index('awaiting_escalation'):
                         # If the process has already exited, then it's not really a
                         # timeout; we'll let the normal error handling deal with it.
-                        if p.poll() is not None:
+                        if poll is not None:
                             break
                         self._terminate_process(p)
                         raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
@@ -720,7 +721,7 @@ class Connection(ConnectionBase):
                 # Now we're awaiting_exit: has the child process exited? If it has,
                 # and we've read all available output from it, we're done.
 
-                if p.poll() is not None:
+                if poll is not None:
                     if not selector.get_map() or not events:
                         break
                     # We should not see further writes to the stdout/stderr file
@@ -765,6 +766,13 @@ class Connection(ConnectionBase):
 
         return (p.returncode, b_stdout, b_stderr)
 
+    @_ssh_retry
+    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
+        """Wrapper around _bare_run that retries the connection
+        """
+        return self._bare_run(cmd, in_data, sudoable, checkrc)
+
+    @_ssh_retry
     def _file_transport_command(self, in_path, out_path, sftp_action):
         # scp and sftp require square brackets for IPv6 addresses, but
         # accept them for hostnames and IPv4 addresses too.
@@ -788,7 +796,7 @@ class Connection(ConnectionBase):
             if not isinstance(scp_if_ssh, bool):
                 scp_if_ssh = scp_if_ssh.lower()
                 if scp_if_ssh in BOOLEANS:
-                    scp_if_ssh = boolean(scp_if_ssh)
+                    scp_if_ssh = boolean(scp_if_ssh, strict=False)
                 elif scp_if_ssh != 'smart':
                     raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
             if scp_if_ssh == 'smart':
@@ -805,14 +813,14 @@ class Connection(ConnectionBase):
                 cmd = self._build_command('sftp', to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
-                (returncode, stdout, stderr) = self._run(cmd, in_data, checkrc=False)
+                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
                 if sftp_action == 'get':
                     cmd = self._build_command('scp', u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
                 else:
                     cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
-                (returncode, stdout, stderr) = self._run(cmd, in_data, checkrc=False)
+                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
                 if sftp_action == 'get':
                     # we pass sudoable=False to disable pty allocation, which
@@ -839,8 +847,8 @@ class Connection(ConnectionBase):
         if returncode == 255:
             raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
         else:
-            raise AnsibleError("failed to transfer file to {0} {1}:\n{2}\n{3}"\
-                    .format(to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
+            raise AnsibleError("failed to transfer file to %s %s:\n%s\n%s" %
+                               (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
     #
     # Main public methods
@@ -851,7 +859,6 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
-
 
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the
@@ -891,12 +898,15 @@ class Connection(ConnectionBase):
 
     def reset(self):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = map(to_bytes, self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host))
+        cmd = self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host)
         controlpersist, controlpath = self._persistence_controls(cmd)
         if controlpersist:
+            display.vvv(u'sending stop: %s' % cmd)
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
-            display.vvv(u'sending stop: %s' % cmd)
+            status_code = p.wait()
+            if status_code != 0:
+                raise AnsibleError("Cannot reset connection:\n%s" % stderr)
 
         self.close()
 

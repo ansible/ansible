@@ -1,23 +1,11 @@
 #!/usr/bin/python
-
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# TODO:
-# Ability to set CPU/Memory reservations
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -308,23 +296,28 @@ EXAMPLES = '''
     force: yes
 '''
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import os
+import re
+import ssl
+import traceback
 
 HAS_PYSPHERE = False
 try:
     from pysphere import VIServer, VIProperty, MORTypes
     from pysphere.resources import VimService_services as VI
     from pysphere.vi_task import VITask
-    from pysphere import VIException, VIApiException, FaultTypes
+    from pysphere import VIApiException
     HAS_PYSPHERE = True
 except ImportError:
     pass
 
-import ssl
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
+
+# TODO:
+# Ability to set CPU/Memory reservations
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
     # add a scsi controller
@@ -790,6 +783,7 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
 
     for cnf_disk in vm_disk:
         disk_id = re.sub("disk", "", cnf_disk)
+        disk_type = vm_disk[cnf_disk]['type']
         found = False
         for dev_key in vm._devices:
             if vm._devices[dev_key]['type'] == 'VirtualDisk':
@@ -798,7 +792,7 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
                     found = True
                     continue
         if not found:
-            it = VI.ReconfigVM_TaskRequestMsg()
+            VI.ReconfigVM_TaskRequestMsg()
             _this = request.new__this(vm._mor)
             _this.set_attribute_type(vm._mor.get_attribute_type())
             request.set_element__this(_this)
@@ -821,7 +815,10 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
             backing.DiskMode = "persistent"
             backing.Split = False
             backing.WriteThrough = False
-            backing.ThinProvisioned = False
+            if disk_type == 'thin':
+                backing.ThinProvisioned = True
+            else:
+                backing.ThinProvisioned = False
             backing.EagerlyScrub = False
             hd.Backing = backing
 
@@ -863,6 +860,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
 
     changed, changes = update_disks(vsphere_client, vm,
                                     module, vm_disk, changes)
+    vm.properties._flush_cache()
     request = VI.ReconfigVM_TaskRequestMsg()
 
     # Change extra config
@@ -1036,11 +1034,10 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                 vm.power_off(sync_run=True)
                 vm.get_status()
 
-            except Exception:
-                e = get_exception()
-                module.fail_json(
-                    msg='Failed to shutdown vm %s: %s' % (guest, e)
-                )
+            except Exception as e:
+                module.fail_json(msg='Failed to shutdown vm %s: %s'
+                                 % (guest, to_native(e)),
+                                 exception=traceback.format_exc())
 
         if len(devices):
             spec.set_element_deviceChange(devices)
@@ -1060,10 +1057,10 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
         if vm.is_powered_off() and poweron:
             try:
                 vm.power_on(sync_run=True)
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 module.fail_json(
-                    msg='Failed to power on vm %s : %s' % (guest, e)
+                    msg='Failed to power on vm %s : %s' % (guest, to_native(e)),
+                    exception=traceback.format_exc()
                 )
 
     vsphere_client.disconnect()
@@ -1355,6 +1352,8 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     if vm_disk:
         disk_num = 0
         disk_key = 0
+        bus_num = 0
+        disk_ctrl = 1
         for disk in sorted(vm_disk):
             try:
                 datastore = vm_disk[disk]['datastore']
@@ -1377,6 +1376,16 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                 module.fail_json(
                     msg="Error on %s definition. type needs to be"
                     " specified." % disk)
+            if disk_num == 7:
+                disk_num = disk_num + 1
+                disk_key = disk_key + 1
+            elif disk_num > 15:
+                bus_num = bus_num + 1
+                disk_ctrl = disk_ctrl + 1
+                disk_ctrl_key = add_scsi_controller(
+                    module, vsphere_client, config, devices, type=vm_hardware['scsi'], bus_num=bus_num, disk_ctrl_key=disk_ctrl)
+                disk_num = 0
+                disk_key = 0
             # Add the disk  to the VM spec.
             add_disk(
                 module, vsphere_client, config_target, config,
@@ -1486,10 +1495,10 @@ def delete_vm(vsphere_client, module, guest, vm, force):
                     vm.power_off(sync_run=True)
                     vm.get_status()
 
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     module.fail_json(
-                        msg='Failed to shutdown vm %s: %s' % (guest, e))
+                        msg='Failed to shutdown vm %s: %s' % (guest, to_native(e)),
+                        exception=traceback.format_exc())
             else:
                 module.fail_json(
                     msg='You must use either shut the vm down first or '
@@ -1511,10 +1520,10 @@ def delete_vm(vsphere_client, module, guest, vm, force):
             module.fail_json(msg="Error removing vm: %s %s" %
                              task.get_error_message())
         module.exit_json(changed=True, changes="VM %s deleted" % guest)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(
-            msg='Failed to delete vm %s : %s' % (guest, e))
+            msg='Failed to delete vm %s : %s' % (guest, to_native(e)),
+            exception=traceback.format_exc())
 
 
 def power_state(vm, state, force):
@@ -1554,8 +1563,8 @@ def power_state(vm, state, force):
                         % power_status
             return True
 
-        except Exception:
-            return get_exception()
+        except Exception as e:
+            return e
 
     return False
 
@@ -1633,8 +1642,9 @@ class DefaultVMConfig(object):
                                 try:
                                     if v == int:
                                         self.check_dict[key][k] = int(self.check_dict[key][k])
-                                    elif v == basestring:
-                                        self.check_dict[key][k] = str(self.check_dict[key][k])
+                                    elif v == string_types:
+                                        self.check_dict[key][k] = to_native(self.check_dict[key][k],
+                                                                            errors='surrogate_or_strict')
                                     else:
                                         raise ValueError
                                 except ValueError:
@@ -1672,29 +1682,29 @@ def main():
     proto_vm_hardware = {
         'memory_mb': int,
         'num_cpus': int,
-        'scsi': basestring,
-        'osid': basestring
+        'scsi': string_types,
+        'osid': string_types
     }
 
     proto_vm_disk = {
         'disk1': {
-            'datastore': basestring,
+            'datastore': string_types,
             'size_gb': int,
-            'type': basestring
+            'type': string_types
         }
     }
 
     proto_vm_nic = {
         'nic1': {
-            'type': basestring,
-            'network': basestring,
-            'network_type': basestring
+            'type': string_types,
+            'network': string_types,
+            'network_type': string_types
         }
     }
 
     proto_esxi = {
-        'datacenter': basestring,
-        'hostname': basestring
+        'datacenter': string_types,
+        'hostname': string_types
     }
 
     module = AnsibleModule(
@@ -1792,17 +1802,17 @@ def main():
     except ssl.SSLError as sslerr:
         if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror:
             if not validate_certs:
-                default_context = ssl._create_default_https_context
+                ssl._create_default_https_context
                 ssl._create_default_https_context = ssl._create_unverified_context
                 viserver.connect(vcenter_hostname, username, password)
             else:
                 module.fail_json(msg='Unable to validate the certificate of the vcenter host %s' % vcenter_hostname)
         else:
             raise
-    except VIApiException:
-        err = get_exception()
+    except VIApiException as err:
         module.fail_json(msg="Cannot connect to %s: %s" %
-                         (vcenter_hostname, err))
+                         (vcenter_hostname, to_native(err)),
+                         exception=traceback.format_exc())
 
     # Check if the VM exists before continuing
     try:
@@ -1815,16 +1825,15 @@ def main():
         if vmware_guest_facts:
             try:
                 module.exit_json(ansible_facts=gather_facts(vm))
-            except Exception:
-                e = get_exception()
-                module.fail_json(
-                    msg="Fact gather failed with exception %s" % e)
+            except Exception as e:
+                module.fail_json(msg="Fact gather failed with exception %s"
+                                 % to_native(e), exception=traceback.format_exc())
         # Power Changes
         elif state in ['powered_on', 'powered_off', 'restarted']:
             state_result = power_state(vm, state, force)
 
             # Failure
-            if isinstance(state_result, basestring):
+            if isinstance(state_result, string_types):
                 module.fail_json(msg=state_result)
             else:
                 module.exit_json(changed=state_result)
@@ -1888,6 +1897,12 @@ def main():
         elif state == 'absent':
             module.exit_json(changed=False, msg="vm %s not present" % guest)
 
+        # check if user is trying to perform state operation on a vm which doesn't exists
+        elif state in ['present', 'powered_off', 'powered_on'] and not all((vm_extra_config,
+                                                       vm_hardware, vm_disk, vm_nic, esxi)):
+            module.exit_json(changed=False, msg="vm %s not present" % guest)
+
+
         # Create the VM
         elif state in ['present', 'powered_off', 'powered_on']:
 
@@ -1918,7 +1933,5 @@ def main():
         vcenter=vcenter_hostname)
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

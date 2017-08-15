@@ -1,20 +1,11 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -103,7 +94,7 @@ options:
     choices: ['line', 'block']
   multiline_delimiter:
     description:
-      - This arugment is used when pushing a multiline configuration
+      - This argument is used when pushing a multiline configuration
         element to the Ordnance router.  It specifies the character to use
         as the delimiting character.  This only applies to the
         configuration action
@@ -195,14 +186,14 @@ backup_path:
 """
 import re
 import time
+import traceback
 
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.ordnance import get_config
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.netcli import Command
+from ansible.module_utils.ordnance import get_config
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 
 def check_args(module, warnings):
@@ -369,10 +360,9 @@ def main():
 
     try:
         run(module, result)
-    except NetworkError:
-        exc = get_exception()
+    except NetworkError as e:
         module.disconnect()
-        module.fail_json(msg=str(exc))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.disconnect()
     module.exit_json(**result)

@@ -1,21 +1,11 @@
 #!/usr/bin/python
 
 # (c) 2016, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -331,9 +321,6 @@ EXAMPLES = '''
 '''
 
 import time
-import sys
-import traceback
-import json
 
 try:
     from ovirtsdk.api import API
@@ -341,6 +328,9 @@ try:
     HAS_SDK = True
 except ImportError:
     HAS_SDK = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 RHEV_FAILED = 1
 RHEV_SUCCESS = 0
@@ -933,13 +923,13 @@ class RHEVConn(object):
         VM = self.get_VM(vmname)
         try:
             if str(VM.status.state) == 'down':
-                cdrom = params.CdRom(file=cd_iso)
+                cdrom = params.CdRom(file=cd_drive)
                 VM.cdroms.add(cdrom)
                 setMsg("Attached the image.")
                 setChanged()
             else:
                 cdrom = VM.cdroms.get(id="00000000-0000-0000-0000-000000000000")
-                cdrom.set_file(cd_iso)
+                cdrom.set_file(cd_drive)
                 cdrom.update(current=True)
                 setMsg("Attached the image.")
                 setChanged()
@@ -971,7 +961,7 @@ class RHEVConn(object):
         HOST = self.get_Host_byid(VM.host.id)
         if str(HOST.name) != vmhost:
             try:
-                vm.migrate(
+                VM.migrate(
                     action=params.Action(
                         host=params.Host(
                             name=vmhost,
@@ -1024,13 +1014,13 @@ class RHEV(object):
             vminfo['cpu_cores']   = VM.cpu.topology.cores
             vminfo['cpu_sockets'] = VM.cpu.topology.sockets
             vminfo['cpu_shares']  = VM.cpu_shares
-            vminfo['memory']      = (int(VM.memory) / 1024 / 1024 / 1024)
-            vminfo['mem_pol']     = (int(VM.memory_policy.guaranteed) / 1024 / 1024 / 1024)
+            vminfo['memory']      = (int(VM.memory) // 1024 // 1024 // 1024)
+            vminfo['mem_pol']     = (int(VM.memory_policy.guaranteed) // 1024 // 1024 // 1024)
             vminfo['os']          = VM.get_os().type_
             vminfo['del_prot']    = VM.delete_protected
             try:
                 vminfo['host']    = str(self.conn.get_Host_byid(str(VM.host.id)).name)
-            except Exception as e:
+            except Exception:
                 vminfo['host']    = None
             vminfo['boot_order']  = []
             for boot_dev in VM.os.get_boot():
@@ -1039,7 +1029,7 @@ class RHEV(object):
             for DISK in VM.disks.list():
                 disk = dict()
                 disk['name'] = DISK.name
-                disk['size'] = (int(DISK.size) / 1024 / 1024 / 1024)
+                disk['size'] = (int(DISK.size) // 1024 // 1024 // 1024)
                 disk['domain'] = str((self.conn.get_domain_byid(DISK.get_storage_domains().get_storage_domain()[0].id)).name)
                 disk['interface'] = DISK.interface
                 vminfo['disks'].append(disk)
@@ -1522,9 +1512,6 @@ def main():
     else:
         module.exit_json(**result)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -21,6 +21,7 @@ from lib.util import (
 
 from lib.http import (
     HttpClient,
+    HttpError,
     urlparse,
 )
 
@@ -242,7 +243,10 @@ class CsCloudProvider(CloudProvider):
             response = client.get(endpoint)
 
             if response.status_code == 200:
-                return response.json()
+                try:
+                    return response.json()
+                except HttpError as ex:
+                    display.error(ex)
 
             time.sleep(30)
 

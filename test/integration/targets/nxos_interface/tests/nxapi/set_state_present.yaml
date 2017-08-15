@@ -6,12 +6,14 @@
     lines:
       - no interface Loopback1
     provider: "{{ nxapi }}"
+  ignore_errors: yes # Fails if the interface is already absent
 
 - name: set state=present
   nxos_interface:
     interface: Loopback1
     state: present
     provider: "{{ nxapi }}"
+  register: result
 
 - assert:
     that:
@@ -22,6 +24,7 @@
     interface: Loopback1
     state: present
     provider: "{{ nxapi }}"
+  register: result
 
 - assert:
     that:

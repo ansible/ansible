@@ -26,6 +26,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.iosxr import iosxr_config
 from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
 
+
 class TestIosxrConfigModule(TestIosxrModule):
 
     module = iosxr_config
@@ -73,19 +74,19 @@ class TestIosxrConfigModule(TestIosxrModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_config_before(self):
-        set_module_args(dict(lines=['hostname foo'], before=['test1','test2']))
+        set_module_args(dict(lines=['hostname foo'], before=['test1', 'test2']))
         commands = ['test1', 'test2', 'hostname foo']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_iosxr_config_after(self):
-        set_module_args(dict(lines=['hostname foo'], after=['test1','test2']))
+        set_module_args(dict(lines=['hostname foo'], after=['test1', 'test2']))
         commands = ['hostname foo', 'test1', 'test2']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_iosxr_config_before_after_no_change(self):
         set_module_args(dict(lines=['hostname router'],
                              before=['test1', 'test2'],
-                             after=['test3','test4']))
+                             after=['test3', 'test4']))
         self.execute_module()
 
     def test_iosxr_config_config(self):
@@ -104,6 +105,11 @@ class TestIosxrConfigModule(TestIosxrModule):
     def test_iosxr_config_force(self):
         lines = ['hostname router']
         set_module_args(dict(lines=lines, force=True))
+        self.execute_module(changed=True, commands=lines)
+
+    def test_iosxr_config_admin(self):
+        lines = ['username admin', 'group root-system', 'secret P@ssw0rd']
+        set_module_args(dict(lines=lines, admin=True))
         self.execute_module(changed=True, commands=lines)
 
     def test_iosxr_config_match_none(self):

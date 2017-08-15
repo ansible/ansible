@@ -1,17 +1,9 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -30,6 +22,7 @@ description:
      - "The given script will be processed through the shell environment on the remote node. "
      - "This module does not require python on the remote system, much like
        the M(raw) module. "
+     - This module is also supported for Windows targets.
 options:
   free_form:
     description:
@@ -49,10 +42,17 @@ options:
     required: no
     default: null
     version_added: "1.5"
+  chdir:
+    description:
+      - cd into this directory on the remote node before running the script
+    version_added: "2.4"
+    required: false
+    default: null
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all
     stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
+  - This module is also supported for Windows targets.
 author:
     - Ansible Core Team
     - Michael DeHaan

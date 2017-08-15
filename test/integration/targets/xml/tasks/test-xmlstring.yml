@@ -1,0 +1,31 @@
+---
+  - name: Read from xmlstring
+    xml:
+      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      pretty_print: True
+    register: xmlresponse
+ 
+  - name: Write result to file
+    copy:
+      dest: /tmp/ansible-xml-beers.xml
+      content: "{{ xmlresponse.xmlstring }}"
+
+  - name: Test expected result
+    command: diff -u {{ role_path }}/results/test-pretty-print-only.xml /tmp/ansible-xml-beers.xml
+
+  - name: Read from xmlstring
+    xml:
+      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      xpath: /business/beers
+      pretty_print: True
+      add_children:
+        - beer: "Old Rasputin"
+    register: xmlresponse_modification
+ 
+  - name: Write result to file
+    copy:
+      dest: /tmp/ansible-xml-beers.xml
+      content: "{{ xmlresponse_modification.xmlstring }}"
+
+  - name: Test expected result
+    command: diff -u {{ role_path }}/results/test-pretty-print.xml /tmp/ansible-xml-beers.xml

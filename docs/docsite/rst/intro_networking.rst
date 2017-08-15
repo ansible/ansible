@@ -169,9 +169,9 @@ Ansible allows you to use conditionals to control the flow of your playbooks. An
 * contains - Object contains specified item
 
 
-Conditional statements evalute the results from the commands that are
+Conditional statements evaluate the results from the commands that are
 executed remotely on the device.  Once the task executes the command
-set, the waitfor argument can be used to evalute the results before
+set, the waitfor argument can be used to evaluate the results before
 returning control to the Ansible playbook.
 
 For example::

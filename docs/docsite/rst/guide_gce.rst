@@ -95,7 +95,7 @@ credentials path as follows so that get automatically picked up:
 .. code-block:: python
 
     GCE_PARAMS = ('', '')
-    GCE_KEYWORD_PARAMS = {'project': 'project_id'}
+    GCE_KEYWORD_PARAMS = {'project': 'project_id', 'datacenter': ''}
 
 Configuring Modules with Environment Variables
 ``````````````````````````````````````````````

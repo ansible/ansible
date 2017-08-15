@@ -1,21 +1,11 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -449,38 +439,37 @@ actions:
                           type: string
 '''
 
-HAS_YAML = True
-HAS_YAML_EXC = None
-HAS_COMPOSE = True
-HAS_COMPOSE_EXC = None
-MINIMUM_COMPOSE_VERSION = '1.7.0'
-
-import sys
+import os
 import re
+import sys
+import tempfile
+from contextlib import contextmanager
+from distutils.version import LooseVersion
 
 try:
     import yaml
+    HAS_YAML = True
+    HAS_YAML_EXC = None
 except ImportError as exc:
     HAS_YAML = False
     HAS_YAML_EXC = str(exc)
 
-from distutils.version import LooseVersion
-from ansible.module_utils.basic import *
-
 try:
     from compose import __version__ as compose_version
-    from compose.project import ProjectError
     from compose.cli.command import project_from_options
-    from compose.service import ConvergenceStrategy, NoSuchImageError
+    from compose.service import NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
     from compose.const import DEFAULT_TIMEOUT
+    HAS_COMPOSE = True
+    HAS_COMPOSE_EXC = None
+    MINIMUM_COMPOSE_VERSION = '1.7.0'
+
 except ImportError as exc:
     HAS_COMPOSE = False
     HAS_COMPOSE_EXC = str(exc)
     DEFAULT_TIMEOUT = 10
 
-from ansible.module_utils.docker_common import *
-from contextlib import contextmanager
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 
 
 AUTH_PARAM_MAPPING = {
@@ -503,20 +492,78 @@ def stdout_redirector(path_name):
     finally:
         sys.stdout = old_stdout
 
-def get_stdout(path_name):
-    full_stdout = ''
-    last_line = ''
+
+@contextmanager
+def stderr_redirector(path_name):
+    old_fh = sys.stderr
+    fd = open(path_name, 'w')
+    sys.stderr = fd
+    try:
+        yield
+    finally:
+        sys.stderr = old_fh
+
+
+def make_redirection_tempfiles():
+    _, out_redir_name = tempfile.mkstemp(prefix="ansible")
+    _, err_redir_name = tempfile.mkstemp(prefix="ansible")
+    return (out_redir_name, err_redir_name)
+
+
+def cleanup_redirection_tempfiles(out_name, err_name):
+    get_redirected_output(out_name)
+    get_redirected_output(err_name)
+
+
+def get_redirected_output(path_name):
+    output = []
     with open(path_name, 'r') as fd:
         for line in fd:
             # strip terminal format/color chars
             new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
-            full_stdout += new_line
-            if new_line.strip():
-                # Assuming last line contains the error message
-                last_line = new_line.strip().encode('utf-8')
+            output.append(new_line)
     fd.close()
     os.remove(path_name)
-    return full_stdout, last_line
+    return output
+
+
+def attempt_extract_errors(exc_str, stdout, stderr):
+    errors = [l.strip() for l in stderr if l.strip().startswith('ERROR:')]
+    errors.extend([l.strip() for l in stdout if l.strip().startswith('ERROR:')])
+
+    warnings = [l.strip() for l in stderr if l.strip().startswith('WARNING:')]
+    warnings.extend([l.strip() for l in stdout if l.strip().startswith('WARNING:')])
+
+    # assume either the exception body (if present) or the last warning was the 'most'
+    # fatal.
+
+    if exc_str.strip():
+        msg = exc_str.strip()
+    elif errors:
+        msg = errors[-1].encode('utf-8')
+    else:
+        msg = 'unknown cause'
+
+    return {
+        'warnings': [w.encode('utf-8') for w in warnings],
+        'errors': [e.encode('utf-8') for e in errors],
+        'msg': msg,
+        'module_stderr': ''.join(stderr),
+        'module_stdout': ''.join(stdout)
+    }
+
+
+def get_failure_info(exc, out_name, err_name=None, msg_format='%s'):
+    if err_name is None:
+        stderr = []
+    else:
+        stderr = get_redirected_output(err_name)
+    stdout = get_redirected_output(out_name)
+
+    reason = attempt_extract_errors(str(exc), stdout, stderr)
+    reason['msg'] = msg_format % reason['msg']
+    return reason
+
 
 class ContainerManager(DockerBaseClass):
 
@@ -565,7 +612,8 @@ class ContainerManager(DockerBaseClass):
             self.options[u'--file'] = self.files
 
         if not HAS_COMPOSE:
-            self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" % HAS_COMPOSE_EXC)
+            self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" %
+                             HAS_COMPOSE_EXC)
 
         if LooseVersion(compose_version) < LooseVersion(MINIMUM_COMPOSE_VERSION):
             self.client.fail("Found docker-compose version %s. Minimum required version is %s. "
@@ -682,25 +730,26 @@ class ContainerManager(DockerBaseClass):
                     result['actions'].append(result_action)
 
         if not self.check_mode and result['changed']:
-            _, fd_name = tempfile.mkstemp(prefix="ansible")
+            out_redir_name, err_redir_name = make_redirection_tempfiles()
             try:
-                with stdout_redirector(fd_name):
-                    do_build = build_action_from_opts(up_options)
-                    self.log('Setting do_build to %s' % do_build)
-                    self.project.up(
-                        service_names=service_names,
-                        start_deps=start_deps,
-                        strategy=converge,
-                        do_build=do_build,
-                        detached=detached,
-                        remove_orphans=self.remove_orphans,
-                        timeout=self.timeout)
+                with stdout_redirector(out_redir_name):
+                    with stderr_redirector(err_redir_name):
+                        do_build = build_action_from_opts(up_options)
+                        self.log('Setting do_build to %s' % do_build)
+                        self.project.up(
+                            service_names=service_names,
+                            start_deps=start_deps,
+                            strategy=converge,
+                            do_build=do_build,
+                            detached=detached,
+                            remove_orphans=self.remove_orphans,
+                            timeout=self.timeout)
             except Exception as exc:
-                full_stdout, last_line= get_stdout(fd_name)
-                self.client.module.fail_json(msg="Error starting project %s" % str(exc), module_stderr=last_line,
-                                             module_stdout=full_stdout)
+                fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                               msg_format="Error starting project %s")
+                self.client.module.fail_json(**fail_reason)
             else:
-                get_stdout(fd_name)
+                cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
         if self.stopped:
             stop_output = self.cmd_stop(service_names)
@@ -903,16 +952,17 @@ class ContainerManager(DockerBaseClass):
                     ))
                 result['actions'].append(service_res)
         if not self.check_mode and result['changed']:
-            _, fd_name = tempfile.mkstemp(prefix="ansible")
+            out_redir_name, err_redir_name = make_redirection_tempfiles()
             try:
-                with stdout_redirector(fd_name):
-                    self.project.stop(service_names=service_names, timeout=self.timeout)
+                with stdout_redirector(out_redir_name):
+                    with stderr_redirector(err_redir_name):
+                        self.project.stop(service_names=service_names, timeout=self.timeout)
             except Exception as exc:
-                full_stdout, last_line = get_stdout(fd_name)
-                self.client.module.fail_json(msg="Error stopping project %s" % str(exc), module_stderr=last_line,
-                                             module_stdout=full_stdout)
+                fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                               msg_format="Error stopping project %s")
+                self.client.module.fail_json(**fail_reason)
             else:
-                get_stdout(fd_name)
+                cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result
 
     def cmd_restart(self, service_names):
@@ -937,16 +987,17 @@ class ContainerManager(DockerBaseClass):
                 result['actions'].append(service_res)
 
         if not self.check_mode and result['changed']:
-            _, fd_name = tempfile.mkstemp(prefix="ansible")
+            out_redir_name, err_redir_name = make_redirection_tempfiles()
             try:
-                with stdout_redirector(fd_name):
-                    self.project.restart(service_names=service_names, timeout=self.timeout)
+                with stdout_redirector(out_redir_name):
+                    with stderr_redirector(err_redir_name):
+                        self.project.restart(service_names=service_names, timeout=self.timeout)
             except Exception as exc:
-                full_stdout, last_line = get_stdout(fd_name)
-                self.client.module.fail_json(msg="Error restarting project %s" % str(exc), module_stderr=last_line,
-                                             module_stdout=full_stdout)
+                fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                               msg_format="Error restarting project %s")
+                self.client.module.fail_json(**fail_reason)
             else:
-                get_stdout(fd_name)
+                cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result
 
     def cmd_scale(self):
@@ -981,7 +1032,7 @@ def main():
         state=dict(type='str', choices=['absent', 'present'], default='present'),
         definition=dict(type='dict'),
         hostname_check=dict(type='bool', default=False),
-        recreate=dict(type='str', choices=['always','never','smart'], default='smart'),
+        recreate=dict(type='str', choices=['always', 'never', 'smart'], default='smart'),
         build=dict(type='bool', default=False),
         remove_images=dict(type='str', choices=['all', 'local']),
         remove_volumes=dict(type='bool', default=False),

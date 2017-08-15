@@ -46,11 +46,11 @@ Installing dependencies
 
 ``ansible-test`` has a number of dependencies , for ``units`` tests we suggest using ``tox``
 
-The dependencies can be installed using the ``--requirements`` argument. For example:
+The dependencies can be installed using the ``--requirements`` argument, which will install all the required dependencies needed for unit tests. For example:
 
 .. code:: shell
 
-   ansible-test units --tox --python 2.7 --requirements apt
+   ansible-test units --tox --python 2.7 --requirements apache2_module
 
 
 .. note:: tox version requirement

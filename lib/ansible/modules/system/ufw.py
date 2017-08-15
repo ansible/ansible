@@ -6,20 +6,11 @@
 # (c) 2013, Aleksey Ovcharenko <aleksey.ovcharenko@gmail.com>
 # (c) 2013, James Martin <jmartin@basho.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -126,6 +117,11 @@ options:
       - Apply the rule to routed/forwarded packets.
     required: false
     choices: ['yes', 'no']
+  comment:
+    description:
+      - Add a comment to the rule. Requires UFW version >=0.35.
+    required: false
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -194,12 +190,13 @@ EXAMPLES = '''
     - 172.16.0.0/12
     - 192.168.0.0/16
 
-# Deny access to udp port 514 from host 1.2.3.4:
+# Deny access to udp port 514 from host 1.2.3.4 and include a comment:
 - ufw:
     rule: deny
     proto: udp
     src: 1.2.3.4
     port: 514
+    comment: "Block syslog"
 
 # Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
 - ufw:
@@ -229,7 +226,10 @@ EXAMPLES = '''
     dest: 4.5.6.0/24
 '''
 
+import re
 from operator import itemgetter
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
@@ -250,7 +250,8 @@ def main():
             to_ip     = dict(default='any', aliases=['dest', 'to']),
             to_port   = dict(default=None,  aliases=['port']),
             proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
-            app       = dict(default=None,  aliases=['name'])
+            app       = dict(default=None,  aliases=['name']),
+            comment   = dict(default=None, type='str')
         ),
         supports_check_mode = True,
         mutually_exclusive = [['app', 'proto', 'logging']]
@@ -266,6 +267,33 @@ def main():
 
         if rc != 0:
             module.fail_json(msg=err or out)
+
+    def ufw_version():
+        """
+        Returns the major and minor version of ufw installed on the system.
+        """
+        rc, out, err = module.run_command("%s --version" % ufw_bin)
+        if rc != 0:
+            module.fail_json(
+                msg="Failed to get ufw version.", rc=rc, out=out, err=err
+            )
+
+        lines = [x for x in out.split('\n') if x.strip() != '']
+        if len(lines) == 0:
+            module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
+
+        matches = re.search(r'^ufw.+(\d+)\.(\d+)(?:\.(\d+))?.*$', lines[0])
+        if matches is None:
+            module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
+
+        # Convert version to numbers
+        major = int(matches.group(1))
+        minor = int(matches.group(2))
+        rev   = 0
+        if matches.group(3) is not None:
+            rev = int(matches.group(3))
+
+        return major, minor, rev
 
     params = module.params
 
@@ -284,7 +312,7 @@ def main():
 
     # Save the pre state and rules in order to recognize changes
     (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
-    (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user*.rules")
+    (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
 
     # Execute commands
     for (command, value) in commands.items():
@@ -306,7 +334,7 @@ def main():
             #
             # ufw [--dry-run] [delete] [insert NUM] [route] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
             #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
-            #     [proto protocol] [app application]
+            #     [proto protocol] [app application] [comment COMMENT]
             cmd.append([module.boolean(params['delete']), 'delete'])
             cmd.append([module.boolean(params['route']), 'route'])
             cmd.append([params['insert'], "insert %s" % params['insert']])
@@ -322,17 +350,20 @@ def main():
                 value = params[key]
                 cmd.append([value, template % (value)])
 
+            ufw_major, ufw_minor, _ = ufw_version()
+            # comment is supported only in ufw version after 0.35
+            if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
+                cmd.append([params['comment'], "comment '%s'" % params['comment']])
+
             execute(cmd)
 
     # Get the new state
     (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
-    (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user*.rules")
+    (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
     changed = (pre_state != post_state) or (pre_rules != post_rules)
 
     return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

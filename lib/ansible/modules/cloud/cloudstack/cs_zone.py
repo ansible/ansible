@@ -38,7 +38,7 @@ options:
     required: true
   id:
     description:
-      - uuid of the exising zone.
+      - uuid of the existing zone.
     default: null
     required: false
   state:
@@ -231,51 +231,55 @@ tags:
   sample: [ { "key": "foo", "value": "bar" } ]
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together,
+)
+
 
 class AnsibleCloudStackZone(AnsibleCloudStack):
 
     def __init__(self, module):
         super(AnsibleCloudStackZone, self).__init__(module)
         self.returns = {
-            'dns1':                     'dns1',
-            'dns2':                     'dns2',
-            'internaldns1':             'internal_dns1',
-            'internaldns2':             'internal_dns2',
-            'ipv6dns1':                 'dns1_ipv6',
-            'ipv6dns2':                 'dns2_ipv6',
-            'domain':                   'network_domain',
-            'networktype':              'network_type',
-            'securitygroupsenabled':    'securitygroups_enabled',
-            'localstorageenabled':      'local_storage_enabled',
-            'guestcidraddress':         'guest_cidr_address',
-            'dhcpprovider':             'dhcp_provider',
-            'allocationstate':          'allocation_state',
-            'zonetoken':                'zone_token',
+            'dns1': 'dns1',
+            'dns2': 'dns2',
+            'internaldns1': 'internal_dns1',
+            'internaldns2': 'internal_dns2',
+            'ipv6dns1': 'dns1_ipv6',
+            'ipv6dns2': 'dns2_ipv6',
+            'domain': 'network_domain',
+            'networktype': 'network_type',
+            'securitygroupsenabled': 'securitygroups_enabled',
+            'localstorageenabled': 'local_storage_enabled',
+            'guestcidraddress': 'guest_cidr_address',
+            'dhcpprovider': 'dhcp_provider',
+            'allocationstate': 'allocation_state',
+            'zonetoken': 'zone_token',
         }
         self.zone = None
 
-
     def _get_common_zone_args(self):
-        args = {}
-        args['name'] = self.module.params.get('name')
-        args['dns1'] = self.module.params.get('dns1')
-        args['dns2'] = self.module.params.get('dns2')
-        args['internaldns1'] = self.get_or_fallback('internal_dns1', 'dns1')
-        args['internaldns2'] = self.get_or_fallback('internal_dns2', 'dns2')
-        args['ipv6dns1'] = self.module.params.get('dns1_ipv6')
-        args['ipv6dns2'] = self.module.params.get('dns2_ipv6')
-        args['networktype'] = self.module.params.get('network_type')
-        args['domain'] = self.module.params.get('network_domain')
-        args['localstorageenabled'] = self.module.params.get('local_storage_enabled')
-        args['guestcidraddress'] = self.module.params.get('guest_cidr_address')
-        args['dhcpprovider'] = self.module.params.get('dhcp_provider')
+        args = {
+            'name': self.module.params.get('name'),
+            'dns1': self.module.params.get('dns1'),
+            'dns2': self.module.params.get('dns2'),
+            'internaldns1': self.get_or_fallback('internal_dns1', 'dns1'),
+            'internaldns2': self.get_or_fallback('internal_dns2', 'dns2'),
+            'ipv6dns1': self.module.params.get('dns1_ipv6'),
+            'ipv6dns2': self.module.params.get('dns2_ipv6'),
+            'networktype': self.module.params.get('network_type'),
+            'domain': self.module.params.get('network_domain'),
+            'localstorageenabled': self.module.params.get('local_storage_enabled'),
+            'guestcidraddress': self.module.params.get('guest_cidr_address'),
+            'dhcpprovider': self.module.params.get('dhcp_provider'),
+        }
         state = self.module.params.get('state')
-        if state in [ 'enabled', 'disabled']:
+        if state in ['enabled', 'disabled']:
             args['allocationstate'] = state.capitalize()
         return args
-
 
     def get_zone(self):
         if not self.zone:
@@ -284,17 +288,16 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
             uuid = self.module.params.get('id')
             if uuid:
                 args['id'] = uuid
-                zones = self.cs.listZones(**args)
+                zones = self.query_api('listZones', **args)
                 if zones:
                     self.zone = zones['zone'][0]
                     return self.zone
 
             args['name'] = self.module.params.get('name')
-            zones = self.cs.listZones(**args)
+            zones = self.query_api('listZones', **args)
             if zones:
                 self.zone = zones['zone'][0]
         return self.zone
-
 
     def present_zone(self):
         zone = self.get_zone()
@@ -303,7 +306,6 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
         else:
             zone = self._create_zone()
         return zone
-
 
     def _create_zone(self):
         required_params = [
@@ -319,12 +321,9 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
 
         zone = None
         if not self.module.check_mode:
-            res = self.cs.createZone(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createZone', **args)
             zone = res['zone']
         return zone
-
 
     def _update_zone(self):
         zone = self.get_zone()
@@ -336,47 +335,43 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.updateZone(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateZone', **args)
                 zone = res['zone']
         return zone
-
 
     def absent_zone(self):
         zone = self.get_zone()
         if zone:
             self.result['changed'] = True
 
-            args = {}
-            args['id'] = zone['id']
-
+            args = {
+                'id': zone['id']
+            }
             if not self.module.check_mode:
-                res = self.cs.deleteZone(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deleteZone', **args)
+
         return zone
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        id = dict(default=None),
-        name = dict(required=True),
-        dns1 = dict(default=None),
-        dns2 = dict(default=None),
-        internal_dns1 = dict(default=None),
-        internal_dns2 = dict(default=None),
-        dns1_ipv6 = dict(default=None),
-        dns2_ipv6 = dict(default=None),
-        network_type = dict(default='basic', choices=['Basic', 'basic', 'Advanced', 'advanced']),
-        network_domain = dict(default=None),
-        guest_cidr_address = dict(default=None),
-        dhcp_provider = dict(default=None),
-        local_storage_enabled = dict(default=None),
-        securitygroups_enabled = dict(default=None),
-        state = dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
-        domain = dict(default=None),
+        id=dict(),
+        name=dict(required=True),
+        dns1=dict(),
+        dns2=dict(),
+        internal_dns1=dict(),
+        internal_dns2=dict(),
+        dns1_ipv6=dict(),
+        dns2_ipv6=dict(),
+        network_type=dict(default='basic', choices=['Basic', 'basic', 'Advanced', 'advanced']),
+        network_domain=dict(),
+        guest_cidr_address=dict(),
+        dhcp_provider=dict(),
+        local_storage_enabled=dict(type='bool'),
+        securitygroups_enabled=dict(type='bool'),
+        state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
+        domain=dict(),
     ))
 
     module = AnsibleModule(
@@ -385,23 +380,18 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_zone = AnsibleCloudStackZone(module)
+    acs_zone = AnsibleCloudStackZone(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            zone = acs_zone.absent_zone()
-        else:
-            zone = acs_zone.present_zone()
+    state = module.params.get('state')
+    if state in ['absent']:
+        zone = acs_zone.absent_zone()
+    else:
+        zone = acs_zone.present_zone()
 
-        result = acs_zone.get_result(zone)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_zone.get_result(zone)
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

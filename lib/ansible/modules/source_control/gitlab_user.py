@@ -1,20 +1,10 @@
 #!/usr/bin/python
 # (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -109,6 +99,12 @@ options:
         required: false
         default: present
         choices: ["present", "absent"]
+    confirm:
+        description:
+            - Require confirmation.
+        required: false
+        default: true
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -145,8 +141,8 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class GitLabUser(object):
@@ -167,7 +163,7 @@ class GitLabUser(object):
             level = 50
         return self._gitlab.addgroupmember(group_id, user_id, level)
 
-    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level):
+    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm):
         group_id = ''
         arguments = {"name": user_name,
                      "username": user_username,
@@ -182,16 +178,14 @@ class GitLabUser(object):
         else:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            self.createUser(group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, arguments)
+            self.createUser(group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, confirm, arguments)
 
-    def createUser(self, group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, arguments):
+    def createUser(self, group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, confirm, arguments):
         user_changed = False
 
         # Create the user
         user_username = arguments['username']
-        user_name = arguments['name']
-        user_email = arguments['email']
-        if self._gitlab.createuser(password=user_password, **arguments):
+        if self._gitlab.createuser(password=user_password, confirm=confirm, **arguments):
             user_id = self.getUserId(user_username)
             if self._gitlab.addsshkeyuser(user_id=user_id, title=user_sshkey_name, key=user_sshkey_file):
                 user_changed = True
@@ -284,6 +278,7 @@ def main():
             group=dict(required=False),
             access_level=dict(required=False, choices=["guest", "reporter", "developer", "master", "owner"]),
             state=dict(default="present", choices=["present", "absent"]),
+            confirm=dict(required=False, default=True, type='bool')
         ),
         supports_check_mode=True
     )
@@ -305,6 +300,7 @@ def main():
     group_name = module.params['group']
     access_level = module.params['access_level']
     state = module.params['state']
+    confirm = module.params['confirm']
 
     # We need both login_user and login_password or login_token, otherwise we fail.
     if login_user is not None and login_password is not None:
@@ -336,9 +332,8 @@ def main():
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
+    except Exception as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s " % to_native(e))
 
     # Check if user is authorized or not before proceeding to any operations
     # if not, exit from here
@@ -359,8 +354,7 @@ def main():
         if state == "absent":
             user.deleteUser(user_username)
         else:
-            user.createOrUpdateUser(user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level)
-
+            user.createOrUpdateUser(user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm)
 
 
 if __name__ == '__main__':

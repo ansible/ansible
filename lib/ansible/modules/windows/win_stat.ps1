@@ -78,7 +78,9 @@ $checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -
 
 $result = @{
     changed = $false
-    stat = @{}
+    stat = @{
+        exists = $false
+    }
 }
 
 # Backward compatibility
@@ -93,6 +95,7 @@ If (Test-Path -Path $path)
     # Initial values
     $result.stat.isdir = $false
     $result.stat.islnk = $false
+    $result.stat.isreg = $false
     $result.stat.isshared = $false
 
     # Need to use -Force so it picks up hidden files
@@ -160,21 +163,26 @@ If (Test-Path -Path $path)
     }
     Else
     {
-        $result.stat.size = $info.Length
         $result.stat.extension = $info.Extension
+        $result.stat.isreg = $true
+        $result.stat.size = $info.Length
 
         If ($get_md5) {
-            $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
+            try {
+                $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
+            } catch {
+                Fail-Json -obj $result -message "failed to get MD5 hash of file, set get_md5 to False to ignore this error: $($_.Exception.Message)"
+            }
         }
 
         If ($get_checksum) {
-            $result.stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+            try {
+                $result.stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+            } catch {
+                Fail-Json -obj $result -message "failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)"
+            }
         }
     }
-}
-Else
-{
-    $result.stat.exists = $false
 }
 
 Exit-Json $result

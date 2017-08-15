@@ -318,6 +318,51 @@ address. For example, to get the IP address itself from a CIDR, you can use::
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :doc:`playbooks_filters_ipaddr`.
 
+.. _network_filters:
+
+Network CLI filters
+```````````````````
+
+.. versionadded:: 2.4
+
+To convert the output of a network device CLI command into structured JSON
+output, use the ``parse_cli`` filter::
+
+  {{ output | parse_cli('path/to/spec') }}
+
+The ``parse_cli`` filter will load the spec file and pass the command output
+through, it returning JSON output.  The spec file is a YAML yaml that defines
+how to parse the CLI output.  
+
+The spec file should be valid formatted YAML.  It defines how to parse the CLI
+output and return JSON data.  Below is an example of a valid spec file that
+will parse the output from the ``show vlan`` command.::
+
+    ---
+    vlan:
+      vlan_id: "{{ item.vlan_id }}"
+      name: "{{ item.name }}"
+      enabled: "{{ item.state != 'act/lshut' }}"
+      state: "{{ item.state }}"
+
+    attributes:
+      vlans:
+        type: list
+        value: "{{ vlan }}"
+        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+      state_static:
+        value: present
+
+The spec file above will return a JSON data structure that is a list of hashs
+with the parsed VLAN information.
+
+The network filters also support parsing the output of a CLI command using the
+TextFSM library.  To parse the CLI output with TextFSM use the following
+filter::
+
+  {{ output | parse_cli_textfsm('path/to/fsm') }}
+
+Use of the TextFSM filter requires the TextFSM library to be installed.
 
 .. _hash_filters:
 
@@ -588,6 +633,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost, 80" using named groups
     {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
+    
+    # convert "localhost:80" to "localhost"
+    {{ 'localhost:80' | regex_replace(':80') }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
@@ -606,8 +654,8 @@ To make use of one attribute from each item in a list of complex variables, use 
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
-    # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
-    {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
+    # get amount of seconds between two dates, default date format is %Y-%m-%d %H:%M:%S but you can pass your own one
+    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).seconds  }}
 
 
 Combination Filters
@@ -645,6 +693,7 @@ To always exhaust all list use ``zip_longest``::
 
 
 .. versionadded:: 2.4
+
 To format a date using a string (like with the shell date command), use the "strftime" filter::
 
     # Display year-month-day
@@ -692,7 +741,7 @@ to be added to core so everyone can make use of them.
        All about variables
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

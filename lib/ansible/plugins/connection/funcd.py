@@ -43,6 +43,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class Connection(object):
     ''' Func-based connections '''
 

@@ -174,4 +174,8 @@ $result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
 
+If ($result.rc -ne 0) {
+    Fail-Json -obj $result -message "non-zero return code"
+}
+
 Exit-Json $result

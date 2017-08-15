@@ -50,6 +50,11 @@ options:
             - In fresh start all the configsare downloaded.
             - Allowed values are 1-1024.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+    client_ip_addr_group:
+        description:
+            - Group to specify if the client ip addresses are public or private.
+            - Field introduced in 17.1.2.
+        version_added: "2.4"
     description:
         description:
             - User defined description for the object.
@@ -57,6 +62,12 @@ options:
         description:
             - Sub domain configuration for the gslb.
             - Gslb service's fqdn must be a match one of these subdomains.
+    is_federated:
+        description:
+            - This field indicates that this object is replicated across gslb federation.
+            - Field introduced in 17.1.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.4"
     leader_cluster_uuid:
         description:
             - Mark this site as leader of gslb configuration.
@@ -125,8 +136,10 @@ def main():
         state=dict(default='present',
                    choices=['absent', 'present']),
         clear_on_max_retries=dict(type='int',),
+        client_ip_addr_group=dict(type='dict',),
         description=dict(type='str',),
         dns_configs=dict(type='list',),
+        is_federated=dict(type='bool',),
         leader_cluster_uuid=dict(type='str',),
         name=dict(type='str', required=True),
         send_interval=dict(type='int',),

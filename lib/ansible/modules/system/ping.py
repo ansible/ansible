@@ -3,47 +3,58 @@
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: ping
 version_added: historical
-short_description: Try to connect to host, verify a usable python and return C(pong) on success.
+short_description: Try to connect to host, verify a usable python and return C(pong) on success
 description:
    - A trivial test module, this module always returns C(pong) on successful
      contact. It does not make sense in playbooks, but it is useful from
      C(/usr/bin/ansible) to verify the ability to login and that a usable python is configured.
    - This is NOT ICMP ping, this is just a trivial test module.
-options: {}
+   - For Windows targets, use the M(ping) module instead.
+notes:
+   - For Windows targets, use the M(ping) module instead.
+options:
+  data:
+    description:
+      - Data to return for the C(ping) return value.
+      - If this parameter is set to C(crash), the module will cause an exception.
+    default: pong
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''
 # Test we can logon to 'webservers' and execute python with json lib.
-ansible webservers -m ping
+# ansible webservers -m ping
+
+# Example from an Ansible Playbook
+- ping:
+
+# Induce an exception to see what happens
+- ping:
+    data: crash
+'''
+
+RETURN = '''
+ping:
+    description: value provided with the data parameter
+    returned: success
+    type: string
+    sample: pong
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -52,15 +63,18 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            data=dict(required=False, default=None),
+            data=dict(type='str', default='pong'),
         ),
         supports_check_mode=True
     )
-    result = dict(ping='pong')
-    if module.params['data']:
-        if module.params['data'] == 'crash':
-            raise Exception("boom")
-        result['ping'] = module.params['data']
+
+    if module.params['data'] == 'crash':
+        raise Exception("boom")
+
+    result = dict(
+        ping=module.params['data'],
+    )
+
     module.exit_json(**result)
 
 

@@ -150,7 +150,7 @@ options:
     description:
       - enable detailed monitoring (CloudWatch) for instance
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   user_data:
@@ -186,7 +186,7 @@ options:
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   private_ip:
@@ -615,27 +615,31 @@ EXAMPLES = '''
 
 '''
 
+import traceback
 import time
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code
+from ansible.module_utils.six import get_function_code, string_types
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, connect_to_aws
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
 from distutils.version import LooseVersion
+from ansible.module_utils.six import string_types
 
 try:
     import boto.ec2
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
-    from boto.vpc import VPCConnection
+    from boto import connect_ec2_endpoint
+    from boto import connect_vpc
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 
-def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
+def find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone=None):
 
     # get reservations for instances that match tag(s) and are running
-    reservations = get_reservations(module, ec2, tags=count_tag, state="running", zone=zone)
+    reservations = get_reservations(module, ec2, vpc, tags=count_tag, state="running", zone=zone)
 
     instances = []
     for res in reservations:
@@ -656,10 +660,19 @@ def _set_none_to_blank(dictionary):
     return result
 
 
-def get_reservations(module, ec2, tags=None, state=None, zone=None):
-
+def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
     # TODO: filters do not work with tags that have underscores
     filters = dict()
+
+    vpc_subnet_id = module.params.get('vpc_subnet_id')
+    vpc_id = None
+    if vpc_subnet_id:
+        filters.update({"subnet-id": vpc_subnet_id})
+        if vpc:
+            vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
+
+    if vpc_id:
+        filters.update({"vpc-id": vpc_id})
 
     if tags is not None:
 
@@ -929,7 +942,7 @@ def enforce_count(module, ec2, vpc):
     if exact_count and count_tag is None:
         module.fail_json(msg="you must use the 'count_tag' option with exact_count")
 
-    reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag, zone)
+    reservations, instances = find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone)
 
     changed = None
     checkmode = False
@@ -1039,7 +1052,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 grp_details = ec2.get_all_security_groups(filters={'vpc_id': vpc_id})
             else:
                 grp_details = ec2.get_all_security_groups()
-            if isinstance(group_name, basestring):
+            if isinstance(group_name, string_types):
                 group_name = [group_name]
             unmatched = set(group_name).difference(str(grp.name) for grp in grp_details)
             if len(unmatched) > 0:
@@ -1048,7 +1061,7 @@ def create_instances(module, ec2, vpc, override_count=None):
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
             # wrap the group_id in a list if it's not one already
-            if isinstance(group_id, basestring):
+            if isinstance(group_id, string_types):
                 group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             group_name = [grp_item.name for grp_item in grp_details]
@@ -1122,7 +1135,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     params['network_interfaces'] = interfaces
             else:
                 if network_interfaces:
-                    if isinstance(network_interfaces, basestring):
+                    if isinstance(network_interfaces, string_types):
                         network_interfaces = [network_interfaces]
                     interfaces = []
                     for i, network_interface_id in enumerate(network_interfaces):
@@ -1217,7 +1230,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     module.fail_json(
                         msg="instance_initiated_shutdown_behavior=stop is not supported for spot instances.")
 
-                if spot_launch_group and isinstance(spot_launch_group, basestring):
+                if spot_launch_group and isinstance(spot_launch_group, string_types):
                     params['launch_group'] = spot_launch_group
 
                 params.update(dict(
@@ -1392,6 +1405,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     wait_timeout = int(module.params.get('wait_timeout'))
     source_dest_check = module.params.get('source_dest_check')
     termination_protection = module.params.get('termination_protection')
+    group_id = module.params.get('group_id')
+    group_name = module.params.get('group')
     changed = False
     instance_dict_array = []
 
@@ -1437,6 +1452,24 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
             if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
                 inst.modify_attribute('disableApiTermination', termination_protection)
                 changed = True
+
+            # Check security groups and if we're using ec2-vpc; ec2-classic security groups may not be modified
+            if inst.vpc_id and group_name:
+                grp_details = ec2.get_all_security_groups(filters={'vpc_id': inst.vpc_id})
+                if isinstance(group_name, string_types):
+                    group_name = [group_name]
+                unmatched = set(group_name) - set(to_text(grp.name) for grp in grp_details)
+                if unmatched:
+                    module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
+                group_ids = [to_text(grp.id) for grp in grp_details if to_text(grp.name) in group_name]
+            elif inst.vpc_id and group_id:
+                if isinstance(group_id, string_types):
+                    group_id = [group_id]
+                grp_details = ec2.get_all_security_groups(group_ids=group_id)
+                group_ids = [grp_item.id for grp_item in grp_details]
+            if inst.vpc_id and (group_name or group_id):
+                if set(sg.id for sg in inst.groups) != set(group_ids):
+                    changed = inst.modify_attribute('groupSet', group_ids)
 
             # Check instance state
             if inst.state != state:
@@ -1611,23 +1644,25 @@ def main():
             ['network_interfaces', 'group_id'],
             ['network_interfaces', 'private_ip'],
             ['network_interfaces', 'vpc_subnet_id'],
-            ],
+        ],
     )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    ec2 = ec2_connect(module)
+    try:
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+        if module.params.get('region') or not module.params.get('ec2_url'):
+            ec2 = ec2_connect(module)
+        elif module.params.get('ec2_url'):
+            ec2 = connect_ec2_endpoint(ec2_url, **aws_connect_kwargs)
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+        if 'region' not in aws_connect_kwargs:
+            aws_connect_kwargs['region'] = ec2.region
 
-    if region:
-        try:
-            vpc = connect_to_aws(boto.vpc, region, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg=str(e))
-    else:
-        vpc = None
+        vpc = connect_vpc(**aws_connect_kwargs)
+    except boto.exception.NoAuthHandlerFound as e:
+        module.fail_json(msg="Failed to get connection: %s" % e.message, exception=traceback.format_exc())
 
     tagged_instances = []
 

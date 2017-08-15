@@ -220,9 +220,8 @@ def state_present(module, existing, proposed):
             command = '{0} {1}'.format(key, value)
             commands.append(command)
 
-    else:
-        commands = ['vni {0} l2'.format(module.params['vni'])]
-        parents = ['evpn']
+    if commands:
+        parents = ['evpn', 'vni {0} l2'.format(module.params['vni'])]
 
     return commands, parents
 
@@ -298,9 +297,10 @@ def main():
         else:
             candidate = CustomNetworkConfig(indent=3)
             candidate.add(commands, parents=parents)
+            candidate = candidate.items_text()
             load_config(module, candidate)
             results['changed'] = True
-            results['commands'] = candidate.items_text()
+            results['commands'] = candidate
     else:
         results['commands'] = []
     module.exit_json(**results)

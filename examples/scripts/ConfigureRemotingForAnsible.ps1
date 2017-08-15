@@ -16,7 +16,7 @@
 # a 10-year valid certificate.
 #
 # Use option -ForceNewSSLCert if the system has been SysPreped and a new
-# SSL Certifcate must be forced on the WinRM Listener when re-running this
+# SSL Certificate must be forced on the WinRM Listener when re-running this
 # script. This is necessary when a new SID and CN name is created.
 #
 # Use option -SkipNetworkProfileCheck to skip the network profile check.
@@ -171,12 +171,12 @@ If (!(Get-Service "WinRM"))
 }
 ElseIf ((Get-Service "WinRM").Status -ne "Running")
 {
-    Write-Verbose "Starting WinRM service."
-    Start-Service -Name "WinRM" -ErrorAction Stop
-    Write-Log "Started WinRM service."
     Write-Verbose "Setting WinRM service to start automatically on boot."
     Set-Service -Name "WinRM" -StartupType Automatic
     Write-Log "Set WinRM service to start automatically on boot."
+    Write-Verbose "Starting WinRM service."
+    Start-Service -Name "WinRM" -ErrorAction Stop
+    Write-Log "Started WinRM service."
 
 }
 

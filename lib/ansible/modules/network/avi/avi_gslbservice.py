@@ -50,6 +50,10 @@ options:
             - Note that the datapath status is determined by the association of health monitor profiles.
             - Only the controller provided status is determined through this configuration.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+    created_by:
+        description:
+            - Creator name.
+            - Field introduced in 17.1.2.
     description:
         description:
             - User defined description for the object.
@@ -72,7 +76,7 @@ options:
         description:
             - Verify vs health by applying one or more health monitors.
             - Active monitors generate synthetic traffic from dns service engine and to mark a vs up or down based on the response.
-            - It is a reference to an object of type gslbhealthmonitor.
+            - It is a reference to an object of type healthmonitor.
     health_monitor_scope:
         description:
             - Health monitor probe can be executed for all the members or it can be executed only for third-party members.
@@ -80,6 +84,11 @@ options:
             - In such a case, avi members can have controller derived status while non-avi members can be probed by via health monitor probes in dataplane.
             - Enum options - GSLB_SERVICE_HEALTH_MONITOR_ALL_MEMBERS, GSLB_SERVICE_HEALTH_MONITOR_ONLY_NON_AVI_MEMBERS.
             - Default value when not specified in API or module is interpreted by Avi Controller as GSLB_SERVICE_HEALTH_MONITOR_ALL_MEMBERS.
+    is_federated:
+        description:
+            - This field indicates that this object is replicated across gslb federation.
+            - Field introduced in 17.1.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     name:
         description:
             - Name for the gslb service.
@@ -150,6 +159,7 @@ def main():
         state=dict(default='present',
                    choices=['absent', 'present']),
         controller_health_status_enabled=dict(type='bool',),
+        created_by=dict(type='str',),
         description=dict(type='str',),
         domain_names=dict(type='list',),
         down_response=dict(type='dict',),
@@ -157,6 +167,7 @@ def main():
         groups=dict(type='list',),
         health_monitor_refs=dict(type='list',),
         health_monitor_scope=dict(type='str',),
+        is_federated=dict(type='bool',),
         name=dict(type='str', required=True),
         num_dns_ip=dict(type='int',),
         tenant_ref=dict(type='str',),

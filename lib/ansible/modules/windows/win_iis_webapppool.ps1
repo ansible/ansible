@@ -17,124 +17,242 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 # WANT_JSON
 # POWERSHELL_COMMON
-$params = Parse-Args $args
 
-# Name parameter
-$name = Get-AnsibleParam -obj $params -name "name" -type "string" -failifempty $true
+$ErrorActionPreference = 'Stop'
 
+$params = Parse-Args -arguments $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-# State parameter
-$state = Get-AnsibleParam -obj $params -name "state" -default "present" -validateSet "started","restarted","stopped","absent"
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateSet "started","restarted","stopped","absent","present"
+$result = @{
+    changed = $false
+    attributes = @{}
+    info = @{
+        name = $name
+        state = $state
+        attributes = @{}
+        cpu = @{}
+        failure = @{}
+        processModel = @{}
+        recycling = @{
+            periodicRestart = @{}
+        }
+    }
+}
 
-# Attributes parameter - Pipe separated list of attributes where
-# keys and values are separated by comma (paramA:valyeA|paramB:valueB)
-$attributes = @{};
-$attrs = Get-AnsibleParam -obj $params -name "attributes" -type "string" -failifempty $false
-If ($attrs) {
-  $attrs -split '\|' | foreach {
-    $key, $value = $_ -split "\:"
-    $attributes.Add($key, $value)
-  }
+# Stores the free form attributes for the module
+$attributes = @{}
+$input_attributes = Get-AnsibleParam -obj $params -name "attributes"
+if ($input_attributes) {
+    if ($input_attributes -is [System.Collections.Hashtable]) {
+        # Uses dict style parameters, newer and recommended style
+        $attributes = $input_attributes
+    } else {
+        # Uses older style of separating with | per key pair and : for key:value (paramA:valueA|paramB:valueB)
+        Add-DeprecationWarning -obj $result -message "Using a string for the attributes parameter is deprecated, please use a dict instead" -version 2.6
+        $input_attributes -split '\|' | ForEach-Object {
+            $key, $value = $_ -split "\:"
+            $attributes.$key = $value
+        }
+    }
+}
+$result.attributes = $attributes
+
+Function Get-DotNetClassForAttribute($attribute_parent) {
+    switch ($attribute_parent) {
+        "attributes" { [Microsoft.Web.Administration.ApplicationPool] }
+        "cpu" { [Microsoft.Web.Administration.ApplicationPoolCpu] }
+        "failure" { [Microsoft.Web.Administration.ApplicationPoolFailure] }
+        "processModel" { [Microsoft.Web.Administration.ApplicationPoolProcessModel] }
+        "recycling" { [Microsoft.Web.Administration.ApplicationPoolRecycling] }
+        default { [Microsoft.Web.Administration.ApplicationPool] }
+    }
+}
+
+Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
+    # Will convert the new value to the enum value expected and cast accordingly to the type
+    if ([bool]($attribute_value.PSobject.Properties -match "Value")) {
+        $attribute_value = $attribute_value.Value
+    }
+    $attribute_key_split = $attribute_key -split "\."
+    if ($attribute_key_split.Length -eq 1) {
+        $attribute_parent = "attributes"
+        $attribute_child = $attribute_key
+        $attribute_meta = $pool.Attributes | Where-Object { $_.Name -eq $attribute_child }
+    } elseif ($attribute_key_split.Length -eq 2) {
+        $attribute_parent = $attribute_key_split[0]
+        $attribute_child = $attribute_key_split[1]
+        $attribute_meta = $pool.$attribute_parent.Attributes | Where-Object { $_.Name -eq $attribute_child }
+    }
+
+    if ($attribute_meta) {
+        $type = $attribute_meta.Schema.Type
+        $value = $attribute_value
+        if ($type -eq "enum") {
+            # Attempt to convert the value from human friendly to enum value - use existing value if we fail
+            $dot_net_class = Get-DotNetClassForAttribute -attribute_parent $attribute_parent
+            $enum_attribute_name = $attribute_child.Substring(0,1).ToUpper() + $attribute_child.Substring(1)
+            $enum = $dot_net_class.GetProperty($enum_attribute_name).PropertyType.FullName
+            if ($enum) {
+                $enum_values = [Enum]::GetValues($enum)
+                foreach ($enum_value in $enum_values) {
+                    if ($attribute_value.GetType() -is $enum_value.GetType()) {
+                        if ($enum_value -eq $attribute_value) {
+                            $value = $enum_value
+                            break
+                        }
+                    } else {
+                        if ([System.String]$enum_value -eq [System.String]$attribute_value) {
+                            $value = $enum_value
+                            break
+                        }
+                    }
+                }
+            }            
+        }
+        # Try and cast the variable using the chosen type, revert to the default if it fails
+        Set-Variable -Name casted_value -Value ($value -as ([type] $attribute_meta.TypeName))
+        if ($casted_value -eq $null) {
+            $value
+        } else {
+            $casted_value
+        }
+    } else {
+        $attribute_value
+    }
 }
 
 # Ensure WebAdministration module is loaded
-if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $NULL){
-  Import-Module WebAdministration
-  $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
-  Add-Type -Path $web_admin_dll_path
-  $t = [Type]"Microsoft.Web.Administration.ApplicationPool"
+if ((Get-Module -Name "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
+    Import-Module WebAdministration
+    $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
+    Add-Type -Path $web_admin_dll_path
 }
 
-# Result
-$result = @{
-  changed = $FALSE
-#  attributes = $attributes
+$pool = Get-Item -Path IIS:\AppPools\$name -ErrorAction SilentlyContinue
+if ($state -eq "absent") {
+    # Remove pool if present
+    if ($pool) {
+        try {
+            Remove-WebAppPool -Name $name -WhatIf:$check_mode
+        } catch {
+            Fail-Json $result "Failed to remove Web App pool $($name): $($_.Exception.Message)"
+        }
+        $result.changed = $true
+    }
+} else {
+    # Add pool if absent
+    if (-not $pool) {
+        if (-not $check_mode) {
+            try {
+                New-WebAppPool -Name $name
+            } catch {
+                Fail-Json $result "Failed to create new Web App Pool $($name): $($_.Exception.Message)"
+            }
+        }
+        $result.changed = $true
+        # If in check mode this pool won't actually exists so skip it
+        if (-not $check_mode) {
+            $pool = Get-Item -Path IIS:\AppPools\$name
+        }
+    }
+
+    # Modify pool based on parameters
+    foreach ($attribute in $attributes.GetEnumerator()) {
+        $attribute_key = $attribute.Name
+        $new_raw_value = $attribute.Value
+        $new_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $new_raw_value
+
+        $current_raw_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
+        $current_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $current_raw_value
+
+        # Cannot use ($current_value -or (..)) as that will fire if $current_value is 0/$null/"" when we only want $null
+        if (($current_value -eq $null) -or ($current_value -ne $new_value)) {
+            try {
+                Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
+            } catch {
+                Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
+            }
+            $result.changed = $true
+        }
+    }
+
+    # Set the state of the pool
+    if (($state -eq "stopped") -and ($pool.State -eq "Started")) {
+        if (-not $check_mode) {
+            try {
+                Stop-WebAppPool -Name $name
+            } catch {
+                Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
+            }
+        }
+        $result.changed = $true
+    }
+
+    
+    if ($pool.State -eq "Stopped") {
+        if ($state -eq "started" -or $state -eq "restarted") {
+            if (-not $check_mode) {
+                try {
+                    Start-WebAppPool -Name $name
+                } catch {
+                    Fail-Json $result "Failed to start Web App Pool $($name): $($_.Exception.Message)"
+                }
+            }
+            $result.changed = $true
+        }
+    } else {
+        if ($state -eq "stopped") {
+            if (-not $check_mode) {
+                try {
+                    Stop-WebAppPool -Name $name
+                } catch {
+                    Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
+                }
+            }
+            $result.changed = $true
+        } elseif ($state -eq "restarted") {
+            if (-not $check_mode) {
+                try {
+                    Restart-WebAppPool -Name $name
+                } catch {
+                    Fail-Json $result "Failed to restart Web App Pool $($name): $($_.Exception.Message)"
+                }
+            }
+            $result.changed = $true
+        }
+    }
 }
 
-$result.attributes = $attributes
+# Get all the current attributes for the pool
+$pool = Get-Item -Path IIS:\AppPools\$name -ErrorAction SilentlyContinue
+$elements = @("attributes", "cpu", "failure", "processModel", "recycling")
 
-# Get pool
-$pool = Get-Item IIS:\AppPools\$name
-
-try {
-  # Add
-  if (-not $pool -and $state -in ('started', 'stopped', 'restarted')) {
-    New-WebAppPool $name
-    $result.changed = $TRUE
-  }
-
-  # Remove
-  if ($pool -and $state -eq 'absent') {
-    Remove-WebAppPool $name
-    $result.changed = $TRUE
-  }
-
-  $pool = Get-Item IIS:\AppPools\$name
-  if($pool) {
-    # Set properties
-    $attributes.GetEnumerator() | foreach {
-      $newParameter = $_
-      $currentParameter = Get-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key
-      $currentParamVal = ""
-      try {
-        $currentParamVal = $currentParameter
-      } catch {
-        $currentParamVal = $currentParameter.Value
-      }
-      if(-not $currentParamVal -or ($currentParamVal -as [String]) -ne $newParameter.Value) {
-        Set-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key $newParameter.Value
-        $result.changed = $TRUE
-      }
+foreach ($element in $elements)  {
+    if ($element -eq "attributes") {
+        $attribute_collection = $pool.Attributes
+        $attribute_parent = $pool
+    } else {
+        $attribute_collection = $pool.$element.Attributes
+        $attribute_parent = $pool.$element
     }
 
-    # Set run state
-    if (($state -eq 'stopped') -and ($pool.State -eq 'Started')) {
-      Stop-WebAppPool -Name $name -ErrorAction Stop
-      $result.changed = $TRUE
+    foreach ($attribute in $attribute_collection) {
+        $attribute_name = $attribute.Name
+        $attribute_value = $attribute_parent.$attribute_name
+
+        $result.info.$element.Add($attribute_name, $attribute_value)
     }
-    if (($state -eq 'started') -and ($pool.State -eq 'Stopped')) {
-      Start-WebAppPool -Name $name -ErrorAction Stop
-      $result.changed = $TRUE
-    }
-    if ($state -eq 'restarted') {
-     switch ($pool.State)
-       { 
-         'Stopped' { Start-WebAppPool -Name $name -ErrorAction Stop }
-         default { Restart-WebAppPool -Name $name -ErrorAction Stop }
-       }
-     $result.changed = $TRUE   
-    }
-  }
-} catch {
-  Fail-Json $result $_.Exception.Message
 }
 
-# Result
-$pool = Get-Item IIS:\AppPools\$name
-if ($pool)
-{
-  $result.info = @{
-    name = $pool.Name
-    state = $pool.State
-    attributes =  @{}
-  };
-
-  $pool.Attributes | ForEach {
-     # lookup name if enum
-     if ($_.Schema.Type -eq 'enum') {
-        $propertyName = $_.Name.Substring(0,1).ToUpper() + $_.Name.Substring(1)
-        $enum = [Microsoft.Web.Administration.ApplicationPool].GetProperty($propertyName).PropertyType.FullName
-        $enum_names = [Enum]::GetNames($enum)
-        $result.info.attributes.Add($_.Name, $enum_names[$_.Value])
-     } else {
-        $result.info.attributes.Add($_.Name, $_.Value);
-     }
-  }
-
+# Manually get the periodicRestart attributes in recycling
+foreach ($attribute in $pool.recycling.periodicRestart.Attributes) {
+    $attribute_name = $attribute.Name
+    $attribute_value = $pool.recycling.periodicRestart.$attribute_name
+    $result.info.recycling.periodicRestart.Add($attribute_name, $attribute_value)
 }
 
 Exit-Json $result
-

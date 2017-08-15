@@ -1,4 +1,4 @@
-# (c) 2016 Red Hat Inc.
+# (c) 2017 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -18,12 +18,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
 import os
 import pty
 import subprocess
-import sys
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six.moves import cPickle
 from ansible.plugins.connection import ConnectionBase
 
@@ -41,7 +41,6 @@ class Connection(ConnectionBase):
     has_pipelining = False
 
     def _connect(self):
-
         self._connected = True
         return self
 
@@ -83,3 +82,18 @@ class Connection(ConnectionBase):
 
     def close(self):
         self._connected = False
+
+    def run(self):
+        """Returns the path of the persistent connection socket.
+
+        Attempts to ensure (within playcontext.timeout seconds) that the
+        socket path exists. If the path exists (or the timeout has expired),
+        returns the socket path.
+        """
+        socket_path = None
+        rc, out, err = self._do_it('RUN:')
+        match = re.search(br"#SOCKET_PATH#: (\S+)", out)
+        if match:
+            socket_path = to_text(match.group(1).strip(), errors='surrogate_or_strict')
+
+        return socket_path

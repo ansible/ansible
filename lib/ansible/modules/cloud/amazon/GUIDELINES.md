@@ -120,7 +120,7 @@ region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 if region:
     try:
         connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 else:
     module.fail_json(msg="region must be specified")
@@ -161,7 +161,7 @@ except ImportError:
 # Make a call to AWS
 try:
     result = connection.aws_call()
-except BotoServerError, e:
+except BotoServerError as e:
     module.fail_json(msg="helpful message here", exception=traceback.format_exc(),
                      **camel_dict_to_snake_dict(e.message))
 ```
@@ -186,7 +186,7 @@ except ImportError:
 # Make a call to AWS
 try:
     result = connection.aws_call()
-except ClientError, e:
+except ClientError as e:
     module.fail_json(msg=e.message, exception=traceback.format_exc(),
                      **camel_dict_to_snake_dict(e.response))
 ```
@@ -197,7 +197,7 @@ If you need to perform an action based on the error boto3 returned, use the erro
 # Make a call to AWS
 try:
     result = connection.aws_call()
-except ClientError, e:
+except ClientError as e:
     if e.response['Error']['Code'] == 'NoSuchEntity':
         return None
     else:
@@ -314,4 +314,6 @@ to modify and a list of tag key names that you need to remove.  Purge is True by
 existing tags will not be modified.
 
 This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the other helper function
-'boto3_tag_list_to_ansible_dict' to get an appropriate tag dict before calling this function.
+'boto3_tag_list_to_ansible_dict' to get an appropriate tag dict before calling this function. Since the AWS APIs are not
+uniform (e.g. EC2 versus Lambda) this will work without modification for some (Lambda) and others may need modification
+before using these values (such as EC2, with requires the tags to unset to be in the form [{'Key': key1}, {'Key': key2}]).

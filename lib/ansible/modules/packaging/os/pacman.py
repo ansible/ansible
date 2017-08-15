@@ -5,20 +5,11 @@
 # (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
 # (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -143,10 +134,7 @@ EXAMPLES = '''
     force: yes
 '''
 
-import shlex
-import os
 import re
-import sys
 
 def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
@@ -212,8 +200,6 @@ def upgrade(module, pacman_path):
 
     if rc == 0:
         regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
-        b = []
-        a = []
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))
@@ -378,17 +364,18 @@ def expand_package_groups(module, pacman_path, pkgs):
     expanded = []
 
     for pkg in pkgs:
-        cmd = "%s -Sgq %s" % (pacman_path, pkg)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        if pkg: # avoid empty strings
+            cmd = "%s -Sgq %s" % (pacman_path, pkg)
+            rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
-        if rc == 0:
-            # A group was found matching the name, so expand it
-            for name in stdout.split('\n'):
-                name = name.strip()
-                if name:
-                    expanded.append(name)
-        else:
-            expanded.append(pkg)
+            if rc == 0:
+                # A group was found matching the name, so expand it
+                for name in stdout.split('\n'):
+                    name = name.strip()
+                    if name:
+                        expanded.append(name)
+            else:
+                expanded.append(pkg)
 
     return expanded
 
@@ -432,7 +419,9 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
+            if not pkg: # avoid empty strings
+                continue
+            elif re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)

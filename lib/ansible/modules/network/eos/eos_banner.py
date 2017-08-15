@@ -39,7 +39,7 @@ options:
         configured on the remote device.
     required: true
     default: null
-    choices: ['login', 'banner']
+    choices: ['login', 'motd']
   text:
     description:
       - The banner text that should be
@@ -90,26 +90,36 @@ session_name:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
 from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils._text import to_text
 
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and 'text' in have.keys() and have['text']:
-        commands.append('no banner %s' % module.params['banner'])
+    if state == 'absent' and have.get('text'):
+        if isinstance(have['text'], str):
+            commands.append('no banner %s' % module.params['banner'])
+        elif have['text'].get('loginBanner') or have['text'].get('motd'):
+            commands.append({'cmd': 'no banner %s' % module.params['banner']})
 
     elif state == 'present':
-        if want['text'] and (want['text'] != have.get('text')):
-            if module.params['transport'] == 'cli':
+        if isinstance(have['text'], str):
+            if want['text'] != have['text']:
                 commands.append('banner %s' % module.params['banner'])
                 commands.extend(want['text'].strip().split('\n'))
                 commands.append('EOF')
-            else:
+        else:
+            have_text = have['text'].get('loginBanner') or have['text'].get('motd')
+            if have_text:
+                have_text = have_text.strip()
+
+            if to_text(want['text']) != have_text or not have_text:
                 # For EAPI we need to construct a dict with cmd/input
                 # key/values for the banner
                 commands.append({'cmd': 'banner %s' % module.params['banner'],
                                  'input': want['text'].strip('\n')})
+
 
     return commands
 

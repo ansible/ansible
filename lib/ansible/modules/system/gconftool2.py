@@ -3,20 +3,11 @@
 # (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
 # (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 #
-# This file is part of Ansible (sort of)
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -104,10 +95,7 @@ RETURN = '''
 ...
 '''
 
-from subprocess import Popen, PIPE
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
-
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GConf2Preference(object):
@@ -158,11 +146,7 @@ class GConf2Preference(object):
                 cmd += "--unset {0}".format(self.key)
 
             # Start external command
-            process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
-
-            # In either case, we will capture the output
-            out = process.stdout.read()
-            err = process.stderr.read()
+            rc, out, err = self.ansible.run_command(cmd, use_unsafe_shell=True)
 
             if len(err) > 0:
                 if fail_onerr:
@@ -171,8 +155,7 @@ class GConf2Preference(object):
             else:
                 changed = True
 
-        except OSError:
-            exception = get_exception()
+        except OSError as exception:
             self.ansible.fail_json(msg='gconftool-2 failed with exception: '
                                        '%s' % exception)
         return changed, out.rstrip()
@@ -199,7 +182,6 @@ def main():
 
     state_values = {"present": "set", "absent": "unset", "get": "get"}
 
-    direct = False
     # Assign module values to dictionary values
     key = module.params['key']
     value_type = module.params['value_type']
@@ -211,8 +193,7 @@ def main():
         value = module.params['value']
 
     state = state_values[module.params['state']]
-    if module.params['direct'] in BOOLEANS_TRUE:
-        direct = True
+    direct = module.params['direct']
     config_source = module.params['config_source']
 
     # Initialize some variables for later
@@ -243,7 +224,7 @@ def main():
     # Check if the current value equals the value we want to set.  If not, make
     # a change
     if current_value != value:
-        # If check mode, we know a change would have occured.
+        # If check mode, we know a change would have occurred.
         if module.check_mode:
             # So we will set the change to True
             change = True

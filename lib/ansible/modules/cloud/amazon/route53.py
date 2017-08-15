@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -30,7 +22,7 @@ options:
   state:
     description:
       - Specifies the state of the resource record. As of Ansible 2.4, the I(command) option has been changed
-        to I(state) as default, but I(command) still works as well.
+        to I(state) as default and the choices 'present' and 'absent' have been added, but I(command) still works as well.
     required: true
     aliases: [ 'command' ]
     choices: [ 'present', 'absent', 'get', 'create', 'delete' ]
@@ -302,16 +294,8 @@ EXAMPLES = '''
 
 '''
 
-MINIMUM_BOTO_VERSION = '2.28.0'
-WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
-
-
 import time
 import distutils.version
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 try:
     import boto
@@ -323,6 +307,13 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+
+
+MINIMUM_BOTO_VERSION = '2.28.0'
+WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
 
 
 class TimeoutError(Exception):
@@ -411,7 +402,7 @@ def main():
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
-        value=dict(required=False, type='list'),
+        value=dict(required=False, type='list', default=[]),
         overwrite=dict(required=False, type='bool'),
         retry_interval=dict(required=False, default=500),
         private_zone=dict(required=False, type='bool', default=False),
@@ -521,7 +512,12 @@ def main():
 
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
-    for rset in sets:
+    sets_iter = iter(sets)
+    while True:
+        try:
+            rset = invoke_with_throttling_retries(next, sets_iter)
+        except StopIteration:
+            break
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
         decoded_name = rset.name.replace(r'\052', '*')
@@ -561,11 +557,18 @@ def main():
                 record['values'] = sorted(rset.resource_records)
             if command_in == 'create' and rset.to_xml() == wanted_rset.to_xml():
                 module.exit_json(changed=False)
-            break
+
+        # We need to look only at the first rrset returned by the above call,
+        # so break here. The returned elements begin with the one matching our
+        # requested name, type, and identifier, if such an element exists,
+        # followed by all others that come after it in alphabetical order.
+        # Therefore, if the first set does not match, no subsequent set will
+        # match either.
+        break
 
     if command_in == 'get':
         if type_in == 'NS':
-            ns = record['values']
+            ns = record.get('values', [])
         else:
             # Retrieve name servers associated to the zone.
             z = invoke_with_throttling_retries(conn.get_zone, zone_in)
@@ -600,6 +603,7 @@ def main():
         module.fail_json(msg='Timeout waiting for changes to replicate')
 
     module.exit_json(changed=True)
+
 
 if __name__ == '__main__':
     main()

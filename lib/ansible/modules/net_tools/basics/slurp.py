@@ -2,28 +2,17 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: slurp
 version_added: historical
@@ -31,27 +20,26 @@ short_description: Slurps a file from remote nodes
 description:
      - This module works like M(fetch). It is used for fetching a base64-
        encoded blob containing the data in a remote file.
+     - This module is also supported for Windows targets.
 options:
   src:
     description:
       - The file on the remote system to fetch. This I(must) be a file, not a
         directory.
     required: true
-    default: null
-    aliases: []
 notes:
    - This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the
      original file size.
+   - This module is also supported for Windows targets.
    - "See also: M(fetch)"
-requirements: []
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan (@mpdehaan)
 '''
 
-EXAMPLES = '''
-# Find out what the remote machine's mounts are:
-- slurp:
+EXAMPLES = r'''
+- name: Find out what the remote machine's mounts are
+  slurp:
     src: /proc/mounts
   register: mounts
 
@@ -71,13 +59,17 @@ EXAMPLES = '''
 '''
 
 import base64
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            src = dict(required=True, aliases=['path'], type='path'),
+        argument_spec=dict(
+            src=dict(type='path', required=True, aliases=['path']),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
     source = module.params['src']
 
@@ -90,9 +82,6 @@ def main():
 
     module.exit_json(content=data, source=source, encoding='base64')
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
-

@@ -74,7 +74,6 @@ Contributors: Matt Hite <mhite@hotmail.com>, Tom Melendez <supertom@google.com>
 Version: 0.0.3
 '''
 
-__requires__ = ['pycrypto>=2.6']
 try:
     import pkg_resources
 except ImportError:
@@ -477,6 +476,13 @@ class GceInventory(object):
                 groups[stat].append(name)
             else:
                 groups[stat] = [name]
+
+            for private_ip in node.private_ips:
+                groups[private_ip] = [name]
+
+            if len(node.public_ips) >= 1:
+                for public_ip in node.public_ips:
+                    groups[public_ip] = [name]
 
         groups["_meta"] = meta
 

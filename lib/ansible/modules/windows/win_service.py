@@ -32,7 +32,8 @@ module: win_service
 version_added: "1.7"
 short_description: Manages Windows services
 description:
-    - Manages Windows services
+    - Manages Windows services.
+    - For non-Windows targets, use the M(service) module instead.
 options:
   dependencies:
     description:
@@ -103,20 +104,27 @@ options:
       - delayed
   state:
     description:
-      - C(started)/C(stopped)/C(absent) are idempotent actions that will not run
+      - C(started)/C(stopped)/C(absent)/C(pause) are idempotent actions that will not run
         commands unless necessary.
       - C(restarted) will always bounce the service.
       - C(absent) added in Ansible 2.3
+      - C(pause) was added in Ansible 2.4
+      - Only services that support the paused state can be paused, you can
+        check the return value C(can_pause_and_continue).
+      - You can only pause a service that is already started.
     choices:
       - started
       - stopped
       - restarted
       - absent
+      - paused
   username:
     description:
       - The username to set the service to start as.
       - This and the C(password) argument must be supplied together.
     version_added: "2.3"
+notes:
+    - For non-Windows targets, use the M(service) module instead.
 author: "Chris Hoffman (@chrishoffman)"
 '''
 
@@ -131,6 +139,11 @@ EXAMPLES = r'''
     name: spooler
     start_mode: auto
     state: started
+
+- name: pause a service
+  win_service:
+    name: Netlogon
+    state: paused
 
 # a new service will also default to the following values:
 # - username: LocalSystem
@@ -221,57 +234,62 @@ EXAMPLES = r'''
 
 RETURN = r'''
 exists:
-    description: whether the service exists or not
+    description: Whether the service exists or not.
     returned: success
     type: boolean
     sample: true
 name:
-    description: the service name or id of the service
+    description: The service name or id of the service.
     returned: success and service exists
     type: string
     sample: CoreMessagingRegistrar
 display_name:
-    description: the display name of the installed service
+    description: The display name of the installed service.
     returned: success and service exists
     type: string
     sample: CoreMessaging
-status:
-    description: the current running status of the service
+state:
+    description: The current running status of the service.
     returned: success and service exists
     type: string
     sample: stopped
 start_mode:
-    description: the startup type of the service
+    description: The startup type of the service.
     returned: success and service exists
     type: string
     sample: manual
 path:
-    description: path to the service
+    description: The path to the service executable.
     returned: success and service exists
     type: string
     sample: C:\Windows\system32\svchost.exe -k LocalServiceNoNetwork
+can_pause_and_continue:
+    description: Whether the service can be paused and unpaused.
+    returned: success and service exists
+    type: bool
+    sample: True
 description:
-    description: the path to the executable of the service
+    description: The description of the service.
     returned: success and service exists
     type: string
     sample: Manages communication between system components.
 username:
-    description: the username that runs the service
+    description: The username that runs the service.
     returned: success and service exists
     type: string
     sample: LocalSystem
 desktop_interact:
-    description: Whether the current user is allowed to interact with the desktop
+    description: Whether the current user is allowed to interact with the desktop.
     returned: success and service exists
     type: boolean
     sample: False
 dependencies:
-    description: A list of dependencies the service relies on
+    description: A list of services that is depended by this service.
     returned: success and service exists
     type: list
     sample: False
 depended_by:
-    description: A list of dependencies this service relies on
+    description: A list of services that depend on this service.
     returned: success and service exists
     type: list
     sample: False

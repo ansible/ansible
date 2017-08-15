@@ -90,7 +90,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
 $user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $true
-$recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default "no" -validateset "no","yes" -resultobj $result
+$recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default $false -resultobj $result
 
 If (-Not (Test-Path -Path $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
@@ -129,7 +129,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occurred when attempting to change owner on $path for $user"
+    Fail-Json $result "an error occurred when attempting to change owner on $path for $($user): $($_.Exception.Message)"
 }
 
 Exit-Json $result

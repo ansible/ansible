@@ -1,21 +1,11 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -161,14 +151,12 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2
 
 try:
     from docker import utils
     if HAS_DOCKER_PY_2:
-        from docker.types import Ulimit, IPAMPool, IPAMConfig
-    else:
-        from docker.utils.types import Ulimit
+        from docker.types import IPAMPool, IPAMConfig
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -194,8 +182,7 @@ class TaskParameters(DockerBaseClass):
 
 
 def container_names_in_network(network):
-    return [c['Name'] for c in network['Containers'].values()]
-
+    return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
 class DockerNetworkManager(object):
 
@@ -247,7 +234,7 @@ class DockerNetworkManager(object):
                 differences.append('driver_options')
             else:
                 for key, value in self.parameters.driver_options.items():
-                    if not net['Options'].get(key) or value != net['Options'][key]:
+                    if not (key in net['Options']) or value != net['Options'][key]:
                         different = True
                         differences.append('driver_options.%s' % key)
         if self.parameters.ipam_driver:
@@ -286,10 +273,10 @@ class DockerNetworkManager(object):
 
             if HAS_DOCKER_PY_2:
                 ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
-                                                   pool_configs=ipam_pools)
+                                         pool_configs=ipam_pools)
             else:
                 ipam_config = utils.create_ipam_config(driver=self.parameters.ipam_driver,
-                                                   pool_configs=ipam_pools)
+                                                       pool_configs=ipam_pools)
 
             if not self.check_mode:
                 resp = self.client.create_network(self.parameters.network_name,
@@ -321,13 +308,18 @@ class DockerNetworkManager(object):
                 self.results['changed'] = True
 
     def disconnect_missing(self):
-        for c in self.existing_network['Containers'].values():
+        containers = self.existing_network['Containers']
+        if not containers:
+            return
+        for c in containers.values():
             name = c['Name']
             if name not in self.parameters.connected:
                 self.disconnect_container(name)
 
     def disconnect_all_containers(self):
         containers = self.client.inspect_network(self.parameters.network_name)['Containers']
+        if not containers:
+            return
         for cont in containers.values():
             self.disconnect_container(cont['Name'])
 
@@ -386,8 +378,6 @@ def main():
     cm = DockerNetworkManager(client)
     client.module.exit_json(**cm.results)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

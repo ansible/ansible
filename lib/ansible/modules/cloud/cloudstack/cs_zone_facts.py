@@ -36,6 +36,7 @@ options:
     description:
       - Name of the zone.
     required: true
+    aliases: [ zone ]
 extends_documentation_fragment: cloudstack
 '''
 
@@ -142,43 +143,41 @@ cloudstack_zone.tags:
   sample: [ { "key": "foo", "value": "bar" } ]
 '''
 
-import base64
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+)
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
 
 class AnsibleCloudStackZoneFacts(AnsibleCloudStack):
 
     def __init__(self, module):
         super(AnsibleCloudStackZoneFacts, self).__init__(module)
         self.returns = {
-            'dns1':                     'dns1',
-            'dns2':                     'dns2',
-            'internaldns1':             'internal_dns1',
-            'internaldns2':             'internal_dns2',
-            'ipv6dns1':                 'dns1_ipv6',
-            'ipv6dns2':                 'dns2_ipv6',
-            'domain':                   'network_domain',
-            'networktype':              'network_type',
-            'securitygroupsenabled':    'securitygroups_enabled',
-            'localstorageenabled':      'local_storage_enabled',
-            'guestcidraddress':         'guest_cidr_address',
-            'dhcpprovider':             'dhcp_provider',
-            'allocationstate':          'allocation_state',
-            'zonetoken':                'zone_token',
+            'dns1': 'dns1',
+            'dns2': 'dns2',
+            'internaldns1': 'internal_dns1',
+            'internaldns2': 'internal_dns2',
+            'ipv6dns1': 'dns1_ipv6',
+            'ipv6dns2': 'dns2_ipv6',
+            'domain': 'network_domain',
+            'networktype': 'network_type',
+            'securitygroupsenabled': 'securitygroups_enabled',
+            'localstorageenabled': 'local_storage_enabled',
+            'guestcidraddress': 'guest_cidr_address',
+            'dhcpprovider': 'dhcp_provider',
+            'allocationstate': 'allocation_state',
+            'zonetoken': 'zone_token',
         }
         self.facts = {
             'cloudstack_zone': None,
         }
 
-
     def get_zone(self):
         if not self.zone:
-            # TODO: add param key signature in get_zone()
-            self.module.params['zone'] = self.module.params.get('name')
             super(AnsibleCloudStackZoneFacts, self).get_zone()
         return self.zone
-
 
     def run(self):
         zone = self.get_zone()
@@ -189,18 +188,19 @@ class AnsibleCloudStackZoneFacts(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
+        zone=dict(required=True, aliases=['name']),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     cs_zone_facts = AnsibleCloudStackZoneFacts(module=module).run()
     cs_facts_result = dict(changed=False, ansible_facts=cs_zone_facts)
+
     module.exit_json(**cs_facts_result)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

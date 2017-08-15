@@ -60,13 +60,6 @@ except ImportError:
     HAS_GOOGLE_API_LIB = False
 
 
-# Ansible Display object for warnings
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 GCP_DEFAULT_SCOPES = ['https://www.googleapis.com/auth/cloud-platform']
@@ -106,7 +99,7 @@ def _get_gcp_environment_credentials(service_account_email, credentials_file, pr
     return (service_account_email, credentials_file, project_id)
 
 
-def _get_gcp_libcloud_credentials(service_account_email=None, credentials_file=None, project_id=None):
+def _get_gcp_libcloud_credentials(module, service_account_email=None, credentials_file=None, project_id=None):
     """
     Helper to look for libcloud secrets.py file.
 
@@ -130,9 +123,9 @@ def _get_gcp_libcloud_credentials(service_account_email=None, credentials_file=N
     if service_account_email is None or credentials_file is None:
         try:
             import secrets
-            display.deprecated(msg=("secrets file found at '%s'.  This method of specifying "
-                                    "credentials is deprecated.  Please use env vars or "
-                                    "Ansible YAML files instead" % (secrets.__file__)), version=2.5)
+            module.deprecate(msg=("secrets file found at '%s'.  This method of specifying "
+                                  "credentials is deprecated.  Please use env vars or "
+                                  "Ansible YAML files instead" % (secrets.__file__)), version=2.5)
         except ImportError:
             secrets = None
         if hasattr(secrets, 'GCE_PARAMS'):
@@ -199,7 +192,7 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
     # get the remaining values from the libcloud secrets file.
     (service_account_email,
      credentials_file,
-     project_id) = _get_gcp_libcloud_credentials(service_account_email,
+     project_id) = _get_gcp_libcloud_credentials(module, service_account_email,
                                                  credentials_file, project_id)
 
     if credentials_file is None or project_id is None or service_account_email is None:
@@ -274,9 +267,9 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
             module.fail_json(
                 msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
         else:
-            display.deprecated(msg=("Non-JSON credentials file provided. This format is deprecated. "
-                                    " Please generate a new JSON key from the Google Cloud console"),
-                               version=2.5)
+            module.deprecate(msg=("Non-JSON credentials file provided. This format is deprecated. "
+                                  " Please generate a new JSON key from the Google Cloud console"),
+                             version=2.5)
             return True
 
 
@@ -509,8 +502,7 @@ class GCPUtils(object):
 
     @staticmethod
     def underscore_to_camel(txt):
-        return txt.split('_')[0] + ''.join(x.capitalize()
-                                           or '_' for x in txt.split('_')[1:])
+        return txt.split('_')[0] + ''.join(x.capitalize() or '_' for x in txt.split('_')[1:])
 
     @staticmethod
     def remove_non_gcp_params(params):
@@ -633,7 +625,7 @@ class GCPUtils(object):
                         # TODO(supertom): Isolate 'build-new-request' stuff.
                         resource_name_singular = GCPUtils.get_entity_name_from_resource_name(
                             resource_name)
-                        if op_resp['operationType'] == 'insert' or not 'entity_name' in parsed_url:
+                        if op_resp['operationType'] == 'insert' or 'entity_name' not in parsed_url:
                             parsed_url['entity_name'] = GCPUtils.parse_gcp_url(op_resp['targetLink'])[
                                 'entity_name']
                         args = {'project': project_id,

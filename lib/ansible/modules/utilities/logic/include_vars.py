@@ -1,12 +1,9 @@
-# -*- mode: python -*-
+# -*- coding: utf-8 -*-
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -21,6 +18,7 @@ short_description: Load variables from files, dynamically within a task.
 description:
     - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task runtime. If loading a directory,
       the files are sorted alphabetically before being loaded.
+    - This module is also supported for Windows targets.
 version_added: "1.4"
 options:
   file:
@@ -65,6 +63,8 @@ options:
     description:
         - This module allows you to specify the 'file' option directly w/o any other options.
           There is no 'free-form' option, this is just an indicator, see example below.
+notes:
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = """
@@ -117,3 +117,17 @@ EXAMPLES = """
     ignore_files: 'bastion.yml'
     extensions: ['yml']
 """
+
+RETURN = '''
+ansible_facts:
+  description: Variables that were included and their values
+  returned: success
+  type: dict
+  sample: {'variable': 'value'}
+ansible_included_var_files:
+  description: A list of files that were successfully included
+  returned: success
+  type: list
+  sample: [ '/path/to/file.yml', '/path/to/file.json' ]
+  version_added: 2.4
+'''

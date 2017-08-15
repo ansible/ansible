@@ -25,7 +25,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_msg
@@ -47,13 +46,14 @@ options:
       - Whether to wait for users to respond.  Module will only wait for the number of seconds specified in display_seconds or 10 seconds if not specified.
         However, if I(wait) is true, the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for
         the timeout to elapse before moving on to the next user.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   msg:
     description:
       - The text of the message to be displayed.
     default: Hello world!
-author: "Jon Hawkesworth (@jhawkesworth)"
+author:
+- Jon Hawkesworth (@jhawkesworth)
 notes:
    - This module must run on a windows host, so ensure your play targets windows
      hosts, or delegates to a windows host.
@@ -63,10 +63,10 @@ notes:
 '''
 
 EXAMPLES = r'''
-  # Warn logged in users of impending upgrade
+- name: Warn logged in users of impending upgrade
   win_msg:
     display_seconds: 60
-    msg: "Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time  }}"
+    msg: Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time }}
 '''
 
 RETURN = r'''
@@ -74,12 +74,17 @@ msg:
     description: Test of the message that was sent.
     returned: changed
     type: string
-    sample: "Automated upgrade about to start.  Please save your work and log off before 22 July 2016 18:00:00"
+    sample: Automated upgrade about to start.  Please save your work and log off before 22 July 2016 18:00:00
 display_seconds:
     description: Value of display_seconds module parameter.
     returned: success
     type: string
     sample: 10
+rc:
+    description: The return code of the API call
+    returned: always
+    type: int
+    sample: 0
 runtime_seconds:
     description: How long the module took to run on the remote windows host.
     returned: success

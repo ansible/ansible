@@ -1,6 +1,8 @@
 ---
 
-test_win_get_url_link: https://www.redhat.com
+test_win_get_url_host: www.redhat.com
+test_win_get_url_link: "https://{{test_win_get_url_host}}"
 test_win_get_url_invalid_link: https://www.redhat.com/skynet_module.html
-test_win_get_url_invalid_path: "Q:\\Filez\\Cyberdyne.html"
-test_win_get_url_path: "{{ test_win_get_url_dir_path }}\\docs_index.html"
+test_win_get_url_invalid_path: 'Q:\Filez\Cyberdyne.html'
+test_win_get_url_invalid_path_dir: 'Q:\Filez\'
+test_win_get_url_path: '{{ test_win_get_url_dir_path }}\docs_index.html'

@@ -2,21 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Chris Long <alcamie@gmail.com> <chlong@redhat.com>
-#
-# This file is a module for Ansible that interacts with Network Manager
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.    See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.    If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -62,7 +51,7 @@ options:
         required: False
         choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, vlan ]
         description:
-            - This is the type of device or network connection that you wish to create.
+            - This is the type of device or network connection that you wish to create or modify.
     mode:
         required: False
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
@@ -87,7 +76,7 @@ options:
         required: False
         default: None
         description:
-            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ["192.0.2.53", "198.51.100.53"]'
+            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: "192.0.2.53 198.51.100.53"'
     ip6:
         required: False
         default: None
@@ -101,7 +90,7 @@ options:
     dns6:
         required: False
         description:
-            - 'A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: ["2001:4860:4860::8888 2001:4860:4860::8844"]'
+            - 'A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: "2001:4860:4860::8888 2001:4860:4860::8844"'
     mtu:
         required: False
         default: 1500
@@ -424,7 +413,7 @@ EXAMPLES='''
       - conn_name: team-p2p2
 
 # To add an Ethernet connection with static IP configuration, issue a command as follows
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
     ifname: eth1
     type: ethernet
@@ -433,7 +422,7 @@ EXAMPLES='''
     state: present
 
 # To add an Team connection with static IP configuration, issue a command as follows
-- nmcli:
+  - nmcli:
     conn_name: my-team1
     ifname: my-team1
     type: team
@@ -443,7 +432,7 @@ EXAMPLES='''
     autoconnect: yes
 
 # Optionally, at the same time specify IPv6 addresses for the device as follows:
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
     ifname: eth1
     type: ethernet
@@ -454,22 +443,23 @@ EXAMPLES='''
     state: present
 
 # To add two IPv4 DNS server addresses:
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
+    type: ethernet
     dns4:
       - 192.0.2.53
       - 198.51.100.53
     state: present
 
 # To make a profile usable for all compatible Ethernet interfaces, issue a command as follows
-- nmcli:
+  - nmcli:
     ctype: ethernet
     name: my-eth1
     ifname: '*'
     state: present
 
 # To change the property of a setting e.g. MTU, issue a command as follows:
-- nmcli:
+  - nmcli:
     conn_name: my-eth1
     mtu: 9000
     type: ethernet
@@ -490,9 +480,7 @@ EXAMPLES='''
 #     - 9 nmcli and NetworkManager versions mismatch
 #     - 10 Connection, device, or access point does not exist.
 '''
-# import ansible.module_utils.basic
-import os
-import sys
+
 HAVE_DBUS=False
 try:
     import dbus
@@ -568,7 +556,7 @@ class Nmcli(object):
         self.type=module.params['type']
         self.ip4=module.params['ip4']
         self.gw4=module.params['gw4']
-        self.dns4=module.params['dns4']
+        self.dns4=' '.join(module.params['dns4'])
         self.ip6=module.params['ip6']
         self.gw6=module.params['gw6']
         self.dns6=module.params['dns6']
@@ -606,7 +594,7 @@ class Nmcli(object):
             for setting in secrets:
                 for key in secrets[setting]:
                     config[setting_name][key]=secrets[setting][key]
-        except Exception as e:
+        except:
             pass
 
     def dict_to_string(self, d):
@@ -638,7 +626,7 @@ class Nmcli(object):
         for setting_name in config:
             setting_list.append(self.dict_to_string(config[setting_name]))
         return setting_list
-        # print ""
+        # print("")
 
     def bool_to_string(self, boolean):
         if boolean:
@@ -1104,7 +1092,7 @@ def main():
             type=dict(required=False, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
-            dns4=dict(required=False, default=None, type='str'),
+            dns4=dict(required=False, default=None, type='list'),
             ip6=dict(required=False, default=None, type='str'),
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
@@ -1196,6 +1184,7 @@ def main():
         result['stderr']=err
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

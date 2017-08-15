@@ -27,6 +27,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
 
@@ -45,12 +46,12 @@ class PlaybookExecutor:
     '''
 
     def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords):
-        self._playbooks        = playbooks
-        self._inventory        = inventory
+        self._playbooks = playbooks
+        self._inventory = inventory
         self._variable_manager = variable_manager
-        self._loader           = loader
-        self._options          = options
-        self.passwords         = passwords
+        self._loader = loader
+        self._options = options
+        self.passwords = passwords
         self._unreachable_hosts = dict()
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
@@ -79,7 +80,7 @@ class PlaybookExecutor:
         try:
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
-                self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
+                # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing
                     entry = {'playbook': playbook_path}
@@ -104,14 +105,14 @@ class PlaybookExecutor:
 
                     if play.vars_prompt:
                         for var in play.vars_prompt:
-                            vname     = var['name']
-                            prompt    = var.get("prompt", vname)
-                            default   = var.get("default", None)
-                            private   = var.get("private", True)
-                            confirm   = var.get("confirm", False)
-                            encrypt   = var.get("encrypt", None)
+                            vname = var['name']
+                            prompt = var.get("prompt", vname)
+                            default = var.get("default", None)
+                            private = boolean(var.get("private", True))
+                            confirm = boolean(var.get("confirm", False))
+                            encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
-                            salt      = var.get("salt", None)
+                            salt = var.get("salt", None)
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
@@ -122,7 +123,7 @@ class PlaybookExecutor:
 
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.
-                    all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+                    all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
                     new_play = play.copy()
                     new_play.post_validate(templar)
@@ -192,7 +193,7 @@ class PlaybookExecutor:
                         retries = sorted(retries)
                         if len(retries) > 0:
                             if C.RETRY_FILES_SAVE_PATH:
-                                basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
+                                basedir = C.RETRY_FILES_SAVE_PATH
                             elif playbook_path:
                                 basedir = os.path.dirname(os.path.abspath(playbook_path))
                             else:

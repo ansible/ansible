@@ -6,11 +6,99 @@
   vars:
     limit_to: "*"
     debug: false
+# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
 
-  roles:
-    - { role: ios_banner, when: "limit_to in ['*', 'ios_banner']" }
-    - { role: ios_command, when: "limit_to in ['*', 'ios_command']" }
-    - { role: ios_config, when: "limit_to in ['*', 'ios_config']" }
-    - { role: ios_facts, when: "limit_to in ['*', 'ios_facts']" }
-    - { role: ios_template, when: "limit_to in ['*', 'ios_template']" }
-    - { role: ios_system, when: "limit_to in ['*', 'ios_system']" }
+
+  tasks:
+    - set_fact:
+        test_failed: false
+        failed_modules: []
+    - block:
+      - include_role:
+          name: ios_banner
+        when: "limit_to in ['*', 'ios_banner']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_banner' ]"
+            test_failed: true
+    - block:
+      - include_role:
+          name: ios_command
+        when: "limit_to in ['*', 'ios_command']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_command' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_config
+        when: "limit_to in ['*', 'ios_config']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_config' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_facts
+        when: "limit_to in ['*', 'ios_facts']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_facts' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_system
+        when: "limit_to in ['*', 'ios_system']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_system' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_user
+        when: "limit_to in ['*', 'ios_user']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_user' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_static_route
+        when: "limit_to in ['*', 'ios_static_route']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_static_route' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_logging
+        when: "limit_to in ['*', 'ios_logging']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_logging' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_interface
+        when: "limit_to in ['*', 'ios_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_logging' ]"
+            test_failed: true
+
+###########
+    - debug: var=failed_modules
+      when: test_failed
+
+    - name: Has any previous test failed?
+      fail:
+        msg: "One or more tests failed, check log for details"
+      when: test_failed
