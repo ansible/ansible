@@ -20,6 +20,7 @@ author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
 - Jacob Mcgill (@jmcgill298)
+version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
@@ -177,4 +178,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
