@@ -20,6 +20,7 @@ author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
 - Jacob Mcgill (@jmcgill298)
+version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
@@ -55,7 +56,6 @@ options:
     description:
     - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
     - This acts as the secondary encap when using useg.
-    type: int
     choices: [ range from 1 to 4096 ]
   encap_mode:
     description:
@@ -76,7 +76,6 @@ options:
   primary_encap:
     description:
     - Determines the primary VLAN ID when using useg.
-    type: int
     choices: [ range from 1 to 4096 ]
   resolution_immediacy:
     description:
