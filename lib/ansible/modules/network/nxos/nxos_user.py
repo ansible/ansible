@@ -331,6 +331,12 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    if module.params['password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+        
     check_args(module, warnings)
     result['warnings'] = warnings
 
