@@ -180,7 +180,6 @@ Ansible Changes By Release
   * aci_subnet
   * aci_taboo_contract
   * aci_tenant
-
 - aix_lvol
 - amazon
   * aws_api_gateway
