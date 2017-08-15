@@ -167,8 +167,9 @@
 - name: Disable interface on aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1, enabled: False}
-      - { name: eth2, description: test-interface-2, enabled: False}
+      - name: eth1
+      - name: eth2
+    enabled: False
   register: result
 
 - assert:
@@ -180,8 +181,9 @@
 - name: Enable interface on aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1, enabled: True}
-      - { name: eth2, description: test-interface-2, enabled: True}
+      - name: eth1
+      - name: eth2
+    enabled: True
   register: result
 
 - assert:
@@ -193,8 +195,9 @@
 - name: Delete interface aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, state: absent}
-      - { name: eth2, state: absent}
+      - name: eth1
+      - name: eth2
+    state: absent
   register: result
 
 - assert:
@@ -206,8 +209,9 @@
 - name: Delete interface aggregate (idempotent)
   vyos_interface:
     aggregate:
-      - { name: eth1, state: absent}
-      - { name: eth2, state: absent}
+      - name: eth1
+      - name: eth2
+    state: absent
   register: result
 
 - assert:

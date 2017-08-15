@@ -127,9 +127,11 @@ commands:
 
 import re
 
+from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
@@ -215,13 +217,6 @@ def get_param_value(key, item, module):
     if not item.get(key):
         value = module.params[key]
 
-    # if key does exist, do a type check on it to validate it
-    else:
-        value_type = module.argument_spec[key].get('type', 'str')
-        type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER[value_type]
-        type_checker(item[key])
-        value = item[key]
-
     # validate the param value (if validator func exists)
     validator = globals().get('validate_%s' % key)
     if all((value, validator)):
@@ -231,21 +226,17 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
-        elif not module.params['name']:
-            module.fail_json(msg='username is required')
         else:
             aggregate = [{'name': module.params['name']}]
     else:
         aggregate = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 aggregate.append({'name': item})
-            elif 'name' not in item:
-                module.fail_json(msg='name is required')
             else:
                 aggregate.append(item)
 
@@ -278,8 +269,7 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        users=dict(type='list', aliases=['aggregate']),
+    element_spec = dict(
         name=dict(),
 
         full_name=dict(),
@@ -292,9 +282,20 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    argument_spec.update(vyos_argument_spec)
-    mutually_exclusive = [('name', 'users')]
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
 
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users']),
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(vyos_argument_spec)
+
+    mutually_exclusive = [('name', 'aggregate')]
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)

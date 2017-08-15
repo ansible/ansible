@@ -90,8 +90,8 @@
 - name: Create aggregate of LLDP interface configurations
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
-    - { name: eth2 }
+    - name: eth1
+    - name: eth2
     state: present
   register: result
 
@@ -104,8 +104,8 @@
 - name: Create aggregate of LLDP interface configurations again (idempotent)
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
-    - { name: eth2 }
+    - name: eth1
+    - name: eth2
     state: present
   register: result
 
@@ -116,7 +116,7 @@
 - name: Override LLDP interface configuration on aggregate
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
+    - name: eth1
     - { name: eth2, state: disabled }
     state: present
   register: result
@@ -129,7 +129,7 @@
 - name: Override LLDP interface configuration on aggregate again (idempotent)
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
+    - name: eth1
     - { name: eth2, state: disabled }
     state: present
   register: result
@@ -141,8 +141,8 @@
 - name: Delete aggregate of LLDP interface configurations
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
-    - { name: eth2 }
+    - name: eth1
+    - name: eth2
     state: absent
   register: result
 
@@ -155,8 +155,8 @@
 - name: Delete aggregate of LLDP interface configurations (idempotent)
   vyos_lldp_interface:
     aggregate:
-    - { name: eth1 }
-    - { name: eth2 }
+    - name: eth1
+    - name: eth2
     state: absent
   register: result
 

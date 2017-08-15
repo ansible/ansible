@@ -45,10 +45,6 @@ options:
       - IPv6 of the L3 interface.
   aggregate:
     description: List of L3 interfaces definitions
-  purge:
-    description:
-      - Purge L3 interfaces not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the L3 interface configuration.
@@ -66,6 +62,19 @@ EXAMPLES = """
   vyos_l3_interface:
     name: eth0
     state: absent
+
+- name: Set IP addresses on aggregate
+  vyos_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+
+- name: Remove IP addresses on aggregate
+  vyos_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+    state: absent
 """
 
 RETURN = """
@@ -76,7 +85,10 @@ commands:
   sample:
     - set interfaces ethernet eth0 address '192.168.0.1/24'
 """
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import load_config, run_commands
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
@@ -153,18 +165,14 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     obj = []
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            if 'ipv4' not in d:
-                d['ipv4'] = None
-            if 'ipv6' not in d:
-                d['ipv6'] = None
-            if 'state' not in d:
-                d['state'] = module.params['state']
-
-            obj.append(d)
+            obj.append(item.copy())
     else:
         obj.append({
             'name': module.params['name'],
@@ -179,16 +187,25 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         ipv4=dict(),
         ipv6=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
