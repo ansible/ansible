@@ -105,14 +105,6 @@ EXAMPLES = '''
     peer_gw: true
     auto_recovery: true
 
-# peer-gateway might ask for confirmation to apply changes
-# Device should be configured with terminal dont-ask that makes
-# the device take default answer on confirmation prompt
-
-- name: Make device take default answer
-  nxos_command:
-    commands: terminal dont-ask
-
 - name: configure
   nxos_vpc:
     domain: 100
@@ -196,7 +188,7 @@ def get_vpc(module):
             for each in vpc_list:
                 if 'delay restore' in each:
                     line = each.split()
-                    if len(line) == 5:
+                    if len(line) == 3:
                         delay_restore = line[-1]
                 if 'peer-keepalive destination' in each:
                     line = each.split()
@@ -283,6 +275,8 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         command = CONFIG_ARGS.get(param)
         if command is not None:
             command = command.format(**vpc).strip()
+            if 'peer-gateway' in command:
+                commands.append('terminal dont-ask')
             commands.append(command)
 
     if commands or domain_only:
@@ -370,6 +364,7 @@ def main():
                 module.fail_json(msg="You are trying to remove a domain that "
                                      "does not exist on the device")
             else:
+                commands.append('terminal dont-ask')
                 commands.append('no vpc domain {0}'.format(domain))
 
     cmds = flatten_list(commands)
