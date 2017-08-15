@@ -421,6 +421,10 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
+
+    if module._name == 'panos_security_policy':
+        module.deprecate("The 'panos_security_policy' module is being renamed 'panos_security_rule'", version=2.8)
+
     if not HAS_LIB:
         module.fail_json(msg='Missing required pan-python and pandevice modules.')
 
