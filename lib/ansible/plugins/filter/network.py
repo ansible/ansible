@@ -87,7 +87,53 @@ def parse_cli(output, tmpl):
         if template.can_template(value):
             value = template(value, spec)
 
-        if 'items' in attrs:
+        if 'start_block' in attrs and 'end_block' in attrs:
+            start_block = re.compile(attrs['start_block'])
+            end_block = re.compile(attrs['end_block'])
+
+            blocks = list()
+            lines = None
+            block_started = False
+
+            for line in output.split('\n'):
+                match_start = start_block.match(line)
+                match_end = end_block.match(line)
+
+                if match_start:
+                    if lines:
+                        blocks.append('\n'.join(lines))
+                    lines = list()
+                    lines.append(line)
+                    block_started = True
+
+                elif match_end:
+                    if lines:
+                        lines.append(line)
+                    block_started = False
+
+                elif block_started:
+                    if lines:
+                        lines.append(line)
+
+            regex_items = [re.compile(r) for r in attrs['items']]
+            objects = list()
+
+            for block in blocks:
+                items = list()
+                for regex in regex_items:
+                    match = regex.search(block)
+                    if match:
+                        items.append(match.group(1))
+                    else:
+                        items.append(None)
+
+                obj = {}
+                obj = dict([(k, template(v, {'item': items})) for k, v in iteritems(value)])
+                objects.append(obj)
+
+            return objects
+
+        elif 'items' in attrs:
             regexp = re.compile(attrs['items'])
             when = attrs.get('when')
             conditional = "{%% if %s %%}True{%% else %%}False{%% endif %%}" % when
