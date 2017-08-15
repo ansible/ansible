@@ -218,7 +218,6 @@ lib/ansible/modules/files/tempfile.py
 lib/ansible/modules/files/xattr.py
 lib/ansible/modules/monitoring/bigpanda.py
 lib/ansible/modules/monitoring/boundary_meter.py
-lib/ansible/modules/monitoring/circonus_annotation.py
 lib/ansible/modules/monitoring/datadog_event.py
 lib/ansible/modules/monitoring/icinga2_feature.py
 lib/ansible/modules/monitoring/librato_annotation.py
