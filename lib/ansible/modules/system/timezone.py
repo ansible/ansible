@@ -70,6 +70,7 @@ EXAMPLES = '''
     name: Asia/Tokyo
 '''
 
+import errno
 import os
 import platform
 import random
@@ -317,6 +318,8 @@ class NosystemdTimezone(Timezone):
         adjtime='/etc/adjtime'
     )
 
+    allow_no_file = dict()
+
     regexps = dict(
         name   =None,  # To be set in __init__
         hwclock=re.compile(r'^UTC\s*=\s*([^\s]+)', re.MULTILINE),
@@ -331,28 +334,42 @@ class NosystemdTimezone(Timezone):
             self.update_timezone  = self.module.get_bin_path('cp', required=True)
             self.update_timezone += ' %s /etc/localtime' % tzfile
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
+        self.allow_no_file['hwclock'] = True  # Since this is only used for get values, file absense does not metter
         # Distribution-specific configurations
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
             self.update_timezone       = self.module.get_bin_path('dpkg-reconfigure', required=True)
             self.update_timezone      += ' --frontend noninteractive tzdata'
             self.conf_files['name']    = '/etc/timezone'
+            self.allow_no_file['name'] = True
             self.conf_files['hwclock'] = '/etc/default/rcS'
             self.regexps['name']       = re.compile(r'^([^\s]+)', re.MULTILINE)
             self.tzline_format         = '%s\n'
         else:
             # RHEL/CentOS
             if self.module.get_bin_path('tzdata-update') is not None:
-                self.update_timezone   = self.module.get_bin_path('tzdata-update', required=True)
+                self.update_timezone       = self.module.get_bin_path('tzdata-update', required=True)
+                self.allow_no_file['name'] = True
             # else:
-            #   self.update_timezone   = 'cp ...' <- configured above
+            #   self.update_timezone       = 'cp ...' <- configured above
+            #   self.allow_no_file['name'] = False <- this is default behavior
             self.conf_files['name']    = '/etc/sysconfig/clock'
             self.conf_files['hwclock'] = '/etc/sysconfig/clock'
             self.regexps['name']       = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
             self.tzline_format         = 'ZONE="%s"\n'
         self.update_hwclock  = self.module.get_bin_path('hwclock', required=True)
 
-    def _edit_file(self, filename, regexp, value):
+    def _allow_ioerror(self, err, key):
+        # In some cases, even if the target file does not exist,
+        # simply creating it may solve the problem.
+        # In such cases, we should continue the configuration rather than aborting.
+        if err.errno != errno.ENOENT:
+            # If the error is not ENOENT ("No such file or directory"),
+            # (e.g., permission error, etc), we should abort.
+            return False
+        return self.allow_no_file.get(key, False)
+
+    def _edit_file(self, filename, regexp, value, key):
         """Replace the first matched line with given `value`.
 
         If `regexp` matched more than once, other than the first line will be deleted.
@@ -361,12 +378,16 @@ class NosystemdTimezone(Timezone):
             filename: The name of the file to edit.
             regexp:   The regular expression to search with.
             value:    The line which will be inserted.
+            key:      For what key the file is being editted.
         """
         # Read the file
         try:
             file = open(filename, 'r')
         except IOError:
-            self.abort('cannot read "%s"' % filename)
+            if self._allow_ioerror(err, key):
+                lines = []
+            else:
+                self.abort('cannot read configuration file "%s" for %s' % (filename, key))
         else:
             lines = file.readlines()
             file.close()
@@ -403,8 +424,11 @@ class NosystemdTimezone(Timezone):
 
         try:
             file = open(filename, mode='r')
-        except IOError:
-            self.abort('cannot read configuration file "%s" for %s' % (filename, key))
+        except IOError as e:
+            if self._allow_ioerror(err, key):
+                return None
+            else:
+                self.abort('cannot read configuration file "%s" for %s' % (filename, key))
         else:
             status = file.read()
             file.close()
@@ -428,7 +452,8 @@ class NosystemdTimezone(Timezone):
     def set_timezone(self, value):
         self._edit_file(filename=self.conf_files['name'],
                         regexp=self.regexps['name'],
-                        value=self.tzline_format % value)
+                        value=self.tzline_format % value,
+                        key='name')
         self.execute(self.update_timezone)
 
     def set_hwclock(self, value):
