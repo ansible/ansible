@@ -99,8 +99,14 @@ class Timezone(object):
         """
         if get_platform() == 'Linux':
             timedatectl = module.get_bin_path('timedatectl')
-            if timedatectl is not None and module.run_command(timedatectl)[0] == 0:
-                return super(Timezone, SystemdTimezone).__new__(SystemdTimezone)
+            if timedatectl is not None:
+                rc, stdout, stderr = module.run_command(timedatectl)
+                if rc == 0:
+                    return super(Timezone, SystemdTimezone).__new__(SystemdTimezone)
+                elif any(module.get_bin_path(cmd) is not None for cmd in ('dpkg-reconfigure', 'tzdata-update')):
+                    return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
+                else:
+                    module.fail_json(msg='timedatectl command is unavailable in this environment:\n%s\n%s' % (stdout, stderr))
             else:
                 return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
         elif re.match('^joyent_.*Z', platform.version()):
