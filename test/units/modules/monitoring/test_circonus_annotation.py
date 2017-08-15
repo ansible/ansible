@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 import uuid
 from urllib3.response import HTTPResponse
 
@@ -170,5 +171,5 @@ class TestCirconusAnnotation(unittest.TestCase):
             with self.assertRaises(AnsibleFailJson) as result:
                 self.module.main()
             self.assertTrue(result.exception.args[0]['failed'])
-            self.assertEqual(result.exception.args[0]['reason'].response.status_code, 403)
+            self.assertTrue(re.match(r'\b403\b', result.exception.args[0]['reason']))
         self.assertEqual(send.call_count, 1)
