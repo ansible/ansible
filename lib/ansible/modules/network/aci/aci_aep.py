@@ -3,7 +3,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_aep
-short_description: Manage Attachable Access Entity Profile on Cisco ACI Fabric
+short_description: Manage Attachable Access Entity Profile on Cisco ACI fabrics
 description:
-- Connect to external virtual and physical domains by using Attachable Access Entity Profiles on Cisco ACI Fabric.
+- Connect to external virtual and physical domains by using Attachable Access Entity Profiles on Cisco ACI fabrics.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,20 +24,20 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
-    aep:
-      description:
-      - The name of the Attachable Access Entity Profile.
-      required: yes
-      aliases: ['name','aep_name']
+  aep:
     description:
-      description:
-      - Description for the AEP.
-    state:
-      description:
-      - Use C(present) or C(absent) for adding or removing.
-      - Use C(query) for listing an object or multiple objects.
-      default: present
-      choices: [ absent, present, query ]
+    - The name of the Attachable Access Entity Profile.
+    required: yes
+    aliases: ['name','aep_name']
+  description:
+    description:
+    - Description for the AEP.
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    default: present
+    choices: [ absent, present, query ]
 extends_documentation_fragment: aci
 '''
 
