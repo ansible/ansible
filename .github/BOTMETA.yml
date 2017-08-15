@@ -4,7 +4,11 @@
 # If you have questions about this data format, please join #ansible-devel
 # on irc.freenode and ping anyone who is op'ed.
 #
-# There are 2 primary sections of the data
+# There are 3 primary sections of the data
+#
+#   automerge
+#       During release freezes, the bot uses this key to know if
+#       automerging should be on or off. It is a boolean value.
 #
 #   macros
 #       Macros are used to shorten and group some strings and lists.
@@ -27,6 +31,7 @@
 #           labels - list of GitHub labels to apply
 #
 
+automerge: False
 files:
   $modules/cloud/amazon/:
     notify:
