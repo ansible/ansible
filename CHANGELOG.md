@@ -155,6 +155,8 @@ Ansible Changes By Release
 - The template module gained a follow parameter to match with copy and file.
   Like those modules, template defaults this parameter to False.  Previously,
   template hardcoded this to true.
+- Added a new parameter to command module that lets users specify data to pipe
+  into the command's stdin.
 
 ### New Modules
 - aci
