@@ -46,7 +46,7 @@ options:
   mask:
     description:
     - The subnet mask for the Subnet.
-    - This is the number assocated with CIDR notation (EX: 24 should be supplied for a /24).
+    - This is the number assocated with CIDR notation.
     choices: [ Any 0 to 32 for IPv4 Addresses, 0-128 for IPv6 Addresses  ]
     aliases: [ subnet_mask ]
   nd_prefix_policy:
