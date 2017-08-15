@@ -30,7 +30,7 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
+from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
 from ansible.utils import plugin_docs
 try:
     from __main__ import display
@@ -66,7 +66,8 @@ class DocCLI(CLI):
         self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
                                help='Show documentation for all plugins')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                               help='Choose which plugin type', choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy'])
+                               help='Choose which plugin type (defaults to "module")',
+                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy'])
 
         super(DocCLI, self).parse()
 
@@ -99,6 +100,10 @@ class DocCLI(CLI):
             for i in self.options.module_path.split(os.pathsep):
                 loader.add_directory(i)
 
+        # save only top level paths for errors
+        search_paths = DocCLI.print_paths(loader)
+        loader._paths = None  # reset so we can use subdirs below
+
         # list plugins for type
         if self.options.list_dir:
             paths = loader._get_paths()
@@ -125,7 +130,7 @@ class DocCLI(CLI):
                 # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
                 filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True)
                 if filename is None:
-                    display.warning("%s %s not found in %s\n" % (plugin_type, plugin, DocCLI.print_paths(loader)))
+                    display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
                     continue
 
                 if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
@@ -255,7 +260,7 @@ class DocCLI(CLI):
 
         # Uses a list to get the order right
         ret = []
-        for i in finder._get_paths():
+        for i in finder._get_paths(subdirs=False):
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
@@ -287,6 +292,9 @@ class DocCLI(CLI):
         text.append('')
 
         return "\n".join(text)
+
+    def _dump_yaml(self, struct, indent):
+        return CLI.tty_ify('\n'.join([indent + line for line in yaml.dump(struct, default_flow_style=False, Dumper=AnsibleDumper).split('\n')]))
 
     def add_fields(self, text, fields, limit, opt_indent):
 
@@ -322,123 +330,109 @@ class DocCLI(CLI):
                 del opt['choices']
             default = ''
             if 'default' in opt or not required:
-                default = "[Default: " + str(opt.pop('default', '(null)')) + "]"
+                default = "[Default: %s" % str(opt.pop('default', '(null)')) + "]"
+
             text.append(textwrap.fill(CLI.tty_ify(aliases + choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
             if 'options' in opt:
-                text.append(opt_indent + "options:\n")
-                self.add_fields(text, opt['options'], limit, opt_indent + opt_indent)
-                text.append('')
-                del opt['options']
+                text.append("%soptions:\n" % opt_indent)
+                self.add_fields(text, opt.pop('options'), limit, opt_indent + opt_indent)
 
             if 'spec' in opt:
-                text.append(opt_indent + "spec:\n")
-                self.add_fields(text, opt['spec'], limit, opt_indent + opt_indent)
-                text.append('')
-                del opt['spec']
+                text.append("%sspec:\n" % opt_indent)
+                self.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
 
-            for conf in ('config', 'env_vars', 'host_vars'):
-                if conf in opt:
-                    text.append(textwrap.fill(CLI.tty_ify("%s: " % conf), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                    for entry in opt[conf]:
-                        if isinstance(entry, dict):
-                            pre = "  -"
-                            for key in entry:
-                                text.append(textwrap.fill(CLI.tty_ify("%s %s: %s" % (pre, key, entry[key])),
-                                            limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                                pre = "   "
-                        else:
-                            text.append(textwrap.fill(CLI.tty_ify("  - %s" % entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                    del opt[conf]
+            conf = {}
+            for config in ('env', 'ini', 'yaml', 'vars'):
+                if config in opt and opt[config]:
+                    conf[config] = opt.pop(config)
 
-            # unspecified keys
-            for k in opt:
+            if conf:
+                text.append(self._dump_yaml({'set_via': conf}, opt_indent))
+
+            for k in sorted(opt):
                 if k.startswith('_'):
                     continue
                 if isinstance(opt[k], string_types):
-                    text.append(textwrap.fill(CLI.tty_ify("%s: %s" % (k, opt[k])), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                elif isinstance(opt[k], (list, dict)):
-                    text.append(textwrap.fill(CLI.tty_ify("%s: %s" % (k, yaml.dump(opt[k], Dumper=AnsibleDumper, default_flow_style=False))),
-                                              limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    text.append('%s%s: %s' % (opt_indent, k, textwrap.fill(CLI.tty_ify(opt[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                elif isinstance(opt[k], (list, tuple)):
+                    text.append(CLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
                 else:
-                    display.vv("Skipping %s key cuase we don't know how to handle eet" % k)
+                    text.append(self._dump_yaml({k: opt[k]}, opt_indent))
+            text.append('')
 
     def get_man_text(self, doc):
+
+        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date'])
         opt_indent = "        "
         text = []
-        text.append("> %s    (%s)\n" % (doc[self.options.type].upper(), doc['filename']))
+
+        text.append("> %s    (%s)\n" % (doc[self.options.type].upper(), doc.pop('filename')))
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
         if isinstance(doc['description'], list):
-            desc = " ".join(doc['description'])
+            desc = " ".join(doc.pop('description'))
         else:
-            desc = doc['description']
+            desc = doc.pop('description')
 
-        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
+        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
-            text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
+            text.append("DEPRECATED: \n%s\n" % doc.pop('deprecated'))
 
-        if 'action' in doc and doc['action']:
+        if doc.pop('action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
         if 'options' in doc and doc['options']:
-            text.append("Options (= is mandatory):\n")
-            self.add_fields(text, doc['options'], limit, opt_indent)
+            text.append("OPTIONS (= is mandatory):\n")
+            self.add_fields(text, doc.pop('options'), limit, opt_indent)
             text.append('')
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
-            text.append("Notes:")
+            text.append("NOTES:")
             for note in doc['notes']:
-                text.append(textwrap.fill(CLI.tty_ify(note), limit - 6, initial_indent="  * ", subsequent_indent=opt_indent))
+                text.append(textwrap.fill(CLI.tty_ify(note), limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+            text.append('')
+            del doc['notes']
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
-            req = ", ".join(doc['requirements'])
-            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
-
-        if 'examples' in doc and len(doc['examples']) > 0:
-            text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))
-            for ex in doc['examples']:
-                text.append("%s\n" % (ex['code']))
+            req = ", ".join(doc.pop('requirements'))
+            text.append("REQUIREMENTS:%s\n" % textwrap.fill(CLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         if 'plainexamples' in doc and doc['plainexamples'] is not None:
-            text.append("EXAMPLES:\n")
+            text.append("EXAMPLES:")
             if isinstance(doc['plainexamples'], string_types):
-                text.append(doc['plainexamples'])
+                text.append(doc.pop('plainexamples').strip())
             else:
-                text.append(yaml.dump(doc['plainexamples'], indent=2, default_flow_style=False))
+                text.append(yaml.dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
+            text.append('')
 
         if 'returndocs' in doc and doc['returndocs'] is not None:
             text.append("RETURN VALUES:\n")
             if isinstance(doc['returndocs'], string_types):
-                text.append(doc['returndocs'])
+                text.append(doc.pop('returndocs'))
             else:
-                text.append(yaml.dump(doc['returndocs'], indent=2, default_flow_style=False))
+                text.append(yaml.dump(doc.pop('returndocs'), indent=2, default_flow_style=False))
         text.append('')
 
-        maintainers = set()
-        if 'author' in doc:
-            if isinstance(doc['author'], string_types):
-                maintainers.add(doc['author'])
+        # Control rest of keys on verbosity (3 == full, 0 only adds small list)
+        rest = []
+        if self.options.verbosity >= 3:
+            rest = doc
+        elif 'author' in doc:
+            rest = ['author']
+
+        # Generic handler
+        for k in sorted(rest):
+            if k in IGNORE or not doc[k]:
+                continue
+            if isinstance(doc[k], string_types):
+                text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+            elif isinstance(doc[k], (list, tuple)):
+                text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
-                maintainers.update(doc['author'])
-
-        if 'maintainers' in doc:
-            if isinstance(doc['maintainers'], string_types):
-                maintainers.add(doc['author'])
-            else:
-                maintainers.update(doc['author'])
-
-        text.append('MAINTAINERS: ' + ', '.join(maintainers))
-        text.append('')
-
-        if 'metadata' in doc and doc['metadata']:
-            text.append("METADATA:")
-            for k in doc['metadata']:
-                if isinstance(k, list):
-                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
-                else:
-                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+                text.append(self._dump_yaml({k.upper(): doc[k]}, opt_indent))
             text.append('')
+
         return "\n".join(text)

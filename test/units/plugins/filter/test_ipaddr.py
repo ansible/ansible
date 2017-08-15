@@ -20,6 +20,11 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
                                            previous_nth_usable, network_in_usable, network_in_network)
+try:
+    import netaddr
+except ImportError:
+    from nose.plugins.skip import SkipTest
+    raise SkipTest("This test  requires the `netaddr` python library")
 
 
 class TestIpFilter(unittest.TestCase):

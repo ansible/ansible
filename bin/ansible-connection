@@ -45,7 +45,7 @@ from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.connection import send_data, recv_data
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import connection_loader
+from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.errors import AnsibleConnectionFailure
 from ansible.utils.display import Display

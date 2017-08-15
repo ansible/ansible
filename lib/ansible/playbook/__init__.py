@@ -26,7 +26,7 @@ from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_text
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
-from ansible.plugins import get_all_plugin_loaders
+from ansible.plugins.loader import get_all_plugin_loaders
 
 try:
     from __main__ import display

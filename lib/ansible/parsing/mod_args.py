@@ -23,7 +23,7 @@ from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
-from ansible.plugins import module_loader, action_loader
+from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
 
 

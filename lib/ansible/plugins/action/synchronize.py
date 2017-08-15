@@ -26,7 +26,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
-from ansible.plugins import connection_loader
+from ansible.plugins.loader import connection_loader
 
 
 class ActionModule(ActionBase):

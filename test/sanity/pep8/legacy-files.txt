@@ -1,4 +1,5 @@
 lib/ansible/cli/config.py
+lib/ansible/constants.py
 lib/ansible/config/data.py
 lib/ansible/config/manager.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py

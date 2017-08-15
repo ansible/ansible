@@ -24,7 +24,7 @@ import os
 
 from ansible.compat.tests import BUILTINS, unittest
 from ansible.compat.tests.mock import mock_open, patch, MagicMock
-from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
+from ansible.plugins.loader import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
 
 class TestErrors(unittest.TestCase):

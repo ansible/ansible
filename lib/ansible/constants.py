@@ -1,46 +1,58 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os  # used to set lang
+
 from string import ascii_letters, digits
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
+from ansible.module_utils.six import string_types
 from ansible.config.manager import ConfigManager
 
-_config = ConfigManager()
-
-# Generate constants from config
-for setting in _config.data.get_settings():
-    vars()[setting.name] = setting.value
-
+def _deprecated(msg):
+    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+    try:
+        from __main__ import display
+        display.deprecated(msg, version='2.8')
+    except:
+        import sys
+        sys.stderr.write('[DEPRECATED] %s, to be removed in 2.8' % msg)
 
 def mk_boolean(value):
     ''' moved to module_utils'''
-    # We don't have a display here so we can't call deprecated
-    # display.deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead', version='2.8')
+    _deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead')
     return boolean(value, strict=False)
 
+def get_config(parser, section, key, env_var, default_value, value_type=None, expand_relative_paths=False):
+    ''' kept for backwarsd compatibility, but deprecated '''
+    _deprecated('ansible.constants.get_config() is deprecated. There is new config API, see porting docs.')
 
-# ### CONSTANTS ### yes, actual ones
+    import os
 
+    value = None
+    # small reconstruction of the old code env/ini/default
+    value = os.environ.get(env_var, None)
+    if value is None:
+        try:
+            value = config.get_ini_config(parser, [{'key': key, 'section': section}])
+        except:
+            pass
+    if value is None:
+        value = default_value
+    try:
+        value = config.ensure_type(value, value_type)
+    except:
+        pass
+
+    return value
+
+### CONSTANTS ### yes, actual ones
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun']
 BECOME_ERROR_STRINGS = {
@@ -79,3 +91,22 @@ RESTRICTED_RESULT_KEYS = ['ansible_rsync_path', 'ansible_playbook_python']
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
+
+### POPULATE SETTINGS FROM CONFIG ###
+config = ConfigManager()
+
+# Generate constants from config
+for setting in config.data.get_settings():
+
+    # FIXME: find better way to do in manager class and/or ensure types
+    if isinstance(setting.value, string_types) and (setting.value.startswith('eval(') and setting.value.endswith(')')):
+        try:
+            eval_string = setting.value.replace('eval(', '', 1)[:-1]
+            vars()[setting.name] = eval(eval_string) # FIXME: safe eval?
+            continue
+        except:
+            pass
+
+    vars()[setting.name] = setting.value
+
+

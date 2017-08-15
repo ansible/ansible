@@ -29,16 +29,24 @@ DOCUMENTATION:
     author: Tomas Tomecek (ttomecek@redhat.com)
     version_added: 2.4
     options:
+        remote_addr:
+            description:
+                - The ID of the container you want to access.
+            default: inventory_hostname
+            config:
+              vars:
+                - name: ansible_host
         remote_user:
             description:
                 - User specified via name or ID which is used to execute commands inside the container.
             config:
-               - section: defaults
-                 key: remote_user
-            env_vars:
-               - ANSIBLE_REMOTE_USER
-            host_vars:
-               - ansible_user
+              ini:
+                - section: defaults
+                  key: remote_user
+              env:
+                - name: ANSIBLE_REMOTE_USER
+              vars:
+                - name: ansible_user
 """
 
 from __future__ import (absolute_import, division, print_function)

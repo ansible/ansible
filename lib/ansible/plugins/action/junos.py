@@ -26,7 +26,7 @@ from ansible import constants as C
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
-from ansible.plugins import connection_loader, module_loader
+from ansible.plugins.loader import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.connection import Connection
 

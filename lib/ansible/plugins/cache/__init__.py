@@ -27,7 +27,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
-from ansible.plugins import cache_loader
+from ansible.plugins.loader import cache_loader
 
 try:
     from __main__ import display
