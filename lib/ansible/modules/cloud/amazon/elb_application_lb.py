@@ -538,9 +538,13 @@ def compare_listener(current_listener, new_listener):
         if current_listener['SslPolicy'] != new_listener['SslPolicy']:
             modified_listener['SslPolicy'] = new_listener['SslPolicy']
         if current_listener['Certificates'][0]['CertificateArn'] != new_listener['Certificates'][0]['CertificateArn']:
+            modified_listener['Certificates'] = []
+            modified_listener['Certificates'].append({})
             modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
     elif current_listener['Protocol'] != 'HTTPS' and new_listener['Protocol'] == 'HTTPS':
         modified_listener['SslPolicy'] = new_listener['SslPolicy']
+        modified_listener['Certificates'] = []
+        modified_listener['Certificates'].append({})
         modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
 
     # Default action
