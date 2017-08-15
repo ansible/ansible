@@ -46,8 +46,7 @@ options:
   mask:
     description:
     - The subnet mask for the Subnet.
-    - This is the number assocated with CIDR notation (EX: 24 should be supplied for a /24)
-    type: int
+    - This is the number assocated with CIDR notation (EX: 24 should be supplied for a /24).
     choices: [ Any 0 to 32 for IPv4 Addresses, 0-128 for IPv6 Addresses  ]
     aliases: [ subnet_mask ]
   nd_prefix_policy:
@@ -55,7 +54,7 @@ options:
     - The IPv6 Neighbor Discovery Prefix Policy to associate with the Subnet.
   preferred:
     description:
-    - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6)
+    - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
       can be preferred in the Bridge Domain.
     - The APIC defaults new Subnets to not be preffered.
     choices: [ no, yes ]
