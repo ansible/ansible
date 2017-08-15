@@ -174,7 +174,7 @@ namespace Ansible.Shell
 
             string so = null, se = null;
 
-            ThreadPool.QueueUserWorkItem((s)=>
+            ThreadPool.QueueUserWorkItem((s) =>
             {
                 so = stdoutStream.ReadToEnd();
                 sowait.Set();
@@ -186,7 +186,7 @@ namespace Ansible.Shell
                 sewait.Set();
             });
 
-            foreach(var wh in new WaitHandle[] { sowait, sewait })
+            foreach (var wh in new WaitHandle[] { sowait, sewait })
                 wh.WaitOne();
 
             stdout = so;
@@ -207,16 +207,18 @@ namespace Ansible.Shell
             StringBuilder sbOut = new StringBuilder(1024);
             IntPtr filePartOut;
 
-            if(SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
+            if (SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
                 throw new FileNotFoundException("Couldn't locate " + findThis + " on path");
 
             return sbOut.ToString();
         }
 
-        public static uint GetProcessExitCode(IntPtr processHandle) {
+        public static uint GetProcessExitCode(IntPtr processHandle)
+        {
             new NativeWaitHandle(processHandle).WaitOne();
             uint exitCode;
-            if(!GetExitCodeProcess(processHandle, out exitCode)) {
+            if (!GetExitCodeProcess(processHandle, out exitCode))
+            {
                 throw new Exception("Error getting process exit code: " + Marshal.GetLastWin32Error());
             }
             return exitCode;
@@ -233,8 +235,8 @@ namespace Ansible.Shell
             security.Persist(safeHandle, AccessControlSections.Access);
         }
 
-        [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
-        public static extern uint SearchPath (
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern uint SearchPath(
             string lpPath,
             string lpFileName,
             string lpExtension,
@@ -243,25 +245,25 @@ namespace Ansible.Shell
             StringBuilder lpBuffer,
             out IntPtr lpFilePart);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
 
         [DllImport("kernel32.dll")]
         public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, uint nSize);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr GetStdHandle(StandardHandleValues nStdHandle);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool SetHandleInformation(IntPtr hObject, HandleFlags dwMask, int dwFlags);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool CloseHandle(IntPtr hObject);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref int lpSize);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool UpdateProcThreadAttribute(
                 IntPtr lpAttributeList,
                 uint dwFlags,
@@ -271,7 +273,25 @@ namespace Ansible.Shell
                 IntPtr lpPreviousValue,
                 IntPtr lpReturnSize);
 
-        [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode, BestFitMapping=false)]
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool LogonUser(
+            string lpszUsername,
+            string lpszDomain,
+            string lpszPassword,
+            int dwLogonType,
+            int dwLogonProvider,
+            out IntPtr phToken);
+
+        [DllImport("userenv.dll", SetLastError=true)]
+        public static extern bool LoadUserProfile(IntPtr hToken, [In,Out]PROFILEINFO lpProfileInfo);
+
+        [DllImport("userenv.dll", SetLastError=true)]
+        public static extern bool UnloadUserProfile(IntPtr hToken, IntPtr hProfile);
+
+        [DllImport("userenv.dll", SetLastError = true)]
+        public static extern bool CreateEnvironmentBlock(out IntPtr lpEnvironment, IntPtr hToken, bool bInherit);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, BestFitMapping = false)]
         public static extern bool CreateProcess(
             [MarshalAs(UnmanagedType.LPTStr)]
             string lpApplicationName,
@@ -287,19 +307,33 @@ namespace Ansible.Shell
             out PROCESS_INFORMATION lpProcessInformation);
 
 
-        [DllImport("advapi32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessWithLogonW(
-            string             userName,
-            string             domain,
-            string             password,
-            LOGON_FLAGS         logonFlags,
-            string             applicationName,
-            string             commandLine,
-            uint          creationFlags,
-            IntPtr             environment,
-            string             currentDirectory,
-            STARTUPINFOEX  startupInfo,
-            out PROCESS_INFORMATION     processInformation);
+            string userName,
+            string domain,
+            string password,
+            LOGON_FLAGS logonFlags,
+            string applicationName,
+            string commandLine,
+            uint creationFlags,
+            IntPtr environment,
+            string currentDirectory,
+            STARTUPINFOEX startupInfo,
+            out PROCESS_INFORMATION processInformation);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool CreateProcessAsUser(
+            IntPtr hToken,
+            string lpApplicationName,
+            string lpCommandLine,
+            SECURITY_ATTRIBUTES lpProcessAttributes,
+            SECURITY_ATTRIBUTES lpThreadAttributes,
+            bool bInheritHandles,
+            uint dwCreationFlags,
+            IntPtr lpEnvironment,
+            string lpCurrentDirectory,
+            STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetProcessWindowStation();
@@ -313,7 +347,8 @@ namespace Ansible.Shell
         private class GenericAccessRule : AccessRule
         {
             public GenericAccessRule(IdentityReference identity, int accessMask, AccessControlType type) :
-                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type) { }
+                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type)
+            { }
         }
 
         private class GenericSecurity : NativeObjectSecurity
@@ -328,12 +363,14 @@ namespace Ansible.Shell
             public override Type AccessRightType { get { throw new NotImplementedException(); } }
 
             public override AccessRule AccessRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type) { throw new NotImplementedException(); }
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type)
+            { throw new NotImplementedException(); }
 
             public override Type AccessRuleType { get { return typeof(AccessRule); } }
 
             public override AuditRule AuditRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags) { throw new NotImplementedException(); }
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags)
+            { throw new NotImplementedException(); }
 
             public override Type AuditRuleType { get { return typeof(AuditRule); } }
         }
@@ -348,8 +385,10 @@ namespace Ansible.Shell
 
     }
 
-    class NativeWaitHandle : WaitHandle {
-        public NativeWaitHandle(IntPtr handle) {
+    class NativeWaitHandle : WaitHandle
+    {
+        public NativeWaitHandle(IntPtr handle)
+        {
             this.Handle = handle;
         }
     }
@@ -357,8 +396,8 @@ namespace Ansible.Shell
     [Flags]
     public enum LOGON_FLAGS
     {
-        LOGON_WITH_PROFILE     = 0x00000001,
-        LOGON_NETCREDENTIALS_ONLY  = 0x00000002
+        LOGON_WITH_PROFILE = 0x00000001,
+        LOGON_NETCREDENTIALS_ONLY = 0x00000002
     }
 
     [Flags]
@@ -393,6 +432,27 @@ namespace Ansible.Shell
         INHERIT = 1
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public class PROFILEINFO {
+        public int dwSize;
+        public int dwFlags;
+        [MarshalAs(UnmanagedType.LPTStr)] 
+        public String lpUserName; 
+        [MarshalAs(UnmanagedType.LPTStr)] 
+        public String lpProfilePath; 
+        [MarshalAs(UnmanagedType.LPTStr)] 
+        public String lpDefaultPath; 
+        [MarshalAs(UnmanagedType.LPTStr)] 
+        public String lpServerName; 
+        [MarshalAs(UnmanagedType.LPTStr)] 
+        public String lpPolicyPath; 
+        public IntPtr hProfile; 
+        
+        public PROFILEINFO()
+        {
+            dwSize = Marshal.SizeOf(this);
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     public class SECURITY_ATTRIBUTES
@@ -401,7 +461,8 @@ namespace Ansible.Shell
         public IntPtr lpSecurityDescriptor;
         public bool bInheritHandle = false;
 
-        public SECURITY_ATTRIBUTES() {
+        public SECURITY_ATTRIBUTES()
+        {
             nLength = Marshal.SizeOf(this);
         }
     }
@@ -429,17 +490,20 @@ namespace Ansible.Shell
         public IntPtr hStdOutput;
         public IntPtr hStdError;
 
-        public STARTUPINFO() {
+        public STARTUPINFO()
+        {
             cb = Marshal.SizeOf(this);
         }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public class STARTUPINFOEX {
+    public class STARTUPINFOEX
+    {
         public STARTUPINFO startupInfo;
         public IntPtr lpAttributeList;
 
-        public STARTUPINFOEX() {
+        public STARTUPINFOEX()
+        {
             startupInfo = new STARTUPINFO();
             startupInfo.cb = Marshal.SizeOf(this);
         }
@@ -453,8 +517,6 @@ namespace Ansible.Shell
         public int dwProcessId;
         public int dwThreadId;
     }
-
-
 
 }
 "@
@@ -657,8 +719,40 @@ Function Run($payload) {
         If(-not [Ansible.Shell.NativeProcessUtil]::CreateProcessWithLogonW($username, $domain, $password, [Ansible.Shell.LOGON_FLAGS]::LOGON_WITH_PROFILE,
          $exec_cmd, $exec_args,
             $pstartup_flags, [IntPtr]::Zero, $env:windir, $si, [ref]$pi)) {
+            $errcode = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+            
+            If($errcode -eq 5) { # retry with LogonUser/CreateProcessAsUser (requires more privileges and more hassle)
+                [System.IntPtr]$hToken = [System.IntPtr]::Zero
+    
+                If(-not [Ansible.Shell.NativeProcessUtil]::LogonUser($username, $domain, $password, 2, 0, [ref]$hToken)) {
+                    # TODO: get translated error message from a Win32Exception
+                    throw "Logon failed; Win32Error: " + [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+                }
+                
+                [System.IntPtr]$pEnv = [System.IntPtr]::Zero
+                
+                $profileInfo = New-Object Ansible.Shell.PROFILEINFO
+                $profileInfo.lpUserName = $username
+                $profileInfo.dwFlags = 1
+    
+                If(-not [Ansible.Shell.NativeProcessUtil]::LoadUserProfile($hToken, $profileInfo)) {
+                    # TODO: get translated error message from a Win32Exception
+                    throw "Couldn't load user profile, Win32Error: " + [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+                }
+    
+                If(-not [Ansible.Shell.NativeProcessUtil]::CreateEnvironmentBlock([ref]$pEnv, $hToken, $false)) {
+                    # TODO: get translated error message from a Win32Exception
+                    throw "Couldn't create env block, Win32Error: " + [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+                }
+    
+                If(-not [Ansible.Shell.NativeProcessUtil]::CreateProcessAsUser($hToken, $exec_cmd, $exec_args, $null, $null, $true, $pstartup_flags, $pEnv, $env:windir, $si, [ref]$pi)) {
+                    # TODO: get translated error message from a Win32Exception
+                    throw "Couldn't create process, Win32Error: " + [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+                }
+            }
+            
             #throw New-Object System.ComponentModel.Win32Exception
-            throw "Worker creation failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            #throw "Worker creation failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
         }
 
         $stdout_fs = New-Object System.IO.FileStream @($stdout_read, [System.IO.FileAccess]::Read, $true, 4096)
