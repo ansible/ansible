@@ -319,6 +319,8 @@ Ansible Changes By Release
   * win_defrag
   * win_domain_group
   * win_dsc
+  * win_eventlog
+  * win_eventlog_entry
   * win_firewall
   * win_group_membership
   * win_hotfix
