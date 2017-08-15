@@ -3,6 +3,7 @@ import json
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import PropertyMock, patch, mock_open
 from ansible.module_utils import basic
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.modules.packaging.os import rhn_register
 
@@ -96,7 +97,7 @@ class TestRhnRegister(unittest.TestCase):
             orig_import = __import__
             with patch('__builtin__.__import__', side_effect=mock_import):
                 rhn = self.module.Rhn()
-                self.assertEqual('123456789', rhn.systemid)
+                self.assertEqual('123456789', to_native(rhn.systemid))
 
     def test_without_required_parameters(self):
         """Failure must occurs when all parameters are missing"""
