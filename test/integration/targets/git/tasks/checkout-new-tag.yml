@@ -18,6 +18,7 @@
   command: git tag --contains
   args:
     chdir: "{{ checkout_dir }}"
+    warn: no
   register: listoftags
 
 - name: make sure the tag does not yet exist
@@ -29,6 +30,7 @@
   command: git tag newtag
   args:
     chdir: "{{ repo_dir }}/format1"
+    warn: no
 
 - name: update copy with new tag
   git:
@@ -41,6 +43,7 @@
   command: git tag --contains
   args:
     chdir: "{{ checkout_dir }}"
+    warn: no
   register: listoftags
 
 - name: check new head

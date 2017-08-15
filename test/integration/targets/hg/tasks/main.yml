@@ -24,6 +24,8 @@
 
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
+  args:
+    warn: no
 
 - name: verify that mercurial is installed so this test can continue
   shell: which hg

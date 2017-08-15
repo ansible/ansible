@@ -24,6 +24,8 @@
 
 - name: remove old db (RedHat or Suse)
   command: rm -rf "{{ pg_dir }}"
+  args:
+    warn: no
   ignore_errors: True
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
@@ -36,11 +38,15 @@
 # Theoretically, pg_dropcluster should work but it doesn't so rm files
 - name: remove old db config (debian)
   command: rm -rf /etc/postgresql
+  args:
+    warn: no
   ignore_errors: True
   when: ansible_os_family == "Debian"
 
 - name: remove old db files (debian)
   command: rm -rf /var/lib/postgresql
+  args:
+    warn: no
   ignore_errors: True
   when: ansible_os_family == "Debian"
 
@@ -60,6 +66,8 @@
 
 - name: Initialize postgres (RedHat sysv)
   command: /sbin/service postgresql initdb
+  args:
+    warn: no
   when: ansible_os_family == "RedHat" and ansible_service_mgr != "systemd"
 
 - name: Initialize postgres (Debian)

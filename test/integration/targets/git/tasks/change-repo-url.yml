@@ -22,11 +22,12 @@
 
 - name: check url updated
   shell: git remote show origin | grep Fetch
-  register: remote_url
   args:
     chdir: '{{ checkout_dir }}'
+    warn: no
   environment:
     LC_ALL: C
+  register: remote_url
 
 - assert:
     that: 
@@ -79,7 +80,7 @@
   assert:
     that:
       - checkout_new_url_check_mode|changed
-  when: git_version.stdout | version_compare("{{git_version_supporting_ls_remote}}", '>=')
+  when: git_version.stdout | version_compare(git_version_supporting_ls_remote, '>=')
 
 - name: clone repo with new url after check mode
   git: repo={{ repo_update_url_1 }} dest={{ checkout_dir }}
@@ -110,6 +111,7 @@
   command: git branch new-branch
   args:
     chdir: '{{ checkout_dir }}/repo'
+    warn: no
 
 - name: Checkout the new branch in the checkout
   git:

@@ -17,11 +17,12 @@
   failed_when: False
   args:
     chdir: '{{ checkout_dir }}'
+    warn: no
 
 - name: make sure the old commit was not fetched
   assert:
     that: 'checkout_early.rc != 0'
-  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
 
 # tests https://github.com/ansible/ansible/issues/14954
 - name: fetch repo again with depth=1
@@ -33,7 +34,7 @@
 
 - assert:
     that: "not checkout2|changed"
-  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
 
 - name: again try to access earlier commit
   shell: "git checkout {{git_shallow_head_1.stdout}}"
@@ -41,11 +42,12 @@
   failed_when: False
   args:
     chdir: '{{ checkout_dir }}'
+    warn: no
 
 - name: again make sure the old commit was not fetched
   assert:
     that: 'checkout_early.rc != 0'
-  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
 
 # make sure we are still able to fetch other versions
 - name: Clone same repo with older version
@@ -63,6 +65,7 @@
   shell: "git checkout {{git_shallow_head_1.stdout}}"
   args:
     chdir: '{{ checkout_dir }}'
+    warn: no
 
 - name: clear checkout_dir
   file:

@@ -37,6 +37,8 @@
 
 - name: check sos with rpm in installroot
   shell: rpm -q zlib --root="{{ yumroot.stdout }}/"
+  args:
+    warn: no
   failed_when: False
   register: rpm_result
 

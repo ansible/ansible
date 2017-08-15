@@ -17,6 +17,8 @@
 
 - name: create random file
   shell: mktemp /tmp/id_rsa.XXXXXX
+  args:
+    warn: no
   register: sshkey
   tags:
     - prepare

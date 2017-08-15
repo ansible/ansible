@@ -17,6 +17,8 @@
 
 - name: make sure systemd is reloaded
   shell: systemctl daemon-reload
+  args:
+    warn: no
   register: restart_systemd_result
 
 - name: assert that systemd was reloaded

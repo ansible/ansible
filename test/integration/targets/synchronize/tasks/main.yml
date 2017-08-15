@@ -18,6 +18,8 @@
 
 - name: cleanup old files
   shell: rm -rf {{output_dir}}/*
+  args:
+    warn: no
 
 - name: create test new files
   copy: dest={{output_dir}}/{{item}} mode=0644 content="hello world"

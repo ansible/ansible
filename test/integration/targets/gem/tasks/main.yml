@@ -21,6 +21,8 @@
 
 - name: verify gist is not installed
   shell: gem list | egrep '^gist '
+  args:
+    warn: no
   register: uninstall
   failed_when: "uninstall.rc != 1"
 
@@ -37,3 +39,5 @@
 
 - name: verify gist is installed
   shell: gem list | egrep '^gist '
+  args:
+    warn: no

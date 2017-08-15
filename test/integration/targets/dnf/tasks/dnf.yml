@@ -4,6 +4,8 @@
 #  on python2 will require python2-dnf)
 - name: check python2-dnf with rpm
   shell: rpm -q python2-dnf
+  args:
+    warn: no
   register: rpm_result
   ignore_errors: true
 
@@ -11,6 +13,8 @@
 # some dnf python files after the package is uninstalled.
 - name: uninstall python2-dnf with shell
   shell: dnf -y remove python2-dnf
+  args:
+    warn: no
   when: rpm_result|success
 
 # UNINSTALL
@@ -24,6 +28,8 @@
 
 - name: check sos with rpm
   shell: rpm -q sos
+  args:
+    warn: no
   failed_when: False
   register: rpm_result
 
@@ -57,6 +63,8 @@
 
 - name: check sos with rpm
   shell: rpm -q sos
+  args:
+    warn: no
   failed_when: False
   register: rpm_result
 
@@ -95,11 +103,15 @@
 
 - name: check sos with rpm
   shell: rpm -q sos
+  args:
+    warn: no
   failed_when: False
   register: rpm_sos_result
 
 - name: check sharutils with rpm
   shell: rpm -q sharutils
+  args:
+    warn: no
   failed_when: False
   register: rpm_sharutils_result
 
@@ -115,11 +127,15 @@
 
 - name: check sos with rpm
   shell: rpm -q sos
+  args:
+    warn: no
   failed_when: False
   register: rpm_sos_result
 
 - name: check sharutils with rpm
   shell: rpm -q sharutils
+  args:
+    warn: no
   failed_when: False
   register: rpm_sharutils_result
 
@@ -145,11 +161,15 @@
 
 - name: check sos with rpm
   shell: rpm -q sos
+  args:
+    warn: no
   failed_when: False
   register: rpm_sos_result
 
 - name: check sharutils with rpm
   shell: rpm -q sharutils
+  args:
+    warn: no
   failed_when: False
   register: rpm_sharutils_result
 
@@ -175,11 +195,15 @@
 
 - name: check sos with rpm
   shell: rpm -q sos
+  args:
+    warn: no
   failed_when: False
   register: rpm_sos_result
 
 - name: check sos with rpm
   shell: rpm -q sharutils
+  args:
+    warn: no
   failed_when: False
   register: rpm_sharutils_result
 
@@ -218,6 +242,8 @@
 
 - name: check sos with rpm in /
   shell: rpm -q sos --root=/
+  args:
+    warn: no
   failed_when: False
   register: rpm_result
 

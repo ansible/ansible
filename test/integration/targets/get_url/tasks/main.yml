@@ -143,21 +143,21 @@
 
 - command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
   register: data_result
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
 - debug: var=get_url_result
 - name: Assert that SNI works with this python version
   assert:
     that:
       - 'data_result.rc == 0'
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python
   assert:
     that:
       - 'get_url_result|failed'
-  when: "{{ not python_has_ssl_context }}"
+  when: not python_has_ssl_context
 
 # These tests are just side effects of how the site is hosted.  It's not
 # specifically a test site.  So the tests may break due to the hosting changing
@@ -170,7 +170,7 @@
 
 - command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
   register: data_result
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
 - debug: var=get_url_result
 - name: Assert that SNI works with this python version
@@ -178,7 +178,7 @@
     that:
       - 'data_result.rc == 0'
       - 'not get_url_result|failed'
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python

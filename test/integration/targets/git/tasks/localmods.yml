@@ -5,6 +5,7 @@
   shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
   args:
     chdir: "{{repo_dir}}"
+    warn: no
 
 - name: checkout old repo
   git:
@@ -55,6 +56,7 @@
   shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
   args:
     chdir: "{{repo_dir}}"
+    warn: no
 
 - name: checkout old repo
   git:
