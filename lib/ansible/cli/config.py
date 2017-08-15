@@ -26,8 +26,7 @@ import sys
 import yaml
 
 from ansible.cli import CLI
-from ansible.config.data import Setting
-from ansible.config.manager import ConfigManager
+from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -68,6 +67,8 @@ class ConfigCLI(CLI):
         if self.action == "list":
             self.parser.set_usage("usage: %prog list [options] ")
         if self.action == "dump":
+            self.parser.add_option('--only-changed', dest='only_changed', action='store_true',
+                                   help="Only show configurations that have changed from the default")
             self.parser.set_usage("usage: %prog dump [options] [-c ansible.cfg]")
         elif self.action == "view":
             self.parser.set_usage("usage: %prog view [options] [-c ansible.cfg] ")
@@ -154,14 +155,15 @@ class ConfigCLI(CLI):
         '''
         list all current configs reading lib/constants.py and shows env and config file setting names
         '''
-        self.pager(to_text(yaml.dump(self.config.initial_defs, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+        self.pager(to_text(yaml.dump(self.config.get_configuration_definitions(), Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
     def execute_dump(self):
         '''
         Shows the current settings, merges ansible.cfg if specified
         '''
+        # FIXME: deal with plugins, not just base config
         text = []
-        defaults = self.config.initial_defs.copy()
+        defaults = self.config.get_configuration_definitions().copy()
         for setting in self.config.data.get_settings():
             if setting.name in defaults:
                 defaults[setting.name] = setting
@@ -176,6 +178,7 @@ class ConfigCLI(CLI):
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))
-            text.append(stringc(msg, color))
+            if not self.options.only_changed or color == 'yellow':
+                text.append(stringc(msg, color))
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))

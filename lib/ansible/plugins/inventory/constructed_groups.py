@@ -25,21 +25,20 @@ DOCUMENTATION:
         - Uses a YAML configuration file to identify group and the Jinja2 expressions that qualify a host for membership.
         - Only variables already in inventory are available for expressions (no facts).
         - Failed expressions will be ignored (assumes vars were missing).
-EXAMPLES:
-# inventory.config file in YAML format
-plugin: constructed_groups
-groups:
-    # simple name matching
-    webservers: inventory_hostname.startswith('web')
+EXAMPLES: | # inventory.config file in YAML format
+    plugin: constructed_groups
+    groups:
+        # simple name matching
+        webservers: inventory_hostname.startswith('web')
 
-    # using ec2 'tags' (assumes aws inventory)
-    development: "'devel' in (ec2_tags|list)"
+        # using ec2 'tags' (assumes aws inventory)
+        development: "'devel' in (ec2_tags|list)"
 
-    # using other host properties populated in inventory
-    private_only: not (public_dns_name is defined or ip_address is defined)
+        # using other host properties populated in inventory
+        private_only: not (public_dns_name is defined or ip_address is defined)
 
-    # complex group membership
-    multi_group: (group_names|intersection(['alpha', 'beta', 'omega']))|length >= 2
+        # complex group membership
+        multi_group: (group_names|intersection(['alpha', 'beta', 'omega']))|length >= 2
 '''
 
 from __future__ import (absolute_import, division, print_function)
@@ -77,7 +76,7 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=False):
         ''' parses the inventory file '''
 
-        super(InventoryModule, self).parse(inventory, loader, path)
+        super(InventoryModule, self).parse(inventory, loader, path, cache=True)
 
         try:
             data = self.loader.load_from_file(path)
@@ -94,19 +93,19 @@ class InventoryModule(BaseInventoryPlugin):
             for host in inventory.hosts:
 
                 # get available variables to templar
-                hostvars = host.get_vars()
-                if host.name in inventory.cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, inventory.cache[host.name])
+                hostvars = inventory.hosts[host].get_vars()
+                if host in inventory.cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, inventory.cache[host])
                 templar.set_available_variables(hostvars)
 
                 # process each 'group entry'
-                for group_name, expression in data.get('groups', {}):
-                    conditional = u"{%% if %s %%} True {%% else %%} False {%% endif %%}" % expression
+                for group_name in data.get('groups', {}):
+                    conditional = u"{%% if %s %%} True {%% else %%} False {%% endif %%}" % data['groups'][group_name]
                     result = templar.template(conditional)
                     if result and bool(result):
                         # ensure group exists
                         inventory.add_group(group_name)
                         # add host to group
-                        inventory.add_child(group_name, host.name)
+                        inventory.add_child(group_name, host)
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))

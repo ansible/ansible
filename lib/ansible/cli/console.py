@@ -44,7 +44,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.plugins import module_loader
+from ansible.plugins.loader import module_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 

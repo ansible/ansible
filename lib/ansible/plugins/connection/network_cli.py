@@ -31,8 +31,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import BytesIO, binary_type
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins import cliconf_loader
-from ansible.plugins import terminal_loader
+from ansible.plugins.loader import cliconf_loader, terminal_loader
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
 from ansible.utils.jsonrpc import Rpc
 

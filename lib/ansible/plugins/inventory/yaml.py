@@ -21,17 +21,19 @@ DOCUMENTATION:
     version_added: "2.4"
     short_description: Uses a specifically YAML file as inventory source.
     description:
-        - YAML based inventory, starts with the 'all' group and has hosts/vars/children entries.
+        - "YAML based inventory, starts with the 'all' group and has hosts/vars/children entries."
         - Host entries can have sub-entries defined, which will be treated as variables.
         - Vars entries are normal group vars.
-        - Children are 'child groups', which can also have their own vars/hosts/children and so on.
-        - File MUST have a valid extension: yaml, yml, json.
+        - "Children are 'child groups', which can also have their own vars/hosts/children and so on."
+        - File MUST have a valid extension, defined in configuration
     notes:
         - It takes the place of the previously hardcoded YAML inventory.
         - To function it requires being whitelisted in configuration.
     options:
-        _yaml_extensions:
+        yaml_extensions:
             description: list of 'valid' extensions for files containing YAML
+            type: list
+            default: ['.yaml', '.yml', '.json']
 EXAMPLES:
 all: # keys must be unique, i.e. only one 'hosts' per group
     hosts:

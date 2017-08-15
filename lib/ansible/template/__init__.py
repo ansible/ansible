@@ -45,7 +45,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.plugins import filter_loader, lookup_loader, test_loader
+from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars

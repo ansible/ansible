@@ -25,7 +25,7 @@ import json
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.plugins import netconf_loader
+from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import ConnectionBase, ensure_connect
 from ansible.utils.jsonrpc import Rpc
 
