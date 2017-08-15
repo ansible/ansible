@@ -9,7 +9,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-                    
+
 DOCUMENTATION = r'''
 module: aci_subject_filter_binding
 short_description: Manage filters belonging to contracts on Cisco ACI fabrics
