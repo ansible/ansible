@@ -92,7 +92,7 @@ class Connection(ConnectionBase):
         """
         socket_path = None
         rc, out, err = self._do_it('RUN:')
-        match = re.search(r"#SOCKET_PATH#: (\S+)", out)
+        match = re.search(br"#SOCKET_PATH#: (\S+)", out)
         if match:
             socket_path = to_text(match.group(1).strip(), errors='surrogate_or_strict')
 
