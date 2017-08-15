@@ -544,7 +544,7 @@ class PlayContext(Base):
 
             # set flags to use for the privilege escalation method, with various overrides
             flags = ''
-            for myflag in (getattr(self, '%s_flags' % self.become_method, None),  self.become_flags):
+            for myflag in (getattr(self, '%s_flags' % self.become_method, None), self.become_flags):
                 if myflag is not None:
                     flags = myflag
                     break
