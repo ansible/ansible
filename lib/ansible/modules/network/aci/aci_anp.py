@@ -3,7 +3,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -15,11 +15,11 @@ DOCUMENTATION = r'''
 module: aci_anp
 short_description: Manage top level application network profile objects
 description:
--  Manage top level application network profile object, i.e. this does
-      not manage EPGs.
+-  Manage top level application network profile object, i.e. this does not manage EPGs.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
@@ -28,22 +28,23 @@ notes:
 options:
    tenant:
      description:
-     - The name of the tenant.
+     - The name of an existing tenant.
      required: yes
      aliases: ['tenant_name']
    app_profile:
      description:
      - The name of the application network profile.
      required: yes
-     aliases: ['app_profile']
-   description:
+     aliases: ['app_profile_name']
+   descr:
      description:
      - Description for the ANP.
-   state:
+  state:
      description:
-     - present, absent, query
-     default: present
+     - Use C(present) or C(absent) for adding or removing.
+     - Use C(query) for listing an object or multiple objects.
      choices: [ absent, present, query ]
+     default: present
 extends_documentation_fragment: aci
 '''
 
@@ -55,7 +56,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     app_profile: default
-    description: Production Tenant
+    description: default ap
     state: present
 
 - name: Remove an ANP
@@ -82,23 +83,13 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
-
 '''
 
 RETURN = r'''
-status:
-  description: The status code of the http request
-  returned: upon making a successful GET, POST or DELETE request to the Cisco ACI APIC
-  type: int
-  sample: 200
-response:
-  description: Response text returned by Cisco ACI APIC
-  returned: when a HTTP request has been made to Cisco ACI APIC
-  type: string
-  sample: '{"totalCount":"0","imdata":[]}'
-'''
 
-import json
+#
+
+'''
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -107,10 +98,11 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all anps
         app_profile=dict(type='str', aliases=['app_profile_name']),
-        description=dict(type='str', aliases=['descr']),
+        description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
     module = AnsibleModule(
@@ -120,27 +112,41 @@ def main():
 
     tenant = module.params['tenant']
     app_profile = module.params['app_profile']
-    description = str(module.params['description'])
+    description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    if (tenant, app_profile) is not None:
-        # Work with specific anp
-        path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
+    if app_profile is not None:
+        if tenant is not None:
+            path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
+        else:
+            path = ('api/class/fvTenant.json?rsp-subtree=children&rsp-subtree-class=fvAp&rsp-subtree-filter='
+                    'eq(fvAp.name, "%(app_profile)s")&rsp-subtree-include=no-scoped' % module.params)
     elif state == 'query':
-        # Query all anps
-        path = 'api/node/class/fvAp.json'
+        path = 'api/class/fvAp.json'
     else:
-        module.fail_json(msg="Parameters 'tenant' and 'app_profile' are required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'tenant' and 'app_profile' are required for state 'absent' or 'present'")
 
-    if state == 'query':
-        aci.request(path)
-    else:
-        payload = {"fvAp": {"attributes": {"name": app_profile, "descr": description}}}
-        aci.request_diff(path, payload=json.dumps(payload))
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
+
+    aci.get_existing()
+
+    if state == 'present':
+        # Filter out module parameters with null values
+        aci.payload(aci_class='fvAp', class_config=dict(name=app_profile, descr=description))
+
+        # Generate config diff which will be used as POST request body
+        aci.get_diff(aci_class='fvAp')
+
+        # Submit changes if module not in check_mode and the proposed is different than existing
+        aci.post_config()
+
+    elif state == 'absent':
+        aci.delete_config()
 
     module.exit_json(**aci.result)
+
 
 if __name__ == "__main__":
     main()
