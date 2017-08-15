@@ -1,10 +1,38 @@
 #!/usr/bin/env python
 
 import os
+import sys
 
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.module_utils._text import to_bytes
+
+
+# from https://www.python.org/dev/peps/pep-0257/
+def trim_docstring(docstring):
+    if not docstring:
+        return ''
+    # Convert tabs to spaces (following the normal Python rules)
+    # and split into a list of lines:
+    lines = docstring.expandtabs().splitlines()
+    # Determine minimum indentation (first line doesn't count):
+    indent = sys.maxint
+    for line in lines[1:]:
+        stripped = line.lstrip()
+        if stripped:
+            indent = min(indent, len(line) - len(stripped))
+    # Remove indentation (first line is special):
+    trimmed = [lines[0].strip()]
+    if indent < sys.maxint:
+        for line in lines[1:]:
+            trimmed.append(line[indent:].rstrip())
+    # Strip off trailing and leading blank lines:
+    while trimmed and not trimmed[-1]:
+        trimmed.pop()
+    while trimmed and not trimmed[0]:
+        trimmed.pop(0)
+    # Return a single string:
+    return '\n'.join(trimmed)
 
 
 def get_options(optlist):
@@ -48,7 +76,7 @@ def opts_docs(cli, name):
         'cli_name': cli_name,
         'usage': cli.parser.usage,
         'short_desc': cli.parser.description,
-        'long_desc': cli.__doc__,
+        'long_desc': trim_docstring(cli.__doc__),
         'actions': {'foo': 1232},
     }
 
@@ -69,7 +97,8 @@ def opts_docs(cli, name):
             cli.set_action()
             docs['actions'][action] = {}
             docs['actions'][action]['name'] = action
-            docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
+            docs['actions'][action]['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
+            #docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
             action_doc_list = opt_doc_list(cli)
 
             uncommon_options = []
@@ -141,7 +170,7 @@ if __name__ == '__main__':
     cli_list = allvars.keys()
 
     templates = {'man.j2': {'out_dir': '../man/man1/%s',
-                            'out_file_format': '%s1.asciidoc.1.in'},
+                            'out_file_format': '%s.1.asciidoc.1.in'},
                  'cli_rst.j2': {'out_dir': '../docsite/rst/cli/%s',
                                 'out_file_format': '%s.rst'}}
 

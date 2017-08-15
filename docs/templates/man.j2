@@ -38,19 +38,16 @@ ARGUMENTS
 {% if actions %}
 ACTIONS
 -------
-
 {% for action in actions %}
-{{ action }}
-
+*{{ action }}*::
 {{ (actions[action]['desc']|default(' '))|wordwrap}}
 
 {% endfor %}
 {% endif %}
 OPTIONS
 -------
-
 {% for option in options|sort(attribute='options') %}
-{% for switch in option['options'] %}*{{switch}}* {% if option['arg'] %}'{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}::
+{% for switch in option['options'] %}*{{switch}}*{% if option['arg'] %}'{{option['arg']}}'{% endif %}{% if not loop.last %},{% endif %}{% endfor %}::
 
 {{ option['desc'] }}
 {% endfor %}
