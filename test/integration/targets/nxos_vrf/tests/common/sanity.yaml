@@ -1,0 +1,15 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vrf sanity test"
+
+- name: Ensure ntc VRF exists on switch
+  nxos_vrf:
+    vrf: ntc
+    provider: "{{ connection }}"
+
+- name: Ensure ntc VRF does not exist on switch
+  nxos_vrf:
+    vrf: ntc
+    state: absent
+    provider: "{{ connection }}"
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vrf sanity test"
