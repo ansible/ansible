@@ -415,8 +415,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         self.loader, self.inventory, self.variable_manager = self._play_prereqs(self.options)
 
+        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
+        vault_ids = self.options.vault_ids
+        vault_ids = default_vault_ids + vault_ids
         vault_secrets = self.setup_vault_secrets(self.loader,
-                                                 vault_id=self.options.vault_ids,
+                                                 vault_ids=vault_ids,
                                                  vault_password_files=self.options.vault_password_files,
                                                  ask_vault_pass=self.options.ask_vault_pass)
         self.loader.set_vault_secrets(vault_secrets)

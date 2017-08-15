@@ -1088,6 +1088,15 @@ DEFAULT_VAULT_IDENTITY:
   - {key: vault_identity, section: defaults}
   vars: []
   yaml: {key: defaults.vault_identity}
+DEFAULT_VAULT_IDENTITY_LIST:
+  default: []
+  desc: 'A list of vault-ids to use by default. Equivalent to multiple --vault-id args. Vault-ids are tried in order.'
+  env: [{name: ANSIBLE_VAULT_IDENTITY_LIST}]
+  ini:
+  - {key: vault_identity_list, section: defaults}
+  value_type: list
+  vars: []
+  yaml: {key: defaults.vault_identity_list}
 DEFAULT_VAULT_PASSWORD_FILE:
   default:
   desc: 'TODO: write it'
