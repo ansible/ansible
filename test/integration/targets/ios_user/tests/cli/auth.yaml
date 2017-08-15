@@ -16,7 +16,7 @@
       responses:
         (?i)password: "pass123"
 
-  - name: test login with invalid password (shoul fail)
+  - name: test login with invalid password (should fail)
     expect:
       command: "ssh auth_user@{{ inventory_hostname }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
       responses:
