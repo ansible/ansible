@@ -101,6 +101,10 @@ class AnsibleVaultError(AnsibleError):
     pass
 
 
+class AnsibleVaultPasswordError(AnsibleVaultError):
+    pass
+
+
 def is_encrypted(data):
     """ Test if this is vault encrypted data blob
 
@@ -218,6 +222,18 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
     return b_vaulttext
 
 
+def verify_secret_is_not_empty(secret, msg=None):
+    '''Check the secret against minimal requirements.
+
+    Raises: AnsibleVaultPasswordError if the password does not meet requirements.
+
+    Currently, only requirement is that the password is not None or an empty string.
+    '''
+    msg = msg or 'Invalid vault password was provided'
+    if not secret:
+        raise AnsibleVaultPasswordError(msg)
+
+
 class VaultSecret:
     '''Opaque/abstract objects for a single vault secret. ie, a password or a key.'''
     def __init__(self, _bytes=None):
@@ -263,7 +279,10 @@ class PromptVaultSecret(VaultSecret):
             try:
                 vault_pass = display.prompt(prompt, private=True)
             except EOFError:
-                break
+                raise AnsibleVaultError('EOFError (ctrl-d) on prompt for (%s)' % self.vault_id)
+
+            verify_secret_is_not_empty(vault_pass)
+
             b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
             b_vault_passwords.append(b_vault_pass)
 
@@ -335,6 +354,9 @@ class FileVaultSecret(VaultSecret):
         except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
 
+        verify_secret_is_not_empty(vault_pass,
+                                   msg='Invalid vault password was provided from file (%s)' % filename)
+
         return vault_pass
 
     def __repr__(self):
@@ -364,6 +386,8 @@ class ScriptVaultSecret(FileVaultSecret):
             raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, stderr))
 
         vault_pass = stdout.strip(b'\r\n')
+        verify_secret_is_not_empty(vault_pass,
+                                   msg='Invalid vault password was provided from script (%s)' % filename)
         return vault_pass
 
 
