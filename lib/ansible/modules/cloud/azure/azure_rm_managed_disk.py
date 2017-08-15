@@ -27,7 +27,7 @@ description:
 options:
     resource_group:
         description:
-            - Name of a resource group where the managed disk exists or will be created.
+            - "Name of a resource group where the managed disk exists or will be created."
         required: true
     name:
         description:
@@ -49,14 +49,14 @@ options:
         required: false
     storage_account_type:
         description:
-            - Type of storage for the managed disk: 'Standard_LRS'  or 'Premium_LRS'. If not specified the disk is created 'Standard_LRS'
+            - "Type of storage for the managed disk: 'Standard_LRS'  or 'Premium_LRS'. If not specified the disk is created 'Standard_LRS'"
         choices:
             - Standard_LRS
             - Premium_LRS
         required: false
     create_option:
         description:
-            - Possible values include: 'empty', 'import',  'copy'. If not present it defaults to 'empty' and creates a new empty managed disk. If value is 'import' then, it creates a managed disk from a VHD file specified in the parameter 'source_uri'. Or if value is 'copy' then, it creates a copy of an existing managed disk or snapshot provided in the parameter 'source_resource_id'.
+            - "Allowed values: empty, import, copy. 'import' from a VHD file in 'source_uri' and 'copy' from previous managed disk 'source_resource_id'."
         choices:
             - empty
             - import
@@ -72,14 +72,14 @@ options:
         required: false
     os_type:
         description:
-            - Type of Operating System: 'linux' or 'windows'. Used when 'create_option' is either 'copy' or 'import' and the source is an OS disk.
+            - "Type of Operating System: 'linux' or 'windows'. Used when 'create_option' is either 'copy' or 'import' and the source is an OS disk."
         choices:
             - linux
             - windows
         required: false
     disk_size_gb:
-        description: 
-            -Size in gigabytes of the managed disk to be created. If 'create_option' is 'copy' then the value must be greater than or equal to the source's size.
+        description:
+            -Size in GB of the managed disk to be created. If 'create_option' is 'copy' then the value must be greater than or equal to the source's size.
         required: true
     tags:
         description:
@@ -113,7 +113,7 @@ RETURN = '''
 managed_disk_id:
     description: The managed disk resource ID.
     returned: always
-    type: 
+    type: dict
 state:
     description: Current state of the managed disk
     returned: always
@@ -130,9 +130,6 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureHttpError
     from azure.mgmt.compute.models import DiskCreateOption
-    from azure.mgmt.compute.models import {
-        DataDisk
-    }
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -149,7 +146,6 @@ def managed_disk_to_dict(managed_disk):
 
 class AzureRMManagedDisk(AzureRMModuleBase):
     """Configuration class for an Azure RM Managed Disk resource"""
-
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(
@@ -191,7 +187,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             os_type=dict(
                 type='str',
                 required=False,
-                choices=['linux','windows']
+                choices=['linux', 'windows']
             ),
             disk_size_gb=dict(
                 type='int',
@@ -201,17 +197,12 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 type='str',
                 required=False
             ),
-
         )
-
         required_if = [
             ('create_option', 'import', ['source_uri']),
             ('create_option', 'copy', ['source_resource_uri'])
         ]
-
-        self.results = dict(changed=False, state=dict()
-        )
-
+        self.results = dict(changed=False, state=dict())
         self.resource_group = None
         self.name = None
         self.location = None
@@ -222,34 +213,32 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
-
-        super(AzureRMManagedDisk, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                 supports_check_mode=True,
-                                                 supports_tags=True)
+        super(AzureRMManagedDisk, self).__init__(
+            derived_arg_spec=self.module_arg_spec,
+            required_if=required_if,
+            supports_check_mode=True,
+            supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
-
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
-
         results = dict()
         resource_group = None
         response = None
-
         try:
             resource_group = self.get_resource_group(self.resource_group)
         except CloudError:
-            self.fail('resource group {} not found'.format(self.resource_group))
+            self.fail(
+                'resource group {} not found'
+                .format(self.resource_group))
         if not self.location:
             self.location = resource_group.location
-
         if self.state == 'present':
             response = self.get_managed_disk()
             if not response:
                 self.results['state'] = self.create_or_update_managed_disk()
             else:
-                #TODO: This needs to implement the update of disk_size and the storage type
                 self.log("managed disk already there, updating Tags")
                 update_tags, response['tags'] = self.update_tags(response['tags'])
                 if update_tags:
@@ -257,68 +246,74 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                     self.results['changed'] = True
         elif self.state == 'absent':
             self.delete_managed_disk()
-
         return self.results
 
     def create_or_update_managed_disk(self):
         try:
-            #Three cases empty, import, copy
-
-            params = DataDisk(
-                location=self.location,
-                tags=self.tags,
-            )
-            poller = self.compute_client.disks.create_or_update(self.resource_group, self.name, params)
+            poller = compute_client.disks.create_or_update(
+                self.resource_group,
+                self.name,
+                {
+                    'location': self.location,
+                    'disk_size_gb': self.disk_size_gb,
+                    'creation_data': {
+                        'create_option': DiskCreateOption.empty
+                    }
+                })
             self.get_poller_result(poller)
         except AzureHttpError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
+
     def create_managed_disk_empty(self):
         try:
             poller = compute_client.disks.create_or_update(
-            self.resource_group,
-            self.name,
-            {
-                'location': self.location,
-                'disk_size_gb': self.disk_size_gb,
-                'creation_data': {
-                    'create_option': DiskCreateOption.empty
-                }
-            })
+                self.resource_group,
+                self.name,
+                {
+                    'location': self.location,
+                    'disk_size_gb': self.disk_size_gb,
+                    'creation_data': {
+                        'create_option': DiskCreateOption.empty
+                    }
+                })
             self.get_poller_result(poller)
         except AzureHttpError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
+
     def create_managed_disk_import(self):
         try:
             poller = compute_client.disks.create_or_update(
-            self.resource_group,
-            self.name,
-            {
-                'location': self.location,
-                'disk_size_gb': self.disk_size_gb,
-                'creation_data': {
-                    'create_option': DiskCreateOption.import_enum,
-                    'source_uri': self.source_uri
-                }
-            })
+                self.resource_group,
+                self.name,
+                {
+                    'location': self.location,
+                    'disk_size_gb': self.disk_size_gb,
+                    'creation_data': {
+                        'create_option': DiskCreateOption.import_enum,
+                        'source_uri': self.source_uri
+                    }
+                })
             self.get_poller_result(poller)
         except AzureHttpError as e:
             self.fail("Error creating the managed disk from image: {0}".format(str(e)))
+
     def create_managed_disk_copy(self):
         try:
             poller = compute_client.disks.create_or_update(
-            self.resource_group,
-            self.name,
-            {
-                'location': self.location,
-                'disk_size_gb': self.disk_size_gb,
-                'creation_data': {
-                    'create_option': DiskCreateOption.copy,
-                    'source_resource_id': self.source_resource_uri
-                }
-            })
+                self.resource_group,
+                self.name,
+                {
+                    'location': self.location,
+                    'disk_size_gb': self.disk_size_gb,
+                    'creation_data': {
+                        'create_option': DiskCreateOption.copy,
+                        'source_resource_id': self.source_resource_uri
+                    }
+                })
             self.get_poller_result(poller)
         except AzureHttpError as e:
             self.fail("Error creating the managed disk from copy: {0}".format(str(e)))
+
     def delete_managed_disk(self):
         try:
             poller = self.compute_client.disks.delete(self.resource_group, self.name)
@@ -337,6 +332,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             return managed_disk_to_dict(response)
         else:
             return False
+
 
 def main():
     """Main execution"""
