@@ -434,7 +434,6 @@ lib/ansible/modules/storage/zfs/zfs.py
 lib/ansible/modules/system/aix_inittab.py
 lib/ansible/modules/system/alternatives.py
 lib/ansible/modules/system/at.py
-lib/ansible/modules/system/authorized_key.py
 lib/ansible/modules/system/capabilities.py
 lib/ansible/modules/system/cron.py
 lib/ansible/modules/system/cronvar.py
