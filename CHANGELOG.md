@@ -155,7 +155,18 @@ Ansible Changes By Release
 
 ### New Modules
 - aci
+  * aci_action_rule_profile
+  * aci_context
+  * aci_contract
+  * aci_fc_policy
+  * aci_filter
+  * aci_monitoring_policy
+  * aci_port_channel
+  * aci_port_security
   * aci_rest
+  * aci_span_dst_group
+  * aci_taboo_contract
+  * aci_tenant
 - aix_lvol
 - amazon
   * aws_api_gateway
