@@ -121,10 +121,11 @@ except ImportError:
     from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
+DEFAULT_DESCRIPTION = "configured by junos_vlan"
 
 
 def validate_vlan_id(value, module):
-    if not 1 <= value <= 4094:
+    if value and not 1 <= value <= 4094:
         module.fail_json(msg='vlan_id must be between 1 and 4094')
 
 
@@ -144,7 +145,7 @@ def main():
     element_spec = dict(
         name=dict(),
         vlan_id=dict(type='int'),
-        description=dict(),
+        description=dict(default=DEFAULT_DESCRIPTION),
         interfaces=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
@@ -152,15 +153,12 @@ def main():
 
     aggregate_spec = deepcopy(element_spec)
     aggregate_spec['name'] = dict(required=True)
-    aggregate_spec['vlan_id'] = dict(required=True, type='int')
 
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)
 
-    required_together = [['name', 'vlan_id']]
-
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec, required_together=required_together)
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec)
     )
 
     argument_spec.update(element_spec)
@@ -171,7 +169,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
-                           required_together=required_together,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
