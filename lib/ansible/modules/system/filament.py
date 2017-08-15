@@ -20,10 +20,4 @@ RETURN = r'''
 this is another check to pass shippable
 
 '''
-
-
-
 foo = 'apple'
-
-
-
