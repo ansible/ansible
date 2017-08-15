@@ -538,7 +538,7 @@ class AzureInventory(object):
                 mac_address=None,
                 plan=(machine.plan.name if machine.plan else None),
                 virtual_machine_size=machine.hardware_profile.vm_size,
-                computer_name=machine.os_profile.computer_name,
+                computer_name=(machine.os_profile.computer_name if machine.os_profile else None),
                 provisioning_state=machine.provisioning_state,
             )
 
@@ -559,7 +559,7 @@ class AzureInventory(object):
                 )
 
             # Add windows details
-            if machine.os_profile.windows_configuration is not None:
+            if machine.os_profile is not None and machine.os_profile.windows_configuration is not None:
                 host_vars['windows_auto_updates_enabled'] = \
                     machine.os_profile.windows_configuration.enable_automatic_updates
                 host_vars['windows_timezone'] = machine.os_profile.windows_configuration.time_zone
