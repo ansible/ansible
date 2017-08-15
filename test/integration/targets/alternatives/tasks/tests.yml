@@ -9,6 +9,7 @@
   vars:
     with_link: '{{ test_conf[0] }}'
     with_alternatives: '{{ test_conf[1] }}'
+    mode: '{{ test_conf[2] }}'
   # update-alternatives included in Fedora 26 (1.10) & Red Hat 7.4 (1.8) doesn't provide
   # '--query' switch, 'link' is mandatory for these distributions.
   when: ansible_os_family != 'RedHat' or test_conf[0]

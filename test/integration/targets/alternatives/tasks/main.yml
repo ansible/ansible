@@ -12,20 +12,10 @@
   # auto / manual ('mode' variable)
 
   - include_tasks: tests.yml
-    vars:
-      mode: auto
     with_nested:
         - [ True, False ] # with_link
         - [ True, False ] # with_alternatives
-    loop_control:
-      loop_var: test_conf
-
-  - include_tasks: tests.yml
-    vars:
-      mode: manual
-    with_nested:
-        - [ True, False ] # with_link
-        - [ True, False ] # with_alternatives
+        - [ 'auto', 'manual' ] # mode
     loop_control:
       loop_var: test_conf
 
