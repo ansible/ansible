@@ -119,6 +119,15 @@ except ImportError:
     HAS_LIB = False
 
 
+def get_devicegroup(device, devicegroup):
+    dg_list = device.refresh_devices()
+    for group in dg_list:
+        if isinstance(group, panorama.DeviceGroup):
+            if group.name == devicegroup:
+                return group
+    return False
+
+
 def find_object(device, dev_group, obj_name, obj_type):
     # Get the firewall objects
     obj_type.refreshall(device)
