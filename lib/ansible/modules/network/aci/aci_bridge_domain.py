@@ -69,7 +69,6 @@ options:
    description:
    - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
    - The APIC defaults new Bridge Domain to End Point Retention Policies to resolve the policy.
-   type: str
   endpoint_retention_policy:
     description:
     - The name of the End Point Retention Policy the Bridge Domain should use when
