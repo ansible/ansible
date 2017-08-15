@@ -300,7 +300,6 @@ lib/ansible/modules/network/netvisor/pn_vrouterif.py
 lib/ansible/modules/network/netvisor/pn_vrouterlbif.py
 lib/ansible/modules/net_tools/nmcli.py
 lib/ansible/modules/network/nxos/_nxos_mtu.py
-lib/ansible/modules/network/nxos/nxos_aaa_server.py
 lib/ansible/modules/network/nxos/nxos_aaa_server_host.py
 lib/ansible/modules/network/nxos/nxos_command.py
 lib/ansible/modules/network/nxos/nxos_config.py

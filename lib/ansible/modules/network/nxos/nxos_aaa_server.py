@@ -95,9 +95,6 @@ EXAMPLES = '''
         server_timeout: 9
         deadtime: 20
         directed_request: enabled
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
 
 # Tacacs Server Basic settings
   - name: "Tacacs Server Basic settings"
@@ -106,56 +103,21 @@ EXAMPLES = '''
         server_timeout: 8
         deadtime: 19
         directed_request: disabled
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
 
 # Setting Global Key
   - name: "AAA Server Global Key"
     nxos_aaa_server:
         server_type: radius
         global_key: test_key
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"deadtime": "22", "directed_request": "enabled",
-            "server_type": "radius", "server_timeout": "11"}
-existing:
-    description:
-        - k/v pairs of existing aaa server
-    returned: always
-    type: dict
-    sample: {"deadtime": "0", "directed_request": "disabled",
-            "global_key": "unknown", "server_timeout": "5"}
-end_state:
-    description: k/v pairs of aaa params after module execution
-    returned: always
-    type: dict
-    sample: {"deadtime": "22", "directed_request": "enabled",
-            "global_key": "unknown", "server_timeout": "11"}
-state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
     sample: ["radius-server deadtime 22", "radius-server timeout 11",
              "radius-server directed-request"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 import re
 
@@ -165,12 +127,12 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    cmds = [command]
-    if module.params['transport'] == 'cli':
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        body = run_commands(module, cmds)
-    return body
+    command = {
+        'command': command,
+        'output': 'text',
+    }
+
+    return run_commands(module, command)
 
 
 def flatten_list(command_lists):
@@ -181,7 +143,6 @@ def flatten_list(command_lists):
         else:
             flat_command_list.append(command)
     return flat_command_list
-
 
 
 def get_aaa_server_info(server_type, module):
@@ -281,25 +242,22 @@ def default_aaa_server(existing, params, server_type):
 
 def main():
     argument_spec = dict(
-        server_type=dict(type='str',
-                             choices=['radius', 'tacacs'], required=True),
+        server_type=dict(type='str', choices=['radius', 'tacacs'], required=True),
         global_key=dict(type='str'),
         encrypt_type=dict(type='str', choices=['0', '7']),
         deadtime=dict(type='str'),
         server_timeout=dict(type='str'),
-        directed_request=dict(type='str',
-                                  choices=['enabled', 'disabled', 'default']),
+        directed_request=dict(type='str', choices=['enabled', 'disabled', 'default']),
         state=dict(choices=['default', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     server_type = module.params['server_type']
     global_key = module.params['global_key']
@@ -316,11 +274,9 @@ def main():
                 encrypt_type=encrypt_type, deadtime=deadtime,
                 server_timeout=server_timeout, directed_request=directed_request)
 
-    changed = False
     proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     existing = get_aaa_server_info(server_type, module)
-    end_state = existing
 
     commands = []
     if state == 'present':
@@ -359,26 +315,15 @@ def main():
 
     cmds = flatten_list(commands)
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
+        results['changed'] = True
+        if not module.check_mode:
             load_config(module, cmds)
-            end_state = get_aaa_server_info(server_type, module)
-            if 'configure' in cmds:
-                cmds.pop(0)
-
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['end_state'] = end_state
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-
