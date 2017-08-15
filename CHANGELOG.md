@@ -160,10 +160,14 @@ Ansible Changes By Release
   * aci_contract
   * aci_fc_policy
   * aci_filter
+  * aci_l2_policy
+  * aci_lldp_policy
+  * aci_mcp
   * aci_monitoring_policy
   * aci_port_channel
   * aci_port_security
   * aci_rest
+  * aci_route_tag_policy
   * aci_span_dst_group
   * aci_taboo_contract
   * aci_tenant
