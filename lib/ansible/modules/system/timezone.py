@@ -357,7 +357,6 @@ class NosystemdTimezone(Timezone):
             self.conf_files['hwclock'] = '/etc/sysconfig/clock'
             self.regexps['name']       = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
             self.tzline_format         = 'ZONE="%s"\n'
-        self.update_hwclock  = self.module.get_bin_path('hwclock', required=True)
 
     def _allow_ioerror(self, err, key):
         # In some cases, even if the target file does not exist,
