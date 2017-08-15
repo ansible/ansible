@@ -28,7 +28,7 @@ options:
     description:
     - The name of the Attachable Access Entity Profile.
     required: yes
-    aliases: ['name','aep_name']
+    aliases: [ aep_name, name ]
   description:
     description:
     - Description for the AEP.
