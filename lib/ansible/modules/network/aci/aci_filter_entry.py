@@ -34,7 +34,7 @@ options:
   description:
     description:
     - Description for the Filter Entry.
-    alias: [ descr ]
+    aliases: [ descr ]
   dst_port:
     description:
     - Used to set both destination start and end ports to the same value when ip_protocol is tcp or udp.
@@ -81,7 +81,7 @@ options:
   tenant:
     description:
     - The name of the tenant.
-    alias: [ tenant_name ]
+    aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''
 
