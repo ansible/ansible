@@ -1,6 +1,18 @@
 ---
 - debug: msg="START net_interface ios/basic.yaml"
 
+- name: Configure interface (setup)
+  net_interface:
+    name: GigabitEthernet0/2
+    description: test-interface-1
+    speed: 10
+    duplex: full
+    mtu: 256
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
 - name: Confgure interface
   net_interface:
     name: GigabitEthernet0/2
@@ -103,7 +115,7 @@
 - name: Disable interface
   net_interface:
     name: GigabitEthernet0/2
-    state: down
+    enabled: False
     authorize: yes
     provider: "{{ cli }}"
   register: result
@@ -117,7 +129,7 @@
 - name: Enable interface
   net_interface:
     name: GigabitEthernet0/2
-    state: up
+    enabled: True
     authorize: yes
     provider: "{{ cli }}"
   register: result
@@ -132,16 +144,13 @@
   net_interface:
     name: GigabitEthernet0/1
     description: test-interface-initial
+    speed: 100
+    duplex: full
+    mtu: 516
     state: present
     authorize: yes
     provider: "{{ cli }}"
   register: result
-
-- assert:
-    that:
-      - 'result.changed == true'
-      - '"interface GigabitEthernet0/1" in result.commands'
-      - '"description test-interface-initial" in result.commands'
 
 - name: Add interface aggregate
   net_interface:
@@ -209,8 +218,8 @@
 - name: Disable interface aggregate
   net_interface:
     aggregate:
-    - { name: GigabitEthernet0/1, state: down }
-    - { name: GigabitEthernet0/2, state: down }
+    - { name: GigabitEthernet0/1, enabled: False }
+    - { name: GigabitEthernet0/2, enabled: False }
     state: present
     authorize: yes
     provider: "{{ cli }}"
@@ -227,8 +236,8 @@
 - name: Enable interface aggregate
   net_interface:
     aggregate:
-    - { name: GigabitEthernet0/1, state: up }
-    - { name: GigabitEthernet0/2, state: up }
+    - { name: GigabitEthernet0/1, enabled: True }
+    - { name: GigabitEthernet0/2, enabled: True }
     state: present
     authorize: yes
     provider: "{{ cli }}"

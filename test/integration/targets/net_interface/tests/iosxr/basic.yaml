@@ -101,7 +101,7 @@
 - name: Disable interface
   net_interface:
     name: GigabitEthernet0/0/0/2
-    state: down
+    enabled: False
     provider: "{{ cli }}"
   register: result
 
@@ -113,7 +113,7 @@
 - name: Enable interface
   net_interface:
     name: GigabitEthernet0/0/0/2
-    state: up
+    enabled: True
     provider: "{{ cli }}"
   register: result
 
@@ -194,8 +194,8 @@
 - name: Disable interface aggregate
   net_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/3, state: down }
-    - { name: GigabitEthernet0/0/0/2, state: down }
+    - { name: GigabitEthernet0/0/0/3, enabled: False }
+    - { name: GigabitEthernet0/0/0/2, enabled: False }
     state: present
     provider: "{{ cli }}"
   register: result
@@ -209,8 +209,8 @@
 - name: Enable interface aggregate
   net_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/3, state: up }
-    - { name: GigabitEthernet0/0/0/2, state: up }
+    - { name: GigabitEthernet0/0/0/3, enabled: True }
+    - { name: GigabitEthernet0/0/0/2, enabled: True }
     state: present
     provider: "{{ cli }}"
   register: result

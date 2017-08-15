@@ -46,10 +46,15 @@ options:
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate
+      - Transmit rate.
   rx_rate:
     description:
-      - Receiver rate
+      - Receiver rate.
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
   aggregate:
     description: List of Interfaces definitions.
   purge:
@@ -105,6 +110,19 @@ EXAMPLES = """
       - name: ge-0/0/1
       - name: ge-0/0/2
     state: absent
+
+- name: Check intent arguments
+  net_interface:
+    name: fxp0
+    state: up
+    tx_rate: ge(0)
+    rx_rate: le(0)
+
+- name: Config + intent
+  net_interface:
+    name: fxp0
+    enabled: False
+    state: down
 """
 
 RETURN = """
