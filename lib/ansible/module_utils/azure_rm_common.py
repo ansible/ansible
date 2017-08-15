@@ -696,8 +696,7 @@ class AzureRMModuleBase(object):
             self._dns_client = DnsManagementClient(
                 self.azure_credentials,
                 self.subscription_id,
-                base_url=self.base_url,
-                api_version='2016-04-01'
+                base_url=self.base_url
             )
             self._register('Microsoft.Dns')
         return self._dns_client
