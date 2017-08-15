@@ -45,17 +45,17 @@ options:
     choices: ['full', 'half']
   tx_rate:
     description:
-      - Transmit rate
+      - Transmit rate in bits per second (bps).
   rx_rate:
     description:
-      - Receiver rate
+      - Receiver rate in bits per second (bps).
   aggregate:
     description: List of Interfaces definitions.
-  purge:
+  delay:
     description:
-      - Purge Interfaces not defined in the aggregate parameter.
-        This applies only for logical interface.
-    default: no
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
   state:
     description:
       - State of the Interface configuration, C(up) means present and
@@ -81,12 +81,12 @@ EXAMPLES = """
 - name: make interface up
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
-    state: up
+    enabled: True
 
 - name: make interface down
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
-    state: down
+    enabled: False
 """
 
 RETURN = """
@@ -102,9 +102,14 @@ commands:
 """
 import re
 
+from time import sleep
+
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.iosxr import get_config, load_config
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network_common import conditional
 
 DEFAULT_DESCRIPTION = "configured by iosxr_interface"
 
@@ -173,10 +178,16 @@ def map_params_to_obj(module):
             if not d.get('state'):
                 d['state'] = module.params['state']
 
-            if d['state'] in ('present', 'up'):
+            if d.get('enabled') is None:
+                d['enabled'] = module.params['enabled']
+
+            if d['enabled']:
                 d['disable'] = False
             else:
                 d['disable'] = True
+
+            if d.get('delay') is None:
+                d['delay'] = module.params['delay']
 
             obj.append(d)
 
@@ -188,11 +199,13 @@ def map_params_to_obj(module):
             'speed': module.params['speed'],
             'mtu': module.params['mtu'],
             'duplex': module.params['duplex'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'delay': module.params['delay'],
+            'tx_rate': module.params['tx_rate'],
+            'rx_rate': module.params['rx_rate']
         }
 
-        state = module.params['state']
-        if state == 'present' or state == 'up':
+        if module.params['enabled']:
             params.update({'disable': False})
         else:
             params.update({'disable': True})
@@ -275,6 +288,57 @@ def map_obj_to_commands(updates):
     return commands
 
 
+def check_declarative_intent_params(module, want, result):
+    failed_conditions = []
+    for w in want:
+        want_state = w.get('state')
+        want_tx_rate = w.get('tx_rate')
+        want_rx_rate = w.get('rx_rate')
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+            continue
+
+        if result['changed']:
+            sleep(w['delay'])
+
+        command = 'show interfaces %s' % w['name']
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+        if want_state in ('up', 'down'):
+            match = re.search(r'%s (\w+)' % 'line protocol is', out, re.M)
+            have_state = None
+            if match:
+                have_state = match.group(1)
+                if have_state.strip() == 'administratively':
+                    match = re.search(r'%s (\w+)' % 'administratively', out, re.M)
+                    if match:
+                        have_state = match.group(1)
+
+            if have_state is None or not conditional(want_state, have_state.strip()):
+                failed_conditions.append('state ' + 'eq(%s)' % want_state)
+
+        if want_tx_rate:
+            match = re.search(r'%s (\d+)' % 'output rate', out, re.M)
+            have_tx_rate = None
+            if match:
+                have_tx_rate = match.group(1)
+
+            if have_tx_rate is None or not conditional(want_tx_rate, have_tx_rate.strip(), cast=int):
+                failed_conditions.append('tx_rate ' + want_tx_rate)
+
+        if want_rx_rate:
+            match = re.search(r'%s (\d+)' % 'input rate', out, re.M)
+            have_rx_rate = None
+            if match:
+                have_rx_rate = match.group(1)
+
+            if have_rx_rate is None or not conditional(want_rx_rate, have_rx_rate.strip(), cast=int):
+                failed_conditions.append('rx_rate ' + want_rx_rate)
+
+    return failed_conditions
+
+
 def main():
     """ main entry point for module execution
     """
@@ -284,11 +348,11 @@ def main():
         speed=dict(),
         mtu=dict(),
         duplex=dict(choices=['full', 'half']),
-        enabled=dict(),
+        enabled=dict(default=True, type='bool'),
         tx_rate=dict(),
         rx_rate=dict(),
+        delay=dict(default=10, type='int'),
         aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
@@ -316,13 +380,17 @@ def main():
     result['commands'] = commands
     result['warnings'] = warnings
 
-    if 'no username admin' in commands:
-        module.fail_json(msg='cannot delete the `admin` account')
-
     if commands:
         if not module.check_mode:
             load_config(module, commands, result['warnings'], commit=True)
+            exec_command(module, 'exit')
         result['changed'] = True
+
+    failed_conditions = check_declarative_intent_params(module, want, result)
+
+    if failed_conditions:
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
 
