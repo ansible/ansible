@@ -159,10 +159,14 @@ Ansible Changes By Release
 ### New Modules
 - aci
   * aci_action_rule_profile
+  * aci_bd_l3out_binding
+  * aci_bridge_domain
   * aci_context
   * aci_contract
+  * aci_epg_domain_binding
   * aci_fc_policy
   * aci_filter
+  * aci_filter_entry
   * aci_l2_policy
   * aci_lldp_policy
   * aci_mcp
@@ -172,6 +176,8 @@ Ansible Changes By Release
   * aci_rest
   * aci_route_tag_policy
   * aci_span_dst_group
+  * aci_subject_filter_binding
+  * aci_subnet
   * aci_taboo_contract
   * aci_tenant
 - aix_lvol
