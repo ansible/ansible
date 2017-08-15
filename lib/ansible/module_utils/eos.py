@@ -302,7 +302,7 @@ class Eapi:
             self._autoc = 'error' not in response
 
     def _request_builder(self, commands, output, reqid=None):
-        if self._autoc is None: 
+        if self._autoc is None:
             self.check_autocomplete()
         if self._autoc:
             params = dict(version=1, cmds=commands, format=output, autoComplete=True)
