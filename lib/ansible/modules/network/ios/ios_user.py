@@ -198,12 +198,7 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         if want['state'] == 'absent':
-            cmd = json.dumps({
-                'command': 'no username %s' % want['name'],
-                'prompt': 'This operation will remove all username related configurations with same name',
-                'answer': 'y'
-            })
-            commands.append(cmd)
+            commands.append(user_del_cmd(want['name']))
             continue
 
         if needs_update(want, have, 'view'):

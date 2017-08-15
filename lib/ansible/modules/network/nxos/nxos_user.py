@@ -57,6 +57,7 @@ options:
         password needs to be provided in cleartext and it will be encrypted
         on the device.
         Please note that this option is not same as C(provider password).
+    version_added: "2.4"
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this

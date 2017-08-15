@@ -56,6 +56,7 @@ options:
         password needs to be provided in clear and it will be encrypted
         on the device.
         Please note that this option is not same as C(provider password).
+    version_added: "2.4"
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -345,7 +346,7 @@ def main():
             'The "password" argument is used to authenticate the current connection. ' +
             'To set a user password use "configured_password" instead.'
         )
-        
+
     check_args(module, warnings)
 
     result = {'changed': False}
