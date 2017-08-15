@@ -1,9 +1,10 @@
 {% set name = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
 {% set name_slug = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
 
-{{ '=' * name|length }}
-``{{name}}``
-{{ '=' * name|length }}
+{% set name_len = name|length + 0-%}
+{{ '=' * name_len }}
+{{name}}
+{{ '=' * name_len }}
 
 Synopsis
 ========
@@ -56,9 +57,9 @@ Actions
 
 {% for action in actions %}
 {{ action}}
-{{ '=' * action|length }}
+{{ '=' * action|length}}
 
-  {{ (actions[action]['desc']|default(' '))}}
+{{ (actions[action]['desc']|default(' '))}}
 
 {% if actions[action]['uncommon_options'] %}
 
@@ -67,7 +68,7 @@ Actions
 {% for option in actions[action]['uncommon_options']|sort %}
 .. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
-    {{ option['desc'] }}
+{{ (option['desc']) }}
 {% endfor %}
 {% endif %}
 
