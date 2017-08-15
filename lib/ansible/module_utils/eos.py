@@ -306,10 +306,9 @@ class Eapi:
             self.check_autocomplete()
         if self._autoc:
             params = dict(version=1, cmds=commands, format=output, autoComplete=True)
-            return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
         else:
             params = dict(version=1, cmds=commands, format=output)
-            return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
+        return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
     def send_request(self, commands, output='text'):
         commands = to_list(commands)
