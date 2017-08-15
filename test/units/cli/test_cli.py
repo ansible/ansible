@@ -141,8 +141,6 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
 
         self.assertIsInstance(res, list)
         matches = vault.match_secrets(res, ['default'])
-        print('res: %s' % res)
-        print('matches1: %s' % matches)
         # --vault-password-file/DEFAULT_VAULT_PASSWORD_FILE is higher precendce than prompts
         # if the same vault-id ('default') regardless of cli order since it didn't matter in 2.3
         self.assertEqual(matches[0][1].bytes, b'file1_password')
