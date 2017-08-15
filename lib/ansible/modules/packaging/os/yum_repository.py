@@ -9,10 +9,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['stableinterface'],
+    'supported_by': 'core'
+}
 
 DOCUMENTATION = '''
 ---
@@ -47,6 +48,7 @@ options:
     description:
       - URL to the directory where the yum repository's 'repodata' directory
         lives.
+      - It can also be a list of multiple URLs.
       - This or the I(mirrorlist) parameter is required if I(state) is set to
         C(present).
   cost:
@@ -130,6 +132,7 @@ options:
     default: null
     description:
       - A URL pointing to the ASCII-armored GPG key file for the repository.
+      - It can also be a list of multiple URLs.
   http_caching:
     required: false
     choices: [all, packages, none]
@@ -635,7 +638,7 @@ def main():
         argument_spec=dict(
             async=dict(type='bool'),
             bandwidth=dict(),
-            baseurl=dict(),
+            baseurl=dict(type='list'),
             cost=dict(),
             deltarpm_metadata_percentage=dict(),
             deltarpm_percentage=dict(),
@@ -647,7 +650,7 @@ def main():
             file=dict(),
             gpgcakey=dict(),
             gpgcheck=dict(type='bool'),
-            gpgkey=dict(),
+            gpgkey=dict(type='list'),
             http_caching=dict(choices=['all', 'packages', 'none']),
             include=dict(),
             includepkgs=dict(),
@@ -716,6 +719,13 @@ def main():
     module.params['repoid'] = module.params['name']
     module.params['name'] = module.params['description']
     del module.params['description']
+
+    # Change list type to string for baseurl and gpgkey
+    for list_param in ['baseurl', 'gpgkey']:
+        if (
+                list_param in module.params and
+                module.params[list_param] is not None):
+            module.params[list_param] = "\n".join(module.params[list_param])
 
     # Define repo file name if it doesn't exist
     if module.params['file'] is None:

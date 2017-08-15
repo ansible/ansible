@@ -146,3 +146,31 @@
 - name: check Idempotant
   assert:
     that: not epel_add.changed
+
+- name: Test list for baseurl and gpgkey
+  yum_repository:
+    name: listtest
+    description: Testing list feature
+    baseurl:
+      - https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+      - https://download2.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    gpgkey:
+      - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}
+      - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG2-KEY-EPEL-{{ ansible_distribution_major_version }}
+
+- set_fact:
+    repofile: "{{ lookup('file', '/etc/yum.repos.d/listtest.repo') }}"
+
+- name: Assert that lists were properly inserted
+  assert:
+    that:
+      - "'download.fedoraproject.org' in repofile"
+      - "'download2.fedoraproject.org' in repofile"
+      - "'RPM-GPG-KEY-EPEL' in repofile"
+      - "'RPM-GPG2-KEY-EPEL' in repofile"
+    value:
+
+- name: Cleanup list test repo
+  yum_repository:
+    name: listtest
+    state: absent
