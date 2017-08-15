@@ -93,7 +93,7 @@ class ActionModule(_ActionModule):
                 provider['host'] = self._play_context.remote_addr
 
             if provider.get('port') is None:
-                if provider.get('use_ssl') is None:
+                if provider.get('use_ssl') is None or provider.get('use_ssl') is False:
                     provider['port'] = 80
                 else:
                     provider['port'] = 443
