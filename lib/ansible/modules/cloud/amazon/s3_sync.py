@@ -94,6 +94,7 @@ options:
     - Remove files that exist in bucket but are not present in the file root.
     required: false
     default: no
+    version_added: "2.4"
 
 requirements:
   - boto3 >= 1.4.4
