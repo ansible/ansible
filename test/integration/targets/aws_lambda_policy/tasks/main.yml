@@ -107,7 +107,11 @@
       register: result
 
     - name: get the aws account ID for use in future commands
-      command: env AWS_ACCESS_KEY_ID='{{aws_access_key}}' AWS_SECRET_ACCESS_KEY='{{aws_secret_key}}' aws sts get-caller-identity --output text --query 'Account'
+      command: aws sts get-caller-identity --output text --query 'Account'
+      environment:
+          AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
+          AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
+          AWS_SESSION_TOKEN: '{{security_token}}'
       register: result
 
     - name: register account id
