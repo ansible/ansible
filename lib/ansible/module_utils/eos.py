@@ -266,6 +266,7 @@ class Eapi:
         self._enable = None
         self._session_support = None
         self._device_configs = {}
+        self._autoc = None
 
         host = module.params['provider']['host']
         port = module.params['provider']['port']
@@ -295,9 +296,20 @@ class Eapi:
         self._session_support = 'error' not in response
         return self._session_support
 
+    def check_autocomplete(self):
+            self._autoc = True
+            response = self.send_request('show clo')
+            self._autoc = 'error' not in response
+
     def _request_builder(self, commands, output, reqid=None):
-        params = dict(version=1, cmds=commands, format=output, autoComplete=True)
-        return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
+        if self._autoc is None: 
+            self.check_autocomplete()
+        if self._autoc:
+            params = dict(version=1, cmds=commands, format=output, autoComplete=True)
+            return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
+        else:
+            params = dict(version=1, cmds=commands, format=output)
+            return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
     def send_request(self, commands, output='text'):
         commands = to_list(commands)
