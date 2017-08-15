@@ -50,7 +50,9 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     secret='AZURE_SECRET',
     tenant='AZURE_TENANT',
     ad_user='AZURE_AD_USER',
-    password='AZURE_PASSWORD'
+    password='AZURE_PASSWORD',
+    resource='AZURE_RESOURCE',
+    authority='AZURE_AUTHORITY'
 )
 
 AZURE_TAG_ARGS = dict(
@@ -89,7 +91,7 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
-    from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
+    from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials, BasicTokenAuthentication
     from azure.mgmt.network.version import VERSION as network_client_version
     from azure.mgmt.storage.version import VERSION as storage_client_version
     from azure.mgmt.compute.version import VERSION as compute_client_version
@@ -99,6 +101,7 @@ try:
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
+    import adal
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -174,6 +177,7 @@ class AzureRMModuleBase(object):
         self._storage_client = None
         self._resource_client = None
         self._compute_client = None
+        self._ignore_register = True
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
         # self.debug = self.module.params.get('debug')
@@ -195,6 +199,30 @@ class AzureRMModuleBase(object):
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'])
+        elif self.credentials.get('ad_user') is not None and \
+             self.credentials.get('password') is not None and \
+             self.credentials.get('client_id') is not None and \
+             self.credentials.get('authority') is not None:
+            # ADAL support
+            # Default value for resource
+            resource = self.credentials['resource']
+            if self.credentials['resource'] is None:
+                resource = 'https://management.core.windows.net/'
+            # Get context
+            context = adal.AuthenticationContext(self.credentials['authority'])
+            # Get token
+            raw_token = context.acquire_token_with_username_password(resource,
+                                                                     self.credentials['ad_user'],
+                                                                     self.credentials['password'],
+                                                                     self.credentials['client_id'])
+            # From CamelCase to underscore
+            token =  {}
+            for key, value in raw_token.items():
+                token[re.sub( '(?<!^)(?=[A-Z])', '_', key).lower()] = value
+            # Get azure credentials
+            self.azure_credentials = BasicTokenAuthentication(token)
+            # In that case, we don't need to register
+            self._ignore_register = False
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
             if tenant is not None:
@@ -617,6 +645,8 @@ class AzureRMModuleBase(object):
         return self.get_poller_result(poller)
 
     def _register(self, key):
+        if self._ignore_register:
+            return
         try:
             # We have to perform the one-time registration here. Otherwise, we receive an error the first
             # time we attempt to use the requested client.

@@ -202,10 +202,11 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-    from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
+    from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials, BasicTokenAuthentication
     from azure.mgmt.network.network_management_client import NetworkManagementClient
     from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient
     from azure.mgmt.compute.compute_management_client import ComputeManagementClient
+    import adal
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -218,7 +219,9 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     secret='AZURE_SECRET',
     tenant='AZURE_TENANT',
     ad_user='AZURE_AD_USER',
-    password='AZURE_PASSWORD'
+    password='AZURE_PASSWORD',
+    resource='AZURE_RESOURCE',
+    authority='AZURE_AUTHORITY'
 )
 
 AZURE_CONFIG_SETTINGS = dict(
@@ -273,6 +276,28 @@ class AzureRM(object):
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'])
+        elif self.credentials.get('ad_user') is not None and \
+             self.credentials.get('password') is not None and \
+             self.credentials.get('client_id') is not None and \
+             self.credentials.get('authority') is not None:
+                # ADAL support
+                # Default value for resource
+                resource = self.credentials['resource']
+                if resource is None:
+                    resource = 'https://management.core.windows.net/'
+                # Get context
+                context = adal.AuthenticationContext(self.credentials['authority'])
+                # Get token
+                raw_token = context.acquire_token_with_username_password(resource,
+                                                                         self.credentials['ad_user'],
+                                                                         self.credentials['password'],
+                                                                         self.credentials['client_id'])
+                # From CamelCase to underscore
+                token =  {}
+                for key, value in raw_token.items():
+                    token[re.sub( '(?<!^)(?=[A-Z])', '_', key).lower()] = value
+                # Get azure credentials
+                self.azure_credentials = BasicTokenAuthentication(token)
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
@@ -467,6 +492,10 @@ class AzureInventory(object):
                             help='Azure Tenant Id')
         parser.add_argument('--ad-user', action='store',
                             help='Active Directory User')
+        parser.add_argument('--authority', action='store',
+                            help='Azure Authority')
+        parser.add_argument('--resource', action='store',
+                            help='Azure Resource')
         parser.add_argument('--password', action='store',
                             help='password')
         parser.add_argument('--resource-groups', action='store',
