@@ -359,7 +359,7 @@ For example:
 Suggestions to resolve:
 
 Options 1:
-Increase value of command timeout in configuration file or by setting enviornment variable.
+Increase value of command timeout in configuration file or by setting environment variable.
 Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
 .. code-block:: yaml
