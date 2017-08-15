@@ -349,7 +349,6 @@ lib/ansible/modules/network/panos/panos_interface.py
 lib/ansible/modules/network/panos/panos_loadcfg.py
 lib/ansible/modules/network/panos/panos_mgtconfig.py
 lib/ansible/modules/network/panos/panos_pg.py
-lib/ansible/modules/network/panos/panos_service.py
 lib/ansible/modules/net_tools/snmp_facts.py
 lib/ansible/modules/network/sros/sros_command.py
 lib/ansible/modules/network/sros/sros_config.py
