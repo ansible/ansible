@@ -45,9 +45,51 @@ class TestCliVersion(unittest.TestCase):
         self.assertIn('python version', version_info['string'])
 
 
+class TestCliBuildVaultIds(unittest.TestCase):
+    def test(self):
+        res = cli.CLI.build_vault_ids(['foo@bar'])
+        self.assertEqual(res, ['foo@bar'])
+
+    def test_create_new_password_no_vault_id(self):
+        res = cli.CLI.build_vault_ids([], create_new_password=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
+    def test_create_new_password_no_vault_id_ask_vault_pass(self):
+        res = cli.CLI.build_vault_ids([], ask_vault_pass=True,
+                                      create_new_password=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
+    def test_create_new_password_with_vault_ids(self):
+        res = cli.CLI.build_vault_ids(['foo@bar'], create_new_password=True)
+        self.assertEqual(res, ['foo@bar'])
+
+    def test_create_new_password_no_vault_ids_password_files(self):
+        res = cli.CLI.build_vault_ids([], vault_password_files=['some-password-file'],
+                                      create_new_password=True)
+        self.assertEqual(res, ['default@some-password-file'])
+
+    def test_everything(self):
+        res = cli.CLI.build_vault_ids(['blip@prompt', 'baz@prompt_ask_vault_pass',
+                                       'some-password-file', 'qux@another-password-file'],
+                                      vault_password_files=['yet-another-password-file',
+                                                            'one-more-password-file'],
+                                      ask_vault_pass=True,
+                                      create_new_password=True)
+        self.assertEqual(set(res), set(['blip@prompt', 'baz@prompt_ask_vault_pass',
+                                        'default@prompt_ask_vault_pass',
+                                        'some-password-file', 'qux@another-password-file',
+                                        'default@yet-another-password-file',
+                                        'default@one-more-password-file']))
+
+
 class TestCliSetupVaultSecrets(unittest.TestCase):
     def setUp(self):
         self.fake_loader = DictDataLoader({})
+        self.tty_patcher = patch('ansible.cli.sys.stdin.isatty', return_value=True)
+        self.mock_isatty = self.tty_patcher.start()
+
+    def tearDown(self):
+        self.tty_patcher.stop()
 
     def test(self):
         res = cli.CLI.setup_vault_secrets(None, None)
@@ -82,6 +124,43 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIn('prompt1', [x[0] for x in matches])
         match = matches[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
+
+    @patch('ansible.cli.PromptVaultSecret')
+    def test_prompt_no_tty(self, mock_prompt_secret):
+        self.mock_isatty.return_value = False
+        mock_prompt_secret.return_value = MagicMock(bytes=b'prompt1_password',
+                                                    vault_id='prompt1')
+        res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
+                                          vault_ids=['prompt1@prompt'],
+                                          ask_vault_pass=True)
+
+        print('res: %s' % res)
+        self.assertIsInstance(res, list)
+        self.assertEqual(len(res), 0)
+        matches = vault.match_secrets(res, ['prompt1'])
+        self.assertEquals(len(matches), 0)
+
+    @patch('ansible.cli.get_file_vault_secret')
+    @patch('ansible.cli.PromptVaultSecret')
+    def test_prompt_no_tty_and_password_file(self, mock_prompt_secret, mock_file_secret):
+        self.mock_isatty.return_value = False
+        mock_prompt_secret.return_value = MagicMock(bytes=b'prompt1_password',
+                                                    vault_id='prompt1')
+        filename = '/dev/null/secret'
+        mock_file_secret.return_value = MagicMock(bytes=b'file1_password',
+                                                  vault_id='file1',
+                                                  filename=filename)
+
+        res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
+                                          vault_ids=['prompt1@prompt', 'file1@/dev/null/secret'],
+                                          ask_vault_pass=True)
+
+        self.assertIsInstance(res, list)
+        matches = vault.match_secrets(res, ['file1'])
+        self.assertIn('file1', [x[0] for x in matches])
+        self.assertNotIn('prompt1', [x[0] for x in matches])
+        match = matches[0][1]
+        self.assertEqual(match.bytes, b'file1_password')
 
     def _assert_ids(self, vault_id_names, res, password=b'prompt1_password'):
         self.assertIsInstance(res, list)
