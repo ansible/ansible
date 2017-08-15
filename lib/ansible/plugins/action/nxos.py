@@ -93,10 +93,10 @@ class ActionModule(_ActionModule):
                 provider['host'] = self._play_context.remote_addr
 
             if provider.get('port') is None:
-                if provider.get('use_ssl') is None or provider.get('use_ssl') is False:
-                    provider['port'] = 80
-                else:
+                if provider.get('use_ssl'):
                     provider['port'] = 443
+                else:
+                    provider['port'] = 80
 
             if provider.get('timeout') is None:
                 provider['timeout'] = self._play_context.timeout
