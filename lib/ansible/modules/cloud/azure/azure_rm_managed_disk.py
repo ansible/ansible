@@ -237,36 +237,39 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         if self.state == 'present':
             response = self.get_managed_disk()
             if not response:
-                self.results['state'] = self.create_or_update_managed_disk()
+                self.results['state'] = self.create_managed_disk_empty()
             else:
                 self.log("managed disk already there, updating Tags")
                 update_tags, response['tags'] = self.update_tags(response['tags'])
                 if update_tags:
-                    self.create_or_update_managed_disk()
+                    self.create_managed_disk_empty()
                     self.results['changed'] = True
         elif self.state == 'absent':
             self.delete_managed_disk()
         return self.results
 
     def create_or_update_managed_disk(self):
+        # Scaffolding empty managed disk
+        parameters = {}
+        creation_data = {}
+        creation_data['create_option'] = DiskCreateOption.empty
+        parameters['location'] = self.location
+        parameters['disk_size_gb'] = self.disk_size_gb
         try:
-            poller = compute_client.disks.create_or_update(
+
+            parameters['creation_data'] = creation_data
+            poller = self.compute_client.disks.create_or_update(
                 self.resource_group,
                 self.name,
-                {
-                    'location': self.location,
-                    'disk_size_gb': self.disk_size_gb,
-                    'creation_data': {
-                        'create_option': DiskCreateOption.empty
-                    }
-                })
+                parameters
+                )
             self.get_poller_result(poller)
         except AzureHttpError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
 
     def create_managed_disk_empty(self):
         try:
-            poller = compute_client.disks.create_or_update(
+            poller = self.compute_client.disks.create_or_update(
                 self.resource_group,
                 self.name,
                 {
@@ -282,7 +285,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
     def create_managed_disk_import(self):
         try:
-            poller = compute_client.disks.create_or_update(
+            poller = self.compute_client.disks.create_or_update(
                 self.resource_group,
                 self.name,
                 {
@@ -299,7 +302,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
     def create_managed_disk_copy(self):
         try:
-            poller = compute_client.disks.create_or_update(
+            poller = self.compute_client.disks.create_or_update(
                 self.resource_group,
                 self.name,
                 {
