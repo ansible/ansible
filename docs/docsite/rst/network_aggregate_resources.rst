@@ -51,7 +51,7 @@ The preceding example would be better written as follows:
 
 .. code-block:: yaml
 
-   - name: configure vlans neighbor (delete others)
+   - name: configure vlans, and delete others
      net_vlan:
        aggregate:
          - { vlan_id: 1, name: default }
@@ -116,7 +116,7 @@ The *additive* format can be useful in a number of cases:
 Local overrides of global module values
 =======================================
 
-When writing tasks using ``aggregate`` you may find yourself repeating various settings withon the aggregate dictionary, for example:
+When writing tasks using ``aggregate`` you may find yourself repeating various settings within the aggregate dictionary, for example:
 
 .. code-block:: yaml
 

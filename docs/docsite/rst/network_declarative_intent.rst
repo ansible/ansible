@@ -190,7 +190,7 @@ FIXME: Q: What would this look like
 
 **When would this be useful**
 
-*Physical then configuration
+* Physical then configuration
 
 **When would this not be useful**
 
