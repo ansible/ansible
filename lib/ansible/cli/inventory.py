@@ -39,16 +39,14 @@ INTERNAL_VARS = frozenset(['ansible_facts', 'ansible_version',
                            'groups',
                            'group_names',
                            'omit',
-                           'playbook_dir',
-                ])
+                           'playbook_dir', ])
 
 
 class InventoryCLI(CLI):
     ''' used to display or dump the configured inventory as Ansible sees it '''
 
     ARGUMENTS = {'host': 'The name of a host to match in the inventory, relevant when using --list',
-                 'group': 'The name of a group in the inventory, relevant when using --graph',
-    }
+                 'group': 'The name of a group in the inventory, relevant when using --graph', }
 
     def __init__(self, args):
 
@@ -179,9 +177,9 @@ class InventoryCLI(CLI):
 
     def _get_host_variables(self, host):
         if self._new_api:
-           hostvars = self.vm.get_vars(host=host)
+            hostvars = self.vm.get_vars(host=host)
         else:
-           hostvars =  self.vm.get_vars(self.loader, host=host)
+            hostvars = self.vm.get_vars(self.loader, host=host)
         return hostvars
 
     def _get_group(self, gname):
