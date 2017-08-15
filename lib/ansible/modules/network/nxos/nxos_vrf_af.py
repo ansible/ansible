@@ -124,9 +124,12 @@ def main():
 
     if not current and module.params['state'] == 'present':
         commands.append('address-family %s unicast' % module.params['afi'])
+        if module.params['route_target_both_auto_evpn']:
+            commands.append('route-target both auto evpn')
 
     elif current and module.params['state'] == 'absent':
         commands.append('no address-family %s unicast' % module.params['afi'])
+
     elif current:
         if module.params['route_target_both_auto_evpn']:
             commands.append('address-family %s unicast' % module.params['afi'])
