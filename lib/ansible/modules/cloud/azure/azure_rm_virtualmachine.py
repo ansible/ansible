@@ -695,10 +695,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if self.data_disk_storage_account_name and not self.data_disk_managed_disk_type:
                 self.get_storage_account(self.data_disk_storage_account_name)
 
-                data_disk_requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(
-                                                                            self.data_disk_storage_account_name,
-                                                                            self.data_disk_storage_container_name,
-                                                                            self.data_disk_storage_blob_name)
+                data_disk_requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(self.data_disk_storage_account_name,
+                 self.data_disk_storage_container_name,
+                 self.data_disk_storage_blob_name)
 
             disable_ssh_password = not self.ssh_password_enabled
 
