@@ -20,7 +20,6 @@
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
-
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
@@ -28,6 +27,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "a
 
 $result = @{
     changed = $false
+    state = $state
 }
 
 # Used to delete symlinks as powershell cannot delete broken symlinks
@@ -52,45 +52,46 @@ namespace Ansible.Command {
 Add-Type -TypeDefinition $symlink_util
 
 # Used to delete directories and files with logic on handling symbolic links
-function Remove-File($file, $checkmode) {
+function Remove-File($file, $check_mode) {
     try {
         if ($file.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
             # Bug with powershell, if you try and delete a symbolic link that is pointing
             # to an invalid path it will fail, using Win32 API to do this instead
-            if (-Not $checkmode) {
+            if (-Not $check_mode) {
                 [Ansible.Command.SymLinkHelper]::DeleteSymLink($file.FullName)
             }
         } elseif ($file.PSIsContainer) {
-            Remove-Directory -directory $file -WhatIf:$checkmode
+            Remove-Directory -directory $file -check_mode $check_mode
         } else {
-            Remove-Item -Path $file.FullName -Force -WhatIf:$checkmode
+            Remove-Item -Path $file.FullName -Force -WhatIf:$check_mode
         }
     } catch [Exception] {
         Fail-Json $result "Failed to delete $($file.FullName): $($_.Exception.Message)"
     }
 }
 
-function Remove-Directory($directory) {
+function Remove-Directory($directory, $check_mode) {
     foreach ($file in Get-ChildItem $directory.FullName) {
-        Remove-File -file $file
+        Remove-File -file $file -check_mode $check_mode
     }
-    Remove-Item -Path $directory.FullName -Force -Recurse
+    Remove-Item -Path $directory.FullName -Force -Recurse -WhatIf:$check_mode
 }
 
-
 if ($state -eq "touch") {
+
     if (Test-Path -Path $path) {
         (Get-ChildItem -Path $path).LastWriteTime = Get-Date
     } else {
         Write-Output $null | Out-File -FilePath $path -Encoding ASCII -WhatIf:$check_mode
         $result.changed = $true
     }
-}
+    $result.state = 'file'
 
-if (Test-Path $path) {
+} elseif (Test-Path -Path $path) {
+
     $fileinfo = Get-Item -Path $path
     if ($state -eq "absent") {
-        Remove-File -File $fileinfo -CheckMode $check_mode
+        Remove-File -file $fileinfo -check_mode $check_mode
         $result.changed = $true
     } else {
         if ($state -eq "directory" -and -not $fileinfo.PsIsContainer) {
@@ -113,6 +114,7 @@ if (Test-Path $path) {
         } else {
            $state = "directory"
         }
+        $result.state = $state
     }
 
     if ($state -eq "directory") {

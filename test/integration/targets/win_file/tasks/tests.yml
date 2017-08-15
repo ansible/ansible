@@ -1,0 +1,480 @@
+# Test code for the file module.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+# Test code for the win_file module.
+# (c) 2017, Dag Wieers <dag@wieers.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Verify that we are checking a file and it is present
+  win_file:
+    path: '{{ win_output_dir }}\foo.txt'
+    state: file
+  register: file1_result
+
+- name: Verify that the file was marked as changed
+  assert:
+    that:
+      - file1_result.changed == False
+      - file1_result.state == 'file'
+
+- name: Verify that we are checking an absent file
+  win_file:
+    path: '{{ win_output_dir }}\bar.txt'
+    state: absent
+  register: file2_result
+
+- name: Verify that the file was not marked as changed
+  assert:
+    that:
+      - file2_result.changed == False
+      - file2_result.state == 'absent'
+
+- name: Verify we can touch a file
+  win_file:
+    path: '{{ win_output_dir }}\baz.txt'
+    state: touch
+  register: file3_result
+
+- name: Verify that the file was marked as changed
+  assert:
+    that:
+      - file3_result.changed == True
+      - file3_result.state == 'file'
+
+- name: Stat the touched file
+  win_stat:
+    path: '{{ win_output_dir }}\baz.txt'
+  register: file3_stat_result
+
+- name: Verify that the touched file exists and is size 0 (normal mode)
+  assert:
+    that:
+      - file3_stat_result.changed == False
+      - file3_stat_result.stat.size == 0
+      - file3_stat_result.stat.exists == True
+  when: not in_check_mode
+
+- name: Verify that the touched file does not exist (check-mode)
+  assert:
+    that:
+      - file3_stat_result.changed == False
+      - file3_stat_result.stat.exists == False
+  when: in_check_mode
+
+- name: Verify we can touch a file (again)
+  win_file:
+    path: '{{ win_output_dir }}\baz.txt'
+    state: touch
+  register: file3_result_again
+
+- name: Verify that the file was not marked as changed (normal mode)
+  assert:
+    that:
+      - file3_result_again.changed == False
+      - file3_result_again.state == 'file'
+  when: not in_check_mode
+
+- name: Verify that the file was not marked as changed (check-mode)
+  assert:
+    that:
+      - file3_result_again.changed == True
+      - file3_result_again.state == 'file'
+  when: in_check_mode
+
+- name: Clean up
+  win_file:
+    path: '{{ win_output_dir }}'
+    state: absent
+
+#- name: Create soft link to file
+#  win_file:
+#    src: '{{ output_file }}'
+#    dest: '{{ win_output_dir }}\soft.txt'
+#    state: link
+#  register: file5_result
+
+#- name: Verify that the file was marked as changed
+#  assert:
+#    that:
+#      - file5_result.changed == True
+
+#- name: Create hard link to file
+#  win_file:
+#    src: '{{ output_file }}'
+#    dest: '{{ win_output_dir }}\hard.txt'
+#    state: hard
+#  register: file6_result
+
+#- name: Verify that the file was marked as changed
+#  assert:
+#    that:
+#      - file6_result.changed == True
+#
+- name: Create a directory
+  win_file:
+    path: '{{ win_output_dir }}\foobar'
+    state: directory
+  register: file7_result
+
+- debug:
+    var: file7_result
+
+- name: Verify that the file was marked as changed
+  assert:
+    that:
+      - file7_result.changed == True
+      - file7_result.state == 'directory'
+
+- name: Create a directory (again)
+  win_file:
+    path: '{{ win_output_dir }}\foobar'
+    state: directory
+  register: file7_result_again
+
+- name: Verify that the file was marked as unchanged (normal mode)
+  assert:
+    that:
+      - file7_result_again.changed == False
+      - file7_result_again.state == 'directory'
+  when: not in_check_mode
+
+- name: Verify that the file was marked as changed (check-mode)
+  assert:
+    that:
+      - file7_result_again.changed == True
+      - file7_result_again.state == 'directory'
+  when: in_check_mode
+
+- name: Remove directory foobar
+  win_file:
+    path: '{{ win_output_dir }}\foobar'
+    state: absent
+
+- name: Remove file foo.txt
+  win_file:
+    path: '{{ win_output_dir }}\foo.txt'
+    state: absent
+
+- name: Remove file bar.txt
+  win_file:
+    path: '{{ win_output_dir }}\bar.txt'
+    state: absent
+
+- name: Remove file baz.txt
+  win_file:
+    path: '{{ win_output_dir }}\baz.txt'
+    state: absent
+
+- name: win_copy directory structure over
+  win_copy:
+    src: foobar
+    dest: '{{ win_output_dir }}'
+
+- name: Remove directory foobar
+  win_file:
+    path: '{{ win_output_dir }}\foobar'
+    state: absent
+  register: file14_result
+
+- debug:
+    var: file14_result
+
+- name: Verify that the directory was removed (normal mode)
+  assert:
+    that:
+      - file14_result.changed == True
+      - file14_result.state == 'absent'
+  when: not in_check_mode
+
+- name: Verify that the directory was removed (check-mode)
+  assert:
+    that:
+      - file14_result.changed == False
+      - file14_result.state == 'absent'
+  when: in_check_mode
+
+- name: Remove directory foobar (again)
+  win_file:
+    path: '{{ win_output_dir }}\foobar'
+    state: absent
+  register: file14_result_again
+
+- name: Verify that the directory was already removed (normal mode)
+  assert:
+    that:
+      - file14_result_again.changed == False
+  when: not in_check_mode
+
+- name: Verify that the directory was removed again (check-mode)
+  assert:
+    that:
+      - file14_result_again.changed == False
+  when: in_check_mode
+
+- name: Create a test sub-directory
+  win_file:
+    path: '{{ win_output_dir }}\sub1'
+    state: directory
+  register: file15_result
+
+- name: Verify that the new directory was created
+  assert:
+    that:
+      - file15_result.changed == True
+      - file15_result.state == 'directory'
+
+- name: Create test files in the sub-directory
+  win_file:
+    path: '{{ win_output_dir }}\sub1\{{ item }}'
+    state: touch
+  with_items:
+  - file1
+  - file2
+  - file3
+  register: file16_result
+
+- name: Verify the files were created
+  assert:
+    that:
+      - item.changed == True
+      - item.state == 'file'
+  with_items: '{{ file16_result.results }}'
+
+#- name: Try to force the sub-directory to a link
+#  win_file:
+#    src: '{{ win_output_dir }}\testing'
+#    dest: '{{ win_output_dir }}\sub1'
+#    state: link
+#    force: yes
+#  register: file17_result
+#  ignore_errors: true
+
+#- name: Verify the directory was not replaced with a link
+#  assert:
+#    that:
+#      - file17_result.failed == True
+#      - file17_result.state == "directory"
+
+#- name: Create soft link to directory using absolute path
+#  win_file:
+#    src: /
+#    dest: '{{ win_output_dir }}\root'
+#    state: link
+#  register: file18_result
+#
+#- name: Verify that the result was marked as changed
+#  assert:
+#    that:
+#      - file18_result.changed == True
+#
+- name: Create another test sub-directory
+  win_file:
+    path: '{{ win_output_dir }}\sub2'
+    state: directory
+  register: file19_result
+
+- name: Verify that the new directory was created
+  assert:
+    that:
+      - file19_result.changed == True
+      - file19_result.state == "directory"
+
+#- name: Create soft link to relative file
+#  win_file:
+#    src: '..\sub1\file1'
+#    dest: '{{ win_output_dir }}\sub2\link1'
+#    state: link
+#  register: file20_result
+
+#- name: Verify that the result was marked as changed
+#  assert:
+#    that:
+#      - file20_result.changed == True
+
+#- name: Create soft link to relative directory
+#  win_file:
+#    src: sub1
+#    dest: '{{ win_output_dir }}\sub1-link'
+#    state: link
+#  register: file21_result
+#
+#- name: Verify that the result was marked as changed
+#  assert:
+#    that:
+#      - file21_result.changed == True
+
+
+# Test the file module using follow=yes, so that the target of a
+# symlink is modified, rather than the link itself
+
+#- name: Create a test file
+#  win_copy:
+#    path: '{{ win_output_dir }}\test_follow'
+#    content: "this is a test file\n"
+#    mode: 0666
+
+#- name: Create a symlink to the test file
+#  win_file:
+#    src: "./test_follow"
+#    dest: '{{ win_output_dir }}\test_follow_link'
+#    state: link
+#
+#- name: Modify the permissions on the link using follow=yes
+#  win_file:
+#    path: '{{ win_output_dir }}\test_follow_link'
+#    mode: 0644
+#    follow: yes
+#  register: result
+
+#- name: Assert that the chmod worked
+#  assert:
+#    that:
+#    - result.changed
+#
+#- name: Stat the link target
+#  win_stat:
+#    path: '{{ win_output_dir }}\test_follow'
+#  register: result
+#
+#- name: Assert that the link target was modified correctly
+#  assert:
+#    that:
+##    - result.stat.mode == '0644'
+
+- name: Create a directory
+  win_file:
+    path: '{{ win_output_dir }}\dirtest'
+    state: directory
+  register: file_result
+
+- name: Stat the directory created
+  win_stat:
+    path: '{{ win_output_dir }}\dirtest'
+  register: stat_result
+
+- name: Assert the directory was created
+  assert:
+    that:
+       - file_result.changed == True
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: Re-run create directory (bug 2147)
+  win_file:
+    path: '{{ win_output_dir }}\dirtest'
+    state: directory
+  register: file_result
+
+- name: Stat the directory created again
+  win_stat:
+    path: '{{ win_output_dir }}\dirtest'
+  register: stat_result
+
+- name: Assert the directory exists but was not changed
+  assert:
+    that:
+       - file_result.changed == False
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+  when: not in_check_mode
+
+- name: Assert the directory exists but was not changed
+  assert:
+    that:
+       - file_result.changed == True
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+  when: in_check_mode
+
+- name: Remove empty dir we just created
+  win_file:
+    path: '{{ win_output_dir }}\dirtest'
+    state: absent
+  register: file_result
+
+- name: Stat the removed directory
+  win_stat:
+    path: '{{ win_output_dir }}\dirtest'
+  register: stat_result
+
+- name: Assert the directory does not exist
+  assert:
+    that:
+       - file_result.changed == True
+       - stat_result.stat.exists == False
+
+- name: Create dir with spaces and parens in the dir name
+  win_file:
+    path: '{{ win_output_dir }}\dir with spaces (and parens)'
+    state: directory
+  register: file_result
+
+- name: Stat the directory with spaces and parens
+  win_stat:
+    path: '{{ win_output_dir }}\dir with spaces (and parens)'
+  register: stat_result
+
+- name: Check dir with spaces and parens in the dir name has been created
+  assert:
+    that:
+       - file_result.changed == True
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: Remove dir with spaces and parens in the dir name
+  win_file:
+    path: '{{ win_output_dir }}\dir with spaces (and parens)'
+    state: absent
+  register: file_result
+
+- name: Stat the dir with spaces and parens in the dir name
+  win_stat:
+    path: '{{ win_output_dir }}\dir with spaces (and parens)'
+  register: stat_result
+
+- name: Assert dir with spaces and parens in the dir name was removed
+  assert:
+    that:
+       - file_result.changed == True
+       - stat_result.stat.exists == False
+
+- name: Create folder to point set symbolic link for
+  win_file:
+    path: '{{ win_output_dir }}\link-test\link-target'
+    state: directory
+
+- name: Create symbolic link
+  win_command: cmd.exe /c mklink /d "{{ win_output_dir }}\link-test\link" "{{ win_output_dir }}\link-test\link-target"
+
+- name: Remove symbolic link target
+  win_file:
+    path: '{{ win_output_dir }}\link-test\link-target'
+    state: absent
+
+- name: Remove parent folder with broken link
+  win_file:
+    path: '{{ win_output_dir }}\link-test'
+    state: absent
+
+- name: Clean up sub1
+  win_file:
+    path: '{{ win_output_dir }}\sub1'
+    state: absent
+
+- name: Clean up sub2
+  win_file:
+    path: '{{ win_output_dir }}\sub2'
+    state: absent
