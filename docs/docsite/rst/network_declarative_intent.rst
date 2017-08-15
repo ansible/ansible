@@ -106,7 +106,6 @@ FIXME: TBD
 Declarative intent modules also take a set of options that allow playbook designers to specify the desired or intended operational state of the resource.  These options allow tasks to define the normalized operating state of the resource once the configuration has been completed.  **State options do not make configuration changes** to the resource.  They serve to validate that a given resource has normalized its operating environment to reflect the intended state.  If the operating state does not reflect the intended (or desired) state of the resource as described in the playbook task, the module is considered failed and remediation actions can be taken in the playbook during the playbook execution.
 
 
-
 .. versionadded:: 2.4
 
 The `declarative intent modules` are new in Ansible 2.4 and is available in certain modules, see the modules documentation to see if the feature is available.
@@ -150,6 +149,7 @@ FIXME: Example
 * FIXME: Q: Why else
 
 FIXME: Q: Any disadvantages?
+
 * not all modules support declaritive_intent - raise an feature request LINK
 
 
@@ -159,6 +159,7 @@ Physical then configuration
 **Overview**
 
 * No point making configuration changes if someone hasn't plugged in the cable - simple case
+
   * Checking the routing between connection - not just plugged in, but a route exists to the correct location - avoid cabling errors
 
 .. code-block:: yaml
@@ -169,11 +170,11 @@ FIXME: Example
 
 **When would this be useful**
 
-*
+* fixme
 
 **When would this not be useful**
 
-*
+* fixme
 
 Configuration then physical
 ---------------------------
@@ -189,11 +190,11 @@ FIXME: Q: What would this look like
 
 **When would this be useful**
 
-*
+*Physical then configuration
 
 **When would this not be useful**
 
-*
+
 
 Checking state only
 -------------------
@@ -209,11 +210,11 @@ FIXME: Q: What would this look like
 
 **When would this be useful**
 
-*
+* fixme
 
 **When would this not be useful**
 
-*
+* fixme
 
 Configuration, cabling, check
 -----------------------------
@@ -229,11 +230,11 @@ FIXME: Q: What would this look like
 
 **When would this be useful**
 
-*
+* fixme
 
 **When would this not be useful**
 
-*
+* fixme
 
 Aggreate declaritive intent
 ---------------------------
@@ -249,11 +250,11 @@ FIXME: Q: What would this look like
 
 **When would this be useful**
 
-*
+* fixme
 
 **When would this not be useful**
 
-*
+* fixme
 
 Link to network_aggregate_resources for more info
 
@@ -276,11 +277,11 @@ FIXME: Q: What would this look like
 
 **When would this be useful**
 
-*
+* fixme
 
 **When would this not be useful**
 
-*
+* fixme
 
 Implementation details
 ======================

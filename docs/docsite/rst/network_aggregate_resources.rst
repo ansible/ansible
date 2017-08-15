@@ -28,6 +28,8 @@ Continuing our vlan example, the following task ensures that vlans ``1``, ``2`` 
 
 This task *will not* change any vlans already configured on the switch, apart from the ones specified in the task. Ansible will ensure that the vlans specified in the task exist with the `name` and `state` specified.
 
+**Bad**
+
 .. code-block:: yaml
 
    - name: configure vlans neighbor in addition to existing
@@ -40,10 +42,10 @@ This task *will not* change any vlans already configured on the switch, apart fr
        - { vlan_id: 2, name: mgmt }
        - { vlan_id: 3, state: suspend }
 
-FIXME Should we even document ``with_items``, is that just confusing the matter. Should this be the same as `Aggregate resources` though without ``purge: yes``?
+The above task is executed 3 times (once per ``item``), this is very inefficient and will take a considerable time to execute as a seperate connection is made to the network device for each ``item``.
 
-FIXME Only showing ``with_items`` to show how it could be done
 
+**Better format**
 
 The preceding example would be better written as follows:
 
@@ -59,8 +61,9 @@ The preceding example would be better written as follows:
 
 This task is very similar to the *additive resource* example above, though with the following differences:
 
-* The module runs only once, rather than *n* times as it does ``with_items``
-* There is no way to to use ``purge`` on ``with_items``
+* The module (``net_vlan``) is executed only **once**, rather than *n* times as it does ``with_items``
+* There is no way to to use ``purge`` on ``with_items``, more on that in the `aggregate resources` section.
+* Easier to write a cleaner task
 
 
 Aggregate resources
@@ -79,40 +82,75 @@ Consider the following example:
        state: active
        purge: yes # Important
 
-FIXME Describe ``purge``
+The ``state:`` is "local overrides of global module values", see FIXMELINK: Local overrides of global module values.
+
+
+Purge
+=====
 
 * The ``purge:`` option (which defaults to `no`) ensures that **only** the specified entries are present. All other entries will be **deleted**.
 
 
-FIXME: the ``state:`` is Local overrides of global module values
-
 .. warning:: Why does ``purge`` default to ``no``?
 
-   To prevent from accidental deletion, ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this.
+To prevent from accidental deletion, ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this, i.e. opt-in to potentially dangerious behaviour.
 
+When would you use aggregate resources with ``purge: true``?
+------------------------------------------------------------
+
+* Ansible to execute your "single source of truth" (execute here means we can talk to source  of truth, e.g. CMS or external data source)
+* Ansible is your "Source of Truth"
+
+
+When would you aggregate resources with ``purge: false``?
+---------------------------------------------------------
+
+
+The *additive* format can be useful in a number of cases:
+
+* When Ansible isn't executing your Single Source of truth; and therefore doesn't ...
+* Allows you to start using Ansible to configure just one part of your network
+* FIXME
 
 
 Local overrides of global module values
 =======================================
 
-* FIXME: What
-* FIXME: Why: Cleaner short hand. Allows you to separate out what's common from what's item specific.
+When writing tasks using ``aggregate`` you may find yourself repeating various settings withon the aggregate dictionary, for example:
 
 .. code-block:: yaml
 
-   - name: configure vlans neighbor (delete others)
+   - name: Reserve mgmt vlans
+     net_vlan:
+       aggregate:
+         - { vlan_id: 4, name: reserved_vlan, state: active }
+         - { vlan_id: 5, name: mgmt, state: active }
+         - { vlan_id: 6, name: reserved_vlan , state: active}
+       name: reserved_vlan
+       state: active # override
+
+In the above example we can see that ``state: active`` is set for all vlans, and most have ``name: reserved_vlan``. We can simplify this to:
+
+
+.. code-block:: yaml
+
+   - name: Reserve mgmt vlans
      net_vlan:
        aggregate:
          - { vlan_id: 4 }
          - { vlan_id: 5, name: mgmt }
          - { vlan_id: 6 }
-       name: reserved_vlan
+       name: reserved_vlan # override
        state: active # override
-       purge: yes # override
+
+
+Note that:
+
+* Shorter task
+* The special cases, ``name: mgmt``, stand out a lot more, increasing readability
+* This can be very powerful when a module uses take a lot of options, most of which are common, such as ``net_interfaces`` or ``nxos_bgp_neighbor_af``
 
 FIXME: Become realy power on ``net_interfaces``, mtu, admin_state, description
-
-FIXME: Even more so on ``bpg_neighbour``: https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py#L655
 
 
 Reference ID shorthand
@@ -145,22 +183,7 @@ Reference ID shorthand
        purge: yes
 
 
-When would you use aggregate resources with ``purge: true``?
-============================================================
 
-* Ansible to execute your "single source of truth" (execute here means we can talk to source  of truth, e.g. CMS or external data source)
-* Ansible is your "Source of Truth"
-
-
-When would you aggregate resources with ``purge: false``?
-=========================================================
-
-
-The *additive* format can be useful in a number of cases:
-
-* When Ansible isn't executing your Single Source of truth; and therefore doesn't ...
-* Allows you to start using Ansible to configure just one part of your network
-* FIXME
 
 FIXME
 =====
@@ -172,6 +195,6 @@ The following need discussing further
   * Do we want to add ``required_if = [('purge', 'true', ['aggregate'])]``
   * Maybe no, as we may want to factory reset a all vlans
   * Add tests for this
-* Does the order matter
+* Does the order matter for access controll list?
 * Link to `Aggreate declaritive intent`
 * Docs marker for "Reference ID"
