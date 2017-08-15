@@ -80,6 +80,15 @@ except ImportError:
     HAS_LIB = False
 
 
+def get_devicegroup(device, devicegroup):
+    dg_list = device.refresh_devices()
+    for group in dg_list:
+        if isinstance(group, panorama.DeviceGroup):
+            if group.name == devicegroup:
+                return group
+    return False
+
+
 def register_ip_to_tag_map(device, ip_addresses, tag):
     """
     
