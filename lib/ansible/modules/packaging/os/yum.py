@@ -1032,7 +1032,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
             rc, out, err = module.run_command(cmd)
             out_lower = out.strip().lower()
             if not out_lower.endswith("no packages marked for update") and \
-                    not out_lower.endswith("already installed and latest version"):
+                    not out_lower.endswith("nothing to do"):
                 res['changed'] = True
         else:
             rc, out, err = [0, '', '']
@@ -1042,7 +1042,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
             rc2, out2, err2 = module.run_command(cmd)
             out2_lower = out2.strip().lower()
             if not out2_lower.endswith("no packages marked for update") and \
-                    not out2_lower.endswith("already installed and latest version"):
+                    not out2_lower.endswith("nothing to do"):
                 res['changed'] = True
         else:
             rc2, out2, err2 = [0, '', '']
