@@ -154,6 +154,14 @@ def validate_privilege(value, module):
         module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
 
 
+def user_del_cmd(username):
+    return json.dumps({
+        'command': 'no username %s' % username,
+        'prompt': 'This operation will remove all username related configurations with same name',
+        'answer': 'y'
+    })
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     state = module.params['state']
@@ -169,12 +177,7 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         if want['state'] == 'absent':
-            cmd = json.dumps({
-                'command': 'no username %s' % want['name'],
-                'prompt': 'This operation will remove all username related configurations with same name',
-                'answer': 'y'
-            })
-            commands.append(cmd)
+            commands.append(user_del_cmd(want['name']))
             continue
 
         if needs_update(want, have, 'view'):
@@ -191,12 +194,7 @@ def map_obj_to_commands(updates, module):
             if want['nopassword']:
                 add(commands, want, 'nopassword')
             else:
-                cmd = json.dumps({
-                    'command': 'no username %s nopassword' % want['name'],
-                    'prompt': 'This operation will remove all username related configurations with same name',
-                    'answer': 'y'
-                })
-                add(commands, want, cmd)
+                add(commands, want, user_del_cmd(want['name']))
 
     return commands
 
@@ -347,12 +345,7 @@ def main():
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
-                cmd = json.dumps({
-                    'command': 'no username %s' % item,
-                    'prompt': 'This operation will remove all username related configurations with same name',
-                    'answer': 'y'
-                })
-                commands.append(cmd)
+                commands.append(user_del_cmd(item))
 
     result['commands'] = commands
 
