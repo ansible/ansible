@@ -49,10 +49,6 @@ options:
       - List of members of the link aggregation group.
   aggregate:
     description: List of link aggregation definitions.
-  purge:
-    description:
-      - Purge link aggregation groups not defined in the aggregates parameter.
-    default: no
   state:
     description:
       - State of the link aggregation group.
@@ -73,6 +69,18 @@ EXAMPLES = """
     name: bond0
     state: absent
 
+- name: Create aggregate of linkagg definitions
+  vyos_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
+
+- name: Remove aggregate of linkagg definitions
+  vyos_linkagg:
+    aggregate:
+      - name: bond0
+      - name: bond1
+    state: absent
 """
 
 RETURN = """
@@ -85,7 +93,10 @@ commands:
     - set interfaces ethernet eth0 bond-group 'bond0'
     - set interfaces ethernet eth1 bond-group 'bond0'
 """
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import load_config, run_commands
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
@@ -173,17 +184,14 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
-            if 'mode' not in d:
-                d['mode'] = module.params['mode']
-
-            obj.append(d)
+            obj.append(item.copy())
     else:
         obj.append({
             'name': module.params['name'],
@@ -198,25 +206,35 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         mode=dict(choices=['802.3ad', 'active-backup', 'broadcast',
                            'round-robin', 'transmit-load-balance',
                            'adaptive-load-balance', 'xor-hash', 'on'],
                   default='802.3ad'),
         members=dict(type='list'),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
     mutually_exclusive = [['name', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()

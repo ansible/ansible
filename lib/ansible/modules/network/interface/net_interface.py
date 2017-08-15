@@ -87,6 +87,24 @@ EXAMPLES = """
     name: ge-0/0/1
     description: test-interface
     enabled: False
+
+- name: Create interface using aggregate
+  net_interface:
+    aggregate:
+      - name: ge-0/0/1
+        description: test-interface-1
+      - name: ge-0/0/2
+        description: test-interface-2
+    speed: 1g
+    duplex: full
+    mtu: 512
+
+- name: Delete interface using aggregate
+  junos_interface:
+    aggregate:
+      - name: ge-0/0/1
+      - name: ge-0/0/2
+    state: absent
 """
 
 RETURN = """

@@ -58,6 +58,20 @@ EXAMPLES = """
   net_lldp_interface:
     name: eth1
     state: absent
+
+- name: Create aggregate of LLDP interface configurations
+  net_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: present
+
+- name: Delete aggregate of LLDP interface configurations
+  net_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: absent
 """
 
 RETURN = """

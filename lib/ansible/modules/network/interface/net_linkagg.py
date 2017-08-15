@@ -70,6 +70,18 @@ EXAMPLES = """
     name: bond0
     state: absent
 
+- name: Create aggregate of linkagg definitions
+  net_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
+
+- name: Remove aggregate of linkagg definitions
+  net_linkagg:
+    aggregate:
+      - name: bond0
+      - name: bond1
+    state: absent
 """
 
 RETURN = """
