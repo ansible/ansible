@@ -21,7 +21,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -32,7 +32,7 @@ description: >
     policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the
     traffic is applied, the more specific rules must precede the more general ones.
 author: "Robert Hagen (@rnh556)"
-version_added: "1.0"
+version_added: "2.4"
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
