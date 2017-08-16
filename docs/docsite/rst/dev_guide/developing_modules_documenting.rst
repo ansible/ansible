@@ -96,7 +96,7 @@ Version 1.1 of the metadata
 +++++++++++++++++++++++++++
 
 Structure
-`````````
+^^^^^^^^^
 
 .. code-block:: python
 
@@ -107,7 +107,7 @@ Structure
   }
 
 Fields
-``````
+^^^^^^
 
 :metadata_version: An “X.Y” formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are

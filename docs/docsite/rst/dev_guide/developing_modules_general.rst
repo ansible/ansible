@@ -51,7 +51,9 @@ working on a whole new file. Here is an example:
 -  Navigate to the directory that you want to develop your new module
    in. E.g. ``$ cd lib/ansible/modules/cloud/azure/``
 -  Create your new module file: ``$ touch my_new_test_module.py``
--  Paste this example code into the new module file: (explanation in comments)::
+-  Paste this example code into the new module file: (explanation in comments)
+
+.. code:: python
 
     #!/usr/bin/python
 
@@ -187,13 +189,14 @@ that can run locally.
 -  Create an arguments file in ``/tmp/args.json`` with the following
    content: (explanation below)
 
-   .. code:: json
-        {
-            "ANSIBLE_MODULE_ARGS": {
-                "name": "hello",
-                "new": true
-            }
+.. code:: json
+
+    {
+        "ANSIBLE_MODULE_ARGS": {
+            "name": "hello",
+            "new": true
         }
+    }
 
 -  If you are using a virtual environment (highly recommended for
    development) activate it: ``$ . venv/bin/activate``
@@ -204,7 +207,7 @@ that can run locally.
 This should be working output that resembles something like the
 following:
 
-::
+.. code:: json
 
     {"changed": true, "state": {"original_message": "hello", "new_message": "goodbye"}, "invocation": {"module_args": {"name": "hello", "new": true}}}
 
