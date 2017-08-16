@@ -236,9 +236,6 @@ Ansible Changes By Release
   * sensu_handler
   * sensu_silence
 
-#### Net Tools
-  * dnsmadeeasy
-
 #### Network
 - aci
   * aci_action_rule_profile
