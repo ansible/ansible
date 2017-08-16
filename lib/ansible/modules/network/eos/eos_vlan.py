@@ -41,10 +41,9 @@ options:
     description:
       - ID of the VLAN.
     required: true
-  interfaces:
+  trunk_groups:
     description:
-      - List of interfaces to check the VLAN has been
-        configured correctly.
+      - List of trunk groups that should be associated to the VLAN.
   aggregate:
     description: List of VLANs definitions
   purge:
@@ -78,77 +77,104 @@ from ansible.module_utils.six import iteritems
 import re
 
 
+def search_obj_in_list(vlan_id, lst):
+    for o in lst:
+        if o['vlan_id'] == vlan_id:
+            return o
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
-    state = module.params['state']
 
-    if state == 'absent':
-        if have:
-            commands.append('no vlan %s' % want['vlan_id'])
-    elif state == 'present':
-        if not have or want['name'] != have['name']:
-            commands.append('vlan %s' % want['vlan_id'])
-            commands.append('name %s' % want['name'])
-    else:
-        if not have:
-            commands.append('vlan %s' % want['vlan_id'])
-            commands.append('name %s' % want['name'])
-            commands.append('state %s' % want['state'])
-        elif have['name'] != want['name'] or have['state'] != want['state']:
-            commands.append('vlan %s' % want['vlan_id'])
+    for w in want:
+        vlan_id = w['vlan_id']
+        name = w['name']
+        state = w['state']
+        trunk_groups = w['trunk_groups']
 
-            if have['name'] != want['name']:
-                commands.append('name %s' % want['name'])
+        obj_in_have = search_obj_in_list(vlan_id, have)
 
-            if have['state'] != want['state']:
-                commands.append('state %s' % want['state'])
+        if state == 'absent':
+            if obj_in_have:
+                commands.append('no vlan %s' % w['vlan_id'])
+        elif state == 'present':
+            if not obj_in_have or w['name'] != obj_in_have['name']:
+                commands.append('vlan %s' % w['vlan_id'])
+                commands.append('name %s' % w['name'])
+        else:
+            if not obj_have:
+                commands.append('vlan %s' % w['vlan_id'])
+                commands.append('name %s' % w['name'])
+                commands.append('state %s' % w['state'])
+            elif obj_in_have['name'] != w['name'] or obj_in_have['state'] != w['state']:
+                commands.append('vlan %s' % w['vlan_id'])
+
+                if obj_in_have['name'] != w['name']:
+                    commands.append('name %s' % w['name'])
+
+                if obj_in_have['state'] != w['state']:
+                    commands.append('state %s' % w['state'])
 
     return commands
 
 
 def map_config_to_obj(module):
-    obj = {}
+    objs = []
     output = run_commands(module, ['show vlan'])
+    lines = output[0].strip().splitlines()[2:]
 
-    if isinstance(output[0], str):
-        for l in output[0].strip().splitlines()[2:]:
-            split_line = l.split()
-            vlan_id = split_line[0]
-            name = split_line[1]
-            status = split_line[2]
+    for l in lines:
+        splitted_line = re.split(r'\s{2,}', l.strip())
+        import q;q(splitted_line)
+        obj = {}
+        obj['vlan_id'] = splitted_line[0]
+        obj['name'] = splitted_line[1]
+        obj['state'] = splitted_line[2]
 
-            if vlan_id == str(module.params['vlan_id']):
-                obj['vlan_id'] = vlan_id
-                obj['name'] = name
-                obj['state'] = status
-                if obj['state'] == 'suspended':
-                    obj['state'] = 'suspend'
-                break
+        if obj['state'] == 'suspended':
+            obj['state'] = 'suspend'
+
+        if len(splitted_line) > 3:
+            obj['trunk_groups'] = []
+
+            for i in splitted_line[3].split(','):
+                obj['trunk_groups'].append(i.strip())
+
+        objs.append(obj)
+
+    return objs
+
+
+def map_params_to_obj(module):
+    obj = []
+
+    if 'aggregate' in module.params and module.params['aggregate']:
+        for v in module.params['aggregate']:
+            d = v.copy()
+
+            if 'state' not in d:
+                d['state'] = module.params['state']
+
+            obj.append(d)
     else:
-        for k, v in iteritems(output[0]['vlans']):
-            vlan_id = k
-            name = v['name']
-            status = v['status']
+        vlan_id = str(module.params['vlan_id'])
+        name = module.params['name']
+        state = module.params['state']
+        trunk_groups = module.params['trunk_groups']
 
-            if vlan_id == str(module.params['vlan_id']):
-                obj['vlan_id'] = vlan_id
-                obj['name'] = name
-                obj['state'] = status
-                if obj['state'] == 'suspended':
-                    obj['state'] = 'suspend'
-                break
+        obj.append({
+            'vlan_id': vlan_id,
+            'name': name,
+            'state': state,
+            'trunk_groups': trunk_groups
+        })
 
     return obj
 
 
-def map_params_to_obj(module):
-    return {
-        'vlan_id': str(module.params['vlan_id']),
-        'name': module.params['name'],
-        'state': module.params['state']
-    }
-
+def check_declarative_intent_params(want, module):
+    pass
 
 def main():
     """ main entry point for module execution
@@ -156,7 +182,7 @@ def main():
     argument_spec = dict(
         vlan_id=dict(required=True, type='int'),
         name=dict(),
-        interfaces=dict(),
+        trunk_groups=dict(type='list'),
         aggregate=dict(),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
@@ -178,6 +204,7 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
+    import q;q(want, have)
 
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
