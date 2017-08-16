@@ -4,7 +4,7 @@ Ansible Module Development Walkthrough
 ======================================
 
 
-In this section, we will walk through developing, testing, and debugging an Ansible module. 
+In this section, we will walk through developing, testing, and debugging an Ansible module.
 
 What's covered in this section:
 
@@ -236,7 +236,7 @@ Ansible playbook.
 - Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
 Debugging (local)
-=================   
+=================
 
 If you want to break into a module and step through with the debugger, locally running the module you can do:
 
@@ -280,7 +280,7 @@ Going Further
 
 If you are starting new development or fixing a bug, create a new branch:
 
-``$ git checkout -b my-new-branch``. 
+``$ git checkout -b my-new-branch``.
 
 If you are planning on contributing
 back to the main Ansible repository, fork the Ansible repository into
@@ -291,7 +291,7 @@ submit a pull request to the Ansible repository.
 If you want to submit a new module to the upstream Ansible repo, be sure
 to run through sanity checks first. For example:
 
-``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME`` 
+``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
 Note that this example requires docker to be installed and running. If you'd rather not use a
 container for this, you can choose to use ``--tox`` instead of ``--docker``.
@@ -309,5 +309,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstring <https://github.com/tstringer>`_) for contributing source 
+Thank you to Thomas Stringer (`@tstring <https://github.com/tstringer>`_) for contributing source
 material for this topic.
