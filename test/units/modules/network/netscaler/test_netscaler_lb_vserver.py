@@ -796,6 +796,7 @@ class TestNetscalerLBVServerModule(TestModule):
             ConfigProxy=Mock(return_value=lb_vserver_proxy_mock),
             ensure_feature_is_enabled=Mock(return_value=True),
             lb_vserver_exists=Mock(side_effect=[True, True]),
+            nitro_exception=self.MockException,
             do_state_change=do_state_change_mock,
         ):
             self.module = netscaler_lb_vserver
