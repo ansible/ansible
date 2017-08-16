@@ -24,6 +24,7 @@ DOCUMENTATION:
     description:
         - Get inventory hosts from the local virtualbox installation.
         - Uses a <name>.vbox.yaml (or .vbox.yml) YAML configuration file.
+        - The inventory_hostname is always the 'Name' of the virtualbox instance.
     options:
         running_only:
             description: toggles showing all vms vs only those currently running
