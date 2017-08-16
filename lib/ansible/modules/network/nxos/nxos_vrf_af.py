@@ -47,6 +47,7 @@ options:
   safi:
     description:
       - Sub Address-Family Identifier (SAFI).
+      - Deprecated in 2.4
     required: true
     choices: ['unicast', 'multicast']
     default: null
