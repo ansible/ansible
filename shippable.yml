@@ -24,8 +24,6 @@ matrix:
 
     - env: TEST=windows
 
-    - env: TEST=network
-
     - env: TEST=linux/centos6/1
     - env: TEST=linux/centos7/1
     - env: TEST=linux/fedora24/1
