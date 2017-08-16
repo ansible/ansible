@@ -104,7 +104,7 @@ def map_obj_to_commands(updates, module):
                 commands.append('vlan %s' % w['vlan_id'])
                 commands.append('name %s' % w['name'])
         else:
-            if not obj_have:
+            if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
                 commands.append('name %s' % w['name'])
                 commands.append('state %s' % w['state'])
@@ -118,10 +118,8 @@ def map_obj_to_commands(updates, module):
                     commands.append('state %s' % w['state'])
 
     if purge:
-        import q;q(have)
         for h in have:
             obj_in_want = search_obj_in_list(h['vlan_id'], want)
-            import q;q(h, obj_in_want)
             if not obj_in_want and h['vlan_id'] != '1':
                 commands.append('no vlan %s' % h['vlan_id'])
 
@@ -183,6 +181,7 @@ def map_params_to_obj(module):
 
 def check_declarative_intent_params(want, module):
     pass
+
 
 def main():
     """ main entry point for module execution
