@@ -315,7 +315,7 @@ EXAMPLES = '''
     ssh_password_enabled: false
     ssh_public_keys:
     - path: /home/adminUser/.ssh/authorized_keys
-        key_data: < insert yor ssh public key here... >
+      key_data: < insert yor ssh public key here... >
     network_interfaces: testvm001
     storage_container: osdisk
     storage_blob: osdisk.vhd
@@ -326,13 +326,13 @@ EXAMPLES = '''
     version: latest
     data_disks:
     - data_disk_lun: 0
-        data_disk_size_gb: 64
-        data_disk_storage_container_name: datadisk1
-        data_disk_storage_blob_name: datadisk1.vhd
+      data_disk_size_gb: 64
+      data_disk_storage_container_name: datadisk1
+      data_disk_storage_blob_name: datadisk1.vhd
     - data_disk_lun: 1
-        data_disk_size_gb: 128
-        data_disk_storage_container_name: datadisk2
-        data_disk_storage_blob_name: datadisk2.vhd
+      data_disk_size_gb: 128
+      data_disk_storage_container_name: datadisk2
+      data_disk_storage_blob_name: datadisk2.vhd
 
 - name: Power Off
   azure_rm_virtualmachine:
