@@ -144,7 +144,6 @@ def parse_cli(output, tmpl):
                         else:
                             items.append(None)
 
-
                     key = template(value['key'], {'item': items})
                     values = dict([(k, template(v, {'item': items})) for k, v in iteritems(value['values'])])
                     objects.append({key: values})
