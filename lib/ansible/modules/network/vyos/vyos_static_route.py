@@ -214,11 +214,17 @@ def map_params_to_obj(module, required_together=None):
 def check_declarative_intent_params(want, module):
     if module.params['prefix']:
         have = config_to_dict(module)
+        want_prefix = list()
+        have_prefix = list()
 
         for w in want:
-            for h in have:
-                if w['prefix'] != h['prefix']:
-                    module.fail_json(msg="Static IP route not configured on device")
+            want_prefix.append(w['prefix'])
+
+        for h in have:
+            have_prefix.append(h['prefix'])
+
+        if bool(set(want_prefix) & set(have_prefix)) is False:
+            module.fail_json(msg="Static IP route not configured on device")
 
 
 def main():
