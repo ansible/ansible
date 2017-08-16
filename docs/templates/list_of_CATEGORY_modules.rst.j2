@@ -1,6 +1,10 @@
 @{ title }@ Modules
 @{ '`' * title | length }@````````
 
+{% if blurb %}
+@{ blurb }@
+
+{% endif %}
 .. toctree:: :maxdepth: 1
 {% if category['_modules'] %}
 
@@ -16,7 +20,7 @@
 .. toctree:: :maxdepth: 1
 
 {% for module in info['_modules'] | sort %}
-  @{ module }@{% if module_info[module]['deprecated'] %}**(D)**{% endif%} - @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} - @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
 {% endfor %}
 
 {% endfor %}
