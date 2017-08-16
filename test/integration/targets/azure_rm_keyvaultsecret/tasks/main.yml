@@ -11,6 +11,7 @@
     keyvault_uri: https://tmpkeyvault.vault.azure.net
     secret_name: samplesecret5
     secret_value: 'mysecret'
+  register: output
 
 - assert:
     that: output.changed
@@ -20,6 +21,7 @@
     keyvault_uri: https://tmpkeyvault.vault.azure.net
     state: absent
     secret_name: samplesecret5
+  register: output
 
 - assert:
     that: output.changed
