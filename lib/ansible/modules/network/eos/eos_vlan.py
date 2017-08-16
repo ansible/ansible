@@ -187,7 +187,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        vlan_id=dict(required=True, type='int'),
+        vlan_id=dict(type='int'),
         name=dict(),
         trunk_groups=dict(type='list'),
         aggregate=dict(),
@@ -198,6 +198,8 @@ def main():
 
     argument_spec.update(eos_argument_spec)
 
+    required_one_of = [['vlan_id', 'aggregate']]
+    mutually_exclusive = [['vlan_id', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
