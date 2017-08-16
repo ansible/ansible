@@ -630,7 +630,7 @@ files:
     maintainers: $team_ansible
   $modules/system/pam_limits.py:
     ignored: usawa
-    maintainers: @giovannisciortino
+    maintainers: giovannisciortino
   $modules/system/pamd.py: kevensen
   $modules/system/parted.py: ColOfAbRiX
   $modules/system/ping.py: $team_ansible
