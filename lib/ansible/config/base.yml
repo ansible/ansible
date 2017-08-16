@@ -1279,14 +1279,6 @@ PARAMIKO_RECORD_HOST_KEYS:
   - {key: record_host_keys, section: paramiko_connection}
   type: boolean
   yaml: {key: paramiko_connection.record_host_keys}
-PERSISTENT_CONNECT_INTERVAL:
-  default: 1
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PERSISTENT_CONNECT_INTERVAL}]
-  ini:
-  - {key: connect_interval, section: persistent_connection}
-  type: integer
-  yaml: {key: persistent_connection.connect_interval}
 PERSISTENT_CONTROL_PATH_DIR:
   default: ~/.ansible/pc
   description: 'TODO: write it'
@@ -1294,17 +1286,9 @@ PERSISTENT_CONTROL_PATH_DIR:
   ini:
   - {key: control_path_dir, section: persistent_connection}
   yaml: {key: persistent_connection.control_path_dir}
-PERSISTENT_CONNECT_RETRIES:
-  default: 30
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRIES}]
-  ini:
-  - {key: connect_retries, section: persistent_connection}
-  type: integer
-  yaml: {key: persistent_connection.connect_retries}
 PERSISTENT_CONNECT_TIMEOUT:
   default: 30
-  description: 'TODO: write it'
+  description: This controls how long the persistent connection will remain idle before it is destroyed.
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT}]
   ini:
   - {key: connect_timeout, section: persistent_connection}
@@ -1312,21 +1296,19 @@ PERSISTENT_CONNECT_TIMEOUT:
   yaml: {key: persistent_connection.connect_timeout}
 PERSISTENT_CONNECT_RETRY_TIMEOUT:
   default: 15
-  desc: 'TODO: write it'
+  description: This contorls the retry timeout for presistent connection to connect to the local domain socket.
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
   ini:
   - {key: connect_retry_timeout, section: persistent_connection}
-  value_type: integer
-  vars: []
+  type: integer
   yaml: {key: persistent_connection.connect_retry_timeout}
 PERSISTENT_COMMAND_TIMEOUT:
   default: 10
-  desc: 'TODO: write it'
+  description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}
-  value_type: integer
-  vars: []
+  type: integer
   yaml: {key: persistent_connection.command_timeout}
 RETRY_FILES_ENABLED:
   default: True
