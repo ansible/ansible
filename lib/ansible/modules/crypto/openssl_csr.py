@@ -354,7 +354,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             else:
                 current = [usage.strip() for usage in str(usages_ext[0]).split(',')]
                 expected = [long[usage] if usage in long else usage for usage in expected]
-                return current == expected and usages_ext[0].get_critical() == critical
+                return set(current) == set(expected) and usages_ext[0].get_critical() == critical
 
         def _check_keyUsage(extensions):
             return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, self.keyUsage_critical, crypto_utils.keyUsageLong)
