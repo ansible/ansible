@@ -101,8 +101,9 @@ def register_ip_to_tag_map(device, ip_addresses, tag):
     exc = None
     try:
         device.userid.register(ip_addresses, tag)
-    except Exception, e:
+    except Exception:
         exc = get_exception()
+        return False, exc
 
     if exc:
         return False, exc
@@ -120,7 +121,7 @@ def get_all_address_group_mapping(device):
     ret = None
     try:
         ret = device.userid.get_registered_ip()
-    except Exception, e:
+    except Exception:
         exc = get_exception()
 
     if exc:
@@ -141,7 +142,7 @@ def delete_address_from_mapping(device, ip_address, tags):
     exc = None
     try:
         ret = device.userid.unregister(ip_address, tags)
-    except Exception, e:
+    except Exception:
         exc = get_exception()
 
     if exc:
@@ -210,8 +211,9 @@ def main():
     if commit:
         try:
             device.commit(sync=True)
-        except Exception, e:
-            module.fail_json(get_exception())
+        except Exception:
+            exc = get_exception()
+            module.fail_json(msg=exc)
 
     module.exit_json(changed=True, msg=result)
 
