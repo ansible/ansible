@@ -54,7 +54,7 @@ Ansible Changes By Release
 * panos_address (use M(panos_object) instead)
 * panos_service (use M(panos_object) instead)
 * panos_security_policy: In 2.4 use M(panos_security_rule) instead.
-# panos_nat_policy, In 2.4 use M(panos_nat_rule) instead.
+* panos_nat_policy, In 2.4 use M(panos_nat_rule) instead.
 
 #### Removed Deprecated Modules:
 * eos_template (use eos_config instead)
