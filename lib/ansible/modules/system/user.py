@@ -1347,7 +1347,7 @@ class SunOS(User):
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
                 try:
                     lines = []
-                    for line in open(self.SHADOWFILE, 'rb').readlines():
+                    for line in open(self.SHADOWFILE, 'r').readlines():
                         fields = line.strip().split(':')
                         if not fields[0] == self.name:
                             lines.append(line)
@@ -1441,7 +1441,7 @@ class SunOS(User):
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
                 try:
                     lines = []
-                    for line in open(self.SHADOWFILE, 'rb').readlines():
+                    for line in open(self.SHADOWFILE, 'r').readlines():
                         fields = line.strip().split(':')
                         if not fields[0] == self.name:
                             lines.append(line)
