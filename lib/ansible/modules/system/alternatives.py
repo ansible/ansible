@@ -37,7 +37,8 @@ options:
   link:
     description:
       - The path to the symbolic link that should point to the real executable.
-      - This option is required on RHEL-based distributions
+      - This option is always required on RHEL-based distributions. On Debian-based distributions this option is
+        required when the alternative I(name) is unknown to the system.
     required: false
   priority:
     description:
