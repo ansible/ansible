@@ -167,6 +167,7 @@ Ansible Changes By Release
   * aci_bridge_domain
   * aci_context
   * aci_contract
+  * aci_epg_contract_binding
   * aci_epg_domain_binding
   * aci_fc_policy
   * aci_filter
