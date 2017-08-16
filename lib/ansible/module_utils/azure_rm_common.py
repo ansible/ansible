@@ -175,6 +175,7 @@ class AzureRMModuleBase(object):
         self._storage_client = None
         self._resource_client = None
         self._compute_client = None
+        self._trafficmanager_client = None
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
         # self.debug = self.module.params.get('debug')
@@ -671,17 +672,17 @@ class AzureRMModuleBase(object):
             )
         return self._resource_client
 
-        @property
+    @property
     def trafficmanager_client(self):
         self.log('Getting traffic manager client')
         if not self._trafficmanager_client:
             # self.check_client_version('resource', resource_client_version, AZURE_EXPECTED_VERSIONS['resource_client_version'])
-            self._resource_client = ResourceManagementClient(
+            self._trafficmanager_client = TrafficManagerManagementClient(
                 self.azure_credentials,
                 self.subscription_id,
                 base_url=self.base_url
             )
-        return self._resource_client
+        return self._trafficmanager_client
 
     @property
     def compute_client(self):

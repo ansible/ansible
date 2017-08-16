@@ -133,11 +133,11 @@ class AzureRMTrafficManager(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             name=dict(type='str', required=True),
-            resource_group=(type='str', required=True),
-            properties=dict(type='list', aliases=['trafficmanagerproperties'] ),
+            resource_group=dict(type='str', required=True),
+            properties=dict(type='str'),
             location=dict(type='str'),
             status=dict(type='str', default='Enabled', choices=['Enabled', 'Disabled']),
-            state=dict(type='str', default='present', choices=['present', 'absent']),
+            state=dict(type='str', default='present', choices=['present', 'absent'])
         )
 
         self.name = None
@@ -155,7 +155,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         )
 
         super(AzureRMTrafficManager, self).__init__(self.module_arg_spec,
-                                                   supports_check_mode=True)
+                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -168,6 +168,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         # Get resource group using Azure Python SDK
         resource_group = self.get_resource_group(self.resource_group)
 
+        
+
         # If there is no location, get the location from the resource group
         if not self.location:
             # Set default location
@@ -178,33 +180,33 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         tm = None
         contains_endpoints = False
 
+
         try:
             self.log('Fetching traffic manager {0}'.format(self.name))
             # Get the resource group to verify it exist
-            tm = self.rm_client.resource_groups.get(self.resource_group, self.name)
-            
+            # tm = self.trafficmanager_client.get(self.resource_group, self.name)
+            tm = self.get_traffic_manager_profile(self.resource_group, self.name)
             #Retrieve the sate of the tm
-            self.check_provisioning_state(tm, self.state)
-            contains_resources = self.resources_exist()
+            # self.check_provisioning_state(tm, self.state)
+            # contains_resources = self.resources_exist()
 
-            results = resource_group_to_dict(rg)
-            if self.state == 'absent':
-                changed = True
-            elif self.state == 'present':
-                update_tags, results['tags'] = self.update_tags(results['tags'])
-                if update_tags:
-                    changed = True
+            # results = resource_group_to_dict(self.resource_group)
+            # if self.state == 'absent':
+            #     changed = True
+            # elif self.state == 'present':
+            #     update_tags, results['tags'] = self.update_tags(results['tags'])
+            #     if update_tags:
+            #         changed = True
 
-                if self.location and self.location != results['location']:
-                    self.fail("traffic manager '{0}' already exists in location '{1}' and cannot be "
-                              "moved.".format(self.name, results['location']))
+            #     if self.location and self.location != results['location']:
+            #         self.fail("traffic manager '{0}' already exists in location '{1}' and cannot be "
+            #                   "moved.".format(self.name, results['location']))
         except CloudError:
             if self.state == 'present':
                 changed = True
 
         self.results['changed'] = changed
         self.results['state'] = results
-        self.results['contains_resources'] = contains_resources
 
         if self.check_mode:
             return self.results
@@ -275,6 +277,21 @@ class AzureRMTrafficManager(AzureRMModuleBase):
     #     except Exception as exc:
     #         self.fail("Error checking for existence of name {0} - {1}".format(self.name, str(exc)))
     #     return exists
+
+    def get_traffic_manager_profile(self, resource_group, name):
+        '''
+        Fetch a traffic manager.
+
+        :param name: name of a traffic  manager
+        :return: traffic manage object
+        '''
+        try:
+            return self.trafficmanager_client.profiles.get(resource_group, name)
+        except CloudError:
+            self.fail("Parameter error: traffic manager {0} not found".format(name))
+        except Exception as exc:
+            self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
+
 
 
 def main():
