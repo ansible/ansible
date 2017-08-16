@@ -24,7 +24,7 @@ requirements:
 - ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
-  The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
+- The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
 options:
   contract:
     description:
@@ -59,7 +59,7 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_subject_bind_filter:
+- aci_subject_filter_binding:
     hostname: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
