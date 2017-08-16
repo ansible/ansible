@@ -1,12 +1,12 @@
 Ansible Changes By Release
 ==========================
 
-## 2.3.2 "Ramble On" - 2017-08-04
 <a id="2.3.3"></a>
 
 ## 2.3.3 "Ramble On" - TBD
 
 ### Bugfixes
+* Fix alternatives module handlling of non existing options
 * Fix synchronize traceback with the docker connection plugin
 * Do not escape backslashes in the template lookup plugin to mirror what the template module does
 * Fix the expires option of the postgresq_user module
@@ -35,7 +35,7 @@ Ansible Changes By Release
 
 <a id="2.3.2"></a>
 
-## 2.3.2 "Ramble On" - TBD
+## 2.3.2 "Ramble On" - 2017-08-04
 
 ### Bugfixes
 * Fix partend i18n issues
