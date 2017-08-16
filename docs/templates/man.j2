@@ -50,8 +50,8 @@ ACTIONS
 {% for action in actions %}
     *{{ action }}*::: {{ (actions[action]['desc']|default(' '))|wordwrap}}
 
-{% if actions[action]['uncommon_options'] %}
-{% for option in actions[action]['uncommon_options']|sort %}
+{% if actions[action]['options'] %}
+{% for option in actions[action]['options']|sort %}
 {% for switch in option['options'] if switch in actions[action]['option_names'] %}*{{switch}}*{% if option['arg'] %} '<{{option['arg']}}>'{% endif %}{% if not loop.last %},{% endif %}{% endfor %}::
 
         {{ (option['desc']) }}

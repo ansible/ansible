@@ -64,68 +64,127 @@ def opt_doc_list(cli):
 
 
 import pprint
-def opts_docs(cli, name):
-    ''' generate doc structure from options '''
-    if name == 'adhoc':
-        cli_name = 'ansible'
-    else:
-        cli_name = 'ansible-%s' % name
 
-    # cli info
+
+# def opts_docs(cli, name):
+def opts_docs(cli_class_name, cli_module_name):
+    ''' generate doc structure from options '''
+
+    cli_name = 'ansible-%s' % cli_module_name
+    if cli_module_name == 'adhoc':
+        cli_name = 'ansible'
+
+    print('cli_class_name: %s' % cli_class_name)
+    print('cli_name: %s' % cli_name)
+    # WIth no action/subcommand
+    # shared opts set
+    # instantiate each cli and ask its options
+    cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
+                                   fromlist=[cli_class_name]), cli_class_name)
+    cli = cli_klass([])
+
+    # parse the common options
+    try:
+        cli.parse()
+    except:
+        # no options passed, we expect errors
+        pass
+
+    # base/common cli info
     docs = {
-        'cli': name,
+        'cli': cli_module_name,
         'cli_name': cli_name,
         'usage': cli.parser.usage,
         'short_desc': cli.parser.description,
         'long_desc': trim_docstring(cli.__doc__),
-        'actions': {'foo': 1232},
+        'actions': {},
     }
+    option_info = {'option_names': [],
+                   'options': []}
 
-    # shared opts set
+    for extras in ('ARGUMENTS'):
+        if hasattr(cli, extras):
+            docs[extras.lower()] = getattr(cli, extras)
+
     common_opts = opt_doc_list(cli)
 
     shared_opt_names = []
     for opt in common_opts:
         shared_opt_names.extend(opt.get('options', []))
 
+    option_info['options'] = common_opts
+    option_info['option_names'] = shared_opt_names
+
+    docs.update(option_info)
+
+    # now for each action/subcommand
     # force populate parser with per action options
-    if cli.VALID_ACTIONS:
-        docs['actions'] = {}
+
+    print('cli_class_name: %s type: %s' % (cli_class_name, type(cli_class_name)))
+
+    # use class attrs not the attrs on a instance (not that it matters here...)
+    print(getattr(cli_klass, 'VALID_ACTIONS', ()))
+    for action in getattr(cli_klass, 'VALID_ACTIONS', ()):
+
+        # instantiate each cli and ask its options
+        action_cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
+                                              fromlist=[cli_class_name]), cli_class_name)
+        # init with args with action added?
+        cli = action_cli_klass([])
+        cli.args.append(action)
+
+        try:
+            cli.parse()
+        except:
+            # no options passed, we expect errors
+            pass
+
+        # FIXME/TODO: needed?
         # avoid dupe errors
         cli.parser.set_conflict_handler('resolve')
-        for action in cli.VALID_ACTIONS:
-            cli.args.append(action)
-            cli.set_action()
-            docs['actions'][action] = {}
-            docs['actions'][action]['name'] = action
-            docs['actions'][action]['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
-            #docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
-            action_doc_list = opt_doc_list(cli)
 
-            uncommon_options = []
-            for action_doc in action_doc_list:
-                uncommon_options = []
-                print('\naction: %s action_doc: %s' % (action, action_doc))
-                for option_alias in action_doc.get('options', []):
-                    print('option_alias: %s' % option_alias)
-                    if option_alias in shared_opt_names:
-                        continue
-                    if 'option_names' not in docs['actions'][action]:
-                        docs['actions'][action]['option_names'] = []
-                    docs['actions'][action]['option_names'].append(option_alias)
-                    uncommon_options.append(action_doc)
+        cli.set_action()
 
-                if 'uncommon_options' not in docs['actions'][action]:
-                    docs['actions'][action]['uncommon_options'] = []
-                docs['actions'][action]['uncommon_options'] = uncommon_options
+        action_info = {'option_names': [],
+                       #'uncommon_options': [],
+                       'options': []}
+        # docs['actions'][action] = {}
+        # docs['actions'][action]['name'] = action
+        action_info['name'] = action
+        action_info['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
 
-            if 'options' not in docs['actions'][action]:
-                docs['actions'][action]['options'] = action_doc_list
-            #if 'uncommon_options' not in docs['actions'][action]:
-            #    docs['actions'][action]['uncommon_options'] = []
-            #for uncommon_option in uncommon_options:
-            #    if uncommon_option not in docs['actions'][action]['uncommon_options']:
-            #        docs['actions'][action]['uncommon_options'].append(uncommon_option)
+        # docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
+        action_doc_list = opt_doc_list(cli)
+
+        uncommon_options = []
+        for action_doc in action_doc_list:
+            # uncommon_options = []
+            print('\naction: %s action_doc: %s' % (action, action_doc))
+
+            for option_alias in action_doc.get('options', []):
+
+                print('option_alias: %s' % option_alias)
+
+                if option_alias in shared_opt_names:
+                    continue
+
+                action_info['option_names'].append(option_alias)
+                uncommon_options.append(action_doc)
+
+            action_info['options'] = uncommon_options
+
+        #if 'options' not in action_info:
+        #    action_info['options'] = action_doc_list
+
+        #if 'uncommon_options' not in docs['actions'][action]:
+        #    docs['actions'][action]['uncommon_options'] = []
+        #for uncommon_option in uncommon_options:
+        #    if uncommon_option not in docs['actions'][action]['uncommon_options']:
+        #        docs['actions'][action]['uncommon_options'].append(uncommon_option)
+
+        print('foo')
+        # TODO: mv per-action stuff to method, return action_info
+        docs['actions'][action] = action_info
 
     docs['options'] = opt_doc_list(cli)
     print('\n\n')
@@ -151,30 +210,20 @@ if __name__ == '__main__':
         elif binary == '__init__.py':
             continue
 
-        libname = os.path.splitext(binary)[0]
-        print("Found CLI %s" % libname)
+        cli_name = os.path.splitext(binary)[0]
+        print("Found CLI %s" % cli_name)
 
-        if libname == 'adhoc':
-            myclass = 'AdHocCLI'
-            output[libname] = 'ansible.1.asciidoc.in'
+        if cli_name == 'adhoc':
+            cli_class_name = 'AdHocCLI'
+            # myclass = 'AdHocCLI'
+            output[cli_name] = 'ansible.1.asciidoc.in'
         else:
-            myclass = "%sCLI" % libname.capitalize()
-            output[libname] = 'ansible-%s.1.asciidoc.in' % libname
+            # myclass = "%sCLI" % libname.capitalize()
+            cli_class_name = "%sCLI" % cli_name.capitalize()
+            output[cli_name] = 'ansible-%s.1.asciidoc.in' % cli_name
 
-        # instantiate each cli and ask its options
-        mycli = getattr(__import__("ansible.cli.%s" % libname, fromlist=[myclass]), myclass)
-        cli_object = mycli([])
-        try:
-            cli_object.parse()
-        except:
-            # no options passed, we expect errors
-            pass
-
-        allvars[libname] = opts_docs(cli_object, libname)
-
-        for extras in ('ARGUMENTS'):
-            if hasattr(cli_object, extras):
-                allvars[libname][extras.lower()] = getattr(cli_object, extras)
+        # FIXME:
+        allvars[cli_name] = opts_docs(cli_class_name, cli_name)
 
     cli_list = allvars.keys()
 
@@ -183,7 +232,7 @@ if __name__ == '__main__':
                  'cli_rst.j2': {'out_dir': '../docsite/rst/cli/%s',
                                 'out_file_format': '%s.rst'}}
 
-    for libname in cli_list:
+    for cli_name in cli_list:
 
         # template it!
         env = Environment(loader=FileSystemLoader('../templates'))
@@ -194,15 +243,15 @@ if __name__ == '__main__':
 
             # add rest to vars
             # pprint.pprint(allvars)
-            tvars = allvars[libname]
+            tvars = allvars[cli_name]
             tvars['cli_list'] = cli_list
-            tvars['cli'] = libname
+            tvars['cli'] = cli_name
             if '-i' in tvars['options']:
                 print('uses inventory')
 
             manpage = template.render(tvars)
             filename = templates[template_file]['out_dir'] % templates[template_file]['out_file_format'] % tvars['cli_name']
-            # output[libname]
+            # output[cli_name]
             # print('filename: %s %s' % (filename, os.path.realpath(filename)))
             with open(filename, 'wb') as f:
                 f.write(to_bytes(manpage))
