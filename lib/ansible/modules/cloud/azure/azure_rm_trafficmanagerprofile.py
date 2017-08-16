@@ -111,7 +111,7 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.resource.resources.models import ResourceGroup
+    from azure.mgmt.trafficmanager.models import DnsConfig, Profile
 except ImportError:
     pass
 
@@ -122,7 +122,7 @@ def trafficmanagerprofile_group_to_dict(tm):
     return dict(
         id=tm.id,
         name=tm.name,
-        resource_group= tm.resource_group,
+        resource_group=tm.resource_group,
         location=tm.location,
         tags=tm.tags,
     )
@@ -134,7 +134,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str', required=True),
             resource_group=dict(type='str', required=True),
-            properties=dict(type='str'),
+            properties=dict(type='dict'),
             location=dict(type='str'),
             status=dict(type='str', default='Enabled', choices=['Enabled', 'Disabled']),
             state=dict(type='str', default='present', choices=['present', 'absent'])
@@ -168,24 +168,27 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         # Get resource group using Azure Python SDK
         resource_group = self.get_resource_group(self.resource_group)
 
-        
-
         # If there is no location, get the location from the resource group
         if not self.location:
             # Set default location
             self.location = resource_group.location
 
+        # Initialize the Ansible return
         results = dict()
         changed = False
-        tm = None
-        contains_endpoints = False
+        traffic_manager = None
+        # contains_endpoints = False
 
 
         try:
             self.log('Fetching traffic manager {0}'.format(self.name))
             # Get the resource group to verify it exist
-            # tm = self.trafficmanager_client.get(self.resource_group, self.name)
-            tm = self.get_traffic_manager_profile(self.resource_group, self.name)
+            # traffic_manager = self.get_traffic_manager_profile(self.resource_group, self.name)
+
+            # if traffic_manager is not None:
+            self.create_or_update_traffic_manager_profile(self.resource_group, self.name,
+                                                              self.location, self.properties)
+            changed = True
             #Retrieve the sate of the tm
             # self.check_provisioning_state(tm, self.state)
             # contains_resources = self.resources_exist()
@@ -280,18 +283,49 @@ class AzureRMTrafficManager(AzureRMModuleBase):
 
     def get_traffic_manager_profile(self, resource_group, name):
         '''
-        Fetch a traffic manager.
+        Fetch a traffic manager profile.
 
         :param name: name of a traffic  manager
         :return: traffic manage object
         '''
         try:
             return self.trafficmanager_client.profiles.get(resource_group, name)
-        except CloudError:
-            self.fail("Parameter error: traffic manager {0} not found".format(name))
+        except CloudError as ce:
+            self.fail("Parameter error: traffic manager {0} not found.\n{1}".format(name, ce))
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
 
+
+
+
+    def create_or_update_traffic_manager_profile(self, resource_group, name, location, properties):
+        '''
+        Create or update a traffic manager profile.
+
+        :param name: name of a traffic  manager
+        :return: traffic manage object
+        '''
+        tags = properties.get('tags', None)
+        location = location
+        profile_status = properties.get('profile_status', None)
+        traffic_routing_method = properties.get('traffic_routing_method', None)
+        monitor_config = properties.get('monitor_config', None)
+        endpoints = properties.get('endpoints', None)
+
+        dns_config = properties.get('dns_config', None)
+        relative_name = dns_config.get('relative_name', None)
+        ttl = dns_config.get('ttl', None)
+        dns_config = DnsConfig(relative_name, ttl)
+
+        profile = Profile(tags, location, profile_status, traffic_routing_method, dns_config, monitor_config, endpoints)
+        
+        try:
+            return self.trafficmanager_client.profiles.create_or_update(resource_group, name, profile)
+        except CloudError as ce:
+            self.fail("Parameter error: traffic manager {0} not found.\n{1}".format(name, ce))
+        except Exception as exc:
+            self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
+        
 
 
 def main():

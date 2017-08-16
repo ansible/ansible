@@ -96,7 +96,7 @@ try:
     from azure.mgmt.resource.version import VERSION as resource_client_version
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
-    from azure.mgmt.trafficmanager import TrafficManagerManagementClient  
+    from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
