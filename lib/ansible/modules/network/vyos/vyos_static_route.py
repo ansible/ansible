@@ -48,6 +48,11 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device.
+    version_added: "2.4"
   aggregate:
     description: List of static route definitions
   state:
@@ -100,6 +105,7 @@ commands:
     - set protocols static route 192.168.2.0/16 next-hop 10.0.0.1
 """
 import re
+import time
 
 from copy import deepcopy
 
@@ -205,6 +211,22 @@ def map_params_to_obj(module, required_together=None):
     return obj
 
 
+def check_declarative_intent_params(want, module):
+    if module.params['prefix']:
+        have = config_to_dict(module)
+        want_prefix = list()
+        have_prefix = list()
+
+        for w in want:
+            want_prefix.append(w['prefix'])
+
+        for h in have:
+            have_prefix.append(h['prefix'])
+
+        if bool(set(want_prefix) & set(have_prefix)) is False:
+            module.fail_json(msg="Static IP route not configured on device")
+
+
 def main():
     """ main entry point for module execution
     """
@@ -213,6 +235,7 @@ def main():
         mask=dict(type='str'),
         next_hop=dict(type='str'),
         admin_distance=dict(type='int'),
+        delay=dict(default=10, type='int'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -229,7 +252,6 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
-    argument_spec.update(vyos_argument_spec)
     required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'next_hop']]
     mutually_exclusive = [['aggregate', 'prefix']]
@@ -256,6 +278,11 @@ def main():
         commit = not module.check_mode
         load_config(module, commands, commit=commit)
         result['changed'] = True
+
+    if result['changed']:
+        time.sleep(module.params['delay'])
+
+    check_declarative_intent_params(want, module)
 
     module.exit_json(**result)
 
