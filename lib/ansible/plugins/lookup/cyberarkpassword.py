@@ -118,7 +118,8 @@ class LookupModule(LookupBase):
     """
     USAGE:
 
-        {{ lookup("cyberarkpassword", {"appid": "app_ansible", "query": "safe=CyberArk_Passwords;folder=root;object=AdminPass", "output": "Password,PassProps.UserName,PassProps.Address,PasswordChangeInProcess"}) }}
+        {{ lookup("cyberarkpassword", {"appid": "app_ansible", "query": "safe=CyberArk_Passwords;folder=root;object=AdminPass",
+                                       "output": "Password,PassProps.UserName,PassProps.Address,PasswordChangeInProcess"}) }}
 
         OR
 
