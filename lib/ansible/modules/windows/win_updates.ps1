@@ -303,7 +303,7 @@ Function RunAsScheduledJob {
     Name = $job_name
     ArgumentList = $job_arg_list
     ErrorAction = "Stop"
-    ScheduledJobOption = @{ RunElevated=$True }
+    ScheduledJobOption = @{ RunElevated=$True; StartIfOnBatteries=$True; StopIfGoingOnBatteries=$False }
   }
 
   if($job_init) { $rsj_args.InitializationScript = $job_init }
