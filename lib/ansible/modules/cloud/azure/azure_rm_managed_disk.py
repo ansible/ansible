@@ -245,8 +245,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
         if self.state == 'present':
-            self.results['state'] = managed_disk_to_dict(
-                self.create_or_update_managed_disk())
+            self.results['state'] = self.create_or_update_managed_disk()
         elif self.state == 'absent':
             self.delete_managed_disk()
         return self.results
@@ -271,16 +270,36 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         try:
             # CreationData cannot be changed after creation
             disk_params['creation_data'] = creation_data
-            poller = self.compute_client.disks.create_or_update(
-                self.resource_group,
-                self.name,
-                disk_params)
-            result = self.get_poller_result(poller)
-            self.results['changed'] = True
-
+            found_prev_disk = self.get_managed_disk()
+            if self.is_different(found_prev_disk, disk_params):
+                poller = self.compute_client.disks.create_or_update(
+                    self.resource_group,
+                    self.name,
+                    disk_params)
+                result = managed_disk_to_dict(self.get_poller_result(poller))
+                self.results['changed'] = True
+            else:
+                result = found_prev_disk
+                self.results['changed'] = False
         except AzureHttpError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
         return result
+
+    def is_different(self, disk1, disk2):
+        resp = False
+        if disk2.get('disk_size_gb'):
+            if not disk1['disk_size_gb'] == disk2['disk_size_gb']:
+                resp = True
+        if disk2.get('tags'):
+            if not disk1['tags'] == disk2['tags']:
+                resp = True
+        if disk2.get('os_type'):
+            if not disk1['os_type '] == disk2['os_type']:
+                resp = True
+        if disk2.get('storage_account_type'):
+            if not disk1['storage_account_type'] == disk2['storage_account_type']:
+                resp = True
+        return resp
 
     def delete_managed_disk(self):
         try:
@@ -295,7 +314,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
     def get_managed_disk(self):
         found = False
         try:
-            response = self.compute_client.disks.get(self.resource_group, self.name)
+            response = self.compute_client.disks.get(
+                self.resource_group, 
+                self.name)
             found = True
         except CloudError as e:
             self.log('Did not find managed disk')
