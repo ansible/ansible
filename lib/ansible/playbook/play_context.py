@@ -340,7 +340,7 @@ class PlayContext(Base):
         #  general flags (should we move out?)
         # for flag in ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff'):
         #  should only be 'non plugin' flags
-        for flag in ('connection', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff'):
+        for flag in ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff'):
             attribute = getattr(options, flag, False)
             if attribute:
                 setattr(self, flag, attribute)
