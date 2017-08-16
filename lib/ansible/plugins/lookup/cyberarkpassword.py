@@ -25,7 +25,14 @@ from subprocess import Popen
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_text
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 CLIPASSWORDSDK_CMD = os.getenv('AIM_CLIPASSWORDSDK_CMD', '/opt/CARKaim/sdk/clipasswordsdk')
 
@@ -109,8 +116,17 @@ class CyberarkPassword:
 class LookupModule(LookupBase):
 
     """
-    USAGE: {{lookup('cyberarkpassword', appid='Application1', query='safe=Safe1;Folder=root;Object=User1',
-                    output='password,passprops.username,passprops.address' [, extra_parms])}}
+    USAGE:
+
+        {{ lookup("cyberarkpassword", {"appid": "app_ansible", "query": "safe=CyberArk_Passwords;folder=root;object=AdminPass", "output": "Password,PassProps.UserName,PassProps.Address,PasswordChangeInProcess"}) }}
+
+        OR
+
+      with_cyberarkpassword:
+        appid: 'app_ansible'
+        query: 'safe=CyberArk_Passwords;folder=root;object=AdminPass'
+        output: 'Password,PassProps.UserName,PassProps.Address,PasswordChangeInProcess'
+
 
     It Requires CyberArk AIM Installed, and /opt/CARKaim/sdk/clipasswordsdk in place or set environment variable AIM_CLIPASSWORDSDK_CMD to the AIM
     CLI Password SDK executable.
@@ -130,12 +146,20 @@ class LookupModule(LookupBase):
     for extra_parms values please check parameters for clipasswordsdk in CyberArk's "Credential Provider and ASCP Implementation Guide"
 
     For Ansible on windows, please change the -parameters (-p, -d, and -o) to /parameters (/p, /d, and /o) and change the location of CLIPasswordSDK.exe
-
-    cyberarkpassword lookup can not be used as a source for loop
     """
 
     def run(self, terms, variables=None, **kwargs):
 
-        cyberark_conn = CyberarkPassword(**kwargs)
-        result = cyberark_conn.get()
-        return result
+        display.vvvv(terms)
+
+        if isinstance(terms, list):
+            return_values = []
+            for term in terms:
+                display.vvvv("Term: %s" % term)
+                cyberark_conn = CyberarkPassword(**term)
+                return_values.append(cyberark_conn.get())
+            return return_values
+        else:
+            cyberark_conn = CyberarkPassword(**terms)
+            result = cyberark_conn.get()
+            return result
