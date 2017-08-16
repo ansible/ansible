@@ -409,16 +409,45 @@ def process_categories(mod_info, categories, templates, output_dir, output_name)
 def process_support_levels(mod_info, templates, output_dir):
     supported_by = {'Ansible Core Team': {'slug': 'core_supported',
                                           'modules': [],
-                                          'output': 'core_maintained.rst'},
+                                          'output': 'core_maintained.rst',
+                                          'blurb': "These are :doc:`modules maintained by the"
+                                                   " Ansible Core Team<core_maintained>` and will always ship"
+                                                   " with Ansible itself."},
                     'Ansible Network Team': {'slug': 'network_supported',
                                              'modules': [],
-                                             'output': 'network_maintained.rst'},
+                                             'output': 'network_maintained.rst',
+                                             'blurb': "These are :doc:`modules maintained by the"
+                                                      " Ansible Network Team<network_maintained>` in"
+                                                      " a relationship similar to how the Ansible Core Team"
+                                                      " maintains the Core modules."},
                     'Ansible Partners': {'slug': 'partner_supported',
                                          'modules': [],
-                                         'output': 'partner_maintained.rst'},
+                                         'output': 'partner_maintained.rst',
+                                         'blurb': """
+Some examples of :doc:`Certified Modules<partner_maintained>` are those submitted by other
+companies. Maintainers of these types of modules must watch for any issues reported or pull requests
+raised against the module.
+
+The Ansible Core Team will review all modules becoming certified.  Core committers will review
+proposed changes to existing Certified Modules once the community maintainers of the module have
+approved the changes. Core committers will also ensure that any issues that arise due to Ansible
+engine changes will be remediated.  Also, it is strongly recommended (but not presently required)
+for these types of modules to have unit tests.
+
+These modules are currently shipped with Ansible, but might be shipped separately in the future.
+"""},
                     'Ansible Community': {'slug': 'community_supported',
                                           'modules': [],
-                                          'output': 'community_maintained.rst'},
+                                          'output': 'community_maintained.rst',
+                                          'blurb': """
+These are :doc:`modules maintained by the Ansible Community<community_maintained>`.  They **are
+not** supported by the Ansible Core Team or by companies/partners associated to the module.
+
+They are still fully usable, but the response rate to issues is purely up to the community.  Best
+effort support will be provided but is not covered under any support contracts.
+
+These modules are currently shipped with Ansible, but will most likely be shipped separately in the future.
+                                          """},
                     }
 
     # Separate the modules by support_level
