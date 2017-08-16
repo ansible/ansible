@@ -51,12 +51,23 @@ def get_options(optlist):
     return opts
 
 
+def get_option_groups(option_parser):
+    groups = []
+    for option_group in option_parser.option_groups:
+        group_info = {}
+        group_info['desc'] = option_group.get_description()
+        group_info['options'] = option_group.option_list
+        group_info['group_obj'] = option_group
+        groups.append(group_info)
+    return groups
+
+
 def opt_doc_list(cli):
     ''' iterate over options lists '''
 
     results = []
-    for optg in cli.parser.option_groups:
-        results.extend(get_options(optg.option_list))
+    for option_group in cli.parser.option_groups:
+        results.extend(get_options(option_group.option_list))
 
     results.extend(get_options(cli.parser.option_list))
 
@@ -100,13 +111,15 @@ def opts_docs(cli_class_name, cli_module_name):
         'actions': {},
     }
     option_info = {'option_names': [],
-                   'options': []}
+                   'options': [],
+                   'groups': []}
 
     for extras in ('ARGUMENTS'):
         if hasattr(cli, extras):
             docs[extras.lower()] = getattr(cli, extras)
 
     common_opts = opt_doc_list(cli)
+    groups_info = get_option_groups(cli.parser)
 
     shared_opt_names = []
     for opt in common_opts:
@@ -114,6 +127,8 @@ def opts_docs(cli_class_name, cli_module_name):
 
     option_info['options'] = common_opts
     option_info['option_names'] = shared_opt_names
+
+    option_info['groups'].extend(groups_info)
 
     docs.update(option_info)
 
@@ -146,7 +161,6 @@ def opts_docs(cli_class_name, cli_module_name):
         cli.set_action()
 
         action_info = {'option_names': [],
-                       #'uncommon_options': [],
                        'options': []}
         # docs['actions'][action] = {}
         # docs['actions'][action]['name'] = action
@@ -159,35 +173,31 @@ def opts_docs(cli_class_name, cli_module_name):
         uncommon_options = []
         for action_doc in action_doc_list:
             # uncommon_options = []
-            print('\naction: %s action_doc: %s' % (action, action_doc))
+            # print('\naction: %s action_doc: %s' % (action, action_doc))
 
-            for option_alias in action_doc.get('options', []):
+            option_aliases = action_doc.get('options', [])
+            for option_alias in option_aliases:
 
-                print('option_alias: %s' % option_alias)
+                # print('option_alias: %s' % option_alias)
 
                 if option_alias in shared_opt_names:
                     continue
 
-                action_info['option_names'].append(option_alias)
+                # TODO: use set
+                if option_alias not in action_info['option_names']:
+                    action_info['option_names'].append(option_alias)
+
+                if action_doc in action_info['options']:
+                    continue
+
                 uncommon_options.append(action_doc)
 
             action_info['options'] = uncommon_options
 
-        #if 'options' not in action_info:
-        #    action_info['options'] = action_doc_list
-
-        #if 'uncommon_options' not in docs['actions'][action]:
-        #    docs['actions'][action]['uncommon_options'] = []
-        #for uncommon_option in uncommon_options:
-        #    if uncommon_option not in docs['actions'][action]['uncommon_options']:
-        #        docs['actions'][action]['uncommon_options'].append(uncommon_option)
-
-        print('foo')
-        # TODO: mv per-action stuff to method, return action_info
         docs['actions'][action] = action_info
 
     docs['options'] = opt_doc_list(cli)
-    print('\n\n')
+    #print('\n\n')
     pprint.pprint(docs)
 
     return docs

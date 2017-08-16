@@ -524,6 +524,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
                               help="clear the fact cache")
 
+        print('parser.option_groups: %s' % parser.option_groups)
         return parser
 
     @abstractmethod

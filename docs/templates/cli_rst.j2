@@ -1,5 +1,5 @@
-{% set name = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
-{% set name_slug = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
+{% set name = cli_name -%}
+{% set name_slug = cli_name -%}
 
 {% set name_len = name|length + 0-%}
 {{ '=' * name_len }}
@@ -11,19 +11,19 @@ Synopsis
 
 .. code-block:: bash
 
-    {{ usage|replace('%prog', name) }}
+    {{ usage|replace('%prog', cli_name) }}
 
 
 Description
 ===========
 
-*{{name}}* {{ long_desc|default('', True)  }}
+*{{cli_name}}* {{ long_desc|default('', True)  }}
 
 {% if options %}
 Common Options
 ==============
 
-.. program:: ansible
+.. program:: {{cli_name}}
 
 {% for option in options|sort(attribute='options') %}
 
@@ -33,11 +33,11 @@ Common Options
 {% endfor %}
 {% endif %}
 
-
-
 {% if arguments %}
 ARGUMENTS
 =========
+
+.. program:: {{cli_name}}
 
 {% for arg in arguments %}
 .. option:: {{ arg }}
@@ -45,11 +45,7 @@ ARGUMENTS
    {{ (arguments[arg]|default(' '))}}
 
 {% endfor %}
-
-.. program:: ansible
-
 {% endif %}
-
 
 {% if actions %}
 Actions
@@ -61,11 +57,11 @@ Actions
 
 {{ (actions[action]['desc']|default(' '))}}
 
-{% if actions[action]['uncommon_options'] %}
+{% if actions[action]['options'] %}
 
-.. program:: ansible {{action}}
+.. program:: {{cli_name}} {{action}}
 
-{% for option in actions[action]['uncommon_options']|sort %}
+{% for option in actions[action]['options']|sort %}
 .. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
 {{ (option['desc']) }}
@@ -75,6 +71,47 @@ Actions
 {% endfor %}
 {% endif %}
 
+Environment
+-----------
+
+The following environment variables may be specified.
+
+{% if inventory %}
+ANSIBLE_INVENTORY  -- Override the default ansible inventory file
+
+{% endif %}
+{% if library %}
+ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+{% endif %}
+ANSIBLE_CONFIG -- Override the default ansible config file
+
+Many more are available for most options in ansible.cfg
+
+
+Files
+-----
+
+{% if inventory %}
+/etc/ansible/hosts -- Default inventory file
+
+{% endif %}
+/etc/ansible/ansible.cfg -- Config file, used if present
+
+~/.ansible.cfg -- User config file, overrides the default config if present
+
+Author
+------
+
+Ansible was originally written by Michael DeHaan.
+See the `AUTHORS` file for a complete list of contributors.
+
+
+Copyright
+---------
+
+Copyright © 2017 Red Hat, Inc | Ansible.
+Ansible is released under the terms of the GPLv3 License.
 
 See also
 ========
