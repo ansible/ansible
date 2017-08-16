@@ -354,7 +354,7 @@ will parse the output from the ``show vlan`` command.::
       state_static:
         value: present
 
-The spec file above will return a JSON data structure that is a list of hashs
+The spec file above will return a JSON data structure that is a list of hashes
 with the parsed VLAN information.
 
 The same command could be parsed into a hash by using the key and values 
