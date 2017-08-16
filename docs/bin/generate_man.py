@@ -63,6 +63,7 @@ def opt_doc_list(cli):
     return results
 
 
+import pprint
 def opts_docs(cli, name):
     ''' generate doc structure from options '''
     if name == 'adhoc':
@@ -103,23 +104,32 @@ def opts_docs(cli, name):
 
             uncommon_options = []
             for action_doc in action_doc_list:
-                for option in action_doc.get('options', []):
-                    if option in shared_opt_names:
+                uncommon_options = []
+                print('\naction: %s action_doc: %s' % (action, action_doc))
+                for option_alias in action_doc.get('options', []):
+                    print('option_alias: %s' % option_alias)
+                    if option_alias in shared_opt_names:
                         continue
                     if 'option_names' not in docs['actions'][action]:
                         docs['actions'][action]['option_names'] = []
-                    docs['actions'][action]['option_names'].append(option)
+                    docs['actions'][action]['option_names'].append(option_alias)
                     uncommon_options.append(action_doc)
+
+                if 'uncommon_options' not in docs['actions'][action]:
+                    docs['actions'][action]['uncommon_options'] = []
+                docs['actions'][action]['uncommon_options'] = uncommon_options
 
             if 'options' not in docs['actions'][action]:
                 docs['actions'][action]['options'] = action_doc_list
-            if 'uncommon_options' not in docs['actions'][action]:
-                docs['actions'][action]['uncommon_options'] = []
-            for uncommon_option in uncommon_options:
-                if uncommon_option not in docs['actions'][action]['uncommon_options']:
-                    docs['actions'][action]['uncommon_options'].append(uncommon_option)
+            #if 'uncommon_options' not in docs['actions'][action]:
+            #    docs['actions'][action]['uncommon_options'] = []
+            #for uncommon_option in uncommon_options:
+            #    if uncommon_option not in docs['actions'][action]['uncommon_options']:
+            #        docs['actions'][action]['uncommon_options'].append(uncommon_option)
 
     docs['options'] = opt_doc_list(cli)
+    print('\n\n')
+    pprint.pprint(docs)
 
     return docs
 
@@ -160,7 +170,6 @@ if __name__ == '__main__':
             # no options passed, we expect errors
             pass
 
-        print('libname1: %s' % libname)
         allvars[libname] = opts_docs(cli_object, libname)
 
         for extras in ('ARGUMENTS'):
@@ -170,17 +179,17 @@ if __name__ == '__main__':
     cli_list = allvars.keys()
 
     templates = {'man.j2': {'out_dir': '../man/man1/%s',
-                            'out_file_format': '%s.1.asciidoc.1.in'},
+                            'out_file_format': '%s.1.asciidoc.in'},
                  'cli_rst.j2': {'out_dir': '../docsite/rst/cli/%s',
                                 'out_file_format': '%s.rst'}}
 
     for libname in cli_list:
-        print('libname2: %s' % libname)
 
         # template it!
         env = Environment(loader=FileSystemLoader('../templates'))
         for template_file in templates:
-            print('template_file: %s' % template_file)
+            # print('template_file: %s' % template_file)
+            # import pdb; pdb.set_trace()  # XXX BREAKPOINT
             template = env.get_template(template_file)
 
             # add rest to vars
@@ -194,7 +203,7 @@ if __name__ == '__main__':
             manpage = template.render(tvars)
             filename = templates[template_file]['out_dir'] % templates[template_file]['out_file_format'] % tvars['cli_name']
             # output[libname]
-            print('filename: %s %s' % (filename, os.path.realpath(filename)))
+            # print('filename: %s %s' % (filename, os.path.realpath(filename)))
             with open(filename, 'wb') as f:
                 f.write(to_bytes(manpage))
-                print("Wrote docs to %s" % filename)
+                print("Wrote doc to %s" % filename)

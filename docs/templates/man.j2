@@ -22,6 +22,15 @@ DESCRIPTION
 -----------
 *{{name}}* {{ long_desc|default('', True)|wordwrap }}
 
+{% if options %}
+COMMON OPTIONS
+--------------
+{% for option in options|sort(attribute='options') %}
+{% for switch in option['options'] %}*{{switch}}*{% if option['arg'] %}'{{option['arg']}}'{% endif %}{% if not loop.last %},{% endif %}{% endfor %}::
+
+{{ option['desc'] }}
+{% endfor %}
+{% endif %}
 
 {% if arguments %}
 ARGUMENTS
@@ -39,18 +48,18 @@ ARGUMENTS
 ACTIONS
 -------
 {% for action in actions %}
-*{{ action }}*::
-{{ (actions[action]['desc']|default(' '))|wordwrap}}
+    *{{ action }}*::: {{ (actions[action]['desc']|default(' '))|wordwrap}}
 
+{% if actions[action]['uncommon_options'] %}
+{% for option in actions[action]['uncommon_options']|sort %}
+{% for switch in option['options'] if switch in actions[action]['option_names'] %}*{{switch}}*{% if option['arg'] %} '<{{option['arg']}}>'{% endif %}{% if not loop.last %},{% endif %}{% endfor %}::
+
+        {{ (option['desc']) }}
 {% endfor %}
 {% endif %}
-OPTIONS
--------
-{% for option in options|sort(attribute='options') %}
-{% for switch in option['options'] %}*{{switch}}*{% if option['arg'] %}'{{option['arg']}}'{% endif %}{% if not loop.last %},{% endif %}{% endfor %}::
-
-{{ option['desc'] }}
 {% endfor %}
+{% endif %}
+
 
 {% if inventory %}
 INVENTORY
