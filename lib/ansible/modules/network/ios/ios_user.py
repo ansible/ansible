@@ -139,6 +139,7 @@ commands:
 """
 
 import re
+import json
 
 from functools import partial
 
@@ -151,6 +152,14 @@ from ansible.module_utils.ios import ios_argument_spec, check_args
 def validate_privilege(value, module):
     if not 1 <= value <= 15:
         module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
+
+
+def user_del_cmd(username):
+    return json.dumps({
+        'command': 'no username %s' % username,
+        'prompt': 'This operation will remove all username related configurations with same name',
+        'answer': 'y'
+    })
 
 
 def map_obj_to_commands(updates, module):
@@ -168,7 +177,7 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         if want['state'] == 'absent':
-            commands.append('no username %s' % want['name'])
+            commands.append(user_del_cmd(want['name']))
             continue
 
         if needs_update(want, have, 'view'):
@@ -185,7 +194,7 @@ def map_obj_to_commands(updates, module):
             if want['nopassword']:
                 add(commands, want, 'nopassword')
             else:
-                add(commands, want, 'no username %s nopassword' % want['name'])
+                add(commands, want, user_del_cmd(want['name']))
 
     return commands
 
@@ -336,14 +345,15 @@ def main():
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
-                commands.append('no username %s' % item)
+                commands.append(user_del_cmd(item))
 
     result['commands'] = commands
 
     # the ios cli prevents this by rule so capture it and display
     # a nice failure message
-    if 'no username admin' in commands:
-        module.fail_json(msg='cannot delete the `admin` account')
+    for cmd in commands:
+        if 'no username admin' in cmd:
+            module.fail_json(msg='cannot delete the `admin` account')
 
     if commands:
         if not module.check_mode:
