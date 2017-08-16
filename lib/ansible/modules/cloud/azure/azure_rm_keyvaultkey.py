@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -18,29 +18,23 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvaultkey
 version_added: "2.4"
-short_description: Use Azure KeyVault Secrets.
+short_description: Use Azure KeyVault keys.
 description:
-    - Create or delete a secret within a given keyvault. By using Key Vault, you can encrypt
+    - Create or delete a key within a given keyvault. By using Key Vault, you can encrypt
       keys and secrets (such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords).
 options:
     keyvault_uri:
             description:
                 - URI of the keyvault endpoint.
             required: true
-    secret_name:
+    key_name:
         description:
-            - Name of the keyvault secret.
+            - Name of the keyvault key.
         required: true
-    secret_value:
-        description:
-            - Secret to be secured by keyvault.
-        required: false
-        aliases:
-            - secret
     state:
         description:
-            - Assert the state of the subnet. Use 'present' to create or update a secret and
-              'absent' to delete a secret .
+            - Assert the state of the key. Use 'present' to create a key and
+              'absent' to delete a key.
         required: false
         default: present
         choices:
@@ -56,29 +50,28 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create a secret
-      azure_rm_keyvaultsecret:
-        secret_name: MySecret
-        secret_value: My_Pass_Sec
+    - name: Create a key
+      azure_rm_keyvaultkey:
+        key_name: MyKey
         keyvault_uri: https://contoso.vault.azure.net/
 
-    - name: Delete a secret
-      azure_rm_keyvaultsecret:
-        secret_name: MySecret
+    - name: Delete a key
+      azure_rm_keyvaultkey:
+        key_name: MyKey
         keyvault_uri: https://contoso.vault.azure.net/
         state: absent
 '''
 
 RETURN = '''
 state:
-    description: Current state of the secret.
+    description: Current state of the key.
     returned: success
     type: complex
     contains:
-        secret_id:
-          description: Secret resource path.
+        key_id:
+          description: key resource path.
           type: str
-          example: https://contoso.vault.azure.net/secrets/hello/e924f053839f4431b35bc54393f98423
+          example: https://contoso.vault.azure.net/keys/hello/e924f053839f4431b35bc54393f98423
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -92,112 +85,91 @@ except ImportError:
     pass
 
 
-class AzureRMKeyVaultSecret(AzureRMModuleBase):
-    ''' Module that creates or deletes secrets in Azure KeyVault '''
+class AzureRMKeyVaultKey(AzureRMModuleBase):
+    ''' Module that creates or deletes keys in Azure KeyVault '''
 
     def __init__(self):
 
         self.module_arg_spec = dict(
-            secret_name=dict(type='str', required=True),
-            secret_value=dict(type='str', aliases=['secret'], no_log=True),
+            key_name=dict(type='str', required=True),
             keyvault_uri=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent'])
         )
-
-        required_if = [
-            ('state', 'present', ['secret_value'])
-        ]
 
         self.results = dict(
             changed=False,
             state=dict()
         )
 
-        self.secret_name = None
-        self.secret_value = None
+        self.key_name = None
         self.keyvault_uri = None
         self.state = None
-        self.data_creds = None
         self.client = None
 
-        super(AzureRMKeyVaultSecret, self).__init__(self.module_arg_spec,
-                                                    supports_check_mode=True,
-                                                    required_if=required_if)
+        super(AzureRMKeyVaultKey, self).__init__(self.module_arg_spec,
+                                                 supports_check_mode=False)
 
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        # Need to override base to add resource argument
-        self.azure_credentials = \
-            ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                        secret=self.credentials['secret'],
-                                        tenant=self.credentials['tenant'],
-                                        resource='https://vault.azure.net')
-
-        # Create KeyVault Client using KeyVault auth class and auth_callback
-        self.client = KeyVaultClient(KeyVaultAuthentication(self.auth_callback))
+        # Create KeyVaultClient
+        self.client = KeyVaultClient(self.azure_credentials)
 
         results = dict()
         changed = False
 
         try:
-            results['secret_id'] = self.get_secret(self.secret_name)
+            results['key_id'] = self.get_key(self.key_name)
 
-            # Secret exists and will be deleted
+            # Key exists and will be deleted
             if self.state == 'absent':
                 changed = True
 
         except KeyVaultErrorException:
-            # Secret doesn't exist
+            # Key doesn't exist
             if self.state == 'present':
                 changed = True
 
         self.results['changed'] = changed
         self.results['state'] = results
 
-        # Create secret
+        # Create key
         if self.state == 'present' and changed:
-            results['secret_id'] = self.create_secret(self.secret_name, self.secret_value)
+            results['key_id'] = self.create_key(self.key_name)
             self.results['state'] = results
             self.results['state']['status'] = 'Created'
-        # Delete secret
+        # Delete key
         elif self.state == 'absent' and changed:
-            results['secret_id'] = self.delete_secret(self.secret_name)
+            results['key_id'] = self.delete_key(self.key_name)
             self.results['state'] = results
             self.results['state']['status'] = 'Deleted'
 
         return self.results
 
-    def auth_callback(self, server, resource, scope):
-        ''' Used by KeyVaultAuth to get token info '''
-        self.data_creds = self.data_creds or self.azure_credentials
-        token = self.data_creds.token
-        return token['token_type'], token['access_token']
+    def get_key(self, name, version=''):
+        ''' Gets an existing key '''
+        key_bundle = self.client.get_key(self.keyvault_uri, name, version)
+        if key_bundle:
+            key_id = KeyVaultId.parse_key_id(key_bundle.key.kid)
+        return key_id.id
 
-    def get_secret(self, name, version=''):
-        ''' Gets an existing secret '''
-        secret_bundle = self.client.get_secret(self.keyvault_uri, name, version)
-        if secret_bundle:
-            secret_id = KeyVaultId.parse_secret_id(secret_bundle.id)
-        return secret_id.id
+    def create_key(self, name, kty='RSA'):
+        ''' Creates a key '''
+        key_bundle = self.client.create_key(self.keyvault_uri, name, kty)
+        key_id = KeyVaultId.parse_key_id(key_bundle.key.kid)
+        return key_id.id
 
-    def create_secret(self, name, secret):
-        ''' Creates a secret '''
-        secret_bundle = self.client.set_secret(self.keyvault_uri, name, secret)
-        secret_id = KeyVaultId.parse_secret_id(secret_bundle.id)
-        return secret_id.id
-
-    def delete_secret(self, name):
-        ''' Deletes a secret '''
-        deleted_secret = self.client.delete_secret(self.keyvault_uri, name)
-        secret_id = KeyVaultId.parse_secret_id(deleted_secret.id)
-        return secret_id.id
+    def delete_key(self, name):
+        ''' Deletes a key '''
+        deleted_key = self.client.delete_key(self.keyvault_uri, name)
+        key_id = KeyVaultId.parse_key_id(deleted_key.key.kid)
+        return key_id.id
 
 
 def main():
-    AzureRMKeyVaultSecret()
+    AzureRMKeyVaultKey()
 
 if __name__ == '__main__':
     main()
