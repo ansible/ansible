@@ -149,7 +149,7 @@ def find_object(device, dev_group, obj_name, obj_type):
 def create_address_group_object(**kwargs):
     """
     Create an Address object
-    
+
     :param kwargs: key word arguments to instantiate AddressGroup object
     @return False or ```objects.AddressObject```
     """
@@ -166,10 +166,10 @@ def create_address_group_object(**kwargs):
 
 
 def add_address_group(device, dev_group, ag_object):
-    """ 
-    Create a new dynamic address group object on the 
+    """
+    Create a new dynamic address group object on the
     PAN FW.
-    
+
     :param device: Firewall Handle
     :param dev_group: Panorama device group
     :param ag_object: Address group object
@@ -192,11 +192,11 @@ def add_address_group(device, dev_group, ag_object):
 
 def delete_address_group(device, dev_group, obj_name):
     """
-    
-    :param device: 
-    :param dev_group: 
+
+    :param device:
+    :param dev_group:
     :param obj_name:
-    :return: 
+    :return:
     """
     static_obj = find_object(device, dev_group, obj_name, objects.AddressGroup)
     # If found, delete it
