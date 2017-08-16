@@ -116,14 +116,22 @@ def map_obj_to_commands(updates, module):
                 if w['interfaces']:
                     if not obj_in_have['interfaces']:
                         for i in w['interfaces']:
+                            commands.append('vlan %s' % w['vlan_id'])
                             commands.append('interface %s' % i)
                             commands.append('switchport access %s' % w['vlan_id'])
                     elif set(w['interfaces']) != obj_in_have['interfaces']:
                         missing_interfaces = list(set(w['interfaces']) - set(obj_in_have['interfaces']))
 
                         for i in missing_interfaces:
+                            commands.append('vlan %s' % w['vlan_id'])
                             commands.append('interface %s' % i)
-                            commands.append('switchport access %s' % w['vlan_id'])
+                            commands.append('switchport access vlan %s' % w['vlan_id'])
+
+                        superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(w['interfaces']))
+                        for i in superfluous_interfaces:
+                            commands.append('vlan %s' % w['vlan_id'])
+                            commands.append('interface %s' % i)
+                            commands.append('no switchport access vlan %s' % w['vlan_id'])
         else:
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
