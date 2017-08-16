@@ -376,7 +376,7 @@ class NosystemdTimezone(Timezone):
         # Read the file
         try:
             file = open(filename, 'r')
-        except IOError:
+        except IOError as err:
             if self._allow_ioerror(err, key):
                 lines = []
             else:
@@ -417,7 +417,7 @@ class NosystemdTimezone(Timezone):
 
         try:
             file = open(filename, mode='r')
-        except IOError as e:
+        except IOError as err:
             if self._allow_ioerror(err, key):
                 return None
             else:
