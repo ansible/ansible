@@ -110,7 +110,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-managed_disk_id:
+id:
     description: The managed disk resource ID.
     returned: always
     type: dict
@@ -124,8 +124,10 @@ changed:
     type: bool
 '''
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+import re
 
+
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureHttpError
@@ -139,8 +141,13 @@ def managed_disk_to_dict(managed_disk):
     return dict(
         id=managed_disk.id,
         name=managed_disk.name,
+        type=managed_disk.type,
         location=managed_disk.location,
-        tags=managed_disk.tags
+        tags=managed_disk.tags,
+        time_created=managed_disk.tags,
+        disk_size_gb=managed_disk.disk_size_gb,
+        os_type=managed_disk.os_type,
+        storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
     )
 
 
@@ -202,7 +209,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ('create_option', 'import', ['source_uri']),
             ('create_option', 'copy', ['source_resource_uri'])
         ]
-        self.results = dict(changed=False, state=dict())
+        self.results = dict(
+            changed=False,
+            state=dict())
+
         self.resource_group = None
         self.name = None
         self.location = None
@@ -235,94 +245,52 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
         if self.state == 'present':
-            response = self.get_managed_disk()
-            if not response:
-                self.results['state'] = self.create_managed_disk_empty()
-            else:
-                self.log("managed disk already there, updating Tags")
-                update_tags, response['tags'] = self.update_tags(response['tags'])
-                if update_tags:
-                    self.create_managed_disk_empty()
-                    self.results['changed'] = True
+            self.results['state'] = managed_disk_to_dict(
+                self.create_or_update_managed_disk())
         elif self.state == 'absent':
             self.delete_managed_disk()
         return self.results
 
     def create_or_update_managed_disk(self):
         # Scaffolding empty managed disk
-        parameters = {}
+        disk_params = {}
         creation_data = {}
+        disk_params['location'] = self.location
+        disk_params['tags'] = self.tags
+        if self.storage_account_type:
+            disk_params['diskSku'] = self.storage_account_type
+        disk_params['disk_size_gb'] = self.disk_size_gb
+        # TODO: Add support for EncryptionSettings
         creation_data['create_option'] = DiskCreateOption.empty
-        parameters['location'] = self.location
-        parameters['disk_size_gb'] = self.disk_size_gb
+        if self.create_option == 'import':
+            creation_data['create_option'] = DiskCreateOption.import_enum
+            creation_data['source_uri'] = self.source_uri
+        elif self.create_option == 'copy':
+            creation_data['create_option'] = DiskCreateOption.copy
+            creation_data['source_resource_id'] = self.source_resource_id
         try:
-
-            parameters['creation_data'] = creation_data
+            # CreationData cannot be changed after creation
+            disk_params['creation_data'] = creation_data
             poller = self.compute_client.disks.create_or_update(
                 self.resource_group,
                 self.name,
-                parameters
-                )
-            self.get_poller_result(poller)
+                disk_params)
+            result = self.get_poller_result(poller)
+            self.results['changed'] = True
+
         except AzureHttpError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
-
-    def create_managed_disk_empty(self):
-        try:
-            poller = self.compute_client.disks.create_or_update(
-                self.resource_group,
-                self.name,
-                {
-                    'location': self.location,
-                    'disk_size_gb': self.disk_size_gb,
-                    'creation_data': {
-                        'create_option': DiskCreateOption.empty
-                    }
-                })
-            self.get_poller_result(poller)
-        except AzureHttpError as e:
-            self.fail("Error creating the managed disk: {0}".format(str(e)))
-
-    def create_managed_disk_import(self):
-        try:
-            poller = self.compute_client.disks.create_or_update(
-                self.resource_group,
-                self.name,
-                {
-                    'location': self.location,
-                    'disk_size_gb': self.disk_size_gb,
-                    'creation_data': {
-                        'create_option': DiskCreateOption.import_enum,
-                        'source_uri': self.source_uri
-                    }
-                })
-            self.get_poller_result(poller)
-        except AzureHttpError as e:
-            self.fail("Error creating the managed disk from image: {0}".format(str(e)))
-
-    def create_managed_disk_copy(self):
-        try:
-            poller = self.compute_client.disks.create_or_update(
-                self.resource_group,
-                self.name,
-                {
-                    'location': self.location,
-                    'disk_size_gb': self.disk_size_gb,
-                    'creation_data': {
-                        'create_option': DiskCreateOption.copy,
-                        'source_resource_id': self.source_resource_uri
-                    }
-                })
-            self.get_poller_result(poller)
-        except AzureHttpError as e:
-            self.fail("Error creating the managed disk from copy: {0}".format(str(e)))
+        return result
 
     def delete_managed_disk(self):
         try:
-            poller = self.compute_client.disks.delete(self.resource_group, self.name)
-            self.get_poller_result(poller)
+            poller = self.compute_client.disks.delete(
+                self.resource_group,
+                self.name)
+            result = self.get_poller_result(poller)
         except AzureHttpError as e:
             self.fail("Error deleting the managed disk: {0}".format(str(e)))
+        return result
 
     def get_managed_disk(self):
         found = False
