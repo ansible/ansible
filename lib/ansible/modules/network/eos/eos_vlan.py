@@ -192,6 +192,9 @@ def map_params_to_obj(module):
             if 'state' not in d:
                 d['state'] = module.params['state']
 
+            if 'name' not in d:
+                d['name'] = None
+
             if 'interfaces' not in d:
                 d['interfaces'] = []
 
