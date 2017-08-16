@@ -86,6 +86,7 @@ def search_obj_in_list(vlan_id, lst):
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
+    purge = module.params['purge']
 
     for w in want:
         vlan_id = w['vlan_id']
@@ -116,6 +117,14 @@ def map_obj_to_commands(updates, module):
                 if obj_in_have['state'] != w['state']:
                     commands.append('state %s' % w['state'])
 
+    if purge:
+        import q;q(have)
+        for h in have:
+            obj_in_want = search_obj_in_list(h['vlan_id'], want)
+            import q;q(h, obj_in_want)
+            if not obj_in_want and h['vlan_id'] != '1':
+                commands.append('no vlan %s' % h['vlan_id'])
+
     return commands
 
 
@@ -126,7 +135,6 @@ def map_config_to_obj(module):
 
     for l in lines:
         splitted_line = re.split(r'\s{2,}', l.strip())
-        import q;q(splitted_line)
         obj = {}
         obj['vlan_id'] = splitted_line[0]
         obj['name'] = splitted_line[1]
@@ -204,7 +212,6 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-    import q;q(want, have)
 
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
