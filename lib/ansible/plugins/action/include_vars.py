@@ -32,7 +32,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'auto_leefs']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
     VALID_ALL = ['name']
 
@@ -67,6 +67,8 @@ class ActionModule(ActionBase):
             self.source_file = self._task.args.get('_raw_params')
 
         self.depth = self._task.args.get('depth', None)
+        self.auto_leefs = self._task.args.get('auto_leefs', None)
+
         self.files_matching = self._task.args.get('files_matching', None)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
@@ -239,8 +241,17 @@ class ActionModule(ActionBase):
                 err_msg = ('{0} must be stored as a dictionary/hash' .format(filename))
             else:
                 self.included_files.append(filename)
+                if self.auto_leefs:
+                    cur_dir = path.dirname(filename)
+                    internal_path = cur_dir.replace(self.source_dir, '')
+                    leefList = internal_path.split('/')
+                    leefList.append(path.splitext(path.basename(filename))[0])
+                    while leefList:
+                        leef = leefList.pop()
+                        data_tmp = dict()
+                        data_tmp[leef] = data
+                        data = data_tmp
                 results.update(data)
-
         return failed, err_msg, results
 
     def _load_files_in_dir(self, root_dir, var_files):
