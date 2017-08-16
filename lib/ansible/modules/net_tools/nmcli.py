@@ -1155,8 +1155,8 @@ def main():
                 module.exit_json(changed=True)
             (rc, out, err)=nmcli.down_connection()
             (rc, out, err)=nmcli.remove_connection()
-        if rc!=0:
-            module.fail_json(name =('No Connection named %s exists' % nmcli.conn_name), msg=err, rc=rc)
+            if rc!=0:
+                module.fail_json(name =('No Connection named %s exists' % nmcli.conn_name), msg=err, rc=rc)
 
     elif nmcli.state=='present':
         if nmcli.connection_exists():
