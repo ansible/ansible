@@ -42,7 +42,7 @@ This task *will not* change any vlans already configured on the switch, apart fr
        - { vlan_id: 2, name: mgmt }
        - { vlan_id: 3, state: suspend }
 
-The above task is executed 3 times (once per ``item``), this is very inefficient and will take a considerable time to execute as a seperate connection is made to the network device for each ``item``.
+The above task is executed 3 times (once per ``item``). This is very inefficient and will take a considerable amount of time to execute because a seperate connection is made to the network device for each ``item``.
 
 
 **Better format**
@@ -59,11 +59,11 @@ The preceding example would be better written as follows:
          - { vlan_id: 3, state: suspend }
        state: active
 
-This task is very similar to the *additive resource* example above, though with the following differences:
+This task is very similar to the *additive resource* example above, with the following differences:
 
-* The module (``net_vlan``) is executed only **once**, rather than *n* times as it does ``with_items``
-* There is no way to to use ``purge`` on ``with_items``, more on that in the `aggregate resources` section.
-* Easier to write a cleaner task
+* The module (``net_vlan``) is executed only **once**, rather than *n* times as it does ``with_items``.
+* There is no way to to use ``purge`` on ``with_items``. See the `aggregate resources` section for more information.
+* It is easier to write a cleaner task.
 
 
 Aggregate resources
@@ -93,7 +93,7 @@ Purge
 
 .. warning:: Why does ``purge`` default to ``no``?
 
-To prevent from accidental deletion, ``purge`` is always set to ``no``. This requires playbook writers to add ``purge: yes`` to enable this, i.e. opt-in to potentially dangerious behaviour.
+To prevent accidental deletion, ``purge`` is always set to ``no``. This requires that playbook writers explicitly add ``purge: yes`` to enable this to opt-in to potentially dangerious behaviour.
 
 When would you use aggregate resources with ``purge: true``?
 ------------------------------------------------------------
@@ -116,7 +116,7 @@ The *additive* format can be useful in a number of cases:
 Local overrides of global module values
 =======================================
 
-When writing tasks using ``aggregate`` you may find yourself repeating various settings within the aggregate dictionary, for example:
+When writing tasks using ``aggregate`` you may find yourself repeating various settings within the aggregate dictionary. For example:
 
 .. code-block:: yaml
 
