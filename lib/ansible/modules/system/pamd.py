@@ -195,7 +195,7 @@ EXAMPLES = """
     - quiet
     state: args_present
 
-- name: Module arguments require commas must be listed as a Yaml list
+- name: Module arguments requiring commas must be listed as a Yaml list
   pamd:
     name: special-module
     type: account
@@ -298,7 +298,7 @@ class PamdRule(object):
             pattern = re.compile(
                 r"""([\-A-Za-z0-9_]+)\s*         # Rule Type
                     \[([A-Za-z0-9_=\s]+)\]\s*    # Rule Control
-                    ([A-Za-z0-9_\.]+)\s*         # Rule Path
+                    ([A-Za-z0-9_\-\.]+)\s*         # Rule Path
                     ([A-Za-z0-9,_=<>\-\s]*)""",  # Rule Args
                 re.X)
             complicated = True
@@ -306,7 +306,7 @@ class PamdRule(object):
             pattern = re.compile(
                 r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
                     ([A-Za-z0-9_]+)\s*          # Rule Control
-                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
+                    ([A-Za-z0-9_\-\.]+)\s*        # Rule Path
                     ([A-Za-z0-9,_=<>\-\s]*)""",  # Rule Args
                 re.X)
 
