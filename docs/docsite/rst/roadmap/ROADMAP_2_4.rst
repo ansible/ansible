@@ -215,7 +215,7 @@ Contributor Quality of Life
       - Originally enabled during the 2.3 release cycle, but later disabled due to intermittent WinRM issues.
       - Depends on resolution of WinRM connection issues.
 
-  - Windows Server Nano Integration Tests
+  - Windows Server Nano Integration Tests **(pushed to future roadmap)**
 
     - Add support to ansible-core-ci for Windows Server 2016 Nano and enable on Shippable.
     - This will use a subset of the existing Windows integration tests.
