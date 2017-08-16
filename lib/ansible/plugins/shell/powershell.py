@@ -147,7 +147,6 @@ Function Run($payload) {
 }
 '''  # end leaf_exec
 
-
 become_wrapper = br'''
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
@@ -174,7 +173,7 @@ namespace Ansible.Shell
 
             string so = null, se = null;
 
-            ThreadPool.QueueUserWorkItem((s)=>
+            ThreadPool.QueueUserWorkItem((s) =>
             {
                 so = stdoutStream.ReadToEnd();
                 sowait.Set();
@@ -186,11 +185,48 @@ namespace Ansible.Shell
                 sewait.Set();
             });
 
-            foreach(var wh in new WaitHandle[] { sowait, sewait })
+            foreach (var wh in new WaitHandle[] { sowait, sewait })
                 wh.WaitOne();
 
             stdout = so;
             stderr = se;
+        }
+
+        public static IntPtr GetElevatedToken(IntPtr hToken)
+        {
+            uint requestedLength;
+
+            IntPtr pTokenInfo = Marshal.AllocHGlobal(sizeof(int));
+
+            try
+            {
+                if(!GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenElevationType, pTokenInfo, sizeof(int), out requestedLength))
+                    throw new Win32Exception("Unable to get TokenElevationType");
+
+                var tet = (TOKEN_ELEVATION_TYPE)Marshal.ReadInt32(pTokenInfo);
+
+                // we already have the best token we can get, just use it
+                if(tet != TOKEN_ELEVATION_TYPE.TokenElevationTypeLimited)
+                    return hToken;
+
+                GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenLinkedToken, IntPtr.Zero, 0, out requestedLength);
+
+                IntPtr pLinkedToken = Marshal.AllocHGlobal((int)requestedLength);
+
+                if(!GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenLinkedToken, pLinkedToken, requestedLength, out requestedLength))
+                    throw new Win32Exception("Unable to get linked token");
+
+                IntPtr linkedToken = Marshal.ReadIntPtr(pLinkedToken);
+
+                Marshal.FreeHGlobal(pLinkedToken);
+
+                return linkedToken;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pTokenInfo);
+            }
+
         }
 
         // http://stackoverflow.com/a/30687230/139652
@@ -207,18 +243,19 @@ namespace Ansible.Shell
             StringBuilder sbOut = new StringBuilder(1024);
             IntPtr filePartOut;
 
-            if(SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
+            if (SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
                 throw new FileNotFoundException("Couldn't locate " + findThis + " on path");
 
             return sbOut.ToString();
         }
 
-        public static uint GetProcessExitCode(IntPtr processHandle) {
+        public static uint GetProcessExitCode(IntPtr processHandle)
+        {
             new NativeWaitHandle(processHandle).WaitOne();
             uint exitCode;
-            if(!GetExitCodeProcess(processHandle, out exitCode)) {
-                throw new Exception("Error getting process exit code: " + Marshal.GetLastWin32Error());
-            }
+            if (!GetExitCodeProcess(processHandle, out exitCode))
+                throw new Win32Exception("Error getting process exit code");
+
             return exitCode;
         }
 
@@ -233,8 +270,8 @@ namespace Ansible.Shell
             security.Persist(safeHandle, AccessControlSections.Access);
         }
 
-        [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
-        public static extern uint SearchPath (
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern uint SearchPath(
             string lpPath,
             string lpFileName,
             string lpExtension,
@@ -243,25 +280,25 @@ namespace Ansible.Shell
             StringBuilder lpBuffer,
             out IntPtr lpFilePart);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
 
         [DllImport("kernel32.dll")]
         public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, uint nSize);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr GetStdHandle(StandardHandleValues nStdHandle);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool SetHandleInformation(IntPtr hObject, HandleFlags dwMask, int dwFlags);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool CloseHandle(IntPtr hObject);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref int lpSize);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool UpdateProcThreadAttribute(
                 IntPtr lpAttributeList,
                 uint dwFlags,
@@ -271,7 +308,16 @@ namespace Ansible.Shell
                 IntPtr lpPreviousValue,
                 IntPtr lpReturnSize);
 
-        [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode, BestFitMapping=false)]
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool LogonUser(
+            string lpszUsername,
+            string lpszDomain,
+            string lpszPassword,
+            int dwLogonType,
+            int dwLogonProvider,
+            out IntPtr phToken);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, BestFitMapping = false)]
         public static extern bool CreateProcess(
             [MarshalAs(UnmanagedType.LPTStr)]
             string lpApplicationName,
@@ -286,20 +332,25 @@ namespace Ansible.Shell
             STARTUPINFO lpStartupInfo,
             out PROCESS_INFORMATION lpProcessInformation);
 
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool CreateProcessWithTokenW(
+            IntPtr hToken,
+            LOGON_FLAGS dwLogonFlags,
+            string lpApplicationName,
+            string lpCommandLine,
+            uint dwCreationFlags,
+            IntPtr lpEnvironment,
+            string lpCurrentDirectory,
+            STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
 
-        [DllImport("advapi32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
-        public static extern bool CreateProcessWithLogonW(
-            string             userName,
-            string             domain,
-            string             password,
-            LOGON_FLAGS         logonFlags,
-            string             applicationName,
-            string             commandLine,
-            uint          creationFlags,
-            IntPtr             environment,
-            string             currentDirectory,
-            STARTUPINFOEX  startupInfo,
-            out PROCESS_INFORMATION     processInformation);
+        [DllImport("advapi32.dll", SetLastError=true)]
+        public static extern bool GetTokenInformation(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetProcessWindowStation();
@@ -313,7 +364,8 @@ namespace Ansible.Shell
         private class GenericAccessRule : AccessRule
         {
             public GenericAccessRule(IdentityReference identity, int accessMask, AccessControlType type) :
-                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type) { }
+                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type)
+            { }
         }
 
         private class GenericSecurity : NativeObjectSecurity
@@ -328,12 +380,14 @@ namespace Ansible.Shell
             public override Type AccessRightType { get { throw new NotImplementedException(); } }
 
             public override AccessRule AccessRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type) { throw new NotImplementedException(); }
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type)
+            { throw new NotImplementedException(); }
 
             public override Type AccessRuleType { get { return typeof(AccessRule); } }
 
             public override AuditRule AuditRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags) { throw new NotImplementedException(); }
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags)
+            { throw new NotImplementedException(); }
 
             public override Type AuditRuleType { get { return typeof(AuditRule); } }
         }
@@ -348,8 +402,25 @@ namespace Ansible.Shell
 
     }
 
-    class NativeWaitHandle : WaitHandle {
-        public NativeWaitHandle(IntPtr handle) {
+    public class Win32Exception : System.ComponentModel.Win32Exception
+    {
+        private string _msg;
+
+        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message) { }
+
+        public Win32Exception(int errorCode, string message) : base(errorCode)
+        {
+            _msg = String.Format("{0} ({1}, Win32ErrorCode {2})", message, base.Message, errorCode);
+        }
+
+        public override string Message { get { return _msg; } }
+        public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
+    }
+
+    class NativeWaitHandle : WaitHandle
+    {
+        public NativeWaitHandle(IntPtr handle)
+        {
             this.Handle = handle;
         }
     }
@@ -357,8 +428,8 @@ namespace Ansible.Shell
     [Flags]
     public enum LOGON_FLAGS
     {
-        LOGON_WITH_PROFILE     = 0x00000001,
-        LOGON_NETCREDENTIALS_ONLY  = 0x00000002
+        LOGON_WITH_PROFILE = 0x00000001,
+        LOGON_NETCREDENTIALS_ONLY = 0x00000002
     }
 
     [Flags]
@@ -370,8 +441,6 @@ namespace Ansible.Shell
         CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
         EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
     }
-
-
 
     [Flags]
     public enum StartupInfoFlags : uint
@@ -393,6 +462,42 @@ namespace Ansible.Shell
         INHERIT = 1
     }
 
+    public enum TOKEN_INFORMATION_CLASS
+    {
+        TokenType = 8,
+        TokenImpersonationLevel = 9,
+        TokenElevationType = 18,
+        TokenLinkedToken = 19,
+    }
+
+    public enum TOKEN_ELEVATION_TYPE
+    {
+        TokenElevationTypeDefault = 1,
+        TokenElevationTypeFull,
+        TokenElevationTypeLimited
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class PROFILEINFO {
+        public int dwSize;
+        public int dwFlags;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpUserName;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpProfilePath;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpDefaultPath;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpServerName;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpPolicyPath;
+        public IntPtr hProfile;
+
+        public PROFILEINFO()
+        {
+            dwSize = Marshal.SizeOf(this);
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     public class SECURITY_ATTRIBUTES
@@ -401,7 +506,8 @@ namespace Ansible.Shell
         public IntPtr lpSecurityDescriptor;
         public bool bInheritHandle = false;
 
-        public SECURITY_ATTRIBUTES() {
+        public SECURITY_ATTRIBUTES()
+        {
             nLength = Marshal.SizeOf(this);
         }
     }
@@ -429,17 +535,20 @@ namespace Ansible.Shell
         public IntPtr hStdOutput;
         public IntPtr hStdError;
 
-        public STARTUPINFO() {
+        public STARTUPINFO()
+        {
             cb = Marshal.SizeOf(this);
         }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public class STARTUPINFOEX {
+    public class STARTUPINFOEX
+    {
         public STARTUPINFO startupInfo;
         public IntPtr lpAttributeList;
 
-        public STARTUPINFOEX() {
+        public STARTUPINFOEX()
+        {
             startupInfo = new STARTUPINFO();
             startupInfo.cb = Marshal.SizeOf(this);
         }
@@ -453,9 +562,6 @@ namespace Ansible.Shell
         public int dwProcessId;
         public int dwThreadId;
     }
-
-
-
 }
 "@
 
@@ -546,8 +652,6 @@ Function Run($payload) {
     $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
     Set-Acl $temp $acl | Out-Null
 
-    # TODO: grant target user permissions on tempfile/tempdir
-
     Try {
         $exec_args = @("-noninteractive", $temp)
 
@@ -568,17 +672,18 @@ Function Run($payload) {
         $stdout_read = $stdout_write = $stderr_read = $stderr_write = 0
 
         If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stdout_read, [ref]$stdout_write, $pipesec, 0)) {
-            throw "Stdout pipe setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Stdout pipe setup failed"
         }
+
         If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stdout_read, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
-            throw "Stdout handle setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Stdout handle setup failed"
         }
 
         If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stderr_read, [ref]$stderr_write, $pipesec, 0)) {
-            throw "Stderr pipe setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Stderr pipe setup failed"
         }
         If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stderr_read, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
-            throw "Stderr handle setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Stderr handle setup failed"
         }
 
         # setup stdin redirection, we'll leave stdout/stderr as normal
@@ -592,13 +697,12 @@ Function Run($payload) {
         $pipesec.bInheritHandle = $true
 
         If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stdin_read, [ref]$stdin_write, $pipesec, 0)) {
-            throw "Stdin pipe setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Stdin pipe setup failed"
         }
         If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stdin_write, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
-            throw "Stdin handle setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Stdin handle setup failed"
         }
         $si.startupInfo.hStdInput = $stdin_read
-
 
         # create an attribute list with our explicit handle inheritance list to pass to CreateProcess
         [int]$buf_sz = 0
@@ -607,7 +711,7 @@ Function Run($payload) {
         If(-not [Ansible.Shell.NativeProcessUtil]::InitializeProcThreadAttributeList([IntPtr]::Zero, 1, 0, [ref]$buf_sz)) {
             $last_err = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
             If($last_err -ne 122) { # ERROR_INSUFFICIENT_BUFFER
-                throw "Attribute list size query failed, Win32Error: $last_err"
+                throw New-Object Ansible.Shell.Win32Exception $last_err, "Attribute list size query failed"
             }
         }
 
@@ -615,7 +719,7 @@ Function Run($payload) {
 
         # initialize the attribute list
         If(-not [Ansible.Shell.NativeProcessUtil]::InitializeProcThreadAttributeList($si.lpAttributeList, 1, 0, [ref]$buf_sz)) {
-            throw "Attribute list init failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Attribute list init failed"
         }
 
         $handles_to_inherit = [IntPtr[]]@($stdin_read,$stdout_write,$stderr_write)
@@ -625,7 +729,7 @@ Function Run($payload) {
         If(-not [Ansible.Shell.NativeProcessUtil]::UpdateProcThreadAttribute($si.lpAttributeList, 0, 0x20002, `
             $pinned_handles.AddrOfPinnedObject(), [System.Runtime.InteropServices.Marshal]::SizeOf([type][IntPtr]) * $handles_to_inherit.Length, `
             [System.IntPtr]::Zero, [System.IntPtr]::Zero)) {
-            throw "Attribute list update failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+            throw [Ansible.Shell.Win32Exception] "Attribute list update failed"
         }
 
         # need to use a preamble-free version of UTF8Encoding
@@ -653,12 +757,26 @@ Function Run($payload) {
             $domain = "."
         }
 
-        # TODO: use proper Win32Exception + error
-        If(-not [Ansible.Shell.NativeProcessUtil]::CreateProcessWithLogonW($username, $domain, $password, [Ansible.Shell.LOGON_FLAGS]::LOGON_WITH_PROFILE,
-         $exec_cmd, $exec_args,
-            $pstartup_flags, [IntPtr]::Zero, $env:windir, $si, [ref]$pi)) {
-            #throw New-Object System.ComponentModel.Win32Exception
-            throw "Worker creation failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+        [System.IntPtr]$hToken = [System.IntPtr]::Zero
+
+        If(-not [Ansible.Shell.NativeProcessUtil]::LogonUser($username, $domain, $password, 2, 0, [ref]$hToken)) {
+            throw [Ansible.Shell.Win32Exception] "LogonUser failed"
+        }
+
+        $hTokenElevated = [Ansible.Shell.NativeProcessUtil]::GetElevatedToken($hToken);
+
+        $launch_success = $false
+
+        foreach($ht in @($hTokenElevated, $hToken)) {
+            If([Ansible.Shell.NativeProcessUtil]::CreateProcessWithTokenW($ht, [Ansible.Shell.LOGON_FLAGS]::LOGON_WITH_PROFILE,
+              $exec_cmd, $exec_args, $pstartup_flags, [System.IntPtr]::Zero, $env:windir, $si, [ref]$pi)) {
+                $launch_success = $true
+                break
+            }
+        }
+
+        If(-not $launch_success) {
+            throw [Ansible.Shell.Win32Exception] "Failed to create process with new token"
         }
 
         $stdout_fs = New-Object System.IO.FileStream @($stdout_read, [System.IO.FileAccess]::Read, $true, 4096)
@@ -682,10 +800,6 @@ Function Run($payload) {
 
         # FUTURE: decode CLIXML stderr output (and other streams?)
 
-        #$proc.WaitForExit() | Out-Null
-
-
-        # TODO: wait on process handle for exit, get process exit code
         $rc = [Ansible.Shell.NativeProcessUtil]::GetProcessExitCode($pi.hProcess)
 
         If ($rc -eq 0) {
@@ -708,7 +822,6 @@ Function Run($payload) {
 }
 
 '''  # end become_wrapper
-
 
 async_wrapper = br'''
 Set-StrictMode -Version 2
@@ -1256,9 +1369,6 @@ class ShellModule(object):
     # env provider's limitations don't appear to be documented.
     safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
 
-    # TODO: implement module transfer
-    # TODO: implement #Requires -Modules parser/locator
-    # TODO: add KEEP_REMOTE_FILES support + debug wrapper dump
     # TODO: add binary module support
 
     def assert_safe_env_key(self, key):
