@@ -172,7 +172,7 @@ def add_address_group(device, dev_group, ag_object):
     
     :param device: Firewall Handle
     :param dev_group: Panorama device group
-    :ag_object: Address group object
+    :param ag_object: Address group object
     """
 
     if dev_group:
@@ -183,13 +183,11 @@ def add_address_group(device, dev_group, ag_object):
     exc = None
     try:
         ag_object.create()
-    except Exception, e:
+    except Exception:
         exc = get_exception()
+        return False, exc
 
-    if exc:
-        return (False, exc)
-    else:
-        return (True, exc)
+    return True, exc
 
 
 def delete_address_group(device, dev_group, obj_name):
@@ -197,7 +195,7 @@ def delete_address_group(device, dev_group, obj_name):
     
     :param device: 
     :param dev_group: 
-    :param ag_object: 
+    :param obj_name:
     :return: 
     """
     static_obj = find_object(device, dev_group, obj_name, objects.AddressGroup)
@@ -208,7 +206,7 @@ def delete_address_group(device, dev_group, obj_name):
             static_obj.delete()
         except Exception:
             exc = get_exception()
-            return (False, exc)
+            return False, exc
         return True, None
     else:
         return False, None
@@ -265,8 +263,9 @@ def main():
         if result and commit:
             try:
                 device.commit(sync=True)
-            except Exception, e:
-                module.fail_json(get_exception())
+            except Exception:
+                exc = get_exception()
+                module.fail_json(msg=exc.message)
 
     elif operation == 'delete':
         obj_name = module.params.get('sag_name', None)
