@@ -1,0 +1,8 @@
+- name: Validate self-signed Certificate (test - Common Name)
+  shell: "openssl x509 -noout -subject -in {{ output_dir }}/cert.selfsign.crt -nameopt oneline,-space_eq"
+  register: cert_cn
+
+- name: Validate self-signed Certificate (assert)
+  assert:
+    that:
+      - cert_cn.stdout.split('=')[-1] == 'www.ansible.com'
