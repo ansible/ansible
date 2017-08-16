@@ -77,12 +77,12 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            path = dict(required=True, type='path'),
-            link = dict(required=False, type='path'),
-            priority = dict(required=False, type='int',
-                            default=50),
+        argument_spec=dict(
+            name=dict(required=True),
+            path=dict(required=True, type='path'),
+            link=dict(required=False, type='path'),
+            priority=dict(required=False, type='int',
+                          default=50),
         ),
         supports_check_mode=True,
     )
@@ -93,7 +93,7 @@ def main():
     link = params['link']
     priority = params['priority']
 
-    UPDATE_ALTERNATIVES = module.get_bin_path('update-alternatives',True)
+    UPDATE_ALTERNATIVES = module.get_bin_path('update-alternatives', True)
 
     current_path = None
     all_alternatives = []
@@ -111,7 +111,9 @@ def main():
                                         re.MULTILINE)
         alternative_regex = re.compile(r'^(\/.*)\s-\spriority', re.MULTILINE)
 
-        current_path = current_path_regex.search(display_output).group(1)
+        match = current_path_regex.search(display_output)
+        if match:
+            current_path = match.group(1)
         all_alternatives = alternative_regex.findall(display_output)
 
         if not link:
