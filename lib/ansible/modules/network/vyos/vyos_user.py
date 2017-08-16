@@ -231,18 +231,18 @@ def map_params_to_obj(module):
         if not module.params['name'] and module.params['purge']:
             return list()
         else:
-            aggregatelist = [{'name': module.params['name']}]
+            users = [{'name': module.params['name']}]
     else:
-        aggregatelist = list()
+        users = list()
         for item in aggregate:
             if not isinstance(item, dict):
-                aggregatelist.append({'name': item})
+                users.append({'name': item})
             else:
-                aggregatelist.append(item)
+                users.append(item)
 
     objects = list()
 
-    for item in aggregatelist:
+    for item in users:
         get_value = partial(get_param_value, item=item, module=module)
         item['configured_password'] = get_value('configured_password')
         item['full_name'] = get_value('full_name')
