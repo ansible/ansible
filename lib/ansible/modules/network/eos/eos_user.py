@@ -42,12 +42,13 @@ options:
         or a hash of username and properties.  This argument is mutually
         exclusive with the C(username) argument. alias C(users).
     version_added: "2.4"
-  username:
+  name:
     description:
       - The username to be configured on the remote Arista EOS
         device.  This argument accepts a stringv value and is mutually
         exclusive with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
+    version_added: "2.4"
   password:
     description:
       - The password to be configured on the remote Arista EOS device. The
@@ -106,7 +107,7 @@ options:
 EXAMPLES = """
 - name: create a new user
   eos_user:
-    username: ansible
+    name: ansible
     sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
     state: present
 
@@ -117,14 +118,14 @@ EXAMPLES = """
 - name: set multiple users to privilege level 15
   eos_user:
     aggregate:
-      - username: netop
-      - username: netend
+      - name: netop
+      - name: netend
     privilege: 15
     state: present
 
 - name: Change Password for User netop
   eos_user:
-    username: netop
+    name: netop
     password: "{{ new_password }}"
     update_password: always
     state: present
@@ -136,8 +137,8 @@ commands:
   returned: always
   type: list
   sample:
-    - username ansible secret password
-    - username admin secret admin
+    - name ansible secret password
+    - name admin secret admin
 session_name:
   description: The EOS config session name used to load the configuration
   returned: when changed is True
@@ -154,9 +155,11 @@ from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
+
 def validate_privilege(value, module):
     if not 1 <= value <= 15:
         module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -167,16 +170,10 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-        if 'name' in want:
-            add = lambda x: commands.append('username %s %s' % (want['name'], x))
-        else:
-            add = lambda x: commands.append('username %s %s' % (want['username'], x))
+        add = lambda x: commands.append('username %s %s' % (want['name'], x))
 
         if want['state'] == 'absent':
-            if 'name' in want:
-                commands.append('no username %s' % want['name'])
-            else:
-                commands.append('no username %s' % want['username'])
+            commands.append('no username %s' % want['name'])
             continue
 
         if needs_update('role'):
@@ -196,27 +193,28 @@ def map_obj_to_commands(updates, module):
             if want['nopassword']:
                 add('nopassword')
             else:
-                if 'name' in want:
-                    add('no username %s nopassword' % want['name'])
-                else:
-                    add('no username %s nopassword' % want['username'])
+                add('no username %s nopassword' % want['name'])
 
     return commands
+
 
 def parse_role(data):
     match = re.search(r'role (\S+)', data, re.M)
     if match:
         return match.group(1)
 
+
 def parse_sshkey(data):
     match = re.search(r'sshkey (.+)$', data, re.M)
     if match:
         return match.group(1)
 
+
 def parse_privilege(data):
     match = re.search(r'privilege (\S+)', data, re.M)
     if match:
         return int(match.group(1))
+
 
 def map_config_to_obj(module):
     data = get_config(module, flags=['section username'])
@@ -232,7 +230,7 @@ def map_config_to_obj(module):
         cfg = re.findall(regex, data, re.M)
         cfg = '\n'.join(cfg)
         obj = {
-            'username': user,
+            'name': user,
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
             'password': None,
@@ -243,6 +241,7 @@ def map_config_to_obj(module):
         instances.append(obj)
 
     return instances
+
 
 def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
@@ -263,22 +262,23 @@ def get_param_value(key, item, module):
 
     return value
 
+
 def map_params_to_obj(module):
     aggregate = module.params['aggregate']
     if not aggregate:
-        if not module.params['username'] and module.params['purge']:
+        if not module.params['name'] and module.params['purge']:
             return list()
-        elif not module.params['username']:
-            module.fail_json(msg='username is required')
+        elif not module.params['name']:
+            module.fail_json(msg='name is required')
         else:
-            collection = [{'username': module.params['username']}]
+            collection = [{'name': module.params['name']}]
     else:
         collection = list()
         for item in aggregate:
             if not isinstance(item, dict):
-                collection.append({'username': item})
-            elif all(u not in item for u in ['username', 'name']):
-                module.fail_json(msg='username is required')
+                collection.append({'name': item})
+            elif 'name' not in item:
+                module.fail_json(msg='name is required')
             else:
                 collection.append(item)
 
@@ -296,14 +296,12 @@ def map_params_to_obj(module):
 
     return objects
 
+
 def update_objects(want, have):
     updates = list()
     for entry in want:
         if 'name' in entry:
-            item = next((i for i in have if i['username'] == entry['name']), None)
-        else:
-            item = next((i for i in have if i['username'] == entry['username']), None)
-
+            item = next((i for i in have if i['name'] == entry['name']), None)
         if all((item is None, entry['state'] == 'present')):
             updates.append((entry, {}))
         elif item:
@@ -312,12 +310,13 @@ def update_objects(want, have):
                     updates.append((entry, item))
     return updates
 
+
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
         aggregate=dict(type='list', aliases=['collection', 'users']),
-        username=dict(aliases=['name']),
+        name=dict(),
 
         password=dict(no_log=True),
         nopassword=dict(type='bool'),
@@ -333,7 +332,7 @@ def main():
     )
 
     argument_spec.update(eos_argument_spec)
-    mutually_exclusive = [('username', 'aggregate')]
+    mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -352,8 +351,8 @@ def main():
     commands = map_obj_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
-        want_users = [x['username'] if 'username' in x else x['name'] for x in want]
-        have_users = [x['username'] for x in have]
+        want_users = [x['name'] for x in want]
+        have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
                 commands.append('no username %s' % item)
