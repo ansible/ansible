@@ -204,8 +204,6 @@ def main():
     transforms = {
     }
 
-    json_encodes = ['targetvserverexpr']
-
     # Instantiate config proxy
     csaction_proxy = ConfigProxy(
         actual=csaction(),
@@ -215,7 +213,6 @@ def main():
         readonly_attrs=readonly_attrs,
         immutable_attrs=immutable_attrs,
         transforms=transforms,
-        json_encodes=json_encodes,
     )
 
     try:
