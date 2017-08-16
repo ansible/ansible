@@ -18,7 +18,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
