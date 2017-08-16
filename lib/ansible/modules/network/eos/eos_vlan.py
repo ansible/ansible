@@ -44,6 +44,10 @@ options:
   interfaces:
     description:
       - List of interfaces that should be associated to the VLAN.
+  delay:
+    description:
+      - Delay the play should wait to check for declaratie intent params values.
+    default: 10
   aggregate:
     description: List of VLANs definitions
   purge:
