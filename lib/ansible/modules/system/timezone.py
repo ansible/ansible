@@ -55,7 +55,13 @@ diff:
   description: The differences about the given arguments.
   returned: success
   type: complex
-  sample: '{"before": {"name": "UTC"},<br>"after": {"name": "Asia/Tokyo"}}'
+  contains:
+    before:
+      description: The values before change
+      type: dict
+    after:
+      description: The values after change
+      type: dict
 '''
 
 EXAMPLES = '''
