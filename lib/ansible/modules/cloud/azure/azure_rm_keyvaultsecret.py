@@ -20,8 +20,8 @@ module: azure_rm_keyvaultsecret
 version_added: "2.4"
 short_description: Use Azure KeyVault Secrets.
 description:
-    - Create or delete a secret within a given keyvault. By using Key Vault, you can encrypt 
-    keys and secrets (such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords).
+    - Create or delete a secret within a given keyvault. By using Key Vault, you can encrypt
+      keys and secrets (such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords).
 options:
     keyvault_uri:
             description:
@@ -78,28 +78,15 @@ state:
         secret_id:
           description: Secret resource path.
           type: str
-          example: "https://contoso.vault.azure.net/secrets/hello/e924f053839f4431b35bc54393f98423"
-        status:
-          description: Created or Deleted of the provisioning event.
-          type: str
-          example: "Created"
-    example:
-        {
-            "changed": true, 
-            "state": {
-                "secret_id": "https://contoso.vault.azure.net/secrets/hello/ac7a7b10d45e4b2da34d4a78e5415fd5", 
-                "status": "Created"
-            }
-        }        
-'''  # NOQA
+          example: https://contoso.vault.azure.net/secrets/hello/e924f053839f4431b35bc54393f98423
+'''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
-    from msrestazure.azure_exceptions import CloudError
     from azure.keyvault import KeyVaultClient, KeyVaultAuthentication, KeyVaultId
-    from azure.keyvault.models.key_vault_error import KeyVaultErrorException
     from azure.common.credentials import ServicePrincipalCredentials
+    from azure.keyvault.models.key_vault_error import KeyVaultErrorException
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -112,7 +99,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             secret_name=dict(type='str', required=True),
-            secret_value=dict(type='str', aliases=['secret']),
+            secret_value=dict(type='str', aliases=['secret'], no_log=True),
             keyvault_uri=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent'])
         )
@@ -134,8 +121,8 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         self.client = None
 
         super(AzureRMKeyVaultSecret, self).__init__(self.module_arg_spec,
-                                                     supports_check_mode=True,
-                                                     required_if=required_if)
+                                                    supports_check_mode=True,
+                                                    required_if=required_if)
 
     def exec_module(self, **kwargs):
 
