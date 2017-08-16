@@ -128,7 +128,7 @@ Ansible Changes By Release
 
 #### New Inventory Plugins:
 - advanced_host_list
-- constructed_groups
+- constructed
 - host_list
 - ini
 - script

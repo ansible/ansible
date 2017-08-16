@@ -42,6 +42,10 @@ DOCUMENTATION:
             description: create vars from jinja2 expressions, these are created AFTER the query block
             type: dictionary
             default: {}
+        groups:
+            description: add hosts to group based on Jinja2 conditionals, these also run after query block
+            type: dictionary
+            default: {}
 EXAMPLES:
 # file must be named vbox.yaml or vbox.yml
 simple_config_file:
@@ -94,13 +98,14 @@ class InventoryModule(BaseInventoryPlugin):
                     hostvars[host][varname] = self._query_vbox_data(host, data['query'][varname])
 
             # create composite vars
-            if data.get('compose') and isinstance(data['compose'], dict):
-                for varname in data['compose']:
-                    hostvars[host][varname] = self._compose(data['compose'][varname], hostvars[host])
+            self._set_composite_vars(data.get('compose'), hostvars, host)
 
             # actually update inventory
             for key in hostvars[host]:
                 self.inventory.set_variable(host, key, hostvars[host][key])
+
+            # constructed groups based on conditionals
+            self._add_host_to_composed_groups(data.get('groups'), hostvars, host)
 
     def _populate_from_source(self, source_data, config_data):
         hostvars = {}
