@@ -49,12 +49,6 @@ options:
     type: bool
     default: 'yes'
     version_added: "1.8"
-  stdin:
-    version_added: "2.4"
-    description:
-      - Set the stdin of the command directly to the specified value.
-    required: false
-    default: null
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
        The C(command) module is much more secure as it's not affected by the user's environment.
@@ -127,7 +121,6 @@ def main():
             creates=dict(type='path'),
             removes=dict(type='path'),
             warn=dict(type='bool', default=True),
-            stdin=dict(required=False),
         )
     )
 
@@ -138,7 +131,6 @@ def main():
     creates = module.params['creates']
     removes = module.params['removes']
     warn = module.params['warn']
-    stdin = module.params['stdin']
 
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
@@ -182,7 +174,7 @@ def main():
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
+    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None)
 
     endd = datetime.datetime.now()
     delta = endd - startd
