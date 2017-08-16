@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'metadata_version': '1.1'}
+
 DOCUMENTATION = '''
 ---
 module: panos_dag_tags
@@ -63,9 +67,6 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
 
 from ansible.module_utils.basic import AnsibleModule, get_exception
 
