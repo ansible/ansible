@@ -230,8 +230,6 @@ def main():
         next_hop=dict(type='str'),
         admin_distance=dict(type='int'),
         delay=dict(default=10, type='int'),
-        aggregate=dict(type='list'),
-        purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -248,7 +246,6 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
-    argument_spec.update(vyos_argument_spec)
     required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'next_hop']]
     mutually_exclusive = [['aggregate', 'prefix']]
