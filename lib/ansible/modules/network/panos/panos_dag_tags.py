@@ -63,6 +63,37 @@ options:
     
 '''
 
+EXAMPLES = '''
+- name: Create the tags to map IP addresses
+  panos_dag_tags:
+    ip_address: "{{ mgmt_ip }}"
+    password: "{{ admin_password }}"
+    ip_to_register: "{{ ip_to_register }}"
+    tag_names: "{{ tag_names }}"
+    description: "Tags to allow certain IP's to access various SaaS Applications"
+    operation: 'add'
+  tags: "add-dagip"
+
+- name: List the IP address to tag mapping
+  panos_dag_tags:
+    ip_address: "{{ mgmt_ip }}"
+    password: "{{ admin_password }}"
+    tag_names: "{{ tag_names }}"
+    description: "List the IP address to tag mapping"
+    operation: 'list'
+  tags: "list-dagip"
+
+- name: Unregister an IP address from a tag mapping
+  panos_dag_tags:
+    ip_address: "{{ mgmt_ip }}"
+    password: "{{ admin_password }}"
+    ip_to_register: "{{ ip_to_register }}"
+    tag_names: "{{ tag_names }}"
+    description: "Unregister IP address from tag mappings"
+    operation: 'delete'
+  tags: "delete-dagip"
+'''
+
 RETURN = '''
 # Default return values
 '''
