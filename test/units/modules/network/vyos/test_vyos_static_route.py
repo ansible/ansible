@@ -40,10 +40,10 @@ class TestVyosStaticRouteModule(TestVyosModule):
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
+        self.get_config.return_value = load_fixture('vyos_static_route_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_vyos_static_route_present(self):
         set_module_args(dict(prefix='172.26.0.0/16', next_hop='172.26.4.1', admin_distance='1'))
-        result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'],
-                         ['set protocols static route 172.26.0.0/16 next-hop 172.26.4.1 distance 1'])
+        result = self.execute_module(changed=False)
+        self.assertEqual(result['commands'], [])
