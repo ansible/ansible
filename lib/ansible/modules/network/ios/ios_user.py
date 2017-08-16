@@ -36,12 +36,12 @@ description:
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         Cisco IOS device. The list entries can either be the username
         or a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument.
+        exclusive with the C(name) argument. alias C(users).
   name:
     description:
       - The username to be configured on the Cisco IOS device.
@@ -110,7 +110,7 @@ EXAMPLES = """
     purge: yes
 - name: set multiple users to privilege level 15
   ios_user:
-    users:
+    aggregate:
       - name: netop
       - name: netend
     privilege: 15
@@ -249,7 +249,7 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
+    users = module.params['aggregate']
     if not users:
         if not module.params['name'] and module.params['purge']:
             return list()
@@ -298,7 +298,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', aliases=['aggregate']),
+        aggregate=dict(type='list', aliases=['users', 'collection']),
         name=dict(),
 
         password=dict(no_log=True),
@@ -313,7 +313,7 @@ def main():
     )
 
     argument_spec.update(ios_argument_spec)
-    mutually_exclusive = [('name', 'users')]
+    mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
