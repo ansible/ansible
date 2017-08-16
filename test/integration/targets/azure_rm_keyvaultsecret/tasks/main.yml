@@ -7,14 +7,19 @@
 #     resource_group: "{{ resource_group }}"
 
 - name: create a kevyault secret
-  azure_rm_keyvaultsecret:
-    keyvault_uri: https://tmpkeyvault.vault.azure.net
-    secret_name: samplesecret5
-    secret_value: 'mysecret'
-  register: output
-
-- assert:
-    that: output.changed
+  block:
+    - azure_rm_keyvaultsecret:
+        keyvault_uri: https://tmpkeyvault.vault.azure.net
+        secret_name: samplesecret5
+        secret_value: 'mysecret'
+      register: output
+    - assert:
+        that: output.changed
+  rescue:
+    - azure_rm_keyvaultsecret:
+        keyvault_uri: https://tmpkeyvault.vault.azure.net
+        state: absent
+        secret_name: samplesecret5
 
 - name: create a kevyault secret
   azure_rm_keyvaultsecret:
