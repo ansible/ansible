@@ -306,33 +306,33 @@ EXAMPLES = '''
           data_disk_size_gb: 128
           data_disk_managed_disk_type: Premium_LRS
 
-  - name: Create a VM with OS and multiple data storage accounts
-    azure_rm_virtualmachine:
-      resource_group: Testing
-      name: testvm001
-      vm_size: Standard_DS1_v2
-      admin_username: adminUser
-      ssh_password_enabled: false
-      ssh_public_keys:
-        - path: /home/adminUser/.ssh/authorized_keys
-          key_data: < insert yor ssh public key here... >
-      network_interfaces: testvm001
-      storage_container: osdisk
-      storage_blob: osdisk.vhd
-      image:
-        offer: CoreOS
-        publisher: CoreOS
-        sku: Stable
-        version: latest
-      data_disks:
-        - data_disk_lun: 0
-          data_disk_size_gb: 64
-          data_disk_storage_container_name: datadisk1
-          data_disk_storage_blob_name: datadisk1.vhd
-        - data_disk_lun: 1
-          data_disk_size_gb: 128
-          data_disk_storage_container_name: datadisk2
-          data_disk_storage_blob_name: datadisk2.vhd
+- name: Create a VM with OS and multiple data storage accounts
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm001
+    vm_size: Standard_DS1_v2
+    admin_username: adminUser
+    ssh_password_enabled: false
+    ssh_public_keys:
+    - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
+    network_interfaces: testvm001
+    storage_container: osdisk
+    storage_blob: osdisk.vhd
+    image:
+    offer: CoreOS
+    publisher: CoreOS
+    sku: Stable
+    version: latest
+    data_disks:
+    - data_disk_lun: 0
+        data_disk_size_gb: 64
+        data_disk_storage_container_name: datadisk1
+        data_disk_storage_blob_name: datadisk1.vhd
+    - data_disk_lun: 1
+        data_disk_size_gb: 128
+        data_disk_storage_container_name: datadisk2
+        data_disk_storage_blob_name: datadisk2.vhd
 
 - name: Power Off
   azure_rm_virtualmachine:
@@ -894,7 +894,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                         for data_disk in self.data_disks:
                             if not data_disk.get('data_disk_managed_disk_type'):
-                                if not datadata_diskDisk.get('data_disk_storage_blob_name'):
+                                if not data_disk.get('data_disk_storage_blob_name'):
                                     data_disk['data_disk_storage_blob_name'] = self.name + str(count) + '-data.vhd'
                                     count += 1
 
