@@ -81,11 +81,12 @@ def parse_cli(output, tmpl):
     spec = yaml.load(open(tmpl).read())
     obj = {}
 
-    for name, attrs in iteritems(spec['attributes']):
+    for name, attrs in iteritems(spec['keys']):
         value = attrs['value']
 
         if template.can_template(value):
-            value = template(value, spec)
+            variables = spec.get('vars', {})
+            value = template(value, variables)
 
         if 'start_block' in attrs and 'end_block' in attrs:
             start_block = re.compile(attrs['start_block'])
@@ -119,17 +120,34 @@ def parse_cli(output, tmpl):
             objects = list()
 
             for block in blocks:
-                items = list()
-                for regex in regex_items:
-                    match = regex.search(block)
-                    if match:
-                        items.append(match.group(1))
-                    else:
-                        items.append(None)
+                if isinstance(value, Mapping) and 'key' not in value:
+                    items = list()
+                    for regex in regex_items:
+                        match = regex.search(block)
+                        if match:
+                            item_values = match.groupdict()
+                            item_values['match'] = list(match.groups())
+                            items.append(item_values)
+                        else:
+                            items.append(None)
 
-                obj = {}
-                obj = dict([(k, template(v, {'item': items})) for k, v in iteritems(value)])
-                objects.append(obj)
+                    objects.append(dict([(k, template(v, {'item': items})) for k, v in iteritems(value)]))
+
+                elif isinstance(value, Mapping):
+                    items = list()
+                    for regex in regex_items:
+                        match = regex.search(block)
+                        if match:
+                            item_values = match.groupdict()
+                            item_values['match'] = list(match.groups())
+                            items.append(item_values)
+                        else:
+                            items.append(None)
+
+
+                    key = template(value['key'], {'item': items})
+                    values = dict([(k, template(v, {'item': items})) for k, v in iteritems(value['values'])])
+                    objects.append({key: values})
 
             return objects
 
