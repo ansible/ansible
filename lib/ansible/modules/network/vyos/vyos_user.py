@@ -36,12 +36,12 @@ description:
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         VyOS device. The list entries can either be the username or
         a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument. alias C(aggregate).
+        exclusive with the C(name) argument. alias C(users).
   name:
     description:
       - The username to be configured on the VyOS device.
@@ -102,7 +102,7 @@ EXAMPLES = """
     purge: yes
 - name: set multiple users to level operator
   vyos_user:
-    users:
+    aggregate:
       - name: netop
       - name: netend
     level: operator
@@ -289,7 +289,7 @@ def main():
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users']),
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
     )
 
     argument_spec.update(element_spec)
