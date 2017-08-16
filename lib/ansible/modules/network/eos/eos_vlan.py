@@ -162,6 +162,9 @@ def map_params_to_obj(module):
             if 'state' not in d:
                 d['state'] = module.params['state']
 
+            if 'trunk_groups' not in d:
+                d['trunk_groups'] = []
+
             obj.append(d)
     else:
         vlan_id = str(module.params['vlan_id'])
