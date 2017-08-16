@@ -20,7 +20,6 @@ To get started, select one of the following topics.
    how_can_I_help
    maintainers
    communication
-   special_interest_groups
    other_tools_and_programs
 
 
