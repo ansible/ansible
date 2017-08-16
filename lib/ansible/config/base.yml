@@ -1316,7 +1316,7 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
   ini:
   - {key: connect_retry_timeout, section: persistent_connection}
-  value_type: integer
+  type: integer
   vars: []
   yaml: {key: persistent_connection.connect_retry_timeout}
 PERSISTENT_COMMAND_TIMEOUT:
@@ -1325,7 +1325,7 @@ PERSISTENT_COMMAND_TIMEOUT:
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}
-  value_type: integer
+  type: integer
   vars: []
   yaml: {key: persistent_connection.command_timeout}
 RETRY_FILES_ENABLED:
