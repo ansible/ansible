@@ -49,7 +49,6 @@ options:
         exclusive with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
     version_added: "2.4"
-  password:
   configured_password:
     description:
       - The password to be configured on the remote Arista EOS device. The
