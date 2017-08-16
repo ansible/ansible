@@ -27,8 +27,10 @@ DOCUMENTATION = '''
 ---
 module: panos_query_rules
 short_description: search for security rules matching specific criteria
-description:
-    - Security policies allow you to enforce rules and take action, and can be as general or specific as needed. The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the traffic is applied, the more specific rules must precede the more general ones.
+description: >
+    - Security policies allow you to enforce rules and take action, and can be as general or specific as needed. The
+    policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the
+    traffic is applied, the more specific rules must precede the more general ones.
 author: "Bob Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
@@ -486,7 +488,7 @@ def main():
                 for object_string in rule.tag:
                     obj = get_tag(device, dev_group, object_string)
                     if obj and (obj.name == tag_name):
-                        tag_match =  True
+                        tag_match = True
             hitlist.append(tag_match)
 
         # Add to hit rulebase
