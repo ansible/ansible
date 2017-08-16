@@ -2,13 +2,24 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, NetApp, Inc
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -82,8 +93,7 @@ clusterRef:
     type: string
     sample: "3233343536373839303132333100000000000000"
 confirmLUNMappingCreation:
-    description: If true, indicates that creation of LUN-to-volume mappings should require careful confirmation from the end-user, since such a mapping
-                 will alter the volume access rights of other clusters, in addition to this one.
+    description: If true, indicates that creation of LUN-to-volume mappings should require careful confirmation from the end-user, since such a mapping will alter the volume access rights of other clusters, in addition to this one.
     returned: always
     type: boolean
     sample: false
@@ -98,8 +108,7 @@ id:
     type: string
     sample: "3233343536373839303132333100000000000000"
 isSAControlled:
-    description: If true, indicates that I/O accesses from this cluster are subject to the storage array's default LUN-to-volume mappings. If false,
-                 indicates that I/O accesses from the cluster are subject to cluster-specific LUN-to-volume mappings.
+    description:  If true, indicates that I/O accesses from this cluster are subject to the storage array's default LUN-to-volume mappings. If false, indicates that I/O accesses from the cluster are subject to cluster-specific LUN-to-volume mappings.
     returned: always except when state is absent
     type: boolean
     sample: false
@@ -128,9 +137,10 @@ HEADERS = {
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.pycompat24 import get_exception
+
 from ansible.module_utils.urls import open_url
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 
 def request(url, data=None, headers=None, method='GET', use_proxy=True,
@@ -141,8 +151,9 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError as e:
-        r = e.fp
+    except HTTPError:
+        err = get_exception()
+        r = err.fp
 
     try:
         raw_data = r.read()
@@ -164,8 +175,8 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         return resp_code, data
 
 
-def group_exists(module, id_type, ident, ssid, api_url, user, pwd):
-    rc, data = get_hostgroups(module, ssid, api_url, user, pwd)
+def group_exists(module, id_type, ident, ssid, api_url, user, pwd, certs):
+    rc, data = get_hostgroups(module, ssid, api_url, user, pwd, certs)
     for group in data:
         if group[id_type] == ident:
             return True, data
@@ -175,23 +186,25 @@ def group_exists(module, id_type, ident, ssid, api_url, user, pwd):
     return False, data
 
 
-def get_hostgroups(module, ssid, api_url, user, pwd):
+def get_hostgroups(module, ssid, api_url, user, pwd, certs):
     groups = "storage-systems/%s/host-groups" % ssid
     url = api_url + groups
     try:
-        rc, data = request(url, headers=HEADERS, url_username=user, url_password=pwd)
+        rc, data = request(url, headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
         return rc, data
-    except HTTPError as e:
-        module.fail_json(msg="Failed to get host groups. Id [%s]. Error [%s]." % (ssid, to_native(e)))
+    except HTTPError:
+        err = get_exception()
+        module.fail_json(msg="Failed to get host groups. Id [%s]. Error [%s]." % (ssid, str(err)))
 
 
-def get_hostref(module, ssid, name, api_url, user, pwd):
+def get_hostref(module, ssid, name, api_url, user, pwd, certs):
     all_hosts = 'storage-systems/%s/hosts' % ssid
     url = api_url + all_hosts
     try:
-        rc, data = request(url, method='GET', headers=HEADERS, url_username=user, url_password=pwd)
-    except Exception as e:
-        module.fail_json(msg="Failed to get hosts. Id [%s]. Error [%s]." % (ssid, to_native(e)))
+        rc, data = request(url, method='GET', headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
+    except Exception:
+        err = get_exception()
+        module.fail_json(msg="Failed to get hosts. Id [%s]. Error [%s]." % (ssid, str(err)))
 
     for host in data:
         if host['name'] == name:
@@ -202,34 +215,35 @@ def get_hostref(module, ssid, name, api_url, user, pwd):
     module.fail_json(msg="No host with the name %s could be found" % name)
 
 
-def create_hostgroup(module, ssid, name, api_url, user, pwd, hosts=None):
+def create_hostgroup(module, ssid, name, api_url, user, pwd, certs, hosts=None):
     groups = "storage-systems/%s/host-groups" % ssid
     url = api_url + groups
     hostrefs = []
 
     if hosts:
         for host in hosts:
-            href = get_hostref(module, ssid, host, api_url, user, pwd)
+            href = get_hostref(module, ssid, host, api_url, user, pwd, certs)
             hostrefs.append(href)
 
     post_data = json.dumps(dict(name=name, hosts=hostrefs))
     try:
-        rc, data = request(url, method='POST', data=post_data, headers=HEADERS, url_username=user, url_password=pwd)
-    except Exception as e:
-        module.fail_json(msg="Failed to create host group. Id [%s]. Error [%s]." % (ssid, to_native(e)))
+        rc, data = request(url, method='POST', data=post_data, headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
+    except Exception:
+        err = get_exception()
+        module.fail_json(msg="Failed to create host group. Id [%s]. Error [%s]." % (ssid, str(err)))
 
     return rc, data
 
 
-def update_hostgroup(module, ssid, name, api_url, user, pwd, hosts=None, new_name=None):
-    gid = get_hostgroup_id(module, ssid, name, api_url, user, pwd)
+def update_hostgroup(module, ssid, name, api_url, user, pwd, certs, hosts=None, new_name=None):
+    gid = get_hostgroup_id(module, ssid, name, api_url, user, pwd, certs)
     groups = "storage-systems/%s/host-groups/%s" % (ssid, gid)
     url = api_url + groups
     hostrefs = []
 
     if hosts:
         for host in hosts:
-            href = get_hostref(module, ssid, host, api_url, user, pwd)
+            href = get_hostref(module, ssid, host, api_url, user, pwd, certs)
             hostrefs.append(href)
 
     if new_name:
@@ -238,30 +252,32 @@ def update_hostgroup(module, ssid, name, api_url, user, pwd, hosts=None, new_nam
         post_data = json.dumps(dict(hosts=hostrefs))
 
     try:
-        rc, data = request(url, method='POST', data=post_data, headers=HEADERS, url_username=user, url_password=pwd)
-    except Exception as e:
+        rc, data = request(url, method='POST', data=post_data, headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
+    except Exception:
+        err = get_exception()
         module.fail_json(msg="Failed to update host group. Group [%s]. Id [%s]. Error [%s]." % (gid, ssid,
-                                                                                                to_native(e)))
+                                                                                                str(err)))
 
     return rc, data
 
 
-def delete_hostgroup(module, ssid, group_id, api_url, user, pwd):
+def delete_hostgroup(module, ssid, group_id, api_url, user, pwd, certs):
     groups = "storage-systems/%s/host-groups/%s" % (ssid, group_id)
     url = api_url + groups
     # TODO: Loop through hosts, do mapping to href, make new list to pass to data
     try:
-        rc, data = request(url, method='DELETE', headers=HEADERS, url_username=user, url_password=pwd)
-    except Exception as e:
-        module.fail_json(msg="Failed to delete host group. Group [%s]. Id [%s]. Error [%s]." % (group_id, ssid, to_native(e)))
+        rc, data = request(url, method='DELETE', headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
+    except Exception:
+        err = get_exception()
+        module.fail_json(msg="Failed to delete host group. Group [%s]. Id [%s]. Error [%s]." % (group_id, ssid, str(err)))
 
     return rc, data
 
 
-def get_hostgroup_id(module, ssid, name, api_url, user, pwd):
+def get_hostgroup_id(module, ssid, name, api_url, user, pwd, certs):
     all_groups = 'storage-systems/%s/host-groups' % ssid
     url = api_url + all_groups
-    rc, data = request(url, method='GET', headers=HEADERS, url_username=user, url_password=pwd)
+    rc, data = request(url, method='GET', headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
     for hg in data:
         if hg['name'] == name:
             return hg['id']
@@ -271,27 +287,29 @@ def get_hostgroup_id(module, ssid, name, api_url, user, pwd):
     module.fail_json(msg="A hostgroup with the name %s could not be found" % name)
 
 
-def get_hosts_in_group(module, ssid, group_name, api_url, user, pwd):
+def get_hosts_in_group(module, ssid, group_name, api_url, user, pwd, certs):
     all_groups = 'storage-systems/%s/host-groups' % ssid
     g_url = api_url + all_groups
     try:
-        g_rc, g_data = request(g_url, method='GET', headers=HEADERS, url_username=user, url_password=pwd)
-    except Exception as e:
+        g_rc, g_data = request(g_url, method='GET', headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
+    except Exception:
+        err = get_exception()
         module.fail_json(
             msg="Failed in first step getting hosts from group. Group: [%s]. Id [%s]. Error [%s]." % (group_name,
                                                                                                       ssid,
-                                                                                                      to_native(e)))
+                                                                                                      str(err)))
 
     all_hosts = 'storage-systems/%s/hosts' % ssid
     h_url = api_url + all_hosts
     try:
-        h_rc, h_data = request(h_url, method='GET', headers=HEADERS, url_username=user, url_password=pwd)
-    except Exception as e:
+        h_rc, h_data = request(h_url, method='GET', headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
+    except Exception:
+        err = get_exception()
         module.fail_json(
             msg="Failed in second step getting hosts from group. Group: [%s]. Id [%s]. Error [%s]." % (
                 group_name,
                 ssid,
-                to_native(e)))
+                str(err)))
 
     hosts_in_group = []
 
@@ -317,7 +335,7 @@ def main():
             hosts=dict(required=False, type='list'),
             api_url=dict(required=True),
             api_username=dict(required=True),
-            validate_certs=dict(required=False, default=True),
+            validate_certs=dict(type='bool'),
             api_password=dict(required=True, no_log=True)
         ),
         supports_check_mode=False,
@@ -334,6 +352,7 @@ def main():
     user = module.params['api_username']
     pwd = module.params['api_password']
     api_url = module.params['api_url']
+    certs = module.params['validate_certs']
 
     if not api_url.endswith('/'):
         api_url += '/'
@@ -345,19 +364,20 @@ def main():
         id_type = 'id'
         id_key = id_num
 
-    exists, group_data = group_exists(module, id_type, id_key, ssid, api_url, user, pwd)
+    exists, group_data = group_exists(module, id_type, id_key, ssid, api_url, user, pwd, certs)
 
     if state == 'present':
         if not exists:
             try:
-                rc, data = create_hostgroup(module, ssid, name, api_url, user, pwd, hosts)
-            except Exception as e:
-                module.fail_json(msg="Failed to create a host group. Id [%s]. Error [%s]." % (ssid, to_native(e)))
+                rc, data = create_hostgroup(module, ssid, name, api_url, user, pwd, certs, hosts)
+            except Exception:
+                err = get_exception()
+                module.fail_json(msg="Failed to create a host group. Id [%s]. Error [%s]." % (ssid, str(err)))
 
-            hosts = get_hosts_in_group(module, ssid, name, api_url, user, pwd)
+            hosts = get_hosts_in_group(module, ssid, name, api_url, user, pwd, certs)
             module.exit_json(changed=True, hosts=hosts, **data)
         else:
-            current_hosts = get_hosts_in_group(module, ssid, name, api_url, user, pwd)
+            current_hosts = get_hosts_in_group(module, ssid, name, api_url, user, pwd, certs)
 
             if not current_hosts:
                 current_hosts = []
@@ -367,10 +387,11 @@ def main():
 
             if set(current_hosts) != set(hosts):
                 try:
-                    rc, data = update_hostgroup(module, ssid, name, api_url, user, pwd, hosts, new_name)
-                except Exception as e:
+                    rc, data = update_hostgroup(module, ssid, name, api_url, user, pwd, certs, hosts, new_name)
+                except Exception:
+                    err = get_exception()
                     module.fail_json(
-                        msg="Failed to update host group. Group: [%s]. Id [%s]. Error [%s]." % (name, ssid, to_native(e)))
+                        msg="Failed to update host group. Group: [%s]. Id [%s]. Error [%s]." % (name, ssid, str(err)))
                 module.exit_json(changed=True, hosts=hosts, **data)
             else:
                 for group in group_data:
@@ -379,12 +400,13 @@ def main():
 
     elif state == 'absent':
         if exists:
-            hg_id = get_hostgroup_id(module, ssid, name, api_url, user, pwd)
+            hg_id = get_hostgroup_id(module, ssid, name, api_url, user, pwd, certs)
             try:
-                rc, data = delete_hostgroup(module, ssid, hg_id, api_url, user, pwd)
-            except Exception as e:
+                rc, data = delete_hostgroup(module, ssid, hg_id, api_url, user, pwd, certs)
+            except Exception:
+                err = get_exception()
                 module.fail_json(
-                    msg="Failed to delete host group. Group: [%s]. Id [%s]. Error [%s]." % (name, ssid, to_native(e)))
+                    msg="Failed to delete host group. Group: [%s]. Id [%s]. Error [%s]." % (name, ssid, str(err)))
 
             module.exit_json(changed=True, msg="Host Group deleted")
         else:
