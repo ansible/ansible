@@ -75,6 +75,7 @@ from ansible.module_utils.eos import eos_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 import re
+import time
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -216,7 +217,16 @@ def map_params_to_obj(module):
 
 
 def check_declarative_intent_params(want, module):
-    pass
+    if module.params['interfaces']:
+        time.sleep(module.params['delay'])
+        have = map_config_to_obj(module)
+
+        for w in want:
+            for i in w['interfaces']:
+                obj_in_have = search_obj_in_list(w['vlan_id'], have)
+
+                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+                    module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
 
 
 def main():
@@ -226,6 +236,7 @@ def main():
         vlan_id=dict(type='int'),
         name=dict(),
         interfaces=dict(type='list'),
+        delay=dict(default=10, type='int'),
         aggregate=dict(type='list'),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
@@ -260,6 +271,9 @@ def main():
             result['diff'] = {'prepared': response.get('diff')}
         result['session_name'] = response.get('session')
         result['changed'] = True
+
+    if result['changed']:
+        check_declarative_intent_params(want, module)
 
     module.exit_json(**result)
 
