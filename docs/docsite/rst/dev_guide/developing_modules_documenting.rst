@@ -396,7 +396,7 @@ Testing documentation
 ---------------------
 
 Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` directory and then
-run the command: ``make webdocs``. The new 'modules.html' file will be
+run the command: ``make webdocs``. The new ``modules.html`` file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
 
 In order to speed up the build process, you can limit the documentation build to 

@@ -51,7 +51,7 @@ working on a whole new file. Here is an example:
 -  Navigate to the directory that you want to develop your new module
    in. E.g. ``$ cd lib/ansible/modules/cloud/azure/``
 -  Create your new module file: ``$ touch my_new_test_module.py``
--  Paste this simple into the new module file: (explanation in comments)::
+-  Paste this example code into the new module file: (explanation in comments)::
 
     #!/usr/bin/python
 
@@ -188,13 +188,12 @@ that can run locally.
    content: (explanation below)
 
    .. code:: json
-
-       {
-         "ANSIBLE_MODULE_ARGS": {
-       "name": "hello",
-       "new": true
-         }
-       }
+        {
+            "ANSIBLE_MODULE_ARGS": {
+                "name": "hello",
+                "new": true
+            }
+        }
 
 -  If you are using a virtual environment (highly recommended for
    development) activate it: ``$ . venv/bin/activate``
@@ -221,7 +220,6 @@ Ansible playbook.
 -  Create a playbook in any directory: ``$ touch testmod.yml``
 -  Add the following to the new playbook file::
 
-    ---
     - name: test my new module
       connection: local
       hosts: localhost
@@ -242,7 +240,7 @@ Debugging (local)
 
 If you want to break into a module and step through with the debugger, locally running the module you can do:
 
-- Set a breakpoint in the module: `import pdb; pdb.set_trace()`
+- Set a breakpoint in the module: ``import pdb; pdb.set_trace()``
 - Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
 
 Debugging (remote)
