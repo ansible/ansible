@@ -688,11 +688,8 @@ def exec_install(module, items, action, pkgs, res, yum_basecmd):
     res['msg'] += err
     res['changed'] = True
 
-    # special case for groups
-    for spec in items:
-        if spec.startswith('@'):
-            if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
-                res['changed'] = False
+    if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
+        res['changed'] = False
 
     if rc != 0:
         res['changed'] = False
