@@ -175,7 +175,7 @@ class NetboxAsInventory(object):
             inventory_dict: Dict, the inventory which will be updated.
 
         Returns:
-            This function doesn't return, it updates the dict in place.
+            The dict "inventory_dict" after adding the host to its group/s.
         """
 
         # The value could be None/null.
@@ -187,6 +187,7 @@ class NetboxAsInventory(object):
             # If the host not in the group it will be add.
             if server_name not in inventory_dict[group_value]:
                 inventory_dict[group_value].append(server_name)
+        return inventory_dict
 
     def add_host_to_inventory(self, groups_categories, inventory_dict, host_data):
         """Add a host to its groups.
@@ -201,7 +202,7 @@ class NetboxAsInventory(object):
             host_data: Dict, it has the host data that will be added to inventory.
 
         Returns:
-            The same dict "inventory_dict" after update.
+            The dict "inventory_dict" after adding the host to it.
         """
 
         server_name = host_data.get("name")
@@ -221,7 +222,7 @@ class NetboxAsInventory(object):
                 for group in groups_categories[category]:
                     # Try to get group value. If the section not found in netbox, this also will print error message.
                     group_value = get_value_by_path(data_dict, [group, key_name])
-                    self.add_host_to_group(server_name, group_value, inventory_dict)
+                    inventory_dict = self.add_host_to_group(server_name, group_value, inventory_dict)
 
         # If no groups in "group_by" section, the host will go to catch-all group.
         else:
@@ -287,13 +288,14 @@ class NetboxAsInventory(object):
             host_vars: A dict has selected fields to be used as host vars.
 
         Returns:
-            This function doesn't return, it updates the dict in place.
+            The dict "inventory_dict" after updating the host meta data.
         """
 
         if host_vars and not self.host:
             inventory_dict['_meta']['hostvars'].update({host_name: host_vars})
         elif host_vars and self.host:
             inventory_dict.update({host_name: host_vars})
+        return inventory_dict
 
     def generate_inventory(self):
         """Generate Ansible dynamic inventory.
@@ -313,7 +315,7 @@ class NetboxAsInventory(object):
                 server_name = current_host.get("name")
                 self.add_host_to_inventory(self.group_by, inventory_dict, current_host)
                 host_vars = self.get_host_vars(current_host, self.hosts_vars)
-                self.update_host_meta_vars(inventory_dict, server_name, host_vars)
+                inventory_dict = self.update_host_meta_vars(inventory_dict, server_name, host_vars)
         return inventory_dict
 
     def print_inventory_json(self, inventory_dict):
