@@ -39,7 +39,28 @@ The headings in brackets are group names, which are used in classifying systems
 and deciding what systems you are controlling at what times and for what purpose.
 
 It is ok to put systems in more than one group, for instance a server could be both a webserver and a dbserver.
-If you do, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in a later chapter.
+If you do, note that variables for a system will come from all of the groups they are a member of, regardless of whether it was referred to directly by name (such as ``someserver.example.com``) or indirectly via one of the groups it is part of (such as ``webservers``). Variable precedence is detailed in a :ref:`later chapter <variable_precedence>`.
+
+If you do not want this behaviour of combining variables for a system from all groups it is a part of, the work around is to name your system differently in each group.
+For example, in your hosts file instead of::
+
+    [webservers]
+    someserver.example.com ansible_user=alice
+
+    [dbservers]
+    someserver.example.com ansible_user=bob
+
+You'd have::
+
+    [webservers]
+    webserver-someserver ansible_host=someserver.example.com ansible_user=alice
+
+    [dbservers]
+    dbserver-someserver ansible_host=someserver.example.com ansible_user=bob
+
+This prevents variables intended for the dbserver running on ``someserver.example.com`` from being used by the webserver running on ``someserver.example.com``.
+
+
 
 If you have hosts that run on non-standard SSH ports you can put the port number
 after the hostname with a colon.  Ports listed in your SSH config file won't be used with the `paramiko`
