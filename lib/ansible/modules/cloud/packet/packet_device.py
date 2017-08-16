@@ -599,7 +599,7 @@ def main():
             count=dict(type='int', default=1),
             count_offset=dict(type='int', default=1),
             device_ids=dict(type='list'),
-            facility=dict(default='ewr1'),
+            facility=dict(),
             features=dict(type='dict'),
             hostnames=dict(type='list', aliases=['name']),
             locked=dict(type='bool', default=False),
