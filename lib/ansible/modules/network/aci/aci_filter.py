@@ -122,7 +122,7 @@ def main():
     # TODO: Investigate for a URI to query objects for a specific tenant
     if filter_name is not None:
         # Work with a specific object
-        path = 'api/mo/uni/tn-%(tenant)s/flt-%(filter_name)s.json' % module.params
+        path = 'api/mo/uni/tn-%s/flt-%s.json' % (tenant, filter_name)
     elif state == 'query':
         # Query all objects
         path = 'api/node/class/vzFilter.json'
