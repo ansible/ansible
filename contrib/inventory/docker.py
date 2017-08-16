@@ -371,7 +371,10 @@ HAS_DOCKER_PY = True
 HAS_DOCKER_ERROR = False
 
 try:
-    from docker import Client
+    try:
+        from docker import APIClient
+    except ImportError as exc:
+        from docker import Client as APIClient
     from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
@@ -415,7 +418,7 @@ def log(msg, pretty_print=False):
         print(msg + u'\n')
 
 
-class AnsibleDockerClient(Client):
+class AnsibleDockerClient(APIClient):
     def __init__(self, auth_params, debug):
 
         self.auth_params = auth_params
