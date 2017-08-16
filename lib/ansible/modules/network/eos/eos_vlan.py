@@ -41,9 +41,9 @@ options:
     description:
       - ID of the VLAN.
     required: true
-  trunk_groups:
+  interfaces:
     description:
-      - List of trunk groups that should be associated to the VLAN.
+      - List of interfaces that should be associated to the VLAN.
   aggregate:
     description: List of VLANs definitions
   purge:
@@ -92,7 +92,7 @@ def map_obj_to_commands(updates, module):
         vlan_id = w['vlan_id']
         name = w['name']
         state = w['state']
-        trunk_groups = w['trunk_groups']
+        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(vlan_id, have)
 
@@ -100,9 +100,30 @@ def map_obj_to_commands(updates, module):
             if obj_in_have:
                 commands.append('no vlan %s' % w['vlan_id'])
         elif state == 'present':
-            if not obj_in_have or w['name'] != obj_in_have['name']:
+            if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
                 commands.append('name %s' % w['name'])
+
+                if w['interfaces']:
+                    for i in w['interfaces']:
+                        commands.append('interface %s' % i)
+                        commands.append('switchport access vlan %s' % w['vlan_id'])
+            else:
+                if w['name'] != obj_in_have['name']:
+                    commands.append('vlan %s' % w['vlan_id'])
+                    commands.append('name %s' % w['name'])
+
+                if w['interfaces']:
+                    if not obj_in_have['interfaces']:
+                        for i in w['interfaces']:
+                            commands.append('interface %s' % i)
+                            commands.append('switchport access %s' % w['vlan_id'])
+                    elif set(w['interfaces']) != obj_in_have['interfaces']:
+                        missing_interfaces = list(set(w['interfaces']) - set(obj_in_have['interfaces']))
+
+                        for i in missing_interfaces:
+                            commands.append('interface %s' % i)
+                            commands.append('switchport access %s' % w['vlan_id'])
         else:
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
@@ -142,10 +163,10 @@ def map_config_to_obj(module):
             obj['state'] = 'suspend'
 
         if len(splitted_line) > 3:
-            obj['trunk_groups'] = []
+            obj['interfaces'] = []
 
             for i in splitted_line[3].split(','):
-                obj['trunk_groups'].append(i.strip())
+                obj['interfaces'].append(i.strip().replace('Et', 'Ethernet'))
 
         objs.append(obj)
 
@@ -164,21 +185,21 @@ def map_params_to_obj(module):
             if 'state' not in d:
                 d['state'] = module.params['state']
 
-            if 'trunk_groups' not in d:
-                d['trunk_groups'] = []
+            if 'interfaces' not in d:
+                d['interfaces'] = []
 
             obj.append(d)
     else:
         vlan_id = str(module.params['vlan_id'])
         name = module.params['name']
         state = module.params['state']
-        trunk_groups = module.params['trunk_groups']
+        interfaces = module.params['interfaces']
 
         obj.append({
             'vlan_id': vlan_id,
             'name': name,
             'state': state,
-            'trunk_groups': trunk_groups
+            'interfaces': interfaces
         })
 
     return obj
@@ -194,7 +215,7 @@ def main():
     argument_spec = dict(
         vlan_id=dict(type='int'),
         name=dict(),
-        trunk_groups=dict(type='list'),
+        interfaces=dict(type='list'),
         aggregate=dict(type='list'),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
