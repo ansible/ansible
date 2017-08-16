@@ -109,11 +109,14 @@ def metadata_schema(deprecated):
     if deprecated:
         valid_status = Any('deprecated')
 
+    # TODO: Check fields specific to a metadata version
     return Schema(
         {
             Required('status'): [valid_status],
-            Required('metadata_version'): '1.0',
-            Required('supported_by'): Any('core', 'community', 'curated')
+            Required('metadata_version'): Any('1.0', '1.1'),
+            Required('supported_by'): Any('core', 'community', 'curated'),
+            'shipped_by': Any('ansible', 'other'),
+            'other_repo_url': Any(*string_types)
         }
     )
 
