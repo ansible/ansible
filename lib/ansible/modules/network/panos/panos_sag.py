@@ -103,9 +103,9 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 from ansible.module_utils.basic import AnsibleModule, get_exception
 
