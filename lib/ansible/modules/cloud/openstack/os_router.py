@@ -186,10 +186,12 @@ ROUTER_INTERFACE_OWNERS = set([
     'network:ha_router_replicated_interface'
 ])
 
+
 def _router_internal_interfaces(cloud, router):
     for port in cloud.list_router_interfaces(router, 'internal'):
         if port['device_owner'] in ROUTER_INTERFACE_OWNERS:
             yield port
+
 
 def _needs_update(cloud, module, router, network, internal_subnet_ids):
     """Decide if the given router needs an update.
