@@ -159,6 +159,8 @@ def map_params_to_obj(module):
         for v in module.params['aggregate']:
             d = v.copy()
 
+            d['vlan_id'] = str(d['vlan_id'])
+
             if 'state' not in d:
                 d['state'] = module.params['state']
 
