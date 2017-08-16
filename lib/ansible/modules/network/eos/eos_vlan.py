@@ -190,7 +190,7 @@ def main():
         vlan_id=dict(type='int'),
         name=dict(),
         trunk_groups=dict(type='list'),
-        aggregate=dict(),
+        aggregate=dict(type='list'),
         purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'active', 'suspend'])
