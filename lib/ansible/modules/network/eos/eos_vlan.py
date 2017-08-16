@@ -109,7 +109,7 @@ def map_obj_to_commands(updates, module):
                         commands.append('interface %s' % i)
                         commands.append('switchport access vlan %s' % w['vlan_id'])
             else:
-                if w['name'] != obj_in_have['name']:
+                if w['name'] and w['name'] != obj_in_have['name']:
                     commands.append('vlan %s' % w['vlan_id'])
                     commands.append('name %s' % w['name'])
 
@@ -118,10 +118,9 @@ def map_obj_to_commands(updates, module):
                         for i in w['interfaces']:
                             commands.append('vlan %s' % w['vlan_id'])
                             commands.append('interface %s' % i)
-                            commands.append('switchport access %s' % w['vlan_id'])
+                            commands.append('switchport access vlan %s' % w['vlan_id'])
                     elif set(w['interfaces']) != obj_in_have['interfaces']:
                         missing_interfaces = list(set(w['interfaces']) - set(obj_in_have['interfaces']))
-
                         for i in missing_interfaces:
                             commands.append('vlan %s' % w['vlan_id'])
                             commands.append('interface %s' % i)
@@ -170,8 +169,8 @@ def map_config_to_obj(module):
         if obj['state'] == 'suspended':
             obj['state'] = 'suspend'
 
+        obj['interfaces'] = []
         if len(splitted_line) > 3:
-            obj['interfaces'] = []
 
             for i in splitted_line[3].split(','):
                 obj['interfaces'].append(i.strip().replace('Et', 'Ethernet'))
