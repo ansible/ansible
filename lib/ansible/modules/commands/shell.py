@@ -60,12 +60,6 @@ options:
     required: false
     default: True
     version_added: "1.8"
-  stdin:
-    version_added: "2.4"
-    description:
-      - Set the stdin of the command directly to the specified value.
-    required: false
-    default: null
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
