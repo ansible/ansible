@@ -32,7 +32,7 @@ MODULE_CLASSES = [
     'ansible.module_utils.ios.NetworkModule',
     'ansible.module_utils.iosxr.NetworkModule',
     'ansible.module_utils.junos.NetworkModule',
-    'ansible.module_utils.openswitch.NetworkModule',
+    'ansible.module_utils.libreswitch.NetworkModule',
 ]
 
 

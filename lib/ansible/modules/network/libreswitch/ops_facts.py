@@ -17,9 +17,9 @@ DOCUMENTATION = """
 module: ops_facts
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Collect device specific facts from OpenSwitch
+short_description: Collect device specific facts from LibreSwitch
 description:
-  - Collects facts from devices running the OpenSwitch operating
+  - Collects facts from devices running the LibreSwitch operating
     system.  Fact collection is supported over both Cli and Rest
     transports.  This module prepends all of the base network fact keys
     with C(ansible_net_<fact>).  The facts module will always collect a
@@ -29,7 +29,7 @@ description:
     are collected for backwards compatibility; however, these facts
     should be considered deprecated and will be removed in a future
     release.
-extends_documentation_fragment: openswitch
+extends_documentation_fragment: libreswitch
 options:
   config:
     description:
@@ -158,7 +158,7 @@ hostname:
   type: string
   sample: ops01
 version:
-  description: The current version of OpenSwitch
+  description: The current version of LibreSwitch
   returned: always
   type: string
   sample: '0.3.0'
@@ -170,7 +170,7 @@ endpoints:
 """
 import re
 
-import ansible.module_utils.openswitch
+import ansible.module_utils.libreswitch
 from ansible.module_utils.netcli import CommandRunner, AddCommandError
 from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.six import iteritems
@@ -229,7 +229,7 @@ class Default(FactsBase):
         self.facts['hostname'] = self.runner.get_command('show hostname')
 
     def parse_version(self, data):
-        match = re.search(r'OpenSwitch Version\s+: (\S+)', data)
+        match = re.search(r'LibreSwitch Version\s+: (\S+)', data)
         if match:
             return match.group(1)
 
@@ -291,7 +291,7 @@ class Legacy(FactsBase):
             self.facts['_config'] = self.runner.get_command('show running-config')
 
     def parse_version(self, data):
-        match = re.search(r'OpenSwitch Version\s+: (\S+)', data)
+        match = re.search(r'LibreSwitch Version\s+: (\S+)', data)
         if match:
             return match.group(1)
 

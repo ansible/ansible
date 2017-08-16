@@ -7,7 +7,7 @@
       - show version
       - show interface eth1
     wait_for:
-      - "result[0] contains OpenSwitch"
+      - "result[0] contains libreswitch"
       - "result[1] contains 'Interface eth1'"
     provider: "{{ cli }}"
   register: result
