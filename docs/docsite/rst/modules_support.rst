@@ -18,45 +18,33 @@ The modules are hosted on GitHub in a subdirectory of the `ansible <https://gith
 Core
 ````
 
-These are modules that the Ansible Core Team maintains and will always ship with Ansible itself.
-They will also receive slightly higher priority for all requests. Non-core modules are still fully usable.
-
-.. seealso::
-    List of :ref:`Core Supported<core_supported>` modules
+These are :doc:`modules maintained by the Ansible Core Team<core_maintained>`
+and will always ship with Ansible itself.
 
 Network
 ```````
 
-These modules are supported by the Ansible Network Team in a relationship
+These are :doc:`modules maintained by the Ansible Network Team<network_maintained>` in a relationship
 similar to how the Ansible Core Team maintains the Core modules.
-
-.. seealso::
-    List of :ref:`Network Supported<network_supported>` modules
 
 Certified
 `````````
 
-Some examples of Certified modules are those submitted by other companies. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
+Some examples of :doc:`Certified Modules<partner_maintained>` are those submitted by other companies. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
 
-Core Committers will review all modules becoming Certified.  Core Committers will review proposed changes to existing Certified modules once the community maintainers of the module have approved the changes. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
+The Ansible Core Team will review all modules becoming certified.  Core committers will review proposed changes to existing Certified Modules once the community maintainers of the module have approved the changes. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
 Also, it is strongly recommended (but not presently required) for these types of modules to have unit tests.
 
 These modules are currently shipped with Ansible, but might be shipped separately in the future.
 
-.. seealso::
-    List of :ref:`Certified<partner_supported>` modules
-
 Community
 `````````
-These modules **are not** supported by Core Committers or by companies/partners associated to the module. They are maintained by the community.
+
+These are :doc:`modules maintained by the Ansible Community<community_maintained>`.  They **are not** supported by the Ansible Core Team or by companies/partners associated to the module.
 
 They are still fully usable, but the response rate to issues is purely up to the community.  Best effort support will be provided but is not covered under any support contracts.
 
 These modules are currently shipped with Ansible, but will most likely be shipped separately in the future.
-
-.. seealso::
-    List of Core Supported modules
-    List of :ref:`Community Supported<community_supported>` modules
 
 
 .. seealso::

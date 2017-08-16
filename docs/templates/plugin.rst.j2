@@ -279,15 +279,13 @@ Status
 This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
 {% endfor %}
 {% endif %}
+{% if metadata.supported_by in ('core', 'network') %}
 
-{% if metadata.supported_by %}
+Maintenance Info
+~~~~~~~~~~~~~~~~
 
-Support Level
-~~~~~~~~~~~~~
-
-This module is maintained by @{ support[metadata.supported_by] }@
-
-For more information on what this means please read :doc:`modules_support`.
+For more information about Red Hat's this support of this module, please
+refer to this `knowledge base article<https://access.redhat.com/articles/rhel-top-support-policies>`
 
 {% endif %}
 {% endif %}
