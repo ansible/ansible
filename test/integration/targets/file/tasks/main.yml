@@ -143,13 +143,42 @@
   stat: path={{output_dir}}/hard.txt
   register: hlstat2
 
-- name: verify that hard link was made
+- name: verify that hard link is still the same after timestamp updated
   assert:
     that:
       - "hlstat1.stat.inode == hlstat2.stat.inode"
 
 - name: create hard link to file 2
   file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  register: hlink_result
+
+- name: verify that hard link creation is idempotent
+  assert:
+    that:
+      - "hlink_result.changed == False"
+
+- name: Change mode on a hard link
+  file: src={{output_file}} dest={{output_dir}}/hard.txt mode=0701
+  register: file6_mode_change
+
+- name: verify that the hard link was touched
+  assert:
+    that:
+      - "file6_touch_result.changed == true"
+
+- name: stat1
+  stat: path={{output_file}}
+  register: hlstat1
+
+- name: stat2
+  stat: path={{output_dir}}/hard.txt
+  register: hlstat2
+
+- name: verify that hard link is still the same after timestamp updated
+  assert:
+    that:
+      - "hlstat1.stat.inode == hlstat2.stat.inode"
+      - "hlstat1.stat.mode == '0701'"
 
 - name: create a directory
   file: path={{output_dir}}/foobar state=directory
