@@ -278,7 +278,6 @@ def main():
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -290,6 +289,7 @@ def main():
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
+        purge=dict(type='bool', default=False)
     )
 
     argument_spec.update(element_spec)
