@@ -1,10 +1,10 @@
 ---
-- debug: msg="START nxapi/default_facts.yaml"
+- debug: msg="START {{ connection.transport }}/default_facts.yaml"
 
 
 - name: test getting default facts
   nxos_facts:
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -31,4 +31,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_config is not defined" # config
 
-- debug: msg="END nxapi/default.yaml"
+- debug: msg="END cli/default.yaml"

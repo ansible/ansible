@@ -1,10 +1,10 @@
 ---
-- debug: msg="START TRANSPORT:CLI nxos_facts sanity test"
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_facts sanity test"
 
 - name: "nxos_facts gather hardware facts"
   nxos_facts:
     gather_subset: hardware
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -29,7 +29,7 @@
 - name: "nxos_facts gather config facts"
   nxos_facts:
     gather_subset: config
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -52,7 +52,7 @@
     gather_subset:
       - hardware
       - config
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -75,4 +75,4 @@
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
 
-- debug: msg="END TRANSPORT:CLI nxos_facts sanity test"
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_facts sanity test"

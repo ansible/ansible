@@ -1,12 +1,13 @@
 ---
-- debug: msg="START cli/all_facts.yaml"
+- debug: msg="START {{ connection.transport }}/all_facts.yaml"
 
 
 - name: test getting all facts
   nxos_facts:
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
     gather_subset:
       - all
+    timeout: 60
   register: result
 
 
@@ -32,4 +33,4 @@
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
 
-- debug: msg="END cli/all_facts.yaml"
+- debug: msg="END {{ connection.transport }}/all_facts.yaml"

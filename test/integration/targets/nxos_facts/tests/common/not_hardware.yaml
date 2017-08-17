@@ -1,10 +1,10 @@
 ---
-- debug: msg="START nxapi/not_hardware_facts.yaml"
+- debug: msg="START {{ connection.transport }}/not_hardware_facts.yaml"
 
 
 - name: test not hardware
   nxos_facts:
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     gather_subset:
       - "!hardware"
     timeout: 30
@@ -29,4 +29,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
-- debug: msg="END nxapi/not_hardware_facts.yaml"
+- debug: msg="END {{ connection.transport }}/not_hardware_facts.yaml"

@@ -1,10 +1,10 @@
 ---
-- debug: msg="START nxapi/invalid_subset.yaml"
+- debug: msg="START {{ connection.transport }}/invalid_subset.yaml"
 
 
 - name: test invalid subset (foobar)
   nxos_facts:
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     gather_subset:
       - "foobar"
   register: result
@@ -26,7 +26,7 @@
 
 - name: test subset specified multiple times
   nxos_facts:
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     gather_subset:
       - "!hardware"
       - "hardware"
@@ -45,4 +45,4 @@
 
 
 
-- debug: msg="END nxapi/invalid_subset.yaml"
+- debug: msg="END {{ connection.transport }}/invalid_subset.yaml"
