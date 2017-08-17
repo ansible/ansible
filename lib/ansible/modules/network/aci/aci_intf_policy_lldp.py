@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_mcp
-short_description: Manage MCP interface policies on Cisco ACI fabrics
+module: aci_intf_policy_lldp
+short_description: Manage LLDP interface policies on Cisco ACI fabrics (lldp:IfPol)
 description:
-- Manage MCP interface policies on Cisco ACI fabrics.
+- Manage LLDP interface policies on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(lldp:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-lldpIfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,38 +26,45 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
-  mcp:
+  lldp_policy:
     description:
-    - The name of the MCP interface.
+    - The LLDP interface policy name.
     required: yes
-    aliases: [ mcp_interface, name ]
+    aliases: [ name ]
   description:
     description:
-    - Description for the MCP interface.
+    - The description for the LLDP interface policy name.
     aliases: [ descr ]
-  admin_state:
+  receive_state:
     description:
-    - Enable or disable admin state.
-    choices: [ disable, enable ]
-    default: enable
+    - Enable or disable Receive state (FIXME!)
+    required: yes
+    choices: [ disabled, enabled ]
+    default: enabled
+  transmit_state:
+    description:
+    - Enable or Disable Transmit state (FIXME!)
+    required: false
+    choices: [ disabled, enabled ]
+    default: enabled
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
     choices: [ absent, present, query ]
     default: present
-extends_documentation_fragment: aci
 '''
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_mcp:
+- aci_intf_policy_lldp:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    mcp: '{{ mcp }}'
-    description: '{{ descr }}'
-    admin_state: '{{ admin_state }}'
+    lldp_policy: '{{ lldp_policy }}'
+    description: '{{ description }}'
+    receive_state: '{{ receive_state }}'
+    transmit_state: '{{ transmit_state }}'
 '''
 
 RETURN = r'''
@@ -69,9 +78,10 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        mcp=dict(type='str', required=False, aliases=['mcp_interface', 'name']),  # Not required for querying all objects
+        lldp_policy=dict(type='str', require=False, aliases=['name']),
         description=dict(type='str', aliases=['descr']),
-        admin_state=dict(type='str', choices=['disabled', 'enabled']),
+        receive_state=dict(type='str', choices=['disabled', 'enabled']),
+        transmit_state=dict(type='str', choices=['disabled', 'enabled']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -81,21 +91,22 @@ def main():
         supports_check_mode=True,
     )
 
-    mcp = module.params['mcp']
+    lldp_policy = module.params['lldp_policy']
     description = module.params['description']
-    admin_state = module.params['admin_state']
+    receive_state = module.params['receive_state']
+    transmit_state = module.params['transmit_state']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    # TODO: This logic could be cleaner.
-    if mcp is not None:
-        path = 'api/mo/uni/infra/mcpIfP--%(mcp)s.json' % module.params
+    if lldp_policy is not None:
+        # Work with a specific object
+        path = 'api/mo/uni/infra/lldpIfP-%(lldp_policy)s.json' % module.params
     elif state == 'query':
         # Query all objects
-        path = 'api/node/class/mcpIfPol.json'
+        path = 'api/node/class/lldpIfPol.json'
     else:
-        module.fail_json(msg="Parameter 'mcp' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'lldp_policy' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -103,10 +114,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='mcpIfPol', class_config=dict(name=mcp, descr=description, adminSt=admin_state))
+        aci.payload(aci_class='lldpIfPol', class_config=dict(name=lldp_policy, descr=description, adminRxSt=receive_state, adminTxSt=transmit_state))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='mcpIfPol')
+        aci.get_diff(aci_class='lldpIfPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

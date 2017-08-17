@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_monitoring_policy
-short_description: Manage monitoring policies on Cisco ACI fabrics
+module: aci_tenant_span_dst_group
+short_description: Manage SPAN destination groups on Cisco ACI fabrics (span:DestGrp)
 description:
-- Manage monitoring policies on Cisco ACI fabrics.
+- Manage SPAN destination groups on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(span:DestGrp) at U(https://developer.cisco.com/media/mim-ref/MO-spanDestGrp.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,16 +26,17 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 options:
-  monitoring_policy:
+  dst_group:
     description:
-    - The name of the monitoring policy.
+    - The name of the SPAN destination group.
     required: yes
     aliases: [ name ]
   description:
     description:
-    - Description for the monitoring policy.
+    - The description of the SPAN destination group.
     aliases: [ descr ]
   tenant:
     description:
@@ -51,12 +54,12 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_monitoring_policy:
-    hostname: '{{ hostname }}'
+- aci_tenant_span_dst_group:
+    hostname: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    monitoring_policy: '{{ monitoring_policy }}'
-    description: '{{ description }}'
+    dst_group: '{{ dst_group }}'
+    description: '{{ descr }}'
     tenant: '{{ tenant }}'
 '''
 
@@ -71,8 +74,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        monitoring_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
-        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
+        dst_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
+        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -83,27 +86,21 @@ def main():
         supports_check_mode=True,
     )
 
-    monitoring_policy = module.params['monitoring_policy']
-    tenant = module.params['tenant']
+    dst_group = module.params['dst_group']
+    # tenant = module.params['tenant']
     description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    if monitoring_policy is not None:
-        # Work with a specific object
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/monepg-%(monitoring_policy)s.json' % module.params
-        elif state == 'query':
-            path = 'api/class/monEPGPol.json?query-target-filter=eq(monEPGPol.name,"%(monitoring_policy)s")' % module.params
+    # TODO: This logic could be cleaner.
+    if dst_group is not None:
+        path = 'api/mo/uni/tn-%(tenant)s/destgrp-%(dst_group)s.json' % module.params
     elif state == 'query':
-        # Query all objects
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=monEPGPol&rsp-subtree-include=no-scoped' % module.params
-        else:
-            path = 'api/node/class/monEPGPol.json'
+        # Query all contracts
+        path = 'api/node/class/spanDestGrp.json'
     else:
-        module.fail_json(msg="Parameter 'monitoring_policy' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'dst_group' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -111,10 +108,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='monEPGPol', class_config=dict(name=monitoring_policy, descr=description))
+        aci.payload(aci_class='spanDestGrp', class_config=dict(name=dst_group, descr=description))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='monEPGPol')
+        aci.get_diff(aci_class='spanDestGrp')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

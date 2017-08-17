@@ -12,11 +12,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_context
-short_description: Manage private networks (aka. contexts) on Cisco ACI fabrics
+module: aci_vrf
+short_description: Manage VRF (private networks aka. contexts) on Cisco ACI fabrics (fv:Ctx)
 description:
-- Manage private networks (aka. contexts) on Cisco ACI fabrics.
+- Manage VRF (private networks aka. contexts) on Cisco ACI fabrics.
 - Each context is a private network associated to a tenant, i.e. VRF.
+- More information from the internal APIC class
+  I(fv:Ctx) at U(https://developer.cisco.com/media/mim-ref/MO-fvCtx.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -25,7 +27,8 @@ version_added: '2.4'
 requirements:
 - Tested with ACI Fabric 1.0(3f)+
 notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 options:
   tenant:
     description:
@@ -45,7 +48,7 @@ options:
     choices: [ enforced, unenforced ]
   description:
     description:
-    - Description for the VRF.
+    - The description for the VRF.
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -57,7 +60,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: Add a new VRF to a tenant
-  aci_context:
+  aci_vrf:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -69,7 +72,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove a VRF for a tenant
-  aci_context:
+  aci_vrf:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -78,7 +81,7 @@ EXAMPLES = r'''
     state: absent
 
 - name: Query a VRF of a tenant
-  aci_context:
+  aci_vrf:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -87,7 +90,7 @@ EXAMPLES = r'''
     state: query
 
 - name: Query all VRFs
-  aci_context:
+  aci_vrf:
     hostname: apic
     username: admin
     password: SomeSecretPassword

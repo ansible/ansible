@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_epg_domain_binding
-short_description: Manage EPG to Domain bindings on Cisco ACI fabrics
+module: aci_epg_to_domain
+short_description: Bind EPGs to Domains on Cisco ACI fabrics (fv:RsDomAtt)
 description:
-- Manage EPG to Physical and Virtual Domains on Cisco ACI fabrics.
+- Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(fv:RsDomAtt) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsDomAtt.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -25,7 +27,7 @@ requirements:
 - ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant), C(app_profile), C(epg), and C(domain) used must exist before using this module in your playbook.
-  The M(aci_tenant) M(aci_anp), M(aci_epg) M(aci_domain) modules can be used for this.
+  The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
 options:
   allow_useg:
     description:
