@@ -162,7 +162,7 @@ def delete_pgroup(module, array):
     changed = True
     if not module.check_mode:
         array.destroy_pgroup(module.params['pgroup'])
-        if module.params['eradicate'] == 'true':
+        if module.params['eradicate']:
             array.eradicate_pgroup(module.params['pgroup'])
     module.exit_json(changed=changed)
 
