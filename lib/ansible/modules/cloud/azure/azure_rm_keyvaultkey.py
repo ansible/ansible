@@ -135,16 +135,18 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
         self.results['changed'] = changed
         self.results['state'] = results
 
-        # Create key
-        if self.state == 'present' and changed:
-            results['key_id'] = self.create_key(self.key_name)
-            self.results['state'] = results
-            self.results['state']['status'] = 'Created'
-        # Delete key
-        elif self.state == 'absent' and changed:
-            results['key_id'] = self.delete_key(self.key_name)
-            self.results['state'] = results
-            self.results['state']['status'] = 'Deleted'
+        if not self.check_mode:
+
+            # Create key
+            if self.state == 'present' and changed:
+                results['key_id'] = self.create_key(self.key_name)
+                self.results['state'] = results
+                self.results['state']['status'] = 'Created'
+            # Delete key
+            elif self.state == 'absent' and changed:
+                results['key_id'] = self.delete_key(self.key_name)
+                self.results['state'] = results
+                self.results['state']['status'] = 'Deleted'
 
         return self.results
 
