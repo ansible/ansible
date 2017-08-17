@@ -43,6 +43,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Ian Philpot (@tripdubroot)"
@@ -105,13 +106,15 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
         self.keyvault_uri = None
         self.state = None
         self.client = None
+        self.tags = None
 
         super(AzureRMKeyVaultKey, self).__init__(self.module_arg_spec,
-                                                 supports_check_mode=False)
+                                                 supports_check_mode=True,
+                                                 supports_tags=True)
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         # Create KeyVaultClient
@@ -139,7 +142,7 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
 
             # Create key
             if self.state == 'present' and changed:
-                results['key_id'] = self.create_key(self.key_name)
+                results['key_id'] = self.create_key(self.key_name, self.tags)
                 self.results['state'] = results
                 self.results['state']['status'] = 'Created'
             # Delete key
@@ -157,9 +160,9 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
             key_id = KeyVaultId.parse_key_id(key_bundle.key.kid)
         return key_id.id
 
-    def create_key(self, name, kty='RSA'):
+    def create_key(self, name, tags, kty='RSA'):
         ''' Creates a key '''
-        key_bundle = self.client.create_key(self.keyvault_uri, name, kty)
+        key_bundle = self.client.create_key(self.keyvault_uri, name, kty, tags=tags)
         key_id = KeyVaultId.parse_key_id(key_bundle.key.kid)
         return key_id.id
 
