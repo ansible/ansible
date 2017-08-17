@@ -19,8 +19,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = r'''
@@ -29,6 +29,7 @@ module: win_disk_management
 version_added: '2.4'
 short_description: A Windows disk management module
 description:
+   - This module is working from Windows Server 2012R2 onwards and on newer versions.
    - With the module you can select a disk on the computer and manage it (e.g. initializing, partitioning, formatting).
    - To select the disk and to manage it you have several options which are all described in the documentation.
    - If more than one disk with the exact same specifications was found on the computer, the first found disk will be selected.
@@ -40,11 +41,13 @@ options:
   disk_size:
       description:
         - Size of the disk in gigabyte which will be selected
+      type: int
       required: true
       default: 5
   partition_style_select:
       description:
         - Partition style of the disk which will be selected
+      type: str
       required: false
       default: raw
       choices:
@@ -54,6 +57,7 @@ options:
   operational_status:
       description:
         - Operational Status of the disk which will be selected
+      type: str
       required: false
       default: offline
       choices:
@@ -62,6 +66,7 @@ options:
   partition_style_set:
       description:
         - Partition style which will be set on selected disk
+      type: str
       required: false
       default: gpt
       choices:
@@ -70,11 +75,13 @@ options:
   drive_letter:
       description:
         - Drive letter which will be set for the partition on selected disk (protected letters are C and D)
+      type: str
       required: false
       default: e
   file_system:
       description:
         - File system which will be set on selected disk
+      type: str
       required: false
       default: ntfs
       choices:
@@ -83,11 +90,13 @@ options:
   label:
       description:
         - File system label which should be set for the file system on found disk
+      type: str
       required: false
       default: ansible_disk
   allocation_unit_size:
       description:
         - Allocation Unit size which will be set for the file system on selected disk (possible values for file system NTFS 4,8,16,32,64KB; ReFs 64KB)
+      type: int
       required: false
       default: 4
       choices:
@@ -158,11 +167,11 @@ general_log:
     contains:
         rescan_disks:
             description: Documents whether rescaning the disks of the computer via diskpart was successful or not
-            returned: success or failed
+            returned: always
             type: string
             sample: "successful"
         search_disk:
-            description: Documents whether the search of the attached disk was successful or not
+            description: Documents whether disk search with the selected options was successful or not
             returned: success or failed
             type: string
             sample: "successful"
@@ -211,15 +220,86 @@ general_log:
             returned: success or failed
             type: string
             sample: "failed"
-log:
-    description: dictionary containing all the detailed logs and stat data of the general log parts
+search_log:
+    description: dictionary containing all the detailed information about the selected disk and the current status of it
     returned: always
     type: complex
     contains:
         disk:
-            returned: success or failed
-            type: string
-            sample: "Disks found: 1, Disk number: 1, Location: PCIROOT(0)#PCI(1F00)#SCSI(P00T00L00), Serial Number: f78c2db7b54562, Unique ID: 31414634313031"
+            description: Detailed information about the selected and found disk
+            returned: always
+            type: complex
+            contains:
+                disks_found:
+                    description: Information about how many disks were found with the select disk options
+                    returned: always
+                    type: string
+                    sample: "2"
+                disk_number_chosen:
+                    description: Information about which disk number was chosen (if more than one disk was found with the select disk options)
+                    returned: success or failed
+                    type: string
+                    sample: "1"
+                location:
+                    description: Information about the location of the disk chosen
+                    returned: success or failed
+                    type: string
+                    sample: "PCIROOT(0)#PCI(0C00)#SCSI(P00T00L00)"
+                serial_number:
+                    description: Information about the serial number of the disk chosen
+                    returned: success or failed
+                    type: string
+                    sample: "488da91d1ea04457884b"
+                unique_id:
+                    description: Information about the unique id of the disk chosen
+                    returned: success or failed
+                    type: string
+                    sample: "3141463431303031"
+                operational_status:
+                    description: Information about the operational status of the disk chosen
+                    returned: success or failed
+                    type: string
+                    sample: "Online"
+                partition_style:
+                    description: Information about the partition style of the disk chosen
+                    returned: success or failed
+                    type: string
+                    sample: "GPT"
+        existing_volumes:
+            description: Detailed information about existing volumes on the disk chosen
+            returned: always
+            type: complex
+            contains:
+                volumes_found:
+                    description: Information about how many volumes were found on the disk chosen
+                    returned: always
+                    type: string
+                    sample: "1"
+                volumes_types:
+                    description: Information about the volume types on the disk chosen
+                    returned: success or failed
+                    type: string
+                    sample: "ReFs"
+        existing_partitions:
+            description: Detailed information about existing partitions on the disk chosen
+            returned: always
+            type: complex
+            contains:
+                partitions_found:
+                    description: Information about how many partitions were found on the disk chosen
+                    returned: always
+                    type: string
+                    sample: "3"
+                partitions_types:
+                    description: Information about the partition types on the disk chosen
+                    returned: success or failed
+                    type: string
+                    sample: "Basic"
+change_log:
+    description: dictionary containing all the detailed information about changes on the selected disk
+    returned: always
+    type: complex
+    contains:
         operational_status:
             description: Detailed information about setting operational status of the disk
             returned: success or failed (only displayed if operational status was set)
@@ -230,16 +310,6 @@ log:
             returned: success or failed (only displayed if writeable status was set)
             type: string
             sample: "Disk need not set to writeable because partition style is RAW"
-        existing_volumes:
-            description: Detailed information about found volumes on the searched disk
-            returned: success or failed
-            type: string
-            sample: "Volumes found: 0"
-        existing_partitions:
-            description: Detailed information about found partitions on the searched disk
-            returned: success or failed
-            type: string
-            sample: "Partition Style: RAW, Partitions found: 0"
         initialize_disk:
             description: Detailed information about initializing the disk
             returned: success or failed (only displayed if disk was initialized)
@@ -321,3 +391,4 @@ switches:
             type: string
             sample: "disabled"
 '''
+

@@ -153,27 +153,24 @@ $Volume | Format-Volume @ParaVol -SetIntegrityStreams $FileSystemIntegrityStream
 $params = Parse-Args $args;
 
 # Create a new result object
-$result = [pscustomobject]@{changed=$false;log=[pscustomobject]@{};general_log=[pscustomobject]@{};parameters=[pscustomobject]@{};switches=[pscustomobject]@{}}
+$result = [pscustomobject]@{changed=$false;search_log=[pscustomobject]@{disk=[pscustomobject]@{};existing_volumes=[pscustomobject]@{};existing_partitions=[pscustomobject]@{}};change_log=[pscustomobject]@{};general_log=[pscustomobject]@{};parameters=[pscustomobject]@{};switches=[pscustomobject]@{}}
 
 ## Extract each attributes into a variable
 # Find attributes
-$Size = Get-Attr -obj $params -name "disk_size" -resultobj $result -failifempty $true
-$FindPartitionStyle = Get-Attr -obj $params -name "partition_style_select" -default "raw" -ValidateSet "raw","mbr","gpt" -resultobj $result -failifempty $false
-$OperationalStatus = Get-Attr -obj $params -name "operational_status" -default "offline" -ValidateSet "offline","online" -resultobj $result -failifempty $false
+$Size = Get-AnsibleParam -obj $params -name "disk_size" -type "int" -failifempty $true
+$FindPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_select" -type "str" -default "raw" -ValidateSet "raw","mbr","gpt"
+$OperationalStatus = Get-AnsibleParam -obj $params -name "operational_status" -type "str" -default "offline" -ValidateSet "offline","online"
 
 # Set attributes partition
-$SetPartitionStyle = Get-Attr -obj $params -name "partition_style_set" -default "gpt" -ValidateSet "gpt","mbr" -resultobj $result -failifempty $false
-$DriveLetter = Get-Attr -obj $params -name "drive_letter" -default "e" -resultobj $result -failifempty $false
+$SetPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_set" -type "str" -default "gpt" -ValidateSet "gpt","mbr"
+$DriveLetter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str" -default "e"
 # Set attributes partition
-$FileSystem = Get-Attr -obj $params -name "file_system" -default "ntfs" -ValidateSet "ntfs","refs" -resultobj $result -failifempty $false
-$Label = Get-Attr -obj $params -name "label" -default "ansible_disk" -resultobj $result -failifempty $false
-$AllocUnitSize = Get-Attr -obj $params -name "allocation_unit_size" -default "4" -ValidateSet "4","8","16","32","64" -resultobj $result -failifempty $false
-$LargeFRS = Get-Attr -obj $params -name "large_frs" -default $false -type "bool" -resultobj $result -failifempty $false
-$ShortNames = Get-Attr -obj $params -name "short_names" -default $false -type "bool" -resultobj $result -failifempty $false
-$IntegrityStreams = Get-Attr -obj $params -name "integrity_streams" -default $false -type "bool" -resultobj $result -failifempty $false
-
-# Convert variable for disk size
-[int32]$DSize = [convert]::ToInt32($Size, 10)
+$FileSystem = Get-AnsibleParam -obj $params -name "file_system" -type "str" -default "ntfs" -ValidateSet "ntfs","refs"
+$Label = Get-AnsibleParam -obj $params -name "label" -type "str" -default "ansible_disk"
+$AllocUnitSize = Get-AnsibleParam -obj $params -name "allocation_unit_size" -type "int" -default 4 -ValidateSet 4,8,16,32,64
+$LargeFRS = Get-AnsibleParam -obj $params -name "large_frs" -default $false -type "bool"
+$ShortNames = Get-AnsibleParam -obj $params -name "short_names" -default $false -type "bool"
+$IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -default $false -type "bool"
 
 # Define script environment variables
 $ErrorActionPreference = "Stop"
@@ -190,7 +187,7 @@ Set-Attr $result.general_log "rescan_disks" "failed"
 Set-Attr $result.general_log "rescan_disks" "successful"
 
 [hashtable]$ParamsDisk = @{
-                          DiskSize = $DSize
+                          DiskSize = $Size
                           PartitionStyle = $FindPartitionStyle
                           OperationalStatus = $OperationalStatus
                           }
@@ -208,23 +205,26 @@ if($disk){
             $diskcount = $disk | Measure-Object | Select-Object  -ExpandProperty Count
                                                       if($diskcount -ge 2){
                                                                                         $disk = $disk[0]
-                                                                                        [string]$DiskNumber = $disk.Number
-                                                                                        [string]$Location = $disk.Location
-                                                                                        [string]$SerialN = $disk.SerialNumber
-                                                                                        [string]$UniqueID = $disk.UniqueId
-                                                                                        Set-Attr $result.log "disk" "Disks found: $diskcount, choosed: Disk number: $DiskNumber, Location: $Location, Serial Number: $SerialN, Unique ID: $UniqueID"
+                                                                                        Set-Attr $result.search_log.disk "disks_found" "$diskcount"
+                                                                                        Set-Attr $result.search_log.disk "disk_number_chosen" "$([string]$disk.Number)"
+                                                                                        Set-Attr $result.search_log.disk "location" "$([string]$disk.Location)"
+                                                                                        Set-Attr $result.search_log.disk "serial_number" "$([string]$disk.SerialNumber)"
+                                                                                        Set-Attr $result.search_log.disk "unique_id" "$([string]$disk.UniqueId)"
+                                                                                        Set-Attr $result.search_log.disk "operational_status" "$([string]$DOperSt = $disk.OperationalStatus)$DOperSt"
+                                                                                        Set-Attr $result.search_log.disk "partition_style" "$([string]$DPartStyle = $disk.PartitionStyle)$DPartStyle"
                                                                                         }
                                                       else{
-                                                              [string]$DiskNumber = $disk.Number
-                                                              [string]$Location = $disk.Location
-                                                              [string]$SerialN = $disk.SerialNumber
-                                                              [string]$UniqueID = $disk.UniqueId
-                                                              Set-Attr $result.log "disk" "Disks found: $diskcount, Disk number: $DiskNumber, Location: $Location, Serial Number: $SerialN, Unique ID: $UniqueID"
+                                                              Set-Attr $result.search_log.disk "disks_found" "$diskcount"
+                                                              Set-Attr $result.search_log.disk "disk_number_chosen" "$([string]$disk.Number)"
+                                                              Set-Attr $result.search_log.disk "location" "$([string]$disk.Location)"
+                                                              Set-Attr $result.search_log.disk "serial_number" "$([string]$disk.SerialNumber)"
+                                                              Set-Attr $result.search_log.disk "unique_id" "$([string]$disk.UniqueId)"
+                                                              Set-Attr $result.search_log.disk "operational_status" "$([string]$DOperSt = $disk.OperationalStatus)$DOperSt"
+                                                              Set-Attr $result.search_log.disk "partition_style" "$([string]$DPartStyle = $disk.PartitionStyle)$DPartStyle"
                                                               }
 }
 else{
-        Set-Attr $result.log "disk" "Disks found: 0, Disk number: n.a., Location: n.a., Serial Number: n.a., Unique ID: n.a."
-        Set-Attr $result.general_log "search_disk" "failed"
+        Set-Attr $result.search_log.disk "disks_found" "0"
         Fail-Json $result "No disk found (size or property is wrong or disk is not attached)."
 }
 
@@ -232,14 +232,13 @@ Set-Attr $result.general_log "search_disk" "successful"
 
 # Check and set Operational Status and writeable state
 $SetOnline = $false
-[string]$DPartStyle = $disk.PartitionStyle
 if($DPartStyle -eq "RAW"){
-    Set-Attr $result.log "operational_status" "Disk set not online because partition style is $DPartStyle"
-    Set-Attr $result.log "disk_writeable" "Disk need not set to writeable because partition style is $DPartStyle"
+    Set-Attr $result.change_log "operational_status" "Disk set not online because partition style is $DPartStyle"
+    Set-Attr $result.change_log "disk_writeable" "Disk need not set to writeable because partition style is $DPartStyle"
 }
 else{
-        if($disk.OperationalStatus -eq "Online"){
-                Set-Attr $result.log "operational_status" "Disk is online already"
+        if($DOperSt -eq "Online"){
+                Set-Attr $result.change_log "operational_status" "Disk is online already"
         }
         else{
                 try{
@@ -247,10 +246,10 @@ else{
                 }
                 catch{
                             Set-Attr $result.general_log "set_operational_status" "failed"
-                            Set-Attr $result.log "operational_status" "Disk failed to set online"
+                            Set-Attr $result.change_log "operational_status" "Disk failed to set online"
                             Fail-Json $result $_
                             }
-                Set-Attr $result.log "operational_status" "Disk set online"
+                Set-Attr $result.change_log "operational_status" "Disk set online"
                 Set-Attr $result "changed" $true;
                 $SetOnline = $true   
                 
@@ -259,10 +258,10 @@ else{
                 }
                 catch{
                             Set-Attr $result.general_log "set_writeable_status" "failed"
-                            Set-Attr $result.log "disk_writeable" "Disk failed to set from read-only to writeable"
+                            Set-Attr $result.change_log "disk_writeable" "Disk failed to set from read-only to writeable"
                             Fail-Json $result $_
                             }
-                Set-Attr $result.log "disk_writeable" "Disk set set from read-only to writeable"
+                Set-Attr $result.change_log "disk_writeable" "Disk set set from read-only to writeable"
                 Set-Attr $result "changed" $true;                               
         }      
 }
@@ -274,7 +273,6 @@ Set-Attr $result.general_log "set_writeable_tatus" "successful"
 [string]$PartNumber = $disk.NumberOfPartitions
 $OPStatusFailed = $false
 if($PartNumber -ge 1){
-
                 try{
                      $Fpartition = Get-Partition -DiskNumber ($disk.Number)
                 }
@@ -282,8 +280,6 @@ if($PartNumber -ge 1){
                         Set-Attr $result.general_log "check_volumes_partitions" "failed"
                         Fail-Json $result "General error while getting partitions of found disk."
                 }
-
-                [string]$PartType = $Fpartition.Type
 
                 try{
                     $volume = Search-Volume -Partition $Fpartition
@@ -299,24 +295,25 @@ if($PartNumber -ge 1){
                                         }
                                         if(!$OPStatusFailed){
                                                         Set-Attr $result.general_log "set_operational_status" "successful"
-                                                        Set-Attr $result.log "operational_status" "Disk set online and now offline again"
+                                                        Set-Attr $result.change_log "operational_status" "Disk set online and now offline again"
                                                         Set-Attr $result "changed" $true;
                                         }
                                         else{
                                                 Set-Attr $result.general_log "set_operational_status" "failed"
-                                                Set-Attr $result.log "operational_status" "Disk failed to set offline again"
+                                                Set-Attr $result.change_log "operational_status" "Disk failed to set offline again"
                                         }
                         }
                         else{
-                              Set-Attr $result.log "operational_status" "Disk was online already and need not to be set offline"  
+                              Set-Attr $result.change_log "operational_status" "Disk was online already and need not to be set offline"  
                         }
                         Fail-Json $result $_
                             }
                 
 
                 if(!$volume){
-                                        Set-Attr $result.log "existing_volumes" "Volumes found: 0"
-                                                Set-Attr $result.log "existing_partitions" "Partition Style: $DPartStyle, Partitions found: $PartNumber, Partition types: $PartType"
+                                        Set-Attr $result.search_log.existing_volumes "volumes_found" "0"
+                                                Set-Attr $result.search_log.existing_partitions "partitions_found" "$PartNumber"
+                                                Set-Attr $result.search_log.existing_partitions "partitions_types" "$([string]$Fpartition.Type)"
                                                 Set-Attr $result.general_log "check_volumes_partitions" "failed"
                                                 if($SetOnline){
                                                             try{
@@ -327,23 +324,25 @@ if($PartNumber -ge 1){
                                                             }
                                                             if(!$OPStatusFailed){
                                                                             Set-Attr $result.general_log "set_operational_status" "successful"
-                                                                            Set-Attr $result.log "operational_status" "Disk set online and now offline again"
+                                                                            Set-Attr $result.change_log "operational_status" "Disk set online and now offline again"
                                                                             Set-Attr $result "changed" $true;
                                                             }
                                                             else{
                                                                     Set-Attr $result.general_log "set_operational_status" "failed"
-                                                                    Set-Attr $result.log "operational_status" "Disk failed to set offline again"
+                                                                    Set-Attr $result.change_log "operational_status" "Disk failed to set offline again"
                                                             }
                                                 }
                                                 else{
-                                                        Set-Attr $result.log "operational_status" "Disk was online already and need not to be set offline"  
+                                                        Set-Attr $result.change_log "operational_status" "Disk was online already and need not to be set offline"  
                                                 }
                                                 Fail-Json $result "Existing terminating partitions recognized on found disk."
                 }
                 else{
-                    [string]$VolNumber = ($volume | Measure-Object).Count 
-                    [string]$VolType = $volume.FileSystem
-                    Set-Attr $result.log "existing_volumes" "Volumes found: $VolNumber, Volume types: $VolType, Partition Style: $DPartStyle, Partitions found: $PartNumber, Partition types: $PartType"
+                    Set-Attr $result.search_log.existing_volumes "volumes_found" "$((($volume | Measure-Object).Count).ToString())"
+                    Set-Attr $result.search_log.existing_volumes "volumes_types" "$([string]$volume.FileSystem)"
+                    Set-Attr $result.search_log.existing_partitions "partitions_found" "$PartNumber"
+                    Set-Attr $result.search_log.existing_partitions "partitions_types" "$([string]$Fpartition.Type)"
+
                     Set-Attr $result.general_log "check_volumes_partitions" "failed"
                     if($SetOnline){
                                try{
@@ -354,24 +353,24 @@ if($PartNumber -ge 1){
                                 }
                                 if(!$OPStatusFailed){
                                                 Set-Attr $result.general_log "set_operational_status" "successful"
-                                                Set-Attr $result.log "operational_status" "Disk set online and now offline again"
+                                                Set-Attr $result.change_log "operational_status" "Disk set online and now offline again"
                                                 Set-Attr $result "changed" $true;
                                 }
                                 else{
                                         Set-Attr $result.general_log "set_operational_status" "failed"
-                                        Set-Attr $result.log "operational_status" "Disk failed to set offline again"
+                                        Set-Attr $result.change_log "operational_status" "Disk failed to set offline again"
                                 }
                     }
                     else{
-                            Set-Attr $result.log "operational_status" "Disk was online already and need not to be set offline"  
+                            Set-Attr $result.change_log "operational_status" "Disk was online already and need not to be set offline"  
                     }
                     Fail-Json $result "Existing volumes recognized on found disk."
                 }
  
 }
 else{
-    Set-Attr $result.log "existing_volumes" "Volumes found: 0"
-    Set-Attr $result.log "existing_partitions" "Partition Style: $FindPartitionStyle, Partitions found: $PartNumber" 
+    Set-Attr $result.search_log.existing_volumes "volumes_found" "0"
+    Set-Attr $result.search_log.existing_partitions "partitions_found" "$PartNumber"
 }
 
 Set-Attr $result.general_log "check_volumes_partitions" "successful"
@@ -401,12 +400,12 @@ else{
 
 if($FileSystem -eq "ntfs"){
                                                 Set-Attr $result.parameters "file_system" "$FileSystem"
-                                                if($DSize -le 256000){
-                                                                                    Set-Attr $result.parameters "disk_size" "$($DSize)gb"
+                                                if($Size -le 256000){
+                                                                                    Set-Attr $result.parameters "disk_size" "$($Size)gb"
                                                                                     Set-Attr $result.parameters "allocation_unit_size" "$AllocUnitSize KB"
                                                 }
                                                 else{
-                                                    Set-Attr $result.parameters "disk_size" "$($DSize)gb"
+                                                    Set-Attr $result.parameters "disk_size" "$($Size)gb"
                                                     Set-Attr $result.general_log "check_parameters" "failed"
                                                     if($SetOnline){
                                                                 try{
@@ -417,28 +416,30 @@ if($FileSystem -eq "ntfs"){
                                                                 }
                                                                 if(!$OPStatusFailed){
                                                                                 Set-Attr $result.general_log "set_operational_status" "successful"
-                                                                                Set-Attr $result.log "operational_status" "Disk set online and now offline again"
+                                                                                Set-Attr $result.change_log "operational_status" "Disk set online and now offline again"
                                                                                 Set-Attr $result "changed" $true;
                                                                 }
                                                                 else{
                                                                         Set-Attr $result.general_log "set_operational_status" "failed"
-                                                                        Set-Attr $result.log "operational_status" "Disk failed to set offline again"
+                                                                        Set-Attr $result.change_log "operational_status" "Disk failed to set offline again"
                                                                 }
                                                     }
                                                     else{
-                                                            Set-Attr $result.log "operational_status" "Disk was online already and need not to be set offline"  
+                                                            Set-Attr $result.change_log "operational_status" "Disk was online already and need not to be set offline"  
                                                     }
-                                                    Fail-Json $result "Disk parameter 'FindSize' with value $DSize GB is not a valid size for NTFS. Disk will be findable but could be not formatted with this file system."
+                                                    Fail-Json $result "Disk parameter 'FindSize' with value $Size GB is not a valid size for NTFS. Disk will be findable but could be not formatted with this file system."
                                                 }
 }
 elseif($FileSystem -eq "refs"){
                                                     Set-Attr $result.parameters "file_system" "$FileSystem"
                                                     if($AllocUnitSize -ne 64){
+                                                                                                Set-Attr $result.parameters "disk_size" "$($Size)gb"
                                                                                                 $AllocUnitSize = 64
-                                                                                                Set-Attr $result.parameters "allocation_unit_size" "$($AllocUnitSize)kb_adjusted_refs"
+                                                                                                Set-Attr $result.parameters "allocation_unit_size" "$($AllocUnitSize)kb_adjusted_refs"                                                  
                                                     }
                                                     else{
-                                                        Set-Attr $result.parameters "allocation_unit_size" "$($AllocUnitSize)_kb"
+                                                        Set-Attr $result.parameters "disk_size" "$($Size)gb"
+                                                        Set-Attr $result.parameters "allocation_unit_size" "$($AllocUnitSize)_kb"   
                                                     }
 }
 
@@ -493,10 +494,10 @@ if($DPartStyle -eq "RAW"){
                             }
                             catch{
                                     Set-Attr $result.general_log "initialize_convert_disk" "failed"
-                                    Set-Attr $result.log "initialize_disk" "Disk initialization failed - Partition style $DPartStyle (partition_style_select) could not be initalized to $SetPartitionStyle (partition_style_set)"
+                                    Set-Attr $result.change_log "initialize_disk" "Disk initialization failed - Partition style $DPartStyle (partition_style_select) could not be initalized to $SetPartitionStyle (partition_style_set)"
                                     Fail-Json $result $_
                             }
-                            Set-Attr $result.log "initialize_disk" "Disk initialization successful - Partition style $DPartStyle (partition_style_select) was initalized to $SetPartitionStyle (partition_style_set)"
+                            Set-Attr $result.change_log "initialize_disk" "Disk initialization successful - Partition style $DPartStyle (partition_style_select) was initalized to $SetPartitionStyle (partition_style_set)"
                             Set-Attr $result "changed" $true;
 }
 else{
@@ -507,7 +508,7 @@ else{
     }
     catch{
         Set-Attr $result.general_log "initialize_convert_disk" "failed"
-        Set-Attr $result.log "convert_disk" "Partition style $DPartStyle (partition_style_select) could not be converted to $SetPartitionStyle (partition_style_set)"
+        Set-Attr $result.change_log "convert_disk" "Partition style $DPartStyle (partition_style_select) could not be converted to $SetPartitionStyle (partition_style_set)"
             if($SetOnline){
                        try{
                             Set-OperationalStatus -Offline -Disk $disk
@@ -517,25 +518,25 @@ else{
                         }
                         if(!$OPStatusFailed){
                                         Set-Attr $result.general_log "set_operational_status" "successful"
-                                        Set-Attr $result.log "operational_status" "Disk set online and now offline again"
+                                        Set-Attr $result.change_log "operational_status" "Disk set online and now offline again"
                                         Set-Attr $result "changed" $true;
                         }
                         else{
                                 Set-Attr $result.general_log "set_operational_status" "failed"
-                                Set-Attr $result.log "operational_status" "Disk failed to set offline again"
+                                Set-Attr $result.change_log "operational_status" "Disk failed to set offline again"
                         }
             }
             else{
-                    Set-Attr $result.log "operational_status" "Disk was online already and need not to be set offline"  
+                    Set-Attr $result.change_log "operational_status" "Disk was online already and need not to be set offline"  
             }
         Fail-Json $result $_
     }
-    Set-Attr $result.log "convert_disk" "Partition style $DPartStyle (partition_style_select) was converted to $SetPartitionStyle (partition_style_set)"
+    Set-Attr $result.change_log "convert_disk" "Partition style $DPartStyle (partition_style_select) was converted to $SetPartitionStyle (partition_style_set)"
     Set-Attr $result "changed" $true;
     }
     else{
     # No convertion
-    Set-Attr $result.log "convert_disk" "$SetPartitionStyle (partition_style_set) is equal to selected partition style of disk, no convertion needed"
+    Set-Attr $result.change_log "convert_disk" "$SetPartitionStyle (partition_style_set) is equal to selected partition style of disk, no convertion needed"
     }
 }
 
@@ -550,7 +551,7 @@ try{
 }
 catch{
         Set-Attr $result.general_log "maintain_shellhw_service" "failed"
-        Set-Attr $result.log "shellhw_service_state" "Check failed"
+        Set-Attr $result.change_log "shellhw_service_state" "Check failed"
 }
 
 if($Check){
@@ -562,17 +563,17 @@ if($Check){
                           }
                 if(!$StopFailed){
                             Set-Attr $result.general_log "maintain_shellhw_service" "successful"
-                            Set-Attr $result.log "shellhw_service_state" "Set from Running to Stopped"
+                            Set-Attr $result.change_log "shellhw_service_state" "Set from Running to Stopped"
                             $StopSuccess = $true
                             Set-Attr $result "changed" $true;
                 }
                 else{
                         Set-Attr $result.general_log "maintain_shellhw_service" "failed"
-                        Set-Attr $result.log "shellhw_service_state" "Could not be set from Running to Stopped"
+                        Set-Attr $result.change_log "shellhw_service_state" "Could not be set from Running to Stopped"
                 }
 }
 else{
-Set-Attr $result.log "shellhw_service_state" "Already Stopped"
+Set-Attr $result.change_log "shellhw_service_state" "Already Stopped"
 Set-Attr $result.general_log "maintain_shellhw_service" "successful"
 }
 
@@ -582,7 +583,7 @@ try{
 }
 catch{
         Set-Attr $result.general_log "create_partition" "failed"
-        Set-Attr $result.log "partitioning" "Partition was failed to create on disk with partition style $SetPartitionStyle"
+        Set-Attr $result.change_log "partitioning" "Partition was failed to create on disk with partition style $SetPartitionStyle"
             if($SetOnline){
                     try{
                         Set-OperationalStatus -Offline -Disk $disk
@@ -592,16 +593,16 @@ catch{
                     }
                     if(!$OPStatusFailed){
                                     Set-Attr $result.general_log "set_operational_status" "successful"
-                                    Set-Attr $result.log "operational_status" "Disk set online and now offline again"
+                                    Set-Attr $result.change_log "operational_status" "Disk set online and now offline again"
                                     Set-Attr $result "changed" $true;
                     }
                     else{
                             Set-Attr $result.general_log "set_operational_status" "failed"
-                            Set-Attr $result.log "operational_status" "Disk failed to set offline again"
+                            Set-Attr $result.change_log "operational_status" "Disk failed to set offline again"
                     }
             }
             else{
-                    Set-Attr $result.log "operational_status" "Disk was online already and need not to be set offline"  
+                    Set-Attr $result.change_log "operational_status" "Disk was online already and need not to be set offline"  
             }
             if($StopSuccess){
                                     try{
@@ -611,21 +612,21 @@ catch{
                                             $StartFailed = $true
                                                 }
                                     if(!$StartFailed){
-                                                Set-Attr $result.log "shellhw_service_state" "Set from Stopped to Running again"
+                                                Set-Attr $result.change_log "shellhw_service_state" "Set from Stopped to Running again"
                                                 Set-Attr $result "changed" $true;
                                     }
                                     else{
                                             Set-Attr $result.general_log "maintain_shellhw_service" "failed"
-                                            Set-Attr $result.log "shellhw_service_state" "Could not be set from Stopped to Running again"
+                                            Set-Attr $result.change_log "shellhw_service_state" "Could not be set from Stopped to Running again"
                                     }
             }
             else{
-                    Set-Attr $result.log "shellhw_service_state" "Service was stopped already and need not to be started again"  
+                    Set-Attr $result.change_log "shellhw_service_state" "Service was stopped already and need not to be started again"  
             }
         Fail-Json $result $_
 }
 
-Set-Attr $result.log "partitioning" "Initial partition $($CPartition.Type) was created successfully on partition style $SetPartitionStyle"
+Set-Attr $result.change_log "partitioning" "Initial partition $($CPartition.Type) was created successfully on partition style $SetPartitionStyle"
 Set-Attr $result.general_log "create_partition" "successful"
 Set-Attr $result "changed" $true;
 
@@ -645,7 +646,7 @@ try{
 }
 catch{
         Set-Attr $result.general_log "create_volume" "failed"
-        Set-Attr $result.log "formatting" "Volume was failed to create on disk with partition $($CPartition.Type)"
+        Set-Attr $result.change_log "formatting" "Volume was failed to create on disk with partition $($CPartition.Type)"
             if($SetOnline){
                     try{
                         Set-OperationalStatus -Offline -Disk $disk
@@ -655,16 +656,16 @@ catch{
                     }
                     if(!$OPStatusFailed){
                                     Set-Attr $result.general_log "set_operational_status" "successful"
-                                    Set-Attr $result.log "operational_status" "Disk set online and now offline again"
+                                    Set-Attr $result.change_log "operational_status" "Disk set online and now offline again"
                                     Set-Attr $result "changed" $true;
                     }
                     else{
                             Set-Attr $result.general_log "set_operational_status" "failed"
-                            Set-Attr $result.log "operational_status" "Disk failed to set offline again"
+                            Set-Attr $result.change_log "operational_status" "Disk failed to set offline again"
                     }
             }
             else{
-                    Set-Attr $result.log "operational_status" "Disk was online already and need not to be set offline"  
+                    Set-Attr $result.change_log "operational_status" "Disk was online already and need not to be set offline"  
             }
             if($StopSuccess){
                                     try{
@@ -674,21 +675,21 @@ catch{
                                             $StartFailed = $true
                                                 }
                                     if(!$StartFailed){
-                                                Set-Attr $result.log "shellhw_service_state" "Set from Stopped to Running again"
+                                                Set-Attr $result.change_log "shellhw_service_state" "Set from Stopped to Running again"
                                                 Set-Attr $result "changed" $true;
                                     }
                                     else{
                                             Set-Attr $result.general_log "maintain_shellhw_service" "failed"
-                                            Set-Attr $result.log "shellhw_service_state" "Could not be set from Stopped to Running again"
+                                            Set-Attr $result.change_log "shellhw_service_state" "Could not be set from Stopped to Running again"
                                     }
             }
             else{
-                    Set-Attr $result.log "shellhw_service_state" "Service was stopped already and need not to be started again"  
+                    Set-Attr $result.change_log "shellhw_service_state" "Service was stopped already and need not to be started again"  
             }
         Fail-Json $result $_
 }
 
-Set-Attr $result.log "formatting" "Volume $($CVolume.FileSystem) was created successfully on partition $($CPartition.Type)"
+Set-Attr $result.change_log "formatting" "Volume $($CVolume.FileSystem) was created successfully on partition $($CPartition.Type)"
 Set-Attr $result.general_log "create_volume" "successful"
 Set-Attr $result "changed" $true;
 
@@ -701,16 +702,16 @@ if($StopSuccess){
                                 $StartFailed = $true
                                     }
                         if(!$StartFailed){
-                                    Set-Attr $result.log "shellhw_service_state" "Set from Stopped to Running again"
+                                    Set-Attr $result.change_log "shellhw_service_state" "Set from Stopped to Running again"
                                     Set-Attr $result "changed" $true;
                         }
                         else{
                                 Set-Attr $result.general_log "maintain_shellhw_service" "failed"
-                                Set-Attr $result.log "shellhw_service_state" "Could not be set from Stopped to Running again"
+                                Set-Attr $result.change_log "shellhw_service_state" "Could not be set from Stopped to Running again"
                         }
 }
 else{
-        Set-Attr $result.log "shellhw_service_state" "Service was stopped already and need not to be started again"  
+        Set-Attr $result.change_log "shellhw_service_state" "Service was stopped already and need not to be started again"  
 }
 
 Exit-Json $result;
