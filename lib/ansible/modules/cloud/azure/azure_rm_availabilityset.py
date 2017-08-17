@@ -219,20 +219,20 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
                 to_be_updated = True
             else:
                 update_tags, response['tags'] = self.update_tags(response['tags'])
-                
+
                 if update_tags:
                     self.log("Tags has to be updated")
                     to_be_updated = True
-                
-                if response['platform_update_domain_count'] != self.platform_update_domain_count :
+
+                if response['platform_update_domain_count'] != self.platform_update_domain_count:
                     self.warn('platform_update_domain_count')
                     self.platform_update_domain_count = response['platform_update_domain_count']
 
-                if response['platform_fault_domain_count'] != self.platform_fault_domain_count :
+                if response['platform_fault_domain_count'] != self.platform_fault_domain_count:
                     self.warn('platform_fault_domain_count')
                     self.platform_fault_domain_count = response['platform_fault_domain_count']
 
-                if response['sku'] != self.sku :
+                if response['sku'] != self.sku:
                     self.warn('sku')
                     self.sku = response['sku']
 
@@ -271,7 +271,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         self.log("Creating availabilityset {0}".format(self.name))
         try:
             # Handling the case to update tags to empty
-            if self.tags == None:
+            if self.tags is None:
                 self.tags = {}
             params_sku = Sku(
                 name=self.sku
