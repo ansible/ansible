@@ -1,0 +1,80 @@
+- name: Create an availability set with default options
+  azure_rm_availabilityset:
+    name: myavailabilityset1
+    resource_group: "{{ resource_group }}"
+    tags:
+      tag1: testtag
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Create an availability set with advanced options
+  azure_rm_availabilityset:
+    name: myavailabilityset2
+    resource_group: "{{ resource_group }}"
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 2
+    sku: Aligned
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Attempt to modify availabilty set options (we don't support modify so no changes)
+  azure_rm_availabilityset:
+    name: myavailabilityset2
+    resource_group: "{{ resource_group }}"
+    platform_update_domain_count: 2
+    platform_fault_domain_count: 2
+    sku: Aligned
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Modify availabilty set options to update tags
+  azure_rm_availabilityset:
+    name: myavailabilityset2
+    resource_group: "{{ resource_group }}"
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 2
+    sku: Aligned
+    tags:
+      test: modified
+  register: output
+
+- assert:
+    that:
+      - "output.state.tags.test == 'modified'"
+
+- name: Create availability set with incorrect fault domain parameter
+  azure_rm_availabilityset:
+    name: myavailabilityset3
+    resource_group: "{{ resource_group }}"
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 4
+    sku: Aligned
+  register: output
+  ignore_errors: yes
+
+- assert:
+    { that: "'The specified fault domain count 4 must fall in the range 1 to' in output['msg']" }
+
+- name: Delete an availability set
+  azure_rm_availabilityset:
+    name: myavailabilityset1
+    resource_group: "{{ resource_group }}"
+    state: absent
+
+- name: Delete an availability set
+  azure_rm_availabilityset:
+    name: myavailabilityset2
+    resource_group: "{{ resource_group }}"
+    state: absent
+
+- name: Delete an availability set
+  azure_rm_availabilityset:
+    name: myavailabilityset3
+    resource_group: "{{ resource_group }}"
+    state: absent
