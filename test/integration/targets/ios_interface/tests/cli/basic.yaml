@@ -155,8 +155,10 @@
 - name: Add interface aggregate
   ios_interface:
     aggregate:
-    - { name: GigabitEthernet0/1, speed: 10, duplex: half, mtu: 256, description: test-interface-1 }
-    - { name: GigabitEthernet0/2, speed: 100, duplex: full, mtu: 516, description: test-interface-2 }
+    - { name: GigabitEthernet0/1, mtu: 256, description: test-interface-1 }
+    - { name: GigabitEthernet0/2, mtu: 516, description: test-interface-2 }
+    duplex: full
+    speed: 100
     state: present
     authorize: yes
     provider: "{{ cli }}"
@@ -166,9 +168,9 @@
     that:
       - 'result.changed == true'
       - '"interface GigabitEthernet0/1" in result.commands'
-      - '"speed 10" in result.commands'
+      - '"speed 100" in result.commands'
       - '"description test-interface-1" in result.commands'
-      - '"duplex half" in result.commands'
+      - '"duplex full" in result.commands'
       - '"mtu 256" in result.commands'
       - '"interface GigabitEthernet0/2" in result.commands'
       - '"speed 100" in result.commands'
@@ -179,8 +181,10 @@
 - name: Add interface aggregate (idempotent)
   ios_interface:
     aggregate:
-    - { name: GigabitEthernet0/1, speed: 10, duplex: half, mtu: 256, description: test-interface-1 }
-    - { name: GigabitEthernet0/2, speed: 100, duplex: full, mtu: 516, description: test-interface-2 }
+    - { name: GigabitEthernet0/1, mtu: 256, description: test-interface-1 }
+    - { name: GigabitEthernet0/2, mtu: 516, description: test-interface-2 }
+    duplex: full
+    speed: 100
     state: present
     authorize: yes
     provider: "{{ cli }}"
@@ -205,9 +209,9 @@
     that:
       - 'result.changed == true'
       - '"interface GigabitEthernet0/1" in result.commands'
-      - '"no speed 10" in result.commands'
+      - '"no speed 100" in result.commands'
       - '"description configured by ios_interface" in result.commands'
-      - '"no duplex half" in result.commands'
+      - '"no duplex full" in result.commands'
       - '"no mtu 256" in result.commands'
       - '"interface GigabitEthernet0/2" in result.commands'
       - '"no speed 100" in result.commands'
@@ -218,8 +222,9 @@
 - name: Disable interface aggregate
   ios_interface:
     aggregate:
-    - { name: GigabitEthernet0/1, enabled: False }
-    - { name: GigabitEthernet0/2, enabled: False }
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+    enabled: False
     state: present
     authorize: yes
     provider: "{{ cli }}"
@@ -236,8 +241,9 @@
 - name: Enable interface aggregate
   ios_interface:
     aggregate:
-    - { name: GigabitEthernet0/1, enabled: True }
-    - { name: GigabitEthernet0/2, enabled: True }
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+    enabled: True
     state: present
     authorize: yes
     provider: "{{ cli }}"
@@ -254,8 +260,8 @@
 - name: Create loopback interface aggregate
   ios_interface:
     aggregate:
-    - { name: Loopback9 }
-    - { name: Loopback10 }
+    - name: Loopback9
+    - name: Loopback10
     state: present
     authorize: yes
     provider: "{{ cli }}"
@@ -272,9 +278,9 @@
 - name: Delete loopback interface aggregate
   ios_interface:
     aggregate:
-    - { name: Loopback9, state: absent }
-    - { name: Loopback10, state: absent }
-    state: present
+    - name: Loopback9
+    - name: Loopback10
+    state: absent
     authorize: yes
     provider: "{{ cli }}"
   register: result
@@ -288,9 +294,9 @@
 - name: Delete loopback interface aggregate (idempotent)
   ios_interface:
     aggregate:
-    - { name: Loopback9, state: absent }
-    - { name: Loopback10, state: absent }
-    state: present
+    - name: Loopback9
+    - name: Loopback10
+    state: absent
     authorize: yes
     provider: "{{ cli }}"
   register: result
