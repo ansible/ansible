@@ -397,7 +397,7 @@ To get a sha256 password hash with a specific salt::
 
 
 Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on crypt.
+'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
 
 .. _combine_filter:
 
