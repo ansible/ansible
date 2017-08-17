@@ -50,6 +50,7 @@ options:
     description:
       - Install gem in user's local gems cache or for all users
     required: false
+    choices: [true, false]
     default: "yes"
     version_added: "1.3"
   executable:
