@@ -29,3 +29,4 @@ from ansible.module_utils.oneview import (HPOneViewException,
                                           OneViewModuleBase)
 
 from ansible.modules.remote_management.hpe.oneview_fc_network import FcNetworkModule
+from ansible.modules.remote_management.hpe.oneview_fcoe_network import FcoeNetworkModule
