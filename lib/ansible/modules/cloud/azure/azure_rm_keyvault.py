@@ -233,16 +233,18 @@ class AzureRMKeyVault(AzureRMModuleBase):
         self.object_id = None
         self.application_id = None
         self.permissions = None
+        self.tags = None
 
         super(AzureRMKeyVault, self).__init__(self.module_arg_spec,
-                                            supports_check_mode=True)
+                                            supports_check_mode=True,
+                                            supports_tags=True)
 
     def exec_module(self, **kwargs):
     
         # create a new vault variable in case the 'try' doesn't find a vault
         vault = None
 
-        for key in self.module_arg_spec.keys():
+        for key in self.module_arg_spec.keys() + ['tags']:
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
@@ -263,9 +265,13 @@ class AzureRMKeyVault(AzureRMModuleBase):
             # serialize object into a dictionary
             results = vault_to_dict(vault)
             
-            # don't change anything if creating an existing vault, but change if deleting it
+            # don't change anything if creating an existing vault (unless outdated tags), but change if deleting it
             if self.state == 'present':
                 changed = False
+
+                update_tags, results['tags'] = self.update_tags(results['tags'])
+                if update_tags:
+                    changed = True
 
             elif self.state == 'absent':
                 changed = True
@@ -288,7 +294,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
         if changed:
              if self.state == 'present':
-                # if you want to create or update a key vault, since it's 'present' 
+                # if you want to create or update a key vault 
                 if not vault:
                     # create new vault
                     self.log('Creating vault {0}'.format(self.name))
@@ -303,9 +309,12 @@ class AzureRMKeyVault(AzureRMModuleBase):
                                                         enabled_for_disk_encryption=self.enabled_for_disk_encryption,
                                                         enabled_for_template_deployment=self.enabled_for_template_deployment
                     )
-                    vault = VaultCreateOrUpdateParameters(self.location, vault_properties)
-                self.results['state'] = self.create_or_update_vault(vault)
+                    vault = VaultCreateOrUpdateParameters(self.location, vault_properties, tags=self.tags)
+                else:
+                    # update the vault
+                    vault = VaultCreateOrUpdateParameters(self.location, vault.VaultProperties, tags=results['tags'])
 
+                self.results['state'] = self.create_or_update_vault(vault)
              elif self.state == 'absent':
                 # delete zone
                 self.delete_vault()
@@ -370,6 +379,7 @@ def vault_to_dict(vault):
         name=vault.name,
         location=vault.location,
         type=vault.type,
+        tags = vault.tags,
         properties=None
     )
     if vault.properties:
