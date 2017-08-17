@@ -54,10 +54,6 @@ options:
       - Set logging severity levels.
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregates parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
@@ -71,24 +67,41 @@ EXAMPLES = """
     dest: host
     name: 172.16.0.1
     state: present
+
 - name: remove host logging configuration
   ios_logging:
     dest: host
     name: 172.16.0.1
     state: absent
+
 - name: configure console logging level and facility
   ios_logging:
     dest: console
     facility: local7
     level: debugging
     state: present
+
 - name: enable logging to all
   ios_logging:
     dest : on
+
 - name: configure buffer size
   ios_logging:
     dest: buffered
     size: 5000
+
+- name: Configure logging using aggregate
+  ios_logging:
+    aggregate:
+      - { dest: console, level: notifications }
+      - { dest: buffered, size: 9000 }
+
+- name: remove logging using aggregate
+  ios_logging:
+    aggregate:
+      - { dest: console, level: notifications }
+      - { dest: buffered, size: 9000 }
+    state: absent
 """
 
 RETURN = """
@@ -103,7 +116,10 @@ commands:
 
 import re
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.ios import get_config, load_config
 from ansible.module_utils.ios import ios_argument_spec, check_args
 
@@ -119,7 +135,6 @@ def validate_size(value, module):
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
-
     for w in want:
         dest = w['dest']
         name = w['name']
@@ -159,7 +174,6 @@ def map_obj_to_commands(updates, module):
                     dest_cmd += ' {}'.format(level)
 
                 commands.append(dest_cmd)
-
     return commands
 
 
@@ -247,21 +261,21 @@ def map_config_to_obj(module):
     return obj
 
 
-def map_params_to_obj(module):
+def map_params_to_obj(module, required_if=None):
     obj = []
+    aggregate = module.params.get('aggregate')
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
+
+            module._check_required_if(required_if, item)
+
+            d = item.copy()
             if d['dest'] != 'host':
                 d['name'] = None
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
-            if 'facility' not in d:
-                d['facility'] = module.params['facility']
-            if 'level' not in d:
-                d['level'] = module.params['level']
 
             if d['dest'] == 'buffered':
                 if 'size' in d:
@@ -312,17 +326,25 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str', default='local7'),
         level=dict(type='str', default='debugging'),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
     required_if = [('dest', 'host', ['name'])]
@@ -338,7 +360,7 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    want = map_params_to_obj(module)
+    want = map_params_to_obj(module, required_if=required_if)
     have = map_config_to_obj(module)
 
     commands = map_obj_to_commands((want, have), module)

@@ -107,11 +107,27 @@
       - 'result.changed == true'
       - '"logging buffered 8000" in result.commands'
 
+- name: Change logging parameters using aggregate
+  ios_logging:
+    aggregate:
+      - { dest: console, level: notifications }
+      - { dest: buffered, size: 9000 }
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging buffered 9000" in result.commands'
+      - '"logging console notifications" in result.commands'
+
 - name: remove logging as collection tearDown
   ios_logging:
     aggregate:
-      - { dest: console, level: warnings, state: absent }
-      - { dest: buffered, size: 8000, state: absent }
+      - { dest: console, level: notifications }
+      - { dest: buffered, size: 9000 }
+    state: absent
     authorize: yes
     provider: "{{ cli }}"
   register: result
