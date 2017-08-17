@@ -1,5 +1,5 @@
 ---
-- debug: msg="START TRANSPORT:NXAPI nxos_rollback sanity test"
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_rollback sanity test"
 
 - name: delete existing checkpoint file
   nxos_config: &delete
@@ -7,23 +7,23 @@
       - terminal dont-ask
       - delete backup.cfg
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: Create checkpoint file
   nxos_rollback:
     checkpoint_file: backup.cfg
     timeout: 300
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
 - name: rollback to the previously created checkpoint file
   nxos_rollback:
     rollback_to: backup.cfg
     timeout: 300
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
 - name: cleanup checkpoint file
   nxos_config: *delete
   ignore_errors: yes
 
-- debug: msg="END TRANSPORT:NXAPI nxos_rollback sanity test"
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_rollback sanity test"
