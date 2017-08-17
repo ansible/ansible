@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'curated'}
 
@@ -111,7 +111,7 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.trafficmanager.models import DnsConfig, Profile
+    from azure.mgmt.trafficmanager.models import DnsConfig, Profile, MonitorConfig
 except ImportError:
     pass
 
@@ -306,12 +306,26 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         location = properties.get('location', "global")
         profile_status = properties.get('profile_status', None)
         traffic_routing_method = properties.get('traffic_routing_method', None)
-        monitor_config = properties.get('monitor_config', None)
-        endpoints = properties.get('endpoints', None)
+        endpoints = properties.get('endpoints', [])
 
-        dns_config = properties.get('dns_config', None)
-        relative_name = dns_config.get('relative_name', None)
-        ttl = dns_config.get('ttl', None)
+
+        #MonitorConfig
+        monitor_properties = properties.get('monitor_config', None)
+        monitor_protocol = monitor_properties.get('protocol', None)
+        monitor_port = monitor_properties.get('port', None)
+        monitor_path = monitor_properties.get('path', None)
+        monitor_status = monitor_properties.get('status', None)
+        monitor_interval_in_seconds = monitor_properties.get('interval_in_seconds', 5)
+        monitor_timeout_in_seconds = monitor_properties.get('timeout_in_seconds', None)
+        monitor_tolerated_failures = monitor_properties.get('tolerated_number_of_failures', None)
+        monitor_config = MonitorConfig(monitor_status, monitor_protocol, monitor_port,
+                                       monitor_path, monitor_interval_in_seconds,
+                                       monitor_timeout_in_seconds, monitor_tolerated_failures)
+
+        #DnsConfig
+        dns_config_properties = properties.get('dns_config', None)
+        relative_name = dns_config_properties.get('relative_name', None)
+        ttl = dns_config_properties.get('ttl', None)
         dns_config = DnsConfig(relative_name, ttl)
 
         profile = Profile(tags, location, profile_status, traffic_routing_method,
