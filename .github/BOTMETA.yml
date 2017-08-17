@@ -568,7 +568,7 @@ files:
   $modules/remote_management/hpilo/: dagwieers haad
   $modules/remote_management/imc/: dagwieers
   $modules/remote_management/ipmi/: cloudnull
-  $modules/remote_management/manageiq/ : $team_manageiq
+  $modules/remote_management/manageiq/: $team_manageiq
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/wakeonlan.py: dagwieers
   $modules/source_control/bzr.py: andreparames
@@ -902,9 +902,6 @@ files:
     maintainers: Spredzy
   $module_utils/dellos:
     maintainers: skg-net
-    labels: networking
-  $module_utils/eos.py:
-    maintainers: $team_networking
     labels: networking
   $module_utils/f5_utils.py:
     maintainers: caphrim007

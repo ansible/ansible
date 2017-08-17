@@ -315,7 +315,7 @@ def command_sanity_pep8(args, targets):
     skip_paths_set = set(skip_paths)
     legacy_paths_set = set(legacy_paths)
 
-    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths_set)
+    paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
     if not paths:
         return SanitySkipped(test)
@@ -458,7 +458,7 @@ def command_sanity_pylint(args, targets):
 
     skip_paths_set = set(skip_paths)
 
-    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths_set)
+    paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
     if not paths:
         return SanitySkipped(test)
