@@ -1,17 +1,17 @@
 ---
-- debug: msg="START cli/configure.yaml"
+- debug: msg="START {{ connection.transport }}/configure.yaml"
 
 - name: setup
   nxos_config:
     lines: no feature bgp
     match: none
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
 
 - name: enable bgp
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -22,7 +22,7 @@
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -33,7 +33,7 @@
   nxos_feature:
     feature: bgp
     state: disabled
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -44,7 +44,7 @@
   nxos_feature:
     feature: bgp
     state: disabled
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -55,6 +55,6 @@
   nxos_config:
     lines: no feature bgp
     match: none
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
 
-- debug: msg="END cli/configure.yaml"
+- debug: msg="END {{ connection.transport }}/configure.yaml"
