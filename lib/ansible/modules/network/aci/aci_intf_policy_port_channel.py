@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_lldp_policy
-short_description: Manage LLDP interface policies on Cisco ACI fabrics
+module: aci_intf_policy_port_channel
+short_description: Manage port channel interface policies on Cisco ACI fabrics (lacp:LagPol)
 description:
-- Manage LLDP interface policies on Cisco ACI fabrics.
+- Manage port channel interface policies on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(lacp:LagPol) at U(https://developer.cisco.com/media/mim-ref/MO-lacpLagPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,45 +26,48 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
-  lldp_policy:
+  port_channel:
     description:
-    - The LLDP interface policy name.
-    required: yes
+    - Name of the port channel.
+    required: true
     aliases: [ name ]
   description:
     description:
-    - Description for the filter.
+    - The description for the port channel.
     aliases: [ descr ]
-  receive_state:
+  max_links:
     description:
-    - Enable or disable Receive state (FIXME!)
-    required: yes
-    choices: [ disabled, enabled ]
-    default: enabled
-  transmit_state:
+    - Maximum links (range 1-16).
+    - The APIC defaults new Port Channel Policies to a max links of 16.
+  min_links:
     description:
-    - Enable or Disable Transmit state (FIXME!)
-    required: false
-    choices: [ disabled, enabled ]
-    default: enabled
+    - Minimum links (range 1-16).
+    - The APIC defaults new Port Channel Policies to a min links of 1.
+  mode:
+    description:
+    - Port channel interface policy mode.
+    - Determines the LACP method to use for forming port-channels.
+    - The APIC defaults new Port Channel Polices to a off mode.
+    choices: [ active, mac-pin, mac-pin-nicload, off, passive ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
     choices: [ absent, present, query ]
     default: present
+extends_documentation_fragment: aci
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_lldp_policy:
-    hostname: '{{ hostname }}'
+- aci_intf_policy_port_channel:
+    hostname: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    lldp_policy: '{{ lldp_policy }}'
+    port_channel: '{{ port_channel }}'
     description: '{{ description }}'
-    receive_state: '{{ receive_state }}'
-    transmit_state: '{{ transmit_state }}'
+    min_links: '{{ min_links }}'
+    max_links: '{{ max_links }}'
+    mode: '{{ mode }}'
 '''
 
 RETURN = r'''
@@ -76,10 +81,11 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        lldp_policy=dict(type='str', require=False, aliases=['name']),
+        port_channel=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        receive_state=dict(type='str', choices=['disabled', 'enabled']),
-        transmit_state=dict(type='str', choices=['disabled', 'enabled']),
+        min_links=dict(type='int'),
+        max_links=dict(type='int'),
+        mode=dict(type='str', choices=['off', 'mac-pin', 'active', 'passive', 'mac-pin-nicload']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -89,22 +95,27 @@ def main():
         supports_check_mode=True,
     )
 
-    lldp_policy = module.params['lldp_policy']
+    port_channel = module.params['port_channel']
     description = module.params['description']
-    receive_state = module.params['receive_state']
-    transmit_state = module.params['transmit_state']
+    # TODO: Validate min_links is in the acceptable range
+    min_links = module.params['min_link']
+    # TODO: Validate max_links is in the acceptable range
+    min_links = str(min_links)
+    max_links = module.params['max_link']
+    max_links = str(max_links)
+    mode = module.params['mode']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    if lldp_policy is not None:
-        # Work with a specific object
-        path = 'api/mo/uni/infra/lldpIfP-%(lldp_policy)s.json' % module.params
+    # TODO: This logic could be cleaner.
+    if port_channel is not None:
+        path = 'api/mo/uni/infra/lacplagp-%(port_channel)s.json' % module.params
     elif state == 'query':
         # Query all objects
-        path = 'api/node/class/lldpIfPol.json'
+        path = 'api/node/class/lacplagPol.json'
     else:
-        module.fail_json(msg="Parameter 'lldp_policy' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'port_channel' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -112,10 +123,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='lldpIfPol', class_config=dict(name=lldp_policy, descr=description, adminRxSt=receive_state, adminTxSt=transmit_state))
+        aci.payload(aci_class='lacpLagPol', class_config=dict(name=port_channel, descr=description, minLinks=min_links, maxLinks=max_links, mode=mode))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='lldpIfPol')
+        aci.get_diff(aci_class='lacpLagPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

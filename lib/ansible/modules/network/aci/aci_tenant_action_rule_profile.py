@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_span_dst_group
-short_description: Manage span destination groups on Cisco ACI fabrics
+module: aci_tenant_action_rule_profile
+short_description: Manage action rule profiles on Cisco ACI fabrics (rtctrl:AttrP)
 description:
-- Manage span destination groups on Cisco ACI fabrics.
+- Manage action rule profiles on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(rtctrl:AttrP) at U(https://developer.cisco.com/media/mim-ref/MO-rtctrlAttrP.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,21 +26,20 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 options:
-  dst_group:
+  action_rule:
     description:
-    - The name of the span destination group.
-    required: yes
-    aliases: [ name ]
+    - The name of the action rule profile.
+    aliases: [ action_rule_name, name ]
   description:
     description:
-    - Description of the span destination group.
+    - The description for the action rule profile.
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
-    required: yes
     aliases: [ tenant_name ]
   state:
     description:
@@ -51,11 +52,11 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_span_dst_group:
+- aci_tenant_action_rule_profile:
     hostname: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    dst_group: '{{ dst_group }}'
+    action_rule: '{{ action_rule }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'
 '''
@@ -71,8 +72,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        dst_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
-        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all objects
+        action_rule=dict(type='str', required=False, aliases=['action_rule_name', 'name']),  # Not required for querying all objects
+        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -83,7 +84,7 @@ def main():
         supports_check_mode=True,
     )
 
-    dst_group = module.params['dst_group']
+    action_rule = module.params['action_rule']
     # tenant = module.params['tenant']
     description = module.params['description']
     state = module.params['state']
@@ -91,13 +92,13 @@ def main():
     aci = ACIModule(module)
 
     # TODO: This logic could be cleaner.
-    if dst_group is not None:
-        path = 'api/mo/uni/tn-%(tenant)s/destgrp-%(dst_group)s.json' % module.params
+    if action_rule is not None:
+        path = 'api/mo/uni/tn-%(tenant)s/attr-%(action_rule)s.json' % module.params
     elif state == 'query':
-        # Query all contracts
-        path = 'api/node/class/spanDestGrp.json'
+        # Query all objects
+        path = 'api/node/class/rtctrlAttrP.json'
     else:
-        module.fail_json(msg="Parameter 'dst_group' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'action_rule' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -105,10 +106,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='spanDestGrp', class_config=dict(name=dst_group, descr=description))
+        aci.payload(aci_class='rtctrlAttrP', class_config=dict(name=action_rule, descr=description))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='spanDestGrp')
+        aci.get_diff(aci_class='rtctrlAttrP')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

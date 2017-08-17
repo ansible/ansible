@@ -12,10 +12,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_epg_contract_binding
-short_description: Manage EPG to Contract bindings on Cisco ACI fabrics
+module: aci_epg_to_contract
+short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fvRsProv)
 description:
-- Manage EPG to Contract bindings on Cisco ACI fabrics.
+- Bind EPGs to Contracts on Cisco ACI fabrics.
+- More information from the internal APIC classes
+  I(fv:RsCons) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsCons.html) and
+  I(fv:RsProv) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsProv.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -25,7 +28,7 @@ requirements:
 - ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
-  The M(aci_tenant), M(aci_anp), M(aci_epg), and M(aci_contract) modules can be used for this.
+  The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
 options:
   app_profile:
     description:
