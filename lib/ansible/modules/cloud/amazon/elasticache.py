@@ -191,7 +191,7 @@ class ElastiCacheManager(object):
         self.zone = zone
         self.wait = wait
         self.hard_modify = hard_modify
-        self.tags = ansible_dict_to_boto3_tag_list(tags)
+        self.tags = tags
         self.purge_tags = purge_tags
 
         self.region = region
@@ -224,14 +224,22 @@ class ElastiCacheManager(object):
         return arn
 
     def compare_and_update_tags(self):
-        tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
-        add, remove = compare_aws_tags(tags, boto3_tag_list_to_ansible_dict(self.tags), purge_tags=self.purge_tags)
-        if add:
-            self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
-            self.changed = True
-        if remove:
-            self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=remove)
-            self.changed = True
+        if self.tags:
+            self.tags = ansible_dict_to_boto3_tag_list(self.tags)
+            tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
+            add, remove = compare_aws_tags(tags, boto3_tag_list_to_ansible_dict(self.tags), self.purge_tags)
+            if add:
+                self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
+                self.changed = True
+
+            if remove:
+                self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=remove)
+                self.changed = True
+        else:
+            tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
+            if tags:
+                self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=tags.keys())
+                self.changed = True
 
     def ensure_absent(self):
         """Ensure cache cluster is gone or delete it if not"""
