@@ -21,7 +21,7 @@
         state: absent
         secret_name: samplesecret5
 
-- name: create a kevyault secret
+- name: delete a kevyault secret
   azure_rm_keyvaultsecret:
     keyvault_uri: https://tmpkeyvault.vault.azure.net
     state: absent
