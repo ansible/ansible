@@ -306,45 +306,53 @@
     that:
     - "template_result|changed"
 
-## demonstrate copy module failing to overwrite a file that's been hard linked
-## https://github.com/ansible/ansible/issues/10834
+#
+# template module can overwrite a file that's been hard linked
+# https://github.com/ansible/ansible/issues/10834
+#
 
 - name: ensure test dir is absent
   file:
-    path: /tmp/10834.2_test
+    path: '{{ output_dir | expanduser }}/hlink_dir'
     state: absent
 
 - name: create test dir
   file:
-    path: /tmp/10834.2_test
+    path: '{{ output_dir | expanduser }}/hlink_dir'
     state: directory
 
 - name: template out test file to system 1
   template:
     src: foo.j2
-    dest: /tmp/10834.2_test/test_file
-
-# not an issue when not hard linked
-- name: template out test file to system 2
-  template:
-    src: foo.j2
-    dest: /tmp/10834.2_test/test_file
+    dest: '{{ output_dir | expanduser }}/hlink_dir/test_file'
 
 - name: make hard link
   file:
-    src: /tmp/10834.2_test/test_file
-    dest: /tmp/10834.2_test/test_file_hardlink
+    src: '{{ output_dir | expanduser }}/hlink_dir/test_file'
+    dest: '{{ output_dir | expanduser }}/hlink_dir/test_file_hlink'
     state: hard
 
-- name: template out test file to system 3
+- name: template out test file to system 2
   template:
     src: foo.j2
-    dest: /tmp/10834.2_test/test_file
+    dest: '{{ output_dir | expanduser }}/hlink_dir/test_file'
+  register: hlink_result
 
-- name: cleanup
-  file:
-    path: /tmp/10834.2_test
-    state: absent
+- name: check that the files are still hardlinked
+  stat:
+    path: '{{ output_dir | expanduser }}/hlink_dir/test_file'
+  register: orig_file
+
+- name: check that the files are still hardlinked
+  stat:
+    path: '{{ output_dir | expanduser }}/hlink_dir/test_file_hlink'
+  register: hlink_file
+
+# We've done nothing at this point to update the content of the file so it should still be hardlinked
+- assert:
+    that:
+      - "hlink_result.changed == False"
+      - "orig_file.stat.inode == hlink_file.stat.inode"
 
 - name: change var for the template
   set_fact:
