@@ -279,7 +279,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             self.fail("Error creating the managed disk: {0}".format(str(e)))
         return result
 
-    # This method accounts for the difference in structure between the 
+    # This method accounts for the difference in structure between the
     # Azure retrieved disk and the parameters for the new disk to be created.
     def is_different(self, found_disk, new_disk):
         resp = False
@@ -308,7 +308,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         found = False
         try:
             response = self.compute_client.disks.get(
-                self.resource_group, 
+                self.resource_group,
                 self.name)
             found = True
         except CloudError as e:
