@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
-#                    Chris Houseknecht, <house@redhat.com>
+# Copyright (c) 2016 Julio Colon, <julio.colon@microsoft.com>
+#                    Diego Casati, <diego.casati@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,32 +17,87 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_trafficmanager
-version_added: "2.1"
+version_added: "2.4"
 short_description: Manage Azure Traffic Manager (profile).
 description:
     - Create, update and delete a traffic manager profile.
 options:
+
     name:
         description:
-            - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
-              group that contains resources.
+             - The name of the Traffic Manager profile.
         default: false
-        required: false
-    location:
-        description:
-            - Azure location for the resource group. Required when creating a new resource group. Cannot
-              be changed once resource group is created.
-        required: false
-        default: null
-    name:
-        description:
-            - Name of the resource group.
         required: true
+    resource_group:
+        description:
+             - The name of the resource group containing the Traffic Manager profile.
+        required: true
+    profile_status:
+        description:
+            - The status of the Traffic Manager profile. 
+            choices:
+                - Enabled
+                - Disabled
+    traffic_routing_method:
+        description:
+            - The traffic routing method of the Traffic Manager profile. Possible 
+            values include: 'Performance', 'Priority', 'Weighted', 'Geographic'.
+    dns_config:
+        description:
+            - The DNS settings of the Traffic Manager profile. This section includes
+            relative_name and ttl.
+        required: true
+        suboptions:
+            ttl:
+                description:
+                    - The DNS Time-To-Live (TTL), in seconds. This informs the 
+                    local DNS resolvers and DNS clients how long to cache DNS 
+                    responses provided by this Traffic Manager profile.
+    monitor_config:
+        description:
+            - The endpoint monitoring settings of the Traffic Manager profile.
+        required: true
+	suboptions:
+            status:
+                description:
+                    - The profile-level monitoring status of the Traffic Manager profile. 
+                    choices:
+                        - CheckingEndpoints
+                        - Online
+                        - Degraded
+                        - Disabled
+                        - Inactive
+            protocol:
+                description:
+                    - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health. 
+                    choices:
+                        - HTTP
+                        - HTTPS
+                        - TCP
+            port:
+                description:
+                    - The TCP port used to probe for endpoint health.
+            path:
+                description:
+                    - The path relative to the endpoint domain name used to probe for 
+                    endpoint health.
+            interval_in_seconds:
+                description:
+                    - The monitor interval for endpoints in this profile. This is the interval 
+                    at which Traffic Manager will check the health of each endpoint in this profile.
+            timeout_in_seconds:
+                description:
+                    - The monitor timeout for endpoints in this profile. This is the time that 
+                    Traffic Manager allows endpoints in this profile to response to the health check.
+            tolerated_number_of_failures:
+                description:
+                    - The number of consecutive failed health check that Traffic Manager tolerates 
+                    before declaring an endpoint in this profile Degraded after the next failed health check.
     state:
         description:
             - Assert the state of the resource group. Use 'present' to create or update and
-              'absent' to delete. When 'absent' a resource group containing resources will not be removed unless the
-              force option is used.
+              'absent' to delete. When 'absent' a resource group containing resources 
+              will not be removed unless the force option is used.
         default: present
         choices:
             - absent
@@ -53,39 +108,39 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - "Julio Colon (@code4clouds)"
+    - "Diego Casati (@diegocasati)"
 
 '''
 
 EXAMPLES = '''
-    - name: Create a resource group
+    - name: Create Traffic Manager Profile
       azure_rm_trafficmanagerprofile:
-        name: "Testing"
-        resource_group: "rg"
+        name: "contoso.com"
+        state: "present"
+        resource_group: "ContosoRG"
         properties:
-            profileStatus: Testing
-            trafficRoutingMethod: westus
-            dnsConfig:
-                relativeName: testing
-                ttl: never
-            monitorConfig:
-                protocol: "HTTP" 
-                path: "/testpath.aspx"
-            endpoits:
-                - id
-                - id
-        location: "global"
-        tags: 
-                - tag1
-                - tag2
-        status: "Enabled"
-
-
-    - name: Delete a resource group
-      azure_rm_resourcegroup:
-        name: Testing
+          profile_status: "Enabled"
+          traffic_routing_method: "Performance"
+          dns_config:
+            ttl: "300"
+          monitor_config:
+            protocol: "HTTP"
+            port: 80
+            path: "/monitor/index.html"
+            status: "Active"
+            interval_in_seconds: 30
+            timeout_in_seconds: 10
+            tolerated_number_of_failures: 3
+          location: "global"
+          tags:
+            project: "My Project"
+  
+    - name: Delete a Traffic Manager Profile
+      azure_rm_trafficmanagerprofile:
+        name: contoso.com
         state: absent
+
 '''
 RETURN = '''
 contains_resources:
