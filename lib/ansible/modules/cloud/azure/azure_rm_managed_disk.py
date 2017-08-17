@@ -188,7 +188,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             disk_size_gb=dict(
                 type='int',
-                required=True
+                required=False
             ),
             tags=dict(
                 type='str',
@@ -197,7 +197,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         )
         required_if = [
             ('create_option', 'import', ['source_uri']),
-            ('create_option', 'copy', ['source_resource_uri'])
+            ('create_option', 'copy', ['source_resource_uri']),
+            ('state', 'present', ['disk_size_gb'])
         ]
         self.results = dict(
             changed=False,
@@ -262,19 +263,19 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             # CreationData cannot be changed after creation
             disk_params['creation_data'] = creation_data
             found_prev_disk = self.get_managed_disk()
-            if self.is_different(found_prev_disk, disk_params):
-                poller = self.compute_client.disks.create_or_update(
-                    self.resource_group,
-                    self.name,
-                    disk_params)
-                result = self.serialize_obj(
-                    self.get_poller_result(poller),
-                    AZURE_OBJECT_CLASS,
-                    enum_modules=AZURE_ENUM_MODULES)
-                self.results['changed'] = True
-            else:
-                result = found_prev_disk
-                self.results['changed'] = False
+            if found_prev_disk:
+                if not self.is_different(found_prev_disk, disk_params):
+                    return found_prev_disk
+            poller = self.compute_client.disks.create_or_update(
+                self.resource_group,
+                self.name,
+                disk_params)
+            result = self.serialize_obj(
+                self.get_poller_result(poller),
+                AZURE_OBJECT_CLASS,
+                enum_modules=AZURE_ENUM_MODULES)
+            result['id'] = poller.id
+            self.results['changed'] = True
         except CloudError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
         return result
@@ -300,6 +301,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 self.resource_group,
                 self.name)
             result = self.get_poller_result(poller)
+            self.results['changed'] = True
         except AzureHttpError as e:
             self.fail("Error deleting the managed disk: {0}".format(str(e)))
         return result
@@ -314,10 +316,13 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         except CloudError as e:
             self.log('Did not find managed disk')
         if found:
-            return self.serialize_obj(
+            serialized = self.serialize_obj(
                 response,
                 AZURE_OBJECT_CLASS,
                 enum_modules=AZURE_ENUM_MODULES)
+            #Serializerd doesn't return the id?
+            serialized['id'] = response.id
+            return serialized
         else:
             return False
 

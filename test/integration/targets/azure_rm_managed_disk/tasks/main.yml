@@ -1,28 +1,12 @@
  - name: Create managed disk
    set_fact:
-       managed_disk: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+       managed_disk1: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
 
- - name: Test invalid account name
-   azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
-       name: "invalid_char$"
-       state: present
-   register: invalid_name     
-   ignore_errors: yes  
-
- - name: Assert task failed
-   assert: { that: "invalid_name['failed'] == True" }
-
- - name: Delete managed disk
-   azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
-       name: "{{ managed_disk }}"
-       state: absent
 
  - name: Create new managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
-       name: "{{ managed_disk }}"
+       name: "{{ managed_disk1 }}"
        account_type: Standard_LRS
        disk_size_gb: 1
        tags:
@@ -46,33 +30,33 @@
  - assert:
        that: azure_storageaccounts | length >= 1
 
- - name: Change account type 
+ - name: Change account type to an invalid type
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
-       name: "{{ managed_disk }}"
-       account_type: Premium_LRS
+       name: "{{ managed_disk1 }}"
+       account_type: PremiumL
+       disk_size_gb: 1
    register: change_account
    ignore_errors: yes 
 
  - name: Assert account type change failed 
    assert: { that: "change_account['failed'] == True" }
 
- - name: Change account type and add custom domain
+ - name: Change disk size to incompatible size 
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk }}"
-       account_type: Standard_GRS
-       custom_domain: { name: ansible.com, use_sub_domain: no }
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 3000
    register: change_account
    ignore_errors: yes
 
- - name: Assert CNAME failure
-   assert: { that: "'custom domain name could not be verified' in  change_account['msg']" }
+ - name: Assert disk size change failure
+   assert: { that: "'failed' in  change_account['msg']" }
 
  - name: Update account tags
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk }}"
+       name: "{{ managed_disk1 }}"
        tags:
            testing: testing
            delete: never
@@ -87,7 +71,7 @@
  - name: Update account tags
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk }}"
+       name: "{{ managed_disk1 }}"
        tags:
            testing: testing
            delete: never
@@ -102,7 +86,7 @@
  - name: Gather facts
    azure_rm_managed_disk_facts:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk }}"
+       name: "{{ managed_disk1 }}"
 
  - assert:
        that:
@@ -119,5 +103,6 @@
  - name: Delete acccount
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
-       name: "{{ managed_disk }}"
+       name: "{{ managed_disk1 }}"
        state: absent
+
