@@ -850,9 +850,10 @@ files:
     - intheclouddan rwaweber zbal
   contrib/inventory/azure_rm.py:
     keywords:
+    - azure inventory
+    - azure rm inventory
     - azure azure_rm dynamic inventory script
-    maintainers:
-    - $team_azure
+    maintainers: $team_azure
   lib/ansible/inventory:
     keywords:
     - core inventory
