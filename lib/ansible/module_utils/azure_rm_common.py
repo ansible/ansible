@@ -279,7 +279,7 @@ class AzureRMModuleBase(object):
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
         changed = False
         # Handling : if tags == None in invocation and not None in Azure
-        if self.module.params.get('tags') == None:
+        if self.module.params.get('tags') is None:
             if len(new_tags) > 0:
                 changed = True
 
