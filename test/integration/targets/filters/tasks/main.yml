@@ -120,6 +120,20 @@
     that:
       - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
 
+- name: "20379 - set_fact app_var_git_branch "
+  set_fact:
+    app_var_git_branch: multi-deployment-400-743
+
+- name: "20379 - trigger a error in jmespath via json_query filter to test error handling"
+  debug:
+    msg: "{{ example_20379 | json_query('ApplicationVersions[].VersionLabel[] | [?starts_with(@, `multi`)]') }}"
+  ignore_errors: true
+
+- name: "20379 - Test errors related to https://github.com/ansible/ansible/issues/20379"
+  assert:
+    that: "example_20379 | json_query('ApplicationVersions[].VersionLabel[] | [?starts_with(@, '+app_var_git_branch+')] | [2:]') == multisdfsdf"
+  ignore_errors: true
+
 - name: Test hash filter
   assert:
     that:
