@@ -43,7 +43,8 @@ asa_argument_spec = {
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
     'provider': dict(type='dict'),
-    'context': dict()
+    'context': dict(),
+    'passwords': dict()
 }
 
 command_spec = {
