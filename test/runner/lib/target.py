@@ -294,7 +294,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
         if path is None:
             root = root[2:]
 
-        if root.startswith('.'):
+        if root.startswith('.') and root != '.github':
             continue
 
         for file_name in file_names:
