@@ -17,8 +17,8 @@
 
 import yaml
 
-from ansible.compat.tests import unittest
-from oneview_module_loader import EthernetNetworkModule, HPOneViewResourceNotFound
+from ansible.compat.tests import unittest, Mock
+from oneview_module_loader import EthernetNetworkModule, OneViewModuleResourceNotFound
 from hpe_test_utils import OneViewBaseTestCase
 
 FAKE_MSG_ERROR = 'Fake message error'
@@ -345,6 +345,7 @@ class EthernetNetworkModuleSpec(unittest.TestCase,
         EthernetNetworkModule().run()
 
         self.mock_ansible_module.fail_json.assert_called_once_with(
+            exception=Mock.ANY,
             msg=EthernetNetworkModule.MSG_ETHERNET_NETWORK_NOT_FOUND
         )
 

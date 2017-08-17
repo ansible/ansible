@@ -112,7 +112,7 @@ ethernet_network_connection_template:
     type: complex
 '''
 
-from ansible.module_utils.oneview import OneViewModuleBase, HPOneViewResourceNotFound
+from ansible.module_utils.oneview import OneViewModuleBase, OneViewModuleResourceNotFound
 
 
 class EthernetNetworkModule(OneViewModuleBase):
@@ -230,7 +230,7 @@ class EthernetNetworkModule(OneViewModuleBase):
     def __default_bandwidth_reset(self, resource):
 
         if not resource:
-            raise HPOneViewResourceNotFound(self.MSG_ETHERNET_NETWORK_NOT_FOUND)
+            raise OneViewModuleResourceNotFound(self.MSG_ETHERNET_NETWORK_NOT_FOUND)
 
         default_connection_template = self.oneview_client.connection_templates.get_default()
 
