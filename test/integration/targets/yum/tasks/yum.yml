@@ -255,7 +255,7 @@
     state: present
   register: yum_result
 
-- name: verify nothing changed
+- name: verify sos is installed
   assert:
     that:
         - "yum_result.rc == 0"
@@ -267,6 +267,25 @@
         - "'changed' in yum_result"
         - "'msg' in yum_result"
         - "'rc' in yum_result"
+        - "'results' in yum_result"
+
+- name: try to install the group again, with --check to check 'changed'
+  yum:
+    name: "@Development Tools"
+    state: present
+  check_mode: yes
+  register: yum_result
+
+- name: verify nothing changed
+  assert:
+    that:
+        - "not yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
         - "'results' in yum_result"
 
 - name: try to install non existing group
