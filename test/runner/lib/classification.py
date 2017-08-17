@@ -405,9 +405,9 @@ class PathMapper(object):
                 return minimal  # network integration test playbook not used by ansible-test
 
             for command in (
-                'integration',
-                'windows-integration',
-                'network-integration',
+                    'integration',
+                    'windows-integration',
+                    'network-integration',
             ):
                 if name == command:
                     return {
