@@ -71,7 +71,7 @@ options:
     - Free-form options to be passed to the lvcreate command
   pvs:
     description:
-    - Comma separated list of physical volumes /dev/sda,/dev/sdc
+    - list of physical volumes /dev/sda /dev/sdc
   type:
     choices: ["thin", "thin-pool", "normal"]
     default: normal
@@ -600,8 +600,6 @@ def main():
 
     if pvs is None:
         pvs = ""
-    else:
-        pvs = pvs.replace(",", " ")
 
     if opts is None:
         opts = ""
