@@ -141,7 +141,7 @@ def delete_volume(module, array):
     """ Delete Volume"""
     if not module.check_mode:
         array.destroy_volume(module.params['name'])
-        if module.params['eradicate'] == 'true':
+        if module.params['eradicate']:
             array.eradicate_volume(module.params['name'])
     module.exit_json(changed=True)
 
