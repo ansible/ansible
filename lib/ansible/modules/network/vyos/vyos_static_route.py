@@ -229,7 +229,6 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
-    argument_spec.update(vyos_argument_spec)
     required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'next_hop']]
     mutually_exclusive = [['aggregate', 'prefix']]

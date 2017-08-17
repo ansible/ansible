@@ -101,6 +101,22 @@ EXAMPLES = """
     name: GigabitEthernet0/2
     enabled: False
     state: down
+
+- name: Add interface using aggregate
+  ios_interface:
+    aggregate:
+    - { name: GigabitEthernet0/1, mtu: 256, description: test-interface-1 }
+    - { name: GigabitEthernet0/2, mtu: 516, description: test-interface-2 }
+    duplex: full
+    speed: 100
+    state: present
+
+- name: Delete interface using aggregate
+  ios_interface:
+    aggregate:
+    - name: Loopback9
+    - name: Loopback10
+    state: absent
 """
 
 RETURN = """
@@ -116,6 +132,7 @@ commands:
 """
 import re
 
+from copy import deepcopy
 from time import sleep
 
 from ansible.module_utils._text import to_text
@@ -124,7 +141,7 @@ from ansible.module_utils.connection import exec_command
 from ansible.module_utils.ios import get_config, load_config
 from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.network_common import conditional
+from ansible.module_utils.network_common import conditional, remove_default_spec
 
 DEFAULT_DESCRIPTION = "configured by ios_interface"
 
@@ -202,45 +219,24 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
-    args = ['name', 'description', 'speed', 'duplex', 'mtu']
-
     aggregate = module.params.get('aggregate')
     if aggregate:
-        for param in aggregate:
-            validate_param_values(module, args, param)
-            d = param.copy()
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            if 'name' not in d:
-                module.fail_json(msg="missing required arguments: %s" % 'name')
-
-            # set default value
-            for item in args:
-                if item not in d:
-                    if item == 'description':
-                        d['description'] = DEFAULT_DESCRIPTION
-                    else:
-                        d[item] = None
-                else:
-                    d[item] = str(d[item])
-
-            if not d.get('state'):
-                d['state'] = module.params['state']
-            if d.get('enabled') is None:
-                d['enabled'] = module.params['enabled']
+            validate_param_values(module, item, item)
+            d = item.copy()
 
             if d['enabled']:
                 d['disable'] = False
             else:
                 d['disable'] = True
 
-            if d.get('delay') is None:
-                d['delay'] = module.params['delay']
-
             obj.append(d)
 
     else:
-        validate_param_values(module, args)
-
         params = {
             'name': module.params['name'],
             'description': module.params['description'],
@@ -253,6 +249,7 @@ def map_params_to_obj(module):
             'rx_rate': module.params['rx_rate']
         }
 
+        validate_param_values(module, params)
         if module.params['enabled']:
             params.update({'disable': False})
         else:
@@ -361,7 +358,7 @@ def check_declarative_intent_params(module, want, result):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         description=dict(default=DEFAULT_DESCRIPTION),
         speed=dict(),
@@ -371,11 +368,21 @@ def main():
         tx_rate=dict(),
         rx_rate=dict(),
         delay=dict(default=10, type='int'),
-        aggregate=dict(type='list'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
     required_one_of = [['name', 'aggregate']]

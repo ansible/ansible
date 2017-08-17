@@ -105,9 +105,11 @@ EXAMPLES = """
     name: ansible
     nopassword: True
     state: present
+
 - name: remove all users except admin
   ios_user:
     purge: yes
+
 - name: set multiple users to privilege level 15
   ios_user:
     aggregate:
@@ -115,17 +117,34 @@ EXAMPLES = """
       - name: netend
     privilege: 15
     state: present
+
 - name: set user view/role
   ios_user:
     name: netop
     view: network-operator
     state: present
+
 - name: Change Password for User netop
   ios_user:
     name: netop
     password: "{{ new_password }}"
     update_password: always
     state: present
+
+- name: Aggregate of users
+  ios_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    view: network-admin
+
+- name: Delete users with aggregate
+  ios_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
 """
 
 RETURN = """
@@ -137,6 +156,7 @@ commands:
     - username ansible secret password
     - username admin secret admin
 """
+from copy import deepcopy
 
 import re
 import json
@@ -144,13 +164,14 @@ import json
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.ios import get_config, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.ios import ios_argument_spec, check_args
 
 
 def validate_privilege(value, module):
-    if not 1 <= value <= 15:
+    if value and not 1 <= value <= 15:
         module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
 
 
@@ -306,8 +327,7 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        aggregate=dict(type='list', aliases=['users', 'collection']),
+    element_spec = dict(
         name=dict(),
 
         password=dict(no_log=True),
@@ -317,11 +337,22 @@ def main():
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
 
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
 
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
+        purge=dict(type='bool', default=False)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
+
     mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,

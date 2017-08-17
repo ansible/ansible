@@ -49,10 +49,6 @@ options:
     default: 1
   aggregate:
     description: List of static route definitions
-  purge:
-    description:
-      - Purge static routes not defined in the aggregates parameter.
-    default: no
   state:
     description:
       - State of the static route configuration.
@@ -74,11 +70,18 @@ EXAMPLES = """
     next_hop: 10.0.0.1
     state: absent
 
-- name: configure aggregates of static routes
+- name: Add static route aggregates
   ios_static_route:
     aggregate:
-      - { prefix: 192.168.2.0, mask 255.255.255.0, next_hop: 10.0.0.1 }
-      - { prefix: 192.168.3.0, mask 255.255.255.0, next_hop: 10.0.2.1 }
+      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+
+- name: Add static route aggregates
+  ios_static_route:
+    aggregate:
+      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+    state: absent
 """
 
 RETURN = """
@@ -89,10 +92,12 @@ commands:
   sample:
     - ip route 192.168.2.0 255.255.255.0 10.0.0.1
 """
+from copy import deepcopy
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.ios import load_config, run_commands
 from ansible.module_utils.ios import ios_argument_spec, check_args
 from ipaddress import ip_network
@@ -143,32 +148,28 @@ def map_config_to_obj(module):
     return obj
 
 
-def map_params_to_obj(module):
+def map_params_to_obj(module, required_together=None):
     obj = []
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            if 'state' not in d:
-                d['state'] = module.params['state']
-            if 'admin_distance' not in d:
-                d['admin_distance'] = str(module.params['admin_distance'])
+            module._check_required_together(required_together, item)
+            d = item.copy()
+            d['admin_distance'] = str(module.params['admin_distance'])
 
             obj.append(d)
     else:
-        prefix = module.params['prefix'].strip()
-        mask = module.params['mask'].strip()
-        next_hop = module.params['next_hop'].strip()
-        admin_distance = str(module.params['admin_distance'])
-        state = module.params['state']
-
         obj.append({
-            'prefix': prefix,
-            'mask': mask,
-            'next_hop': next_hop,
-            'admin_distance': admin_distance,
-            'state': state
+            'prefix': module.params['prefix'].strip(),
+            'mask': module.params['mask'].strip(),
+            'next_hop': module.params['next_hop'].strip(),
+            'admin_distance': str(module.params['admin_distance']),
+            'state': module.params['state']
         })
 
     return obj
@@ -177,17 +178,27 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         prefix=dict(type='str'),
         mask=dict(type='str'),
         next_hop=dict(type='str'),
         admin_distance=dict(default=1, type='int'),
-        aggregate=dict(type='list'),
-        purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['prefix'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
+
     required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'mask', 'next_hop']]
     mutually_exclusive = [['aggregate', 'prefix']]
@@ -195,6 +206,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            required_together=required_together,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -203,7 +215,7 @@ def main():
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings
-    want = map_params_to_obj(module)
+    want = map_params_to_obj(module, required_together=required_together)
     have = map_config_to_obj(module)
 
     commands = map_obj_to_commands((want, have), module)
