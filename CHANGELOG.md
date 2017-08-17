@@ -19,6 +19,7 @@ Ansible Changes By Release
   * docker_login module
   * Workaround python-libselinux API change in the seboolean module
   * digital_ocean_tag module
+  * Fix the zip filter
 * ios_config: Fix traceback when the efaults parameter is not set
 * iosxr_config: Fixed unicode error when UTF-8 characters are in configs
 * Fix check mode in archive module
