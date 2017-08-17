@@ -1,5 +1,5 @@
 ---
-- debug: msg="START nxapi/set_mtu.yaml"
+- debug: msg="START {{ connection.transport }}/set_mtu.yaml"
 
 - name: setup
   nxos_config:
@@ -8,13 +8,13 @@
       - no mtu
     parents: interface Ethernet3/1
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
 - name: configure interface mtu
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 2000
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -25,7 +25,7 @@
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 2000
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -36,7 +36,7 @@
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 2001
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -48,7 +48,7 @@
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 100000
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -61,6 +61,6 @@
     lines: no mtu
     parents: interface Ethernet3/1
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
-- debug: msg="END nxapi/set_mtu.yaml"
+- debug: msg="END {{ connection.transport }}/set_mtu.yaml"
