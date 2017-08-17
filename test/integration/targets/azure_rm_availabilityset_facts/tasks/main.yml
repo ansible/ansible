@@ -1,0 +1,29 @@
+- name: Create an availability set
+  azure_rm_availabilityset:
+    name: myavailabilityset1
+    resource_group: "{{ resource_group }}"
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 2
+    sku: Classic
+    tags:
+      tag1: testtag
+
+- name: Get facts for created availability set
+  azure_rm_availabilityset_facts:
+    name: myavailabilityset1
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - not output.failed
+      - output.ansible_facts.azure_availabilitysets[0].properties.platformFaultDomainCount == 2
+      - output.ansible_facts.azure_availabilitysets[0].properties.platformUpdateDomainCount == 5
+      - output.ansible_facts.azure_availabilitysets[0].sku == 'Classic'
+
+- name: Delete the availability set
+  azure_rm_availabilityset:
+    name: myavailabilityset1
+    resource_group: "{{ resource_group }}"
+    state: absent
