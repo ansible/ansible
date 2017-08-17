@@ -810,6 +810,9 @@ class Nmcli(object):
             cmd.append(self.ifname)
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
+        if self.mode is not None:
+            cmd.append('mode')
+            cmd.append(self.mode)
         if self.ip4 is not None:
             cmd.append('ip4')
             cmd.append(self.ip4)
@@ -825,9 +828,6 @@ class Nmcli(object):
         if self.autoconnect is not None:
             cmd.append('autoconnect')
             cmd.append(self.bool_to_string(self.autoconnect))
-        if self.mode is not None:
-            cmd.append('mode')
-            cmd.append(self.mode)
         if self.miimon is not None:
             cmd.append('miimon')
             cmd.append(self.miimon)
