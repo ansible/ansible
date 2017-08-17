@@ -238,32 +238,32 @@ Ansible Changes By Release
 
 #### Network
 - aci
-  * aci_action_rule_profile
   * aci_aep
-  * aci_anp
-  * aci_bd_l3out_binding
-  * aci_bridge_domain
-  * aci_context
+  * aci_ap
+  * aci_bd
+  * aci_bd_subnet
+  * aci_bd_to_l3out
   * aci_contract
+  * aci_contract_subject_to_filter
   * aci_epg
-  * aci_epg_contract_binding
-  * aci_epg_domain_binding
-  * aci_fc_policy
+  * aci_epg_monitoring_policy
+  * aci_epg_to_contract
+  * aci_epg_to_domain
   * aci_filter
   * aci_filter_entry
-  * aci_l2_policy
-  * aci_lldp_policy
-  * aci_mcp
-  * aci_monitoring_policy
-  * aci_port_channel
-  * aci_port_security
+  * aci_intf_policy_fc
+  * aci_intf_policy_l2
+  * aci_intf_policy_lldp
+  * aci_intf_policy_mcp
+  * aci_intf_policy_port_channel
+  * aci_intf_policy_port_security
+  * aci_l3out_route_tag_policy
   * aci_rest
-  * aci_route_tag_policy
-  * aci_span_dst_group
-  * aci_subject_filter_binding
-  * aci_subnet
   * aci_taboo_contract
   * aci_tenant
+  * aci_tenant_action_rule_profile
+  * aci_tenant_span_dst_group
+  * aci_vrf
 - aireos
   * aireos_command
   * aireos_config
