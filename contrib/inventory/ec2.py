@@ -253,12 +253,18 @@ class Ec2Inventory(object):
 
         # Regions
         self.regions = []
-        configRegions = config.get('ec2', 'regions')
+        if config.has_option('ec2', 'regions'):
+            configRegions = config.get('ec2', 'regions')
+        else:
+            configRegions = 'all'
         if (configRegions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
-                configRegions_exclude = config.get('ec2', 'regions_exclude')
+                if config.has_option('ec2', 'regions_exclude'):
+                    configRegions_exclude = config.get('ec2', 'regions_exclude')
+                else:
+                    configRegions_exclude = 'us-gov-west-1,cn-north-1'
                 for regionInfo in ec2.regions():
                     if regionInfo.name not in configRegions_exclude:
                         self.regions.append(regionInfo.name)
@@ -271,8 +277,14 @@ class Ec2Inventory(object):
             self.regions = [env_region]
 
         # Destination addresses
-        self.destination_variable = config.get('ec2', 'destination_variable')
-        self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
+        if config.has_option('ec2', 'destination_variable'):
+            self.destination_variable = config.get('ec2', 'destination_variable')
+        else:
+            self.destination_variable = 'public_dns_name'
+        if config.has_option('ec2', 'vpc_destination_variable'):
+            self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
+        else:
+            self.vpc_destination_variable = 'ip_address'
 
         if config.has_option('ec2', 'hostname_variable'):
             self.hostname_variable = config.get('ec2', 'hostname_variable')
@@ -288,7 +300,10 @@ class Ec2Inventory(object):
             self.destination_format_tags = None
 
         # Route53
-        self.route53_enabled = config.getboolean('ec2', 'route53')
+        if config.has_option('ec2', 'route53'):
+            self.route53_enabled = config.getboolean('ec2', 'route53')
+        else:
+            self.route53_enabled = False
         if config.has_option('ec2', 'route53_hostnames'):
             self.route53_hostnames = config.get('ec2', 'route53_hostnames')
         else:
@@ -395,7 +410,10 @@ class Ec2Inventory(object):
                     self.credentials['security_token'] = aws_security_token
 
         # Cache related
-        cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
+        if config.has_option('ec2', 'cache_path'):
+            cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
+        else:
+            cache_dir = os.path.expanduser('~/.ansible/tmp')
         if self.boto_profile:
             cache_dir = os.path.join(cache_dir, 'profile_' + self.boto_profile)
         if not os.path.exists(cache_dir):
@@ -407,7 +425,10 @@ class Ec2Inventory(object):
             cache_name = '%s-%s' % (cache_name, cache_id)
         self.cache_path_cache = os.path.join(cache_dir, "%s.cache" % cache_name)
         self.cache_path_index = os.path.join(cache_dir, "%s.index" % cache_name)
-        self.cache_max_age = config.getint('ec2', 'cache_max_age')
+        if config.has_option('ec2', 'cache_max_age'):
+            self.cache_max_age = config.getint('ec2', 'cache_max_age')
+        else:
+            self.cache_max_age = 300
 
         if config.has_option('ec2', 'expand_csv_tags'):
             self.expand_csv_tags = config.getboolean('ec2', 'expand_csv_tags')
@@ -455,11 +476,18 @@ class Ec2Inventory(object):
             'group_by_elasticache_replication_group',
             'group_by_aws_account',
         ]
+        group_by_options_false = [
+            'group_by_aws_account',
+            'group_by_instance_state',
+        ]
         for option in group_by_options:
             if config.has_option('ec2', option):
                 setattr(self, option, config.getboolean('ec2', option))
             else:
-                setattr(self, option, True)
+                if option in group_by_options_false:
+                    setattr(self, option, False)
+                else:
+                    setattr(self, option, True)
 
         # Do we need to just include hosts that match a pattern?
         try:
