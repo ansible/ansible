@@ -17,17 +17,15 @@ DOCUMENTATION = r'''
 module: wait_for
 short_description: Waits for a condition before continuing
 description:
-     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified.
-     - Waiting for a port to become available is useful for when services
-       are not immediately available after their init scripts return
-       which is true of certain Java application servers. It is also
-       useful when starting guests with the M(virt) module and
+     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified or just C(timeout) is specified.
+       This does not produce an error.
+     - Waiting for a port to become available is useful for when services are not immediately available after their init scripts return
+       which is true of certain Java application servers. It is also useful when starting guests with the M(virt) module and
        needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
      - In 1.6 and later, this module can also be used to wait for a file to be available or
        absent on the filesystem.
-     - In 1.8 and later, this module can also be used to wait for active
-       connections to be closed before continuing, useful if a node
+     - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
      - This module is also supported for Windows targets.
 version_added: "0.7"
@@ -38,7 +36,8 @@ options:
     default: "127.0.0.1"
   timeout:
     description:
-      - Maximum number of seconds to wait for.
+      - Maximum number of seconds to wait for, when used with another condition it will force an error.
+      - When used without other conditions it is equivalent of just sleeping.
     default: 300
   connect_timeout:
     description:
@@ -99,6 +98,10 @@ author:
 '''
 
 EXAMPLES = r'''
+- name: sleep for 300 seconds and continue with play
+  wait_for: timeout=300
+  delegate_to: localhost
+
 - name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
