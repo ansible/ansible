@@ -578,7 +578,7 @@ def main():
         state=dict(default='present', type='str', choices=['present', 'absent']),
         purge_rules=dict(default=True, required=False, type='bool'),
         purge_rules_egress=dict(default=True, required=False, type='bool'),
-        tags=dict(default=dict(), required=False, type='dict', aliases=['resource_tags']),
+        tags=dict(required=False, type='dict', aliases=['resource_tags']),
         purge_tags=dict(default=True, required=False, type='bool')
     )
     )
@@ -692,12 +692,12 @@ def main():
 
             changed = True
 
-        if tags:
-            current_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []), tag_name_key_name='key', tag_value_key_name='value')
+        if tags is not None:
+            current_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []))
             tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
             if tags_to_delete:
                 try:
-                    client.delete_tags(Resources=[group['GroupId']], Tags=ansible_dict_to_boto3_tag_list(tags_to_delete))
+                    client.delete_tags(Resources=[group['GroupId']], Tags=[{'Key': tag} for tag in tags_to_delete])
                 except botocore.exceptions.ClientError as e:
                     module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
