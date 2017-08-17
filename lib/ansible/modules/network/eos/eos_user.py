@@ -49,12 +49,13 @@ options:
         exclusive with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
     version_added: "2.4"
-  password:
+  configured_password:
     description:
       - The password to be configured on the remote Arista EOS device. The
         password needs to be provided in clear and it will be encrypted
         on the device.
         Please note that this option is not same as C(provider password).
+    version_added: "2.4"
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -125,8 +126,8 @@ EXAMPLES = """
 
 - name: Change Password for User netop
   eos_user:
-    name: netop
-    password: "{{ new_password }}"
+    username: netop
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 """
@@ -182,9 +183,9 @@ def map_obj_to_commands(updates, module):
         if needs_update('privilege'):
             add('privilege %s' % want['privilege'])
 
-        if needs_update('password'):
+        if needs_update('configured_password'):
             if update_password == 'always' or not have:
-                add('secret %s' % want['password'])
+                add('secret %s' % want['configured_password'])
 
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
@@ -233,7 +234,7 @@ def map_config_to_obj(module):
             'name': user,
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
-            'password': None,
+            'configured_password': None,
             'sshkey': parse_sshkey(cfg),
             'privilege': parse_privilege(cfg),
             'role': parse_role(cfg)
@@ -286,7 +287,7 @@ def map_params_to_obj(module):
 
     for item in collection:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['role'] = get_value('role')
@@ -318,7 +319,7 @@ def main():
         aggregate=dict(type='list', aliases=['collection', 'users']),
         name=dict(),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
@@ -339,6 +340,12 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
 
     result = {'changed': False}
