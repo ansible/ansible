@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -99,17 +99,17 @@ RETURN = '''
 ethernet_network:
     description: Has the facts about the Ethernet Networks.
     returned: On state 'present'. Can be null.
-    type: complex
+    type: dict
 
 ethernet_network_bulk:
     description: Has the facts about the Ethernet Networks affected by the bulk insert.
     returned: When 'vlanIdRange' attribute is in data argument. Can be null.
-    type: complex
+    type: dict
 
 ethernet_network_connection_template:
     description: Has the facts about the Ethernet Network Connection Template.
     returned: On state 'default_bandwidth_reset'. Can be null.
-    type: complex
+    type: dict
 '''
 
 from ansible.module_utils.oneview import OneViewModuleBase, OneViewModuleResourceNotFound
