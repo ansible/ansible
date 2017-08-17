@@ -181,7 +181,7 @@ configuration:
         'code_size': 123,
         'description': 'My function',
         'environment': {
-          'variables: {
+          'variables': {
             'key': 'value'
           }
         },
