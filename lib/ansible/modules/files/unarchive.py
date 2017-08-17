@@ -132,6 +132,7 @@ import stat
 import time
 import traceback
 from zipfile import ZipFile, BadZipfile
+from fnmatch import fnmatch
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -165,6 +166,13 @@ def crc32(path):
 def shell_escape(string):
     ''' Quote meta-characters in the args for the unix shell '''
     return re.sub(r'([^A-Za-z0-9_])', r'\\\1', string)
+
+
+def in_pattern_list(name, patterns):
+    for pattern in patterns:
+        if fnmatch(name, pattern):
+            return True
+    return False
 
 
 class UnarchiveError(Exception):
@@ -254,7 +262,7 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
-                    if member not in self.excludes:
+                    if not in_pattern_list(member, self.excludes):
                         self._files_in_archive.append(to_native(member))
             except:
                 archive.close()
