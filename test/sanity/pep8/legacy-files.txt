@@ -390,7 +390,6 @@ lib/ansible/modules/packaging/os/homebrew.py
 lib/ansible/modules/packaging/os/homebrew_cask.py
 lib/ansible/modules/packaging/os/layman.py
 lib/ansible/modules/packaging/os/macports.py
-lib/ansible/modules/packaging/os/openbsd_pkg.py
 lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
 lib/ansible/modules/packaging/os/pkg5.py
