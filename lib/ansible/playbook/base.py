@@ -440,7 +440,6 @@ class Base(with_metaclass(BaseMeta, object)):
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
-
             except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
