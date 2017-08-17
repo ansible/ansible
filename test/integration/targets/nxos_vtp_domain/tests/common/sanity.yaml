@@ -1,0 +1,23 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vtp_domain sanity test"
+
+- block:
+  - name: enable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: enabled
+      provider: "{{ connection }}"
+
+  - name: configure vtp domain
+    nxos_vtp_domain:
+      domain: ntc
+      provider: "{{ connection }}"
+
+  always:
+  - name: disable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: disabled
+      provider: "{{ connection }}"
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vtp_domain sanity test"
