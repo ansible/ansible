@@ -82,6 +82,14 @@ options:
     required: false
     default: none
     version_added: "2.4"
+  purge_tags:
+    description:
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
+        tags will not be modified.
+    required: false
+    default: yes
+    choices: [ 'yes', 'no' ]
+    version_added: "2.4"
 
 extends_documentation_fragment:
     - aws
@@ -149,7 +157,7 @@ class ElastiCacheManager(object):
     def __init__(self, module, name, engine, cache_engine_version, node_type,
                  num_nodes, cache_port, cache_parameter_group, cache_subnet_group,
                  cache_security_groups, security_group_ids, zone, wait,
-                 tags, hard_modify, region, **aws_connect_kwargs):
+                 tags, purge_tags, hard_modify, region, **aws_connect_kwargs):
         self.module = module
         self.name = name
         self.engine = engine.lower()
@@ -165,6 +173,7 @@ class ElastiCacheManager(object):
         self.wait = wait
         self.hard_modify = hard_modify
         self.tags = ansible_dict_to_boto3_tag_list(tags)
+        self.purge_tags = purge_tags
 
         self.region = region
         self.aws_connect_kwargs = aws_connect_kwargs
@@ -197,7 +206,7 @@ class ElastiCacheManager(object):
 
     def compare_and_update_tags(self):
         tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
-        add, remove = compare_aws_tags(tags, boto3_tag_list_to_ansible_dict(self.tags), purge_tags=True)
+        add, remove = compare_aws_tags(tags, boto3_tag_list_to_ansible_dict(self.tags), purge_tags=self.purge_tags)
         if add:
             self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
             self.changed = True
@@ -528,7 +537,8 @@ def main():
         zone=dict(),
         wait=dict(default=True, type='bool'),
         hard_modify=dict(type='bool'),
-        tags=dict(type='dict')
+        tags=dict(type='dict'),
+        purge_tags=dict(default=True, type='bool')
     ))
 
     module = AnsibleModule(
@@ -555,6 +565,7 @@ def main():
     hard_modify = module.params['hard_modify']
     cache_parameter_group = module.params['cache_parameter_group']
     tags = module.params['tags']
+    purge_tags = module.params['purge_tags']
 
     if cache_subnet_group and cache_security_groups:
         module.fail_json(msg="Can't specify both cache_subnet_group and cache_security_groups")
@@ -568,7 +579,7 @@ def main():
                                              cache_parameter_group,
                                              cache_subnet_group,
                                              cache_security_groups,
-                                             security_group_ids, zone, wait, tags,
+                                             security_group_ids, zone, wait, tags, purge_tags,
                                              hard_modify, region, **aws_connect_kwargs)
 
     if state == 'present':
