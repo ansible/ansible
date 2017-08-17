@@ -209,7 +209,7 @@ def walk_compile_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path='lib/ansible/modules/', extensions=('.py',))
+    return walk_test_targets(module_path='lib/ansible/modules/', extensions=('.py',), extra_dirs=('bin',))
 
 
 def walk_sanity_targets():
@@ -276,12 +276,13 @@ def load_integration_prefixes():
     return prefixes
 
 
-def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None):
+def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None, extra_dirs=None):
     """
     :type path: str | None
     :type module_path: str | None
     :type extensions: tuple[str] | None
     :type prefix: str | None
+    :type extra_dirs: tuple[str] | None
     :rtype: collections.Iterable[TestTarget]
     """
     for root, _, file_names in os.walk(path or '.', topdown=False):
@@ -294,7 +295,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
         if path is None:
             root = root[2:]
 
-        if root.startswith('.'):
+        if root.startswith('.') and root != '.github':
             continue
 
         for file_name in file_names:
@@ -309,7 +310,22 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
             if prefix and not name.startswith(prefix):
                 continue
 
-            yield TestTarget(os.path.join(root, file_name), module_path, prefix, path)
+            file_path = os.path.join(root, file_name)
+
+            if os.path.islink(file_path):
+                continue
+
+            yield TestTarget(file_path, module_path, prefix, path)
+
+    if extra_dirs:
+        for extra_dir in extra_dirs:
+            file_names = os.listdir(extra_dir)
+
+            for file_name in file_names:
+                file_path = os.path.join(extra_dir, file_name)
+
+                if os.path.isfile(file_path) and not os.path.islink(file_path):
+                    yield TestTarget(file_path, module_path, prefix, path)
 
 
 def analyze_integration_target_dependencies(integration_targets):
