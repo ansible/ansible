@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_route_tag_policy
-short_description: Manage route tag policies on Cisco ACI fabrics
+module: aci_intf_policy_port_security
+short_description: Manage port security on Cisco ACI fabrics (l2:PortSecurityPol)
 description:
-- Manage route tag policies on Cisco ACI fabrics.
+- Manage port security on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(l2:PortSecurityPol) at U(https://developer.cisco.com/media/mim-ref/MO-l2PortSecurityPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -23,27 +25,20 @@ author:
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
-notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
-  rtp:
+  port_security:
     description:
-    - The name of the route tag policy.
+    - The name of the port security.
     required: yes
-    aliases: [ name, rtp_name ]
+    aliases: [ name ]
   description:
     description:
-    - Description for the route tag policy.
+    - The description for the contract.
     aliases: [ descr ]
-  tenant:
+  max_end_points:
     description:
-    - The name of the tenant.
-    required: yes
-    aliases: [ tenant_name ]
-  tag:
-    description:
-    - The value of the route tag (range 0-4294967295).
-    default: '4294967295'
+    - Maximum number of end points (range 0-12000).
+    - The APIC defaults new port-security policies to a max End Points of 0.
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -55,14 +50,13 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_route_tag_policy:
-    hostname: apic
-    username: admin
-    password: SomeSecretPassword
-    rtp: '{{ rtp_name }}'
-    tenant: production
-    tag: '{{ tag }}'
-    description: '{{ description }}'
+- aci_intf_policy_port_security:
+    hostname: '{{ inventory_hostname }}'
+    username: '{{ username }}'
+    password: '{{ password }}'
+    port_security: '{{ port_security }}'
+    description: '{{ descr }}'
+    max_end_points: '{{ max_end_points }}'
 '''
 
 RETURN = r'''
@@ -76,10 +70,9 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        rtp=dict(type='str', required=False, aliases=['name', 'rtp_name']),  # Not required for querying all objects
-        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for quering all objects
+        port_security=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        tag=dict(type='int'),
+        max_end_points=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -89,28 +82,22 @@ def main():
         supports_check_mode=True,
     )
 
-    rtp = module.params['rtp']
-    tenant = module.params['tenant']
+    port_security = module.params['port_security']
     description = module.params['description']
-    tag = module.params['tag']
+    # TODO: validate that max_end_points is in the acceptable range
+    max_end_points = module.params['max_end_points']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    if rtp is not None:
-        # Work with a specific object
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/rttag-%(rtp)s.json' % module.params
-        else:
-            path = 'api/class/l3extRouteTagPol.json?query-target-filter=eq(l3extRouteTagPol.name,"%(rtp)s")' % module.params
+    # TODO: This logic could be cleaner.
+    if port_security is not None:
+        path = 'api/mo/uni/infra/portsecurityP-%(port_security)s.json' % module.params
     elif state == 'query':
         # Query all objects
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=l3extRouteTagPol&rsp-subtree-include=no-scoped' % module.params
-        else:
-            path = 'api/node/class/l3extRouteTagPol.json'
+        path = 'api/node/class/l2PortSecurityPol.json'
     else:
-        module.fail_json(msg="Parameter 'rtp' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'port_security' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -118,10 +105,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='l3extRouteTagPol', class_config=dict(name=rtp, descr=description, tag=tag))
+        aci.payload(aci_class='l2PortSecurityPol', class_config=dict(name=port_security, descr=description, maximum=max_end_points))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='l3extRouteTagPol')
+        aci.get_diff(aci_class='l2PortSecurityPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

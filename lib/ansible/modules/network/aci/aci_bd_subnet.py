@@ -11,10 +11,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
-module: aci_subnet
-short_description: Manage subnets on Cisco ACI fabrics
+---
+module: aci_bd_subnet
+short_description: Manage Subnets on Cisco ACI fabrics (fv:Subnet)
 description:
-- Manage subnets on Cisco ACI fabrics.
+- Manage Subnets on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(fv:Subnet) at U(https://developer.cisco.com/media/mim-ref/MO-fvSubnet.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -23,10 +26,10 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The gateway parameter is the root key used to access the Subnet (not name), so the gateway
-  is required when the state is 'absent' or 'present'.
-- The tenant and bridge domain used must exist before using this module in your playbook.
-  The M(aci_tenant) module and M(aci_bridge_domain) can be used for these.
+- The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
+  is required when the state is C(absent) or C(present).
+- The C(tenant) and C(bd) used must exist before using this module in your playbook.
+  The M(aci_tenant) module and M(aci_bd) can be used for these.
 options:
   bd:
     description:

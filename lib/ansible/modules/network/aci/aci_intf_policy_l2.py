@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_port_channel
-short_description: Manage port channel interface policies on Cisco ACI fabrics
+module: aci_intf_policy_l2
+short_description: Manage Layer 2 interface policies on Cisco ACI fabrics (l2:IfPol)
 description:
-- Manage port channel interface policies on Cisco ACI fabrics.
+- Manage Layer 2 interface policies on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(l2:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-l2IfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,29 +26,20 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
-  port_channel:
+  l2_policy:
     description:
-    - Name of the port channel.
-    required: true
+    - The name of the Layer 2 interface policy.
+    required: yes
     aliases: [ name ]
   description:
     description:
-    - Description for the port channel.
+    - The description of the Layer 2 interface policy.
     aliases: [ descr ]
-  max_links:
+  vlan_scope:
     description:
-    - Maximum links (range 1-16).
-    - The APIC defaults new Port Channel Policies to a max links of 16.
-  min_links:
-    description:
-    - Minimum links (range 1-16).
-    - The APIC defaults new Port Channel Policies to a min links of 1.
-  mode:
-    description:
-    - Port channel interface policy mode.
-    - Determines the LACP method to use for forming port-channels.
-    - The APIC defaults new Port Channel Polices to a off mode.
-    choices: [ active, mac-pin, mac-pin-nicload, off, passive ]
+    - The scope of the VLAN.
+    choices: [ global, portlocal ]
+    default: global
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -57,15 +50,13 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- aci_port_channel:
-    hostname: '{{ inventory_hostname }}'
+- aci_intf_policy_l2:
+    hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    port_channel: '{{ port_channel }}'
+    l2_policy: '{{ l2_policy }}'
+    vlan_scope: '{{ vlan_policy }}'
     description: '{{ description }}'
-    min_links: '{{ min_links }}'
-    max_links: '{{ max_links }}'
-    mode: '{{ mode }}'
 '''
 
 RETURN = r'''
@@ -75,15 +66,18 @@ RETURN = r'''
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+# Mapping dicts are used to normalize the proposed data to what the APIC expects, which will keep diffs accurate
+QINQ_MAPPING = dict(core_port='corePort', disabled='disabled', edge_port='edgePort')
+
 
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        port_channel=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
+        l2_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all policies
         description=dict(type='str', aliases=['descr']),
-        min_links=dict(type='int'),
-        max_links=dict(type='int'),
-        mode=dict(type='str', choices=['off', 'mac-pin', 'active', 'passive', 'mac-pin-nicload']),
+        vlan_scope=dict(type='str', choices=['global', 'portlocal']),  # No default provided on purpose
+        qinq=dict(type='str', choices=['core_port', 'disabled', 'edge_port']),
+        vepa=dict(type='str', choices=['disabled', 'enabled']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -93,27 +87,25 @@ def main():
         supports_check_mode=True,
     )
 
-    port_channel = module.params['port_channel']
+    l2_policy = module.params['l2_policy']
+    vlan_scope = module.params['vlan_scope']
+    qinq = module.params['qinq']
+    if qinq is not None:
+        qinq = QINQ_MAPPING[qinq]
+    vepa = module.param['vepa']
     description = module.params['description']
-    # TODO: Validate min_links is in the acceptable range
-    min_links = module.params['min_link']
-    # TODO: Validate max_links is in the acceptable range
-    min_links = str(min_links)
-    max_links = module.params['max_link']
-    max_links = str(max_links)
-    mode = module.params['mode']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    # TODO: This logic could be cleaner.
-    if port_channel is not None:
-        path = 'api/mo/uni/infra/lacplagp-%(port_channel)s.json' % module.params
+    if l2_policy is not None:
+        # Work with a specific object
+        path = 'api/mo/uni/infra/l2IfP-%(l2_policy)s.json' % module.params
     elif state == 'query':
         # Query all objects
-        path = 'api/node/class/lacplagPol.json'
+        path = 'api/class/l2IfPol.json'
     else:
-        module.fail_json(msg="Parameter 'port_channel' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'l2_policy' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -121,10 +113,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='lacpLagPol', class_config=dict(name=port_channel, descr=description, minLinks=min_links, maxLinks=max_links, mode=mode))
+        aci.payload(aci_class='l2IfPol', class_config=dict(name=l2_policy, descr=description, vlanScope=vlan_scope, qinq=qinq, vepa=vepa))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='lacpLagPol')
+        aci.get_diff(aci_class='l2IfPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

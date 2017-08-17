@@ -12,11 +12,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_anp
-short_description: Manage top level application network profile objects on Cisco ACI fabrics
+module: aci_ap
+short_description: Manage top level Application Profile (AP) objects on Cisco ACI fabrics (fv:Ap)
 description:
-- Manage top level application network profile objects on Cisco ACI fabrics
-- This modules does not manage EPGs, see M(aci_epg) to do this.
+- Manage top level Application Profile (AP) objects on Cisco ACI fabrics
+- More information from the internal APIC class
+  I(fv:Ap) at U(https://developer.cisco.com/media/mim-ref/MO-fvAp.html).
+notes:
+- This module does not manage EPGs, see M(aci_epg) to do this.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,8 +29,6 @@ author:
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
-notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
    tenant:
      description:
@@ -36,10 +39,10 @@ options:
      description:
      - The name of the application network profile.
      required: yes
-     aliases: [ app_profile_name, name ]
+     aliases: [ ap, app_profile_name, name ]
    descr:
      description:
-     - Description for the ANP.
+     - Description for the AP.
    state:
      description:
      - Use C(present) or C(absent) for adding or removing.
@@ -50,8 +53,8 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a new ANP
-  aci_anp:
+- name: Add a new AP
+  aci_ap:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -60,8 +63,8 @@ EXAMPLES = r'''
     description: default ap
     state: present
 
-- name: Remove an ANP
-  aci_anp:
+- name: Remove an AP
+  aci_ap:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -69,8 +72,8 @@ EXAMPLES = r'''
     app_profile: default
     state: absent
 
-- name: Query an ANP
-  aci_anp:
+- name: Query an AP
+  aci_ap:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -78,8 +81,8 @@ EXAMPLES = r'''
     app_profile: default
     state: query
 
-- name: Query all ANPs
-  aci_anp:
+- name: Query all APs
+  aci_ap:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -97,8 +100,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all anps
-        app_profile=dict(type='str', aliases=['app_profile_name', 'name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all APs
+        app_profile=dict(type='str', aliases=['ap', 'app_profile_name', 'name']),
         description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
