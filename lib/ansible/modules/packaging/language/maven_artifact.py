@@ -102,7 +102,7 @@ options:
             - If C(yes), the downloaded artifact's name is preserved, i.e the version number remains part of it.
             - This option only has effect when C(dest) is a directory and C(version) is set to C(latest).
         required: false
-        default: no
+        default: 'no'
         choices: ['yes', 'no']
         version_added: "2.4"
 '''
