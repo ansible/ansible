@@ -33,7 +33,7 @@ EXAMPLES = '''
 
  - name: Print each switch/port
    debug:
-    msg: "{{ lldp[item]['chassis']['name'] }} / {{ lldp[item]['port']['ifalias'] }}"
+    msg: "{{ lldp[item]['chassis']['name'] }} / {{ lldp[item]['port']['ifname'] }}"
    with_items: "{{ lldp.keys() }}"
 
 # TASK: [Print each switch/port] ***********************************************************
