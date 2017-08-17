@@ -621,7 +621,7 @@ files:
   $modules/system/make.py: LinusU
   $modules/system/modprobe.py:
     ignored: stygstra
-  $modules/system/mount.py: $team_ansible
+  $modules/system/mount.py: $team_ansible jtyr
   $modules/system/ohai.py: $team_ansible
   $modules/system/open_iscsi.py: srvg
   $modules/system/openwrt_init.py: agaffney
