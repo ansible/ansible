@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -121,7 +121,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         self.client = None
 
         super(AzureRMKeyVaultSecret, self).__init__(self.module_arg_spec,
-                                                    supports_check_mode=True,
+                                                    supports_check_mode=False,
                                                     required_if=required_if)
 
     def exec_module(self, **kwargs):
@@ -129,15 +129,8 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        # Need to override base to add resource argument
-        self.azure_credentials = \
-            ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                        secret=self.credentials['secret'],
-                                        tenant=self.credentials['tenant'],
-                                        resource='https://vault.azure.net')
-
         # Create KeyVault Client using KeyVault auth class and auth_callback
-        self.client = KeyVaultClient(KeyVaultAuthentication(self.auth_callback))
+        self.client = KeyVaultClient(self.azure_credentials)
 
         results = dict()
         changed = False
@@ -169,12 +162,6 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
             self.results['state']['status'] = 'Deleted'
 
         return self.results
-
-    def auth_callback(self, server, resource, scope):
-        ''' Used by KeyVaultAuth to get token info '''
-        self.data_creds = self.data_creds or self.azure_credentials
-        token = self.data_creds.token
-        return token['token_type'], token['access_token']
 
     def get_secret(self, name, version=''):
         ''' Gets an existing secret '''
