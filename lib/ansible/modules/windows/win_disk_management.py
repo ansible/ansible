@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 
@@ -41,13 +41,11 @@ options:
   disk_size:
       description:
         - Size of the disk in gigabyte which will be selected
-      type: int
       required: true
       default: 5
   partition_style_select:
       description:
         - Partition style of the disk which will be selected
-      type: str
       required: false
       default: raw
       choices:
@@ -57,7 +55,6 @@ options:
   operational_status:
       description:
         - Operational Status of the disk which will be selected
-      type: str
       required: false
       default: offline
       choices:
@@ -66,7 +63,6 @@ options:
   partition_style_set:
       description:
         - Partition style which will be set on selected disk
-      type: str
       required: false
       default: gpt
       choices:
@@ -75,13 +71,11 @@ options:
   drive_letter:
       description:
         - Drive letter which will be set for the partition on selected disk (protected letters are C and D)
-      type: str
       required: false
       default: e
   file_system:
       description:
         - File system which will be set on selected disk
-      type: str
       required: false
       default: ntfs
       choices:
@@ -90,13 +84,11 @@ options:
   label:
       description:
         - File system label which should be set for the file system on found disk
-      type: str
       required: false
       default: ansible_disk
   allocation_unit_size:
       description:
         - Allocation Unit size which will be set for the file system on selected disk (possible values for file system NTFS 4,8,16,32,64KB; ReFs 64KB)
-      type: int
       required: false
       default: 4
       choices:
@@ -391,4 +383,3 @@ switches:
             type: string
             sample: "disabled"
 '''
-
