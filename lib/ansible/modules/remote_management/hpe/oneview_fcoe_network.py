@@ -15,7 +15,7 @@ module: oneview_fcoe_network
 short_description: Manage OneView FCoE Network resources.
 description:
     - Provides an interface to manage FCoE Network resources. Can create, update, or delete.
-version_added: "2.3"
+version_added: "2.4"
 requirements:
     - "python >= 2.7.9"
     - "hpOneView >= 4.0.0"
@@ -69,7 +69,7 @@ RETURN = '''
 fcoe_network:
     description: Has the facts about the OneView FCoE Networks.
     returned: On state 'present'. Can be null.
-    type: complex
+    type: dict
 '''
 
 from ansible.module_utils.oneview import OneViewModuleBase

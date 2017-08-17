@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###
-import unittest
 
+from ansible.compat.tests import unittest
 from oneview_module_loader import FcoeNetworkModule
 from hpe_test_utils import OneViewBaseTestCase
 
