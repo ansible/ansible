@@ -219,8 +219,10 @@ class ElastiCacheManager(object):
         add, remove = compare_aws_tags(tags, boto3_tag_list_to_ansible_dict(self.tags), purge_tags=True)
         if add:
             self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
+            self.changed = True
         if remove:
             self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=remove)
+            self.changed = True
 
     def ensure_absent(self):
         """Ensure cache cluster is gone or delete it if not"""
