@@ -49,6 +49,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Ian Philpot (@tripdubroot)"
@@ -61,6 +62,9 @@ EXAMPLES = '''
         secret_name: MySecret
         secret_value: My_Pass_Sec
         keyvault_uri: https://contoso.vault.azure.net/
+        tags:
+            testing: testing
+            delete: never
 
     - name: Delete a secret
       azure_rm_keyvaultsecret:
@@ -119,14 +123,16 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         self.state = None
         self.data_creds = None
         self.client = None
+        self.tags = None
 
         super(AzureRMKeyVaultSecret, self).__init__(self.module_arg_spec,
                                                     supports_check_mode=True,
-                                                    required_if=required_if)
+                                                    required_if=required_if,
+                                                    supports_tags=True)
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         # Create KeyVault Client using KeyVault auth class and auth_callback
@@ -154,7 +160,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
 
             # Create secret
             if self.state == 'present' and changed:
-                results['secret_id'] = self.create_secret(self.secret_name, self.secret_value)
+                results['secret_id'] = self.create_secret(self.secret_name, self.secret_value, self.tags)
                 self.results['state'] = results
                 self.results['state']['status'] = 'Created'
             # Delete secret
@@ -172,9 +178,9 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
             secret_id = KeyVaultId.parse_secret_id(secret_bundle.id)
         return secret_id.id
 
-    def create_secret(self, name, secret):
+    def create_secret(self, name, secret, tags):
         ''' Creates a secret '''
-        secret_bundle = self.client.set_secret(self.keyvault_uri, name, secret)
+        secret_bundle = self.client.set_secret(self.keyvault_uri, name, secret, tags)
         secret_id = KeyVaultId.parse_secret_id(secret_bundle.id)
         return secret_id.id
 
