@@ -10,8 +10,11 @@
   block:
     - azure_rm_keyvaultsecret:
         keyvault_uri: https://tmpkeyvault.vault.azure.net
-        secret_name: samplesecret5
+        secret_name: testsecret
         secret_value: 'mysecret'
+        tags:
+          testing: test
+          delete: on-exit
       register: output
     - assert:
         that: output.changed
@@ -19,13 +22,13 @@
     - azure_rm_keyvaultsecret:
         keyvault_uri: https://tmpkeyvault.vault.azure.net
         state: absent
-        secret_name: samplesecret5
+        secret_name: testsecret
 
 - name: delete a kevyault secret
   azure_rm_keyvaultsecret:
     keyvault_uri: https://tmpkeyvault.vault.azure.net
     state: absent
-    secret_name: samplesecret5
+    secret_name: testsecret
   register: output
 
 - assert:
