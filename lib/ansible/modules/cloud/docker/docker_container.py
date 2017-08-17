@@ -1288,7 +1288,6 @@ class Container(DockerBaseClass):
         # Map parameters to container inspect results
         config_mapping = dict(
             auto_remove=host_config.get('AutoRemove'),
-            image=config.get('Image'),
             expected_cmd=config.get('Cmd'),
             hostname=config.get('Hostname'),
             user=config.get('User'),
