@@ -37,7 +37,7 @@ options:
         This argument accepts a string value and is mutually exclusive
         with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
-  password:
+  configured_password:
     description:
       - The password to be configured on the Cisco IOS XR device. The
         password needs to be provided in clear and it will be encrypted
@@ -81,7 +81,7 @@ EXAMPLES = """
 - name: create a new user
   iosxr_user:
     name: ansible
-    password: test
+    configured_password: test
     state: present
 - name: remove all users except admin
   iosxr_user:
@@ -96,7 +96,7 @@ EXAMPLES = """
 - name: Change Password for User netop
   iosxr_user:
     name: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 """
@@ -142,16 +142,16 @@ def map_obj_to_commands(updates, module):
             user_cmd = 'username ' + name
             commands.append(user_cmd)
 
-            if w['password']:
-                commands.append(user_cmd + ' secret ' + w['password'])
+            if w['configured_password']:
+                commands.append(user_cmd + ' secret ' + w['configured_password'])
             if w['group']:
                 commands.append(user_cmd + ' group ' + w['group'])
 
         elif state == 'present' and obj_in_have:
             user_cmd = 'username ' + name
 
-            if module.params['update_password'] == 'always' and w['password']:
-                commands.append(user_cmd + ' secret ' + w['password'])
+            if module.params['update_password'] == 'always' and w['configured_password']:
+                commands.append(user_cmd + ' secret ' + w['configured_password'])
             if w['group'] and w['group'] != obj_in_have['group']:
                 commands.append(user_cmd + ' group ' + w['group'])
 
@@ -181,7 +181,7 @@ def map_config_to_obj(module):
         obj = {
             'name': name,
             'state': 'present',
-            'password': None,
+            'configured_password': None,
             'group': group
         }
         instances.append(obj)
@@ -232,7 +232,7 @@ def map_params_to_obj(module):
 
     for item in aggregate:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
         item['group'] = get_value('group')
         item['state'] = get_value('state')
         objects.append(item)
@@ -247,7 +247,7 @@ def main():
         aggregate=dict(type='list', aliases=['users', 'collection']),
         name=dict(),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
         group=dict(aliases=['role']),
@@ -264,6 +264,12 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
 
     result = {'changed': False}

@@ -37,7 +37,7 @@ options:
         This argument accepts a string value and is mutually exclusive
         with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
-  password:
+  configured_password:
     description:
       - The password to be configured on the remote network device. The
         password needs to be provided in clear and it will be encrypted

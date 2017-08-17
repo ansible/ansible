@@ -53,7 +53,7 @@ options:
       - The C(full_name) argument provides the full name of the user
         account to be created on the remote device. This argument accepts
         any text string value.
-  password:
+  configured_password:
     description:
       - The password to be configured on the VyOS device. The
         password needs to be provided in clear and it will be encrypted
@@ -95,7 +95,7 @@ EXAMPLES = """
 - name: create a new user
   vyos_user:
     name: ansible
-    password: password
+    configured_password: password
     state: present
 - name: remove all users except admin
   vyos_user:
@@ -110,7 +110,7 @@ EXAMPLES = """
 - name: Change Password for User netop
   vyos_user:
     name: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 """
@@ -166,9 +166,9 @@ def spec_to_commands(updates, module):
         if needs_update(want, have, 'full_name'):
             add(commands, want, "full-name %s" % want['full_name'])
 
-        if needs_update(want, have, 'password'):
+        if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'authentication plaintext-password %s' % want['password'])
+                add(commands, want, 'authentication plaintext-password %s' % want['configured_password'])
 
     return commands
 
@@ -203,7 +203,7 @@ def config_to_dict(module):
         obj = {
             'name': user,
             'state': 'present',
-            'password': None,
+            'configured_password': None,
             'level': parse_level(cfg),
             'full_name': parse_full_name(cfg)
         }
@@ -231,20 +231,20 @@ def map_params_to_obj(module):
         if not module.params['name'] and module.params['purge']:
             return list()
         else:
-            aggregatelist = [{'name': module.params['name']}]
+            users = [{'name': module.params['name']}]
     else:
-        aggregatelist = list()
+        users = list()
         for item in aggregate:
             if not isinstance(item, dict):
-                aggregatelist.append({'name': item})
+                users.append({'name': item})
             else:
-                aggregatelist.append(item)
+                users.append(item)
 
     objects = list()
 
-    for item in aggregatelist:
+    for item in users:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
         item['full_name'] = get_value('full_name')
         item['level'] = get_value('level')
         item['state'] = get_value('state')
@@ -275,7 +275,7 @@ def main():
         full_name=dict(),
         level=dict(aliases=['role']),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
         purge=dict(type='bool', default=False),
@@ -301,6 +301,12 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
 
     result = {'changed': False}
