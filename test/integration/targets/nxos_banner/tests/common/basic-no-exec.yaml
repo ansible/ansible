@@ -6,13 +6,13 @@
       Junk exec banner
       over multiple lines
     state: present
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
 
 - name: remove exec
   nxos_banner:
     banner: exec
     state: absent
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - debug:
@@ -27,7 +27,7 @@
   nxos_banner:
     banner: exec
     state: absent
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:

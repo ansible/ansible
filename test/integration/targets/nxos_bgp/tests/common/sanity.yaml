@@ -1,5 +1,5 @@
 ---
-- debug: msg="START TRANSPORT:NXAPI nxos_bgp sanity test"
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp sanity test"
 
 - set_fact: neighbor_down_fib_accelerate="true"
   when: (titanium is defined) and not ((titanium | search('true')))
@@ -8,17 +8,17 @@
   when: (titanium is defined) and not ((titanium | search('true')))
 
 - name: "Enable feature BGP"
-  nxos_feature: 
+  nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp: &remove
     asn: 65535
     state: absent
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
   register: result
 
@@ -28,7 +28,7 @@
       asn: 65535
       router_id: 1.1.1.1
       state: present
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -54,7 +54,7 @@
     register: result
 
   - assert: *false
-  
+
   - name: "Configure BGP non defaults"
     nxos_bgp: &configure_non_default
       asn: 65535
@@ -90,9 +90,9 @@
       event_history_periodic: size_small
       suppress_fib_pending: true
       state: present
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
     register: result
-  
+
   - assert: *true
 
   - name: "Check Idempotence"
@@ -106,18 +106,18 @@
     register: result
 
   - assert: *true
-  
+
   - name: "Check Idempotence"
     nxos_bgp: *remove
     register: result
 
   - assert: *false
-  
+
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
 
   rescue:
   - name: "Cleanup BGP"
@@ -128,8 +128,8 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ nxapi }}"
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   always:
-  - debug: msg="END TRANSPORT:NXAPI nxos_bgp sanity test"  
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_bgp sanity test"
