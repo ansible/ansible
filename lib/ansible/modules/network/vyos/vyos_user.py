@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: vyos_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage the collection of local users on VyOS device
 description:
   - This module provides declarative management of the local usernames
@@ -231,18 +231,18 @@ def map_params_to_obj(module):
         if not module.params['name'] and module.params['purge']:
             return list()
         else:
-            aggregate = [{'name': module.params['name']}]
+            aggregatelist = [{'name': module.params['name']}]
     else:
-        aggregate = list()
+        aggregatelist = list()
         for item in aggregate:
             if not isinstance(item, dict):
-                aggregate.append({'name': item})
+                aggregatelist.append({'name': item})
             else:
-                aggregate.append(item)
+                aggregatelist.append(item)
 
     objects = list()
 
-    for item in aggregate:
+    for item in aggregatelist:
         get_value = partial(get_param_value, item=item, module=module)
         item['password'] = get_value('password')
         item['full_name'] = get_value('full_name')
