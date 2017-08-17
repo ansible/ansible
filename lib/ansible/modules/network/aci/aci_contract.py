@@ -118,7 +118,7 @@ def main():
     description = module.params['description']
     scope = module.params['scope']
     priority = module.params['priority']
-    target = module.params['target']
+    dscp = module.params['dscp']
     state = module.params['state']
 
     aci = ACIModule(module)
@@ -143,7 +143,7 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzBrCP', class_config=dict(name=contract, descr=description, scope=scope, prio=priority, targetDscp=target))
+        aci.payload(aci_class='vzBrCP', class_config=dict(name=contract, descr=description, scope=scope, prio=priority, targetDscp=dscp))
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzBrCP')

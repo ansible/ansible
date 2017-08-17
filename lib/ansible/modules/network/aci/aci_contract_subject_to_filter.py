@@ -45,7 +45,7 @@ options:
   subject:
     description:
     - The name of the Contract Subject.
-    aliases: [ subject_name ]
+    aliases: [ contract_subject, subject_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -85,9 +85,9 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         contract=dict(type='str', aliases=['contract_name']),
-        filter_name=dict(type='str'),
+        filter=dict(type='str', aliases=['filter_name']),
         log=dict(tyep='str', choices=['log', 'none'], aliases=['directive']),
-        subject=dict(type='str', aliases=['subject_name']),
+        subject=dict(type='str', aliases=['contract_subject', 'subject_name']),
         tenant=dict(type='str', aliases=['tenant_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -96,12 +96,12 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['state', 'absent', ['contract', 'filter_name', 'subject', 'tenant']],
-                     ['state', 'present', ['contract', 'filter_name', 'subject', 'tenant']]]
+        required_if=[['state', 'absent', ['contract', 'filter', 'subject', 'tenant']],
+                     ['state', 'present', ['contract', 'filter', 'subject', 'tenant']]]
     )
 
     # contract = module.params['contract']
-    filter_name = module.params['filter_name']
+    filter_name = module.params['filter']
     log = module.params['log']
     # subject = module.params['subject']
     # tenant = module.params['tenant']
@@ -114,7 +114,7 @@ def main():
     # TODO: cleanup this logic and provide better filter_strings for all options
     if filter_name is not None:
         # Work with specific binding
-        path = 'api/mo/uni/tn-%(tenant)s/brc-%(contract)s/subj-%(subject)s/rssubjFiltAtt-%(filter_name)s.json' % module.params
+        path = 'api/mo/uni/tn-%(tenant)s/brc-%(contract)s/subj-%(subject)s/rssubjFiltAtt-%(filter)s.json' % module.params
     else:
         path = 'api/class/vzRsSubjFiltAtt.json'
 
