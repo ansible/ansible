@@ -121,6 +121,10 @@ except ImportError:
 
 
 def availability_set_to_dict(avaset):
+    '''
+    Serialazing the availability set from the API to Dict
+    :return: dict
+    '''
     return dict(
         id=avaset.id,
         name=avaset.name,
@@ -180,6 +184,8 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         self.platform_update_domain_count = None
         self.platform_fault_domain_count = None
         self.sku = None
+        self.state = None
+        self.warning = False
 
         self.results = dict(changed=False, state=dict())
 
@@ -193,9 +199,9 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
-        results = dict()
         resource_group = None
         response = None
+        to_be_updated = False
 
         try:
             resource_group = self.get_resource_group(self.resource_group)
@@ -207,25 +213,67 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         # Check if the AS already present in the RG
         if self.state == 'present':
             response = self.get_availabilityset()
+            self.results['state'] = response
+
             if not response:
-                self.results['state'] = self.create_availabilityset()
-                self.results['changed'] = True
+                to_be_updated = True
             else:
-                self.log("AS already there, updating Tags")
                 update_tags, response['tags'] = self.update_tags(response['tags'])
+                
                 if update_tags:
-                    self.results['state'] = self.create_availabilityset()
-                    self.results['changed'] = True
+                    self.log("Tags has to be updated")
+                    to_be_updated = True
+                
+                if response['platform_update_domain_count'] != self.platform_update_domain_count :
+                    self.warn('platform_update_domain_count')
+                    self.platform_update_domain_count = response['platform_update_domain_count']
+
+                if response['platform_fault_domain_count'] != self.platform_fault_domain_count :
+                    self.warn('platform_fault_domain_count')
+                    self.platform_fault_domain_count = response['platform_fault_domain_count']
+
+                if response['sku'] != self.sku :
+                    self.warn('sku')
+                    self.sku = response['sku']
+
+            if self.warning:
+                self.module.warn("An Availability Set is immutable, except tags")
+
+            if self.check_mode:
+                return self.results
+
+            if to_be_updated:
+                self.results['state'] = self.create_or_update_availabilityset()
+                self.results['changed'] = True
+
         elif self.state == 'absent':
             self.delete_availabilityset()
             self.results['changed'] = True
 
         return self.results
 
-    def create_availabilityset(self):
+    def warn(self, param):
+        '''
+        Helper method to push warning message in the console.
+        Usefull to notify that the users cannot change some values in a Availibility Set
+
+        :param: variable's name impacted
+        :return: void
+        '''
+        self.module.warn("You tried to change {0} but is was unsuccessful".format(str(param)))
+        self.warning = True
+
+    def create_or_update_availabilityset(self):
+        '''
+        Method calling the Azure SDK to create or update the AS.
+        :return: void
+        '''
         self.log("Creating availabilityset {0}".format(self.name))
         try:
-            paramsSku = Sku(
+            # Handling the case to update tags to empty
+            if self.tags == None:
+                self.tags = {}
+            params_sku = Sku(
                 name=self.sku
             )
             params = AvailabilitySet(
@@ -233,7 +281,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
                 tags=self.tags,
                 platform_update_domain_count=self.platform_update_domain_count,
                 platform_fault_domain_count=self.platform_fault_domain_count,
-                sku=paramsSku
+                sku=params_sku
             )
             response = self.compute_client.availability_sets.create_or_update(self.resource_group, self.name, params)
         except CloudError as e:
@@ -243,6 +291,10 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         return availability_set_to_dict(response)
 
     def delete_availabilityset(self):
+        '''
+        Method calling the Azure SDK to delete the AS.
+        :return: void
+        '''
         self.log("Deleting availabilityset {0}".format(self.name))
         try:
             response = self.compute_client.availability_sets.delete(self.resource_group, self.name)
@@ -253,6 +305,10 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         return True
 
     def get_availabilityset(self):
+        '''
+        Method calling the Azure SDK to get an AS.
+        :return: void
+        '''
         self.log("Checking if the availabilityset {0} is present".format(self.name))
         found = False
         try:
