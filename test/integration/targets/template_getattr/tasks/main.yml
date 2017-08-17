@@ -152,12 +152,25 @@
       - valid_test.confused_for_a_list.popitem()[0] in ['pop', 'soda']
       - valid_test.confused_for_a_list.popitem()[1] in ['cheerwine', 'RC']
 
-# these fail with or without the patch
-#    - debug:
-#        msg: "valid_test.endswith('r_v'): {{ valid_test.endswith('r_v') }}"
+      # these fail with or without the pat
+- debug:
+    msg: "valid_test.endswith: {{ valid_test.endswith }}"
 
-#    - debug:
-#        msg: "valid_test.confused.endswith('r_v'): {{ valid_test.confused.endswith('r_v') }}"
+- debug:
+    msg: "valid_test.some_var.endswith: {{ valid_test.some_var.endswith }}"
 
-#    - debug:
-#        msg: "valid_test.confused.startswith('r_v'): {{ valid_test.confused.startsswith('r_v') }}"
+- debug:
+    msg: "valid_test.some_var.endswith('r_v'): {{ valid_test.some_var.endswith('r_v') }}"
+
+- assert:
+    that:
+      - valid_test.some_var.endswith is callable
+      - valid_test.some_var.endswith('r_v') == True
+      - valid_test.some_var.endswith('the_end') == False
+
+- name: try confused.endswith
+  assert:
+    that:
+      - valid_test.confused.endswith is not callable
+      - valid_test.confused.endswith == "not the endswith method"
+
