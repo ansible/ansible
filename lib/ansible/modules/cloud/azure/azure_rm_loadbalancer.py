@@ -18,9 +18,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -302,9 +306,12 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
         self.results = dict(changed=False, state=dict())
 
+        required_if = [('state', 'present', ['public_ip_address_name'])]
+
         super(AzureRMLoadBalancer, self).__init__(
             derived_arg_spec=self.module_args,
-            supports_check_mode=True
+            supports_check_mode=True,
+            required_if=required_if
         )
 
     def exec_module(self, **kwargs):
@@ -391,14 +398,15 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         )
         load_balancer_props['backend_address_pools'] = [BackendAddressPool(name=backend_address_pool_name)]
 
+        probe_name = random_name('probe')
+        prb_id = probe_id(
+            subscription_id=self.subscription_id,
+            resource_group_name=self.resource_group,
+            load_balancer_name=self.name,
+            name=probe_name
+        )
+
         if self.probe_protocol:
-            probe_name = random_name('probe')
-            prb_id = probe_id(
-                subscription_id=self.subscription_id,
-                resource_group_name=self.resource_group,
-                load_balancer_name=self.name,
-                name=probe_name
-            )
             load_balancer_props['probes'] = [
                 Probe(
                     name=probe_name,
@@ -411,7 +419,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             ]
 
         load_balancing_rule_name = random_name('lbr')
-        if prb_id and backend_addr_pool_id and frontend_ip_config_id:
+        if self.protocol:
             load_balancer_props['load_balancing_rules'] = [
                 LoadBalancingRule(
                     name=load_balancing_rule_name,

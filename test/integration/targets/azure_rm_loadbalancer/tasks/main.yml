@@ -1,0 +1,32 @@
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: ansiblepip3
+    resource_group: '{{ resource_group }}'
+
+- name: create load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lbtestfromansible
+    public_ip: ansiblepip3
+  register: output
+
+- name: assert load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lbtestfromansible
+    state: absent
+  register: output
+
+- name: assert load balancer deleted
+  assert:
+    that: output.changed
+
+- name: cleanup public ip
+  azure_rm_publicipaddress:
+    name: ansiblepip3
+    resource_group: '{{ resource_group }}'
+    state: absent
