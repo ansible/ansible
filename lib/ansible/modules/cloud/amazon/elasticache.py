@@ -449,7 +449,7 @@ class ElastiCacheManager(object):
             'EngineVersion': self.cache_engine_version
         }
         for key, value in modifiable_data.items():
-            if value is not None and self.data[key] != value:
+            if value and self.data[key] != value:
                 return True
 
         # Check cache security groups
