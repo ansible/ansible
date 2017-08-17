@@ -34,7 +34,7 @@ version_added: "2.4"
 short_description: Create, Delete and Modify Protection Groups on Pure Storage FlashArray
 description:
     - This module creates, deletes or modifies protection groups on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+author: Simon Dodsley (@sdodsley)
 options:
   pgroup:
     description:

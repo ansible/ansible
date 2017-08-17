@@ -19,7 +19,7 @@ version_added: 2.4
 short_description:  Create or Delete volume snapshots on Pure Storage FlashArray
 description:
     - This module creates or deletes volume snapshots and creates volumes from snapshots on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+author: Simon Dodsley (@sdodsley)
 options:
   name:
     description:

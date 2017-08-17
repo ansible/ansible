@@ -20,7 +20,7 @@ version_added: "2.4"
 short_description:  Create, Delete or Extend a volume on Pure Storage FlashArray
 description:
     - This module creates, deletes or extends the capacity of a volume on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+author: Simon Dodsley (@sdodsley)
 options:
   name:
     description:

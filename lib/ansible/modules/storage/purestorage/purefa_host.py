@@ -20,7 +20,7 @@ version_added: "2.4"
 short_description: Create, Delete and Modify Hosts on Pure Storage FlashArray
 description:
     - This module creates, deletes or modifies hosts on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+author: Simon Dodsley (@sdodsley)
 options:
   host:
     description:
