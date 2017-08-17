@@ -18,7 +18,7 @@ description:
   - Pauses playbook execution for a set amount of time, or until a prompt is acknowledged. All parameters are optional. The default behavior is to pause with a prompt.
   - To pause/wait/sleep per host, use the `wait_for` module.
   - You can use C(ctrl+c) if you wish to advance a pause earlier than it is set to expire or if you need to abort a playbook run entirely.
-    To continue early press C(ctrl+c) and then C(c). To abort a playbook: press C(ctrl+c) and then C(a).
+    To continue early press C(ctrl+c) and then C(c). To abort a playbook press C(ctrl+c) and then C(a).
   - The pause module integrates into async/parallelized playbooks without any special considerations (see Rolling Updates).
     When using pauses with the C(serial) playbook parameter (as in rolling updates) you are only prompted once for the current group of hosts.
   - This module is also supported for Windows targets.
