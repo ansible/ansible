@@ -87,7 +87,7 @@ class Playbook:
             if not isinstance(entry, dict):
                 # restore the basedir in case this error is caught and handled
                 self._loader.set_basedir(cur_basedir)
-                raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
+                raise AnsibleParserError("playbook entries must be either a valid play or an 'import_playbook' statement", obj=entry)
 
             if 'include' in entry or 'import_playbook' in entry:
                 if 'include' in entry:

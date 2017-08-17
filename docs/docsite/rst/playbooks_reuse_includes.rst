@@ -19,8 +19,8 @@ Importing Playbooks
 It is possible to include playbooks inside a master playbook. For example::
 
     ---
-    import_playbook: webservers.yml
-    import_playbook: databases.yml
+    - import_playbook: webservers.yml
+    - import_playbook: databases.yml
 
 Each playbook listed will be run in the order they are listed.
 
@@ -114,4 +114,3 @@ Please refer to :doc:`playbooks_reuse_roles` for details on including and import
        Complete playbook files from the GitHub project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-
