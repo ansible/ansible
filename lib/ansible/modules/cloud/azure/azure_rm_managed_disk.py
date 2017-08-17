@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -132,26 +132,13 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureHttpError
     from azure.mgmt.compute.models import DiskCreateOption
+    from azure.mgmt.compute.models import DiskSku
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
-def managed_disk_to_dict(managed_disk):
-    os_type = None
-    if managed_disk.os_type:
-        os_type = managed_disk.os_type.name
-    return dict(
-        id=managed_disk.id,
-        name=managed_disk.name,
-        type=managed_disk.type,
-        location=managed_disk.location,
-        tags=managed_disk.tags,
-        time_created=managed_disk.tags,
-        disk_size_gb=managed_disk.disk_size_gb,
-        os_type=os_type,
-        storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
-    )
-
+AZURE_OBJECT_CLASS = 'Disk'
+AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
 class AzureRMManagedDisk(AzureRMModuleBase):
@@ -259,8 +246,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         creation_data = {}
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
+        DiskSku
         if self.storage_account_type:
-            disk_params['diskSku'] = self.storage_account_type
+            disk_params['sku'] = DiskSku(self.storage_account_type)
         disk_params['disk_size_gb'] = self.disk_size_gb
         # TODO: Add support for EncryptionSettings
         creation_data['create_option'] = DiskCreateOption.empty
@@ -279,28 +267,30 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                     self.resource_group,
                     self.name,
                     disk_params)
-                result = managed_disk_to_dict(self.get_poller_result(poller))
+                result = self.serialize_obj(
+                    self.get_poller_result(poller),
+                    AZURE_OBJECT_CLASS,
+                    enum_modules=AZURE_ENUM_MODULES)
                 self.results['changed'] = True
             else:
                 result = found_prev_disk
                 self.results['changed'] = False
-        except AzureHttpError as e:
+        except CloudError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
         return result
 
-    def is_different(self, disk1, disk2):
+    # This method accounts for the difference in structure between the 
+    # Azure retrieved disk and the parameters for the new disk to be created.
+    def is_different(self, found_disk, new_disk):
         resp = False
-        if disk2.get('disk_size_gb'):
-            if not disk1['disk_size_gb'] == disk2['disk_size_gb']:
+        if new_disk.get('disk_size_gb'):
+            if not found_disk['properties']['diskSizeGB'] == new_disk['disk_size_gb']:
                 resp = True
-        if disk2.get('tags'):
-            if not disk1['tags'] == disk2['tags']:
+        if new_disk.get('sku'):
+            if not found_disk['sku']['name'] == new_disk['sku'].name:
                 resp = True
-        if disk2.get('os_type'):
-            if not disk1['os_type '] == disk2['os_type']:
-                resp = True
-        if disk2.get('storage_account_type'):
-            if not disk1['storage_account_type'] == disk2['storage_account_type']:
+        if new_disk.get('tags'):
+            if not found_disk['tags'] == new_disk['tags']:
                 resp = True
         return resp
 
@@ -324,7 +314,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         except CloudError as e:
             self.log('Did not find managed disk')
         if found:
-            return managed_disk_to_dict(response)
+            return self.serialize_obj(
+                response,
+                AZURE_OBJECT_CLASS,
+                enum_modules=AZURE_ENUM_MODULES)
         else:
             return False
 
