@@ -499,7 +499,7 @@ def get_database_privileges(cursor, user, db):
     datacl = cursor.fetchone()[0]
     if datacl is None:
         return set()
-    r = re.search('%s=(C?T?c?)/[a-z]+\,?' % user, datacl)
+    r = re.search('%s\\\\?\"?=(C?T?c?)/[^,]+\,?' % user, datacl)
     if r is None:
         return set()
     o = set()
