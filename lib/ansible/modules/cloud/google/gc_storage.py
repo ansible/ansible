@@ -83,12 +83,25 @@ options:
       - GS access key. If not set then the value of the GS_ACCESS_KEY_ID environment variable is used.
     required: true
     default: null
+  region:
+    version_added: "2.4"
+    description:
+      - The gs region to use. If not defined then the value 'US' will be used. See U(https://cloud.google.com/storage/docs/bucket-locations)
+    required: false
+    default: 'US'
+  versioning:
+    version_added: "2.4"
+    description:
+      - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
+    required: false
+    default: null
+    choices: [ 'yes', 'no' ]
 
 requirements:
     - "python >= 2.6"
     - "boto >= 2.9"
 
-author: "Benno Joy (@bennojoy)"
+author: "Benno Joy (@bennojoy), extended by Lukas Beumer (@nitaco)"
 
 '''
 
@@ -136,6 +149,19 @@ EXAMPLES = '''
   gc_storage:
     bucket: mybucket
     mode: delete
+
+- name: Create a bucket with versioning enabled
+  gc_storage:
+    bucket: "mybucket"
+    versioning: yes
+    mode: create
+
+- name: Create a bucket located in the eu
+  gc_storage:
+    bucket: "mybucket"
+    region: "europe-west3"
+    mode: create
+
 '''
 
 import os
@@ -180,6 +206,7 @@ def key_check(module, gs, bucket, obj):
     else:
         return False
 
+
 def keysum(module, gs, bucket, obj):
     bucket = gs.lookup(bucket)
     key_check = bucket.get_key(obj)
@@ -190,6 +217,7 @@ def keysum(module, gs, bucket, obj):
     if etag_multipart is True:
         module.fail_json(msg="Files uploaded with multipart of gs are not supported with checksum, unable to compute checksum.")
     return md5_remote
+
 
 def bucket_check(module, gs, bucket):
     try:
@@ -202,14 +230,17 @@ def bucket_check(module, gs, bucket):
     else:
         return False
 
+
 def create_bucket(module, gs, bucket):
     try:
-        bucket = gs.create_bucket(bucket)
+        bucket = gs.create_bucket(bucket, transform_headers(module.params.get('headers')), module.params.get('region'))
         bucket.set_acl(module.params.get('permission'))
+        bucket.configure_versioning(module.params.get('versioning'))
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     if bucket:
         return True
+
 
 def delete_bucket(module, gs, bucket):
     try:
@@ -222,6 +253,7 @@ def delete_bucket(module, gs, bucket):
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
+
 def delete_key(module, gs, bucket, obj):
     try:
         bucket = gs.lookup(bucket)
@@ -229,6 +261,7 @@ def delete_key(module, gs, bucket, obj):
         module.exit_json(msg="Object deleted from bucket ", changed=True)
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
+
 
 def create_dirkey(module, gs, bucket, obj):
     try:
@@ -239,11 +272,13 @@ def create_dirkey(module, gs, bucket, obj):
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
+
 def path_check(path):
     if os.path.exists(path):
         return True
     else:
         return False
+
 
 def transform_headers(headers):
     """
@@ -260,6 +295,7 @@ def transform_headers(headers):
         headers[key] = str(value)
     return headers
 
+
 def upload_gsfile(module, gs, bucket, obj, src, expiry):
     try:
         bucket = gs.lookup(bucket)
@@ -274,6 +310,7 @@ def upload_gsfile(module, gs, bucket, obj, src, expiry):
     except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
+
 def download_gsfile(module, gs, bucket, obj, dest):
     try:
         bucket = gs.lookup(bucket)
@@ -282,6 +319,7 @@ def download_gsfile(module, gs, bucket, obj, dest):
         module.exit_json(msg="GET operation complete", changed=True)
     except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
+
 
 def download_gsstr(module, gs, bucket, obj):
     try:
@@ -292,6 +330,7 @@ def download_gsstr(module, gs, bucket, obj):
     except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
+
 def get_download_url(module, gs, bucket, obj, expiry):
     try:
         bucket = gs.lookup(bucket)
@@ -300,6 +339,7 @@ def get_download_url(module, gs, bucket, obj, expiry):
         module.exit_json(msg="Download url:", url=url, expiration=expiry, changed=True)
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
+
 
 def handle_get(module, gs, bucket, obj, overwrite, dest):
     md5_remote = keysum(module, gs, bucket, obj)
@@ -310,6 +350,7 @@ def handle_get(module, gs, bucket, obj, overwrite, dest):
         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
     else:
         download_gsfile(module, gs, bucket, obj, dest)
+
 
 def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
     # Lets check to see if bucket exists to get ground truth.
@@ -335,6 +376,7 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
     if bucket_rc and not key_rc:
         upload_gsfile(module, gs, bucket, obj, src, expiration)
 
+
 def handle_delete(module, gs, bucket, obj):
     if bucket and not obj:
         if bucket_check(module, gs, bucket):
@@ -351,6 +393,7 @@ def handle_delete(module, gs, bucket, obj):
             module.exit_json(msg="Bucket does not exist.", changed=False)
     else:
         module.fail_json(msg="Bucket or Bucket & object  parameter is required.", failed=True)
+
 
 def handle_create(module, gs, bucket, obj):
     if bucket and not obj:
@@ -373,6 +416,7 @@ def handle_create(module, gs, bucket, obj):
             create_bucket(module, gs, bucket)
             create_dirkey(module, gs, bucket, dirobj)
 
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -387,6 +431,8 @@ def main():
             gs_secret_key  = dict(no_log=True, required=True),
             gs_access_key  = dict(required=True),
             overwrite      = dict(default=True, type='bool', aliases=['force']),
+            region         = dict(default='US', type='str'),
+            versioning     = dict(default='no', type='bool')
         ),
     )
 
