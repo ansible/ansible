@@ -24,12 +24,24 @@ description:
 options:
   path:
     description:
-    - The XML file as accepted by hponcfg
+    - The XML file as accepted by hponcfg.
     required: true
     aliases: ['src']
   minfw:
     description:
-    - The minimum firmware level needed
+    - The minimum firmware level needed.
+    required: false
+  executable:
+    description:
+    - Path to the hponcfg executable (`hponcfg` which uses $PATH).
+    default: hponcfg
+    version_added: "2.4"
+  verbose:
+    description:
+    - Run hponcfg in verbose mode (-v).
+    default: no
+    type: bool
+    version_added: "2.4"
 requirements:
 - hponcfg tool
 notes:
@@ -58,6 +70,11 @@ EXAMPLES = r'''
 - name: Configure HP iLO using enable-ssh.xml
   hponcfg:
     src: /tmp/enable-ssh.xml
+
+- name: Configure HP iLO on VMware ESXi hypervisor
+  hponcfg:
+    src: /tmp/enable-ssh.xml
+    executable: /opt/hp/tools/hponcfg
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -69,6 +86,8 @@ def main():
         argument_spec=dict(
             src=dict(type='path', required=True, aliases=['path']),
             minfw=dict(type='str'),
+            executable=dict(default='hponcfg', type='str'),
+            verbose=dict(default=False, type='bool'),
         )
     )
 
@@ -77,16 +96,18 @@ def main():
 
     src = module.params['src']
     minfw = module.params['minfw']
+    executable = module.params['executable']
+    verbose = module.params['verbose']
 
     options = ' -f %s' % src
 
-    # Add -v for debugging
-#    options += ' -v'
+    if verbose:
+        options += ' -v'
 
     if minfw:
         options += ' -m %s' % minfw
 
-    rc, stdout, stderr = module.run_command('hponcfg %s' % options)
+    rc, stdout, stderr = module.run_command('%s %s' % (executable, options))
 
     if rc != 0:
         module.fail_json(rc=rc, msg="Failed to run hponcfg", stdout=stdout, stderr=stderr)
