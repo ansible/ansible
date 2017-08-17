@@ -214,6 +214,7 @@ DEFAULTS = {
     'group_by_tag_keys': 'True',
     'group_by_tag_none': 'True',
     'group_by_vpc_id': 'True',
+    'group_tag_key': None,
     'hostname_variable': None,
     'iam_role': None,
     'include_rds_clusters': 'False',
@@ -471,6 +472,9 @@ class Ec2Inventory(object):
 
         # IAM role to assume for connection
         self.iam_role = config.get('ec2', 'iam_role')
+
+        # Tag key holding the information about the instance group(s).
+        self.group_tag_key = config.get('ec2', 'group_tag_key')
 
         # Configure which groups should be created.
 
@@ -1066,6 +1070,18 @@ class Ec2Inventory(object):
 
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', hostname)
+
+        # Global Tag: Put instace into a specifc group(s) if requested
+        if self.group_tag_key is not None:
+            for k, v in instance.tags.items():
+                if k == self.group_tag_key:
+                    if self.expand_csv_tags and v and ',' in v:
+                        values = map(lambda x: x.strip(), v.split(','))
+                    else:
+                        values = [v]
+
+                    for v in values:
+                        self.push(self.inventory, v, hostname)
 
         self.inventory["_meta"]["hostvars"][hostname] = self.get_host_info_dict_from_instance(instance)
         self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = dest
