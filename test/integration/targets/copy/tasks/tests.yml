@@ -166,7 +166,76 @@
   copy:
     content: 'modified'
     dest: '{{ remote_file }}'
+    mode: 0700
+  register: copy_results
+
+- name: Check the stat results of the file
+  stat:
+    path: "{{ remote_file }}"
+  register: stat_results
+
+- name: Check the stat results of the hard link
+  stat:
+    path: "{{ output_dir }}/hard.lnk"
+  register: hlink_results
+
+- name: Check that the file did not change
+  assert:
+    that:
+      - 'stat_results.stat.inode == hlink_results.stat.inode'
+      - 'copy_results.changed == False'
+      - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
+
+- name: copy the same contents into place but change mode
+  copy:
+    content: 'modified'
+    dest: '{{ remote_file }}'
     mode: 0404
+  register: copy_results
+
+- name: Check the stat results of the file
+  stat:
+    path: "{{ remote_file }}"
+  register: stat_results
+
+- name: Check the stat results of the hard link
+  stat:
+    path: "{{ output_dir }}/hard.lnk"
+  register: hlink_results
+
+- name: Check that the file changed permissions but is still the same
+  assert:
+    that:
+      - 'stat_results.stat.inode == hlink_results.stat.inode'
+      - 'copy_results.changed == True'
+      - 'stat_results.stat.mode == hlink_results.stat.mode'
+      - 'stat_results.stat.mode == "0404"'
+      - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
+
+- name: copy the different contents into place
+  copy:
+    content: 'adjusted'
+    dest: '{{ remote_file }}'
+    mode: 0404
+  register: copy_results
+
+- name: Check the stat results of the file
+  stat:
+    path: "{{ remote_file }}"
+  register: stat_results
+
+- name: Check the stat results of the hard link
+  stat:
+    path: "{{ output_dir }}/hard.lnk"
+  register: hlink_results
+
+- name: Check that the file changed and hardlink was broken
+  assert:
+    that:
+      - 'stat_results.stat.inode != hlink_results.stat.inode'
+      - 'copy_results.changed == True'
+      - "stat_results.stat.checksum == ('adjusted'|hash('sha1'))"
+      - "hlink_results.stat.checksum == ('modified'|hash('sha1'))"
 
 - name: Try invalid copy input location fails
   copy:
