@@ -138,8 +138,8 @@ EXAMPLES = '''
   
     - name: Delete a Traffic Manager Profile
       azure_rm_trafficmanagerprofile:
-        name: contoso.com
-        state: absent
+        name: "contoso.com"
+        state: "absent"
 
 '''
 RETURN = '''
