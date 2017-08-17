@@ -508,7 +508,7 @@ URI Filter
 
 .. versionadded:: 2.4
 
-The `uri` filter allows to extract the hostname, path, port or scheme from an URI::
+The `uri` filter extracts the hostname, path, port or scheme from an URI::
 
     {{ "http://localhost:9000/foo" | uri('hostname') }}
     # => 'localhost'
