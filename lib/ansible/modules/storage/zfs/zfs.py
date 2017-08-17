@@ -157,7 +157,7 @@ class Zfs(object):
         if volsize:
             cmd += ['-V', volsize]
         if volblocksize:
-            cmd += ['-b', 'volblocksize']
+            cmd += ['-b', volblocksize]
         if properties:
             for prop, value in properties.items():
                 cmd += ['-o', '%s="%s"' % (prop, value)]
