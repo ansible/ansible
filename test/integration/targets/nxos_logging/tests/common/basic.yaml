@@ -4,7 +4,7 @@
     dest: console
     dest_level: 0
     state: present
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -17,7 +17,7 @@
     dest: console
     dest_level: 0
     state: present
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -29,7 +29,7 @@
     dest: console
     dest_level: 0
     state: absent
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -42,7 +42,7 @@
     dest: console
     dest_level: 0
     state: absent
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -55,7 +55,7 @@
     name: test
     dest_level: 0
     state: present
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -67,7 +67,7 @@
   nxos_logging:
     facility: daemon
     facility_level: 0
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -80,7 +80,7 @@
     aggregate:
       - { dest: logfile, name: test, dest_level: 0, state: absent }
       - { facility: daemon, facility_level: 0, state: absent }
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:

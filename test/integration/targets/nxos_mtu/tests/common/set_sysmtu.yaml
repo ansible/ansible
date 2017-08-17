@@ -1,16 +1,16 @@
 ---
-- debug: msg="START nxapi/sysmtu.yaml"
+- debug: msg="START {{ connection.transport }}/sysmtu.yaml"
 
 - name: setup
   nxos_config:
     lines: no system jumbomtu
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
 - name: configure system mtu
   nxos_mtu:
     sysmtu: 2000
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -20,7 +20,7 @@
 - name: verify system mtu
   nxos_mtu:
     sysmtu: 2000
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -30,7 +30,7 @@
 - name: configure invalid (odd) system mtu
   nxos_mtu:
     sysmtu: 2001
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -41,7 +41,7 @@
 - name: configure invalid (large) system mtu setting
   nxos_mtu:
     sysmtu: 10000
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -53,6 +53,6 @@
   nxos_config:
     lines: no system jumbomtu
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
-- debug: msg="END nxapi/sysmtu.yaml"
+- debug: msg="END {{ connection.transport }}/sysmtu.yaml"
