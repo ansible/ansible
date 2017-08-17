@@ -384,7 +384,6 @@ def vmware_argument_spec():
 
 
 def connect_to_api(module, disconnect_atexit=True):
-
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
@@ -394,21 +393,23 @@ def connect_to_api(module, disconnect_atexit=True):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
                              'python or or use validate_certs=false')
 
+    ssl_context = None
+    if not validate_certs:
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        ssl_context.verify_mode = ssl.CERT_NONE
+
+    service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
-    except vim.fault.InvalidLogin as invalid_login:
-        module.fail_json(msg=invalid_login.msg, apierror=str(invalid_login))
-    except (requests.ConnectionError, ssl.SSLError) as connection_error:
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and not validate_certs:
-            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            context.verify_mode = ssl.CERT_NONE
-            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
-        else:
-            module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
-    except:
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        context.verify_mode = ssl.CERT_NONE
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
+        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context)
+    except vim.fault.InvalidLogin as e:
+        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s as %s: %s" % (hostname, username, e.msg))
+    except (requests.ConnectionError, ssl.SSLError) as e:
+        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/443: %s" % (hostname, e))
+    except Exception as e:
+        module.fail_json(msg="Unknown error connecting to vCenter or ESXi API at %s: %s" % (hostname, e))
+
+    if service_instance is None:
+        module.fail_json(msg="Unknown error connecting to vCenter or ESXi API at %s" % hostname)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
