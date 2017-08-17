@@ -168,11 +168,6 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         # Get resource group using Azure Python SDK
         resource_group = self.get_resource_group(self.resource_group)
 
-        # If there is no location, get the location from the resource group
-        if not self.location:
-            # Set default location
-            self.location = resource_group.location
-
         # Initialize the Ansible return
         results = dict()
         changed = False
@@ -184,10 +179,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             self.log('Fetching traffic manager {0}'.format(self.name))
             # Get the resource group to verify it exist
             # traffic_manager = self.get_traffic_manager_profile(self.resource_group, self.name)
-
-            # if traffic_manager is not None:
             self.create_or_update_traffic_manager_profile(self.resource_group, self.name,
-                                                              self.location, self.properties)
+                                                          self.location, self.properties)
             changed = True
             #Retrieve the sate of the tm
             # self.check_provisioning_state(tm, self.state)
@@ -289,13 +282,17 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :return: traffic manage object
         '''
         try:
-            return self.trafficmanager_client.profiles.get(resource_group, name)
+            profiles = self.trafficmanager_client.profile.list_by_resource_group(resource_group)
+           
+            #  Check the profiles and return the one that matches the name
+            for profile in profiles:
+                if profile is name:
+                    return self.trafficmanager_client.profiles.get(resource_group, name)
+            return None  # if there is no profile returns None
         except CloudError as ce:
-            self.fail("Parameter error: traffic manager {0} not found.\n{1}".format(name, ce))
+            self.fail("Error getting traffic manager profile with nanme: {0}.  {1}".format(name, ce))
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
-
-
 
 
     def create_or_update_traffic_manager_profile(self, resource_group, name, location, properties):
@@ -306,7 +303,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :return: traffic manage object
         '''
         tags = properties.get('tags', None)
-        location = location
+        location = properties.get('location', "global")
         profile_status = properties.get('profile_status', None)
         traffic_routing_method = properties.get('traffic_routing_method', None)
         monitor_config = properties.get('monitor_config', None)
@@ -317,12 +314,14 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         ttl = dns_config.get('ttl', None)
         dns_config = DnsConfig(relative_name, ttl)
 
-        profile = Profile(tags, location, profile_status, traffic_routing_method, dns_config, monitor_config, endpoints)
-        
+        profile = Profile(tags, location, profile_status, traffic_routing_method,
+                          dns_config, monitor_config, endpoints)
+       
         try:
             return self.trafficmanager_client.profiles.create_or_update(resource_group, name, profile)
-        except CloudError as ce:
-            self.fail("Parameter error: traffic manager {0} not found.\n{1}".format(name, ce))
+        except CloudError as cloudError:
+            self.fail("Error creating or updating traffic manager profile with name {0}.  {1}"
+                      .format(name, cloudError))
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
         
