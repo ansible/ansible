@@ -707,6 +707,9 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
     if zone:
         filters.update({'availability-zone': zone})
 
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
+
     results = ec2.get_all_instances(filters=filters)
 
     return results
@@ -1423,6 +1426,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
 
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
     # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
@@ -1548,6 +1553,8 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     if instance_tags:
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
 
     # Check that our instances are not in the state we want to take
 
