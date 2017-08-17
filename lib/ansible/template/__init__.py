@@ -222,15 +222,20 @@ class AnsibleEnvironment(Environment):
                             types.MethodType,
                             types.FunctionType)):
             try:
-                item = obj.__getitem__(attribute)
+                obj.__getitem__(attribute)
             except (TypeError, KeyError):
                 # getattr, got a method, but there is no item by that name so the method
                 # is ok
                 return ret
+            # the attr name is also a name for a data/dict item
 
-            display.warning("The attribute '%s' for this object shadows a builtin method name. Returning the data item instead. "
-                            "See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % (attribute))
-            return item
+            msg = "The attribute '%s' for this object shadows a builtin method name." \
+                " This means a reference to the objects method will be returned, possibly" \
+                " resulting in templating getting a string of the methods repr." \
+                " See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % attribute
+            display.warning(msg)
+            return ret
+
         return ret
 
 
