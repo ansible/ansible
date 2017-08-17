@@ -52,14 +52,15 @@ options:
   entry:
     description:
     - Then name of the Filter Entry.
-    aliases: [ entry_name, name ]
+    aliases: [ entry_name, filter_entry, name ]
   ether_type:
     description:
     - The Ethernet type.
     choices: [ arp, fcoe, ip, mac_security, mpls_ucast, trill, unspecified ]
-  filter_name:
+  filter:
     description:
       The name of Filter that the entry should belong to.
+    aliases: [ filter_name ]
   icmp_msg_type:
     description:
     - ICMPv4 message type; used when ip_protocol is icmp.
@@ -94,7 +95,7 @@ EXAMPLES = r'''
     tenant: "{{ tenant }}"
     ether_name: "{{  ether_name }}"
     icmp_msg_type: "{{ icmp_msg_type }}"
-    filter_name: "{{ filter_name }}"
+    filter: "{{ filter }}"
     descr: "{{ descr }}"
     host: "{{ inventory_hostname }}"
     username: "{{ user }}"
@@ -132,9 +133,9 @@ def main():
         dst_port=dict(type='str'),
         dst_port_end=dict(type='str'),
         dst_port_start=dict(type='str'),
-        entry=dict(type='str', aliases=['entry_name', 'name']),
+        entry=dict(type='str', aliases=['entry_name', 'filter_entry', 'name']),
         ether_type=dict(choices=VALID_ETHER_TYPES, type='str'),
-        filter_name=dict(type='str'),
+        filter=dict(type='str', aliases=['filter_name']),
         icmp_msg_type=dict(type='str', choices=VALID_ICMP_TYPES),
         icmp6_msg_type=dict(type='str', choices=VALID_ICMP6_TYPES),
         ip_protocol=dict(choices=VALID_IP_PROTOCOLS, type='str'),
@@ -163,7 +164,7 @@ def main():
         dst_start = FILTER_PORT_MAPPING[dst_start]
     entry = module.params['entry']
     ether_type = module.params['ether_type']
-    filter_name = module.params['filter_name']
+    filter_name = module.params['filter']
     icmp_msg_type = module.params['icmp_msg_type']
     if icmp_msg_type is not None:
         icmp_msg_type = ICMP_MAPPING[icmp_msg_type]
@@ -192,7 +193,7 @@ def main():
     if entry is not None:
         # fail when entry is provided without tenant and filter_name
         if tenant is not None and filter_name is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/flt-%(filter_name)s/e-%(entry)s.json' % module.params
+            path = 'api/mo/uni/tn-%(tenant)s/flt-%(filter)s/e-%(entry)s.json' % module.params
         elif tenant is not None and state == 'query':
             path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=full&rsp-subtree-class=vzEntry&rsp-subtree-filter=eq(vzEntry.name, \
                    \"%(entry)s\")&rsp-subtree-include=no-scoped' % module.params
