@@ -1,19 +1,19 @@
 ---
-- name: setup - remove exec
+- name: setup - remove motd
   nxos_banner:
-    banner: exec
+    banner: motd
     state: absent
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
-- name: Set exec
+- name: Set motd
   nxos_banner:
-    banner: exec
+    banner: motd
     text: |
-      this is my exec banner
+      this is my motd banner
       that has a multiline
       string
     state: present
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - debug:
@@ -22,23 +22,24 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'banner exec @\nthis is my exec banner\nthat has a multiline\nstring\n@' in result.commands"
+      - "'banner motd @\nthis is my motd banner\nthat has a multiline\nstring\n@' in result.commands"
 
-- name: Set exec again (idempotent)
+- name: Set motd again (idempotent)
   nxos_banner:
-    banner: exec
+    banner: motd
     text: |
-      this is my exec banner
+      this is my motd banner
       that has a multiline
       string
     state: present
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
       - "result.commands | length == 0"
+
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:
