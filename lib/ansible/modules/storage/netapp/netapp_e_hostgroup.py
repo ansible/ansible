@@ -189,7 +189,7 @@ def get_hostref(module, ssid, name, api_url, user, pwd, certs):
     all_hosts = 'storage-systems/%s/hosts' % ssid
     url = api_url + all_hosts
     try:
-        rc, data = request(url, method='GET', headers=HEADERS, url_username=user, url_password=pwd)
+        rc, data = request(url, method='GET', headers=HEADERS, url_username=user, url_password=pwd, validate_certs=certs)
     except Exception as e:
         module.fail_json(msg="Failed to get hosts. Id [%s]. Error [%s]." % (ssid, to_native(e)))
 
