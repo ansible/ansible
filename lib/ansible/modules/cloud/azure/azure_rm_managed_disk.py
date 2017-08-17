@@ -136,8 +136,10 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-
 def managed_disk_to_dict(managed_disk):
+    os_type = None
+    if managed_disk.os_type:
+        os_type = managed_disk.os_type.name
     return dict(
         id=managed_disk.id,
         name=managed_disk.name,
@@ -146,9 +148,10 @@ def managed_disk_to_dict(managed_disk):
         tags=managed_disk.tags,
         time_created=managed_disk.tags,
         disk_size_gb=managed_disk.disk_size_gb,
-        os_type=managed_disk.os_type,
+        os_type=os_type,
         storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
     )
+
 
 
 class AzureRMManagedDisk(AzureRMModuleBase):

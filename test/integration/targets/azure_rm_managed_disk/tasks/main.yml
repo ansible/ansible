@@ -24,7 +24,7 @@
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk }}"
        account_type: Standard_LRS
-       disk_size_gb: 2
+       disk_size_gb: 1
        tags:
            test: test
            galaxy: galaxy
