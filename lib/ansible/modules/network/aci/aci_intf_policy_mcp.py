@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_fc_policy
-short_description: Manage Fibre Channel interface policies on Cisco ACI fabrics
+module: aci_intf_policy_mcp
+short_description: Manage MCP interface policies on Cisco ACI fabrics (mcp:IfPol)
 description:
-- Manage ACI Fiber Channel interface policies on Cisco ACI fabrics.
+- Manage MCP interface policies on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(mcp:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-mcpIfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,20 +26,20 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
-  fc_policy:
+  mcp:
     description:
-    - Name of the Fiber Channel interface policy.
+    - The name of the MCP interface.
     required: yes
-    aliases: [ name ]
+    aliases: [ mcp_interface, name ]
   description:
     description:
-    - Description of the Fiber Channel interface policy.
+    - The description for the MCP interface.
     aliases: [ descr ]
-  port_mode:
+  admin_state:
     description:
-    - Port Mode
-    choices: [ f, np ]
-    default: f
+    - Enable or disable admin state.
+    choices: [ disable, enable ]
+    default: enable
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -47,15 +49,15 @@ options:
 extends_documentation_fragment: aci
 '''
 
+# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_fc_policy:
+- aci_mcp:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    fc_policy: '{{ fc_policy }}'
-    port_mode: '{{ port_mode }}'
-    description: '{{ description }}'
-    state: present
+    mcp: '{{ mcp }}'
+    description: '{{ descr }}'
+    admin_state: '{{ admin_state }}'
 '''
 
 RETURN = r'''
@@ -69,9 +71,9 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        fc_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
+        mcp=dict(type='str', required=False, aliases=['mcp_interface', 'name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        port_mode=dict(type='str', choices=['f', 'np']),  # No default provided on purpose
+        admin_state=dict(type='str', choices=['disabled', 'enabled']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -81,21 +83,21 @@ def main():
         supports_check_mode=True,
     )
 
-    fc_policy = module.params['fc_policy']
-    port_mode = module.params['port_mode']
+    mcp = module.params['mcp']
     description = module.params['description']
+    admin_state = module.params['admin_state']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    if fc_policy is not None:
-        # Work with a specific object
-        path = 'api/mo/uni/infra/fcIfPol-%(fc_policy)s.json' % module.params
+    # TODO: This logic could be cleaner.
+    if mcp is not None:
+        path = 'api/mo/uni/infra/mcpIfP--%(mcp)s.json' % module.params
     elif state == 'query':
         # Query all objects
-        path = 'api/infra/class/fcIfPol.json'
+        path = 'api/node/class/mcpIfPol.json'
     else:
-        module.fail_json(msg="Parameter 'fc_policy' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'mcp' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -103,10 +105,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='fcIfPol', class_config=dict(name=fc_policy, descr=description, portMode=port_mode))
+        aci.payload(aci_class='mcpIfPol', class_config=dict(name=mcp, descr=description, adminSt=admin_state))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='fcIfPol')
+        aci.get_diff(aci_class='mcpIfPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

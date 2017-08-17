@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_action_rule_profile
-short_description: Manage action rule profiles on Cisco ACI fabrics
+module: aci_intf_policy_fc
+short_description: Manage Fibre Channel interface policies on Cisco ACI fabrics (fc:IfPol)
 description:
-- Manage action rule profiles on Cisco ACI fabrics.
+- Manage ACI Fiber Channel interface policies on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(fc:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-fcIfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -23,21 +25,21 @@ author:
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
-notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
-  action_rule:
+  fc_policy:
     description:
-    - The name of the action rule profile.
-    aliases: [ action_rule_name, name ]
+    - The name of the Fiber Channel interface policy.
+    required: yes
+    aliases: [ name ]
   description:
     description:
-    - Description for the action rule profile.
+    - The description of the Fiber Channel interface policy.
     aliases: [ descr ]
-  tenant:
+  port_mode:
     description:
-    - The name of the tenant.
-    aliases: [ tenant_name ]
+    - Port Mode
+    choices: [ f, np ]
+    default: f
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -47,15 +49,15 @@ options:
 extends_documentation_fragment: aci
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_action_rule_profile:
-    hostname: '{{ inventory_hostname }}'
+- aci_intf_policy_fc:
+    hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    action_rule: '{{ action_rule }}'
-    description: '{{ descr }}'
-    tenant: '{{ tenant }}'
+    fc_policy: '{{ fc_policy }}'
+    port_mode: '{{ port_mode }}'
+    description: '{{ description }}'
+    state: present
 '''
 
 RETURN = r'''
@@ -69,9 +71,9 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        action_rule=dict(type='str', required=False, aliases=['action_rule_name', 'name']),  # Not required for querying all objects
-        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
+        fc_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
+        port_mode=dict(type='str', choices=['f', 'np']),  # No default provided on purpose
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -81,21 +83,21 @@ def main():
         supports_check_mode=True,
     )
 
-    action_rule = module.params['action_rule']
-    # tenant = module.params['tenant']
+    fc_policy = module.params['fc_policy']
+    port_mode = module.params['port_mode']
     description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    # TODO: This logic could be cleaner.
-    if action_rule is not None:
-        path = 'api/mo/uni/tn-%(tenant)s/attr-%(action_rule)s.json' % module.params
+    if fc_policy is not None:
+        # Work with a specific object
+        path = 'api/mo/uni/infra/fcIfPol-%(fc_policy)s.json' % module.params
     elif state == 'query':
         # Query all objects
-        path = 'api/node/class/rtctrlAttrP.json'
+        path = 'api/infra/class/fcIfPol.json'
     else:
-        module.fail_json(msg="Parameter 'action_rule' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'fc_policy' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -103,10 +105,10 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='rtctrlAttrP', class_config=dict(name=action_rule, descr=description))
+        aci.payload(aci_class='fcIfPol', class_config=dict(name=fc_policy, descr=description, portMode=port_mode))
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='rtctrlAttrP')
+        aci.get_diff(aci_class='fcIfPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
