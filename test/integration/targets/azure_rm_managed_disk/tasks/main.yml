@@ -1,4 +1,4 @@
- - name: Create managed disk
+ - name: Setup variables...
    set_fact:
        managed_disk1: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
 
@@ -7,11 +7,8 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       account_type: Standard_LRS
+       storage_account_type: Standard_LRS
        disk_size_gb: 1
-       tags:
-           test: test
-           galaxy: galaxy
    register: output
 
  - name: Assert status succeeded and results include an Id value 
@@ -20,21 +17,11 @@
        - output.changed
        - output.state.id is defined
 
- - name: Gather facts by tags
-   azure_rm_managed_disk_facts:
-       resource_group: "{{ resource_group }}"
-       tags:
-         - test
-         - galaxy
-
- - assert:
-       that: azure_storageaccounts | length >= 1
-
  - name: Change account type to an invalid type
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       account_type: PremiumL
+       storage_account_type: PremiumL
        disk_size_gb: 1
    register: change_account
    ignore_errors: yes 
@@ -90,7 +77,7 @@
 
  - assert:
        that:
-           - "azure_storageaccounts| length == 1"
+           - "managed_disk | length == 1"
 
  - name: Gather facts
    azure_rm_managed_disk_facts:
@@ -98,7 +85,7 @@
 
  - assert:
        that:
-           - "azure_storageaccounts | length > 0"
+           - "managed_disk | length > 0"
 
  - name: Delete acccount
    azure_rm_managed_disk:
