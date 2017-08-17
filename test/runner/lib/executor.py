@@ -681,8 +681,6 @@ def command_integration_role(args, target, start_at_task):
         inventory = args.inventory or 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
-        if hosts == 'net':
-            hosts = 'all'
     else:
         inventory = 'inventory'
         hosts = 'testhost'
