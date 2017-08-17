@@ -310,7 +310,12 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
             if prefix and not name.startswith(prefix):
                 continue
 
-            yield TestTarget(os.path.join(root, file_name), module_path, prefix, path)
+            file_path = os.path.join(root, file_name)
+
+            if os.path.islink(file_path):
+                continue
+
+            yield TestTarget(file_path, module_path, prefix, path)
 
     if extra_dirs:
         for extra_dir in extra_dirs:
