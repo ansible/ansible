@@ -214,7 +214,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
             ], default='Key, Secret, & Certificate Management', type='str')
         )
 
-        #store the results of the module operation 
+        # store the results of the module operation 
         self.results = dict(
             changed=False,
             state=dict()
@@ -239,7 +239,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
     
-        #create a new vault variable in case the 'try' doesn't find a vault
+        # create a new vault variable in case the 'try' doesn't find a vault
         vault = None
 
         for key in self.module_arg_spec.keys():
@@ -247,7 +247,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
         self.results['check_mode'] = self.check_mode
 
-        #retrieve resource group to make sure it exists
+        # retrieve resource group to make sure it exists
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             # Set default location
@@ -260,10 +260,10 @@ class AzureRMKeyVault(AzureRMModuleBase):
             self.log('Fetching Vault {0}'.format(self.name))
             vault = self.keyvault_client.vaults.get(self.resource_group, self.name)
 
-            #serialize object into a dictionary
+            # serialize object into a dictionary
             results = vault_to_dict(vault)
             
-            #don't change anything if creating an existing vault, but change if deleting it
+            # don't change anything if creating an existing vault, but change if deleting it
             if self.state == 'present':
                 changed = False
 
@@ -276,29 +276,25 @@ class AzureRMKeyVault(AzureRMModuleBase):
                 changed = True
 
             else:
-                #you can't delete what is not there
+                # you can't delete what is not there
                 changed = False
 
         self.results['changed'] = changed
         self.results['state'] = results
 
-        #return the results if your only gathering information
+        # return the results if your only gathering information
         if self.check_mode:
             return self.results
 
         if changed:
              if self.state == 'present':
-                #if you want to create or update a key vault, since it's 'present' 
+                # if you want to create or update a key vault, since it's 'present' 
                 if not vault:
                     # create new vault
                     self.log('Creating vault {0}'.format(self.name))
-
-                    #put in paramters for vault using create or update
-                    ####update it later based on if they true or false enable soft delete
                     use_sku = Sku(self.sku)
                     permission_preset = create_permissions(self)
                     access_policy_lst = [AccessPolicyEntry(self.tenant_id, self.object_id, permission_preset, application_id=self.application_id)]
-                    #self.fail('This is the current vault: {0}'.format(type(vault)))
                     vault_properties = VaultProperties(self.tenant_id,
                                                         use_sku,
                                                         access_policies=access_policy_lst,
@@ -320,7 +316,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
     def create_or_update_vault(self, vault):
         try:
-            #create or update the new Vault object we created
+            # create or update the new Vault object we created
             new_vault = self.keyvault_client.vaults.create_or_update(self.resource_group, self.name, vault)
         except Exception as exc:
             self.fail("Error creating or updating vault {0} - {1}".format(self.name, str(exc)))
@@ -328,7 +324,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
     def delete_vault(self):
         try:
-            #delete the Vault
+            # delete the Vault
             self.keyvault_client.vaults.delete(self.resource_group, self.name)
         except Exception as exc:
             self.fail("Error deleting vault {0} - {1}".format(self.name, str(exc)))
@@ -336,12 +332,11 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
 def create_permissions(self):
     # function takes in presets for permissions and returns a permissions object with the necessary/required permissions
-    #Permissions(keys=None, secrets=None, certificates=None, storage=None)
     fin_permissions = None
     k_perm = []
     s_perm = []
     c_perm = []
-    #if they want the 'Key, Secret, & Certificate Management' permission preset, create and return a new permissions class with all the necessary information
+    # if they want the 'Key, Secret, & Certificate Management' permission preset, create and return a new permissions class with all the necessary information
     if self.permissions == 'Key, Secret, & Certificate Management':
         k_perm = ['Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore']
         s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore']
@@ -369,7 +364,7 @@ def create_permissions(self):
     return fin_permissions
 
 def vault_to_dict(vault):
-    #turn Vault object into a dictionary (serialization)
+    # turn Vault object into a dictionary (serialization)
     result = dict(
         id=vault.id,
         name=vault.name,
