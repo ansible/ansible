@@ -121,7 +121,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         self.client = None
 
         super(AzureRMKeyVaultSecret, self).__init__(self.module_arg_spec,
-                                                    supports_check_mode=False,
+                                                    supports_check_mode=True,
                                                     required_if=required_if)
 
     def exec_module(self, **kwargs):
@@ -150,16 +150,18 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         self.results['changed'] = changed
         self.results['state'] = results
 
-        # Create secret
-        if self.state == 'present' and changed:
-            results['secret_id'] = self.create_secret(self.secret_name, self.secret_value)
-            self.results['state'] = results
-            self.results['state']['status'] = 'Created'
-        # Delete secret
-        elif self.state == 'absent' and changed:
-            results['secret_id'] = self.delete_secret(self.secret_name)
-            self.results['state'] = results
-            self.results['state']['status'] = 'Deleted'
+        if not self.check_mode:
+
+            # Create secret
+            if self.state == 'present' and changed:
+                results['secret_id'] = self.create_secret(self.secret_name, self.secret_value)
+                self.results['state'] = results
+                self.results['state']['status'] = 'Created'
+            # Delete secret
+            elif self.state == 'absent' and changed:
+                results['secret_id'] = self.delete_secret(self.secret_name)
+                self.results['state'] = results
+                self.results['state']['status'] = 'Deleted'
 
         return self.results
 
