@@ -11,9 +11,9 @@ The Ansible Core team provides a roadmap for each upcoming release. These roadma
 Pull Requests
 =============
 
-Ansible accepts code via pull requests ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>` in general.
+Ansible accepts code via *pull requests* ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>` in general.
 
-Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by the Ansibot.
+Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by the *Ansibot*.
 
 The Ansibot
 ===========
@@ -34,26 +34,11 @@ we can find new maintainers.
 Community Maintainers
 ---------------------
 
-Each module in Core and Extras has at least one assigned maintainer,
-listed in two maintainers files: one for `Core`_ and one for `Extras`_.
-
-Some modules have no community maintainers assigned. In this case, the
-maintainer is listed as “ansible”. Ultimately, it’s our goal to have at
-least one community maintainer for every module.
-
-The maintainer’s job is to review PRs and decide whether that PR should
-be merged (“shipit!”) or revised (“needs\_revision”).
-
-The ultimate goal of any Pull Request is to reach “shipit” status, where
-the Core team then decides whether the PR is ready to be merged. Not
-every PR that reaches the “shipit” label is actually ready to be merged,
-but the better our reviewers are, and the better our guidelines are, the
-more likely it will be that a PR that reaches “shipit” will be
-mergeable.
+Each module has at least one assigned maintainer,
+listed in a maintainers file:
 
 .. _Ansibot: https://github.com/ansible/ansibullbot/blob/master/triage.py
 .. _Core: https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS-CORE.txt
-.. _Extras: https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS-CORE.txt
 
 Some modules have no community maintainers assigned. In this case, the
 maintainer is listed as “ansible”. Ultimately, it’s our goal to have at
@@ -68,13 +53,14 @@ every PR that reaches the “shipit” label is actually ready to be merged,
 but the better our reviewers are, and the better our guidelines are, the
 more likely it will be that a PR that reaches “shipit” will be
 mergeable.
+
+
 
 Workflow
 --------
 
-The triage bot runs every six hours and examines every open PR in both
-core and extras repositories, and enforces state roughly according to
-the following workflow:
+The triage bot runs every six hours. It examines every open PR in the repositories, and enforces 
+state roughly according to the following workflow:
 
 -  If a PR has no workflow labels, it’s considered “new”. Files in the
    PR are identified, and the maintainers of those files are pinged by

@@ -1,8 +1,8 @@
 Reporting Bugs And Requesting Features
 ======================================
 
-I'd Like To Report A Bug
-------------------------
+Reporting A Bug
+---------------
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
