@@ -52,6 +52,7 @@ EXAMPLES = '''
 '''
 
 import time
+import re
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -71,16 +72,45 @@ def main():
 
     MONIT = module.get_bin_path('monit', True)
 
+    def monit_version():
+        rc, out, err = module.run_command('%s -V' % MONIT, check_rc=True)
+        version_line = out.split('\n')[0]
+        version = re.search("[0-9]+\.[0-9]+", version_line).group().split('.')
+        # Use only major and minor even if there are more these should be enough
+        return int(version[0]), int(version[1])
+
+    def is_version_higher_than_18():
+        return MONIT_MAJOR_VERSION > 3 or MONIT_MAJOR_VERSION == 3 and MONIT_MINOR_VERSION > 18
+
+    def parse(parts):
+        if is_version_higher_than_18():
+            return parse_current(parts)
+        else:
+            return parse_older_versions(parts)
+
+    def parse_older_versions(parts):
+        if len(parts) > 2 and parts[0].lower() == 'process' and parts[1] == "'%s'" % name:
+            return ' '.join(parts[2:]).lower()
+        else:
+            return ''
+
+    def parse_current(parts):
+        if len(parts) > 2 and parts[2].lower() == 'process' and parts[0] == name:
+            return ''.join(parts[1]).lower()
+        else:
+            return ''
+
     def status():
         """Return the status of the process in monit, or the empty string if not present."""
-        rc, out, err = module.run_command('%s summary' % MONIT, check_rc=True)
+        rc, out, err = module.run_command('%s %s' % (MONIT, SUMMARY_COMMAND), check_rc=True)
         for line in out.split('\n'):
             # Sample output lines:
             # Process 'name'    Running
             # Process 'name'    Running - restart pending
-            parts = line.split()
-            if len(parts) > 2 and parts[0].lower() == 'process' and parts[1] == "'%s'" % name:
-                return ' '.join(parts[2:]).lower()
+            parts = parse(line.split())
+            if parts != '':
+                return parts
+
         else:
             return ''
 
@@ -106,6 +136,10 @@ def main():
 
             time.sleep(sleep_time)
             running_status = status()
+
+    MONIT_MAJOR_VERSION, MONIT_MINOR_VERSION = monit_version()
+
+    SUMMARY_COMMAND = ('summary', 'summary -B')[is_version_higher_than_18()]
 
     if state == 'reloaded':
         if module.check_mode:
