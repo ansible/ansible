@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
-#                    Chris Houseknecht, <house@redhat.com>
+# Copyright (c) 2016 Sertac Ozercan, <seozerca@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,8 +14,141 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
+---
+module: azure_rm_virtualmachine
+
+version_added: "2.4"
+
+short_description: Manage Azure virtual machine scale sets.
+
+description:
+    - Create and update a virtual machine scale set.
+
+options:
+    resource_group:
+        description:
+            - Name of the resource group containing the virtual machine scale set.
+        required: true
+    name:
+        description:
+            - Name of the virtual machine.
+        required: true
+    state:
+        description:
+            - Assert the state of the virtual machine scale set.
+            - State 'present' will check that the machine exists with the requested configuration. If the configuration
+              of the existing machine does not match, the machine will be updated.
+              state.
+            - State 'absent' will remove the virtual machine scale set.
+        default: present
+        choices:
+            - absent
+            - present
+    location:
+        description:
+            - Valid Azure location. Defaults to location of the resource group.
+    vm_size:
+        description:
+            - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
+              subscription and location. Check your subscription for available choices.
+        required: true
+    capacity:
+        description:
+            - Capacity of VMSS
+        required: true
+    admin_username:
+        description:
+            - Admin username used to access the host after it is created. Required when creating a VM.
+    admin_password:
+        description:
+            - Password for the admin username. Not required if the os_type is Linux and SSH password authentication
+              is disabled by setting ssh_password_enabled to false.
+    ssh_password_enabled:
+        description:
+            - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
+              and require use of SSH keys.
+        default: true
+    ssh_public_keys:
+        description:
+            - "For os_type Linux provide a list of SSH keys. Each item in the list should be a dictionary where the
+              dictionary contains two keys: path and key_data. Set the path to the default location of the
+              authorized_keys files. On an Enterprise Linux host, for example, the path will be
+              /home/<admin username>/.ssh/authorized_keys. Set key_data to the actual value of the public key."
+    image:
+        description:
+            - "A dictionary describing the Marketplace image used to build the VM. Will contain keys: publisher,
+              offer, sku and version. NOTE: set image.version to 'latest' to get the most recent version of a given
+              image."
+        required: true
+    os_disk_caching:
+        description:
+            - Type of OS disk caching.
+        choices:
+            - ReadOnly
+            - ReadWrite
+        default: ReadOnly
+        aliases:
+            - disk_caching
+    os_type:
+        description:
+            - Base type of operating system.
+        choices:
+            - Windows
+            - Linux
+        default:
+            - Linux
+    managed_disk_type:
+        description:
+            - Managed disk type
+        choices:
+            - Standard_LRS
+            - Premium_LRS
+    virtual_network_name:
+        description:
+            - Virtual Network name
+        aliases:
+            - virtual_network
+    subnet_name:
+        description:
+            - Subnet name
+        aliases:
+            - subnet
+    remove_on_absent:
+        description:
+            - When removing a VM using state 'absent', also remove associated resources
+            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
+            - Any other input will be ignored
+        default: ['all']
+
+extends_documentation_fragment:
+    - azure
+    - azure_tags
+
+author:
+    - "Sertac Ozercan (@sozercan)"
+
 '''
 EXAMPLES = '''
+
+- name: Create VMSS
+  azure_rm_virtualmachine_scaleset:
+    resource_group: Testing
+    name: testvmss
+    vm_size: Standard_DS1_v2
+    capacity: 2
+    virtual_network_name: testvnet
+    subnet_name: testsubnet
+    admin_username: adminUser
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
+    managed_disk_type: Standard_LRS
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
 '''  # NOQA
 
 import random
@@ -74,12 +206,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             subnet_name=dict(type='str', aliases=['subnet']),
-            virtual_network_resource_group=dict(type = 'str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
-            allocated=dict(type='bool', default=True),
-            restarted=dict(type='bool', default=False),
-            started=dict(type='bool', default=True),
         )
 
         self.resource_group = None
@@ -98,19 +226,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.managed_disk_type = None
         self.os_type = None
         self.subnet_name = None
-        self.virtual_network_resource_group = None
         self.virtual_network_name = None
         self.tags = None
-        self.force = None
-        self.allocated = None
-        self.restarted = None
-        self.started = None
         self.differences = None
 
         self.results = dict(
             changed=False,
             actions=[],
-            powerstate_change=None,
             ansible_facts=dict(azure_vm=None)
         )
 
@@ -126,7 +248,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.remove_on_absent = set([resource.lower() for resource in self.remove_on_absent])
 
         changed = False
-        powerstate_change = None
         results = dict()
         vmss = None
         disable_ssh_password = None
@@ -181,41 +302,16 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 results = vmss_dict
 
                 if self.os_disk_caching and \
-                   self.os_disk_caching != vmss_dict['properties']['storageProfile']['osDisk']['caching']:
+                   self.os_disk_caching != vmss_dict['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching']:
                     self.log('CHANGED: virtual machine scale set {0} - OS disk caching'.format(self.name))
                     differences.append('OS Disk caching')
                     changed = True
-                    vmss_dict['properties']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
+                    vmss_dict['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
 
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
                     differences.append('Tags')
                     changed = True
-
-                if self.short_hostname and self.short_hostname != vmss_dict['properties']['osProfile']['computerName']:
-                    self.log('CHANGED: virtual machine scale set {0} - short hostname'.format(self.name))
-                    differences.append('Short Hostname')
-                    changed = True
-                    vmss_dict['properties']['osProfile']['computerName'] = self.short_hostname
-
-                if self.started and vmss_dict['powerstate'] != 'running':
-                    self.log("CHANGED: virtual machine scale set {0} not running and requested state 'running'".format(self.name))
-                    changed = True
-                    powerstate_change = 'poweron'
-                elif self.state == 'present' and vmss_dict['powerstate'] == 'running' and self.restarted:
-                    self.log("CHANGED: virtual machine scale set {0} {1} and requested state 'restarted'"
-                             .format(self.name, vmss_dict['powerstate']))
-                    changed = True
-                    powerstate_change = 'restarted'
-                elif self.state == 'present' and not self.allocated and vmss_dict['powerstate'] != 'deallocated':
-                    self.log("CHANGED: virtual machine scale set {0} {1} and requested state 'deallocated'"
-                             .format(self.name, vmss_dict['powerstate']))
-                    changed = True
-                    powerstate_change = 'deallocated'
-                elif not self.started and vmss_dict['powerstate'] == 'running':
-                    self.log("CHANGED: virtual machine scale set {0} running and requested state 'stopped'".format(self.name))
-                    changed = True
-                    powerstate_change = 'poweroff'
 
                 self.differences = differences
 
@@ -232,7 +328,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         self.results['changed'] = changed
         self.results['ansible_facts']['azure_vmss'] = results
-        self.results['powerstate_change'] = powerstate_change
 
         if self.check_mode:
             return self.results
@@ -263,10 +358,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         self.short_hostname = self.name
 
                     managed_disk = VirtualMachineScaleSetManagedDiskParameters(storage_account_type=self.managed_disk_type)
-
-                    # virtual_network = VirtualNetwork(id=id)
-                    # subnet = Subnet(id=id)
-                    # nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
 
                     vmss_resource = VirtualMachineScaleSet(
                         self.location,
@@ -333,23 +424,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
 
-                # Make sure we leave the machine in requested power state
-                if (powerstate_change == 'poweron' and
-                        self.results['ansible_facts']['azure_vmss']['powerstate'] != 'running'):
-                    # Attempt to power on the machine
-                    self.power_on_vmss()
-
-                elif (powerstate_change == 'poweroff' and
-                        self.results['ansible_facts']['azure_vmss']['powerstate'] == 'running'):
-                    # Attempt to power off the machine
-                    self.power_off_vmss()
-
-                elif powerstate_change == 'restarted':
-                    self.restart_vmss()
-
-                elif powerstate_change == 'deallocated':
-                    self.deallocate_vmss()
-
                 self.results['ansible_facts']['azure_vmss'] = self.serialize_vmss(self.get_vmss())
 
             elif self.state == 'absent':
@@ -407,72 +481,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         result['location'] = vmss.location
         result['tags'] = vmss.tags
 
-        result['powerstate'] = dict()
-        vmss = self.compute_client.virtual_machine_scale_sets.get_instance_view(self.resource_group, self.name)
-
-        if vmss.instance_view:
-            result['powerstate'] = next((s.code.replace('PowerState/', '')
-                                         for s in vmss.instance_view.statuses if s.code.startswith('PowerState')), None)
-
-        # Expand public IPs to include config properties
-        # for interface in result['properties']['networkProfile']['networkInterfaceConfigurations']:
-        #     for config in interface['properties']['ipConfigurations']:
-        #         if config['properties'].get('publicIPAddress'):
-        #             pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])
-        #             try:
-        #                 pip = self.network_client.public_ip_addresses.get(self.resource_group,
-        #                                                                   pipid_dict['publicIPAddresses'])
-        #             except Exception as exc:
-        #                 self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'],
-        #                                                                       str(exc)))
-        #             pip_dict = self.serialize_obj(pip, 'PublicIPAddress')
-        #             config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
-        #             config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
-
-        self.log(result, pretty_print=True)
-        if self.state != 'absent' and not result['powerstate']:
-            self.fail("Failed to determine PowerState of virtual machine scale set {0}".format(self.name))
         return result
-
-    def power_off_vmss(self):
-        self.log("Powered off virtual machine {0}".format(self.name))
-        self.results['actions'].append("Powered off virtual machine scale set {0}".format(self.name))
-        try:
-            poller = self.compute_client.virtual_machine_scale_sets.power_off(self.resource_group, self.name)
-            self.get_poller_result(poller)
-        except Exception as exc:
-            self.fail("Error powering off virtual machine scale set {0} - {1}".format(self.name, str(exc)))
-        return True
-
-    def power_on_vmss(self):
-        self.results['actions'].append("Powered on virtual machine scale set {0}".format(self.name))
-        self.log("Power on virtual machine {0}".format(self.name))
-        try:
-            poller = self.compute_client.virtual_machine_scale_sets.start(self.resource_group, self.name)
-            self.get_poller_result(poller)
-        except Exception as exc:
-            self.fail("Error powering on virtual machine scale set {0} - {1}".format(self.name, str(exc)))
-        return True
-
-    def restart_vmss(self):
-        self.results['actions'].append("Restarted virtual machine scale set {0}".format(self.name))
-        self.log("Restart virtual machine {0}".format(self.name))
-        try:
-            poller = self.compute_client.virtual_machine_scale_sets.restart(self.resource_group, self.name)
-            self.get_poller_result(poller)
-        except Exception as exc:
-            self.fail("Error restarting virtual machine scale set {0} - {1}".format(self.name, str(exc)))
-        return True
-
-    def deallocate_vmss(self):
-        self.results['actions'].append("Deallocated virtual machine scale set {0}".format(self.name))
-        self.log("Deallocate virtual machine {0}".format(self.name))
-        try:
-            poller = self.compute_client.virtual_machine_scale_sets.deallocate(self.resource_group, self.name)
-            self.get_poller_result(poller)
-        except Exception as exc:
-            self.fail("Error deallocating virtual machine scale set {0} - {1}".format(self.name, str(exc)))
-        return True
 
     def delete_vmss(self, vmss):
         self.log("Deleting virtual machine scale set {0}".format(self.name))
@@ -530,126 +539,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             if size.name == self.vm_size:
                 return True
         return False
-
-    # def create_default_nic(self):
-    #     '''
-    #     Create a default Network Interface <vm name>01. Requires an existing virtual network
-    #     with one subnet. If NIC <vm name>01 exists, use it. Otherwise, create one.
-
-    #     :return: NIC object
-    #     '''
-
-    #     network_interface_name = self.name + '01'
-    #     nic = None
-
-    #     self.log("Create default NIC {0}".format(network_interface_name))
-    #     self.log("Check to see if NIC {0} exists".format(network_interface_name))
-    #     try:
-    #         nic = self.network_client.network_interfaces.get(self.resource_group, network_interface_name)
-    #     except CloudError:
-    #         pass
-
-    #     if nic:
-    #         self.log("NIC {0} found.".format(network_interface_name))
-    #         self.check_provisioning_state(nic)
-    #         return nic
-
-    #     self.log("NIC {0} does not exist.".format(network_interface_name))
-
-    #     virtual_network_resource_group = None
-    #     if self.virtual_network_resource_group:
-    #         virtual_network_resource_group = self.virtual_network_resource_group
-    #     else:
-    #         virtual_network_resource_group = self.resource_group
-
-    #     if self.virtual_network_name:
-    #         try:
-    #             self.network_client.virtual_networks.list(virtual_network_resource_group, self.virtual_network_name)
-    #             virtual_network_name = self.virtual_network_name
-    #         except CloudError:
-    #             self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
-
-    #     else:
-    #         # Find a virtual network
-    #         no_vnets_msg = "Error: unable to find virtual network in resource group {0}. A virtual network " \
-    #                        "with at least one subnet must exist in order to create a NIC for the virtual " \
-    #                        "machine.".format(self.resource_group)
-
-    #         virtual_network_name = None
-    #         try:
-    #             vnets = self.network_client.virtual_networks.list(self.resource_group)
-    #         except CloudError:
-    #             self.log('cloud error!')
-    #             self.fail(no_vnets_msg)
-
-    #         for vnet in vnets:
-    #             virtual_network_name = vnet.name
-    #             self.log('vnet name: {0}'.format(vnet.name))
-    #             break
-
-    #         if not virtual_network_name:
-    #             self.fail(no_vnets_msg)
-
-    #     if self.subnet_name:
-    #         try:
-    #             subnet = self.network_client.subnets.get(self.resource_group, virtual_network_name, self.subnet_name)
-    #             subnet_id = subnet.id
-    #         except Exception as exc:
-    #             self.fail("Error: fetching subnet {0} - {1}".format(self.subnet_name, str(exc)))
-    #     else:
-    #         no_subnets_msg = "Error: unable to find a subnet in virtual network {0}. A virtual network " \
-    #                          "with at least one subnet must exist in order to create a NIC for the virtual " \
-    #                          "machine.".format(virtual_network_name)
-
-    #         subnet_id = None
-    #         try:
-    #             subnets = self.network_client.subnets.list(virtual_network_resource_group, virtual_network_name)
-    #         except CloudError:
-    #             self.fail(no_subnets_msg)
-
-    #         for subnet in subnets:
-    #             subnet_id = subnet.id
-    #             self.log('subnet id: {0}'.format(subnet_id))
-    #             break
-
-    #         if not subnet_id:
-    #             self.fail(no_subnets_msg)
-
-    #     self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
-    #     pip = self.create_default_pip(self.resource_group, self.location, self.name, self.public_ip_allocation_method)
-
-    #     self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
-    #     group = self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type,
-    #                                               self.open_ports)
-
-    #     parameters = NetworkInterface(
-    #         location=self.location,
-    #         ip_configurations=[
-    #             NetworkInterfaceIPConfiguration(
-    #                 private_ip_allocation_method='Dynamic',
-    #             )
-    #         ]
-    #     )
-    #     parameters.ip_configurations[0].subnet = Subnet(id=subnet_id)
-    #     parameters.ip_configurations[0].name = 'default'
-    #     parameters.network_security_group = NetworkSecurityGroup(id=group.id,
-    #                                                              location=group.location,
-    #                                                              resource_guid=group.resource_guid)
-    #     parameters.ip_configurations[0].public_ip_address = PublicIPAddress(id=pip.id,
-    #                                                                         location=pip.location,
-    #                                                                         resource_guid=pip.resource_guid)
-
-    #     self.log("Creating NIC {0}".format(network_interface_name))
-    #     self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)
-    #     self.results['actions'].append("Created NIC {0}".format(network_interface_name))
-    #     try:
-    #         poller = self.network_client.network_interfaces.create_or_update(self.resource_group,
-    #                                                                          network_interface_name,
-    #                                                                          parameters)
-    #         new_nic = self.get_poller_result(poller)
-    #     except Exception as exc:
-    #         self.fail("Error creating network interface {0} - {1}".format(network_interface_name, str(exc)))
-    #     return new_nic
 
 
 def main():
