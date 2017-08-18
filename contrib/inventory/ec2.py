@@ -139,7 +139,7 @@ from ansible.module_utils import ec2 as ec2_utils
 
 HAS_BOTO3 = False
 try:
-    import boto3
+    import boto3  # noqa
     HAS_BOTO3 = True
 except ImportError:
     pass
@@ -238,10 +238,10 @@ class Ec2Inventory(object):
         ec2_ini_path = os.environ.get('EC2_INI_PATH', defaults['ec2']['ini_path'])
         ec2_ini_path = os.path.expanduser(os.path.expandvars(ec2_ini_path))
 
-        if not os.path.isfile(ec2_ini_path):
+        if os.path.isfile(ec2_ini_path):
+            config.read(ec2_ini_path)
+        else:
             ec2_ini_path = os.path.expanduser(defaults['ec2']['ini_fallback'])
-
-        config.read(ec2_ini_path)
 
         # is eucalyptus?
         self.eucalyptus_host = None
@@ -490,23 +490,21 @@ class Ec2Inventory(object):
                     setattr(self, option, True)
 
         # Do we need to just include hosts that match a pattern?
-        try:
+        pattern_include = None
+        if config.has_option('ec2', 'pattern_include'):
             pattern_include = config.get('ec2', 'pattern_include')
-            if pattern_include and len(pattern_include) > 0:
-                self.pattern_include = re.compile(pattern_include)
-            else:
-                self.pattern_include = None
-        except configparser.NoOptionError:
+        if pattern_include is not None and len(pattern_include) > 0:
+            self.pattern_include = re.compile(pattern_include)
+        else:
             self.pattern_include = None
 
         # Do we need to exclude hosts that match a pattern?
-        try:
+        pattern_exclude = None
+        if config.has_option('ec2', 'pattern_exclude'):
             pattern_exclude = config.get('ec2', 'pattern_exclude')
-            if pattern_exclude and len(pattern_exclude) > 0:
-                self.pattern_exclude = re.compile(pattern_exclude)
-            else:
-                self.pattern_exclude = None
-        except configparser.NoOptionError:
+        if pattern_exclude is not None and len(pattern_exclude) > 0:
+            self.pattern_exclude = re.compile(pattern_exclude)
+        else:
             self.pattern_exclude = None
 
         # Do we want to stack multiple filters?
