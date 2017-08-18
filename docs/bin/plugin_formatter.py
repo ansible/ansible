@@ -179,7 +179,7 @@ def get_module_info(module_dir, limit_to_modules=None, verbose=False):
 
         # If requested, limit module documentation building only to passed-in
         # modules.
-        if limit_to_modules is not None and module.lower() in limit_to_modules:
+        if limit_to_modules is not None and module.lower() not in limit_to_modules:
             continue
 
         deprecated = False
