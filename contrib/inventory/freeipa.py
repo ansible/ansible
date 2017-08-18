@@ -3,6 +3,7 @@
 import argparse
 from ipalib import api
 import json
+from distutils.version import StrictVersion
 
 
 def initialize():
@@ -31,13 +32,17 @@ def list_groups(api):
 
     inventory = {}
     hostvars = {}
-    meta = {}
 
+    ipa_version = api.Command.env()['result']['version']
     result = api.Command.hostgroup_find()['result']
 
     for hostgroup in result:
         # Get direct and indirect members (nested hostgroups) of hostgroup
         members = []
+        if StrictVersion(ipa_version) >= StrictVersion('4.0.0'):
+            hostgroup_name = hostgroup['cn'][0]
+            hostgroup = api.Command.hostgroup_show(hostgroup_name)['result']
+
         if 'member_host' in hostgroup:
             members = [host for host in hostgroup['member_host']]
         if 'memberindirect_host' in hostgroup:
