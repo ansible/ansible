@@ -43,6 +43,9 @@ options:
     descr:
         description: description of server
 
+extends_documentation_fragment:
+    - cisco_ucs
+
 requirements:
     - 'ucsmsdk'
     - 'ucsm_apis'
