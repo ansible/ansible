@@ -54,13 +54,12 @@ PARAMETER_MAP = {
     'db_name': 'DBName',
     'engine_version': 'EngineVersion',
     'force_failover': 'ForceFailover',
-    'instance_name': 'DBInstanceIdentifier',
+    'db_instance_id': 'DBInstanceIdentifier',
     'instance_type': 'DBInstanceClass',
     'iops': 'Iops',
     'license_model': 'LicenseModel',
     'maint_window': 'PreferredMaintenanceWindow',
     'multi_zone': 'MultiAZ',
-    'new_instance_name': 'NewDBInstanceIdentifier',
     'option_group': 'OptionGroupName',
     'parameter_group': 'DBParameterGroupName',
     'password': 'MasterUserPassword',
@@ -95,11 +94,6 @@ def get_db_instance(conn, instancename):
 def instance_to_facts(instance):
     assert 'DBInstanceIdentifier' in instance, "instance argument was not a valid instance"
     d = camel_dict_to_snake_dict(instance)
-    d.update({
-        'id': instance.get('DBInstanceIdentifier'),
-        'instance_id': instance.get('DBInstanceIdentifier'),
-        'create_time': instance.get('InstanceCreateTime', ''),
-    })
     return d
 
 
@@ -117,11 +111,6 @@ def get_snapshot(conn, snapshotid):
 def snapshot_to_facts(snapshot):
     assert 'DBSnapshotIdentifier' in snapshot, "snapshot argument was not a valid snapshot"
     d = camel_dict_to_snake_dict(snapshot)
-    d.update({
-        'id': snapshot.get('DBSnapshotIdentifier'),
-        'instance_id': snapshot.get('DBInstanceIdentifier'),
-        'create_time': snapshot.get('SnapshotCreateTime', ''),
-    })
     return d
 
 
@@ -169,12 +158,17 @@ def instance_facts_diff(state_a, state_b):
         old_port = state_a.get("endpoint").get("port")
     except AttributeError:
         old_port = None
+    if old_port is None:
+        old_port = state_a.get("port")
+
     try:
         new_port = state_b.get("endpoint").get("port")
     except AttributeError:
         new_port = None
+    if new_port is None:
+        new_port = state_b.get("port")
 
-    if old_port != new_port:
+    if new_port and (old_port != new_port):
         before['port'] = old_port
         after['port'] = new_port
     result = dict()
