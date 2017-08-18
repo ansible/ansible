@@ -173,8 +173,8 @@
 - name: Change interface parameters in aggregate
   iosxr_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/3 }
-    - { name: GigabitEthernet0/0/0/2 }
+    - name: GigabitEthernet0/0/0/3
+    - name: GigabitEthernet0/0/0/2
     state: present
     provider: "{{ cli }}"
   register: result
@@ -209,8 +209,9 @@
 - name: Enable interface aggregate
   iosxr_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/3, enabled: True }
-    - { name: GigabitEthernet0/0/0/2, enabled: True }
+    - name: GigabitEthernet0/0/0/3
+    - name: GigabitEthernet0/0/0/2
+    enabled: True
     state: present
     provider: "{{ cli }}"
   register: result
@@ -221,11 +222,20 @@
       - '"no interface GigabitEthernet0/0/0/3 shutdown" in result.commands'
       - '"no interface GigabitEthernet0/0/0/2 shutdown" in result.commands'
 
+- name: interface aggregate (setup)
+  iosxr_interface:
+    aggregate:
+    - name: GigabitEthernet0/0/0/4
+    - name: GigabitEthernet0/0/0/5
+    description: test-interface-initial
+    provider: "{{ cli }}"
+  register: result
+
 - name: Create interface aggregate
   iosxr_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/4 }
-    - { name: GigabitEthernet0/0/0/5 }
+    - name: GigabitEthernet0/0/0/4
+    - name: GigabitEthernet0/0/0/5
     state: present
     provider: "{{ cli }}"
   register: result
@@ -239,9 +249,9 @@
 - name: Delete interface aggregate
   iosxr_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/4, state: absent }
-    - { name: GigabitEthernet0/0/0/5, state: absent }
-    state: present
+    - name: GigabitEthernet0/0/0/4
+    - name: GigabitEthernet0/0/0/5
+    state: absent
     provider: "{{ cli }}"
   register: result
 
@@ -254,9 +264,9 @@
 - name: Delete interface aggregate (idempotent)
   iosxr_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/4, state: absent }
-    - { name: GigabitEthernet0/0/0/5, state: absent }
-    state: present
+    - name: GigabitEthernet0/0/0/4
+    - name: GigabitEthernet0/0/0/5
+    state: absent
     provider: "{{ cli }}"
   register: result
 
