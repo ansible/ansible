@@ -276,7 +276,7 @@ class AzureRM(object):
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
             if tenant is not None:
-                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)          
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)
             else:
                 self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
@@ -490,8 +490,7 @@ class AzureInventory(object):
                 try:
                     virtual_machines = self._compute_client.virtual_machines.list(resource_group)
                 except Exception as exc:
-                    sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group,
-                                                                                                    str(exc)))
+                    sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group, str(exc)))
                 if self._args.host or self.tags:
                     selected_machines = self._selected_machines(virtual_machines)
                     self._load_machines(selected_machines)
@@ -801,6 +800,7 @@ def main():
                  "Do you have Azure >= 2.0.0rc5 installed? (try `pip install 'azure>=2.0.0rc5' --upgrade`)".format(AZURE_MIN_VERSION, azure_compute_version))
 
     AzureInventory()
+
 
 if __name__ == '__main__':
     main()
