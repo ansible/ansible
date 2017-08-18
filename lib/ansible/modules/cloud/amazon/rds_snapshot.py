@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -92,28 +92,27 @@ import time
 # import module snippets
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.aws.rds import RDSSnapshot, get_db_snapshot
-
-# FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
+from ansible.module_utils.aws.rds import get_snapshot, snapshot_to_facts
 
 
-def await_resource(conn, resource, status, module):
+def await_resource(conn, resource_name, status, module):
     wait_timeout = module.params.get('wait_timeout') + time.time()
-    while wait_timeout > time.time() and resource.status != status:
+    resource = get_snapshot(conn, resource_name)
+    while wait_timeout > time.time() and resource['Status'] != status:
         time.sleep(5)
         if wait_timeout <= time.time():
-            module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
+            module.fail_json(msg="Timeout waiting for RDS resource %s" % resource_name)
         # Temporary until all the rds2 commands have their responses parsed
-        if resource.name is None:
-            module.fail_json(msg="Failed waiting for RDS snapshot %s" % resource.snapshot)
-        resource = get_db_snapshot(conn, resource.name)
+        if resource is None:
+            module.fail_json(msg="Failed waiting for RDS snapshot %s" % resource_name)
+        resource = get_snapshot(conn, resource_name)
     return resource
 
 
 def delete_snapshot(module, conn):
     snapshot = module.params.get('snapshot')
 
-    result = get_db_snapshot(conn, snapshot)
+    result = get_snapshot(conn, snapshot)
     if not result:
         module.exit_json(changed=False)
     if result.status == 'deleting':
@@ -143,34 +142,36 @@ def create_snapshot(module, conn):
         module.fail_json(msg='instance_name is required for rds_snapshot when state=present')
     snapshot_name = module.params.get('snapshot')
     changed = False
-    snapshot = get_db_snapshot(conn, snapshot_name)
+    snapshot = get_snapshot(conn, snapshot_name)
     if not snapshot:
         try:
-            resource = conn.create_db_snapshot(DBSnapshotIdentifier=snapshot_name,
+            snapshot = conn.create_db_snapshot(DBSnapshotIdentifier=snapshot_name,
                                                DBInstanceIdentifier=instance_name)
-            snapshot = RDSSnapshot(resource['DBSnapshot'])
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e, msg="trying to create db snapshot")
 
     if module.params.get('wait'):
-        snapshot = await_resource(conn, snapshot, 'available', module)
+        snapshot = await_resource(conn, snapshot_name, 'available', module)
     else:
-        snapshot = get_db_snapshot(conn, snapshot_name)
+        snapshot = get_snapshot(conn, snapshot_name)
 
-    module.exit_json(changed=changed, snapshot=snapshot.data)
+    module.exit_json(changed=changed, snapshot=snapshot_to_facts(snapshot))
+
+
+argument_spec = dict(
+    state=dict(choices=['present', 'absent'], default='present'),
+    db_snapshot_identifier=dict(aliases=['id'], required=True),
+    db_instance_identifier=dict(aliases=['instance']),
+    wait=dict(type='bool', default=False),
+    wait_timeout=dict(type='int', default=300),
+    tags=dict(type='dict'),
+)
 
 
 def main():
     module = AnsibleAWSModule(
-        argument_spec=dict(
-            state=dict(choices=['present', 'absent'], default='present'),
-            snapshot=dict(required=True),
-            instance_name=dict(),
-            wait=dict(type='bool', default=False),
-            wait_timeout=dict(type='int', default=300),
-            tags=dict(type='dict'),
-        )
+        argument_spec=argument_spec
     )
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -189,4 +190,5 @@ def main():
         create_snapshot(module, conn)
 
 
-main()
+if __name__ == '__main__':
+    main()
