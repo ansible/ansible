@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachine
+module: azure_rm_virtualmachine_scaleset
 
 version_added: "2.4"
 
@@ -156,21 +156,24 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import NetworkInterfaceReference, \
-                                          VirtualMachineScaleSet, HardwareProfile, \
-                                          VirtualMachineScaleSetStorageProfile, VirtualMachineScaleSetOSProfile, \
-                                          VirtualMachineScaleSetOSDisk, VirtualMachineScaleSetDataDisk, \
-                                          VirtualHardDisk, VirtualMachineScaleSetManagedDiskParameters, \
-                                          ImageReference, VirtualMachineScaleSetNetworkProfile, LinuxConfiguration, \
-                                          SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
-                                          DiskCreateOptionTypes, CachingTypes, VirtualMachineScaleSetVMProfile, \
-                                          VirtualMachineScaleSetIdentity, VirtualMachineScaleSetIPConfiguration, \
-                                          VirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings, \
-                                          VirtualMachineScaleSetPublicIPAddressConfiguration, Sku, UpgradePolicy, \
-                                          VirtualMachineScaleSetNetworkConfiguration, ApiEntityReference
+    from azure.mgmt.compute.models import VirtualMachineScaleSet, \
+        VirtualMachineScaleSetStorageProfile, \
+        VirtualMachineScaleSetOSProfile, \
+        VirtualMachineScaleSetOSDisk, VirtualMachineScaleSetDataDisk, \
+        VirtualMachineScaleSetManagedDiskParameters, \
+        VirtualMachineScaleSetNetworkProfile, LinuxConfiguration, \
+        SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
+        DiskCreateOptionTypes, CachingTypes, \
+        VirtualMachineScaleSetVMProfile, VirtualMachineScaleSetIdentity, \
+        VirtualMachineScaleSetIPConfiguration, \
+        VirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings, \
+        VirtualMachineScaleSetPublicIPAddressConfiguration, Sku, \
+        UpgradePolicy, VirtualMachineScaleSetNetworkConfiguration, \
+        ApiEntityReference
 
-    from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
-                                          NetworkInterfaceIPConfiguration, Subnet, VirtualNetwork
+    from azure.mgmt.network.models import PublicIPAddress, \
+        NetworkSecurityGroup, NetworkInterface, \
+        NetworkInterfaceIPConfiguration, Subnet, VirtualNetwork
 
 except ImportError:
     # This is handled in azure_rm_common
@@ -236,8 +239,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             ansible_facts=dict(azure_vm=None)
         )
 
-        super(AzureRMVirtualMachineScaleSet, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                    supports_check_mode=True)
+        super(AzureRMVirtualMachineScaleSet, self).__init__(
+            derived_arg_spec=self.module_arg_spec,
+            supports_check_mode=True
+        )
 
     def exec_module(self, **kwargs):
 
@@ -461,9 +466,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         try:
             subnet = self.network_client.subnets.get(self.resource_group, vnet_name, subnet_name)
         except Exception as exc:
-            self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(subnet_name,
-                                                                                      vnet_name,
-                                                                                      str(exc)))
+            self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(
+                subnet_name,
+                vnet_name,
+                str(exc)))
         return subnet
 
     def serialize_vmss(self, vmss):
