@@ -68,6 +68,7 @@ EXAMPLES = '''
     priority: -10
 '''
 
+import os
 import re
 import subprocess
 
@@ -137,6 +138,8 @@ def main():
         try:
             # install the requested path if necessary
             if path not in all_alternatives:
+                if not os.path.exists(path):
+                    module.fail_json(msg="Specified path %s does not exist" % path)
                 if not link:
                     module.fail_json(msg="Needed to install the alternative, but unable to do so as we are missing the link")
 
