@@ -486,11 +486,20 @@ def delete_db_instance(module, conn):
     return dict(changed=True, response=response, instance=instance)
 
 
-def update_rds_tags(module, conn, resource, current_tags, desired_tags):
-    changed = False
+def update_rds_tags(module, conn, db_instance=None):
+    # if we get no db_instance we should go collect one; not needed
+    # now - we currently inherit the one modify ends up with
+    assert db_instance is not None, "internal error - no db_instance in update_rds_tags call"
+
+    db_instance_arn = db_instance['DBInstanceArn']
+
     # it's much easier to do set manipulation in ansible form
-    current_tags = boto3_tag_list_to_ansible_dict(current_tags)
-    desired_tags = boto3_tag_list_to_ansible_dict(desired_tags)
+    current_tag_list = conn.list_tags_for_resource(db_instance_arn)['TagList']
+    current_tags = boto3_tag_list_to_ansible_dict(current_tag_list)
+    desired_tags = module.params.get('tags')
+
+    changed = False
+
     current_keys = set(current_tags.keys())
     desired_keys = set(desired_tags.keys())
     to_add = desired_keys - current_keys
@@ -503,7 +512,7 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
 
     if to_delete:
         try:
-            conn.remove_tags_from_resource(ResourceName=resource, TagKeys=list(to_delete))
+            conn.remove_tags_from_resource(ResourceName=db_instance_arn, TagKeys=list(to_delete))
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e, msg="trying to remove old tags from instance")
         changed = True
@@ -511,12 +520,12 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
     if to_add:
         tag_map = [{'Key': k, 'Value': desired_tags[k]} for k in to_add]
         try:
-            conn.add_tags_to_resource(ResourceName=resource, Tags=tag_map)
+            conn.add_tags_to_resource(ResourceName=db_instance_arn, Tags=tag_map)
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e, msg="trying to add new tags to instance")
         changed = True
 
-    return dict(changed=changed)
+    return changed
 
 
 def abort_on_impossible_changes(module, before_facts):
@@ -692,8 +701,7 @@ def modify_db_instance(module, conn):
     changed = not not diff  # "not not" casts from dict to boolean!
 
     # boto3 modify_db_instance can't modify tags directly
-    current_tags = conn.list_tags_for_resource(ResourceName=response['DBInstance']['DBInstanceArn'])['TagList']
-    if update_rds_tags(module, conn, response['DBInstance']['DBInstanceArn'], current_tags, module.params.get('tags')):
+    if update_rds_tags(module, conn, db_instance=return_instance):
         changed = True
     return dict(changed=changed, instance=return_instance, diff=diff)
 
@@ -843,8 +851,7 @@ argument_spec.update(
         license_model=dict(choices=LICENSE_MODELS),
         multi_zone=dict(type='bool', default=False),
         iops=dict(type='int'),
-        storage_type=dict(
-            choices=['standard', 'io1', 'gp2'], default='standard'),
+        storage_type=dict(choices=['standard', 'io1', 'gp2'], default='standard'),
         security_groups=dict(),
         vpc_security_groups=dict(type='list'),
         port=dict(type='int'),
