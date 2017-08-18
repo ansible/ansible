@@ -55,7 +55,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Bruno Medina (@tstringer)"
+    - "Bruno Medina (@brusMX)"
 '''
 
 EXAMPLES = '''

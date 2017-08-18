@@ -90,7 +90,7 @@ extends_documentation_fragment:
     - azure
     - azure_tags
 author:
-    - "Bruno Medina (@brusmx)"
+    - "Bruno Medina (@brusMX)"
 '''
 
 EXAMPLES = '''
