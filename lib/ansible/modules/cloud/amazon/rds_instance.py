@@ -966,7 +966,7 @@ def main():
     validate_parameters(module)
     conn = setup_client(module)
     return_dict = run_task(module, conn)
-    module.exit_json(return_dict)
+    module.exit_json(**return_dict)
 
 
 if __name__ == '__main__':
