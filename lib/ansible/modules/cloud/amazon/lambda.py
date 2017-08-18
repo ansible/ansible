@@ -48,7 +48,7 @@ options:
     description:
       - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
         resources. You may use the bare ARN if the role belongs to the same AWS account.
-    default: null
+    required: true
   handler:
     description:
       - The function within your code that Lambda calls to begin execution
@@ -234,7 +234,7 @@ def main():
         name=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         runtime=dict(type='str', required=True),
-        role=dict(type='str', default=None),
+        role=dict(type='str', required=True),
         handler=dict(type='str', default=None),
         zip_file=dict(type='str', default=None, aliases=['src']),
         s3_bucket=dict(type='str'),
