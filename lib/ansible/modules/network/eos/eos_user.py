@@ -149,9 +149,11 @@ session_name:
 
 import re
 
+from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.eos import eos_argument_spec, check_args
@@ -315,8 +317,7 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        aggregate=dict(type='list', aliases=['collection', 'users']),
+    element_spec = dict(
         name=dict(),
 
         configured_password=dict(no_log=True),
@@ -328,10 +329,20 @@ def main():
 
         sshkey=dict(),
 
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['collection', 'users']),
+        purge=dict(type='bool', default=False)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(eos_argument_spec)
     mutually_exclusive = [('name', 'aggregate')]
 
