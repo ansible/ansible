@@ -298,6 +298,8 @@ def main():
     kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
+    else:
+        kwargs['action'] = 'merge'
 
     with locked_config(module):
         diff = load_config(module, tostring(ele), warnings, **kwargs)
