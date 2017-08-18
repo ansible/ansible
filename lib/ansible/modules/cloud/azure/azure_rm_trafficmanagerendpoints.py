@@ -117,25 +117,15 @@ EXAMPLES = '''
       endpoint_type: "ExternalEndpoints"
 '''
 RETURN = '''
-contains_resources:
-    description: Contains associated resources.
-    returned: always
-    type: bool
-    sample: True
 state:
-    description: Current state of the endpoint.
+    description: Current state of the endpoint
     returned: always
     type: dict
-    sample: {
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
-        "location": "westus",
-        "name": "Testing",
-        "provisioning_state": "Succeeded",
-        "tags": {
-            "delete": "on-exit",
-            "testing": "no"
-        }
-    }
+
+changed:
+    description: Whether or not the resource has changed
+    returned: always
+    type: bool
 '''
 
 try:
