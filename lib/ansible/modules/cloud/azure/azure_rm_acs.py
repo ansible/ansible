@@ -407,22 +407,25 @@ class AzureRMContainerService(AzureRMModuleBase):
                         to_be_updated = True
 
                     # Cannot Update the master count for now
-                    # if response['master_profile'].count != self.master_profile[0].get('count'):
+                     if response['master_profile'].count != self.master_profile[0].get('count'):
                     #     self.log("Master Profile Count Diff, Was {0} / Now {1}".format(response['master_profile'].count, self.master_profile[0].get('count')))
                     #     to_be_updated = True
+                        module.warn("master_profile.count cannot be updated")
 
                     # Cannot Update the SSH Key for now
-                    # if response['linux_profile'].ssh.public_keys[0].key_data != self.linux_profile[0].get('ssh_key'):
+                     if response['linux_profile'].ssh.public_keys[0].key_data != self.linux_profile[0].get('ssh_key'):
                     #     self.log("Linux Profile Diff SSH, Was {0} / Now {1}".format(response['linux_profile'].ssh.public_keys[0].key_data, self.linux_profile[0].get('ssh_key')))
                     #     to_be_updated = True
+                        module.warn("linux_profile.ssh_key cannot be updated")
                     
                     # Cannot Update the Username for now
-                    # if response['linux_profile'].admin_username != self.linux_profile[0].get('admin_username'):
+                     if response['linux_profile'].admin_username != self.linux_profile[0].get('admin_username'):
                     #     self.log("Linux Profile Diff User, Was {0} / Now {1}".format(response['linux_profile'].admin_username, self.linux_profile[0].get('admin_username')))
                     #     to_be_updated = True
+                        module.warn("linux_profile.admin_username cannot be updated")
                    
                     if len(response['agent_pool_profiles']) != len(self.agent_pool_profiles):
-                        self.log("Agent Pool length is diff, TBU")
+                        self.log("Agent Pool length is diff, need to updated")
                         to_be_updated = True
 
                     for profile_result in response['agent_pool_profiles']:
