@@ -4,7 +4,7 @@
   connection: local
 
   vars:
-    limit_to: "nxos_bgp_neighbor_af"
+    limit_to: "*"
     debug: false
 
 # Run the tests within blocks allows the the next module to be tested if the previous one fails.
