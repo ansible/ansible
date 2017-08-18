@@ -245,6 +245,7 @@ def create_vm_diagnostics_instance(vmdiag):
 
 def create_acs_dict(acs):
     results = dict(
+        id=acs.id,
         name=acs.name,
         location=acs.location,
         tags=acs.tags,
@@ -276,21 +277,27 @@ def create_master_profile_dict(masterprofile):
 
 def create_diagnotstics_profile_dict(diagnosticsprofile):
     results = dict(
-        vm_diagnostics=diagnosticsprofile.vm_diagnostics
+        vm_diagnostics=diagnosticsprofile.vm_diagnostics.enabled
     )
     return results
 
 def create_orchestrator_profile_dict(orchestratorprofile):
     results = dict(
-        orchestrator_type=orchestratorprofile.orchestrator_type
+        orchestrator_type=str(orchestratorprofile.orchestrator_type)
     )
     return results
 
 def create_agent_pool_profiles_dict(agentpoolprofiles):
-    results = dict()
-    results['agent_pool_profiles'] = []
+    results = []
     for profile in agentpoolprofiles:
-        results['agent_pool_profiles'].append(profile)
+        result = dict(
+            count=profile.count,
+            vm_size=profile.vm_size,
+            name=profile.name,
+            dns_prefix=profile.dns_prefix,
+            fqdn=profile.fqdn
+        )
+        results.append(result)
 
     return results
 
@@ -421,20 +428,17 @@ class AzureRMContainerService(AzureRMModuleBase):
                     for profile_result in response['agent_pool_profiles']:
                         matched = False
                         for profile_self in self.agent_pool_profiles:
-                            self.log("DEBUGGGGGGsdresultdGGGG {0}".format(profile_result[0]))
-                            self.log("DEBUGGGGGGsselfGGGG {0}".format(profile_self))
-                            self.log("Comparing {0} vs. {1}".format(profile_result.name, profile_self['name']))
-                            if profile_result.name == profile_self['name']:
+                            if profile_result['name'] == profile_self['name']:
                                 matched = True
-                                if profile_result.count != profile_self['count'] or profile_result.vm_size != profile_self['vm_size']:
-                                    self.log("Agent Profile Diff - Count was {0} / Now {1} - Vm_size was {2} / Now {3}".format(profile_result.count, profile_self['count'], profile_result.vm_size, profile_self['vm_size']))
+                                if profile_result['count'] != profile_self['count'] or profile_result['vm_size'] != profile_self['vm_size']:
+                                    self.log("Agent Profile Diff - Count was {0} / Now {1} - Vm_size was {2} / Now {3}".format(profile_result['count'], profile_self['count'], profile_result['vm_size'], profile_self['vm_size']))
                                     to_be_updated = True
                         if not matched:
                             self.log("Agent Pool not found, TBU")
                             to_be_updated = True
 
             if to_be_updated:
-                self.log("TB UPDATED".format())
+                self.log("Need to Create / Update the ACS instance")
 
                 results['name'] = self.name
                 results['location'] = self.location
@@ -447,13 +451,12 @@ class AzureRMContainerService(AzureRMModuleBase):
                 results['diagnostics_profile'] = self.diagnostics_profile
 
                 self.results['state'] = self.create_acs(results)
-
-                self.log("Update Done".format())
                 self.results['changed'] = True
-        
+
+                self.log("Creation / Update done")
         elif self.state == 'absent':
             self.delete_acs()
-            self.log("ACS instance deleted".format())
+            self.log("ACS instance deleted")
 
         return self.results
 
@@ -503,7 +506,7 @@ class AzureRMContainerService(AzureRMModuleBase):
         self.log("Deleting the ACS instance {0}".format(self.name))
         try:
             poller = self.containerservice_client.container_services.delete(self.resource_group, self.name)
-            response = self.get_poller_result(poller)
+            self.get_poller_result(poller)
         except CloudError as e:
             self.log('Error attempting to delete the ACS instance.')
             self.fail("Error deleting the ACS instance: {0}".format(str(e)))
