@@ -18,7 +18,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -171,11 +174,42 @@ state:
     description: Current state of the key vault.
     returned: always
     type: dict
-##update later
+    sample:{
+        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/presentation_rg/providers/Microsoft.KeyVault/vaults/ozidatamanagement",
+        "location": "westus2",
+        "name": "keyvault",
+        "properties": {
+            "access_policies": [
+                {
+                    "application_id": null,
+                    "object_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                    "permissions": {
+                        "certificates": [],
+                        "keys": [
+                            "Get",
+                            "List",
+                            "UnwrapKey"
+                        ],
+                        "secrets": []
+                    },
+                    "tenant_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                }
+            ],
+            "enabled_for_deployment": true,
+            "enabled_for_disk_encryption": true,
+            "enabled_for_template_deployment": false,
+            "sku": {
+                "name": "premium"
+            },
+            "tenant_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "vault_uri": "https:/keyvault.vault.azure.net"
+        },
+        "tags": {},
+        "type": "Microsoft.KeyVault/vaults"
+    }
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -316,7 +350,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
                 self.results['state'] = self.create_or_update_vault(vault)
              elif self.state == 'absent':
-                # delete zone
+                # delete vault
                 self.delete_vault()
                 # the delete does not actually return anything. if no exception, then we'll assume
                 # it worked.
