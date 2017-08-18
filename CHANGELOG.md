@@ -128,6 +128,10 @@ Ansible Changes By Release
 - profile_roles
 - stderr
 
+#### New Filters:
+- parse_cli
+- parse_cli_textfsm
+
 #### New Inventory Plugins:
 - advanced_host_list
 - constructed_groups
