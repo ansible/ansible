@@ -137,8 +137,19 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-AZURE_OBJECT_CLASS = 'Disk'
-AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
+def managed_disk_to_dict(managed_disk):
+    os_type = None
+    if managed_disk.os_type:
+        os_type = managed_disk.os_type.name
+    return dict(
+        id=managed_disk.id,
+        name=managed_disk.name,
+        location=managed_disk.location,
+        tags=managed_disk.tags,
+        disk_size_gb=managed_disk.disk_size_gb,
+        os_type=os_type,
+        storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
+    )
 
 
 class AzureRMManagedDisk(AzureRMModuleBase):
@@ -247,9 +258,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         creation_data = {}
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
-        DiskSku
         if self.storage_account_type:
-            disk_params['sku'] = DiskSku(self.storage_account_type)
+            disk_params['sku'] = self.storage_account_type
         disk_params['disk_size_gb'] = self.disk_size_gb
         # TODO: Add support for EncryptionSettings
         creation_data['create_option'] = DiskCreateOption.empty
@@ -270,11 +280,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 self.resource_group,
                 self.name,
                 disk_params)
-            result = self.serialize_obj(
-                self.get_poller_result(poller),
-                AZURE_OBJECT_CLASS,
-                enum_modules=AZURE_ENUM_MODULES)
-            result['id'] = poller.id
+            aux = self.get_poller_result(poller)
+            result = managed_disk_to_dict(aux)
             self.results['changed'] = True
         except CloudError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
@@ -285,11 +292,12 @@ class AzureRMManagedDisk(AzureRMModuleBase):
     def is_different(self, found_disk, new_disk):
         resp = False
         if new_disk.get('disk_size_gb'):
-            if not found_disk['properties']['diskSizeGB'] == new_disk['disk_size_gb']:
+            if not found_disk['disk_size_gb'] == new_disk['disk_size_gb']:
                 resp = True
         if new_disk.get('sku'):
-            if not found_disk['sku']['name'] == new_disk['sku'].name:
+            if not found_disk['storage_account_type'] == new_disk['storage_account_type']:
                 resp = True
+        # Check how to implement tags
         if new_disk.get('tags'):
             if not found_disk['tags'] == new_disk['tags']:
                 resp = True
@@ -316,12 +324,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         except CloudError as e:
             self.log('Did not find managed disk')
         if found:
-            serialized = self.serialize_obj(
-                response,
-                AZURE_OBJECT_CLASS,
-                enum_modules=AZURE_ENUM_MODULES)
-            #Serializerd doesn't return the id?
-            serialized['id'] = response.id
+            serialized = managed_disk_to_dict(
+                response)
             return serialized
         else:
             return False

@@ -90,9 +90,19 @@ except:
     # handled in azure_rm_common
     pass
 
-AZURE_OBJECT_CLASS = 'Disk'
-AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
-
+def managed_disk_to_dict(managed_disk):
+    os_type = None
+    if managed_disk.os_type:
+        os_type = managed_disk.os_type.name
+    return dict(
+        id=managed_disk.id,
+        name=managed_disk.name,
+        location=managed_disk.location,
+        tags=managed_disk.tags,
+        disk_size_gb=managed_disk.disk_size_gb,
+        os_type=os_type,
+        storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
+    )
 
 class AzureRMManagedDiskFacts(AzureRMModuleBase):
     """Utility class to get managed disk facts"""
@@ -137,7 +147,6 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
             ),
         )
         self.results = dict(
-            changed=False,
             ansible_facts=dict(
                 azure_managed_disks=[]
             )
@@ -182,7 +191,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
             pass
 
         if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_obj(item, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)]
+            result = [managed_disk_to_dict(item)]
 
         return result
 
@@ -196,8 +205,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES))
-
+                results.append(managed_disk_to_dict(item))
         return results
 
 
