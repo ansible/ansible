@@ -131,7 +131,13 @@ def parse_cli(output, tmpl):
                         else:
                             items.append(None)
 
-                    objects.append(dict([(k, template(v, {'item': items})) for k, v in iteritems(value)]))
+                    obj = {}
+                    for k, v in iteritems(value):
+                        try:
+                            obj[k] = template(v, {'item': items}, fail_on_undefined=False)
+                        except:
+                            obj[k] = None
+                    objects.append(obj)
 
                 elif isinstance(value, Mapping):
                     items = list()
