@@ -148,7 +148,7 @@ class TaskExecutor:
                             else:
                                 raise
                 elif isinstance(res, list):
-                    for (idx, item) in enumerate(res):
+                    for idx, item in enumerate(res):
                         res[idx] = _clean_res(item, errors=errors)
                 return res
 
