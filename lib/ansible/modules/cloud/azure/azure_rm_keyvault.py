@@ -312,7 +312,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
                     vault = VaultCreateOrUpdateParameters(self.location, vault_properties, tags=self.tags)
                 else:
                     # update the vault
-                    vault = VaultCreateOrUpdateParameters(self.location, vault.VaultProperties, tags=results['tags'])
+                    vault = VaultCreateOrUpdateParameters(self.location, results['properties'], tags=results['tags'])
 
                 self.results['state'] = self.create_or_update_vault(vault)
              elif self.state == 'absent':
