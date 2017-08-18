@@ -228,7 +228,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         traffic_manager = self.get_traffic_manager_profile(self.resource_group, self.name)
         results = self.traffic_manager_to_dict(traffic_manager, self.resource_group, self.name,
                                                self.location, self.properties)
-        if self.check_mode:  # if check_mode then return with the dictionary of the traffic manager object
+        # if check_mode then return with the dictionary of the traffic manager object
+        if self.check_mode:
             self.results['changed'] = changed
             self.results['state'] = results
             return self.results
@@ -253,7 +254,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                         # Deletes the traffic manager and set change variable
                         self.remove_traffic_manager_profile(self.resource_group, self.name)
                         changed = True
-                        results['state']['status'] = 'Deleted'
+                        results['status'] = 'Deleted'
 
             except CloudError:
                 if self.state == 'present':
@@ -320,8 +321,13 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :return: traffic manage object
         '''
         if traffic_manager is None:  # Create a stub if there is no traffic manager
-            monitor_config = self.create_monitor_config(properties)
-            dns_config = self.create_dns_config(properties, name)
+            if not(properties is None or len(properties) == 0):
+                monitor_config = self.create_monitor_config(properties)
+                dns_config = self.create_dns_config(properties, name)
+            else:
+                dns_config = {}
+                monitor_config = {}
+            
             return dict(
                         # id=traffic_manager.profile.id,
                         name=name,
@@ -421,7 +427,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         dns_config = self.create_dns_config(properties, name)
 
         # Create Endpoints
-        endpoints_config = self.create_endpoints(properties, name)
+        endpoints_config = self.create_endpoints(endpoints)
 
         profile = Profile(tags, location, profile_status, traffic_routing_method,
                           dns_config, monitor_config, endpoints_config)
@@ -434,7 +440,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
 
-    def create_endpoints(self, properties, name):
+    def create_endpoints(self, endpoint_list):
         '''
         Create a dns configuration from properties.
 
@@ -442,7 +448,6 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :return: DnsConfig object
         '''
         endpoint_list_config = []
-        endpoint_list = properties.get('endpoints', None)
         for endpoint_properties in endpoint_list:
             target_resource_id = endpoint_properties.get('target_resource_id', None)
             target = endpoint_properties.get('target', None)
@@ -471,7 +476,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :param name: name of a traffic  manager
         :return: DnsConfig object
         '''
-        dns_config_properties = properties.get('dns_config', None)
+        dns_config_properties = properties.get('dns_config', {})
         relative_name = dns_config_properties.get('relative_name', name)
         ttl = dns_config_properties.get('ttl', None)
         dns_config = DnsConfig(relative_name, ttl)
@@ -484,7 +489,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :param name: name of a traffic  manager
         :return: MonitorConfig object
         '''
-        monitor_properties = properties.get('monitor_config', None)
+        monitor_properties = properties.get('monitor_config', {})
         monitor_protocol = monitor_properties.get('protocol', None)
         monitor_port = monitor_properties.get('port', None)
         monitor_path = monitor_properties.get('path', None)
@@ -496,8 +501,6 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                                        monitor_path, monitor_interval_in_seconds,
                                        monitor_timeout_in_seconds, monitor_tolerated_failures)
         return monitor_config
-        
-
 
 
 
