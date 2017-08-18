@@ -353,7 +353,8 @@ def delete_bucket(module, s3, bucket):
         # if there are contents then we need to delete them before we can delete the bucket
         for keys in paginated_list(s3, Bucket=bucket):
             formatted_keys = [{'Key': key} for key in keys]
-            s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
+            if formatted_keys:
+                s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
         s3.delete_bucket(Bucket=bucket)
         return True
     except botocore.exceptions.ClientError as e:
