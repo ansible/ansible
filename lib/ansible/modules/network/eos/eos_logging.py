@@ -55,10 +55,6 @@ options:
               'warnings', 'notifications', 'informational', 'debugging']
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
@@ -72,24 +68,35 @@ EXAMPLES = """
     dest: host
     name: 172.16.0.1
     state: present
+
 - name: remove host logging configuration
   eos_logging:
     dest: host
     name: 172.16.0.1
     state: absent
+
 - name: configure console logging level and facility
   eos_logging:
     dest: console
     facility: local7
     level: debugging
     state: present
+
 - name: enable logging to all
   eos_logging:
     dest : on
+
 - name: configure buffer size
   eos_logging:
     dest: buffered
     size: 5000
+
+- name: Configure logging using aggregate
+  eos_logging:
+    aggregate:
+      - { dest: console, level: warnings }
+      - { dest: buffered, size: 480000 }
+    state: present
 """
 
 RETURN = """
@@ -104,7 +111,10 @@ commands:
 
 import re
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
@@ -268,29 +278,20 @@ def parse_obj(obj, module):
     return obj
 
 
-def map_params_to_obj(module):
+def map_params_to_obj(module, required_if=None):
     obj = []
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        args = {'dest': '',
-                'name': '',
-                'size': '',
-                'facility': '',
-                'level': '',
-                }
-
-        for c in module.params['aggregate']:
-            d = c.copy()
-
-            for key in args:
-                if key not in d:
-                    d[key] = None
+            module._check_required_if(required_if, item)
+            d = item.copy()
 
             if d['dest'] != 'host':
                 d['name'] = None
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
 
             if d['dest'] == 'buffered':
                 if 'size' in d:
@@ -323,17 +324,25 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         dest=dict(choices=DEST_GROUP),
         name=dict(),
         size=dict(type='int'),
         facility=dict(),
         level=dict(choices=LEVEL_GROUP),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(eos_argument_spec)
 
     required_if = [('dest', 'host', ['name'])]
@@ -349,7 +358,7 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    want = map_params_to_obj(module)
+    want = map_params_to_obj(module, required_if=required_if)
     have = map_config_to_obj(module)
 
     commands = map_obj_to_commands((want, have), module)
