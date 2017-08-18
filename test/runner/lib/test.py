@@ -200,8 +200,10 @@ class TestFailure(TestResult):
 
         if messages:
             messages = sorted(messages, key=lambda m: m.sort_key)
+        else:
+            messages = []
 
-        self.messages = messages or []
+        self.messages = messages
         self.summary = summary
 
     def write(self, args):

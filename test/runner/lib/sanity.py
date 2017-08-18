@@ -206,7 +206,7 @@ def command_sanity_validate_modules(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     messages = json.loads(stdout)
 
@@ -268,7 +268,7 @@ def command_sanity_shellcheck(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     # json output is missing file paths in older versions of shellcheck, so we'll use xml instead
     root = fromstring(stdout)  # type: Element
@@ -317,9 +317,6 @@ def command_sanity_pep8(args, targets):
 
     paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
-    if not paths:
-        return SanitySkipped(test)
-
     cmd = [
         'pycodestyle',
         '--max-line-length', '160',
@@ -327,23 +324,29 @@ def command_sanity_pep8(args, targets):
         '--ignore', ','.join(sorted(current_ignore)),
     ] + paths
 
-    try:
-        stdout, stderr = run_command(args, cmd, capture=True)
-        status = 0
-    except SubprocessError as ex:
-        stdout = ex.stdout
-        stderr = ex.stderr
-        status = ex.status
+    if paths:
+        try:
+            stdout, stderr = run_command(args, cmd, capture=True)
+            status = 0
+        except SubprocessError as ex:
+            stdout = ex.stdout
+            stderr = ex.stderr
+            status = ex.status
 
-    if stderr:
-        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+        if stderr:
+            raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+    else:
+        stdout = None
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
-    pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$'
+    if stdout:
+        pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$'
 
-    results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+        results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+    else:
+        results = []
 
     results = [SanityMessage(
         message=r['message'],
@@ -460,9 +463,6 @@ def command_sanity_pylint(args, targets):
 
     paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
-    if not paths:
-        return SanitySkipped(test)
-
     cmd = [
         'pylint',
         '--jobs', '0',
@@ -477,19 +477,22 @@ def command_sanity_pylint(args, targets):
 
     env = ansible_environment(args)
 
-    try:
-        stdout, stderr = run_command(args, cmd, env=env, capture=True)
-        status = 0
-    except SubprocessError as ex:
-        stdout = ex.stdout
-        stderr = ex.stderr
-        status = ex.status
+    if paths:
+        try:
+            stdout, stderr = run_command(args, cmd, env=env, capture=True)
+            status = 0
+        except SubprocessError as ex:
+            stdout = ex.stdout
+            stderr = ex.stderr
+            status = ex.status
 
-    if stderr or status >= 32:
-        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+        if stderr or status >= 32:
+            raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+    else:
+        stdout = None
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     if stdout:
         messages = json.loads(stdout)
@@ -557,7 +560,7 @@ def command_sanity_yamllint(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): \[(?P<level>warning|error)\] (?P<message>.*)$'
 
@@ -611,7 +614,7 @@ def command_sanity_rstcheck(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$'
 
