@@ -157,7 +157,7 @@ $result = [pscustomobject]@{changed=$false;search_log=[pscustomobject]@{disk=[ps
 
 ## Extract each attributes into a variable
 # Find attributes
-$Size = Get-AnsibleParam -obj $params -name "disk_size" -type "int" -failifempty $true
+$Size = Get-AnsibleParam -obj $params -name "disk_size" -type "str/int" -failifempty $true
 $FindPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_select" -type "str" -default "raw" -ValidateSet "raw","mbr","gpt"
 $OperationalStatus = Get-AnsibleParam -obj $params -name "operational_status" -type "str" -default "offline" -ValidateSet "offline","online"
 
@@ -167,10 +167,18 @@ $DriveLetter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str" -d
 # Set attributes partition
 $FileSystem = Get-AnsibleParam -obj $params -name "file_system" -type "str" -default "ntfs" -ValidateSet "ntfs","refs"
 $Label = Get-AnsibleParam -obj $params -name "label" -type "str" -default "ansible_disk"
-$AllocUnitSize = Get-AnsibleParam -obj $params -name "allocation_unit_size" -type "int" -default 4 -ValidateSet 4,8,16,32,64
+$AllocUnitSize = Get-AnsibleParam -obj $params -name "allocation_unit_size" -type "str/int" -default 4 -ValidateSet 4,8,16,32,64
 $LargeFRS = Get-AnsibleParam -obj $params -name "large_frs" -default $false -type "bool"
 $ShortNames = Get-AnsibleParam -obj $params -name "short_names" -default $false -type "bool"
 $IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -default $false -type "bool"
+
+# Convert variable for disk size
+if(($Size.GetType()).Name -eq 'String'){
+[int32]$Size = [convert]::ToInt32($Size, 10)
+}
+if(($AllocUnitSize.GetType()).Name -eq 'String'){
+[int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
+}
 
 # Define script environment variables
 $ErrorActionPreference = "Stop"
@@ -715,3 +723,4 @@ else{
 }
 
 Exit-Json $result;
+

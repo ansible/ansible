@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'supported_by': 'community',
+    'status': ['preview']
+}
 
 
 DOCUMENTATION = r'''
@@ -41,6 +43,7 @@ options:
   disk_size:
       description:
         - Size of the disk in gigabyte which will be selected
+        - Data type can be int or string
       required: true
       default: 5
   partition_style_select:
@@ -89,6 +92,7 @@ options:
   allocation_unit_size:
       description:
         - Allocation Unit size which will be set for the file system on selected disk (possible values for file system NTFS 4,8,16,32,64KB; ReFs 64KB)
+        - Data type can be int or string
       required: false
       default: 4
       choices:
