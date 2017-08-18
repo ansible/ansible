@@ -521,7 +521,6 @@ class AzureRMContainerService(AzureRMModuleBase):
                             to_be_updated = True
 
             if to_be_updated:
-
                 self.log("Need to Create / Update the ACS instance")
 
                 #results['name'] = self.name
@@ -533,7 +532,9 @@ class AzureRMContainerService(AzureRMModuleBase):
                 #results['master_profile'] = self.master_profile
                 #results['agent_pool_profiles'] = self.agent_pool_profiles
                 #results['diagnostics_profile'] = self.diagnostics_profile
-
+                if self.check_mode:
+                    return self.results
+                
                 self.results['state'] = self.create_update_acs()
                 self.results['changed'] = True
 
