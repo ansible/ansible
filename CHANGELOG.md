@@ -195,6 +195,7 @@ Ansible Changes By Release
   * cs_instance_nic_secondaryip
   * cs_network_acl
   * cs_network_acl_rule
+  * cs_storage_pool
   * cs_vpn_gateway
 - digital_ocean
   * digital_ocean_floating_ip
