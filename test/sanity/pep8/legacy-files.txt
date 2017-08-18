@@ -333,9 +333,6 @@ lib/ansible/modules/network/nxos/nxos_vtp_domain.py
 lib/ansible/modules/network/nxos/nxos_vtp_password.py
 lib/ansible/modules/network/nxos/nxos_vtp_version.py
 lib/ansible/modules/net_tools/omapi_host.py
-lib/ansible/modules/network/openswitch/ops_command.py
-lib/ansible/modules/network/openswitch/ops_config.py
-lib/ansible/modules/network/openswitch/ops_facts.py
 lib/ansible/modules/network/ordnance/ordnance_config.py
 lib/ansible/modules/network/ordnance/ordnance_facts.py
 lib/ansible/modules/network/ovs/openvswitch_bridge.py
