@@ -1,9 +1,11 @@
+*************
 Communicating
-=============
+*************
 
+.. contents:: Topics
 
 Mailing List Information
-------------------------
+========================
 
 Ansible has several mailing lists.  Your first post to the mailing list will be moderated (to reduce spam), so please allow up to a day or so for your first post to appear.
 
@@ -17,21 +19,40 @@ Ansible has several mailing lists.  Your first post to the mailing list will be 
 
 `Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks.
 
-To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: ansible-devel+subscribe@googlegroups.com
+To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: `ansible-devel+subscribe@googlegroups.com`
 
 IRC Channel
------------
+===========
 
-Ansible has several IRC channels on Freenode (irc.freenode.net):
+Ansible has several IRC channels on Freenode (irc.freenode.net).
+
+General Channels
+----------------
 
 - ``#ansible`` - For general use questions and support.
 - ``#ansible-devel`` - For discussions on developer topics and code related to features/bugs.
+- ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
+- ``#ansible-notices`` - Mostly bot output from things like GitHub, etc.
+
+Working Group
+-------------
+
 - ``#ansible-aws`` - For discussions on Amazon Web Services.
+- ``#ansible-community`` - Channel for discussing Ansible Community related things.
 - ``#ansible-container`` - For discussions on Ansible Container.
+- ``#ansible-jboss`` - Channel for discussing JBoss and Ansible related things
+- ``#ansible-network`` - Channel for discussing Network and Ansible related things
+- ``#ansible-news`` - Channel for discussing Ansible Communication & News related things
 - ``#ansible-vmware`` - For discussions on Ansible & VMware.
 - ``#ansible-windows`` - For discussions on Ansible & Windows.
-- ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
-- ``#ansible-notices`` - Mostly bot output from things like Github, etc.
+
+
+Language specific channels
+--------------------------
+
+- ``#ansible-es`` - Channel for Spanish speaking Ansible community
+- ``#ansible-fr`` - Channel for French speaking Ansible community
+
 
 IRC Meetings
 ------------
@@ -40,7 +61,7 @@ The Ansible community holds regular IRC meetings on various topics, and anyone w
 participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 Tower Support Questions
------------------------
+========================
 
 Ansible `Tower <https://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible.
 
