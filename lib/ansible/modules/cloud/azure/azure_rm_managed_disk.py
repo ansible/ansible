@@ -137,6 +137,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 def managed_disk_to_dict(managed_disk):
     os_type = None
     if managed_disk.os_type:
@@ -259,7 +260,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
         if self.storage_account_type:
-            disk_params['sku'] = self.storage_account_type
+            storage_account_type = DiskSku(self.storage_account_type)
+            disk_params['sku'] = storage_account_type
         disk_params['disk_size_gb'] = self.disk_size_gb
         # TODO: Add support for EncryptionSettings
         creation_data['create_option'] = DiskCreateOption.empty
@@ -295,7 +297,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             if not found_disk['disk_size_gb'] == new_disk['disk_size_gb']:
                 resp = True
         if new_disk.get('sku'):
-            if not found_disk['storage_account_type'] == new_disk['storage_account_type']:
+            if not found_disk['storage_account_type'] == new_disk['sku'].name:
                 resp = True
         # Check how to implement tags
         if new_disk.get('tags'):

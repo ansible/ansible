@@ -74,7 +74,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_managed_disks:
+azure_managed_disk:
     description: List of managed disk dicts.
     returned: always
     type: list
@@ -148,7 +148,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         )
         self.results = dict(
             ansible_facts=dict(
-                azure_managed_disks=[]
+                azure_managed_disk=[]
             )
         )
         self.resource_group = None
@@ -171,7 +171,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        self.results['ansible_facts']['azure_managed_disks'] = (
+        self.results['ansible_facts']['azure_managed_disk'] = (
             self.get_item() if self.name
             else self.list_items()
         )

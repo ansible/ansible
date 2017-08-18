@@ -2,12 +2,31 @@
    set_fact:
        managed_disk1: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
 
-
- - name: Create new managed disk
+ - name: Delete managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       storage_account_type: Standard_LRS
+       state: absent
+
+
+ - name: Test invalid account name (should give error)
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "invalid_char$"
+       disk_size_gb: 1
+       state: present
+   register: output     
+   ignore_errors: yes  
+
+ - name: Assert task failed
+   assert: { that: "output['failed'] == True" }
+
+
+ - name: Create new managed disk succesfully 
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk1 }}"
+       storage_account_type: "Standard_LRS"
        disk_size_gb: 1
    register: output
 
@@ -17,67 +36,106 @@
        - output.changed
        - output.state.id is defined
 
- - name: Change account type to an invalid type
+ - name: Update a new disk without changes
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       storage_account_type: PremiumL
+       storage_account_type: "Standard_LRS"
        disk_size_gb: 1
-   register: change_account
+   register: output
+
+ - name: Assert status succeeded and results include an Id value 
+   assert:
+     that:
+       - not output.changed
+       - output.state.id is defined
+
+ - name: Change storage account type to an invalid type
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk1 }}"
+       storage_account_type: "PremiumL"
+       disk_size_gb: 1
+   register: output
    ignore_errors: yes 
 
- - name: Assert account type change failed 
-   assert: { that: "change_account['failed'] == True" }
+ - name: Assert storage account type change failed 
+   assert: { that: "output['failed'] == True" }
 
  - name: Change disk size to incompatible size 
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
-       disk_size_gb: 3000
-   register: change_account
+       disk_size_gb: 30000
+   register: output
    ignore_errors: yes
 
- - name: Assert disk size change failure
-   assert: { that: "'failed' in  change_account['msg']" }
+ - name: Assert disk size change to incompatible size (>4095)  failure
+   assert: { that: "output['failed'] == True" }
 
- - name: Update account tags
+ - name: Change disk to bigger size
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}"
+       resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       tags:
-           testing: testing
-           delete: never
-           galaxy: 'no'
+       storage_account_type: "Standard_LRS"
+       disk_size_gb: 2
    register: output
 
- - assert:
-       that:
-           - "output.state.tags | length == 3"
-           - "output.state.tags.galaxy == 'no'"
+ - name: Assert status succeeded and results include an Id value 
+   assert:
+     that:
+       - output.changed
 
- - name: Update account tags
+ - name: Change disk to Premium
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}"
+       resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       tags:
-           testing: testing
-           delete: never
+       storage_account_type: "Premium_LRS"
+       disk_size_gb: 2
    register: output
 
- - assert:
-       that:
-           - "output.state.tags | length == 2"
-           - "output.state.tags.testing == 'testing'"
-           - "output.state.tags.delete == 'never'"
+ - name: Assert status succeeded and results include an Id value 
+   assert:
+     that:
+       - output.changed
+#  - name: Update account tags
+#    azure_rm_managed_disk:
+#        resource_group: "{{ resource_group }}"
+#        name: "{{ managed_disk1 }}"
+#        tags:
+#            testing: testing
+#            delete: never
+#            galaxy: 'no'
+#    register: output
 
- - name: Gather facts
+#  - assert:
+#        that:
+#            - "output.state.tags | length == 3"
+#            - "output.state.tags.galaxy == 'no'"
+
+#  - name: Update account tags
+#    azure_rm_managed_disk:
+#        resource_group: "{{ resource_group }}"
+#        name: "{{ managed_disk1 }}"
+#        tags:
+#            testing: testing
+#            delete: never
+#    register: output
+
+#  - assert:
+#        that:
+#            - "output.state.tags | length == 2"
+#            - "output.state.tags.testing == 'testing'"
+#            - "output.state.tags.delete == 'never'"
+
+ - name: Gather facts to one specific disk
    azure_rm_managed_disk_facts:
        resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
 
  - assert:
        that:
-           - "managed_disk | length == 1"
+           - "azure_managed_disk | length == 1"
 
  - name: Gather facts
    azure_rm_managed_disk_facts:
@@ -85,9 +143,9 @@
 
  - assert:
        that:
-           - "managed_disk | length > 0"
+           - "azure_managed_disk | length > 0"
 
- - name: Delete acccount
+ - name: Delete managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
