@@ -169,7 +169,7 @@ try:
         VirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings, \
         VirtualMachineScaleSetPublicIPAddressConfiguration, Sku, \
         UpgradePolicy, VirtualMachineScaleSetNetworkConfiguration, \
-        ApiEntityReference
+        ApiEntityReference, ImageReference
 
     from azure.mgmt.network.models import PublicIPAddress, \
         NetworkSecurityGroup, NetworkInterface, \
@@ -199,6 +199,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             short_hostname=dict(type='str'),
             vm_size=dict(type='str', required=True),
             capacity=dict(type='int', default=1),
+            upgrade_policy=dict(type='str', choices=['Automatic', 'Manual']),
             admin_username=dict(type='str'),
             admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
@@ -220,6 +221,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.short_hostname = None
         self.vm_size = None
         self.capacity = None
+        self.upgrade_policy = None
         self.admin_username = None
         self.admin_password = None
         self.ssh_password_enabled = None
@@ -313,6 +315,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     changed = True
                     vmss_dict['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
 
+                if self.capacity and \
+                   self.capacity != vmss_dict['sku']['capacity']:
+                    self.log('CHANGED: virtual machine scale set {0} - Capacity'.format(self.name))
+                    differences.append('Capacity')
+                    changed = True
+                    vmss_dict['sku']['capacity'] = self.capacity
+
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
                     differences.append('Tags')
@@ -368,7 +377,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         self.location,
                         tags=self.tags,
                         upgrade_policy=UpgradePolicy(
-                            mode='Manual'
+                            mode=self.upgrade_policy
                         ),
                         sku=Sku(
                             name=self.vm_size,
@@ -429,11 +438,22 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
 
+                elif self.differences and len(self.differences) > 0:
+                    self.log("Update virtual machine scale set {0}".format(self.name))
+                    self.results['actions'].append('Updated VMSS {0}'.format(self.name))
+
+                    vmss_resource = self.get_vmss()
+                    vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
+                    vmss_resource.sku.capacity = self.capacity
+
+                    self.log("Update virtual machine with parameters:")
+                    self.create_or_update_vmss(vmss_resource)
+
                 self.results['ansible_facts']['azure_vmss'] = self.serialize_vmss(self.get_vmss())
 
             elif self.state == 'absent':
                 # delete the VM
-                self.log("Delete virtual machine {0}".format(self.name))
+                self.log("Delete virtual machine scale set {0}".format(self.name))
                 self.results['ansible_facts']['azure_vmss'] = None
                 self.delete_vmss(vmss)
 
@@ -449,8 +469,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         :return: VirtualMachineScaleSet object
         '''
         try:
-            vm = self.compute_client.virtual_machine_scale_sets.get(self.resource_group, self.name)
-            return vm
+            vmss = self.compute_client.virtual_machine_scale_sets.get(self.resource_group, self.name)
+            return vmss
         except Exception as exc:
             self.fail("Error getting virtual machine scale set {0} - {1}".format(self.name, str(exc)))
 
