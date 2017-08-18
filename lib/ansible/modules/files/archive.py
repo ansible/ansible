@@ -281,7 +281,7 @@ def main():
                 try:
                     # Slightly more difficult (and less efficient!) compression using zipfile module
                     if format == 'zip':
-                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
+                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
 
                     # Easier compression using tarfile module
                     elif format == 'gz' or format == 'bz2':
@@ -390,7 +390,7 @@ def main():
 
                 try:
                     if format == 'zip':
-                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
+                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
                         arcfile.write(path, path[len(arcroot):])
                         arcfile.close()
                         state = 'archive' # because all zip files are archives
