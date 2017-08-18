@@ -12,15 +12,15 @@
   azure_rm_availabilityset_facts:
     name: myavailabilityset1
     resource_group: "{{ resource_group }}"
-  register: output
+  register: results
 
 - assert:
     that: 
-      - not output.changed
-      - not output.failed
-      - output.ansible_facts.azure_availabilitysets[0].properties.platformFaultDomainCount == 2
-      - output.ansible_facts.azure_availabilitysets[0].properties.platformUpdateDomainCount == 5
-      - output.ansible_facts.azure_availabilitysets[0].sku == 'Classic'
+      - not results.changed
+      - not results.failed
+      - results.ansible_facts.azure_availabilitysets[0].properties.platformFaultDomainCount == 2
+      - results.ansible_facts.azure_availabilitysets[0].properties.platformUpdateDomainCount == 5
+      - results.ansible_facts.azure_availabilitysets[0].sku == 'Classic'
 
 - name: Delete the availability set
   azure_rm_availabilityset:
