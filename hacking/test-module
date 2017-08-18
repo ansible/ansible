@@ -23,11 +23,10 @@
 # modules
 #
 # example:
-#    test-module -m ../library/commands/command -a "/bin/sleep 3"
-#    test-module -m ../library/system/service -a "name=httpd ensure=restarted"
-#    test-module -m ../library/system/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
-#    test-module -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
-#    test-module -m ../library/commands/command -a "echo hello" -n -o "test_hello"
+#    ./hacking/test-module -m lib/ansible/modules/commands/command.py -a "/bin/sleep 3"
+#    ./hacking/test-module -m lib/ansible/modules/commands/command.py -a "/bin/sleep 3" --debugger /usr/bin/pdb
+#    ./hacking/test-module -m lib/ansible/modules/files/lineinfile.py -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
+#    ./hacking/test-module -m lib/ansible/modules/commands/command.py -a "echo hello" -n -o "test_hello"
 
 import optparse
 import os
