@@ -345,17 +345,22 @@ class Template:
         self.env = Environment()
         self.env.filters.update({'ternary': ternary})
 
-    def __call__(self, value, variables=None):
+    def __call__(self, value, variables=None, fail_on_undefined=True):
         variables = variables or {}
         if not self.contains_vars(value):
             return value
 
-        value = self.env.from_string(value).render(variables)
+        try:
+            value = self.env.from_string(value).render(variables)
+        except UndefinedError:
+            if not fail_on_undefined:
+                return None
+            raise
 
         if value:
             try:
                 return ast.literal_eval(value)
-            except ValueError:
+            except:
                 return str(value)
         else:
             return None
