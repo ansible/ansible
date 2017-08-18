@@ -85,6 +85,10 @@ class Connection(Rpc, ConnectionBase):
         if not network_os:
             raise AnsibleConnectionFailure('Unable to automatically determine host network os. Please ansible_network_os value')
 
+        ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
+        if ssh_config == 'True':
+            ssh_config = True
+
         try:
             self._manager = manager.connect(
                 host=self._play_context.remote_addr,
@@ -96,7 +100,8 @@ class Connection(Rpc, ConnectionBase):
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
                 allow_agent=self.allow_agent,
                 timeout=self._play_context.timeout,
-                device_params={'name': network_os}
+                device_params={'name': network_os},
+                ssh_config=ssh_config
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(str(exc))
