@@ -361,3 +361,30 @@ def test_await_should_wait_for_delete_and_handle_none():
     print("dbinstance calls:\n" + str(rds_client_double.describe_db_instances.mock_calls))
     assert(len(sleeper_double.mock_calls) > 3), "await_pending didn't sleep enough"
     assert(len(rds_client_double.describe_db_instances.mock_calls) > 5), "await_pending didn't wait enough"
+
+
+def test_update_rds_tags_should_add_and_remove_appropriate_tags():
+    params = {
+        "tags": dict(newtaga="avalue", oldtagb="bvalue"),
+        "db_instance_identifier": "fakedb-too",
+    }
+    rds_client_double = MagicMock()
+    mk_tag_fn = rds_client_double.add_tags_to_resource
+    rm_tag_fn = rds_client_double.remove_tags_from_resource
+    ls_tag_fn = rds_client_double.list_tags_for_resource
+
+    ls_tag_fn.return_value = {'TagList': [{"Key": "oldtagb", "Value": "bvalue"},
+                                          {"Key": "oldtagc", "Value": "cvalue"}, ]}
+
+    rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__n
+    my_instance = copy.deepcopy(describe_rds_return['DBInstances'][0])
+    rds_instance_entry_mock.return_value = my_instance
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+
+    tag_update_return = rds_i.update_rds_tags(module_double, rds_client_double, db_instance=my_instance)
+
+    mk_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb', Tags=[{'Value': 'avalue', 'Key': 'newtaga'}])
+    rm_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb', TagKeys=['oldtagc'])
+    assert tag_update_return == True
