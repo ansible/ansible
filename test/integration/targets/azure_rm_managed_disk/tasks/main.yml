@@ -150,4 +150,3 @@
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
        state: absent
-

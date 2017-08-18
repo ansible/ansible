@@ -21,7 +21,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -90,6 +90,7 @@ except:
     # handled in azure_rm_common
     pass
 
+
 def managed_disk_to_dict(managed_disk):
     os_type = None
     if managed_disk.os_type:
@@ -103,6 +104,7 @@ def managed_disk_to_dict(managed_disk):
         os_type=os_type,
         storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
     )
+
 
 class AzureRMManagedDiskFacts(AzureRMModuleBase):
     """Utility class to get managed disk facts"""
@@ -164,8 +166,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         super(AzureRMManagedDiskFacts, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             supports_check_mode=True,
-            supports_tags=True
-            )
+            supports_tags=True)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
