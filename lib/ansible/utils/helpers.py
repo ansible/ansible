@@ -33,6 +33,7 @@ def pct_to_int(value, num_items, min_value=1):
     else:
         return int(value)
 
+
 def object_to_dict(obj):
     """
     Converts an object into a dict making the properties into keys
