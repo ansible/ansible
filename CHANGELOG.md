@@ -63,6 +63,7 @@ Ansible Changes By Release
 * junos_template (use junos_config instead)
 * nxos_template (use nxos_config instead)
 * ops_template (use ops_config instead)
+* openswitch
 
 * Modules (scheduled for removal in 2.6)
 
