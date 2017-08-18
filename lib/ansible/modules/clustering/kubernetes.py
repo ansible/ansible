@@ -52,11 +52,13 @@ options:
     required: false
     default: null
   patch_operation:
-    description:
-      - Specify patch operation for Kubernetes resource update. For details, see the description of PATCH operations at U(https://github.com/kubernetes/kubernetes/blob/release-1.5/docs/devel/api-conventions.md#patch-operations).
+    description: >
+      - Specify patch operation for Kubernetes resource update. For details, see the description of PATCH operations at
+        U(https://github.com/kubernetes/kubernetes/blob/release-1.5/docs/devel/api-conventions.md#patch-operations).
     default: Strategic Merge Patch
     aliases: ["patch_strategy"]
     choices: ["JSON Patch", "Merge Patch", "Strategic Merge Patch"]
+    version_added: 2.4
   certificate_authority_data:
     description:
       - Certificate Authority data for Kubernetes server. Should be in either
