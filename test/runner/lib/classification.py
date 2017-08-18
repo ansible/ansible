@@ -461,6 +461,11 @@ class PathMapper(object):
 
             return all_tests(self.args)  # test infrastructure, run all tests
 
+        if path.startswith('test/runner/lib/sanity/'):
+            return {
+                'sanity': 'all',  # test infrastructure, run all sanity checks
+            }
+
         if path.startswith('test/runner/'):
             return all_tests(self.args)  # test infrastructure, run all tests
 
