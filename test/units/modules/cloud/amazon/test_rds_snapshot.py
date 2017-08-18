@@ -77,3 +77,18 @@ def test_create_snapshot_if_not_present():
     rds_client_double.describe_db_snapshots.return_value = describe_snapshot_return
 
     rds_s.create_snapshot(module_double, rds_client_double)
+
+
+def test_call_delete_with_sensible_arguments_if_present_when_should_not_be():
+    params = {
+        "db_snapshot_identifier": "fake-snapshot",
+        "state": "absent",
+    }
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+    rds_client_double = MagicMock()
+    rds_client_double.describe_db_snapshots.return_value = describe_snapshot_return
+
+    rds_s.delete_snapshot(module_double, rds_client_double)
+    rds_client_double.delete_db_snapshot.assert_called_with(DBSnapshotIdentifier='fake-snapshot')

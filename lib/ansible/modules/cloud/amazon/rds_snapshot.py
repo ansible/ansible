@@ -110,13 +110,13 @@ def await_resource(conn, resource_name, status, module):
 
 
 def delete_snapshot(module, conn):
-    snapshot = module.params.get('snapshot')
+    snapshot = module.params.get('db_snapshot_identifier')
 
     result = get_snapshot(conn, snapshot)
     if not result:
-        module.exit_json(changed=False)
-    if result.status == 'deleting':
-        module.exit_json(changed=False)
+        return dict(changed=False)
+    if result['Status'] == 'deleting':
+        return dict(changed=False)
     try:
         result = conn.delete_db_snapshot(DBSnapshotIdentifier=snapshot)
     except Exception as e:
@@ -125,13 +125,13 @@ def delete_snapshot(module, conn):
     # If we're not waiting for a delete to complete then we're all done
     # so just return
     if not module.params.get('wait'):
-        module.exit_json(changed=True)
+        return dict(changed=True)
     try:
         await_resource(conn, result, 'deleted', module)
-        module.exit_json(changed=True)
+        return dict(changed=True)
     except Exception as e:
         if e.response['Error']['Code'] == 'DBSnapshotNotFound':
-            module.exit_json(changed=True)
+            return dict(changed=True)
         else:
             module.fail_json_aws(e, "awaiting snapshot deletion")
 
@@ -156,7 +156,7 @@ def create_snapshot(module, conn):
     else:
         snapshot = get_snapshot(conn, snapshot_name)
 
-    module.exit_json(changed=changed, snapshot=snapshot_to_facts(snapshot))
+    return dict(changed=changed, snapshot=snapshot_to_facts(snapshot))
 
 
 argument_spec = dict(
@@ -185,10 +185,10 @@ def main():
         module.fail_json_aws(e, msg="trying to create db snapshot")
 
     if module.params['state'] == 'absent':
-        delete_snapshot(module, conn)
+        ret_dict = delete_snapshot(module, conn)
     else:
-        create_snapshot(module, conn)
-
+        ret_dict = create_snapshot(module, conn)
+    module.exit_json(**ret_dict)
 
 if __name__ == '__main__':
     main()
