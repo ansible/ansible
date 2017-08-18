@@ -61,6 +61,7 @@ Options
 .. raw:: html
 
     <table border=1 cellpadding=4>
+
     <tr>
     <th class="head">parameter</th>
     <th class="head">required</th>
@@ -68,57 +69,94 @@ Options
     <th class="head">choices</th>
     <th class="head">comments</th>
     </tr>
-    {% for k in option_keys %}
-    {% set v = options[k] %}
-    {% if not v['suboptions'] %}
-    <tr><td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
-    <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
-    <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
-    {% if v.get('type', 'not_bool') == 'bool' %}
+{% for k in option_keys -%}
+{% set v = options[k] -%}
+{% if not v['suboptions'] %}
+
+    <tr>
+    <td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] -%} (added in @{v['version_added']}@){% endif -%}</div></td>
+    <td>{% if v.get('required', False) -%}yes{% else %}no{% endif -%}</td>
+    <td>{% if v['default'] -%}@{ v['default'] }@{% endif -%}</td>
+{% if v.get('type', 'not_bool') == 'bool' %}
     <td><ul><li>yes</li><li>no</li></ul></td>
-    {% else %}
-    <td>{% if v['choices'] %}<ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif %}</td>
-    {% endif %}
-    <td>{% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
-    <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
-    {% else %}
-    <tr><td rowspan="2">@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
-    <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
-    <td></td><td></td>
-    <td> {% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
-    <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
+{% else %}
+    <td>{% if v['choices'] -%}<ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif -%}</td>
+{% endif %}
+    <td>
+{% if v.description is string %}
+        <div>@{ v.description | replace('\n', '\n    ') | html_ify }@</div>
+{% else %}
+{% for desc in v.description %}
+        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+{% endfor %}
+{% endif %}
+{% if 'aliases' in v and v.aliases %}
+        </br><div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@</div>
+{% endif %}
+{% else %}
+
+    <tr>
+    <td rowspan="2">@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] -%} (added in @{v['version_added']}@){% endif -%}</div></td>
+    <td>{% if v.get('required', False) -%}yes{% else -%}no{% endif -%}</td>
+    <td></td>
+    <td></td>
+    <td>
+{% for desc in v.description %}
+        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+{% endfor %}
+{% if 'aliases' in v and v.aliases %}
+        </br><div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@</div>
+{% endif %}
     </tr>
+
     <tr>
     <td colspan="5">
-    <table border=1 cellpadding=4>
-    <caption><b>Dictionary object @{ k }@</b></caption>
-    <tr>
-    <th class="head">parameter</th>
-    <th class="head">required</th>
-    <th class="head">default</th>
-    <th class="head">choices</th>
-    <th class="head">comments</th>
-    </tr>
-    {% for k2 in v['suboptions'] %}
-        {% set v2 = v['suboptions'] [k2] %}
-        <tr><td>@{ k2 }@<br/><div style="font-size: small;">{% if v2['version_added'] %} (added in @{v2['version_added']}@){% endif %}</div></td>
-        <td>{% if v2.get('required', False) %}yes{% else %}no{% endif %}</td>
-        <td>{% if v2['default'] %}@{ v2['default'] }@{% endif %}</td>
-        {% if v2.get('type', 'not_bool') == 'bool' %}
+        <table border=1 cellpadding=4>
+        <caption><b>Dictionary object @{ k }@</b></caption>
+
+        <tr>
+        <th class="head">parameter</th>
+        <th class="head">required</th>
+        <th class="head">default</th>
+        <th class="head">choices</th>
+        <th class="head">comments</th>
+        </tr>
+{% for k2 in v['suboptions'] %}
+{% set v2 = v['suboptions'] [k2] %}
+
+        <tr>
+        <td>@{ k2 }@<br/><div style="font-size: small;">{% if v2['version_added'] -%} (added in @{v2['version_added']}@){% endif -%}</div></td>
+        <td>{% if v2.get('required', False) -%}yes{% else -%}no{% endif -%}</td>
+        <td>{% if v2['default'] -%}@{ v2['default'] }@{% endif -%}</td>
+{% if v2.get('type', 'not_bool') == 'bool' %}
         <td><ul><li>yes</li><li>no</li></ul></td>
-        {% else %}
-        <td>{% if v2['choices'] %}<ul>{% for choice in v2.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif %}</td>
-        {% endif %}
-        <td>{% for desc in v2.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v2.aliases -%}</br>
-        <div style="font-size: small;">aliases: @{ v2.aliases|join(', ') }@<div>{%- endif %}
-        </td></tr>
-    {% endfor %}
-    </table>
+{% else %}
+        <td>{% if v2['choices'] -%}<ul>{% for choice in v2.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif -%}</td>
+{% endif %}
+        <td>
+{% if v2.description is string %}
+        <div>@{ v2.description | replace('\n', '\n    ') | html_ify }@</div>
+{% else %}
+{% for desc in v2.description %}
+            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+{% endfor %}
+{% endif %}
+{% if 'aliases' in v and v2.aliases %}
+            </br><div style="font-size: small;">aliases: @{ v2.aliases|join(', ') }@</div>
+{% endif %}
+        </td>
+        </tr>
+{% endfor %}
+
+        </table>
+
     </td>
     </tr>
-    {% endif %}
-    </td></tr>
-    {% endfor %}
+{% endif %}
+    </td>
+    </tr>
+{% endfor %}
+
     </table>
     </br>
 
@@ -148,6 +186,7 @@ Common return values are documented here :doc:`common_return_values`, the follow
 .. raw:: html
 
     <table border=1 cellpadding=4>
+
     <tr>
     <th class="head">name</th>
     <th class="head">description</th>
@@ -155,19 +194,30 @@ Common return values are documented here :doc:`common_return_values`, the follow
     <th class="head">type</th>
     <th class="head">sample</th>
     </tr>
+{% for entry in returndocs %}
 
-    {% for entry in returndocs %}
     <tr>
-        <td> @{ entry }@ </td>
-        <td> @{ returndocs[entry].description }@ </td>
-        <td align=center> @{ returndocs[entry].returned }@ </td>
-        <td align=center> @{ returndocs[entry].type }@ </td>
-        <td align=center> @{ returndocs[entry].sample}@ </td>
+    <td>@{ entry }@</td>
+    <td>
+{% if returndocs[entry].description is string %}
+        <div>@{ returndocs[entry].description | replace('\n', '\n    ') | html_ify }@</div>
+{% else %}
+{% for desc in returndocs[entry].description %}
+        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+{% endfor %}
+{% endif %}
+    </td>
+    <td align=center>@{ returndocs[entry].returned }@</td>
+    <td align=center>@{ returndocs[entry].type }@</td>
+    <td align=center>@{ returndocs[entry].sample | replace('\n', '\n    ') | html_ify }@</td>
     </tr>
-    {% if returndocs[entry].type == 'complex' %}
-    <tr><td>contains: </td>
+{% if returndocs[entry].type == 'complex' %}
+
+    <tr>
+    <td>contains:</td>
     <td colspan=4>
         <table border=1 cellpadding=2>
+
         <tr>
         <th class="head">name</th>
         <th class="head">description</th>
@@ -175,25 +225,34 @@ Common return values are documented here :doc:`common_return_values`, the follow
         <th class="head">type</th>
         <th class="head">sample</th>
         </tr>
+{% for sub in returndocs[entry].contains %}
 
-        {% for sub in returndocs[entry].contains %}
         <tr>
-        <td> @{ sub }@ </td>
-        <td> @{ returndocs[entry].contains[sub].description }@ </td>
-        <td align=center> @{ returndocs[entry].contains[sub].returned }@ </td>
-        <td align=center> @{ returndocs[entry].contains[sub].type }@ </td>
-        <td align=center> @{ returndocs[entry].contains[sub].sample}@ </td>
+        <td>@{ sub }@</td>
+        <td>
+{% if returndocs[entry].contains[sub].description is string %}
+            <div>@{ returndocs[entry].contains[sub].description | replace('\n', '\n    ') | html_ify }@</div>
+{% else %}
+{% for desc in returndocs[entry].contains[sub].description %}
+            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+{% endfor %}
+{% endif %}
+        </td>
+        <td align=center>@{ returndocs[entry].contains[sub].returned }@</td>
+        <td align=center>@{ returndocs[entry].contains[sub].type }@</td>
+        <td align=center>@{ returndocs[entry].contains[sub].sample }@</td>
         </tr>
-        {% endfor %}
+{% endfor %}
 
         </table>
-    </td></tr>
-
-    {% endif %}
-    {% endfor %}
+    </td>
+    </tr>
+{% endif %}
+{% endfor %}
 
     </table>
-    </br></br>
+    </br>
+    </br>
 {% endif %}
 
 {% if notes -%}
