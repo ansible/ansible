@@ -305,7 +305,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'additional_paths_receive': 'capability additional-paths receive',
     'additional_paths_send': 'capability additional-paths send',
     'advertise_map_exist': 'advertise-map exist',
-    'advertise_map_non_exist': 'advertise-map non-exist',
+    'advertise_map_non_exist': 'advertise-map non-exist-map',
     'allowas_in': 'allowas-in',
     'allowas_in_max': 'allowas-in',
     'as_override': 'as-override',
@@ -401,22 +401,16 @@ def get_custom_value(arg, config, module):
                     value = 'disable'
                 else:
                     value = 'enable'
-    elif arg == 'advertise_map_exist':
+    elif command.startswith('advertise-map'):
         value = []
         for line in splitted_config:
-            if 'advertise-map' in line and 'exist-map' in line:
+            mo = re.search('advertise-map\s+\S+\s+(\S+)', line)
+            if mo:
                 splitted_line = line.split()
-                value = [splitted_line[1], splitted_line[3]]
-    elif command == 'advertise-map':
-        value = []
-        exclude = 'non_exist' in arg
-        for line in splitted_config:
-            if 'advertise-map' in line and (
-                (exclude and 'non-exist-map' in line) or
-                (not exclude and 'exist-map' in line)
-            ):
-                splitted_line = line.split()
-                value = [splitted_line[1], splitted_line[3]]
+                if mo.group(1) == 'exist-map' and arg == 'advertise_map_exist':
+                    value = [splitted_line[1], splitted_line[3]]
+                elif mo.group(1) == 'non-exist-map' and arg == 'advertise_map_non_exist':
+                    value = [splitted_line[1], splitted_line[3]]
     elif arg.startswith('max_prefix'):
         for line in splitted_config:
             if 'maximum-prefix' in line:
