@@ -121,7 +121,6 @@ except ImportError:
     from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
-DEFAULT_DESCRIPTION = "configured by junos_vlan"
 
 
 def validate_vlan_id(value, module):
@@ -145,7 +144,7 @@ def main():
     element_spec = dict(
         name=dict(),
         vlan_id=dict(type='int'),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         interfaces=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')

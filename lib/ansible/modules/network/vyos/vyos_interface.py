@@ -138,8 +138,6 @@ from ansible.module_utils.network_common import conditional, remove_default_spec
 from ansible.module_utils.vyos import load_config, get_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
-DEFAULT_DESCRIPTION = "'configured by vyos_interface'"
-
 
 def search_obj_in_list(name, lst):
     for o in lst:
@@ -302,7 +300,7 @@ def main():
     """
     element_spec = dict(
         name=dict(),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),

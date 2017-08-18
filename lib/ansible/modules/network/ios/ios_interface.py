@@ -143,8 +143,6 @@ from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.network_common import conditional, remove_default_spec
 
-DEFAULT_DESCRIPTION = "configured by ios_interface"
-
 
 def validate_mtu(value, module):
     if value and not 64 <= int(value) <= 9600:
@@ -284,13 +282,6 @@ def map_obj_to_commands(updates):
                         if candidate:
                             cmd = item + ' ' + str(candidate)
                             add_command_to_interface(interface, cmd, commands)
-                        elif running:
-                            # if value present in device is default value for
-                            # interface, don't delete
-                            if running == 'auto' and item in ('speed', 'duplex'):
-                                continue
-                            cmd = 'no ' + item + ' ' + str(running)
-                            add_command_to_interface(interface, cmd, commands)
 
                 if disable and not obj_in_have.get('disable', False):
                     add_command_to_interface(interface, 'shutdown', commands)
@@ -360,7 +351,7 @@ def main():
     """
     element_spec = dict(
         name=dict(),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         speed=dict(),
         mtu=dict(),
         duplex=dict(choices=['full', 'half', 'auto']),

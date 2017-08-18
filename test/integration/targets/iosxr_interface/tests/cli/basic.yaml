@@ -72,28 +72,16 @@
       - '"interface GigabitEthernet0/0/0/2 duplex full" in result.commands'
       - '"interface GigabitEthernet0/0/0/2 mtu 256" in result.commands'
 
-- name: Delete interface parameters
+- name: Change interface parameters (idempotent)
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
+    description: test-interface-1
+    speed: 10
+    duplex: full
+    mtu: 256
     state: present
     provider: "{{ cli }}"
   register: result
-
-- assert:
-    that:
-      - 'result.changed == true'
-      - '"interface GigabitEthernet0/0/0/2 description configured by iosxr_interface" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/2 speed 10" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/2 duplex full" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/2 mtu 256" in result.commands'
-
-- name: Delete interface parameters (idempotent)
-  iosxr_interface:
-    name: GigabitEthernet0/0/0/2
-    state: present
-    provider: "{{ cli }}"
-  register: result
-
 - assert:
     that:
       - 'result.changed == false'
@@ -135,11 +123,20 @@
       - 'result.changed == true'
       - '"interface GigabitEthernet0/0/0/3 description test-interface-initial" in result.commands'
 
+- name: Delete interface aggregate (setup)
+  iosxr_interface:
+    aggregate:
+    - name: GigabitEthernet0/0/0/3
+    - name: GigabitEthernet0/0/0/2
+    state: absent
+
 - name: Add interface aggregate
   iosxr_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/3, speed: 10, duplex: half, mtu: 256, description: test-interface-1 }
-    - { name: GigabitEthernet0/0/0/2, speed: 100, duplex: full, mtu: 516, description: test-interface-2 }
+    - { name: GigabitEthernet0/0/0/3, mtu: 256, description: test-interface-1 }
+    - { name: GigabitEthernet0/0/0/2, mtu: 516, description: test-interface-2 }
+    speed: 100
+    duplex: full
     state: present
     provider: "{{ cli }}"
   register: result
@@ -147,20 +144,23 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"interface GigabitEthernet0/0/0/3 speed 10" in result.commands'
+      - '"interface GigabitEthernet0/0/0/3 speed 100" in result.commands'
       - '"interface GigabitEthernet0/0/0/3 description test-interface-1" in result.commands'
-      - '"interface GigabitEthernet0/0/0/3 duplex half" in result.commands'
+      - '"interface GigabitEthernet0/0/0/3 duplex full" in result.commands'
       - '"interface GigabitEthernet0/0/0/3 mtu 256" in result.commands'
       - '"interface GigabitEthernet0/0/0/2 speed 100" in result.commands'
       - '"interface GigabitEthernet0/0/0/2 description test-interface-2" in result.commands'
       - '"interface GigabitEthernet0/0/0/2 duplex full" in result.commands'
       - '"interface GigabitEthernet0/0/0/2 mtu 516" in result.commands'
 
+
 - name: Add interface aggregate (idempotent)
   iosxr_interface:
     aggregate:
-    - { name: GigabitEthernet0/0/0/3, speed: 10, duplex: half, mtu: 256, description: test-interface-1 }
-    - { name: GigabitEthernet0/0/0/2, speed: 100, duplex: full, mtu: 516, description: test-interface-2 }
+    - { name: GigabitEthernet0/0/0/3, mtu: 256, description: test-interface-1 }
+    - { name: GigabitEthernet0/0/0/2, mtu: 516, description: test-interface-2 }
+    speed: 100
+    duplex: full
     state: present
     provider: "{{ cli }}"
   register: result
@@ -169,33 +169,12 @@
     that:
       - 'result.changed == false'
 
-
-- name: Change interface parameters in aggregate
+- name: Disable interface aggregate
   iosxr_interface:
     aggregate:
     - name: GigabitEthernet0/0/0/3
     - name: GigabitEthernet0/0/0/2
-    state: present
-    provider: "{{ cli }}"
-  register: result
-
-- assert:
-    that:
-      - 'result.changed == true'
-      - '"no interface GigabitEthernet0/0/0/3 speed 10" in result.commands'
-      - '"interface GigabitEthernet0/0/0/3 description configured by iosxr_interface" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/3 duplex half" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/3 mtu 256" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/2 speed 100" in result.commands'
-      - '"interface GigabitEthernet0/0/0/2 description configured by iosxr_interface" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/2 duplex full" in result.commands'
-      - '"no interface GigabitEthernet0/0/0/2 mtu 516" in result.commands'
-
-- name: Disable interface aggregate
-  iosxr_interface:
-    aggregate:
-    - { name: GigabitEthernet0/0/0/3, enabled: False }
-    - { name: GigabitEthernet0/0/0/2, enabled: False }
+    enabled: False
     state: present
     provider: "{{ cli }}"
   register: result
@@ -235,7 +214,9 @@
   iosxr_interface:
     aggregate:
     - name: GigabitEthernet0/0/0/4
+      description: test_interface_1
     - name: GigabitEthernet0/0/0/5
+      description: test_interface_2
     state: present
     provider: "{{ cli }}"
   register: result
@@ -243,8 +224,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"interface GigabitEthernet0/0/0/4 description configured by iosxr_interface" in result.commands'
-      - '"interface GigabitEthernet0/0/0/5 description configured by iosxr_interface" in result.commands'
+      - '"interface GigabitEthernet0/0/0/4 description test_interface_1" in result.commands'
+      - '"interface GigabitEthernet0/0/0/5 description test_interface_2" in result.commands'
 
 - name: Delete interface aggregate
   iosxr_interface:

@@ -126,7 +126,6 @@
       - result.diff.prepared | search("\+ *test_vlan_1")
       - result.diff.prepared | search("\+ *vlan-id 159")
       - result.diff.prepared | search("\+ *test_vlan_2")
-      - result.diff.prepared | search("\+ *description \"configured by junos_vlan\"")
 
 - name: Deactivate vlan configuration using aggregate
   junos_vlan:

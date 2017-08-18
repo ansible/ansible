@@ -4,6 +4,7 @@
 - name: Setup (interface is up)
   iosxr_interface:
     name: GigabitEthernet0/0/0/5
+    description: test_interface_5
     enabled: True
     state: present
     provider: "{{ cli }}"
