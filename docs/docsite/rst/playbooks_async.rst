@@ -79,6 +79,47 @@ following::
    "check on it later" task to fail because the temporary status file that
    the ``async_status:`` is looking for will not have been written or no longer exist 
 
+If you would like to run multiple asynchronous tasks while limiting the amount
+of tasks running concurrently, you can do it this way::
+
+    #####################
+    # main.yml
+    #####################
+    - name: Run items asynchronously in batch of two items
+      vars:
+        sleep_durations:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+        durations: "{{ item }}"
+      include: execute_batch.yml
+      with_items:
+        - "{{ sleep_durations | batch(2) | list }}"
+
+    #####################
+    # execute_batch.yml
+    #####################
+    - name: Async sleeping for batched_items
+      command: sleep {{ async_item }}
+      async: 45
+      poll: 0
+      with_items: "{{ durations }}"
+      loop_control:
+        loop_var: "async_item"
+      register: async_results
+
+    - name: Check sync status
+      async_status:
+        jid: "{{ async_result_item.ansible_job_id }}"
+      with_items: "{{ async_results.results }}"
+      loop_control:
+        loop_var: "async_result_item"
+      register: async_poll_results
+      until: async_poll_results.finished
+      retries: 30
+
 .. seealso::
 
    :doc:`playbooks`

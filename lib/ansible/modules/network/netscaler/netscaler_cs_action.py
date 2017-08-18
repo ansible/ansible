@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -204,8 +204,6 @@ def main():
     transforms = {
     }
 
-    json_encodes = ['targetvserverexpr']
-
     # Instantiate config proxy
     csaction_proxy = ConfigProxy(
         actual=csaction(),
@@ -215,7 +213,6 @@ def main():
         readonly_attrs=readonly_attrs,
         immutable_attrs=immutable_attrs,
         transforms=transforms,
-        json_encodes=json_encodes,
     )
 
     try:

@@ -30,6 +30,7 @@ RUN apt-get update -y && \
     openssh-server \
     python-cryptography \
     python-dev \
+    pass \
     python-dbus \
     python-httplib2 \
     python-jinja2 \

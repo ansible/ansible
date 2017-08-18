@@ -45,10 +45,10 @@ The Password Lookup
     A great alternative to the password lookup plugin, if you don't need to generate random passwords on a per-host basis, would be to use :doc:`playbooks_vault`.  Read the documentation there and consider using it first, it will be more desirable for most applications.
 
 ``password`` generates a random plaintext password and stores it in
-a file at a given filepath.  
+a file at a given filepath.
 
 (Docs about crypted save modes are pending)
- 
+
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (which simplifies password management in 'host_vars' variables).
 
@@ -609,6 +609,3 @@ These macros are evaluated each time they are used in a task (or template)::
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-

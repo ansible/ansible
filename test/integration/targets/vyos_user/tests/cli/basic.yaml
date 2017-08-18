@@ -1,8 +1,16 @@
 ---
-- name: Create user (SetUp)
+- name: Setup
+  vyos_config:
+    lines:
+      - delete system login user ansibletest1
+      - delete system login user ansibletest2
+      - delete system login user ansibletest3
+    provider: "{{ cli }}"
+
+- name: Create user
   vyos_user:
     name: ansibletest1
-    password: test
+    configured_password: test
     state: present
     provider: "{{ cli }}"
   register: result
@@ -31,7 +39,7 @@
 - name: Add user again (Idempotent)
   vyos_user:
     name: ansibletest1
-    password: test
+    configured_password: test
     state: present
     update_password: on_create
     provider: "{{ cli }}"

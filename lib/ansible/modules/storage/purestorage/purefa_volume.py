@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -20,7 +20,7 @@ version_added: "2.4"
 short_description:  Create, Delete or Extend a volume on Pure Storage FlashArray
 description:
     - This module creates, deletes or extends the capacity of a volume on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+author: Simon Dodsley (@sdodsley)
 options:
   name:
     description:
@@ -141,7 +141,7 @@ def delete_volume(module, array):
     """ Delete Volume"""
     if not module.check_mode:
         array.destroy_volume(module.params['name'])
-        if module.params['eradicate'] == 'true':
+        if module.params['eradicate']:
             array.eradicate_volume(module.params['name'])
     module.exit_json(changed=True)
 

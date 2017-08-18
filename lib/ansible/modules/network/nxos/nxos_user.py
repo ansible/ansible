@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -40,7 +40,7 @@ options:
       - The set of username objects to be configured on the remote
         Cisco Nexus device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
-        exclusive with the C(name) argument.
+        exclusive with the C(name) argument. alias C(users).
     version_added: "2.4"
     required: false
     default: null
@@ -51,6 +51,13 @@ options:
         exclusive with the C(aggregate) argument.
     required: false
     default: null
+  configured_password:
+    description:
+      - The password to be configured on the network device. The
+        password needs to be provided in cleartext and it will be encrypted
+        on the device.
+        Please note that this option is not same as C(provider password).
+    version_added: "2.4"
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -178,9 +185,9 @@ def map_obj_to_commands(updates, module):
         if want['state'] == 'present' and not have:
             commands.append('username %s' % want['name'])
 
-        if needs_update('password'):
+        if needs_update('configured_password'):
             if update_password == 'always' or not have:
-                add('password %s' % want['password'])
+                add('password %s' % want['configured_password'])
 
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
@@ -221,7 +228,7 @@ def map_config_to_obj(module):
     for item in to_list(data['TABLE_template']['ROW_template']):
         objects.append({
             'name': item['usr_name'],
-            'password': parse_password(item),
+            'configured_password': parse_password(item),
             'sshkey': item.get('sshkey_info'),
             'roles': parse_roles(item),
             'state': 'present'
@@ -266,7 +273,7 @@ def map_params_to_obj(module):
     for item in collection:
         get_value = partial(get_param_value, item=item, module=module)
         item.update({
-            'password': get_value('password'),
+            'configured_password': get_value('configured_password'),
             'sshkey': get_value('sshkey'),
             'roles': get_value('roles'),
             'state': get_value('state')
@@ -302,7 +309,7 @@ def main():
         aggregate=dict(type='list', no_log=True, aliases=['collection', 'users']),
         name=dict(),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
         roles=dict(type='list', aliases=['role']),
@@ -325,6 +332,12 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
     result['warnings'] = warnings
 

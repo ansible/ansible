@@ -138,8 +138,9 @@
 - name: Disable interface on aggregate
   net_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512, enabled: False}
-      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256, enabled: False}
+      - name: eth1
+      - name: eth2
+    enabled: False
   register: result
 
 - assert:
@@ -151,8 +152,9 @@
 - name: Enable interface on aggregate
   net_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512, enabled: True}
-      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256, enabled: True}
+      - name: eth1
+      - name: eth2
+    enabled: True
   register: result
 
 - assert:
@@ -164,8 +166,9 @@
 - name: Delete interface aggregate
   net_interface:
     aggregate:
-      - { name: eth1, state: absent}
-      - { name: eth2, state: absent}
+      - name: eth1
+      - name: eth2
+    state: absent
   register: result
 
 - assert:
@@ -177,8 +180,9 @@
 - name: Delete interface aggregate (idempotent)
   net_interface:
     aggregate:
-      - { name: eth1, state: absent}
-      - { name: eth2, state: absent}
+      - name: eth1
+      - name: eth2
+    state: absent
   register: result
 
 - assert:

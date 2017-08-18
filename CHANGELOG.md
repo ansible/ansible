@@ -34,6 +34,7 @@ Ansible Changes By Release
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 * Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
+* Windows become_method: runas now works across all authtypes and will auto-elevate under UAC if WinRM user has "Act as part of the operating system" privilege
 
 ### Deprecations
 * The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line
@@ -50,6 +51,10 @@ Ansible Changes By Release
 #### Deprecated Modules:
 * ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
 * cs_nic (removed in 2.7), replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+* panos_address (use M(panos_object) instead)
+* panos_service (use M(panos_object) instead)
+* panos_security_policy: In 2.4 use M(panos_security_rule) instead.
+* panos_nat_policy, In 2.4 use M(panos_nat_rule) instead.
 
 #### Removed Deprecated Modules:
 * eos_template (use eos_config instead)
@@ -58,6 +63,7 @@ Ansible Changes By Release
 * junos_template (use junos_config instead)
 * nxos_template (use nxos_config instead)
 * ops_template (use ops_config instead)
+* openswitch
 
 * Modules (scheduled for removal in 2.6)
 
@@ -122,6 +128,10 @@ Ansible Changes By Release
 - profile_roles
 - stderr
 
+#### New Filters:
+- parse_cli
+- parse_cli_textfsm
+
 #### New Inventory Plugins:
 - advanced_host_list
 - constructed_groups
@@ -152,33 +162,132 @@ Ansible Changes By Release
 - The template module gained a follow parameter to match with copy and file.
   Like those modules, template defaults this parameter to False.  Previously,
   template hardcoded this to true.
+- Added a new parameter to command module that lets users specify data to pipe
+  into the command's stdin.
 
 ### New Modules
-- aci
-  * aci_rest
-- aix_lvol
+
+#### Cloud
 - amazon
   * aws_api_gateway
+  * aws_s3_bucket_facts
+  * data_pipeline
   * dynamodb_ttl
   * ec2_instance_facts
   * ec2_metadata_facts
+  * ec2_vpc_dhcp_option_facts
   * ec2_vpc_endpoint
   * ec2_vpc_endpoint_facts
   * ec2_vpc_peering_facts
+  * ecs_attribute
   * elb_application_lb
   * elb_application_lb_facts
   * elb_target_group
   * elb_target_group_facts
-  * iam_cert_facts
   * iam_group
   * iam_managed_policy
   * lightsail
+  * redshift_facts
 - atomic
   * atomic_container
+- cloudstack
+  * cs_instance_nic
+  * cs_instance_nic_secondaryip
+  * cs_network_acl
+  * cs_network_acl_rule
+  * cs_vpn_gateway
+- digital_ocean
+  * digital_ocean_floating_ip
+- docker
+  * docker_secret
+  * docker_volume
+- google
+  * gce_labels
+  * gcp_backend_service
+  * gcp_forwarding_rule
+  * gcp_healthcheck
+  * gcp_target_proxy
+  * gcp_url_map
+- misc
+  * helm
+- ovirt
+  * ovirt_host_storage_facts
+  * ovirt_scheduling_policies_facts
+  * ovirt_storage_connections
+- vmware
+  * vcenter_license
+  * vmware_guest_find
+  * vmware_guest_tools_wait
+  * vmware_resource_pool
+
+#### Commands
+  * telnet
+
+#### Crypto
+  * openssl_csr
+
+#### Files
+  * xml
+
+#### Identity
+- cyberark
+  * cyberark_authentication
+  * cyberark_user
+- ipa
+  * ipa_dnsrecord
+
+#### Monitoring
+  * sensu_client
+  * sensu_handler
+  * sensu_silence
+
+#### Network
+- aci
+  * aci_aep
+  * aci_ap
+  * aci_bd
+  * aci_bd_subnet
+  * aci_bd_to_l3out
+  * aci_contract
+  * aci_contract_subject_to_filter
+  * aci_epg
+  * aci_epg_monitoring_policy
+  * aci_epg_to_contract
+  * aci_epg_to_domain
+  * aci_filter
+  * aci_filter_entry
+  * aci_intf_policy_fc
+  * aci_intf_policy_l2
+  * aci_intf_policy_lldp
+  * aci_intf_policy_mcp
+  * aci_intf_policy_port_channel
+  * aci_intf_policy_port_security
+  * aci_l3out_route_tag_policy
+  * aci_rest
+  * aci_taboo_contract
+  * aci_tenant
+  * aci_tenant_action_rule_profile
+  * aci_tenant_span_dst_group
+  * aci_vrf
+- aireos
+  * aireos_command
+  * aireos_config
+- aruba
+  * aruba_command
+  * aruba_config
 - avi
+  * avi_actiongroupconfig
+  * avi_alertconfig
+  * avi_alertemailconfig
+  * avi_alertscriptconfig
+  * avi_alertsyslogconfig
+  * avi_authprofile
+  * avi_backup
+  * avi_backupconfiguration
   * avi_cloud
   * avi_cloudconnectoruser
   * avi_cloudproperties
+  * avi_cluster
   * avi_controllerproperties
   * avi_dnspolicy
   * avi_gslb
@@ -186,24 +295,39 @@ Ansible Changes By Release
   * avi_gslbgeodbprofile
   * avi_gslbhealthmonitor
   * avi_gslbservice
+  * avi_hardwaresecuritymodulegroup
   * avi_httppolicyset
   * avi_ipaddrgroup
+  * avi_ipamdnsproviderprofile
+  * avi_microservicegroup
   * avi_network
   * avi_networksecuritypolicy
+  * avi_poolgroupdeploymentpolicy
+  * avi_prioritylabels
+  * avi_scheduler
   * avi_seproperties
+  * avi_serverautoscalepolicy
+  * avi_serviceengine
   * avi_serviceenginegroup
+  * avi_snmptrapprofile
   * avi_stringgroup
+  * avi_trafficcloneprofile
   * avi_useraccountprofile
+  * avi_vrfcontext
   * avi_vsdatascriptset
   * avi_vsvip
-- awall
-- catapult
+  * avi_webhook
+- bigswitch
+  * bcf_switch
 - cloudengine
   * ce_aaa_server
   * ce_aaa_server_host
   * ce_acl
   * ce_acl_advance
   * ce_acl_interface
+  * ce_bfd_global
+  * ce_bfd_session
+  * ce_bfd_view
   * ce_bgp
   * ce_bgp_af
   * ce_bgp_neighbor
@@ -215,6 +339,7 @@ Ansible Changes By Release
   * ce_evpn_bd_vni
   * ce_evpn_bgp
   * ce_evpn_bgp_rr
+  * ce_evpn_global
   * ce_facts
   * ce_file_copy
   * ce_info_center_debug
@@ -254,66 +379,165 @@ Ansible Changes By Release
   * ce_vrf
   * ce_vrf_af
   * ce_vrf_interface
+  * ce_vrrp
   * ce_vxlan_arp
   * ce_vxlan_gateway
   * ce_vxlan_global
   * ce_vxlan_tunnel
   * ce_vxlan_vap
-- cloudstack
-  * cs_instance_nic
-  * cs_instance_nic_secondaryip
-  * cs_network_acl
-  * cs_network_acl_rule
-  * cs_vpn_gateway
-- crypto
-  * openssl_csr
-- digital_ocean_floating_ip
+- cloudvision
+  * cv_server_provision
+- eos
+  * eos_logging
+  * eos_vlan
+  * eos_vrf
 - f5
   * bigip_command
-  * bigip_switchport
+  * bigip_config
+  * bigip_configsync_actions
+  * bigip_gtm_pool
+  * bigip_iapp_service
+  * bigip_iapp_template
+  * bigip_monitor_tcp_echo
+  * bigip_monitor_tcp_half_open
+  * bigip_provision
+  * bigip_qkview
+  * bigip_snmp
+  * bigip_snmp_trap
+  * bigip_ucs
   * bigip_user
-- github_issue
-- google
-  * gcp_backend_service
-  * gcp_forwarding_rule
-  * gcp_healthcheck
-  * gcp_target_proxy
-  * gcp_url_map
-- gunicorn
+  * bigip_virtual_address
+- fortios
+  * fortios_address
+- interface
+  * net_interface
+  * net_linkagg
+  * net_lldp_interface
+- ios
+  * ios_interface
+  * ios_logging
+  * ios_static_route
+  * ios_user
+- iosxr
+  * iosxr_banner
+  * iosxr_interface
+  * iosxr_logging
+  * iosxr_user
+- junos
+  * junos_banner
+  * junos_interface
+  * junos_l3_interface
+  * junos_linkagg
+  * junos_lldp
+  * junos_lldp_interface
+  * junos_logging
+  * junos_static_route
+  * junos_system
+  * junos_vlan
+  * junos_vrf
+- layer2
+  * net_l2_interface
+  * net_vlan
+- layer3
+  * net_l3_interface
+  * net_vrf
+- netscaler
+  * netscaler_cs_action
+  * netscaler_cs_policy
+  * netscaler_cs_vserver
+  * netscaler_gslb_service
+  * netscaler_gslb_site
+  * netscaler_gslb_vserver
+  * netscaler_lb_monitor
+  * netscaler_lb_vserver
+  * netscaler_save_config
+  * netscaler_server
+  * netscaler_service
+  * netscaler_servicegroup
+  * netscaler_ssl_certkey
 - nuage
-  * nuage_vpsk
+  * nuage_vspk
+- nxos
+  * nxos_banner
+  * nxos_logging
+- panos
+  * panos_nat_rule
+  * panos_object
+  * panos_security_rule
+- protocol
+  * net_lldp
+- routing
+  * net_static_route
+- system
+  * net_banner
+  * net_command
+  * net_logging
+  * net_system
+  * net_user
+- vyos
+  * vyos_banner
+  * vyos_interface
+  * vyos_l3_interface
+  * vyos_linkagg
+  * vyos_lldp
+  * vyos_lldp_interface
+  * vyos_logging
+  * vyos_static_route
+  * vyos_user
+
+#### Notification
+  * bearychat
+  * catapult
+  * office_365_connector_card
+
+#### Remote Management
+- hpe
+  * oneview_fc_network
+- imc
+  * imc_rest
+- manageiq
+  * manageiq_user
+
+#### Source Control
+  * github_deploy_key
+  * github_issue
+
+#### Storage
 - purestorage
   * purefa_hg
   * purefa_host
   * purefa_pg
+  * purefa_snap
   * purefa_volume
-- imc
-  * imc_rest
-- rundeck
+
+#### System
+  * aix_lvol
+  * awall
+  * dconf
+  * interfaces_file
+
+#### Web Infrastructure
+  * gunicorn
   * rundeck_acl_policy
   * rundeck_project
-- sensu
-  * sensu_client
-  * sensu_silence
-  * sensu_handler
-- vmware
-  * vcenter_license
-  * vmware_guest_find
-  * vmware_guest_tools_wait
-- windows
+
+#### Windows
   * win_defrag
   * win_domain_group
+  * win_domain_user
   * win_dsc
+  * win_eventlog
+  * win_eventlog_entry
   * win_firewall
   * win_group_membership
   * win_hotfix
   * win_mapped_drive
   * win_psmodule
+  * win_rabbitmq_plugin
   * win_route
   * win_security_policy
   * win_user_right
   * win_wakeonlan
-- xml
 
 <a id="2.3"></a>
 

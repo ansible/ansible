@@ -22,7 +22,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -34,7 +34,7 @@ version_added: "2.4"
 short_description: Create, Delete and Modify Protection Groups on Pure Storage FlashArray
 description:
     - This module creates, deletes or modifies protection groups on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+author: Simon Dodsley (@sdodsley)
 options:
   pgroup:
     description:
@@ -162,7 +162,7 @@ def delete_pgroup(module, array):
     changed = True
     if not module.check_mode:
         array.destroy_pgroup(module.params['pgroup'])
-        if module.params['eradicate'] == 'true':
+        if module.params['eradicate']:
             array.eradicate_pgroup(module.params['pgroup'])
     module.exit_json(changed=changed)
 

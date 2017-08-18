@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -146,7 +144,6 @@ from ansible.module_utils.netcfg import CustomNetworkConfig
 
 PARAM_TO_COMMAND_KEYMAP = {
     'vrf': 'vrf',
-    'ospf': 'ospf',
     'router_id': 'router-id',
     'default_metric': 'default-metric',
     'log_adjacency': 'log-adjacency-changes',

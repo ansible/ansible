@@ -4,7 +4,7 @@ Ansible Module Development Walkthrough
 ======================================
 
 
-In this section, we will walk through developing, testing, and debugging an Ansible module. 
+In this section, we will walk through developing, testing, and debugging an Ansible module.
 
 What's covered in this section:
 
@@ -51,14 +51,16 @@ working on a whole new file. Here is an example:
 -  Navigate to the directory that you want to develop your new module
    in. E.g. ``$ cd lib/ansible/modules/cloud/azure/``
 -  Create your new module file: ``$ touch my_new_test_module.py``
--  Paste this simple into the new module file: (explanation in comments)::
+-  Paste this example code into the new module file: (explanation in comments)
+
+.. code:: python
 
     #!/usr/bin/python
 
     ANSIBLE_METADATA = {
-        'metadata_version': '1.0',
+        'metadata_version': '1.1',
         'status': ['preview'],
-        'supported_by': 'curated'
+        'supported_by': 'community'
     }
 
     DOCUMENTATION = '''
@@ -187,14 +189,14 @@ that can run locally.
 -  Create an arguments file in ``/tmp/args.json`` with the following
    content: (explanation below)
 
-   .. code:: json
+.. code:: json
 
-       {
-         "ANSIBLE_MODULE_ARGS": {
-       "name": "hello",
-       "new": true
-         }
-       }
+    {
+        "ANSIBLE_MODULE_ARGS": {
+            "name": "hello",
+            "new": true
+        }
+    }
 
 -  If you are using a virtual environment (highly recommended for
    development) activate it: ``$ . venv/bin/activate``
@@ -205,7 +207,7 @@ that can run locally.
 This should be working output that resembles something like the
 following:
 
-::
+.. code:: json
 
     {"changed": true, "state": {"original_message": "hello", "new_message": "goodbye"}, "invocation": {"module_args": {"name": "hello", "new": true}}}
 
@@ -221,7 +223,6 @@ Ansible playbook.
 -  Create a playbook in any directory: ``$ touch testmod.yml``
 -  Add the following to the new playbook file::
 
-    ---
     - name: test my new module
       connection: local
       hosts: localhost
@@ -238,11 +239,11 @@ Ansible playbook.
 - Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
 Debugging (local)
-=================   
+=================
 
 If you want to break into a module and step through with the debugger, locally running the module you can do:
 
-- Set a breakpoint in the module: `import pdb; pdb.set_trace()`
+- Set a breakpoint in the module: ``import pdb; pdb.set_trace()``
 - Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
 
 Debugging (remote)
@@ -282,7 +283,7 @@ Going Further
 
 If you are starting new development or fixing a bug, create a new branch:
 
-``$ git checkout -b my-new-branch``. 
+``$ git checkout -b my-new-branch``.
 
 If you are planning on contributing
 back to the main Ansible repository, fork the Ansible repository into
@@ -293,7 +294,7 @@ submit a pull request to the Ansible repository.
 If you want to submit a new module to the upstream Ansible repo, be sure
 to run through sanity checks first. For example:
 
-``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME`` 
+``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
 Note that this example requires docker to be installed and running. If you'd rather not use a
 container for this, you can choose to use ``--tox`` instead of ``--docker``.
@@ -311,5 +312,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstring <https://github.com/tstringer>`_) for contributing source 
+Thank you to Thomas Stringer (`@tstring <https://github.com/tstringer>`_) for contributing source
 material for this topic.

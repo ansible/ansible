@@ -10,7 +10,7 @@
 - name: Create user (SetUp)
   iosxr_user:
     name: ansibletest1
-    password: test
+    configured_password: test
     state: present
     provider: "{{ cli }}"
   register: result
@@ -24,7 +24,7 @@
 - name: Create user with update_password always (not idempotent)
   iosxr_user:
     name: ansibletest1
-    password: test
+    configured_password: test
     update_password: always
     state: present
     provider: "{{ cli }}"
@@ -39,7 +39,7 @@
 - name: Create user again with update_password on_create (idempotent)
   iosxr_user:
     name: ansibletest1
-    password: test
+    configured_password: test
     update_password: on_create
     state: present
     provider: "{{ cli }}"
@@ -53,7 +53,7 @@
 - name: Modify user group
   iosxr_user:
     name: ansibletest1
-    password: test
+    configured_password: test
     update_password: on_create
     group: sysadmin
     state: present
@@ -69,7 +69,7 @@
 - name: Modify user group again (idempotent)
   iosxr_user:
     name: ansibletest1
-    password: test
+    configured_password: test
     update_password: on_create
     group: sysadmin
     state: present
@@ -86,7 +86,7 @@
     aggregate:
       - name: ansibletest2
       - name: ansibletest3
-    password: test
+    configured_password: test
     state: present
     group: sysadmin
     provider: "{{ cli }}"
@@ -107,7 +107,7 @@
     aggregate:
       - name: ansibletest2
       - name: ansibletest3
-    password: test
+    configured_password: test
     state: present
     group: sysadmin
     provider: "{{ cli }}"
@@ -126,7 +126,7 @@
     aggregate:
       - name: ansibletest2
       - name: ansibletest3
-    password: test
+    configured_password: test
     update_password: on_create
     state: present
     group: sysadmin

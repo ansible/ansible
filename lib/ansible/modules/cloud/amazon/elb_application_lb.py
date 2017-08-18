@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -628,6 +628,7 @@ def compare_listeners(connection, module, current_listeners, new_listeners, purg
     for current_listener in current_listeners:
         current_listener_passed_to_module = False
         for new_listener in new_listeners[:]:
+            new_listener['Port'] = int(new_listener['Port'])
             if current_listener['Port'] == new_listener['Port']:
                 current_listener_passed_to_module = True
                 # Remove what we match so that what is left can be marked as 'to be added'

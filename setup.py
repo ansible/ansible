@@ -190,8 +190,7 @@ setup(
             'galaxy/data/*/*/.*',
             'galaxy/data/*/*/*.*',
             'galaxy/data/*/tests/inventory',
-            'config/data/*.yaml',
-            'config/data/*.yml',
+            'config/base.yml',
         ],
     },
     classifiers=[

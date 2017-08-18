@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -94,7 +94,7 @@ class CapabilitiesModule(object):
                 self.module.exit_json(changed=True, msg='capabilities changed')
             else:
                 # remove from current cap list if it's already set (but op/flags differ)
-                current = filter(lambda x: x[0] != self.capability_tup[0], current)
+                current = list(filter(lambda x: x[0] != self.capability_tup[0], current))
                 # add new cap with correct op/flags
                 current.append( self.capability_tup )
                 self.module.exit_json(changed=True, state=self.state, msg='capabilities changed', stdout=self.setcap(self.path, current))

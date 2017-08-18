@@ -37,7 +37,7 @@ Release status
 +=================+============================+========================================+
 | devel           | `2.4`_ (unreleased, trunk) | In development                         |
 +-----------------+----------------------------+----------------------------------------+
-| 2.3             | `2.3.1`_ (2017-06-01)      | Supported (bug **and** security fixes) |
+| 2.3             | `2.3.2`_ (2017-08-08)      | Supported (bug **and** security fixes) |
 +-----------------+----------------------------+----------------------------------------+
 | 2.2             | `2.2.3`_ (2017-05-09)      | Supported (**only** security fixes)    |
 +-----------------+----------------------------+----------------------------------------+
@@ -51,7 +51,7 @@ Release status
 +-----------------+----------------------------+----------------------------------------+
 
 .. _2.4: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.3.1: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
+.. _2.3.2: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
 .. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
 .. _2.1.6: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
 .. _2.0.2: https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md

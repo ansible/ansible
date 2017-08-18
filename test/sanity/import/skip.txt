@@ -1,3 +1,4 @@
+lib/ansible/modules/cloud/ovirt/_ovirt_disks.py
 lib/ansible/module_utils/ansible_tower.py
 lib/ansible/module_utils/avi.py
 lib/ansible/module_utils/azure_rm_common.py
@@ -43,7 +44,11 @@ lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gcdns_record.py
 lib/ansible/modules/cloud/google/gcdns_zone.py
+lib/ansible/modules/cloud/misc/serverless.py
 lib/ansible/modules/cloud/ovirt/ovirt_disks.py
+lib/ansible/modules/cloud/openstack/os_client_config.py
+lib/ansible/modules/cloud/ovirt/ovirt_disk.py
+lib/ansible/modules/cloud/univention/udm_user.py
 lib/ansible/modules/cloud/webfaction/webfaction_app.py
 lib/ansible/modules/cloud/webfaction/webfaction_db.py
 lib/ansible/modules/cloud/webfaction/webfaction_domain.py
@@ -54,7 +59,6 @@ lib/ansible/modules/clustering/consul_kv.py
 lib/ansible/modules/messaging/rabbitmq_binding.py
 lib/ansible/modules/messaging/rabbitmq_exchange.py
 lib/ansible/modules/messaging/rabbitmq_queue.py
-lib/ansible/modules/monitoring/circonus_annotation.py
 lib/ansible/modules/network/cloudengine/ce_file_copy.py
 lib/ansible/modules/network/cumulus/_cl_img_install.py
 lib/ansible/modules/network/f5/bigip_command.py
