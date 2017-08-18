@@ -145,7 +145,7 @@ def main():
     ele = map_obj_to_ele(module, want, top, param=item)
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        diff = load_config(module, tostring(ele), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:
