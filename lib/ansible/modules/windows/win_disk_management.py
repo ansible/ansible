@@ -18,11 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = r"""
-    version: "1.1"
-    supported_by: "community"
-    status: ["preview"]
-"""
+ANSIBLE_METADATA = r'''
+    metadata_version: '1.1'
+    supported_by: 'community'
+    status: ['preview']
+'''
 
 DOCUMENTATION = r'''
 ---
@@ -30,7 +30,6 @@ module: win_disk_management
 version_added: '2.4'
 short_description: A Windows disk management module
 description:
-   - This module is working from Windows Server 2012R2 onwards and on newer versions.
    - With the module you can select a disk on the computer and manage it (e.g. initializing, partitioning, formatting).
    - To select the disk and to manage it you have several options which are all described in the documentation.
    - If more than one disk with the exact same specifications was found on the computer, the first found disk will be selected.
@@ -38,6 +37,10 @@ description:
    - If parameter file_system is set to "refs" the parameter allocation_unit_size will be automatically adjusted to "64" (KB).
    - The module recognizes whether the selected switches are suitable with the selected parameters.
    - If they do not fit with the selected parameters, the switches will be automatically deactivated.
+requirements:
+    - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
+author:
+    - Marc Tschapek (@marqelme)
 options:
   disk_size:
       description:
@@ -114,8 +117,6 @@ options:
         - Switch to set Integrity Streams option for file system on selected disk, only for ReFs file system
       type: bool
       default: 'no'
-author:
-    - Marc Tschapek (@marqelme)
 '''
 
 EXAMPLES = r'''
