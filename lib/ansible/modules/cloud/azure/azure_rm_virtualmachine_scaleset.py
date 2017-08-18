@@ -56,6 +56,18 @@ options:
         description:
             - Capacity of VMSS
         required: true
+    tier:
+        description:
+            - SKU Tier
+        choices:
+            - Basic
+            - Standard
+    upgrade_policy:
+        description:
+            - Upgrade policy
+        choices:
+            - Manual
+            - Automatic
     admin_username:
         description:
             - Admin username used to access the host after it is created. Required when creating a VM.
@@ -198,6 +210,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             location=dict(type='str'),
             short_hostname=dict(type='str'),
             vm_size=dict(type='str', required=True),
+            tier=dict(type='str', choices=['Basic', 'Standard']),
             capacity=dict(type='int', default=1),
             upgrade_policy=dict(type='str', choices=['Automatic', 'Manual']),
             admin_username=dict(type='str'),
@@ -221,6 +234,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.short_hostname = None
         self.vm_size = None
         self.capacity = None
+        self.tier = None
         self.upgrade_policy = None
         self.admin_username = None
         self.admin_password = None
@@ -382,7 +396,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         sku=Sku(
                             name=self.vm_size,
                             capacity=self.capacity,
-                            tier="Standard"
+                            tier=self.tier,
                         ),
                         virtual_machine_profile=VirtualMachineScaleSetVMProfile(
                             os_profile=VirtualMachineScaleSetOSProfile(
