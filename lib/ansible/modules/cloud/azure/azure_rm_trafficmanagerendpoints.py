@@ -22,7 +22,6 @@ short_description: Manage Azure Traffic Manager (endpoints).
 description:
     - Create, update and delete a traffic manager endpoints.
 options:
-
     name:
         description:
              - The name of the Traffic Manager endpoints.
@@ -32,67 +31,51 @@ options:
         description:
              - The name of the resource group containing the Traffic Manager endpoints.
         required: true
+    endpoint_name:
+        description:
+            - The name of the Traffic Manager endpoint to be created or updated.        
+    required: true
+    endpoint_type:
+        description:
+            - The type of the Traffic Manager endpoint to be created or updated.
+    # XXX
+    target_resource_id:
+        description:
+            - The Azure Resource URI of the of the endpoint. Not applicable to 
+            endpoints of type 'ExternalEndpoints'.
+    target:
+        description:
+            - The fully-qualified DNS name of the endpoint. Traffic Manager 
+            returns this value in DNS responses to direct traffic to this endpoint.
     endpoint_status:
         description:
-            - The status of the Traffic Manager endpoints. 
-            choices:
-                - Enabled
-                - Disabled
-    traffic_routing_method:
+            - The status of the endpoint. If the endpoint is Enabled, it is probed 
+            for endpoint health and is included in the traffic routing method. 
+        choices:
+            - Enabled 
+            - Disabled
+    weight:
         description:
-            - The traffic routing method of the Traffic Manager endpoints. Possible 
-            values include: 'Performance', 'Priority', 'Weighted', 'Geographic'.
-    dns_config:
+            - The weight of this endpoint when using the 'Weighted' traffic routing method. 
+            Possible values are from 1 to 1000.
+    priority:
         description:
-            - The DNS settings of the Traffic Manager endpoints. This section includes
-            relative_name and ttl.
-        required: true
-        suboptions:
-            ttl:
-                description:
-                    - The DNS Time-To-Live (TTL), in seconds. This informs the 
-                    local DNS resolvers and DNS clients how long to cache DNS 
-                    responses provided by this Traffic Manager endpoints.
-    monitor_config:
+            - The priority of this endpoint when using the ‘Priority’ traffic routing method.
+             Possible values are from 1 to 1000, lower values represent higher priority. 
+             This is an optional parameter. If specified, it must be specified on all endpoints, 
+             and no two endpoints can share the same priority value.
+    endpoint_location:
         description:
-            - The endpoint monitoring settings of the Traffic Manager endpoints.
-        required: true
-	suboptions:
-            status:
-                description:
-                    - The endpoints-level monitoring status of the Traffic Manager endpoints. 
-                    choices:
-                        - CheckingEndpoints
-                        - Online
-                        - Degraded
-                        - Disabled
-                        - Inactive
-            protocol:
-                description:
-                    - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health. 
-                    choices:
-                        - HTTP
-                        - HTTPS
-                        - TCP
-            port:
-                description:
-                    - The TCP port used to probe for endpoint health.
-            path:
-                description:
-                    - The path relative to the endpoint domain name used to probe for 
-                    endpoint health.
-            interval_in_seconds:
-                description:
-                    - The monitor interval for endpoints in this endpoints. This is the interval 
-                    at which Traffic Manager will check the health of each endpoint in this endpoints.
-            timeout_in_seconds:
-                description:
-                    - The monitor timeout for endpoints in this endpoints. This is the time that 
-                    Traffic Manager allows endpoints in this endpoints to response to the health check.
-            tolerated_number_of_failures:
-                description:
-                    - The number of consecutive failed health check that Traffic Manager tolerates 
-                    before declaring an endpoint in this endpoints Degraded after the next failed health check.
+            - Specifies the location of the external or nested endpoints when using the ‘Performance’ 
+            traffic routing method.
+    min_child_endpoints:
+        description:
+            - The minimum number of endpoints that must be available in the child profile in order 
+            for the parent profile to be considered available. Only applicable to endpoint of type 'NestedEndpoints'.
+    geo_mapping:
+        description:
+            - The list of countries/regions mapped to this endpoint when using the ‘Geographic’ traffic routing method. 
+            Please consult Traffic Manager Geographic documentation for a full list of accepted values.
     state:
         description:
             - Assert the state of the resource group. Use 'present' to create or update and
@@ -114,33 +97,24 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create Traffic Manager Profile
-      azure_rm_trafficmanagerendpoints:
-        name: "contoso.com"
-        state: "present"
-        resource_group: "ContosoRG"
-        properties:
-          endpoint_status: "Enabled"
-          traffic_routing_method: "Performance"
-          dns_config:
-            ttl: "300"
-          monitor_config:
-            protocol: "HTTP"
-            port: 80
-            path: "/monitor/index.html"
-            status: "Active"
-            interval_in_seconds: 30
-            timeout_in_seconds: 10
-            tolerated_number_of_failures: 3
-          endpoint_type: ""
-          tags:
-            project: "My Project"
-  
-    - name: Delete a Traffic Manager Profile
-      azure_rm_trafficmanagerendpoints:
-        name: "contoso.com"
-        state: "absent"
+    - name: Create a Traffic Manager endpoint
+    azure_rm_trafficmanagerendpoints:
+      resource_group: "ContosoRG"
+      profile_name: "contoso.com"
+      endpoint_name: "Contoso South Central US"
+      endpoint_type: "ExternalEndpoints"
+      properties:
+        target: "ww2.contoso.com"
+        endpoint_status: "Enabled"
+        endpoint_location: "South Central US"
 
+    - name: Delete a Traffic Manager endpoint
+    azure_rm_trafficmanagerendpoints:
+      resource_group: "ContosoRG"
+      profile_name: "contoso.com"
+      state: "absent"
+      endpoint_name: "Contoso South Central US"
+      endpoint_type: "ExternalEndpoints"
 '''
 RETURN = '''
 contains_resources:
@@ -166,7 +140,7 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.trafficmanager.models import Endpoint, DnsConfig, Profile, MonitorConfig
+    from azure.mgmt.trafficmanager.models import Endpoint, Profile
 except ImportError:
     pass
 
@@ -233,7 +207,7 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
                 endpoint = self.create_or_update_traffic_manager_endpoints(self.resource_group, self.profile_name,
                                                                 self.endpoint_type, self.endpoint_name, self.properties)
 
-                #TODO
+
                 #results = self.endpoint_to_dict(endpoint, self.resource_group, self.profile_name,
                 #                                       self.endpoint_type, self.endpoint_name, self.properties)
                 changed = True
@@ -291,7 +265,7 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
         weight = parameters.get('weight', None)
         priority = parameters.get('priority', None)
         endpoint_location = parameters.get('endpoint_location', None)
-        endpoint_monitor_status = parameters.get('endpoint_monitor_status', None)
+        endpoint_monitor_status = None
         min_child_endpoints = parameters.get('min_child_endpoints', None)
         geo_mapping = parameters.get('geo_mapping', None)
 
@@ -302,7 +276,7 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
             return self.trafficmanager_client.endpoints.create_or_update(resource_group, profile_name, endpoint_type, endpoint_name, endpoint_parameters)
         except CloudError as cloudError:
             self.fail("Error creating or updating traffic manager endpoints with name {0}.  {1}"
-                      .format(profile_name, cloudError))
+                      .format(endpoint_name, cloudError))
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(profile_name, str(exc)))
 
