@@ -161,6 +161,87 @@ EXAMPLES = '''
       publisher: CoreOS
       sku: Stable
       version: latest
+'''
+
+RETURN = '''
+azure_vmss:
+    description: Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
+    returned: always
+    type: complex
+    contains: {
+        "properties": {
+            "overprovision": true,
+            "singlePlacementGroup": true,
+            "upgradePolicy": {
+                "mode": "Manual"
+            },
+            "virtualMachineProfile": {
+                "networkProfile": {
+                    "networkInterfaceConfigurations": [
+                        {
+                            "name": "testvmss",
+                            "properties": {
+                                "dnsSettings": {
+                                    "dnsServers": []
+                                },
+                                "enableAcceleratedNetworking": false,
+                                "ipConfigurations": [
+                                    {
+                                        "name": "default",
+                                        "properties": {
+                                            "privateIPAddressVersion": "IPv4",
+                                            "subnet": {
+                                                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/testvnet/subnets/testsubnet"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "primary": true
+                            }
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "testuser",
+                    "computerNamePrefix": "testvmss",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "keyData": "",
+                                    "path": "/home/testuser/.ssh/authorized_keys"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": []
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "offer": "CoreOS",
+                        "publisher": "CoreOS",
+                        "sku": "Stable",
+                        "version": "899.17.0"
+                    },
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        }
+                    }
+                }
+            }
+        },
+        "sku": {
+            "capacity": 2,
+            "name": "Standard_DS1_v2",
+            "tier": "Standard"
+        },
+        "tags": null,
+        "type": "Microsoft.Compute/virtualMachineScaleSets"
+    }
 '''  # NOQA
 
 import random
@@ -252,7 +333,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.results = dict(
             changed=False,
             actions=[],
-            ansible_facts=dict(azure_vm=None)
+            ansible_facts=dict(azure_vmss=None)
         )
 
         super(AzureRMVirtualMachineScaleSet, self).__init__(
