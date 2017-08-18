@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import errno
+import inspect
 import os
 import pipes
 import pkgutil
@@ -476,7 +477,8 @@ def get_subclasses(class_type):
 
         for child in parent.__subclasses__():
             if child not in subclasses:
-                subclasses.add(child)
+                if not inspect.isabstract(child):
+                    subclasses.add(child)
                 queue.append(child)
 
     return subclasses
