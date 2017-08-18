@@ -274,7 +274,10 @@ class AzureRM(object):
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'])
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
-            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            if self.credentials['tenant']:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=self.credentials['tenant'])
+            else:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
