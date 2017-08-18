@@ -597,11 +597,17 @@ def turn_to_input(self, curr_record):
     if self.record_type == 'A':
         x = RecordSet(arecords=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'AAAA':
+        x = RecordSet(aaaa_records=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'CNAME':
+        x = RecordSet(cname_record=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'MX':
+        x = RecordSet(mx_records=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'NS':
+        x = RecordSet(ns_records=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'SRV':
+        x = RecordSet(srv_records=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'TXT':
+        x = RecordSet(txt_records=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'PTR':
         x = RecordSet(ptr_records=curr_record, type=self.record_type, ttl=val)
     return x
