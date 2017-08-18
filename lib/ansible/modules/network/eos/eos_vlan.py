@@ -62,6 +62,35 @@ options:
 """
 
 EXAMPLES = """
+- name: Create vlan
+  eos_vlan:
+    vlan_id: 4000
+    name: vlan-4000
+    state: present
+
+- name: Add interfaces to vlan
+  eos_vlan:
+    vlan_id: 4000
+    state: present
+    interfaces:
+      - Ethernet1
+      - Ethernet2
+
+- name: Suspend vlan
+  eos_vlan:
+    vlan_id: 4000
+    state: suspend
+
+- name: Unsuspend vlan
+  eos_vlan:
+    vlan_id: 4000
+    state: active
+
+- name: Create aggregate of vlans
+  eos_vlan:
+    aggregate:
+      - vlan_id: 4000
+      - {vlan_id: 4001, name: vlan-4001}
 """
 
 RETURN = """
@@ -73,13 +102,15 @@ commands:
     - vlan 20
     - name test-vlan
 """
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
-from ansible.module_utils.six import iteritems
-
 import re
 import time
+
+from copy import deepcopy
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
+from ansible.module_utils.eos import load_config, run_commands
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -187,34 +218,23 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for v in module.params['aggregate']:
-            d = v.copy()
-
+            d = item.copy()
             d['vlan_id'] = str(d['vlan_id'])
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
-
-            if 'name' not in d:
-                d['name'] = None
-
-            if 'interfaces' not in d:
-                d['interfaces'] = []
 
             obj.append(d)
     else:
-        vlan_id = str(module.params['vlan_id'])
-        name = module.params['name']
-        state = module.params['state']
-        interfaces = module.params['interfaces']
-
         obj.append({
-            'vlan_id': vlan_id,
-            'name': name,
-            'state': state,
-            'interfaces': interfaces
+            'vlan_id': str(module.params['vlan_id']),
+            'name': module.params['name'],
+            'state': module.params['state'],
+            'interfaces': module.params['interfaces']
         })
 
     return obj
@@ -236,23 +256,35 @@ def check_declarative_intent_params(want, module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         vlan_id=dict(type='int'),
         name=dict(),
         interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent', 'active', 'suspend'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['vlan_id'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(eos_argument_spec)
 
     required_one_of = [['vlan_id', 'aggregate']]
     mutually_exclusive = [['vlan_id', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+                           supports_check_mode=True,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive)
 
     warnings = list()
     check_args(module, warnings)

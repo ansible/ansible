@@ -59,6 +59,35 @@ options:
 """
 
 EXAMPLES = """
+- name: Create vrf
+  eos_vrf:
+    name: test
+    rd: 1:200
+    interfaces:
+      - Ethernet2
+    state: present
+
+- name: Delete VRFs
+  eos_vrf:
+    name: test
+    state: absent
+
+- name: Create aggregate of VRFs with purge
+  eos_vrf:
+    aggregate:
+      - { name: test4, rd: "1:204" }
+      - { name: test5, rd: "1:205" }
+    state: present
+    purge: yes
+
+- name: Delete aggregate of VRFs
+  eos_vrf:
+    aggregate:
+      - name: test2
+      - name: test3
+      - name: test4
+      - name: test5
+    state: absent
 """
 
 RETURN = """
@@ -72,13 +101,15 @@ commands:
     - interface Ethernet1
     - vrf forwarding test
 """
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
-from ansible.module_utils.six import iteritems
-
 import re
 import time
+
+from copy import deepcopy
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
+from ansible.module_utils.eos import load_config, run_commands
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 
 def search_obj_in_list(name, lst):
@@ -172,25 +203,14 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
-
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
-
-            if 'state' not in d:
-                d['state'] = module.params['state']
-            if 'rd' not in d:
-                d['rd'] = module.params['rd']
-            if 'interfaces' not in d:
-                d['interfaces'] = module.params['interfaces']
-
-            obj.append(d)
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
+            obj.append(item.copy())
     else:
-        name = module.params['name'],
-        state = module.params['state'],
-        rd = module.params['rd'],
-        interfaces = module.params['interfaces']
-
         obj.append({
             'name': module.params['name'],
             'state': module.params['state'],
@@ -217,16 +237,25 @@ def check_declarative_intent_params(want, module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         rd=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(eos_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
