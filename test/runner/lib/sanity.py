@@ -206,7 +206,7 @@ def command_sanity_validate_modules(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     messages = json.loads(stdout)
 
@@ -268,7 +268,7 @@ def command_sanity_shellcheck(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     # json output is missing file paths in older versions of shellcheck, so we'll use xml instead
     root = fromstring(stdout)  # type: Element
@@ -339,7 +339,7 @@ def command_sanity_pep8(args, targets):
         stdout = None
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     if stdout:
         pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$'
@@ -492,7 +492,7 @@ def command_sanity_pylint(args, targets):
         stdout = None
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     if stdout:
         messages = json.loads(stdout)
@@ -560,7 +560,7 @@ def command_sanity_yamllint(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): \[(?P<level>warning|error)\] (?P<message>.*)$'
 
@@ -614,7 +614,7 @@ def command_sanity_rstcheck(args, targets):
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
     if args.explain:
-        return SanitySkipped(test)
+        return SanitySuccess(test)
 
     pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$'
 
