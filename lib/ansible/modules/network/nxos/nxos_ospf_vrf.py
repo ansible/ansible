@@ -115,6 +115,7 @@ options:
     description:
       - Setting to true will suppress routing update on interface.
         Valid values are 'true' and 'false'.
+    version_added: "2.4"
     required: false
     choices: ['true','false']
     default: null
