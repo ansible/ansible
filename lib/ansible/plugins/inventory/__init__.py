@@ -90,7 +90,7 @@ class BaseInventoryPlugin(object):
         ''' loops over compose entries to create vars for hosts '''
         if compose and isinstance(compose, dict):
             for varname in compose:
-                composite = self._compose(data['compose'][varname], variables)
+                composite = self._compose(compose[varname], variables)
                 self.inventory.set_variable(host, varname, composite)
 
     def _add_host_to_composed_groups(self, groups, variables, host):
