@@ -40,9 +40,9 @@ Working Group
 - ``#ansible-aws`` - For discussions on Amazon Web Services.
 - ``#ansible-community`` - Channel for discussing Ansible Community related things.
 - ``#ansible-container`` - For discussions on Ansible Container.
-- ``#ansible-jboss`` - Channel for discussing JBoss and Ansible related things
-- ``#ansible-network`` - Channel for discussing Network and Ansible related things
-- ``#ansible-news`` - Channel for discussing Ansible Communication & News related things
+- ``#ansible-jboss`` - Channel for discussing JBoss and Ansible related things.
+- ``#ansible-network`` - Channel for discussing Network and Ansible related things.
+- ``#ansible-news`` - Channel for discussing Ansible Communication & News related things.
 - ``#ansible-vmware`` - For discussions on Ansible & VMware.
 - ``#ansible-windows`` - For discussions on Ansible & Windows.
 
@@ -50,8 +50,8 @@ Working Group
 Language specific channels
 --------------------------
 
-- ``#ansible-es`` - Channel for Spanish speaking Ansible community
-- ``#ansible-fr`` - Channel for French speaking Ansible community
+- ``#ansible-es`` - Channel for Spanish speaking Ansible community.
+- ``#ansible-fr`` - Channel for French speaking Ansible community.
 
 
 IRC Meetings
