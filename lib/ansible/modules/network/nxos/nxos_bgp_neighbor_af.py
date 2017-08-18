@@ -339,8 +339,6 @@ def get_value(arg, config, module):
     custom = [
         'additional_paths_send',
         'additional_paths_receive',
-        'advertise_map_exist',
-        'advertise_map_non_exist',
         'max_prefix_limit',
         'max_prefix_interval',
         'max_prefix_threshold',
@@ -365,6 +363,12 @@ def get_value(arg, config, module):
         value = False
         if has_command:
             value = True
+
+    elif command.startswith('advertise-map'):
+        value = []
+        has_adv_map = re.search(r'{0}\s(?P<value1>.*)\s{1}\s(?P<value2>.*)$'.format(*command.split()), config, re.M)
+        if has_adv_map:
+            value = list(has_adv_map.groups())
 
     elif command.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
         has_cmd_direction_val = re.search(r'{0}\s(?P<value>.*)\s{1}$'.format(*command.split()), config, re.M)
@@ -401,16 +405,6 @@ def get_custom_value(arg, config, module):
                     value = 'disable'
                 else:
                     value = 'enable'
-    elif command.startswith('advertise-map'):
-        value = []
-        for line in splitted_config:
-            mo = re.search('advertise-map\s+\S+\s+(\S+)', line)
-            if mo:
-                splitted_line = line.split()
-                if mo.group(1) == 'exist-map' and arg == 'advertise_map_exist':
-                    value = [splitted_line[1], splitted_line[3]]
-                elif mo.group(1) == 'non-exist-map' and arg == 'advertise_map_non_exist':
-                    value = [splitted_line[1], splitted_line[3]]
     elif arg.startswith('max_prefix'):
         for line in splitted_config:
             if 'maximum-prefix' in line:
