@@ -211,7 +211,7 @@ options:
     required: false
   tags:
     description:
-      - tags dict to apply to a resource.
+      - tags dict to apply to a resource.  If None then tags are ignored.  Use {} to set to empty.
     required: false
 extends_documentation_fragment:
     - aws
@@ -497,6 +497,9 @@ def update_rds_tags(module, conn, db_instance=None):
     current_tag_list = conn.list_tags_for_resource(db_instance_arn)['TagList']
     current_tags = boto3_tag_list_to_ansible_dict(current_tag_list)
     desired_tags = module.params.get('tags')
+
+    if desired_tags is None:
+        return False
 
     changed = False
 
@@ -829,7 +832,7 @@ def select_parameters(module, required_vars, valid_vars):
         params['DBSecurityGroups'] = facts.get('security_groups').split(',')
 
     # Convert tags dict to list of tuples that boto expects
-    if 'Tags' in params:
+    if 'Tags' in params and module.params['tags']:
         params['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
     return params
 
