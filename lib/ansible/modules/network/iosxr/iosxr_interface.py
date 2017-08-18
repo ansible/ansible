@@ -87,6 +87,33 @@ EXAMPLES = """
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
     enabled: False
+
+- name: Create interface using aggregate
+  iosxr_interface:
+    aggregate:
+    - name: GigabitEthernet0/0/0/3
+    - name: GigabitEthernet0/0/0/2
+    state: present
+
+- name: Delete interface using aggregate
+  iosxr_interface:
+    aggregate:
+    - name: GigabitEthernet0/0/0/3
+    - name: GigabitEthernet0/0/0/2
+    state: absent
+
+- name: Check intent arguments
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/5
+    state: up
+    delay: 20
+
+- name: Config + intent
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/5
+    enabled: False
+    state: down
+    delay: 20
 """
 
 RETURN = """
@@ -103,13 +130,14 @@ commands:
 import re
 
 from time import sleep
+from copy import deepcopy
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.iosxr import get_config, load_config
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
-from ansible.module_utils.network_common import conditional
+from ansible.module_utils.network_common import conditional, remove_default_spec
 
 DEFAULT_DESCRIPTION = "configured by iosxr_interface"
 
@@ -158,36 +186,18 @@ def map_params_to_obj(module):
 
     aggregate = module.params.get('aggregate')
     if aggregate:
-        for param in aggregate:
-            validate_param_values(module, args, param)
-            d = param.copy()
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            if 'name' not in d:
-                module.fail_json(msg="missing required arguments: %s" % 'name')
-
-            # set default value
-            for item in args:
-                if item not in d:
-                    if item == 'description':
-                        d['description'] = DEFAULT_DESCRIPTION
-                    else:
-                        d[item] = None
-                else:
-                    d[item] = str(d[item])
-
-            if not d.get('state'):
-                d['state'] = module.params['state']
-
-            if d.get('enabled') is None:
-                d['enabled'] = module.params['enabled']
+            validate_param_values(module, item, item)
+            d = item.copy()
 
             if d['enabled']:
                 d['disable'] = False
             else:
                 d['disable'] = True
-
-            if d.get('delay') is None:
-                d['delay'] = module.params['delay']
 
             obj.append(d)
 
@@ -342,7 +352,7 @@ def check_declarative_intent_params(module, want, result):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
         description=dict(default=DEFAULT_DESCRIPTION),
         speed=dict(),
@@ -352,11 +362,21 @@ def main():
         tx_rate=dict(),
         rx_rate=dict(),
         delay=dict(default=10, type='int'),
-        aggregate=dict(type='list'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(iosxr_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
