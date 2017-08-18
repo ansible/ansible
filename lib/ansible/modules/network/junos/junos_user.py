@@ -218,6 +218,8 @@ def map_params_to_obj(module):
     if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
+        elif not module.params['name']:
+            module.fail_json(msg='missing required argument: name')
         else:
             collection = [{'name': module.params['name']}]
     else:
@@ -225,6 +227,8 @@ def map_params_to_obj(module):
         for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
+            elif 'name' not in item:
+                module.fail_json(msg='missing required argument: name')
             else:
                 collection.append(item)
 
@@ -277,14 +281,10 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
-    required_one_of = [['aggregate', 'name']]
     mutually_exclusive = [['aggregate', 'name']]
-
-    argument_spec.update(junos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
-                           required_one_of=required_one_of,
                            supports_check_mode=True)
 
     warnings = list()
