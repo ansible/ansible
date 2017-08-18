@@ -22,7 +22,7 @@
 
     - name: ensure non-existent snapshot is not present
       rds_snapshot:
-        snapshot: "ansible-test-dont-create-youll-break-the-tests"
+        db_snapshot_identifier: "ansible-test-dont-create-youll-break-the-tests"
         state: absent
         region: '{{ec2_region}}'
         aws_access_key: '{{aws_access_key}}'
@@ -59,8 +59,8 @@
 
     - name: snapshot instance
       rds_snapshot:
-        id: "{{ rds_instance_name }}"
-        snapshot: "{{ rds_instance_name }}-snapshot"
+        db_instance_identifier: "{{ rds_instance_name }}"
+        db_snapshot_identifier: "{{ rds_instance_name }}-snapshot"
         wait_timeout: 1200
         wait: yes
         region: '{{ec2_region}}'
@@ -70,7 +70,7 @@
 
     - name: get snapshot facts
       rds_snapshot_facts:
-        id: "{{ rds_instance_name }}"
+        db_instance_identifier: "{{ rds_instance_name }}"
         region: '{{ec2_region}}'
         aws_access_key: '{{aws_access_key}}'
         aws_secret_key: '{{aws_secret_key}}'
@@ -78,7 +78,7 @@
 
     - name: delete snapshot
       rds_snapshot:
-        snapshot: "{{ rds_instance_name }}-snapshot"
+        db_snapshot_identifier: "{{ rds_instance_name }}-snapshot"
         state: absent
         region: '{{ec2_region}}'
         aws_access_key: '{{aws_access_key}}'
