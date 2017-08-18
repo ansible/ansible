@@ -55,7 +55,7 @@ As of version 2.3, Ansible can now use a vaulted variable that lives in an other
               34623731376664623134383463316265643436343438623266623965636363326136
     other_plain_text: othervalue
 
-To create a vaulted variable, use the `ansible-vault encrypt_string` command. See :ref:`encrypt_string` for details.
+To create a vaulted variable, use the :ref:`ansible-vault encrypt_string` command. See :ref:`encrypt_string` for details.
 
 This vaulted variable will be decrypted with the supplied vault secret and used as a normal variable. The ``ansible-vault`` command line supports stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these vaulted variables; you just have to be sure to add the ``!vault`` tag so both Ansible and YAML are aware of the need to decrypt. The ``|`` is also required, as vault encryption results in a multi-line string.
 
@@ -68,4 +68,4 @@ Using encrypt_string
 This command will output a string in the above format ready to be included in a YAML file.
 The string to encrypt can be provided via stdin, command line args, or via an interactive prompt.
 
-See `_encrypt_string_for_use_in_yaml`.
+See :ref:`encrypt_string_for_use_in_yaml`.

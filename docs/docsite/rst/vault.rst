@@ -19,7 +19,9 @@ The vault feature can encrypt any structured data file used by Ansible.  This ca
 
 Ansible tasks, handlers, and so on are also data so these can be encrypted with vault as well. To hide the names of variables that you're using, you can encrypt the task files in their entirety. However, that might be a little too much and could annoy your coworkers :)
 
-+The vault feature can also encrypt arbitrary files, even binary files.  If a vault-encrypted file is given as the `src` argument to the `copy`, `template`, `unarchive`, `script` or `assemble` modules, the file will be placed at the destination on the target host decrypted (assuming a valid vault password is supplied when running the play).
+The vault feature can also encrypt arbitrary files, even binary files.  If a vault-encrypted file is
+given as the :ref:`src <src>` argument to the :ref:`copy <copy>`, :ref:`template <template>`,
+:ref:`unarchive <unarchive>`, :ref:`script <script>` or :ref:`assemble <assemble>` modules, the file will be placed at the destination on the target host decrypted (assuming a valid vault password is supplied when running the play).
 
 As of version 2.3, Ansible also supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details below.
 
@@ -102,11 +104,10 @@ If you want to view the contents of an encrypted file without editing it, you ca
 Use encrypt_string to create encrypted variables to embed in yaml
 `````````````````````````````````````````````````````````````````
 
-The `ansible-vault encrypt_string` command will encrypt and format a provided string into a format
+The :ref:`ansible-vault encrypt_string` command will encrypt and format a provided string into a format
 that can be included in `ansible-playbook` YAML files.
 
-See `_single_encrypted_variable` for an example.
-
+See :ref:`single_encrypted_variable` for an example
 
 .. _speeding_up_vault:
 
