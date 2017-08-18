@@ -70,7 +70,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Julien Stroheker (@ju_stroh)"
+    - "Julien Stroheker (@julienstroheker)"
 '''
 
 EXAMPLES = '''
