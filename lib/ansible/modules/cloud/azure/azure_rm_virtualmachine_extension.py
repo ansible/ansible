@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -75,9 +75,9 @@ options:
         description:
             - Whether the extension handler should be automatically upgraded across minor versions.
         required: false
+
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Sertac Ozercan (@sozercan)"
@@ -121,7 +121,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureHttpError
     from azure.mgmt.compute.models import (
         VirtualMachineExtension
     )
@@ -131,6 +130,10 @@ except ImportError:
 
 
 def vmextension_to_dict(extension):
+    '''
+    Serializing the VM Extension from the API to Dict
+    :return: dict
+    '''
     return dict(
         id=extension.id,
         name=extension.name,
@@ -141,7 +144,6 @@ def vmextension_to_dict(extension):
         auto_upgrade_minor_version=extension.auto_upgrade_minor_version,
         settings=extension.settings,
         protected_settings=extension.protected_settings,
-        tags=extension.tags
     )
 
 
@@ -201,29 +203,29 @@ class AzureRMVMExtension(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
-        self.tags = None
         self.publisher = None
         self.virtual_machine_extension_type = None
         self.type_handler_version = None
         self.auto_upgrade_minor_version = None
         self.settings = None
         self.protected_settings = None
+        self.state = None
 
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMVMExtension, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                 supports_check_mode=True,
-                                                 supports_tags=True)
+                                                 supports_check_mode=False,
+                                                 supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
 
-        results = dict()
         resource_group = None
         response = None
+        to_be_updated = False
 
         try:
             resource_group = self.get_resource_group(self.resource_group)
@@ -235,24 +237,34 @@ class AzureRMVMExtension(AzureRMModuleBase):
         if self.state == 'present':
             response = self.get_vmextension()
             if not response:
-                self.results['state'] = self.create_vmextension()
+                to_be_updated = True
             else:
-                self.log("VM Extension already there, updating Tags")
-                update_tags, response['tags'] = self.update_tags(response['tags'])
-                if update_tags:
-                    self.create_vmextension()
-                    self.results['changed'] = True
+                if response['settings'] != self.settings:
+                    response['settings'] = self.settings
+                    to_be_updated = True
+
+                if response['protected_settings'] != self.protected_settings:
+                    response['protected_settings'] = self.protected_settings
+                    to_be_updated = True
+
+            if to_be_updated:
+                self.results['changed'] = True
+                self.results['state'] = self.create_or_update_vmextension()
         elif self.state == 'absent':
             self.delete_vmextension()
+            self.results['changed'] = True
 
         return self.results
 
-    def create_vmextension(self):
-        self.log("Creating vmextension {0}".format(self.name))
+    def create_or_update_vmextension(self):
+        '''
+        Method calling the Azure SDK to create or update the VM extension.
+        :return: void
+        '''
+        self.log("Creating VM extension {0}".format(self.name))
         try:
             params = VirtualMachineExtension(
                 location=self.location,
-                tags=self.tags,
                 publisher=self.publisher,
                 virtual_machine_extension_type=self.virtual_machine_extension_type,
                 type_handler_version=self.type_handler_version,
@@ -261,21 +273,31 @@ class AzureRMVMExtension(AzureRMModuleBase):
                 protected_settings=self.protected_settings
             )
             poller = self.compute_client.virtual_machine_extensions.create_or_update(self.resource_group, self.virtual_machine_name, self.name, params)
-            self.get_poller_result(poller)
-        except AzureHttpError as e:
-            self.log('Error attempting to create the vmextension.')
-            self.fail("Error creating the vmextension: {0}".format(str(e)))
+            response = self.get_poller_result(poller)
+            return vmextension_to_dict(response)
+
+        except CloudError as e:
+            self.log('Error attempting to create the VM extension.')
+            self.fail("Error creating the VM extension: {0}".format(str(e)))
 
     def delete_vmextension(self):
+        '''
+        Method calling the Azure SDK to delete the VM Extension.
+        :return: void
+        '''
         self.log("Deleting vmextension {0}".format(self.name))
         try:
             poller = self.compute_client.virtual_machine_extensions.delete(self.resource_group, self.virtual_machine_name, self.name)
             self.get_poller_result(poller)
-        except AzureHttpError as e:
+        except CloudError as e:
             self.log('Error attempting to delete the vmextension.')
             self.fail("Error deleting the vmextension: {0}".format(str(e)))
 
     def get_vmextension(self):
+        '''
+        Method calling the Azure SDK to get a VM Extension.
+        :return: void
+        '''
         self.log("Checking if the vm extension {0} is present".format(self.name))
         found = False
         try:
