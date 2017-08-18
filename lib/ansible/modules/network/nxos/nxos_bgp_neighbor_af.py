@@ -304,7 +304,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'neighbor': 'neighbor',
     'additional_paths_receive': 'capability additional-paths receive',
     'additional_paths_send': 'capability additional-paths send',
-    'advertise_map_exist': 'advertise-map exist',
+    'advertise_map_exist': 'advertise-map exist-map',
     'advertise_map_non_exist': 'advertise-map non-exist-map',
     'allowas_in': 'allowas-in',
     'allowas_in_max': 'allowas-in',
