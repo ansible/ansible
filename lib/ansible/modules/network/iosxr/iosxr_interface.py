@@ -93,6 +93,9 @@ EXAMPLES = """
     aggregate:
     - name: GigabitEthernet0/0/0/3
     - name: GigabitEthernet0/0/0/2
+    speed: 100
+    duplex: full
+    mtu: 512
     state: present
 
 - name: Delete interface using aggregate
@@ -139,8 +142,6 @@ from ansible.module_utils.iosxr import get_config, load_config
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 from ansible.module_utils.network_common import conditional, remove_default_spec
 
-DEFAULT_DESCRIPTION = "configured by iosxr_interface"
-
 
 def validate_mtu(value, module):
     if value and not 64 <= int(value) <= 65535:
@@ -182,7 +183,6 @@ def search_obj_in_list(name, lst):
 
 def map_params_to_obj(module):
     obj = []
-    args = ['name', 'description', 'speed', 'duplex', 'mtu']
 
     aggregate = module.params.get('aggregate')
     if aggregate:
@@ -202,7 +202,7 @@ def map_params_to_obj(module):
             obj.append(d)
 
     else:
-        validate_param_values(module, args)
+        validate_param_values(module, module.params)
         params = {
             'name': module.params['name'],
             'description': module.params['description'],
@@ -279,9 +279,6 @@ def map_obj_to_commands(updates):
                         if candidate:
                             cmd = interface + ' ' + item + ' ' + str(candidate)
                             commands.append(cmd)
-                        elif running:
-                            cmd = 'no ' + interface + ' ' + item + ' ' + str(running)
-                            commands.append(cmd)
 
                 if disable and not obj_in_have.get('disable', False):
                     commands.append(interface + ' shutdown')
@@ -292,7 +289,6 @@ def map_obj_to_commands(updates):
                     value = w.get(item)
                     if value:
                         commands.append(interface + ' ' + item + ' ' + str(value))
-
                 if disable:
                     commands.append('no ' + interface + ' shutdown')
     return commands
@@ -354,7 +350,7 @@ def main():
     """
     element_spec = dict(
         name=dict(),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         speed=dict(),
         mtu=dict(),
         duplex=dict(choices=['full', 'half']),

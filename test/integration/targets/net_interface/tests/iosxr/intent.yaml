@@ -1,9 +1,10 @@
 ---
-- debug: msg="START net_interface cli/intent.yaml"
+- debug: msg="START net_interface iosxr/intent.yaml"
 
 - name: Setup (interface is up)
   net_interface:
     name: GigabitEthernet0/0/0/5
+    description: test_interface_5
     enabled: True
     state: present
     provider: "{{ cli }}"

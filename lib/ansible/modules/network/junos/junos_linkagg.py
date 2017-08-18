@@ -170,7 +170,6 @@ except ImportError:
     from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
-DEFAULT_COMMENT = 'configured by junos_linkagg'
 
 
 def validate_device_count(value, module):
@@ -263,7 +262,7 @@ def main():
         members=dict(type='list'),
         min_links=dict(type='int'),
         device_count=dict(type='int'),
-        description=dict(default=DEFAULT_COMMENT),
+        description=dict(),
         state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
     )
