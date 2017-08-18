@@ -90,6 +90,10 @@ options:
     required: false
     version_added: "2.4"
 
+requirements:
+  - boto3 >= 1.4.4
+  - botocore
+
 author: tedder
 extends_documentation_fragment:
 - aws
@@ -202,16 +206,15 @@ import traceback
 from dateutil import tz
 
 # import module snippets
-import ansible.module_utils.ec2
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3
 
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    # Handled by imported HAS_BOTO3
+    pass
 
 
 def boto_exception(err):
@@ -488,10 +491,10 @@ def main():
     result = {}
     mode = module.params['mode']
 
-    region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     if not region:
         module.fail_json(msg="Region must be specified")
-    s3 = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    s3 = boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     if mode == 'push':
         try:
