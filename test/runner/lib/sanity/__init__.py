@@ -13,6 +13,7 @@ from lib.util import (
     run_command,
     import_plugins,
     load_plugins,
+    ABC,
 )
 
 from lib.ansible_util import (
@@ -192,8 +193,10 @@ class SanityTargets(object):
         self.include_external, self.exclude_external = walk_external_targets(self.targets, include, exclude, require)
 
 
-class SanityTest(object):
+class SanityTest(ABC):
     """Sanity test base class."""
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, name):
         self.name = name
 
@@ -232,8 +235,6 @@ class SanityCodeSmellTest(SanityTest):
 
 class SanityFunc(SanityTest):
     """Base class for sanity test plugins."""
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self):
         name = self.__class__.__name__
         name = re.sub(r'Test$', '', name)  # drop Test suffix
@@ -244,8 +245,6 @@ class SanityFunc(SanityTest):
 
 class SanitySingleVersion(SanityFunc):
     """Base class for sanity test plugins which should run on a single python version."""
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractmethod
     def test(self, args, targets):
         """
@@ -258,8 +257,6 @@ class SanitySingleVersion(SanityFunc):
 
 class SanityMultipleVersion(SanityFunc):
     """Base class for sanity test plugins which should run on multiple python versions."""
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractmethod
     def test(self, args, targets, python_version):
         """

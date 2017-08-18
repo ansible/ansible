@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import abc
 import errno
 import inspect
 import os
@@ -12,6 +13,8 @@ import subprocess
 import re
 import sys
 import time
+
+ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # compatible with Python 2 *and* 3
 
 
 def is_shippable():
