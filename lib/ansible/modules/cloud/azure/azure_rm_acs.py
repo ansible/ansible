@@ -49,7 +49,7 @@ options:
         description:
             - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
         required: true
-    master_profile
+    master_profile:
         description:
             - Master profile suboptions.
         required: true
@@ -68,7 +68,7 @@ options:
                 description:
                   - The DNS Prefix to use for the Container Service master nodes.
                 required: true
-    linux_profile
+    linux_profile:
         description:
             - The linux profile suboptions.
         required: true
@@ -83,7 +83,7 @@ options:
                 description:
                     - The Public SSH Key used to access the cluster.
                 required: true
-    agent_pool_profiles
+    agent_pool_profiles:
         description:
             - The agent pool profile suboptions.
         required: true
@@ -141,7 +141,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Create an azure container services instance running Kubernetes
+  - name: Create an azure container services instance running Kubernetes
     azure_rm_acs:
     name: acctestcontservice1
     location: eastus
@@ -165,7 +165,7 @@ EXAMPLES = '''
     tags:
         Environment: Production
     
-- name: Create an azure container services instance running DCOS
+  - name: Create an azure container services instance running DCOS
     azure_rm_acs:
     name: acctestcontservice2
     location: eastus
@@ -186,7 +186,7 @@ EXAMPLES = '''
     tags:
         Environment: Production
 
-- name: Create an azure container services instance running Swarm
+  - name: Create an azure container services instance running Swarm
     azure_rm_acs:
     name: acctestcontservice3
     location: eastus
@@ -211,7 +211,7 @@ EXAMPLES = '''
 # The operation does not delete other resources created as part of creating a container service, 
 # including storage accounts, VMs, and availability sets. All the other resources created with the container 
 # service are part of the same resource group and can be deleted individually.
-- name: Remove an azure container services instance
+  - name: Remove an azure container services instance
     azure_rm_acs:
     name: acctestcontservice3
     location: eastus
