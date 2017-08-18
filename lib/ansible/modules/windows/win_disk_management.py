@@ -18,12 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'supported_by': 'community',
-    'status': ['preview']
-}
-
+ANSIBLE_METADATA = r"""
+    version: "1.1"
+    supported_by: "community"
+    status: ["preview"]
+"""
 
 DOCUMENTATION = r'''
 ---
