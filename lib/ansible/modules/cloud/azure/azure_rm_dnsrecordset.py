@@ -592,24 +592,27 @@ def create_current_record(self):
 
 
 def turn_to_input(self, curr_record):
+    val = turn_to_long(self.time_to_live)
+
     if self.record_type == 'A':
-        x = RecordSet(arecords=curr_record, type=self.record_type, ttl=long(self.time_to_live))
+        x = RecordSet(arecords=curr_record, type=self.record_type, ttl=val)
     elif self.record_type == 'AAAA':
-        x = RecordSet(aaaa_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'CNAME':
-        x = RecordSet(cname_record=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'MX':
-        x = RecordSet(mx_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'NS':
-        x = RecordSet(ns_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'SRV':
-        x = RecordSet(srv_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'TXT':
-        x = RecordSet(txt_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'PTR':
-        x = RecordSet(ptr_records=curr_record, type=self.record_type, ttl=long(self.time_to_live))
+        x = RecordSet(ptr_records=curr_record, type=self.record_type, ttl=val)
     return x
 
+
+def turn_to_long(value):
+    try:
+        output = long(value)
+    except NameError:
+        output = int(value)
+    return output
 
 def main():
     AzureRMRecordSet()
