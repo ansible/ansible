@@ -13,7 +13,7 @@ As noted in :doc:`playbooks_reuse`, include and import statements are very simil
 
 Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
 
-Also be aware that this behaviour changed in 2.4, prior to that Ansible version only ``include`` was available and behaved differntly depending on context.
+Also be aware that this behaviour changed in 2.4, prior to that Ansible version only ``include`` was available and behaved differently depending on context.
 
 .. versionadded:: 2.4
 
