@@ -460,7 +460,6 @@ lib/ansible/modules/system/seport.py
 lib/ansible/modules/system/service.py
 lib/ansible/modules/system/solaris_zone.py
 lib/ansible/modules/system/svc.py
-lib/ansible/modules/system/sysctl.py
 lib/ansible/modules/system/systemd.py
 lib/ansible/modules/system/timezone.py
 lib/ansible/modules/system/ufw.py
