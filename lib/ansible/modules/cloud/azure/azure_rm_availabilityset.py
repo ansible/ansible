@@ -270,9 +270,6 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         '''
         self.log("Creating availabilityset {0}".format(self.name))
         try:
-            # Handling the case to update tags to empty
-            if self.tags is None:
-                self.tags = {}
             params_sku = Sku(
                 name=self.sku
             )
