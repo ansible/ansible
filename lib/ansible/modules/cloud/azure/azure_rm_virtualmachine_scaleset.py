@@ -303,6 +303,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                  default='ReadOnly'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
+            data_disks=dict(type='list'),
             subnet_name=dict(type='str', aliases=['subnet']),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
@@ -324,6 +325,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.image = None
         self.os_disk_caching = None
         self.managed_disk_type = None
+        self.data_disks = None
         self.os_type = None
         self.subnet_name = None
         self.virtual_network_name = None
@@ -416,6 +418,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     differences.append('Capacity')
                     changed = True
                     vmss_dict['sku']['capacity'] = self.capacity
+
+                if self.data_disks and \
+                   len(self.data_disks) != len(vmss_dict['properties']['virtualMachineProfile']['storageProfile']['dataDisks']):
+                    self.log('CHANGED: virtual machine scale set {0} - Data Disks'.format(self.name))
+                    differences.append('Data Disks')
+                    changed = True
 
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
@@ -530,6 +538,29 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             [SshPublicKey(path=key['path'], key_data=key['key_data']) for key in self.ssh_public_keys]
                         vmss_resource.virtual_machine_profile.os_profile.linux_configuration.ssh = ssh_config
 
+                    if self.data_disks:
+                        data_disks = []
+
+                        for data_disk in self.data_disks:
+                            data_disk_managed_disk = VirtualMachineScaleSetManagedDiskParameters(
+                                storage_account_type=data_disk['data_disk_managed_disk_type']
+                            )
+
+                            data_disk['data_disk_caching'] = data_disk.get(
+                                'data_disk_caching',
+                                CachingTypes.read_only
+                            )
+
+                            data_disks.append(VirtualMachineScaleSetDataDisk(
+                                lun=data_disk['data_disk_lun'],
+                                caching=data_disk['data_disk_caching'],
+                                create_option=DiskCreateOptionTypes.empty,
+                                disk_size_gb=data_disk['data_disk_size_gb'],
+                                managed_disk=data_disk_managed_disk,
+                            ))
+
+                        vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
+
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
 
@@ -540,6 +571,19 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.get_vmss()
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
+
+                    data_disks = []
+                    for data_disk in self.data_disks:
+                        data_disks.append(VirtualMachineScaleSetDataDisk(
+                            lun=data_disk['data_disk_lun'],
+                            caching=data_disk['data_disk_caching'],
+                            create_option=DiskCreateOptionTypes.empty,
+                            disk_size_gb=data_disk['data_disk_size_gb'],
+                            managed_disk=VirtualMachineScaleSetManagedDiskParameters(
+                                storage_account_type=data_disk['data_disk_managed_disk_type']
+                            ),
+                        ))
+                    vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
 
                     self.log("Update virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
