@@ -1356,6 +1356,7 @@ class SunOS(User):
                 try:
                     lines = []
                     for line in open(self.SHADOWFILE, 'rb').readlines():
+                        line = to_native(line, errors='surrogate_or_strict')
                         fields = line.strip().split(':')
                         if not fields[0] == self.name:
                             lines.append(line)
@@ -1450,6 +1451,7 @@ class SunOS(User):
                 try:
                     lines = []
                     for line in open(self.SHADOWFILE, 'rb').readlines():
+                        line = to_native(line, errors='surrogate_or_strict')
                         fields = line.strip().split(':')
                         if not fields[0] == self.name:
                             lines.append(line)
