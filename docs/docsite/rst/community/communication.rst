@@ -57,7 +57,7 @@ Language specific channels
 IRC Meetings
 ------------
 
-The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
+The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to
 participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 Tower Support Questions

@@ -1,6 +1,8 @@
 The Ansible Development Process
 ===============================
 
+.. contents:: Topics
+
 This section discusses how the Ansible development and triage process works.
 
 Road Maps

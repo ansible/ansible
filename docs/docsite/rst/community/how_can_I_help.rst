@@ -1,7 +1,9 @@
 How To Help
 ===========
 
-There are many ways to help the Ansible project. 
+.. contents:: Topics
+
+There are many ways to help the Ansible project.
 
 Become a power user
 -------------------
@@ -13,14 +15,14 @@ When you become a power user, your ability and opportunities to help the Ansible
 Ask and answer questions online
 -------------------------------
 
-There are many forums online where Ansible users ask and answer questions. Reach out and communicate with your fellow Ansible users. Ask good questions, and give good answers. 
+There are many forums online where Ansible users ask and answer questions. Reach out and communicate with your fellow Ansible users. Ask good questions, and give good answers.
 
 You can find the official Ansible communication channels `here <http://docs.ansible.com/ansible/latest/community/communication.html>`.
 
 Participate in your local meetup
 --------------------------------
 
-There are Ansible meetups `all over the world <https://www.meetup.com/topics/ansible/>`. Join your local meetup. Attend regularly. Ask good questions. Volunteer to give a presentation about how you use Ansible. 
+There are Ansible meetups `all over the world <https://www.meetup.com/topics/ansible/>`. Join your local meetup. Attend regularly. Ask good questions. Volunteer to give a presentation about how you use Ansible.
 
 If there isn't a meetup near you, we'll be happy to help you `start one <https://www.ansible.com/ansible-meetup-organizer>`.
 
@@ -48,13 +50,13 @@ To learn more about the responsibilities of being an Ansible module maintainer, 
 Join a working group
 --------------------
 
-Working groups are a way for Ansible community members to self-organize around particular topics of interest. We have working groups around various topics. To join or create a working group, please read the `Ansible working group guidelines <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`. 
+Working groups are a way for Ansible community members to self-organize around particular topics of interest. We have working groups around various topics. To join or create a working group, please read the `Ansible working group guidelines <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`.
 
 
 Teach Ansible to others
 -----------------------
 
-We're working on a standardized Ansible workshop called `Lightbulb <https://github.com/ansible/lightbulb>` that can provide a good hands-on introduction to Ansible usage and concepts. 
+We're working on a standardized Ansible workshop called `Lightbulb <https://github.com/ansible/lightbulb>` that can provide a good hands-on introduction to Ansible usage and concepts.
 
 Social media
 ------------
