@@ -449,14 +449,15 @@ def main():
                 hosts_module.action(
                     action='upgrade_check',
                     action_condition=lambda host: not host.update_available,
-                    wait_condition=lambda host: host.update_available or
+                    wait_condition=lambda host: host.update_available or (
                         len([
                             event
                             for event in events_service.list(
                                 from_=int(last_event.id),
                                 search='type=885 and host.name=%s' % host.name,
                             )
-                        ]) > 0,
+                        ]) > 0
+                    ),
                     fail_condition=lambda host: len([
                         event
                         for event in events_service.list(
