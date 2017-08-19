@@ -56,7 +56,7 @@ options:
         required: false
     create_option:
         description:
-            - "Allowed values: empty, import, copy. 'import' from a VHD file in 'source_uri' and 'copy' from previous managed disk 'source_resource_id'."
+            - "Allowed values: empty, import, copy. 'import' from a VHD file in 'source_uri' and 'copy' from previous managed disk 'source_resource_uri'."
         choices:
             - empty
             - import
@@ -130,7 +130,6 @@ import re
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureHttpError
     from azure.mgmt.compute.models import DiskCreateOption
     from azure.mgmt.compute.models import DiskSku
 except ImportError:
@@ -270,7 +269,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             creation_data['source_uri'] = self.source_uri
         elif self.create_option == 'copy':
             creation_data['create_option'] = DiskCreateOption.copy
-            creation_data['source_resource_id'] = self.source_resource_id
+            creation_data['source_resource_id'] = self.source_resource_uri
         try:
             # CreationData cannot be changed after creation
             disk_params['creation_data'] = creation_data
@@ -312,7 +311,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 self.name)
             result = self.get_poller_result(poller)
             self.results['changed'] = True
-        except AzureHttpError as e:
+        except CloudError as e:
             self.fail("Error deleting the managed disk: {0}".format(str(e)))
         return result
 
