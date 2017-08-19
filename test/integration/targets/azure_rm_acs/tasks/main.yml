@@ -1,47 +1,42 @@
-- name: Create a random dns name
-  set_fact:
-      master_dns_prefix: "{{ resource_group | hash('md5') | truncate(16, True, '') }}"
-      agent_dns_prefix: "{{ resource_group | hash('md5') | truncate(18, True, '') }}"
+ - name: Create an ACS instance with DCOS
+   azure_rm_acs:
+     name: "{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     orchestration_platform: DCOS
+     master_profile:
+         - count: 3
+           dns_prefix: "{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+     linux_profile:
+         - admin_username: azureuser
+           ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
+     agent_pool_profiles:
+         - name: default
+           count: 5
+           dns_prefix: "{{ resource_group | hash('md5') | truncate(12, True, '') }}"
+           vm_size: Standard_D2_v2
+     diagnostics_profile: false
+   register: results
 
-- name: Create an ACS DCOS
-  azure_rm_acs:
-      name: acctestcontservice1
-      resource_group: "{{ resource_group }}"
-      orchestration_platform: DCOS
-      master_profile:
-          - count: 3
-            dns_prefix: "{{ master_dns_prefix }}"
-      linux_profile:
-          - admin_username: azureuser
-            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
-      agent_pool_profiles:
-          - name: default
-            count: 5
-            dns_prefix: "{{ agent_dns_prefix }}"
-            vm_size: Standard_D2_v2
-      diagnostics_profile: false
-  register: results
+ - name: Assert the ACS instance is well created
+   assert:
+     that:
+       - results.changed
 
-- assert:
-    that: results.changed
-
-- name: Delete an availability set
-  azure_rm_availabilityset:
-      name: acctestcontservice1
-      resource_group: "{{ resource_group }}"
-      orchestration_platform: DCOS
-      state: absent
-      master_profile:
-          - count: 3
-            dns_prefix: "{{ master_dns_prefix }}"
-      linux_profile:
-          - admin_username: azureuser
-            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
-      agent_pool_profiles:
-          - name: default
-            count: 5
-            dns_prefix: "{{ agent_dns_prefix }}"
-            vm_size: Standard_D2_v2
-      diagnostics_profile: false
-      tags:
-          Ansible: azure_rm_acs
+ - name: Delete the DCOS ACS instance
+   azure_rm_acs:
+     name: "{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     orchestration_platform: DCOS
+     state: absent
+     master_profile:
+         - count: 3
+           dns_prefix: "{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+     linux_profile:
+         - admin_username: azureuser
+           ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
+     agent_pool_profiles:
+         - name: default
+           count: 5
+           dns_prefix: "{{ resource_group | hash('md5') | truncate(12, True, '') }}"
+           vm_size: Standard_D2_v2
+     diagnostics_profile: false

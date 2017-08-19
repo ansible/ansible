@@ -108,17 +108,17 @@ options:
     service_principal:
         description:
             - The service principal suboptions.
-        required: true
+        required: false
         default: null
         suboptions:
             client_id:
                 description:
                     - The ID for the Service Principal.
-                required: true
+                required: false
             client_secret:
                 description:
                     - The secret password associated with the service principal.
-                required: true
+                required: false
     diagnostics_profile:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
@@ -486,7 +486,7 @@ class AzureRMContainerService(AzureRMModuleBase):
             ),
             service_principal=dict(
                 type='list',
-                required=True
+                required=False
             ),
             diagnostics_profile=dict(
                 type='bool',
@@ -532,6 +532,14 @@ class AzureRMContainerService(AzureRMModuleBase):
 
         # Check if the ACS instance already present in the RG
         if self.state == 'present':
+
+            if self.orchestration_platform == 'Kubernetes':
+                if not self.service_principal:
+                    self.fail('service_principal should be specified when using Kubernetes')
+                if not self.service_principal[0].get('client_id'):
+                    self.fail('service_principal.client_id should be specified when using Kubernetes')
+                if not self.service_principal[0].get('client_secret'):
+                    self.fail('service_principal.client_secret should be specified when using Kubernetes')
 
             mastercount = self.master_profile[0].get('count')
             if mastercount != 1 and mastercount != 3 and mastercount != 5:
