@@ -223,14 +223,11 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         # Initialize the Ansible return
         results = dict()
         changed = False
-        # traffic_manager = None
-        # contains_endpoints = False
-        traffic_manager = self.get_traffic_manager_profile(self.resource_group, self.name)
-        results = self.traffic_manager_to_dict(traffic_manager, self.resource_group, self.name,
-                                               self.location, self.properties)
+        current_traffic_manager = self.get_traffic_manager_profile(self.resource_group, self.name)
+        results = self.traffic_manager_to_dict(current_traffic_manager, self.resource_group,
+                                               self.name, self.location, self.properties)
         # if check_mode then return with the dictionary of the traffic manager object
         if self.check_mode:
-            self.results['changed'] = changed
             self.results['state'] = results
             return self.results
 
@@ -238,19 +235,17 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             try:
                 if self.state == 'present':
                     self.log('Fetching traffic manager {0}'.format(self.name))
-                    # Get the resource group to verify it exist
-
                     self.create_or_update_traffic_manager_profile(self.resource_group, self.name,
                                                                   self.location, self.properties)
                     changed = True
-                    if traffic_manager is None:
+                    if current_traffic_manager is None:
                         results['status'] = 'Created'
                     else:
                         results['status'] = 'Updated'
 
                 elif self.state == 'absent':
                     self.log('Deleting traffic manager {0}'.format(self.name))
-                    if traffic_manager is not None:
+                    if current_traffic_manager is not None:
                         # Deletes the traffic manager and set change variable
                         self.remove_traffic_manager_profile(self.resource_group, self.name)
                         changed = True
@@ -261,56 +256,9 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                     changed = True
 
             self.results['changed'] = changed
-            self.results['state'] = results
-
-
-        # if changed:
-        #     if self.state == 'present':
-        #         if not rg:
-        #             # Create resource group
-        #             self.log("Creating resource group {0}".format(self.name))
-        #             if not self.location:
-        #                 self.fail("Parameter error: location is required when creating a resource group.")
-        #             if self.name_exists():
-        #                 self.fail("Error: a resource group with the name {0} already exists in your subscription."
-        #                           .format(self.name))
-        #             params = ResourceGroup(
-        #                 location=self.location,
-        #                 tags=self.tags
-        #             )
-        #         else:
-        #             # Update resource group
-        #             params = ResourceGroup(
-        #                 location=results['location'],
-        #                 tags=results['tags']
-        #             )
-        #         self.results['state'] = self.create_or_update_resource_group(params)
-        #     elif self.state == 'absent':
-        #         if contains_resources and not self.force:
-        #             self.fail("Error removing resource group {0}. Resources exist within the group.".format(self.name))
-        #         self.delete_resource_group()
+            # self.results['state'] = results
 
         return self.results
-
-    # def create_or_update_resource_group(self, params):
-    #     try:
-    #         result = self.rm_client.resource_groups.create_or_update(self.name, params)
-    #     except Exception as exc:
-    #         self.fail("Error creating or updating resource group {0} - {1}".format(self.name, str(exc)))
-    #     return resource_group_to_dict(result)
-
-    # def delete_resource_group(self):
-    #     try:
-    #         poller = self.rm_client.resource_groups.delete(self.name)
-    #         self.get_poller_result(poller)
-    #     except Exception as exc:
-    #         self.fail("Error delete resource group {0} - {1}".format(self.name, str(exc)))
-
-    #     # The delete operation doesn't return anything.
-    #     # If we got here, assume all is good
-    #     self.results['state']['status'] = 'Deleted'
-    #     return True
-
 
     def traffic_manager_to_dict(self, traffic_manager, resource_group=None,
                                 name=None, location=None, properties=None):
@@ -321,28 +269,36 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :return: traffic manage object
         '''
         if traffic_manager is None:  # Create a stub if there is no traffic manager
-            if not(properties is None or len(properties) == 0):
+            if properties is not None and len(properties) > 0:
                 monitor_config = self.create_monitor_config(properties)
                 dns_config = self.create_dns_config(properties, name)
+                tags=properties.get('tags',[])
+                # propertes = properties
             else:
+                name=None
+                resource_group=None
                 dns_config = {}
                 monitor_config = {}
-            
+                tags=[]
+    
+            properties = dict(dns_config=dns_config,
+                              monitor_config=monitor_config, tags=tags)
+
             return dict(
                         # id=traffic_manager.profile.id,
                         name=name,
                         resource_group=resource_group,
                         location=location,
-                        dns_config=dns_config,
-                        monitor_config=monitor_config)
-                        # tags=traffic_manager.tags,
+                        properties=properties)
                         # provisioning_state=traffic_manager.properties.provisioning_state
+
         else:  # Create a dictionary from the Azure traffic manager
+            properties = dict(tags=traffic_manager.tags)
             return dict(
                         id=traffic_manager.id,
                         name=traffic_manager.name,
                         location=traffic_manager.location,
-                        tags=traffic_manager.tags,
+                        properties=properties
                         # properties=traffic_manager.properties
                         # provisioning_state=traffic_manager.properties.provisioning_state
                         )
@@ -476,6 +432,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :param name: name of a traffic  manager
         :return: DnsConfig object
         '''
+        if properties is None:
+            properties = {}
         dns_config_properties = properties.get('dns_config', {})
         relative_name = dns_config_properties.get('relative_name', name)
         ttl = dns_config_properties.get('ttl', None)
@@ -489,6 +447,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :param name: name of a traffic  manager
         :return: MonitorConfig object
         '''
+        if properties is None:
+            properties = {}
         monitor_properties = properties.get('monitor_config', {})
         monitor_protocol = monitor_properties.get('protocol', None)
         monitor_port = monitor_properties.get('port', None)
