@@ -1,94 +1,144 @@
 #!powershell
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-$params = Parse-Args $args -supports_check_mode $true
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
 
+$ErrorActionPreference = 'Stop'
+
+$params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
-$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
+# there are 4 modes to win_copy which are driven by the action plugins:
+#   explode: src is a zip file which needs to be extracted to dest, for use with multiple files
+#   query: win_copy action plugin wants to get the state of remote files to check whether it needs to send them
+#   remote: all copy action is happening remotely (remote_src=True)
+#   single: a single file has been copied, also used with template
+$mode = Get-AnsibleParam -obj $params -name "mode" -type "str" -default "single" -validateset "explode","query","remote","single"
+
+# used in explode, remote and single mode
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($mode -in @("explode","process","single"))
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
+
+# used in single mode
 $original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str"
 
-# original_basename gets set if src and dest are dirs
-# but includes subdir if the source folder contains sub folders
-# e.g. you could get subdir/foo.txt
+# used in query and remote mode
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
+
+# used in query mode, contains the local files/directories/symlinks that are to be copied
+$files = Get-AnsibleParam -obj $params -name "files" -type "list"
+$directories = Get-AnsibleParam -obj $params -name "directories" -type "list"
+$symlinks = Get-AnsibleParam -obj $params -name "symlinks" -type "list"
 
 $result = @{
     changed = $false
-    dest = $dest
-    original_basename = $original_basename
-    src = $src
 }
 
-if (($force -eq $false) -and (Test-Path -Path $dest)) {
-    $result.msg = "file already exists"
-    Exit-Json $result
+if ($diff_mode) {
+    $result.diff = @{}
 }
 
-Function Copy-Folder($src, $dest) {
-    if (Test-Path -Path $dest) {
-        if (-not (Get-Item -Path $dest -Force).PSIsContainer) {
-            Fail-Json $result "If src is a folder, dest must also be a folder. src: $src, dest: $dest"
+Function Copy-File($source, $dest) {
+    $diff = ""
+    $copy_file = $false
+    $source_checksum = $null
+    if ($force) {
+        $source_checksum = Get-FileChecksum -path $source
+    }
+
+    if (Test-Path -Path $dest -PathType Container) {
+        Fail-Json -obj $result -message "cannot copy file from $source to $($dest): dest is already a folder"
+    } elseif (Test-Path -Path $dest -PathType Leaf) {
+        if ($force) {
+            $target_checksum = Get-FileChecksum -path $dest
+            if ($source_checksum -ne $target_checksum) {
+                $copy_file = $true
+            }
         }
     } else {
-        try {
-            New-Item -Path $dest -ItemType Directory -Force -WhatIf:$check_mode
-            $result.changed = $true
-        } catch {
-            Fail-Json $result "Failed to create new folder $dest $($_.Exception.Message)"
-        }
+        $copy_file = $true
     }
 
-    foreach ($item in Get-ChildItem -Path $src) {
-        $dest_path = Join-Path -Path $dest -ChildPath $item.PSChildName
-        if ($item.PSIsContainer) {
-            Copy-Folder -src $item.FullName -dest $dest_path
-        } else {
-            Copy-File -src $item.FullName -dest $dest_path
+    if ($copy_file) {
+        $file_dir = [System.IO.Path]::GetDirectoryName($dest)
+        # validate the parent dir is not a file and that it exists
+        if (Test-Path -Path $file_dir -PathType Leaf) {
+            Fail-Json -obj $result -message "cannot copy file from $source to $($dest): object at dest parent dir is not a folder"
+        } elseif (-not (Test-Path -Path $file_dir)) {
+            # directory doesn't exist, need to create
+            New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            $diff += "+$file_dir\`n"
         }
-    }
-}
 
-Function Copy-File($src, $dest) {
-    if (Test-Path -Path $dest) {
-        if ((Get-Item -Path $dest -Force).PSIsContainer) {
-            Fail-Json $result "If src is a file, dest must also be a file. src: $src, dest: $dest"
+        if (Test-Path -Path $dest -PathType Leaf) {
+            Remove-Item -Path $dest -Force -Recurse | Out-Null
+            $diff += "-$dest`n"
         }
-    }
 
-    $src_checksum = Get-FileChecksum -Path $src
-    $dest_checksum = Get-FileChecksum -Path $dest
-    if ($src_checksum -ne $dest_checksum) {
-        try {
-            Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
-        } catch {
-            Fail-Json $result "Failed to copy file: $($_.Exception.Message)"
+        if (-not $check_mode) {
+            # cannot run with -WhatIf:$check_mode as if the parent dir didn't
+            # exist and was created above would still not exist in check mode
+            Copy-Item -Path $source -Destination $dest -Force | Out-Null
         }
+        $diff += "+$dest`n"
+
+        # make sure we set the attributes accordingly
+        if (-not $check_mode) {
+            $source_file = Get-Item -Path $source -Force
+            $dest_file = Get-Item -Path $dest -Force
+            $dest_file.Attributes = $source_file.Attributes
+            $dest_file.SetAccessControl($source_file.GetAccessControl())
+        }
+
         $result.changed = $true
     }
 
-    # Verify the file we copied is the same
-    $dest_checksum_verify = Get-FileChecksum -Path $dest
-    if (-not ($check_mode) -and ($src_checksum -ne $dest_checksum_verify)) {
-        Fail-Json $result "Copied file does not match checksum. src: $src_checksum, dest: $dest_checksum_verify. Failed to copy file from $src to $dest"
+    # ugly but to save us from running the checksum twice, let's return it for
+    # the main code to add it to $result
+    return ,@{ diff = $diff; checksum = $source_checksum }
+}
+
+Function Copy-Folder($source, $dest) {
+    $diff = ""
+    $copy_folder = $false
+
+    if (-not (Test-Path -Path $dest -PathType Container)) {
+        $parent_dir = [System.IO.Path]::GetDirectoryName($dest)
+        if (Test-Path -Path $parent_dir -PathType Leaf) {
+            Fail-Json -obj $result -message "cannot copy file from $source to $($dest): object at dest parent dir is not a folder"
+        }
+        if (Test-Path -Path $dest -PathType Leaf) {
+            Fail-Json -obj $result -message "cannot copy folder from $source to $($dest): dest is already a file"
+        }
+
+        New-Item -Path $dest -ItemType Container -WhatIf:$check_mode | Out-Null
+        $diff += "+$dest\`n"
+        $result.changed = $true
+
+        if (-not $check_mode) {
+            $source_folder = Get-Item -Path $source -Force
+            $dest_folder = Get-Item -Path $source -Force
+            $dest_folder.Attributes = $source_folder.Attributes
+            $dest_folder.SetAccessControl($source_folder.GetAccessControl())
+        }
     }
+
+    $child_items = Get-ChildItem -Path $source -Force
+    foreach ($child_item in $child_items) {
+        $dest_child_path = Join-Path -Path $dest -ChildPath $child_item.Name
+        if ($child_item.PSIsContainer) {
+            $diff += (Copy-Folder -source $child_item.Fullname -dest $dest_child_path)
+        } else {
+            $diff += (Copy-File -source $child_item.Fullname -dest $dest_child_path).diff
+        }
+    }
+
+    return $diff
 }
 
 Function Get-FileSize($path) {
@@ -108,56 +158,193 @@ Function Get-FileSize($path) {
     $size
 }
 
-if (-not (Test-Path -Path $src)) {
-    Fail-Json $result "Cannot copy src file: $src as it does not exist"
-}
+if ($mode -eq "query") {
+    # we only return a list of files/directories that need to be copied over
+    # the source of the local file will be the key used
+    $will_change = $false
+    $changed_files = @()
+    $changed_directories = @()
+    $changed_symlinks = @()
 
-# If copying from remote we need to get the original folder path and name and change dest to this path
-if ($original_basename) {
-    $parent_path = Split-Path -Path $original_basename -Parent
-    if ($parent_path.length -gt 0) {
-        $dest_folder = Join-Path -Path $dest -ChildPath $parent_path
-        try {
-            New-Item -Path $dest_folder -Type directory -Force -WhatIf:$check_mode
-            $result.changed = $true
-        } catch {
-            Fail-Json $result "Failed to create directory $($dest_folder): $($_.Exception.Message)"
+    foreach ($file in $files) {
+        $filename = $file.dest
+        $local_checksum = $file.checksum
+
+        $filepath = Join-Path -Path $dest -ChildPath $filename
+        if (Test-Path -Path $filepath -PathType Leaf) {
+            if ($force) {
+                $checksum = Get-FileChecksum -path $filepath
+                if ($checksum -ne $local_checksum) {
+                    $will_change = $true
+                    $changed_files += $file
+                }
+            }
+        } elseif (Test-Path -Path $filepath -PathType Container) {
+            Fail-Json -obj $result -message "cannot copy file to dest $($filepath): object at path is already a directory"
+        } else {
+            $will_change = $true
+            $changed_files += $file
         }
     }
 
-    if ((Get-Item -Path $dest -Force).PSIsContainer) {
-        $dest = Join-Path $dest -ChildPath $original_basename
-    }
-}
+    foreach ($directory in $directories) {
+        $dirname = $directory.dest
 
-# If the source is a container prepare for some recursive magic
-if ((Get-Item -Path $src -Force).PSIsContainer) {
-    if (Test-Path -Path $dest) {
-        if (-not (Get-Item -Path $dest -Force).PSIsContainer) {
-            Fail-Json $result "If src is a folder, dest must also be a folder. src: $src, dest: $dest"
+        $dirpath = Join-Path -Path $dest -ChildPath $dirname
+        $parent_dir = [System.IO.Path]::GetDirectoryName($dirpath)
+        if (Test-Path -Path $parent_dir -PathType Leaf) {
+            Fail-Json -obj $result -message "cannot copy folder to dest $($dirpath): object at parent directory path is already a file"
+        }
+        if (Test-Path -Path $dirpath -PathType Leaf) {
+            Fail-Json -obj $result -message "cannot copy folder to dest $($dirpath): object at path is already a file"
+        } elseif (-not (Test-Path -Path $dirpath -PathType Container)) {
+            $will_change = $true
+            $changed_directories += $directory
         }
     }
 
-    $folder_name = (Get-Item -Path $src -Force).Name
-    $dest_path = Join-Path -Path $dest -ChildPath $folder_name
-    Copy-Folder -src $src -dest $dest_path
-    if ($result.changed -eq $true) {
-        $result.operation = "folder_copy"
+    # TODO: Handle symlinks
+
+    # Detect if the PS zip assemblies are available, this will control whether
+    # the win_copy plugin will use explode as the mode or single
+    try {
+        Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
+        Add-Type -Assembly System.IO.Compression | Out-Null
+        $result.zip_available = $true
+    } catch {
+        $result.zip_available = $false
     }
-} else {
-    Copy-File -src $src -dest $dest
-    if ($result.changed -eq $true) {
-        $result.operation = "file_copy"
+
+    $result.will_change = $will_change
+    $result.files = $changed_files
+    $result.directories = $changed_directories
+    $result.symlinks = $changed_symlinks
+} elseif ($mode -eq "explode") {
+    # a single zip file containing the files and directories needs to be
+    # expanded this will always result in a change as the calculation is done
+    # on the win_copy action plugin and is only run if a change needs to occur
+    if (-not (Test-Path -Path $src -PathType Leaf)) {
+        Fail-Json -obj $result -message "Cannot expand src zip file file: $src as it does not exist"
     }
-    $result.original_basename = (Get-Item -Path $src -Force).Name
-    $result.checksum = Get-FileChecksum -Path $src
+
+    Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
+    Add-Type -Assembly System.IO.Compression | Out-Null
+
+    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
+    foreach ($entry in $archive.Entries) {
+        $entry_target_path = [System.IO.Path]::Combine($dest, $entry.FullName)
+        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
+
+        if (-not (Test-Path -Path $entry_dir)) {
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+        }
+
+        if (-not ($entry_target_path.EndsWith("`\") -or $entry_target_path.EndsWith("/"))) {
+            if (-not $check_mode) {
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
+            }
+        }
+    }
+
+    $result.changed = $true
+} elseif ($mode -eq "remote") {
+    # all copy actions are happening on the remote side (windows host), need
+    # too copy source and dest using PS code
+    $result.src = $src
+    $result.dest = $dest
+
+    if (-not (Test-Path -Path $src)) {
+        Fail-Json -obj $result -message "Cannot copy src file: $src as it does not exist"
+    }
+
+    if (Test-Path -Path $src -PathType Container) {
+        # we are copying a directory or the contents of a directory
+        $result.operation = 'folder_copy'
+        if ($src.EndsWith("/") -or $src.EndsWith("`\")) {
+            # copying the folder's contents to dest
+            $diff = ""
+            $child_files = Get-ChildItem -Path $src -Force
+            foreach ($child_file in $child_files) {
+                $dest_child_path = Join-Path -Path $dest -ChildPath $child_file.Name
+                if ($child_file.PSIsContainer) {
+                    $diff += Copy-Folder -source $child_file.FullName -dest $dest_child_path
+                } else {
+                    $diff += (Copy-File -source $child_file.FullName -dest $dest_child_path).diff
+                }
+            }
+        } else {
+            # copying the folder and it's contents to dest
+            $dest = Join-Path -Path $dest -ChildPath (Get-Item -Path $src -Force).Name
+            $result.dest = $dest
+            $diff = Copy-Folder -source $src -dest $dest
+        }
+    } else {
+        # we are just copying a single file to dest
+        $result.operation = 'file_copy'
+
+        $source_basename = (Get-Item -Path $src -Force).Name
+        $result.original_basename = $source_basename
+
+        if ($dest.EndsWith("/") -or $dest.EndsWith("`\")) {
+            $dest = Join-Path -Path $dest -ChildPath (Get-Item -Path $src -Force).Name
+            $result.dest = $dest
+        } else {
+            # check if the parent dir exists, this is only done if src is a
+            # file and dest if the path to a file (doesn't end with \ or /)
+            $parent_dir = Split-Path -Path $dest
+            if (Test-Path -Path $parent_dir -PathType Leaf) {
+                Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+            } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+                Fail-Json -obj $result -message "Destination directory $parent_dir does not exist"
+            }
+        }
+        $copy_result = Copy-File -source $src -dest $dest
+        $diff = $copy_result.diff
+        $result.checksum = $copy_result.checksum
+    }
+
+    # the file might not exist if running in check mode
+    if (-not $check_mode -or (Test-Path -Path $dest -PathType Leaf)) {
+        $result.size = Get-FileSize -path $dest
+    } else {
+        $result.size = $null
+    }
+    if ($diff_mode) {
+        $result.diff.prepared = $diff
+    }
+} elseif ($mode -eq "single") {
+    # a single file is located in src and we need to copy to dest, this will
+    # always result in a change as the calculation is done on the Ansible side
+    # before this is run. This should also never run in check mode
+    if (-not (Test-Path -Path $src -PathType Leaf)) {
+        Fail-Json -obj $result -message "Cannot copy src file: $src as it does not exist"
+    }
+
+    # the dest parameter is a directory, we need to append original_basename
+    if ($dest.EndsWith("/") -or $dest.EndsWith("`\")) {
+        $remote_dest = Join-Path -Path $dest -ChildPath $original_basename
+        $parent_dir = Split-Path -Path $remote_dest
+
+        # when dest ends with /, we need to create the destination directories
+        if (Test-Path -Path $parent_dir -PathType Leaf) {
+            Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+        } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+            New-Item -Path $parent_dir -ItemType Directory | Out-Null
+        }
+    } else {
+        $remote_dest = $dest
+        $parent_dir = Split-Path -Path $remote_dest
+
+        # check if the dest parent dirs exist, need to fail if they don't
+        if (Test-Path -Path $parent_dir -PathType Leaf) {
+            Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+        } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+            Fail-Json -obj $result -message "Destination directory $parent_dir does not exist"
+        }
+    }
+
+    Copy-Item -Path $src -Destination $remote_dest -Force | Out-Null
+    $result.changed = $true
 }
 
-if ($check_mode) {
-    # When in check mode the dest won't exit, just get the source size
-    $result.size = Get-FileSize -path $src
-} else {
-    $result.size = Get-FileSize -path $dest
-}
-
-Exit-Json $result
+Exit-Json -obj $result
