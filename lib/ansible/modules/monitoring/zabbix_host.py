@@ -319,7 +319,7 @@ class Host(object):
                     flag = False
                     interface_str = interface
                     for exist_interface in exist_interface_list:
-                        interface_type = interface['type']
+                        interface_type = int(interface['type'])
                         exist_interface_type = int(exist_interface['type'])
                         if interface_type == exist_interface_type:
                             # update
