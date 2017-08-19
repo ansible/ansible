@@ -43,7 +43,7 @@ requirements:
 options:
   account_key:
     description:
-      - "File containing the the Let's Encrypt account RSA key."
+      - "File containing the Let's Encrypt account RSA key."
       - "Can be created with C(openssl rsa ...)."
     required: true
   account_email:

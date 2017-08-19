@@ -20,7 +20,7 @@ Some tasks that require 'local' resources use action plugins (template and copy 
 The magic of 'local' paths
 --------------------------
 
-Lookups and action plugins both use a special 'search magic' to find things, taking the current play into account, it uses from most specific to most general the the playbook dir in which a task is contained (this includes roles and includes).
+Lookups and action plugins both use a special 'search magic' to find things, taking the current play into account, it uses from most specific to most general playbook dir in which a task is contained (this includes roles and includes).
 
 Using this magic, relative paths get attempted first with a 'files|templates|vars' appended (if not already present), depending on action being taken, 'files' is the default. (i.e include_vars will use vars/).  The paths will be searched from most specific to most general (i.e role before play).
 dependent roles WILL be traversed (i.e task is in role2, role2 is a dependency of role1, role2 will be looked at first, then role1, then play).

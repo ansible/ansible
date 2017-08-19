@@ -42,17 +42,17 @@ options:
         - Should https certificates be validated?
     source_volume_id:
         description:
-            - The the id of the volume copy source.
+            - The id of the volume copy source.
             - If used, must be paired with destination_volume_id
             - Mutually exclusive with volume_copy_pair_id, and search_volume_id
     destination_volume_id:
         description:
-            - The the id of the volume copy destination.
+            - The id of the volume copy destination.
             - If used, must be paired with source_volume_id
             - Mutually exclusive with volume_copy_pair_id, and search_volume_id
     volume_copy_pair_id:
         description:
-            - The the id of a given volume copy pair
+            - The id of a given volume copy pair
             - Mutually exclusive with destination_volume_id, source_volume_id, and search_volume_id
             - Can use to delete or check presence of volume pairs
             - Must specify this or (destination_volume_id and source_volume_id)

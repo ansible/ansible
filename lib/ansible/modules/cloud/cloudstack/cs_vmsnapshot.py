@@ -145,7 +145,7 @@ description:
   type: string
   sample: snapshot brought to you by Ansible
 domain:
-  description: Domain the the vm snapshot is related to.
+  description: Domain the vm snapshot is related to.
   returned: success
   type: string
   sample: example domain

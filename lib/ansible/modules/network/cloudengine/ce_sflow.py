@@ -128,7 +128,7 @@ options:
         default: null
     counter_interval:
         description:
-            - Indicates the the counter sampling interval.
+            - Indicates the counter sampling interval.
               The value is an integer that ranges from 10 to 4294967295, in seconds. The default value is 20.
         required: false
         default: null
