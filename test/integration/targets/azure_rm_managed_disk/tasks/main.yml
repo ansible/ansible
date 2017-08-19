@@ -28,6 +28,9 @@
        name: "{{ managed_disk1 }}"
        storage_account_type: "Standard_LRS"
        disk_size_gb: 1
+       tags:
+           testing: testing
+           delete: never
    register: output
 
  - name: Assert status succeeded and results include an Id value 
@@ -77,7 +80,6 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       storage_account_type: "Standard_LRS"
        disk_size_gb: 2
    register: output
 
@@ -98,35 +100,38 @@
    assert:
      that:
        - output.changed
-#  - name: Update account tags
-#    azure_rm_managed_disk:
-#        resource_group: "{{ resource_group }}"
-#        name: "{{ managed_disk1 }}"
-#        tags:
-#            testing: testing
-#            delete: never
-#            galaxy: 'no'
-#    register: output
 
-#  - assert:
-#        that:
-#            - "output.state.tags | length == 3"
-#            - "output.state.tags.galaxy == 'no'"
+ - name: Update account tags
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       tags:
+           testing: testing
+           delete: never
+           galaxy: 'no'
+   register: output
 
-#  - name: Update account tags
-#    azure_rm_managed_disk:
-#        resource_group: "{{ resource_group }}"
-#        name: "{{ managed_disk1 }}"
-#        tags:
-#            testing: testing
-#            delete: never
-#    register: output
+ - assert:
+       that:
+           - "output.state.tags | length == 3"
+           - "output.state.tags.galaxy == 'no'"
 
-#  - assert:
-#        that:
-#            - "output.state.tags | length == 2"
-#            - "output.state.tags.testing == 'testing'"
-#            - "output.state.tags.delete == 'never'"
+ - name: Update account tags
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       tags:
+           testing: testing
+           delete: never
+   register: output
+
+ - assert:
+       that:
+           - "output.state.tags | length == 2"
+           - "output.state.tags.testing == 'testing'"
+           - "output.state.tags.delete == 'never'"
 
  - name: Gather facts to one specific disk
    azure_rm_managed_disk_facts:
