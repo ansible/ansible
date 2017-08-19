@@ -20,7 +20,7 @@ These values are then made available using the standard templating system in Ans
 .. _getting_file_contents:
 
 Intro to Lookups: Getting File Contents
-```````````````````````````````````````
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The file lookup is the most basic lookup type.
 
@@ -38,7 +38,7 @@ Contents can be read off the filesystem as follows::
 .. _password_lookup:
 
 The Password Lookup
-```````````````````
+^^^^^^^^^^^^^^^^^^^
 
 .. note::
 
@@ -105,7 +105,7 @@ To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and
 .. _passwordstore_lookup:
 
 The Passwordstore Lookup
-````````````````````````
+^^^^^^^^^^^^^^^^^^^^^^^^
 .. versionadded:: 2.3
 
 The ``passwordstore`` lookup enables Ansible to retrieve, create or update passwords from
@@ -115,7 +115,7 @@ in the passwordfile.
 .. _passwordstore.org: https://www.passwordstore.org
 
 Examples
---------
+````````
 Basic lookup. Fails if example/test doesn't exist::
 
     password="{{ lookup('passwordstore', 'example/test')}}"
@@ -149,7 +149,7 @@ The location of the password-store directory can be specified in the following w
 .. _csvfile_lookup:
 
 The CSV File Lookup
-```````````````````
+^^^^^^^^^^^^^^^^^^^
 .. versionadded:: 1.5
 
 The ``csvfile`` lookup reads the contents of a file in CSV (comma-separated value)
@@ -197,7 +197,7 @@ encoding     utf-8          Encoding (character set) of the used CSV file (added
 .. _ini_lookup:
 
 The INI File Lookup
-```````````````````
+^^^^^^^^^^^^^^^^^^^
 .. versionadded:: 2.0
 
 The ``ini`` lookup reads the contents of a file in INI format (key1=value1).
@@ -262,7 +262,7 @@ default      empty string   return value if the key is not in the ini file
 .. _credstash_lookup:
 
 The Credstash Lookup
-````````````````````
+^^^^^^^^^^^^^^^^^^^^
 .. versionadded:: 2.0
 
 Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/fugue/credstash
@@ -320,7 +320,7 @@ If you're not using 2.0 yet, you can do something similar with the credstash too
 .. _dns_lookup:
 
 The DNS Lookup (dig)
-````````````````````
+^^^^^^^^^^^^^^^^^^^^
 .. versionadded:: 1.9.0
 
 .. warning:: This lookup depends on the `dnspython <http://www.dnspython.org/>`_
@@ -426,7 +426,7 @@ TXT          strings
 .. _mongodb_lookup:
 
 MongoDB Lookup
-``````````````
+^^^^^^^^^^^^^^
 .. versionadded:: 2.3
 
 .. warning:: This lookup depends on the `pymongo 2.4+ <http://www.mongodb.org/>`_
@@ -520,7 +520,7 @@ Sample output:
 .. _more_lookups:
 
 More Lookups
-````````````
+^^^^^^^^^^^^
 
 Various *lookup plugins* allow additional ways to iterate over data.  In :doc:`Loops <playbooks_loops>` you will learn
 how to use them to walk over collections of numerous types.  However, they can also be used to pull in data
