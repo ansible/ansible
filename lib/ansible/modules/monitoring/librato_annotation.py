@@ -52,11 +52,11 @@ options:
         required: false
     start_time:
         description:
-            - The unix timestamp indicating the the time at which the event referenced by this annotation started
+            - The unix timestamp indicating the time at which the event referenced by this annotation started
         required: false
     end_time:
         description:
-            - The unix timestamp indicating the the time at which the event referenced by this annotation ended
+            - The unix timestamp indicating the time at which the event referenced by this annotation ended
             - For events that have a duration, this is a useful way to annotate the duration of the event
         required: false
     links:

@@ -33,7 +33,7 @@ There are two options:
 1. Force a task to **run in check mode**, even when the playbook is called **without** ``--check``. This is called ``check_mode: yes``.
 2. Force a task to **run in normal mode** and make changes to the system, even when the playbook is called **with** ``--check``. This is called ``check_mode: no``.
 
-.. note:: Prior to version 2.2 only the the equivalent of ``check_mode: no`` existed. The notation for that was ``always_run: yes``.
+.. note:: Prior to version 2.2 only the equivalent of ``check_mode: no`` existed. The notation for that was ``always_run: yes``.
 
 Instead of ``yes``/``no`` you can use a Jinja2 expression, just like the ``when`` clause.
 
@@ -51,7 +51,7 @@ Example::
 
 
 Running single tasks with ``check_mode: yes`` can be useful to write tests for
-ansible modules, either to test the module itself or to the the conditions under
+ansible modules, either to test the module itself or to the conditions under
 which a module would make changes. 
 With ``register`` (see :doc:`playbooks_conditionals`) you can check the
 potential changes.

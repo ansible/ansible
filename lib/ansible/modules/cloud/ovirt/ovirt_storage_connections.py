@@ -34,7 +34,7 @@ description:
 options:
     id:
         description:
-            - "Id of the the storage connection to manage."
+            - "Id of the storage connection to manage."
     state:
         description:
             - "Should the storage connection be present or absent."
@@ -42,7 +42,7 @@ options:
         default: present
     storage:
         description:
-            - "Name of the the storage domain to be used with storage connection."
+            - "Name of the storage domain to be used with storage connection."
     address:
         description:
             - "Address of the storage server. E.g.: myserver.mydomain.com"

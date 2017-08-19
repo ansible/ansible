@@ -70,7 +70,7 @@ options:
     choices: [true, false]
   access_token:
     description:
-     - Bigmon access token. If this isn't set the the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
+     - Bigmon access token. If this isn't set, the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
 
 '''
 
