@@ -169,6 +169,7 @@
     aggregate:
       - name: eth1
       - name: eth2
+    description: test-interface
     enabled: False
   register: result
 
