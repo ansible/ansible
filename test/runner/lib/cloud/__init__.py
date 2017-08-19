@@ -15,6 +15,7 @@ from lib.util import (
     is_shippable,
     import_plugins,
     load_plugins,
+    ABC,
 )
 
 from lib.target import (
@@ -132,7 +133,7 @@ def cloud_init(args, targets):
         provider.setup()
 
 
-class CloudBase(object):
+class CloudBase(ABC):
     """Base class for cloud plugins."""
     __metaclass__ = abc.ABCMeta
 
@@ -206,8 +207,6 @@ class CloudBase(object):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
-    __metaclass__ = abc.ABCMeta
-
     TEST_DIR = 'test/integration'
 
     def __init__(self, args, config_extension='.yml'):
@@ -334,8 +333,6 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractmethod
     def configure_environment(self, env, cmd):
         """
