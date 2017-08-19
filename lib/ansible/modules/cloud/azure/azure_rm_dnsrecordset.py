@@ -620,6 +620,7 @@ def turn_to_long(value):
         output = int(value)
     return output
 
+
 def main():
     AzureRMRecordSet()
 
