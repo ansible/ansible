@@ -24,7 +24,7 @@ description:
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
 notes:
-    - This module supports devices with and without the the candidate and
+    - This module supports devices with and without the candidate and
       confirmed-commit capabilities. It always use the safer feature.
 version_added: "2.2"
 options:

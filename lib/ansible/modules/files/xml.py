@@ -78,7 +78,7 @@ options:
       or a hash where the key is an element name and the value is the element value.
   set_children:
     description:
-    - Set the the child-element(s) of a selected element.
+    - Set the child-element(s) of a selected element.
     - Removes any existing children.
     - Child elements must be specified as in C(add_children).
   count:
