@@ -49,7 +49,7 @@ options:
         required: false
 
     qos:
-        description: Initial quality of service settings for this volume.
+        description: Initial quality of service settings for this volume. Configure as dict in playbooks.
         required: false
         default: None
 
@@ -102,6 +102,7 @@ EXAMPLES = """
        password: "{{ solidfire_password }}"
        state: present
        name: AnsibleVol
+       qos: {minIOPS: 1000, maxIOPS: 20000, burstIOPS: 50000}
        account_id: 3
        enable512e: False
        size: 1
@@ -156,7 +157,7 @@ class SolidFireVolume(object):
             account_id=dict(required=True, type='int'),
 
             enable512e=dict(type='bool', aliases=['512emulation']),
-            qos=dict(required=False, type='str', default=None),
+            qos=dict(required=False, type='dict', default=None),
             attributes=dict(required=False, type='dict', default=None),
 
             volume_id=dict(type='int', default=None),
