@@ -92,7 +92,7 @@ extends_documentation_fragment:
 
 author:
     - "Julio Colon (@code4clouds)"
-    - "Diego Casati (@diegocasati)"
+    - "Diego Casati (@dcasati)"
 
 '''
 
@@ -179,50 +179,24 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
         changed = False
 
         try:
+            # Check if the endpoint exists.
+            endpoint = self.trafficmanager_client.endpoints.get(
+                self.resource_group,
+                self.profile_name,
+                self.endpoint_type,
+                self.endpoint_name
+            )
             if self.state == 'present':
-                endpoint = self.create_or_update_traffic_manager_endpoints(
-                    self.resource_group,
-                    self.profile_name,
-                    self.endpoint_type,
-                    self.endpoint_name,
-                    self.properties
-                )
-
-                results = self.endpoint_to_dict(
-                    endpoint,
-                    self.resource_group,
-                    self.profile_name,
-                    self.endpoint_type,
-                    self.endpoint_name
-                )
-                changed = True
-            # Handle the case where the user wants to remove this endpoint
-            elif self.state == 'absent':
-                # Before we proceed, verify that the endpoint exists
-                endpoint = self.trafficmanager_client.endpoints.get(
-                    self.resource_group,
-                    self.profile_name,
-                    self.endpoint_type,
-                    self.endpoint_name
-                )
-                results = self.endpoint_to_dict(
-                    endpoint,
-                    self.resource_group,
-                    self.profile_name,
-                    self.endpoint_type,
-                    self.endpoint_name
-                )
-                if endpoint is not None:
-                    # Our endpoint exists and it can be deleted.
-                    # While here, update 'changed' to True.
-                    endpoint = self.trafficmanager_client.endpoints.delete(
+                if endpoint is None:
+                    # Create the endpoint
+                    changed = True
+                    endpoint = self.create_or_update_traffic_manager_endpoints(
                         self.resource_group,
                         self.profile_name,
                         self.endpoint_type,
-                        self.endpoint_name
+                        self.endpoint_name,
+                        self.properties
                     )
-                    changed = True
-
                     results = self.endpoint_to_dict(
                         endpoint,
                         self.resource_group,
@@ -230,6 +204,37 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
                         self.endpoint_type,
                         self.endpoint_name
                     )
+                elif endpoint:
+                    # Upgrade an existing endpoint and report back what changed
+                    # results = compare_endpoints(endpoint, )
+                    endpoint = self.create_or_update_traffic_manager_endpoints(
+                        self.resource_group,
+                        self.profile_name,
+                        self.endpoint_type,
+                        self.endpoint_name,
+                        self.properties
+                    )
+
+            # Handle the case where the user wants to remove this endpoint
+            elif self.state == 'absent':
+                try:
+                    self.trafficmanager_client.endpoints.delete(
+                        self.resource_group,
+                        self.profile_name,
+                        self.endpoint_type,
+                        self.endpoint_name
+                    )
+                    changed = True
+                except CloudError:
+                    changed = False
+
+            results = self.endpoint_to_dict(
+                endpoint,
+                self.resource_group,
+                self.profile_name,
+                self.endpoint_type,
+                self.endpoint_name
+            )
         except CloudError:
             if self.state == 'present':
                 changed = True
