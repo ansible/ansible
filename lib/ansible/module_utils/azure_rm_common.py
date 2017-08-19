@@ -713,4 +713,3 @@ class AzureRMModuleBase(object):
             )
             self._register('Microsoft.Dns')
         return self._dns_client
-

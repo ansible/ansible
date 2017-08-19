@@ -143,18 +143,18 @@ EXAMPLES = '''
         orchestration_platform: Kubernetes
         master_profile:
             - count: 3
-                dns_prefix: acsk8smasterdns
+              dns_prefix: acsk8smasterdns
         linux_profile:
             - admin_username: azureuser
-                ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
+              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
         service_principal:
             - client_id: "cf72ca99-f6b9-4004-b0e0-bee10c521948"
-                client_secret: "mySPNp@ssw0rd!"
+              client_secret: "mySPNp@ssw0rd!"
         agent_pool_profiles:
             - name: default
-                count: 5
-                dns_prefix: acsk8sagent
-                vm_size: Standard_D2_v2
+              count: 5
+              dns_prefix: acsk8sagent
+              vm_size: Standard_D2_v2
         diagnostics_profile: false
         tags:
             Environment: Production
@@ -167,15 +167,15 @@ EXAMPLES = '''
         orchestration_platform: DCOS
         master_profile:
             - count: 3
-                dns_prefix: acsdcosmasterdns
+              dns_prefix: acsdcosmasterdns
         linux_profile:
             - admin_username: azureuser
-                ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
+              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
         agent_pool_profiles:
             - name: default
-                count: 5
-                dns_prefix: acscdcosagent
-                vm_size: Standard_D2_v2
+              count: 5
+              dns_prefix: acscdcosagent
+              vm_size: Standard_D2_v2
         diagnostics_profile: false
         tags:
             Environment: Production
@@ -188,15 +188,15 @@ EXAMPLES = '''
         orchestration_platform: Swarm
         master_profile:
             - count: 3
-                dns_prefix: acsswarmmasterdns
+              dns_prefix: acsswarmmasterdns
         linux_profile:
             - admin_username: azureuser
-                ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
+              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
         agent_pool_profiles:
             - name: default
-                count: 5
-                dns_prefix: acsswarmagent
-                vm_size: Standard_D2_v2
+              count: 5
+              dns_prefix: acsswarmagent
+              vm_size: Standard_D2_v2
         diagnostics_profile: false
         tags:
             Environment: Production
@@ -254,22 +254,37 @@ except ImportError:
     pass
 
 
-def create_agent_pool_profile_instance(agp):
+def create_agent_pool_profile_instance(agentpoolprofile):
+    '''
+    Helper method to serialize a dict to a ContainerServiceAgentPoolProfile
+    :param: agentpoolprofile: dict with the parameters to setup the ContainerServiceAgentPoolProfile
+    :return: ContainerServiceAgentPoolProfile
+    '''
     return ContainerServiceAgentPoolProfile(
-        name=agp['name'],
-        count=agp['count'],
-        dns_prefix=agp['dns_prefix'],
-        vm_size=agp['vm_size']
+        name=agentpoolprofile['name'],
+        count=agentpoolprofile['count'],
+        dns_prefix=agentpoolprofile['dns_prefix'],
+        vm_size=agentpoolprofile['vm_size']
     )
 
 
 def create_orch_platform_instance(orchestrator):
+    '''
+    Helper method to serialize a dict to a ContainerServiceOrchestratorProfile
+    :param: orchestrator: dict with the parameters to setup the ContainerServiceOrchestratorProfile
+    :return: ContainerServiceOrchestratorProfile
+    '''
     return ContainerServiceOrchestratorProfile(
         orchestrator_type=orchestrator,
     )
 
 
 def create_service_principal_profile_instance(spnprofile):
+    '''
+    Helper method to serialize a dict to a ContainerServiceServicePrincipalProfile
+    :param: spnprofile: dict with the parameters to setup the ContainerServiceServicePrincipalProfile
+    :return: ContainerServiceServicePrincipalProfile
+    '''
     return ContainerServiceServicePrincipalProfile(
         client_id=spnprofile[0]['client_id'],
         secret=spnprofile[0]['client_secret']
@@ -277,6 +292,11 @@ def create_service_principal_profile_instance(spnprofile):
 
 
 def create_linux_profile_instance(linuxprofile):
+    '''
+    Helper method to serialize a dict to a ContainerServiceLinuxProfile
+    :param: linuxprofile: dict with the parameters to setup the ContainerServiceLinuxProfile
+    :return: ContainerServiceLinuxProfile
+    '''
     return ContainerServiceLinuxProfile(
         admin_username=linuxprofile[0]['admin_username'],
         ssh=create_ssh_configuration_instance(linuxprofile[0]['ssh_key'])
@@ -284,6 +304,11 @@ def create_linux_profile_instance(linuxprofile):
 
 
 def create_ssh_configuration_instance(sshconf):
+    '''
+    Helper method to serialize a dict to a ContainerServiceSshConfiguration
+    :param: sshconf: dict with the parameters to setup the ContainerServiceSshConfiguration
+    :return: ContainerServiceSshConfiguration
+    '''
     listssh = []
     key = ContainerServiceSshPublicKey(key_data=str(sshconf))
     listssh.append(key)
@@ -293,6 +318,11 @@ def create_ssh_configuration_instance(sshconf):
 
 
 def create_master_profile_instance(masterprofile):
+    '''
+    Helper method to serialize a dict to a ContainerServiceMasterProfile
+    :param: masterprofile: dict with the parameters to setup the ContainerServiceMasterProfile
+    :return: ContainerServiceMasterProfile
+    '''
     return ContainerServiceMasterProfile(
         count=masterprofile[0]['count'],
         dns_prefix=masterprofile[0]['dns_prefix']
@@ -300,18 +330,33 @@ def create_master_profile_instance(masterprofile):
 
 
 def create_diagnostics_profile_instance(diagprofile):
+    '''
+    Helper method to serialize a dict to a ContainerServiceDiagnosticsProfile
+    :param: diagprofile: dict with the parameters to setup the ContainerServiceDiagnosticsProfile
+    :return: ContainerServiceDiagnosticsProfile
+    '''
     return ContainerServiceDiagnosticsProfile(
         vm_diagnostics=create_vm_diagnostics_instance(diagprofile)
     )
 
 
 def create_vm_diagnostics_instance(vmdiag):
+    '''
+    Helper method to serialize a dict to a ContainerServiceVMDiagnostics
+    :param: vmdiag: dict with the parameters to setup the ContainerServiceVMDiagnostics
+    :return: ContainerServiceVMDiagnostics
+    '''
     return ContainerServiceVMDiagnostics(
         enabled=vmdiag
     )
 
 
 def create_acs_dict(acs):
+    '''
+    Helper method to deserialize a ContainerService to a dict
+    :param: acs: ContainerService or AzureOperationPoller with the Azure callback object
+    :return: dict with the state on Azure
+    '''
     results = dict(
         id=acs.id,
         name=acs.name,
@@ -330,6 +375,11 @@ def create_acs_dict(acs):
 
 
 def create_linux_profile_dict(linuxprofile):
+    '''
+    Helper method to deserialize a ContainerServiceLinuxProfile to a dict
+    :param: linuxprofile: ContainerServiceLinuxProfile with the Azure callback object
+    :return: dict with the state on Azure
+    '''
     results = dict(
         ssh_key=linuxprofile.ssh.public_keys[0].key_data,
         admin_username=linuxprofile.admin_username
@@ -338,6 +388,11 @@ def create_linux_profile_dict(linuxprofile):
 
 
 def create_master_profile_dict(masterprofile):
+    '''
+    Helper method to deserialize a ContainerServiceMasterProfile to a dict
+    :param: masterprofile: ContainerServiceMasterProfile with the Azure callback object
+    :return: dict with the state on Azure
+    '''
     results = dict(
         count=masterprofile.count,
         fqdn=masterprofile.fqdn,
@@ -347,6 +402,11 @@ def create_master_profile_dict(masterprofile):
 
 
 def create_diagnotstics_profile_dict(diagnosticsprofile):
+    '''
+    Helper method to deserialize a ContainerServiceVMDiagnostics to a dict
+    :param: diagnosticsprofile: ContainerServiceVMDiagnostics with the Azure callback object
+    :return: dict with the state on Azure
+    '''
     results = dict(
         vm_diagnostics=diagnosticsprofile.vm_diagnostics.enabled
     )
@@ -354,6 +414,11 @@ def create_diagnotstics_profile_dict(diagnosticsprofile):
 
 
 def create_orchestrator_profile_dict(orchestratorprofile):
+    '''
+    Helper method to deserialize a ContainerServiceOrchestratorProfile to a dict
+    :param: orchestratorprofile: ContainerServiceOrchestratorProfile with the Azure callback object
+    :return: dict with the state on Azure
+    '''
     results = dict(
         orchestrator_type=str(orchestratorprofile.orchestrator_type)
     )
@@ -361,6 +426,11 @@ def create_orchestrator_profile_dict(orchestratorprofile):
 
 
 def create_agent_pool_profiles_dict(agentpoolprofiles):
+    '''
+    Helper method to deserialize a ContainerServiceAgentPoolProfile to a dict
+    :param: agentpoolprofiles: ContainerServiceAgentPoolProfile with the Azure callback object
+    :return: dict with the state on Azure
+    '''
     results = []
     for profile in agentpoolprofiles:
         result = dict(
@@ -527,7 +597,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                                               profile_result['vm_size'], profile_self['vm_size'])))
                                     to_be_updated = True
                         if not matched:
-                            self.log("Agent Pool not found, TBU")
+                            self.log("Agent Pool not found")
                             to_be_updated = True
 
             if to_be_updated:
@@ -550,7 +620,6 @@ class AzureRMContainerService(AzureRMModuleBase):
         '''
         Creates or updates a container service with the specified configuration of orchestrator, masters, and agents.
 
-        :results: serialized ACS instance to be created / updated
         :return: deserialized ACS instance state dictionary
         '''
         self.log("Creating / Updating the ACS instance {0}".format(self.name))
@@ -615,12 +684,9 @@ class AzureRMContainerService(AzureRMModuleBase):
 
     def get_acs(self):
         '''
-        Deletes the specified container service in the specified subscription and resource group.
-        The operation does not delete other resources created as part of creating a container service,
-        including storage accounts, VMs, and availability sets.
-        All the other resources created with the container service are part of the same resource group and can be deleted individually.
+        Gets the properties of the specified container service.
 
-        :return: True
+        :return: deserialized ACS instance state dictionary
         '''
         self.log("Checking if the ACS instance {0} is present".format(self.name))
         found = False
