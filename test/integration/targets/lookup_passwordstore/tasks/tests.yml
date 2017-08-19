@@ -34,3 +34,35 @@
   assert:
     that:
         - "readpass == newpass"
+
+- name: define multiline password components
+  set_fact:
+    multiline_password: testpassword
+    multiline_rest: |
+      email: example@example.com
+      expires: 01/01/01
+
+- name: aggregate multiline password components into single fact
+  set_fact:
+    multiline_all: |
+      {{ multiline_password }}
+      {{ multiline_rest }}
+
+- name: import multiline password into pass
+  shell: 'echo "{{ multiline_all }}" | pass insert -m test-multiline'
+
+- name: fetch first line of multiline password
+  set_fact:
+    read_first_line: "{{ lookup('passwordstore', 'test-multiline') }}"
+
+- name: fetch all of multiline password
+  set_fact:
+    read_all_lines: "{{ lookup('passwordstore', 'test-multiline returnall=true') }}"
+
+- name: fetch multiline password from an existing file
+  assert:
+    that: "multiline_password == read_first_line"
+
+- name: fetch multiline password from an existing file
+  assert:
+    that: "multiline_all == read_all_lines"
