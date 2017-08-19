@@ -1,2 +1,3 @@
 posix/ci/cloud/vcenter
+posix/ci/cloud/smoketest
 cloud/vcenter
