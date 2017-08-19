@@ -1,4 +1,5 @@
-# Ken Celenza <ken@networktocode.com>
+# Author Ken Celenza <ken@networktocode.com>
+# Author Jason Edelman <jason@networktocode.com>
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)

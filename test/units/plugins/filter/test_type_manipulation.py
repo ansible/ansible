@@ -15,7 +15,6 @@ class TestTypeFilter(unittest.TestCase):
         dict_return = {'eigrp': {'state': 'enabled', 'proto': 'eigrp'}, 'ospf': {'state': 'enabled', 'proto': 'ospf'}}
         self.assertEqual(list_to_dict(list_original, key), dict_return)
 
-        
         # Fail when key is not found
         key = 'key_not_to_be_found'
         self.assertRaises(AnsibleFilterError, list_to_dict, list_original, key)
@@ -30,3 +29,25 @@ class TestTypeFilter(unittest.TestCase):
         key = 'proto'
         self.assertRaises(AnsibleFilterError, list_to_dict, list_original, key)
 
+    def test_dict(self):
+        # Good test
+        dict_original = {'eigrp': {'state': 'enabled', 'as': '1'}, 'ospf': {'state': 'enabled', 'as': '2'}}
+        key_name = 'proto'
+        list_return = [{'state': 'enabled', 'proto': 'ospf', 'as': '2'}, {'state': 'enabled', 'proto': 'eigrp', 'as': '1'}]
+        actual_return = dict_to_list(dict_original, key_name)
+        self.assertItemsEqual(actual_return, list_return)
+
+        # Fail when dict key is already used
+        dict_original = {'eigrp': {'state': 'enabled', 'as': '1', 'proto': 'bgp'}, 'ospf': {'state': 'enabled', 'as': '2'}}
+        key_name = 'proto'
+        self.assertRaises(AnsibleFilterError, list_to_dict, dict_original, key_name)
+
+        # Fail when sending a non-dict
+        dict_original = [{'eigrp': {'state': 'enabled', 'as': '1'}, 'ospf': {'state': 'enabled', 'as': '2'}}]
+        key_name = 'proto'
+        self.assertRaises(AnsibleFilterError, list_to_dict, dict_original, key_name)
+
+        # Fail when dict value is not a dict
+        dict_original = {'eigrp': [{'state': 'enabled', 'as': '1'}], 'ospf': {'state': 'enabled', 'as': '2'}}
+        key_name = 'proto'
+        self.assertRaises(AnsibleFilterError, list_to_dict, dict_original, key_name)
