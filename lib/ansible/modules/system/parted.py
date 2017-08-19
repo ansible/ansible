@@ -654,7 +654,7 @@ def main():
             if not module.check_mode:
                 partition = [p for p in current_parts if p['num'] == number][0]
 
-            # Assign name to the the partition
+            # Assign name to the partition
             if name is not None and partition.get('name', None) != name:
                 script += "name %s %s " % (number, name)
 

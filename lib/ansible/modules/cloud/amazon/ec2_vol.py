@@ -151,7 +151,7 @@ EXAMPLES = '''
     count: 3
   register: ec2
 - ec2_vol:
-    instance: "{{ item.id }} "
+    instance: "{{ item.id }}"
     volume_size: 5
   with_items: "{{ ec2.instances }}"
   register: ec2_vol

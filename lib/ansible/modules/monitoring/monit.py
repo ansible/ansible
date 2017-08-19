@@ -35,7 +35,7 @@ options:
   timeout:
     description:
       - If there are pending actions for the service monitored by monit, then Ansible will check
-        for up to this many seconds to verify the the requested action has been performed.
+        for up to this many seconds to verify the requested action has been performed.
         Ansible will sleep for five seconds between each check.
     required: false
     default: 300
