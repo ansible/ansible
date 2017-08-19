@@ -47,6 +47,8 @@ options:
       is different than destination.
     - If set to C(no), the file will only be transferred if the
       destination does not exist.
+    - If set to C(no), no checksuming of the content is performed which can
+      help improve performance on larger files.
     default: 'yes'
     type: bool
   local_follow:
@@ -81,6 +83,9 @@ notes:
   remote and remote to remote.
 - It is recommended that backslashes C(\) are used instead of C(/) when dealing
   with remote paths.
+- Because win_copy runs over WinRM, it is not a very efficient transfer
+  mechanism. If sending large files consider hosting them on a web service and
+  using M(win_get_url) instead.
 author:
 - Jon Hawkesworth (@jhawkesworth)
 - Jordan Borean (@jborean93)
