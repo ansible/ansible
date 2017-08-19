@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 ---
 module: win_wait_for
 version_added: '2.4'
-short_description: waits for a condition before continuing
+short_description: Waits for a condition before continuing
 description:
 - You can wait for a set amount of time C(timeout), this is the default if
   nothing is specified.
