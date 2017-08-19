@@ -27,21 +27,36 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 author:
-    - Pavol Ipoth (@p53)
+  - Pavol Ipoth (@p53)
 module: lvol_thin
 version_added: "2.4"
 short_description: Configure Thin LVM logical volumes
 description:
   - This module creates, removes or resizes, converts thin logical volumes.
 options:
-  vg:
+  force:
+    choices: ["yes", "no"]
+    default: "no"
     description:
-    - The volume group this logical volume is part of.
-    required: true
+    - Shrink/extend/remove/conversion operations of volumes requires this switch. Ensures that
+      that filesystems get never corrupted/destroyed by mistake.
+    - This flag always means that data on lvol will be destroyed.
+    required: false
   lv:
     description:
     - The name of the logical volume.
     required: true
+  opts:
+    description:
+    - Free-form options to be passed to the lvcreate command.
+  pvs:
+    description:
+    - List of physical volumes /dev/sda /dev/sdc.
+  pool:
+    description:
+    - This value is used when type is thin, specifies which thin pool will
+      be caching data for thin lvol. Must be in format vg/lv. Thin pool lvol
+      and thin lvol must be from same vg (this is restriction of lvm2).
   size:
     description:
     - The size of the logical volume, by default in megabytes or optionally
@@ -55,20 +70,6 @@ options:
     - Control if the logical volume exists. If C(present) the C(size) option
       is required.
     required: false
-  force:
-    choices: [yes, no]
-    default: "no"
-    description:
-    - Shrink/extend/remove/conversion operations of volumes requires this switch. Ensures that
-      that filesystems get never corrupted/destroyed by mistake.
-    - This flag always means that data on lvol will be destroyed.
-    required: false
-  opts:
-    description:
-    - Free-form options to be passed to the lvcreate command.
-  pvs:
-    description:
-    - List of physical volumes /dev/sda /dev/sdc.
   type:
     choices: [thin, thin-pool, normal]
     default: normal
@@ -76,11 +77,10 @@ options:
     - Type of logical volume, thin is thind lvol, thin-pool is thin pool
       supplying thind lvol, normal is lvol without any type. To create thin
       lvol, thin pool must already exist.
-  pool:
+  vg:
     description:
-    - This value is used when type is thin, specifies which thin pool will
-      be caching data for thin lvol. Must be in format vg/lv. Thin pool lvol
-      and thin lvol must be from same vg (this is restriction of lvm2).
+    - The volume group this logical volume is part of.
+    required: true
 notes:
   - Filesystems on top of the volume are not resized.
 '''
@@ -128,21 +128,21 @@ EXAMPLES = '''
     vg: firefly
     lv: test
     size: 80%VG
-    force: True
+    force: yes
 
 - name: Reduce the logical volume to 512m
   lvol:
     vg: firefly
     lv: test
     size: 512m
-    force: True
+    force: yes
 
 - name: Remove the logical volume
   lvol:
     vg: firefly
     lv: test
     state: absent
-    force: True
+    force: yes
 
 - name: Create thin pool logical volume of 512m
   lvol:
@@ -180,7 +180,7 @@ EXAMPLES = '''
     lv: testthind
     size: 5g
     type: normal
-    force: True
+    force: yes
 
 - name: Convert normal lvol to thin pool
   lvol:
@@ -188,7 +188,7 @@ EXAMPLES = '''
     lv: testthind
     size: 5g
     type: thin-pool
-    force: True
+    force: yes
 
 - name: Convert thin pool lvol to thin lvol, you should notice that firefly/testpool still exists
   lvol:
@@ -197,7 +197,7 @@ EXAMPLES = '''
     size: 5g
     type: thin
     pool: firefly/testpool
-    force: True
+    force: yes
 
 - name: Remove thin pool lvol, this also changes thin lvol to normal
   lvol:
@@ -206,7 +206,7 @@ EXAMPLES = '''
     size: 2g
     type: thin-pool
     state: absent
-    force: True
+    force: yes
 '''
 
 RETURN = ''' # '''
@@ -240,8 +240,8 @@ class Vg(object):
 
     def get_vg_info(self, vg_name, unit):
         vgs_cmd = self.module.get_bin_path("vgs", required=True)
-        cmd = "%s --noheadings -o vg_name,size,free,vg_extent_size\
-                --units %s --separator ';' %s" % (vgs_cmd, unit, vg_name)
+        cmd = ("%s --noheadings -o vg_name,size,free,vg_extent_size"
+                "--units %s --separator ';' %s" % (vgs_cmd, unit, vg_name))
 
         rc, current_vgs, err = self.module.run_command(cmd)
 
@@ -362,8 +362,8 @@ class Lvol(object):
         lvs_cmd = self.module.get_bin_path("lvs", required=True)
 
         rc, current_lvs, err = self.module.run_command(
-            "%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,cachemode\
-            --units %s --separator ';' %s/%s" % (lvs_cmd, unit, vg_name, lv_name)
+            ("%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,cachemode"
+            "--units %s --separator ';' %s/%s" % (lvs_cmd, unit, vg_name, lv_name))
         )
 
         if rc != 0:
@@ -509,9 +509,9 @@ class Lvol(object):
             tool = self.module.get_bin_path("lvextend", required=True)
         else:
             self.module.fail_json(
-                msg="Logical Volume %s could not be extended.\
-                Not enough free space left (%s%s required / %s%s available)"
-                % (self.name, (requested_size - self.size), self.unit, self.vg.free, self.unit)
+                msg=("Logical Volume %s could not be extended."
+                "Not enough free space left (%s%s required / %s%s available)"
+                % (self.name, (requested_size - self.size), self.unit, self.vg.free, self.unit))
             )
 
         self.resize_common(tool, requested_size, pvs)
@@ -570,8 +570,9 @@ class ThinPoolLvol(Lvol):
         lvs_cmd = self.module.get_bin_path("lvs", required=True)
 
         rc, current_lvs, err = self.module.run_command(
-            "%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,lv_layout\
-            --units %s --separator ';' %s" % (lvs_cmd, self.unit, self.vg.name))
+            ("%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,lv_layout"
+            "--units %s --separator ';' %s" % (lvs_cmd, self.unit, self.vg.name))
+        )
 
         if rc != 0:
             if state == 'absent':
@@ -707,15 +708,15 @@ def validate_size(module, size):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            vg=dict(required=True),
-            lv=dict(required=True),
-            size=dict(),
-            opts=dict(),
-            state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default=False),
+            lv=dict(required=True),
+            opts=dict(),
             pvs=dict(),
+            pool=dict(),
+            size=dict(),
+            state=dict(choices=["absent", "present"], default='present'),
             type=dict(choices=["thin", "thin-pool", "normal"], default="normal"),
-            pool=dict()
+            vg=dict(required=True)
         ),
         supports_check_mode=True,
     )
