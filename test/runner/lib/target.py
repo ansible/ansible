@@ -9,7 +9,10 @@ import itertools
 import abc
 import sys
 
-from lib.util import ApplicationError
+from lib.util import (
+    ApplicationError,
+    ABC,
+)
 
 MODULE_EXTENSIONS = '.py', '.ps1'
 
