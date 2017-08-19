@@ -214,18 +214,18 @@ EXAMPLES = '''
         orchestration_platform: Swarm
         master_profile:
             - count: 1
-            dns_prefix: acstestingmasterdns5
+              dns_prefix: acstestingmasterdns5
         linux_profile:
             - admin_username: azureuser
-            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
+              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
         service_principal:
             - client_id: 7fb4173c-3ca3-4d5b-87f8-1daac941207a
-            client_secret: MPNSuM1auUuITefiLGBrpZZnLMDKBLw2
+              client_secret: MPNSuM1auUuITefiLGBrpZZnLMDKBLw2
         agent_pool_profiles:
             - name: default
-            count: 4
-            dns_prefix: acctestagent15
-            vm_size: Standard_A0
+              count: 4
+              dns_prefix: acctestagent15
+              vm_size: Standard_A0
         diagnostics_profile: false
         tags:
             Ansible: azure_rm_acs
