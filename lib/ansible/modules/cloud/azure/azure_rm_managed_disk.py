@@ -200,11 +200,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             disk_size_gb=dict(
                 type='int',
                 required=False
-            ),
-            tags=dict(
-                type='str',
-                required=False
-            ),
+            )
         )
         required_if = [
             ('create_option', 'import', ['source_uri']),
@@ -299,7 +295,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             if not found_disk['storage_account_type'] == new_disk['sku'].name:
                 resp = True
         # Check how to implement tags
-        if new_disk.get('tags'):
+        if new_disk.get('tags') is not None:
             if not found_disk['tags'] == new_disk['tags']:
                 resp = True
         return resp
