@@ -32,7 +32,7 @@ options:
         required: false
         default: none
         description:
-            - identifier of key. Including this allows check mode to correctly report the changed state.
+            - identifier of key. Including this allows check mode to correctly report the changed state. Required when C(state) is set to C(absent).
             - "If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead."
     data:
         required: false
@@ -93,11 +93,6 @@ EXAMPLES = '''
     id: 473041FA
     url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
     state: present
-
-# Remove an Apt signing key, uses whichever key is at the URL
-- apt_key:
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
-    state: absent
 
 # Remove a Apt specific signing key, leading 0x is valid
 - apt_key:
