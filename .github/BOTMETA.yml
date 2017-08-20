@@ -370,6 +370,9 @@ files:
   $modules/files/template.py: $team_ansible
   $modules/files/unarchive.py: dagwieers pileofrogs
   $modules/files/xattr.py: $team_ansible bcoca
+  $modules/files/xml.py:
+    ignored: magnus919
+    maintainers: tbielawa dagwieers sm4rk0 cmprescott
   $modules/identity/ipa/ipa_dnsrecord.py: Nosmoht akasurde
   $modules/identity/ipa/ipa_group.py: Nosmoht
   $modules/identity/ipa/ipa_hbacrule.py: Nosmoht
