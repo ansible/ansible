@@ -3,21 +3,27 @@
 # and jail.py       (c) 2013, Michael Scherer <misc@zarb.org>
 # (c) 2015, Dagobert Michelsen <dam@baltic-online.de>
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+"""
+DOCUMENTATION:
+    author: Ansible Core Team
+    connection: zone
+    short_description: Run tasks in a zone instance
+    description:
+        - Run commands or put/fetch files to an existing zone
+    version_added: "2.0"
+    options:
+      remote_addr:
+        description:
+            - Zone identifire
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_zone_host
+"""
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

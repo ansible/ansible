@@ -2,22 +2,9 @@
 # Copyright (c) 2013, Jesse Keating <jesse.keating@rackspace.com>
 # Copyright (c) 2015, Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2016, Rackspace Australia
-# Copyright (c) 2017, Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 '''
 DOCUMENTATION:
     name: openstack

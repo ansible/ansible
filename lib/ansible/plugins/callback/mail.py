@@ -1,7 +1,27 @@
 # -*- coding: utf-8 -*-
-
 # Copyright: (c) 2012, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+'''
+DOCUMENTATION:
+    callback: mail
+    type: notification
+    short_description: Sends failure events via email
+    description:
+      - This callback will report failures via email
+    version_added: "2.3"
+    requirements:
+      - whitelisting in configuration
+      - logstash (python library)
+    options:
+      mta:
+        description: Mail Transfer Agent, server that accepts SMTP
+        env:
+          - name: SMTPHOST
+        default: localhost
+    note:
+      - "TODO: expand configuration options now that plugins can leverage Ansible's configuration"
+'''
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type

@@ -168,6 +168,17 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             display.v(u"No config file found; using defaults")
 
+        # warn about deprecated options
+        for deprecated in C.config.DEPRECATED:
+            name = deprecated[0]
+            why = deprecated[1]['why']
+            if 'alternative' in deprecated[1]:
+                alt = ', use %s instead' % deprecated[1]['alternative']
+            else:
+                alt = ''
+            ver = deprecated[1]['version']
+            display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
+
     @staticmethod
     def split_vault_id(vault_id):
         # return (before_@, after_@)

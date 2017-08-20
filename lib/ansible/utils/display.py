@@ -193,14 +193,14 @@ class Display:
 
         if not removed:
             if version:
-                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in version %s." % (msg, version)
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
             else:
-                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in a future release." % (msg)
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
         else:
             raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
-        wrapped = textwrap.wrap(new_msg, self.columns, replace_whitespace=False, drop_whitespace=False)
+        wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"
 
         if new_msg not in self._deprecations:

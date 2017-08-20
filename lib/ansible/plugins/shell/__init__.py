@@ -25,13 +25,17 @@ import random
 
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
+from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 
-class ShellBase(object):
+class ShellBase(AnsiblePlugin):
 
     def __init__(self):
+
+        super(ShellBase, self).__init__()
+
         self.env = dict()
         if C.DEFAULT_MODULE_SET_LOCALE:
             module_locale = C.DEFAULT_MODULE_LANG or os.getenv('LANG', 'en_US.UTF-8')

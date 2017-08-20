@@ -1,26 +1,42 @@
 # Based on the chroot connection plugin by Maykel Moya
 #
-# Connection plugin for configuring docker containers
 # (c) 2014, Lorin Hochstein
-# (c) 2015, Leendert Brouwer
+# (c) 2015, Leendert Brouwer (https://github.com/objectified)
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# Maintainer: Leendert Brouwer (https://github.com/objectified)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+"""
+DOCUMENTATION:
+    author:
+        - Lorin Hochestein
+        - Leendert Brouwer
+    connection: docker
+    short_description: Run tasks in docker containers
+    description:
+        - Run commands or put/fetch files to an existing docker container.
+    version_added: "2.0"
+    options:
+      remote_user:
+        description:
+            - The user to execute as inside the container
+        default: The set user as per docker's configuration
+        vars:
+            - name: ansible_user
+            - name: ansible_docker4_user
+      docker_extra_args:
+        description:
+            - Extra arguments to pass to the docker command line
+        default: ''
+      remote_addr:
+        description:
+            - The path of the chroot you want to access.
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_docker_host
+"""
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

@@ -2,26 +2,29 @@
 # Based on chroot.py (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 # Based on func.py
 # (c) 2014, Michael Scherer <misc@zarb.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# ---
-# The saltstack transport permit to use ansible over saltstack. For
-# people who have already setup saltstack and that wish to play with
-# ansible, this permit to use both of them.
+"""
+DOCUMENTATION:
+    author: Michael Scherer <misc@zarb.org>
+    connection: saltstack
+    short_description: Allow ansible to piggyback on salt minions
+    description:
+        - This allows you to use existing Saltstack infrastructure to connect to targets.
+    version_added: "2.2"
+"""
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import re
+import os
+import pty
+import subprocess
+
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six.moves import cPickle
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

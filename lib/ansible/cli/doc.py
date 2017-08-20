@@ -30,7 +30,8 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
+from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
+    vars_loader, connection_loader, strategy_loader, PluginLoader
 from ansible.utils import plugin_docs
 try:
     from __main__ import display
@@ -53,7 +54,7 @@ class DocCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [options] [plugin]',
+            usage='usage: %prog [-l|-s|-a] [options] [-t <plugin type] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
@@ -67,9 +68,12 @@ class DocCLI(CLI):
                                help='Show documentation for all plugins')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
                                help='Choose which plugin type (defaults to "module")',
-                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy'])
+                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy', 'vars'])
 
         super(DocCLI, self).parse()
+
+        if [self.options.all_plugins, self.options.list_dir, self.options.show_snippet].count(True) > 1:
+            raise AnsibleOptionsError("Only one of -l, -a or -s can be used at the same time.")
 
         display.verbosity = self.options.verbosity
 
@@ -90,6 +94,8 @@ class DocCLI(CLI):
             loader = lookup_loader
         elif plugin_type == 'strategy':
             loader = strategy_loader
+        elif plugin_type == 'vars':
+            loader = vars_loader
         elif plugin_type == 'inventory':
             loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
         else:
@@ -118,6 +124,7 @@ class DocCLI(CLI):
             paths = loader._get_paths()
             for path in paths:
                 self.find_plugins(path, plugin_type)
+            self.args = sorted(set(self.plugin_list))
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
@@ -128,7 +135,7 @@ class DocCLI(CLI):
 
             try:
                 # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True)
+                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
                 if filename is None:
                     display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
                     continue
@@ -221,7 +228,7 @@ class DocCLI(CLI):
         for plugin in sorted(self.plugin_list):
 
             # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-            filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True)
+            filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
 
             if filename is None:
                 continue

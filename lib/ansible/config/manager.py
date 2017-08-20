@@ -22,8 +22,9 @@ from ansible.parsing.quoting import unquote
 from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
 
-Plugin = namedtuple('Plugin','name type')
-Setting = namedtuple('Setting','name value origin')
+Plugin = namedtuple('Plugin', 'name type')
+Setting = namedtuple('Setting', 'name value origin type')
+
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
 def ensure_type(value, value_type):
@@ -74,9 +75,15 @@ def ensure_type(value, value_type):
             prefix = 'ansible-local-%s' % os.getpid()
             value = tempfile.mkdtemp(prefix=prefix, dir=value)
 
+        elif value_type == 'pathspec':
+            if isinstance(value, string_types):
+                value = value.split(os.pathsep)
+            value = [resolve_path(x) for x in value]
+
         elif value_type == 'pathlist':
             if isinstance(value, string_types):
-                value = [resolve_path(x) for x in value.split(os.pathsep)]
+                value = value.split(',')
+            value = [resolve_path(x) for x in value]
 
         # defaults to string types
         elif isinstance(value, string_types):
@@ -84,13 +91,15 @@ def ensure_type(value, value_type):
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
+
 # FIXME: see if this can live in utils/path
 def resolve_path(path):
     ''' resolve relative or 'varaible' paths '''
-    if '{{CWD}}' in path: # allow users to force CWD using 'magic' {{CWD}}
+    if '{{CWD}}' in path:  # allow users to force CWD using 'magic' {{CWD}}
         path = path.replace('{{CWD}}', os.getcwd())
 
     return unfrackpath(path, follow=False)
+
 
 # FIXME: generic file type?
 def get_config_type(cfile):
@@ -107,16 +116,18 @@ def get_config_type(cfile):
 
     return ftype
 
+
 # FIXME: can move to module_utils for use for ini plugins also?
 def get_ini_config_value(p, entry):
     ''' returns the value of last ini entry found '''
     value = None
     if p is not None:
         try:
-            value = p.get(entry.get('section','defaults'), entry.get('key',''), raw=True)
-        except: # FIXME: actually report issues here
+            value = p.get(entry.get('section', 'defaults'), entry.get('key', ''), raw=True)
+        except:  # FIXME: actually report issues here
             pass
     return value
+
 
 def find_ini_config_file():
     ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
@@ -142,6 +153,7 @@ def find_ini_config_file():
 
     return path
 
+
 class ConfigManager(object):
 
     UNABLE = []
@@ -156,8 +168,7 @@ class ConfigManager(object):
         self._config_file = conf_file
         self.data = ConfigData()
 
-
-        #FIXME: make dynamic? scan for more? make it's own method?
+        # FIXME: make dynamic? scan for more? make it's own method?
         # Create configuration definitions from source
         bconfig_def = to_bytes('%s/base.yml' % os.path.dirname(__file__))
         if os.path.exists(bconfig_def):
@@ -200,11 +211,9 @@ class ConfigManager(object):
             else:
                 raise AnsibleOptionsError("Unsupported configuration file type: %s" % to_native(ftype))
 
-
     def _find_yaml_config_files(self):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
-
 
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
@@ -227,12 +236,13 @@ class ConfigManager(object):
         for entry in entry_list:
             name = entry.get('name')
             temp_value = container.get(name, None)
-            if temp_value is not None: # only set if env var is defined
+            if temp_value is not None:  # only set if env var is defined
                 value = temp_value
                 origin = name
 
                 # deal with deprecation of setting source, if used
-                #FIXME: if entry.get('deprecated'):
+                if 'deprecated' in entry:
+                    self.DEPRECATED.append((entry['name'], entry['deprecated']))
 
         return value, origin
 
@@ -273,15 +283,16 @@ class ConfigManager(object):
             if ftype and defs[config].get(ftype):
                 if ftype == 'ini':
                     # load from ini config
-                    try: # FIXME: generaelize _loop_entries to allow for files also
+                    try:  # FIXME: generaelize _loop_entries to allow for files also
                         for ini_entry in defs[config]['ini']:
                             value = get_ini_config_value(self._parser, ini_entry)
                             origin = cfile
-                            #FIXME: if ini_entry.get('deprecated'):
+                            if 'deprecated' in ini_entry:
+                                self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                     except Exception as e:
                         sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                 elif ftype == 'yaml':
-                    pass # FIXME: implement, also , break down key from defs (. notation???)
+                    pass  # FIXME: implement, also , break down key from defs (. notation???)
                     origin = cfile
 
         '''
@@ -315,16 +326,10 @@ class ConfigManager(object):
             self.UNABLE.append(config)
 
         # deal with deprecation of the setting
-        if defs[config].get('deprecated') and origin != 'default':
+        if 'deprecated' in defs[config] and origin != 'default':
             self.DEPRECATED.append((config, defs[config].get('deprecated')))
 
         return value, origin
-
-    def update_plugin_config(self, plugin_type, name, defs):
-        ''' really: update constants '''
-        # no sense?
-        self.initialize_plugin_configuration_definitions(plugin_type, name, defs)
-        self.update_config_data(defs)
 
     def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
 
@@ -346,7 +351,7 @@ class ConfigManager(object):
             raise AnsibleOptionsError("Invalid configuration definition type: %s for %s" % (type(defs), defs))
 
         # update the constant for config file
-        self.data.update_setting(Setting('CONFIG_FILE', configfile, ''))
+        self.data.update_setting(Setting('CONFIG_FILE', configfile, '', 'string'))
 
         origin = None
         # env and config defs can have several entries, ordered in list from lowest to highest precedence
@@ -358,7 +363,7 @@ class ConfigManager(object):
             value, origin = self.get_config_value_and_origin(config, configfile)
 
             # set the constant
-            self.data.update_setting(Setting(config, value, origin))
+            self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))
 
         # FIXME: find better way to do this by passing back to where display is available
         if self.UNABLE:
