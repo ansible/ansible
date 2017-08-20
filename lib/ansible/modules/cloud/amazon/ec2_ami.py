@@ -99,7 +99,7 @@ options:
     description:
       - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
       - >
-        Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean),
+        Valid properties include: device_name, volume_type, size/volume_size (in GB), delete_on_termination (boolean), no_device (boolean),
         snapshot_id, iops (for io1 volume_type)
     required: false
     default: null
@@ -435,10 +435,6 @@ def create_image(module, connection):
             module.fail_json(msg="Error registering image - " + str(e), exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
 
-    # Wait until the image is recognized. EC2 API has eventual consistency such that a successful CreateImage API call doesn't guarantee the success
-    # of subsequent DescribeImages API call using the new image id returned.
-    image_create_error_message = "Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help."
-
     for i in range(wait_timeout):
         try:
             image = get_image_by_id(module, connection, image_id)
@@ -448,7 +444,8 @@ def create_image(module, connection):
                 module.fail_json(msg="AMI creation failed, please see the AWS console for more details.")
         except botocore.exceptions.ClientError as e:
             if ('InvalidAMIID.NotFound' not in e.error_code and 'InvalidAMIID.Unavailable' not in e.error_code) and wait and i == wait_timeout - 1:
-                module.fail_json(msg="%s %s: %s" % (image_create_error_message, e.error_code, e.error_message))
+                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help. %s: %s"
+                                 % (e.error_code, e.error_message))
         finally:
             time.sleep(1)
 
