@@ -381,15 +381,20 @@ def create_image(module, connection):
         block_device_mapping = None
 
         if device_mapping:
-            block_device_mapping = {}
+            block_device_mapping = []
             for device in device_mapping:
-                if 'DeviceName' not in device:
+                device['Ebs'] = {}
+                if 'device_name' not in device:
                     module.fail_json(msg="Error - Device name must be set for volume.")
-                device_name = device['DeviceName']
-                del device['DeviceName']
-                bd = BlockDeviceType(**device)
-                block_device_mapping[device_name] = bd
-
+                device = add_item_if_exists(device, 'device_name', 'DeviceName')
+                device = add_item_if_exists(device, 'virtual_name', 'VirtualName')
+                device = add_item_if_exists(device, 'no_device', 'NoDevice')
+                device = add_item_if_exists(device, 'volume_type', 'VolumeType', 'Ebs')
+                device = add_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
+                device = add_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
+                device = add_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
+                device = add_item_if_exists(device, 'size', 'VolumeSize', 'Ebs')
+                block_device_mapping.append(device)
         if instance_id:
             params['InstanceId'] = instance_id
             params['NoReboot'] = no_reboot
@@ -404,7 +409,7 @@ def create_image(module, connection):
             if root_device_name:
                 params['RootDeviceName'] = root_device_name
             if block_device_mapping:
-                params['BlockDeviceMap'] = block_device_mapping
+                params['BlockDeviceMappings'] = block_device_mapping
             image_id = connection.register_image(**params).get('ImageId')
     except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error removing all tags from resource - " + str(e), exception=traceback.format_exc(),
@@ -545,6 +550,17 @@ def convert_dict_to_tag_list(dict_object):
         tag_item = {'Key': key, 'Value': value}
         dict_list.append(tag_item)
     return dict_list
+
+
+def add_item_if_exists(dict_object, attribute, new_attribute, child_node=None):
+    new_item = dict_object.get(attribute)
+    if new_item is not None:
+        if child_node is None:
+            dict_object[new_attribute] = dict_object.get(attribute)
+        else:
+            dict_object[child_node][new_attribute] = dict_object.get(attribute)
+        dict_object.pop(attribute)
+    return dict_object
 
 
 def main():
