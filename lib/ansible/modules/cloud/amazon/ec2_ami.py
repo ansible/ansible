@@ -485,8 +485,7 @@ def deregister_image(module, connection):
     # When trying to re-deregister an already deregistered image it doesn't raise an exception, it just returns an object without image attributes.
     if 'ImageId' in image:
         try:
-            params = {'ImageId': image_id}
-            res = connection.deregister_image(**params)
+            res = connection.deregister_image(ImageId=image_id)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error deregistering image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
