@@ -24,7 +24,7 @@ DOCUMENTATION:
           the next series of hosts until the batch is done, before going on to the next task.
     version_added: "2.0"
     notes:
-     - This was the default Ansible behaviour before 'strategy plugins' were introduces in 2.0.
+     - This was the default Ansible behaviour before 'strategy plugins' were introduced in 2.0.
     author: Ansible Core Team
 '''
 # Make coding more python3-ish

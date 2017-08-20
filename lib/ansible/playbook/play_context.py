@@ -307,7 +307,7 @@ class PlayContext(Base):
             self.force_handlers = play.force_handlers
 
     def set_options_from_plugin(self, plugin):
-        # generic derived from connection plugin
+        # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
         options = C.config.get_configuration_definitions(get_plugin_class(plugin), plugin._load_name)
@@ -318,7 +318,7 @@ class PlayContext(Base):
                     setattr(self, flag, self.connection.get_option(flag))
 
         # TODO: made irrelavent by above
-        # get ssh options FIXME: make these common to all connections
+        # get ssh options
         # for flag in ('ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args'):
         #     setattr(self, flag, getattr(options, flag, ''))
 

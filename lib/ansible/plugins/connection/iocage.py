@@ -1,21 +1,33 @@
-# based on jail.py    (c) 2013, Michael Scherer <misc@zarb.org>
-#                     (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# Based on jail.py
+# (c) 2013, Michael Scherer <misc@zarb.org>
+# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 # (c) 2016, Stephan Lohse <dev-github@ploek.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+"""
+DOCUMENTATION:
+    author: Stephan Lohse <dev-github@ploek.org>
+    connection: iocage
+    short_description: Run tasks in iocage jails
+    description:
+        - Run commands or put/fetch files to an existing iocage jail
+    version_added: "2.0"
+    options:
+      remote_addr:
+        description:
+            - Path to the jail
+        default: The set user as per docker's configuration
+        vars:
+            - name: ansible_host
+            - name: ansible_iocage_host
+      remote_user:
+        description:
+            - User to execute as inside the jail
+        vars:
+            - name: ansible_user
+            - name: ansible_iocage_user
+"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
