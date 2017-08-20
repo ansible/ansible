@@ -18,7 +18,7 @@ def list_to_dict(data, key):
             raise AnsibleFilterError("List item is not a valid dict")
         try:
             key_elem = item.get(key)
-        except Exception, e:
+        except Exception as e:
             raise AnsibleFilterError(str(e))
         if new_obj.get(key_elem):
             raise AnsibleFilterError("Key {} is not unique, cannot correctly turn into dict".format(key_elem))
