@@ -1,20 +1,71 @@
-#
 # (c) 2016 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+"""
+DOCUMENTATION:
+    author: Ansible Networking Team
+    connection: netconf
+    short_description: Use netconf to run command on network appliances
+    description:
+        - Use netconf to run command on network appliances
+    version_added: "2.3"
+    options:
+      network_os:
+        description:
+            - Appliance specific OS
+        default: 'default'
+        vars:
+            - name: ansible_netconf_network_os
+      password:
+        description:
+            - Secret used to authenticate
+        vars:
+            - name: ansible_pass
+            - name: ansible_netconf_pass
+      private_key_file:
+        description:
+            - Key or certificate file used for authentication
+        vars:
+            - name: ansible_private_key_file
+            - name: ansible_netconf_private_key_file
+      ssh_config:
+        type: boolean
+        default: False
+        description:
+            - Flag to decide if we use SSH configuration options with netconf
+        vars:
+            - name: ansible_netconf_ssh_config
+        env:
+            - name: ANSIBLE_NETCONF_SSH_CONFIG
+      user:
+        description:
+          - User to authenticate as
+        vars:
+          - name: ansible_user
+          - name: ansible_netconf_user
+      port:
+        type: int
+        description:
+          - port to connect to on the remote
+        default: 830
+        vars:
+          - name: ansible_port
+          - name: ansible_netconf_port
+      timeout:
+        type: int
+        description:
+          - Connection timeout in seconds
+        default: 120
+      host_key_checking:
+        type: boolean
+        description:
+          - Flag to control wether we check for validity of the host key of the remote
+        default: True
+# TODO:
+#look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+#allow_agent=self.allow_agent,
+"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
