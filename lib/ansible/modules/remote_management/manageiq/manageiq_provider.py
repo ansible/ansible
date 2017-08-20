@@ -56,12 +56,12 @@ options:
     choices: ['Openshift', 'Amazon']
   zone:
     description:
-      - The provider's zone name in manageiq.
+      - The ManageIQ zone name that will manage the provider.
     required: false
     default: 'default'
-  region:
+  provider_region:
     description:
-      - The provider's region name in manageiq.
+      - The provider region name to connect to (e.g. AWS region for Amazon).
     required: false
     default: null
   endpoints:
@@ -81,7 +81,7 @@ options:
       default[port]:
         description:
           - The provider's api port.
-        required: true
+        required: false
       default[userid]:
         required: false
         default: null
@@ -125,7 +125,7 @@ options:
       metrics[port]:
         description:
           - The provider's api port.
-        required: true
+        required: false
       metrics[userid]:
         required: false
         default: null
@@ -160,7 +160,7 @@ options:
 '''
 
 EXAMPLES = '''
-  - name: Create a new provider in ManageIQ
+  - name: Create a new provider in ManageIQ ('Hawkular' metrics)
     manageiq_provider:
       name: 'EngLab'
       type: 'Openshift'
@@ -181,7 +181,7 @@ EXAMPLES = '''
         password: 'smartvm'
         verify_ssl: False
 
-  - name: Update an existing provider named 'EngLab'
+  - name: Update an existing provider named 'EngLab' (defaults to 'Prometheus' metrics)
     manageiq_provider:
       name: 'EngLab'
       type: 'Openshift'
@@ -210,6 +210,23 @@ EXAMPLES = '''
         username: 'admin'
         password: 'smartvm'
         verify_ssl: False
+
+  - name: Create a new Amazon provider in ManageIQ
+    manageiq_provider:
+      name: 'EngAmazon'
+      type: 'Amazon'
+      provider_region: 'us-east-1'
+      endpoints:
+        default:
+          hostname: 'amazon.example.com'
+          userid: 'hello'
+          password: 'world'
+      manageiq_connection:
+        url: 'http://127.0.0.1:3000'
+        username: 'admin'
+        password: 'smartvm'
+        verify_ssl: False
+
 '''
 
 RETURN = '''
@@ -248,7 +265,7 @@ def endpoint_argument_spec():
     return dict(
         role=dict(),
         hostname=dict(required=True),
-        port=dict(required=True, type='int'),
+        port=dict(type='int'),
         verify_ssl=dict(default=True, type='bool'),
         certificate_authority=dict(),
         security_protocol=dict(
@@ -323,21 +340,21 @@ class ManageIQProvider(object):
         """
         return self.manageiq.find_collection_resource_by('providers', name=name)
 
-    def build_endpoints(self, provider_type, raw_endpoints):
+    def build_connection_configurations(self, provider_type, raw_endpoints):
         """ Build "connection_configurations" objects from
         requested endpoints provided by user
 
         Returns:
             the user requested provider endpoints list
         """
-        endpoints = []
+        connection_configurations = []
         provider_defaults = supported_providers().get(provider_type)
 
         # build default endpoint
         endpoint = raw_endpoints.get('default')
         default_auth_key = endpoint.get('auth_key')
         if endpoint:
-            endpoints.append({
+            connection_configurations.append({
                 'endpoint': {
                     'role': endpoint.get('role') or provider_defaults['default_role'],
                     'hostname': endpoint['hostname'],
@@ -357,7 +374,7 @@ class ManageIQProvider(object):
         # build metrics endpoint
         endpoint = raw_endpoints.get('metrics')
         if endpoint:
-            endpoints.append({
+            connection_configurations.append({
                 'endpoint': {
                     'role': endpoint.get('role') or provider_defaults['metrics_role'],
                     'hostname': endpoint['hostname'],
@@ -374,7 +391,7 @@ class ManageIQProvider(object):
                 }
             })
 
-        return endpoints
+        return connection_configurations
 
     def delete_provider(self, provider):
         """ Deletes a provider from manageiq.
@@ -390,7 +407,7 @@ class ManageIQProvider(object):
 
         return dict(changed=True, msg=result['message'])
 
-    def edit_provider(self, provider, name, provider_type, endpoints, zone_id, region):
+    def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region):
         """ Edit a user from manageiq.
 
         Returns:
@@ -401,7 +418,7 @@ class ManageIQProvider(object):
         resource = dict(
             name=name,
             zone={'id': zone_id},
-            provider_region=region,
+            provider_region=provider_region,
             connection_configurations=endpoints,
         )
 
@@ -424,7 +441,7 @@ class ManageIQProvider(object):
             changed=True,
             msg="successfully updated the provider %s: %s" % (provider['name'], result))
 
-    def create_provider(self, name, provider_type, endpoints, zone_id, region):
+    def create_provider(self, name, provider_type, endpoints, zone_id, provider_region):
         """ Creates the user in manageiq.
 
         Returns:
@@ -442,7 +459,7 @@ class ManageIQProvider(object):
                 name=name,
                 type=supported_providers()[provider_type]['class_name'],
                 zone={'id': zone_id},
-                provider_region=region,
+                provider_region=provider_region,
                 connection_configurations=endpoints,
             )
         except Exception as e:
@@ -464,7 +481,7 @@ def main():
             state=dict(choices=['absent', 'present'], default='present'),
             name=dict(required=True),
             zone=dict(default='default'),
-            region=dict(),
+            provider_region=dict(),
             type=dict(choices=supported_providers().keys()),
             endpoints=dict(type='dict', options=endpoint_list_spec()),
         ),
@@ -476,7 +493,7 @@ def main():
     zone_name = module.params['zone']
     provider_type = module.params['type']
     raw_endpoints = module.params['endpoints']
-    region = module.params['region']
+    provider_region = module.params['provider_region']
     state = module.params['state']
 
     manageiq = ManageIQ(module)
@@ -507,14 +524,14 @@ def main():
 
         # build "connection_configurations" objects from user requsted endpoints
         if raw_endpoints:
-            endpoints = manageiq_provider.build_endpoints(provider_type, raw_endpoints)
+            endpoints = manageiq_provider.build_connection_configurations(provider_type, raw_endpoints)
 
         # if we have a provider, edit it
         if provider:
-            res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, region)
+            res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region)
         # if we do not have a provider, create it
         else:
-            res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, region)
+            res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region)
 
     module.exit_json(**res_args)
 
