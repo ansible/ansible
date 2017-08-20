@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -212,7 +214,6 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 __metaclass__ = type
-from __future__ import (absolute_import, division, print_function)
 import re
 from ansible.module_utils.basic import AnsibleModule
 
@@ -240,8 +241,10 @@ class Vg(object):
 
     def get_vg_info(self, vg_name, unit):
         vgs_cmd = self.module.get_bin_path("vgs", required=True)
-        cmd = ("%s --noheadings -o vg_name,size,free,vg_extent_size"
-                "--units %s --separator ';' %s" % (vgs_cmd, unit, vg_name))
+        cmd = (
+            "%s --noheadings -o vg_name,size,free,vg_extent_size"
+            "--units %s --separator ';' %s" % (vgs_cmd, unit, vg_name)
+        )
 
         rc, current_vgs, err = self.module.run_command(cmd)
 
@@ -362,8 +365,10 @@ class Lvol(object):
         lvs_cmd = self.module.get_bin_path("lvs", required=True)
 
         rc, current_lvs, err = self.module.run_command(
-            ("%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,cachemode"
-            "--units %s --separator ';' %s/%s" % (lvs_cmd, unit, vg_name, lv_name))
+            (
+                "%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,cachemode"
+                "--units %s --separator ';' %s/%s" % (lvs_cmd, unit, vg_name, lv_name)
+            )
         )
 
         if rc != 0:
@@ -509,9 +514,11 @@ class Lvol(object):
             tool = self.module.get_bin_path("lvextend", required=True)
         else:
             self.module.fail_json(
-                msg=("Logical Volume %s could not be extended."
-                "Not enough free space left (%s%s required / %s%s available)"
-                % (self.name, (requested_size - self.size), self.unit, self.vg.free, self.unit))
+                msg=(
+                    "Logical Volume %s could not be extended."
+                    "Not enough free space left (%s%s required / %s%s available)"
+                    % (self.name, (requested_size - self.size), self.unit, self.vg.free, self.unit)
+                )
             )
 
         self.resize_common(tool, requested_size, pvs)
@@ -571,7 +578,7 @@ class ThinPoolLvol(Lvol):
 
         rc, current_lvs, err = self.module.run_command(
             ("%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,lv_layout"
-            "--units %s --separator ';' %s" % (lvs_cmd, self.unit, self.vg.name))
+                "--units %s --separator ';' %s" % (lvs_cmd, self.unit, self.vg.name))
         )
 
         if rc != 0:
