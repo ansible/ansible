@@ -381,7 +381,7 @@ def create_image(module, connection):
         block_device_mapping = None
 
         if device_mapping:
-            block_device_mapping = BlockDeviceMapping()
+            block_device_mapping = {}
             for device in device_mapping:
                 if 'DeviceName' not in device:
                     module.fail_json(msg="Error - Device name must be set for volume.")
@@ -395,7 +395,7 @@ def create_image(module, connection):
             params['NoReboot'] = no_reboot
             if block_device_mapping:
                 params['BlockDeviceMappings'] = block_device_mapping
-            image_id = connection.create_image(**params)
+            image_id = connection.create_image(**params).get('ImageId')
         else:
             params['Architecture'] = architecture
             params['VirtualizationType'] = virtualization_type
@@ -405,7 +405,7 @@ def create_image(module, connection):
                 params['RootDeviceName'] = root_device_name
             if block_device_mapping:
                 params['BlockDeviceMap'] = block_device_mapping
-            image_id = connection.register_image(**params)
+            image_id = connection.register_image(**params).get('ImageId')
     except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error removing all tags from resource - " + str(e), exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
@@ -417,9 +417,9 @@ def create_image(module, connection):
     for i in range(wait_timeout):
         try:
             image = get_image_by_id(module, connection, image_id)
-            if image.state == 'available':
+            if image.get('State') == 'available':
                 break
-            elif image.state == 'failed':
+            elif image.get('State') == 'failed':
                 module.fail_json(msg="AMI creation failed, please see the AWS console for more details.")
         except botocore.exceptions.ClientError as e:
             if ('InvalidAMIID.NotFound' not in e.error_code and 'InvalidAMIID.Unavailable' not in e.error_code) and wait and i == wait_timeout - 1:
@@ -427,12 +427,9 @@ def create_image(module, connection):
         finally:
             time.sleep(1)
 
-    if image.state != 'available':
-        module.fail_json(msg=image_create_error_message)
-
     if tags:
         try:
-            connection.create_tags(image_id, tags)
+            connection.create_tags(Resources=[image_id], Tags=convert_dict_to_tag_list(tags))
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error tagging image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -540,6 +537,14 @@ def get_image_by_id(module, connection, image_id):
         module.fail_json(msg="Invalid number of instances (%s) found for image_id: %s" % (str(len(images)), image_id))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Error retreiving image by image_id - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
+def convert_dict_to_tag_list(dict_object):
+    dict_list = []
+    for key, value in dict_object.iteritems():
+        tag_item = {'Key': key, 'Value': value}
+        dict_list.append(tag_item)
+    return dict_list
 
 
 def main():
