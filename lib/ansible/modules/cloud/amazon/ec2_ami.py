@@ -358,6 +358,11 @@ def create_image(module, connection):
     device_mapping = module.params.get('device_mapping')
     tags = module.params.get('tags')
     launch_permissions = module.params.get('launch_permissions')
+    image_location = module.params.get('image_location')
+    ena_support = module.params.get('ena_support')
+    billing_products = module.params.get('billing_products')
+    ramdisk_id = module.params.get('ramdisk_id')
+    sriov_net_support = module.params.get('sriov_net_support')
 
     try:
         params = {
@@ -405,8 +410,20 @@ def create_image(module, connection):
                 params['BlockDeviceMappings'] = block_device_mapping
             image_id = connection.create_image(**params).get('ImageId')
         else:
-            params['Architecture'] = architecture
-            params['VirtualizationType'] = virtualization_type
+            if architecture:
+                params['Architecture'] = architecture
+            if virtualization_type:
+                params['VirtualizationType'] = virtualization_type
+            if image_location:
+                params['ImageLocation'] = image_location
+            if ena_support:
+                params['EnaSupport'] = ena_support
+            if billing_products:
+                params['BillingProducts'] = billing_products
+            if ramdisk_id:
+                params['RamdiskId'] = ramdisk_id
+            if sriov_net_support:
+                params['SriovNetSupport'] = sriov_net_support
             if kernel_id:
                 params['KernelId'] = kernel_id
             if root_device_name:
@@ -415,7 +432,7 @@ def create_image(module, connection):
                 params['BlockDeviceMappings'] = block_device_mapping
             image_id = connection.register_image(**params).get('ImageId')
     except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Error removing all tags from resource - " + str(e), exception=traceback.format_exc(),
+            module.fail_json(msg="Error registering image - " + str(e), exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
 
     # Wait until the image is recognized. EC2 API has eventual consistency such that a successful CreateImage API call doesn't guarantee the success
@@ -584,7 +601,12 @@ def main():
         state=dict(default='present'),
         device_mapping=dict(type='list'),
         tags=dict(type='dict'),
-        launch_permissions=dict(type='dict')
+        launch_permissions=dict(type='dict'),
+        image_location=dict(),
+        ena_support=dict(type='bool'),
+        billing_products=dict(type='list'),
+        ramdisk_id=dict(),
+        sriov_net_support=dict()
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
