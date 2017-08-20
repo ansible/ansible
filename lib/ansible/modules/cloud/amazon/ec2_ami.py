@@ -394,6 +394,9 @@ def create_image(module, connection):
                 device = add_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
                 device = add_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
                 device = add_item_if_exists(device, 'size', 'VolumeSize', 'Ebs')
+                device = add_item_if_exists(device, 'volume_size', 'VolumeSize', 'Ebs')
+                device = add_item_if_exists(device, 'iops', 'Iops', 'Ebs')
+                device = add_item_if_exists(device, 'encrypted', 'Encrypted', 'Ebs')
                 block_device_mapping.append(device)
         if instance_id:
             params['InstanceId'] = instance_id
