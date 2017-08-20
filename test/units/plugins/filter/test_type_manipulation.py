@@ -10,7 +10,7 @@ from ansible.errors import AnsibleError, AnsibleFilterError
 class TestTypeFilter(unittest.TestCase):
     def test_list_to_dict(self):
         # Good test
-        list_original = [{"proto":"eigrp", "state":"enabled"}, {"proto":"ospf", "state":"enabled"}] 
+        list_original = [{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]
         key = 'proto'
         dict_return = {'eigrp': {'state': 'enabled', 'proto': 'eigrp'}, 'ospf': {'state': 'enabled', 'proto': 'ospf'}}
         self.assertEqual(list_to_dict(list_original, key), dict_return)
@@ -20,17 +20,17 @@ class TestTypeFilter(unittest.TestCase):
         self.assertRaisesRegexp(AnsibleFilterError, 'was not found', list_to_dict, list_original, key)
 
         # Fail when key is duplicated
-        list_original = [{"proto":"eigrp", "state":"enabled"}, {"proto":"ospf", "state":"enabled"}, {"proto":"ospf", "state":"enabled"}] 
+        list_original = [{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]
         key = 'proto'
         self.assertRaisesRegexp(AnsibleFilterError, 'is not unique', list_to_dict, list_original, key)
 
         # Fail when list item is not a dict
-        list_original = [{"proto":"eigrp", "state":"enabled"}, "ospf"] 
+        list_original = [{"proto": "eigrp", "state": "enabled"}, "ospf"]
         key = 'proto'
         self.assertRaisesRegexp(AnsibleFilterError, 'List item is not a valid dict', list_to_dict, list_original, key)
 
         # Fail when a non list is sent
-        list_original = {"proto":"eigrp", "state":"enabled"} 
+        list_original = {"proto": "eigrp", "state": "enabled"}
         key = 'proto'
         self.assertRaisesRegexp(AnsibleFilterError, 'not a valid list', list_to_dict, list_original, key)
 

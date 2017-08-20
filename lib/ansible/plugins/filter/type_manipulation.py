@@ -10,7 +10,7 @@ from ansible.errors import AnsibleError, AnsibleFilterError
 
 def list_to_dict(data, key):
     new_obj = {}
-    
+
     if not isinstance(data, list):
         raise AnsibleFilterError("Type is not a valid list")
     for item in data:
@@ -56,7 +56,7 @@ class FilterModule(object):
 
 
 if __name__ == "__main__":
-    list_data = [{"proto":"eigrp", "state":"enabled"}, {"proto":"ospf", "state":"enabled"}]
+    list_data = [{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]
     print(list_to_dict(list_data, 'proto'))
     dict_data = {'eigrp': {'state': 'enabled', 'as': '1'}, 'ospf': {'state': 'enabled', 'as': '2'}}
     print(dict_to_list(dict_data, 'proto'))
