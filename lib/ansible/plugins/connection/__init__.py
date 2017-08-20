@@ -70,6 +70,9 @@ class ConnectionBase(AnsiblePlugin):
     allow_executable = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
+
+        super(ConnectionBase, self).__init__()
+
         # All these hasattrs allow subclasses to override these parameters
         if not hasattr(self, '_play_context'):
             self._play_context = play_context
