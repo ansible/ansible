@@ -54,10 +54,14 @@ matrix:
     - env: TEST=linux/opensuse42.3/3
     - env: TEST=linux/ubuntu1404/3
     - env: TEST=linux/ubuntu1604/3
+    - env: TEST=linux/ubuntu1704/3
     - env: TEST=linux/ubuntu1604py3/3
+    - env: TEST=linux/ubuntu1704py3/3
 
     - env: TEST=cloud/ubuntu1604
+    - env: TEST=cloud/ubuntu1704
     - env: TEST=cloud/ubuntu1604py3
+     - env: TEST=cloud/ubuntu1704py3
 
 branches:
   except:
