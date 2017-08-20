@@ -14,6 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+DOCUMENTATION:
+    author: Ansible Core Team
+    connection: accelerate
+    short_description: Temporary 0mq agent
+    description:
+        - This plugin uses one of the other ssh plugins to setup a temporary 0mq daemon on the target to execute subsequent tasks
+    deprecated:
+        why: paramiko and ssh + controlpersist perform the same or better without the problems of having an agent.
+        version: 2.5
+        alternative: paramiko and ssh with conrol persistence.
+"""
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type

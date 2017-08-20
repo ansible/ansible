@@ -103,6 +103,9 @@ def remove_internal_keys(data):
 
 class VariableManager:
 
+    _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
+                          'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
+
     def __init__(self, loader=None, inventory=None):
 
         self._nonpersistent_fact_cache = defaultdict(dict)
@@ -283,7 +286,7 @@ class VariableManager:
                     data = combine_vars(data, _get_plugin_vars(plugin, basedir, entities))
                 return data
 
-            # configurable functions that are sortable via config
+            # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list
             def all_inventory():
                 return all_group.get_vars()
 
@@ -317,12 +320,13 @@ class VariableManager:
                 return data
 
             # Merge as per precedence config
+            # only allow to call the functions we want exposed
             for entry in C.VARIABLE_PRECEDENCE:
-                # only allow to call the functions we want exposed
-                if entry.startswith('_') or '.' in entry:
-                    continue
-                display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                all_vars = combine_vars(all_vars, locals()[entry]())
+                if entry in self._ALLOWED:
+                    display.debug('Calling %s to load vars for %s' % (entry, host.name))
+                    all_vars = combine_vars(all_vars, locals()[entry]())
+                else:
+                    display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
             all_vars = combine_vars(all_vars, host.get_vars())
@@ -332,13 +336,8 @@ class VariableManager:
             # finally, the facts caches for this host, if it exists
             try:
                 host_facts = wrap_var(self._fact_cache.get(host.name, {}))
-                if not C.ONLY_NAMESPACE_FACTS:
-                    # allow facts to polute main namespace
-                    all_vars = combine_vars(all_vars, host_facts)
-
-                # always return namespaced facts
-                all_vars = combine_vars(all_vars, {'ansible_facts': host_facts})
-
+                # push facts to main namespace
+                all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
 
