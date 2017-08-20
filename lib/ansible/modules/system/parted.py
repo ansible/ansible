@@ -97,6 +97,12 @@ options:
        only return the device information.
     choices: ['present', 'absent', 'info']
     default: info
+  fs_type:
+    description:
+     - If specified, will set filesystem type to given partition
+    choices: ['btrfs', 'ext2', 'ext3', 'ext4', 'fat16', 'fat32', 'hfs', 'hfs+', 'linux-swap', 'ntfs', 'reiserfs', 'xfs']
+    default: 'ext4'
+    version_added: '2.4'
 '''
 
 RETURN = '''
@@ -564,6 +570,14 @@ def main():
             },
             'part_start': {'default': '0%', 'type': 'str'},
             'part_end': {'default': '100%', 'type': 'str'},
+            'fs_type': {
+                'default': 'ext4',
+                'choices': [
+                    'btrfs', 'ext2', 'ext3', 'ext4', 'fat16', 'fat32', 'hfs',
+                    'hfs+', 'linux-swap', 'ntfs', 'reiserfs', 'xfs'
+                ],
+                'type': 'str'
+            },
 
             # name <partition> <name> command
             'name': {'type': 'str'},
@@ -594,6 +608,7 @@ def main():
     name = module.params['name']
     state = module.params['state']
     flags = module.params['flags']
+    fs_type = module.params['fs_type']
 
     # Parted executable
     parted_exec = module.get_bin_path('parted', True)
@@ -629,8 +644,9 @@ def main():
 
         # Create partition if required
         if part_type and not part_exists(current_parts, 'num', number):
-            script += "mkpart %s %s %s " % (
+            script += "mkpart %s %s %s %s " % (
                 part_type,
+                fs_type,
                 part_start,
                 part_end
             )

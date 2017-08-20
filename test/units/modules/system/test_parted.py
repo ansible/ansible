@@ -188,7 +188,7 @@ class TestParted(unittest.TestCase):
             'state': 'present',
         })
         with patch('ansible.modules.system.parted.get_device_info', return_value=parted_dict1):
-            self.execute_module(changed=True, script='unit KiB mkpart primary 0% 100%')
+            self.execute_module(changed=True, script='unit KiB mkpart primary ext4 0% 100%')
 
     def test_create_new_partition_1G(self):
         set_module_args({
@@ -198,7 +198,7 @@ class TestParted(unittest.TestCase):
             'part_end': '1GiB',
         })
         with patch('ansible.modules.system.parted.get_device_info', return_value=parted_dict1):
-            self.execute_module(changed=True, script='unit KiB mkpart primary 0% 1GiB')
+            self.execute_module(changed=True, script='unit KiB mkpart primary ext4 0% 1GiB')
 
     def test_remove_partition_number_1(self):
         set_module_args({
@@ -246,7 +246,7 @@ class TestParted(unittest.TestCase):
             '_ansible_check_mode': True,
         })
         with patch('ansible.modules.system.parted.get_device_info', return_value=parted_dict1):
-            self.execute_module(changed=True, script='unit KiB mkpart primary 257GiB 100% unit KiB set 4 boot on')
+            self.execute_module(changed=True, script='unit KiB mkpart primary ext4 257GiB 100% unit KiB set 4 boot on')
 
     def test_create_label_gpt(self):
         # Like previous test, current implementation use parted to create the partition and
@@ -262,4 +262,4 @@ class TestParted(unittest.TestCase):
             '_ansible_check_mode': True,
         })
         with patch('ansible.modules.system.parted.get_device_info', return_value=parted_dict2):
-            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary 0% 100% unit KiB name 1 lvmpartition set 1 lvm on')
+            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary ext4 0% 100% unit KiB name 1 lvmpartition set 1 lvm on')
