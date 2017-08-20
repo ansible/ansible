@@ -40,7 +40,11 @@ class TestTypeFilter(unittest.TestCase):
         key_name = 'proto'
         list_return = [{'state': 'enabled', 'proto': 'ospf', 'as': '2'}, {'state': 'enabled', 'proto': 'eigrp', 'as': '1'}]
         actual_return = dict_to_list(dict_original, key_name)
-        self.assertItemsEqual(actual_return, list_return)
+        try:
+            _assertItemsEqual = self.assertItemsEqual
+        except AttributeError:
+            _assertItemsEqual = self.assertCountEqual
+        _assertItemsEqual(actual_return, list_return)
 
         # Fail when dict key is already used
         dict_original = {'eigrp': {'state': 'enabled', 'as': '1', 'proto': 'bgp'}, 'ospf': {'state': 'enabled', 'as': '2'}}
