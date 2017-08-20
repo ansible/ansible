@@ -41,12 +41,6 @@ from random import Random, SystemRandom, shuffle, random
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
-try:
-    import passlib.hash
-    HAS_PASSLIB = True
-except ImportError:
-    HAS_PASSLIB = False
-
 from ansible.errors import AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types
 from ansible.module_utils.six.moves import reduce, shlex_quote
@@ -54,6 +48,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
@@ -252,42 +247,19 @@ def get_hash(data, hashtype='sha1'):
     return h.hexdigest()
 
 
-def get_encrypted_password(password, hashtype='sha512', salt=None):
+def get_encrypted_password(password, hashtype='sha512', salt=None, **settings):
+    if salt is not None:
+        settings['salt'] = salt
 
-    # TODO: find a way to construct dynamically from system
-    cryptmethod = {
-        'md5': '1',
-        'blowfish': '2a',
-        'sha256': '5',
-        'sha512': '6',
+    passlib_mapping = {
+        'md5': 'md5_crypt',
+        'blowfish': 'bcrypt',
+        'sha256': 'sha256_crypt',
+        'sha512': 'sha512_crypt',
     }
 
-    if hashtype in cryptmethod:
-        if salt is None:
-            r = SystemRandom()
-            if hashtype in ['md5']:
-                saltsize = 8
-            else:
-                saltsize = 16
-            saltcharset = string.ascii_letters + string.digits + '/.'
-            salt = ''.join([r.choice(saltcharset) for _ in range(saltsize)])
-
-        if not HAS_PASSLIB:
-            if sys.platform.startswith('darwin'):
-                raise AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on macOS/Darwin')
-            saltstring = "$%s$%s" % (cryptmethod[hashtype], salt)
-            encrypted = crypt.crypt(password, saltstring)
-        else:
-            if hashtype == 'blowfish':
-                cls = passlib.hash.bcrypt
-            else:
-                cls = getattr(passlib.hash, '%s_crypt' % hashtype)
-
-            encrypted = cls.encrypt(password, salt=salt)
-
-        return encrypted
-
-    return None
+    hashtype = passlib_mapping.get(hashtype, hashtype)
+    return passlib_or_crypt(password, hashtype, error_type=AnsibleFilterError, **settings)
 
 
 def to_uuid(string):
