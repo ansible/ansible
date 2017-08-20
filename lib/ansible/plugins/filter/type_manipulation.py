@@ -23,7 +23,7 @@ def list_to_dict(data, key):
         if new_obj.get(key_elem):
             raise AnsibleFilterError("Key {} is not unique, cannot correctly turn into dict".format(key_elem))
         elif not key_elem:
-            raise AnsibleFilterError("Key {} was not found".format(key_elem))
+            raise AnsibleFilterError("Key {} was not found".format(key))
         else:
             new_obj[key_elem] = item
     return new_obj
@@ -37,7 +37,7 @@ def dict_to_list(data, key_name):
     for key, value in data.items():
         if not isinstance(value, dict):
             raise AnsibleFilterError("Type of key {} value {} is not a valid dict".format(key, value))
-        if value.get(key):
+        if value.get(key_name):
             raise AnsibleFilterError("Key name {} is already in use, cannot correctly turn into dict".format(key_name))
         value[key_name] = key
         new_obj.append(value)
