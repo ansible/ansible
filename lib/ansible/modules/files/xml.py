@@ -260,7 +260,7 @@ _RE_SPLITSUBLAST = re.compile("^(.*)/(" + _NSIDENT + ")\\[(.*)\\]$")
 _RE_SPLITONLYEQVALUE = re.compile("^(.*)/text\\(\\)=" + _XPSTR + "$")
 
 
-def print_match(module, tree, xpath, namespaces):
+def match_print(module, tree, xpath, namespaces):
     match = tree.xpath(xpath, namespaces=namespaces)
     match_xpaths = []
     for m in match:
@@ -721,7 +721,7 @@ def main():
         module.fail_json(msg="Error while parsing path: %s" % e)
 
     if print_match:
-        print_match(module, doc, xpath, namespaces)
+        match_print(module, doc, xpath, namespaces)
 
     if count:
         count_nodes(module, doc, xpath, namespaces)
