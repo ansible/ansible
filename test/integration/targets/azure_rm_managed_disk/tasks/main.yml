@@ -1,13 +1,36 @@
  - name: Setup variables...
    set_fact:
        managed_disk1: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+       managed_disk2: "{{ resource_group | hash('md5') | truncate(18, True, '') }}"
 
- - name: Delete managed disk
+ - name: Clearing (if) previous disks were created (1/2)
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk2 }}"
+       state: absent
+
+ - name: Clearing (if) previous disks were created (2/2)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       state: absent
+       state: absent  
+       
+ - name: Create managed disk (Check Mode)
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 1
+       tags:
+           testing: testing
+           delete: never
+   register: output
+   check_mode: yes
 
+ - name: Assert status succeeded (Check Mode)
+   assert:
+     that:
+       - output.changed
+       - output.state
 
  - name: Test invalid account name (should give error)
    azure_rm_managed_disk:
@@ -17,10 +40,10 @@
        state: present
    register: output     
    ignore_errors: yes  
+   check_mode: no
 
  - name: Assert task failed
    assert: { that: "output['failed'] == True" }
-
 
  - name: Create new managed disk succesfully 
    azure_rm_managed_disk:
@@ -38,6 +61,21 @@
      that:
        - output.changed
        - output.state.id is defined
+
+ - name: Copy disk to a new managed disk
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk2 }}"
+       create_option: "copy"
+       source_resource_uri: "{{ output.state.id }}"
+       disk_size_gb: 1
+   register: copy
+
+ - name: Assert status succeeded and results include an Id value 
+   assert:
+     that:
+       - copy.changed
+       - copy.state.id is defined
 
  - name: Update a new disk without changes
    azure_rm_managed_disk:
@@ -83,7 +121,7 @@
        disk_size_gb: 2
    register: output
 
- - name: Assert status succeeded and results include an Id value 
+ - name: Assert status succeeded
    assert:
      that:
        - output.changed
@@ -96,12 +134,12 @@
        disk_size_gb: 2
    register: output
 
- - name: Assert status succeeded and results include an Id value 
+ - name: Assert status succeeded
    assert:
      that:
        - output.changed
 
- - name: Update account tags
+ - name: Update disk tags
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
@@ -112,12 +150,13 @@
            galaxy: 'no'
    register: output
 
- - assert:
+ - name: Assert disk incremented tags
+   assert:
        that:
            - "output.state.tags | length == 3"
            - "output.state.tags.galaxy == 'no'"
 
- - name: Update account tags
+ - name: Update disk tags
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
@@ -127,7 +166,8 @@
            delete: never
    register: output
 
- - assert:
+ - name: Assert disk tags are 2
+   assert:
        that:
            - "output.state.tags | length == 2"
            - "output.state.tags.testing == 'testing'"
@@ -150,8 +190,32 @@
        that:
            - "azure_managed_disk | length > 0"
 
- - name: Delete managed disk
+ - name: Delete managed disk (Check Mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
        state: absent
+       disk_size_gb: 2
+   check_mode: yes
+
+ - name: Assert status succeeded 
+   assert:
+     that:
+       - output.changed
+       - output.state
+
+ - name: Delete managed disk 
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk2 }}"
+       disk_size_gb: 1
+       state: absent
+   check_mode: no
+
+ - name: Delete copied managed disk 
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       state: absent
+   check_mode: no

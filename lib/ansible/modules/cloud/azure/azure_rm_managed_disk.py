@@ -273,12 +273,15 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             if found_prev_disk:
                 if not self.is_different(found_prev_disk, disk_params):
                     return found_prev_disk
-            poller = self.compute_client.disks.create_or_update(
-                self.resource_group,
-                self.name,
-                disk_params)
-            aux = self.get_poller_result(poller)
-            result = managed_disk_to_dict(aux)
+            if not self.check_mode:
+                poller = self.compute_client.disks.create_or_update(
+                    self.resource_group,
+                    self.name,
+                    disk_params)
+                aux = self.get_poller_result(poller)
+                result = managed_disk_to_dict(aux)
+            else:
+                result = True
             self.results['changed'] = True
         except CloudError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
@@ -302,30 +305,30 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
     def delete_managed_disk(self):
         try:
-            poller = self.compute_client.disks.delete(
-                self.resource_group,
-                self.name)
-            result = self.get_poller_result(poller)
+            if not self.check_mode:
+                poller = self.compute_client.disks.delete(
+                    self.resource_group,
+                    self.name)
+                result = self.get_poller_result(poller)
+            else:
+                result = True
             self.results['changed'] = True
         except CloudError as e:
             self.fail("Error deleting the managed disk: {0}".format(str(e)))
         return result
 
     def get_managed_disk(self):
-        found = False
+        resp = False
         try:
-            response = self.compute_client.disks.get(
+            resp = self.compute_client.disks.get(
                 self.resource_group,
                 self.name)
-            found = True
         except CloudError as e:
             self.log('Did not find managed disk')
-        if found:
-            serialized = managed_disk_to_dict(
-                response)
-            return serialized
-        else:
-            return False
+        if resp:
+            resp = managed_disk_to_dict(
+                resp)
+        return resp
 
 
 def main():
