@@ -23,7 +23,7 @@ from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
 
 Plugin = namedtuple('Plugin','name type')
-Setting = namedtuple('Setting','name value origin')
+Setting = namedtuple('Setting','name value origin type')
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
 def ensure_type(value, value_type):
@@ -320,12 +320,6 @@ class ConfigManager(object):
 
         return value, origin
 
-    def update_plugin_config(self, plugin_type, name, defs):
-        ''' really: update constants '''
-        # no sense?
-        self.initialize_plugin_configuration_definitions(plugin_type, name, defs)
-        self.update_config_data(defs)
-
     def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
 
         if plugin_type not in self._plugins:
@@ -346,7 +340,7 @@ class ConfigManager(object):
             raise AnsibleOptionsError("Invalid configuration definition type: %s for %s" % (type(defs), defs))
 
         # update the constant for config file
-        self.data.update_setting(Setting('CONFIG_FILE', configfile, ''))
+        self.data.update_setting(Setting('CONFIG_FILE', configfile, '', 'string'))
 
         origin = None
         # env and config defs can have several entries, ordered in list from lowest to highest precedence
@@ -358,7 +352,7 @@ class ConfigManager(object):
             value, origin = self.get_config_value_and_origin(config, configfile)
 
             # set the constant
-            self.data.update_setting(Setting(config, value, origin))
+            self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))
 
         # FIXME: find better way to do this by passing back to where display is available
         if self.UNABLE:

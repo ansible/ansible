@@ -13,7 +13,7 @@ from string import ascii_letters, digits
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
-from ansible.config.manager import ConfigManager
+from ansible.config.manager import ConfigManager, ensure_type
 
 def _deprecated(msg):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
@@ -51,6 +51,10 @@ def get_config(parser, section, key, env_var, default_value, value_type=None, ex
         pass
 
     return value
+
+def set_constant(name, value, export=vars()):
+    ''' sets constants and returns resolved options dict '''
+    export[name] = value
 
 ### CONSTANTS ### yes, actual ones
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
@@ -98,15 +102,15 @@ config = ConfigManager()
 # Generate constants from config
 for setting in config.data.get_settings():
 
-    # FIXME: find better way to do in manager class and/or ensure types
+    value = None
     if isinstance(setting.value, string_types) and (setting.value.startswith('eval(') and setting.value.endswith(')')):
         try:
+            # FIXME: find better way to do in manager class and/or ensure types
             eval_string = setting.value.replace('eval(', '', 1)[:-1]
-            vars()[setting.name] = eval(eval_string) # FIXME: safe eval?
-            continue
+            value = ensure_type(eval(eval_string), setting.type)  # FIXME: safe eval?
         except:
-            pass
+            value = setting.value
 
-    vars()[setting.name] = setting.value
+    set_constant(setting.name, setting.value)
 
 
