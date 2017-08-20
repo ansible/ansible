@@ -391,17 +391,17 @@ def create_image(module, connection):
                 device['Ebs'] = {}
                 if 'device_name' not in device:
                     module.fail_json(msg="Error - Device name must be set for volume.")
-                device = add_item_if_exists(device, 'device_name', 'DeviceName')
-                device = add_item_if_exists(device, 'virtual_name', 'VirtualName')
-                device = add_item_if_exists(device, 'no_device', 'NoDevice')
-                device = add_item_if_exists(device, 'volume_type', 'VolumeType', 'Ebs')
-                device = add_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
-                device = add_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
-                device = add_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
-                device = add_item_if_exists(device, 'size', 'VolumeSize', 'Ebs')
-                device = add_item_if_exists(device, 'volume_size', 'VolumeSize', 'Ebs')
-                device = add_item_if_exists(device, 'iops', 'Iops', 'Ebs')
-                device = add_item_if_exists(device, 'encrypted', 'Encrypted', 'Ebs')
+                device = rename_item_if_exists(device, 'device_name', 'DeviceName')
+                device = rename_item_if_exists(device, 'virtual_name', 'VirtualName')
+                device = rename_item_if_exists(device, 'no_device', 'NoDevice')
+                device = rename_item_if_exists(device, 'volume_type', 'VolumeType', 'Ebs')
+                device = rename_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
+                device = rename_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
+                device = rename_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
+                device = rename_item_if_exists(device, 'size', 'VolumeSize', 'Ebs')
+                device = rename_item_if_exists(device, 'volume_size', 'VolumeSize', 'Ebs')
+                device = rename_item_if_exists(device, 'iops', 'Iops', 'Ebs')
+                device = rename_item_if_exists(device, 'encrypted', 'Encrypted', 'Ebs')
                 block_device_mapping.append(device)
         if instance_id:
             params['InstanceId'] = instance_id
@@ -572,7 +572,7 @@ def convert_dict_to_tag_list(dict_object):
     return dict_list
 
 
-def add_item_if_exists(dict_object, attribute, new_attribute, child_node=None):
+def rename_item_if_exists(dict_object, attribute, new_attribute, child_node=None):
     new_item = dict_object.get(attribute)
     if new_item is not None:
         if child_node is None:
