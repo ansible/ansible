@@ -505,9 +505,7 @@ def deregister_image(module, connection):
     if wait and wait_timeout <= time.time():
         module.fail_json(msg="Timed out waiting for image to be deregistered.")
 
-    # Boto library has hardcoded the deletion of the snapshot for the root volume mounted as '/dev/sda1' only.
-    # Make it possible to deregister all snapshots which belong to image, including root block device mapped as '/dev/xvda'
-    deregister_complete_message = "AMI deregister operation complete."
+    exit_params = {'msg': "AMI deregister operation complete.", 'changed': True}
 
     if delete_snapshot:
         try:
@@ -517,9 +515,9 @@ def deregister_image(module, connection):
             # Don't error out if root volume snapshot was already deregistered as part of deregister_image
             if e.error_code == 'InvalidSnapshot.NotFound':
                 pass
-        module.exit_json(msg=deregister_complete_message, changed=True, snapshots_deleted=snapshots)
-    else:
-        module.exit_json(msg=deregister_complete_message, changed=True)
+        exit_params['snapshots_deleted'] = snapshots
+
+    module.exit_json(**exit_params)
 
 
 def update_image(module, connection, image_id):
