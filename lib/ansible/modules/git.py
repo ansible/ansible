@@ -127,6 +127,14 @@ options:
         default: 'yes'
         version_added: "1.6"
 
+    single_branch:
+        description:
+            - if C(no), repository will be cloned with the --single-branch
+              option. (clone only)
+        type: bool
+        default: 'no'
+        version_added: '2.11'
+
     track_submodules:
         description:
             - if C(yes), submodules will track the latest commit on their
@@ -232,6 +240,11 @@ EXAMPLES = '''
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
+
+# Example clone of a single branch
+- git:
+    single_branch: yes
+    branch: master
 '''
 
 RETURN = '''
@@ -453,7 +466,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist):
+          reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -480,8 +493,11 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
                         "HEAD, branches, tags or in combination with refspec.")
     if reference:
         cmd.extend(['--reference', str(reference)])
-    needs_separate_git_dir_fallback = False
 
+    if single_branch:
+        cmd.append("--single-branch")
+
+    needs_separate_git_dir_fallback = False
     if separate_git_dir:
         git_version_used = git_version(git_path, module)
         if git_version_used is None:
@@ -1061,6 +1077,7 @@ def main():
             executable=dict(default=None, type='path'),
             bare=dict(default='no', type='bool'),
             recursive=dict(default='yes', type='bool'),
+            single_branch=dict(default='no', type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
@@ -1085,6 +1102,7 @@ def main():
     verify_commit = module.params['verify_commit']
     gpg_whitelist = module.params['gpg_whitelist']
     reference = module.params['reference']
+    single_branch = module.params['single_branch']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
     key_file = module.params['key_file']
     ssh_opts = module.params['ssh_opts']
@@ -1180,7 +1198,8 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
+              refspec, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
