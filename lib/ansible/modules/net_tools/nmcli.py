@@ -1079,6 +1079,13 @@ class Nmcli(object):
             cmd=self.modify_connection_vlan()
         return self.execute_command(cmd)
 
+    def show_connection(self):
+        cmd=[self.module.get_bin_path('nmcli', True)]
+        cmd.append('con')
+        cmd.append('show')
+        cmd.append(self.conn_name)
+        return self.execute_command(cmd)
+
 
 def main():
     # Parsing argument file
@@ -1136,6 +1143,8 @@ def main():
     rc=None
     out=''
     err=''
+    config_before=None
+    config_after=None
     result={}
     result['conn_name']=nmcli.conn_name
     result['state']=nmcli.state
@@ -1165,7 +1174,9 @@ def main():
             result['Exists']='Connections do exist so we are modifying them'
             if module.check_mode:
                 module.exit_json(changed=True)
+            config_before=nmcli.show_connection()
             (rc, out, err)=nmcli.modify_connection()
+            config_after=nmcli.show_connection()
         if not nmcli.connection_exists():
             result['Connection']=('Connection %s of Type %s is being added' % (nmcli.conn_name, nmcli.type))
             if module.check_mode:
@@ -1176,6 +1187,12 @@ def main():
 
     if rc is None:
         result['changed']=False
+    elif config_before and config_after:
+        # If nmcli.modify_connection() was called, check whether connection was actually modified
+        if config_before==config_after:
+            result['changed']=False
+        else:
+            result['changed']=True
     else:
         result['changed']=True
     if out:
