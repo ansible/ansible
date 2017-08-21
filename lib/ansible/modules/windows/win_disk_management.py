@@ -290,6 +290,11 @@ search_log:
                     returned: success or failed
                     type: string
                     sample: "Basic"
+        shellhw_service_state:
+            description: Detailed information about maintaining ShellHWService (check)
+            returned: success or failed
+            type: string
+            sample: "Service check failed"
 change_log:
     description: dictionary containing all the detailed information about changes on the selected disk
     returned: always

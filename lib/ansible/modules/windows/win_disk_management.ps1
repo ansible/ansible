@@ -224,7 +224,7 @@ $disk = Search-Disk @ParamsDisk
 }
 catch{
 $result.general_log.search_disk = "failed"
-Fail-Json $result $_
+Fail-Json -obj $result -message "Failed to search and/or select the disk with the specified parameter options: $($_.Exception.Message)"
 }
 
 if($disk){
@@ -251,7 +251,7 @@ if($disk){
 }
 else{
         $result.search_log.disk.disks_found = "0"
-        Fail-Json $result "No disk found (size or property is wrong or disk is not attached)."
+        Fail-Json -obj $result -message "No disk could be found and selected with the specified parameter options."
 }
 
 $result.general_log.search_disk = "successful"
@@ -273,7 +273,7 @@ else{
                 catch{
                             $result.general_log.set_operational_status = "failed"
                             $result.change_log.operational_status = "Disk failed to set online"
-                            Fail-Json $result $_
+                            Fail-Json -obj $result -message "Failed to set the disk online: $($_.Exception.Message)"
                             }
                 $result.change_log.operational_status = "Disk set online"
                 $result.changed = $true
@@ -285,7 +285,7 @@ else{
                 catch{
                             $result.general_log.set_writeable_status = "failed"
                             $result.change_log.disk_writeable = "Disk failed to set from read-only to writeable"
-                            Fail-Json $result $_
+                            Fail-Json -obj $result -message "Failed to set the disk from read-only to writeable: $($_.Exception.Message)"
                             }
                 $result.change_log.disk_writeable = "Disk set set from read-only to writeable"
                 $result.changed = $true                         
@@ -304,7 +304,7 @@ if($PartNumber -ge 1){
                 }
                 catch{
                         $result.general_log.check_volumes_partitions = "failed"
-                        Fail-Json $result "General error while getting partitions of found disk."
+                        Fail-Json -obj $result -message "General error while searching for partitions on the selected disk: $($_.Exception.Message)"
                 }
 
                 try{
@@ -332,7 +332,7 @@ if($PartNumber -ge 1){
                         else{
                               $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                         }
-                        Fail-Json $result $_
+                        Fail-Json -obj $result -message "General error while searching for volumes on the selected disk: $($_.Exception.Message)"
                             }
                 
 
@@ -361,7 +361,7 @@ if($PartNumber -ge 1){
                                                 else{
                                                         $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                                                 }
-                                                Fail-Json $result "Existing terminating partitions recognized on found disk."
+                                                Fail-Json -obj $result -message "Existing partitions found on the selected disk."
                 }
                 else{
                     $result.search_log.existing_volumes.volumes_found = "$((($volume | Measure-Object).Count).ToString())"
@@ -390,7 +390,7 @@ if($PartNumber -ge 1){
                     else{
                             $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                     }
-                    Fail-Json $result "Existing volumes recognized on found disk."
+                    Fail-Json -obj $result -message "Existing volumes found on the selected disk."
                 }
  
 }
@@ -412,7 +412,7 @@ else{
     $result.parameters.drive_letter_set = "$DriveLetter"
     $result.parameters.drive_letter_used = "yes"
     $result.general_log.check_parameters = "failed"
-    Fail-Json $result "Partition parameter 'SetDriveLetter' with value $DriveLetter is already set on another partition on this server which is not allowed."
+    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter is already set on another partition on this server which is not allowed."
 }
 
 if($DriveLetter -ne "C" -and $DriveLetter -ne "D"){
@@ -421,7 +421,7 @@ if($DriveLetter -ne "C" -and $DriveLetter -ne "D"){
 else{
     $result.parameters.forbidden_drive_letter_set = "yes"
     $result.general_log.check_parameters = "failed"
-    Fail-Json $result "Partition parameter 'SetDriveLetter' with value $DriveLetter contains protected letters C or D."
+    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter contains protected letters C or D."
 }
 
 if($FileSystem -eq "ntfs"){
@@ -453,7 +453,7 @@ if($FileSystem -eq "ntfs"){
                                                     else{
                                                             $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                                                     }
-                                                    Fail-Json $result "Disk parameter 'FindSize' with value $Size GB is not a valid size for NTFS. Disk will be findable but could be not formatted with this file system."
+                                                    Fail-Json -obj $result -message "Option disk_size with value $Size GB is not a valid size for NTFS. The disk can not be not formatted with this file system."
                                                 }
 }
 elseif($FileSystem -eq "refs"){
@@ -521,7 +521,7 @@ if($DPartStyle -eq "RAW"){
                             catch{
                                     $result.general_log.initialize_convert_disk = "failed"
                                     $result.change_log.initialize_disk = "Disk initialization failed - Partition style $DPartStyle (partition_style_select) could not be initalized to $SetPartitionStyle (partition_style_set)"
-                                    Fail-Json $result $_
+                                    Fail-Json -obj $result -message "Failed to initialize the disk: $($_.Exception.Message)"
                             }
                             $result.change_log.initialize_disk = "Disk initialization successful - Partition style $DPartStyle (partition_style_select) was initalized to $SetPartitionStyle (partition_style_set)"
                             $result.changed = $true
@@ -555,7 +555,7 @@ else{
             else{
                     $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
             }
-        Fail-Json $result $_
+        Fail-Json -obj $result -message "Failed to convert the disk: $($_.Exception.Message)"
     }
     $result.change_log.convert_disk = "Partition style $DPartStyle (partition_style_select) was converted to $SetPartitionStyle (partition_style_set)"
     $result.changed = $true
@@ -577,7 +577,7 @@ try{
 }
 catch{
         $result.general_log.maintain_shellhw_service = "failed"
-        $result.change_log.shellhw_service_state = "Check failed"
+        $result.search_log.shellhw_service_state = "Service check failed"
 }
 
 if($Check){
@@ -589,17 +589,17 @@ if($Check){
                           }
                 if(!$StopFailed){
                             $result.general_log.maintain_shellhw_service = "successful"
-                            $result.change_log.shellhw_service_state = "Set from Running to Stopped"
+                            $result.change_log.shellhw_service_state = "Set from 'Running' to 'Stopped'"
                             $StopSuccess = $true
                             $result.changed = $true
                 }
                 else{
                         $result.general_log.maintain_shellhw_service = "failed"
-                        $result.change_log.shellhw_service_state = "Could not be set from Running to Stopped"
+                        $result.change_log.shellhw_service_state = "Could not be set from 'Running' to 'Stopped'"
                 }
 }
 else{
-$result.change_log.shellhw_service_state = "Already Stopped"
+$result.change_log.shellhw_service_state = "Already 'Stopped'"
 $result.general_log.maintain_shellhw_service = "successful"
 }
 
@@ -638,18 +638,18 @@ catch{
                                             $StartFailed = $true
                                                 }
                                     if(!$StartFailed){
-                                                $result.change_log.shellhw_service_state = "Set from Stopped to Running again"
+                                                $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
                                                 $result.changed = $true
                                     }
                                     else{
                                             $result.general_log.maintain_shellhw_service = "failed"
-                                            $result.change_log.shellhw_service_state = "Could not be set from Stopped to Running again"
+                                            $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
                                     }
             }
             else{
                     $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"  
             }
-        Fail-Json $result $_
+        Fail-Json -obj $result -message "Failed to create the partition on the disk: $($_.Exception.Message)"
 }
 
 $result.change_log.partitioning = "Initial partition $($CPartition.Type) was created successfully on partition style $SetPartitionStyle"
@@ -701,18 +701,18 @@ catch{
                                             $StartFailed = $true
                                                 }
                                     if(!$StartFailed){
-                                                $result.change_log.shellhw_service_state = "Set from Stopped to Running again"
+                                                $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
                                                 $result.changed = $true
                                     }
                                     else{
                                             $result.general_log.maintain_shellhw_service = "failed"
-                                            $result.change_log.shellhw_service_state = "Could not be set from Stopped to Running again"
+                                            $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
                                     }
             }
             else{
                     $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"  
             }
-        Fail-Json $result $_
+        Fail-Json -obj $result -message "Failed to create the volume on the disk: $($_.Exception.Message)"
 }
 
 $result.change_log.formatting = "Volume $($CVolume.FileSystem) was created successfully on partition $($CPartition.Type)"
@@ -728,12 +728,12 @@ if($StopSuccess){
                                 $StartFailed = $true
                                     }
                         if(!$StartFailed){
-                                    $result.change_log.shellhw_service_state = "Set from Stopped to Running again"
+                                    $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
                                     $result.changed = $true
                         }
                         else{
                                 $result.general_log.maintain_shellhw_service = "failed"
-                                $result.change_log.shellhw_service_state = "Could not be set from Stopped to Running again"
+                                $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
                         }
 }
 else{
