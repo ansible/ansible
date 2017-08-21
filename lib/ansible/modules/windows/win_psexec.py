@@ -2,26 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -59,34 +44,34 @@ options:
     description:
     - Do not display the startup banner and copyright message.
     - This only works for specific versions of the PsExec binary.
+    type: bool
     default: 'no'
-    choices: [ 'no', 'yes' ]
     version_added: '2.4'
   noprofile:
     description:
     - Run the command without loading the account's profile.
+    type: bool
     default: 'no'
-    choices: [ 'no', 'yes' ]
   elevated:
     description:
     - Run the command with elevated privileges.
+    type: bool
     default: 'no'
-    choices: [ 'no', 'yes' ]
   interactive:
     description:
     - Run the program so that it interacts with the desktop on the remote system.
+    type: bool
     default: 'no'
-    choices: [ 'no', 'yes' ]
   limited:
     description:
     - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).
+    type: bool
     default: 'no'
-    choices: [ 'no', 'yes' ]
   system:
     description:
     - Run the remote command in the System account.
+    type: bool
     default: 'no'
-    choices: [ 'no', 'yes' ]
   priority:
     description:
     - Used to run the command at a different priority.
@@ -104,13 +89,15 @@ options:
     description:
     - Wait for the application to terminate.
     - Only use for non-interactive applications.
+    type: bool
     default: 'yes'
-    choices: [ 'no', 'yes' ]
 notes:
-- More information related to PsExec is available from
+- More information related to Microsoft PsExec is available from
   U(https://technet.microsoft.com/en-us/sysinternals/bb897553.aspx)
-requirements: [ psexec ]
-author: Dag Wieers (@dagwieers)
+requirements:
+- Microsoft PsExec
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
