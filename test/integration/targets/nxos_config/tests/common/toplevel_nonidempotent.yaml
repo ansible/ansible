@@ -1,16 +1,16 @@
 ---
-- debug: msg="START nxapi/toplevel_nonidempontent"
+- debug: msg="START {{ connection.transport }}/nonidempotent.yaml"
 
 - name: setup
   nxos_config:
     lines: hostname {{ inventory_hostname_short }}
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     match: none
 
 - name: configure top level command
   nxos_config:
     lines: hostname foo
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     match: strict
   register: result
 
@@ -22,7 +22,7 @@
 - name: configure top level command idempotent check
   nxos_config:
     lines: hostname foo
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     match: strict
   register: result
 
@@ -30,10 +30,10 @@
     that:
       - "result.changed == true"
 
-- name: setup
+- name: teardown
   nxos_config:
     lines: hostname {{ inventory_hostname_short }}
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     match: none
 
-- debug: msg="END nxapi/toplevel_nonidempontent"
+- debug: msg="END {{ connection.transport }}/nonidempotent.yaml"

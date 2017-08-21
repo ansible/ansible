@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/backup.yaml"
+- debug: msg="START {{ connection.transport }}/backup.yaml"
 
 - name: setup
   nxos_config:
@@ -9,7 +9,7 @@
     parents:
       - interface Ethernet2/5
     match: none
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
 
 - name: collect any backup files
   find:
@@ -28,7 +28,7 @@
   nxos_config:
     src: basic/config.j2
     backup: yes
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -47,4 +47,4 @@
     that:
       - "backup_files.files is defined"
 
-- debug: msg="END cli/backup.yaml"
+- debug: msg="END {{ connection.transport }}/backup.yaml"
