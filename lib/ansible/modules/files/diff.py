@@ -18,8 +18,8 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'supported_by': 'community',
-                    'status': ['preview']}
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -55,7 +55,7 @@ options:
         choices: [ string, file, command ]
         aliases: []
 
-    target:
+    target_type:
         description:
             - Specify the input type of I(target).
         required: true
