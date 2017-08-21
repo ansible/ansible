@@ -43,14 +43,14 @@ options:
     descr:
         description: description of server
 
-extends_documentation_fragment:
-    - cisco_ucs
-
 requirements:
     - 'ucsmsdk'
     - 'ucsm_apis'
     - 'python2 >= 2.7.9 or python3 >= 3.2'
     - 'openssl version >= 1.0.1'
+
+extends_documentation_fragment:
+    - cisco_ucs
 
 author: "Cisco Systems Inc(ucs-python@cisco.com)"
 '''
