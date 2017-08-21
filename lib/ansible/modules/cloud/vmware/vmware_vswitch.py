@@ -29,16 +29,18 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    switch_name:
+    switch:
         description:
             - vSwitch name to add
+            - Alias C('switch') is added in version 2.4
         required: True
-        aliases: ['switch']
-    nic_name:
+        aliases: ['switch_name']
+    nics:
         description:
             - A list of vmnic names or vmnic name to attach to vSwitch
+            - Alias C('nics') is added in version 2.4
         required: False
-        aliases: ['nics']
+        aliases: ['nic_name']
     number_of_ports:
         description:
             - Number of port to configure on vSwitch
@@ -83,8 +85,8 @@ EXAMPLES = '''
     hostname: esxi_hostname
     username: esxi_username
     password: esxi_password
-    switch_name: vmware_vswitch_0004
-    nic_name: ['vmnic1', 'vmnic2']
+    switch: vmware_vswitch_0004
+    nics: ['vmnic1', 'vmnic2']
     mtu: 9000
 '''
 
@@ -112,9 +114,9 @@ class VMwareHostVirtualSwitch(object):
         self.content = None
         self.vss = None
         self.module = module
-        self.switch_name = module.params['switch_name']
+        self.switch = module.params['switch']
         self.number_of_ports = module.params['number_of_ports']
-        self.nic_name = module.params['nic_name']
+        self.nics = module.params['nics']
         self.mtu = module.params['mtu']
         self.state = module.params['state']
         self.content = connect_to_api(self.module)
@@ -149,13 +151,9 @@ class VMwareHostVirtualSwitch(object):
         vss_spec = vim.host.VirtualSwitch.Specification()
         vss_spec.numPorts = self.number_of_ports
         vss_spec.mtu = self.mtu
-        if self.nic_name:
-            if isinstance(self.nic_name, list):
-                # Multiple Physical NICs
-                vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=self.nic_name)
-            else:
-                vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=[self.nic_name])
-        self.host_system.configManager.networkSystem.AddVirtualSwitch(vswitchName=self.switch_name, spec=vss_spec)
+        if self.nics:
+            vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=self.nics)
+        self.host_system.configManager.networkSystem.AddVirtualSwitch(vswitchName=self.switch, spec=vss_spec)
         self.module.exit_json(changed=True)
 
     def state_exit_unchanged(self):
@@ -189,7 +187,7 @@ class VMwareHostVirtualSwitch(object):
             self.module.fail_json(msg="Unable to find host")
 
         self.host_system = list(host.keys())[0]
-        self.vss = find_vswitch_by_name(self.host_system, self.switch_name)
+        self.vss = find_vswitch_by_name(self.host_system, self.switch)
 
         if self.vss is None:
             return 'absent'
