@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: oneview_fcoe_network
-short_description: Manage OneView FCoE Network resources.
+short_description: Manage OneView FCoE Network resources
 description:
     - Provides an interface to manage FCoE Network resources. Can create, update, or delete.
 version_added: "2.4"
@@ -26,6 +26,7 @@ options:
             - Indicates the desired state for the FCoE Network resource.
               C(present) will ensure data properties are compliant with OneView.
               C(absent) will remove the resource from OneView, if it exists.
+        default: present
         choices: ['present', 'absent']
     data:
         description:
@@ -40,18 +41,19 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Ensure that FCoE Network is present using the default configuration
   oneview_fcoe_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: present
     data:
-      name: 'Test FCoE Network'
-      vlanId: '201'
+      name: Test FCoE Network
+      vlanId: 201
+  delegate_to: localhost
 
 - name: Update the FCOE network scopes
   oneview_fcoe_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: present
     data:
-      name: 'New FCoE Network'
+      name: New FCoE Network
       scopeUris:
         - '/rest/scopes/00SC123456'
         - '/rest/scopes/01SC123456'
@@ -59,10 +61,11 @@ EXAMPLES = '''
 
 - name: Ensure that FCoE Network is absent
   oneview_fcoe_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: absent
     data:
-      name: 'New FCoE Network'
+      name: New FCoE Network
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -86,9 +89,8 @@ class FcoeNetworkModule(OneViewModuleBase):
     def __init__(self):
 
         additional_arg_spec = dict(data=dict(required=True, type='dict'),
-                                   state=dict(
-                                       required=True,
-                                       choices=['present', 'absent']))
+                                   state=dict(default='present',
+                                              choices=['present', 'absent']))
 
         super(FcoeNetworkModule, self).__init__(additional_arg_spec=additional_arg_spec,
                                                 validate_etag_support=True)
