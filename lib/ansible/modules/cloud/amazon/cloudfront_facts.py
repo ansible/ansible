@@ -558,7 +558,7 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    service_mgr = CloudFrontFactsServiceManager(module)
+    service_mgr = CloudFrontServiceManager(module)
 
     distribution_id = module.params.get('distribution_id')
     invalidation_id = module.params.get('invalidation_id')
