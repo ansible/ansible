@@ -25,7 +25,7 @@ module: ec2_ami
 version_added: "1.3"
 short_description: create or destroy an image in ec2
 description:
-     - Regsiters or deregisters ec2 images.
+     - Registers or deregisters ec2 images.
 options:
   instance_id:
     description:
@@ -73,7 +73,7 @@ options:
     default: 300
   state:
     description:
-      - Create or deregister AMI.
+      - Register or deregister an AMI.
     required: false
     default: 'present'
     choices: [ "absent", "present" ]
