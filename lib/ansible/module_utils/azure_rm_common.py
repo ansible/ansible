@@ -100,6 +100,7 @@ try:
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
+    from azure.mgmt.web import WebSiteManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -178,6 +179,7 @@ class AzureRMModuleBase(object):
         self._resource_client = None
         self._compute_client = None
         self._dns_client = None
+        self._web_client = None
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
         # self.debug = self.module.params.get('debug')
@@ -700,3 +702,13 @@ class AzureRMModuleBase(object):
             )
             self._register('Microsoft.Dns')
         return self._dns_client
+
+    def web_client(self):
+        self.log('Getting web client')
+        if not self._web_client:
+            self._web_client = WebSiteManagementClient(
+                credentials=self.azure_credentials,
+                subscription_id=self.subscription_id,
+                base_url=self.base_url
+            )
+        return self._web_client
