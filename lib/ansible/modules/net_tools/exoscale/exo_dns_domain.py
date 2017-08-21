@@ -32,55 +32,17 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
-  api_key:
-    description:
-      - API key of the Exoscale DNS API.
-    required: false
-    default: null
-  api_secret:
-    description:
-      - Secret key of the Exoscale DNS API.
-    required: false
-    default: null
-  api_timeout:
-    description:
-      - HTTP timeout to Exoscale DNS API.
-    required: false
-    default: 10
-  api_region:
-    description:
-      - Name of the ini section in the C(cloustack.ini) file.
-    required: false
-    default: cloudstack
-  validate_certs:
-    description:
-      - Validate SSL certs of the Exoscale DNS API.
-    required: false
-    default: true
-requirements:
-  - "python >= 2.6"
-notes:
-  - As Exoscale DNS uses the same API key and secret for all services, we reuse the config used for Exscale Compute based on CloudStack.
-    The config is read from several locations, in the following order.
-    The C(CLOUDSTACK_KEY), C(CLOUDSTACK_SECRET) environment variables.
-    A C(CLOUDSTACK_CONFIG) environment variable pointing to an C(.ini) file,
-    A C(cloudstack.ini) file in the current working directory.
-    A C(.cloudstack.ini) file in the users home directory.
-    Optionally multiple credentials and endpoints can be specified using ini sections in C(cloudstack.ini).
-    Use the argument C(api_region) to select the section name, default section is C(cloudstack).
-  - This module does not support multiple A records and will complain properly if you try.
-  - More information Exoscale DNS can be found on https://community.exoscale.ch/documentation/dns/.
-  - This module supports check mode and diff.
+extends_documentation_fragment: exoscale
 '''
 
 EXAMPLES = '''
-# Create a domain.
-- local_action:
+- name: Create a domain
+  local_action:
     module: exo_dns_domain
     name: example.com
 
-# Remove a domain.
-- local_action:
+- name: Remove a domain
+  local_action:
     module: exo_dns_domain
     name: example.com
     state: absent

@@ -39,10 +39,10 @@ EXO_DNS_BASEURL = "https://api.exoscale.ch/dns/v1"
 
 def exo_dns_argument_spec():
     return dict(
-        api_key=dict(default=None, no_log=True),
-        api_secret=dict(default=None, no_log=True),
-        api_timeout=dict(type='int', default=10),
-        api_region=dict(default='cloudstack'),
+        api_key=dict(default=os.environ.get('CLOUDSTACK_KEY'), no_log=True),
+        api_secret=dict(default=os.environ.get('CLOUDSTACK_SECRET'), no_log=True),
+        api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT') or 10),
+        api_region=dict(default=os.environ.get('CLOUDSTACK_REGION') or 'cloudstack'),
         validate_certs=dict(default='yes', type='bool'),
     )
 
