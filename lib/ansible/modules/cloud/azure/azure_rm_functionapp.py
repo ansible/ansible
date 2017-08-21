@@ -107,7 +107,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 type='str',
                 required=True,
                 aliases=['storage', 'storage_account_name']
-            )
+            ),
+            app_settings=dict(type='dict')
         )
 
         self.results = dict(
@@ -120,6 +121,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.state = None
         self.location = None
         self.storage_account = None
+        self.app_settings = dict()
 
         super(AzureRMFunctionApp, self).__init__(
             self.module_arg_spec,
@@ -140,45 +142,64 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         except CloudError as exc:
             exists = False
 
-        if exists and self.state == 'absent':
-            try:
-                self.web_client.web_apps.delete(
-                    resource_group_name=self.resource_group,
-                    name=self.name
-                )
-            except CloudError as exc:
-                self.fail('Failure while deleting web app: {}'.format(exc))
-        elif not exists and self.state == 'present':
-            function_app = Site(
-                location=self.location,
-                kind='functionapp',
-                site_config=SiteConfig(
-                    app_settings=self.necessary_functionapp_settings(),
-                    scm_type='LocalGit'
-                )
-            )
+        if self.state == 'absent':
+            if exists:
+                try:
+                    self.web_client.web_apps.delete(
+                        resource_group_name=self.resource_group,
+                        name=self.name
+                    )
+                    self.results['changed'] = True
+                except CloudError as exc:
+                    self.fail('Failure while deleting web app: {}'.format(exc))
+            else:
+                self.results['changed'] = False
         else:
-            self.fail('Updating a resource is currently unsupported')
+            if not exists:
+                function_app = Site(
+                    location=self.location,
+                    kind='functionapp',
+                    site_config=SiteConfig(
+                        app_settings=self.aggregated_app_settings(),
+                        scm_type='LocalGit'
+                    )
+                )
+            else:
+                self.fail('Updating a resource is currently unsupported')
 
-        try:
-            self.web_client.web_apps.create_or_update(
-                resource_group_name=self.resource_group,
-                name=self.name,
-                site_envelope=function_app
-            )
-        except CloudError as exc:
-            self.fail('Error creating or updating web app: {}'.format(exc))
+            try:
+                new_function_app = self.web_client.web_apps.create_or_update(
+                    resource_group_name=self.resource_group,
+                    name=self.name,
+                    site_envelope=function_app
+                ).result()
+                self.results['changed'] = True
+                self.results['state'] = new_function_app.as_dict()
+            except CloudError as exc:
+                self.fail('Error creating or updating web app: {}'.format(exc))
 
         return self.results
 
     def necessary_functionapp_settings(self):
         """Construct the necessary app settings required for an Azure Function App"""
+
         function_app_settings = []
         for key in ['AzureWebJobsStorage', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'AzureWebJobsDashboard']:
             function_app_settings.append(NameValuePair(name=key, value=self.storage_connection_string))
         function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~1'))
         function_app_settings.append(NameValuePair(name='WEBSITE_NODE_DEFAULT_VERSION', value='6.5.0'))
         function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.storage_account))
+        return function_app_settings
+
+    def aggregated_app_settings(self):
+        """Combine both system and user app settings"""
+
+        function_app_settings = self.necessary_functionapp_settings()
+        for app_setting_key in self.app_settings.keys():
+            function_app_settings.append(NameValuePair(
+                name=app_setting_key,
+                value=self.app_settings[app_setting_key]
+            ))
         return function_app_settings
 
     @property
