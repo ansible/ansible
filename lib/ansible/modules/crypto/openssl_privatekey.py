@@ -134,7 +134,7 @@ else:
     pyopenssl_found = True
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -181,11 +181,11 @@ class PrivateKey(crypto_utils.OpenSSLObject):
                                           os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
                                           self.mode)
 
-                extras = {}
                 if self.cipher and self.passphrase:
-                    extras = {'cipher': self.cipher, 'passphrase': self.passphrase}
-
-                os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey, **extras))
+                    os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey,
+                                                                     self.cipher, to_bytes(self.passphrase)))
+                else:
+                    os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey))
                 os.close(privatekey_file)
                 self.changed = True
             except IOError as exc:
