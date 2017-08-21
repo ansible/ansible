@@ -781,7 +781,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 re_key = re.compile('^ansible_%s_' % conn_name)
                 for fact_key in fact_keys:
                     # exception for lvm tech, whic normally returns asnible_x_bridge facts that get filterd out (docker,lxc, etc)
-                    if re_key.match(fact_key) and not fact_key.endswith(('_bridge','_gwbridge')):
+                    if re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge')):
                         remove_keys.add(fact_key)
             except AttributeError:
                 pass
