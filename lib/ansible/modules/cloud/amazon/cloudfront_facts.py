@@ -42,7 +42,7 @@ options:
         required: false
     origin_access_identity_id:
         description:
-            - The id of the cloudfront origin access identity to get information about.
+          - The id of the cloudfront origin access identity to get information about.
         required: false
     web_acl_id:
         description:
@@ -238,8 +238,8 @@ except ImportError:
     pass  # will be caught by imported HAS_BOTO3
 
 
-class CloudFrontFactsServiceManager:
-    """Handles CloudFront Facts Services"""
+class CloudFrontServiceManager:
+    """Handles CloudFront Services"""
 
     def __init__(self, module):
         self.module = module
@@ -493,7 +493,7 @@ class CloudFrontFactsServiceManager:
                                   exception=traceback.format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
 
-    def paginated_response(self, func, result_key=''):
+    def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
@@ -503,7 +503,7 @@ class CloudFrontFactsServiceManager:
         loop = True
         while loop:
             response = func(**args)
-            if result_key == '':
+            if result_key == "":
                 result = response
                 result.pop('ResponseMetadata', None)
             else:
