@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -89,6 +89,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.web.models import Site, SiteConfig, NameValuePair, SiteSourceControl
+    from azure.mgmt.resource.resources import ResourceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -134,6 +135,13 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         try:
+            resource_group = self.rm_client.resource_groups.get(self.resource_group)
+        except CloudError:
+            self.fail('Unable to retrieve resource group')
+
+        self.location = self.location or resource_group.location
+
+        try:
             function_app = self.web_client.web_apps.get(
                 resource_group_name=self.resource_group,
                 name=self.name
@@ -164,21 +172,46 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                         scm_type='LocalGit'
                     )
                 )
-            else:
-                self.fail('Updating a resource is currently unsupported')
-
-            try:
-                new_function_app = self.web_client.web_apps.create_or_update(
-                    resource_group_name=self.resource_group,
-                    name=self.name,
-                    site_envelope=function_app
-                ).result()
                 self.results['changed'] = True
-                self.results['state'] = new_function_app.as_dict()
-            except CloudError as exc:
-                self.fail('Error creating or updating web app: {}'.format(exc))
+            else:
+                self.results['changed'], function_app = self.update(function_app)
+
+            if self.results['changed']:
+                try:
+                    new_function_app = self.web_client.web_apps.create_or_update(
+                        resource_group_name=self.resource_group,
+                        name=self.name,
+                        site_envelope=function_app
+                    ).result()
+                    self.results['state'] = new_function_app.as_dict()
+                except CloudError as exc:
+                    self.fail('Error creating or updating web app: {}'.format(exc))
 
         return self.results
+
+    def update(self, source_function_app):
+        """Update the Site object if there are any changes"""
+
+        source_app_settings = self.web_client.web_apps.list_application_settings(
+            resource_group_name=self.resource_group,
+            name=self.name
+        )
+
+        changed, target_app_settings = self.update_app_settings(source_app_settings.properties)
+
+        source_function_app.site_config = SiteConfig(
+            app_settings=target_app_settings,
+            scm_type='LocalGit'
+        )
+
+        return changed, source_function_app
+
+    def update_app_settings(self, source_app_settings):
+        """Update app settings"""
+
+        target_app_settings = self.aggregated_app_settings()
+        target_app_settings_dict = {i.name: i.value for i in target_app_settings}
+        return target_app_settings_dict != source_app_settings, target_app_settings
 
     def necessary_functionapp_settings(self):
         """Construct the necessary app settings required for an Azure Function App"""
@@ -195,7 +228,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         """Combine both system and user app settings"""
 
         function_app_settings = self.necessary_functionapp_settings()
-        for app_setting_key in self.app_settings.keys():
+        for app_setting_key in self.app_settings:
             function_app_settings.append(NameValuePair(
                 name=app_setting_key,
                 value=self.app_settings[app_setting_key]
