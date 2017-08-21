@@ -66,12 +66,4 @@ options:
             - UcsHandle object to interact with Cisco UCS server.
         type: UcsHandle
         default: null
-
-requirements:
-    - 'ucsmsdk'
-    - 'ucsm_apis'
-    - 'python2 >= 2.7.9 or python3 >= 3.2'
-    - 'openssl version >= 1.0.1'
-
-author: "Cisco Systems Inc(ucs-python@cisco.com)"
 '''
