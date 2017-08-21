@@ -59,6 +59,12 @@ options:
       - The name of the resource_pool to create the VM in.
     required: false
     default: None
+  datastore:
+    version_added: "2.6"
+    description:
+      - The name of the datastore to create the VM in.
+    required: true
+    default: null
   cluster:
     description:
       - The name of the cluster to create the VM in. By default this is derived from the host you tell the module to build the guest on.
@@ -1216,7 +1222,7 @@ def _get_folderid_for_path(vsphere_client, datacenter, path):
     return folder['id'] if folder else None
 
 
-def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
+def create_vm(vsphere_client, module, esxi, resource_pool, datastore, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
 
     datacenter = esxi['datacenter']
     esxi_hostname = esxi['hostname']
@@ -1339,7 +1345,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         config.set_element_version(vm_hw_version)
     vmfiles = config.new_files()
     datastore_name, ds = find_datastore(
-        module, vsphere_client, vm_disk['disk1']['datastore'], config_target)
+        module, vsphere_client, datastore, config_target)
     vmfiles.set_element_vmPathName(datastore_name)
     config.set_element_files(vmfiles)
     config.set_element_name(guest)
@@ -1748,6 +1754,7 @@ def main():
             vm_extra_config=dict(required=False, type='dict', default={}),
             vm_hw_version=dict(required=False, default=None, type='str'),
             resource_pool=dict(required=False, default=None, type='str'),
+            datastore=dict(required=True, type='str'),
             cluster=dict(required=False, default=None, type='str'),
             force=dict(required=False, type='bool', default=False),
             esxi=dict(required=False, type='dict', default={}),
@@ -1790,6 +1797,7 @@ def main():
     vm_hw_version = module.params['vm_hw_version']
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
+    datastore = module.params['datastore']
     cluster = module.params['cluster']
     template_src = module.params['template_src']
     from_template = module.params['from_template']
@@ -1918,6 +1926,7 @@ def main():
                 module=module,
                 esxi=esxi,
                 resource_pool=resource_pool,
+                datastore=datastore,
                 cluster_name=cluster,
                 guest=guest,
                 vm_extra_config=vm_extra_config,
