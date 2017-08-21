@@ -293,7 +293,7 @@ try:
     ...
 except boto.exception.BotoServerError as err:
     error_msg = boto_exception(err)
-    module.fail_json(msg=error_msg, traceback=traceback.format_exc())
+    module.fail_json(msg=error_msg, exception=traceback.format_exc())
 ```
 
 
