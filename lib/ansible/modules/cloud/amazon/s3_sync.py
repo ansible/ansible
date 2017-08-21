@@ -207,7 +207,7 @@ from dateutil import tz
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3, boto_exception
 
 
 try:

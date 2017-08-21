@@ -284,7 +284,18 @@ any boto3 _facts modules.
 
 ### boto_exception
 
-Pass an exception returned from boto or boto3, and this funciton will consistently get the message from the exception.
+Pass an exception returned from boto or boto3, and this function will consistently get the message from the exception.
+
+```
+import traceback
+from ansible.module_utils.ec2 import boto_exception
+try:
+    ...
+except boto.exception.BotoServerError as err:
+    error_msg = boto_exception(err)
+    module.fail_json(msg=error_msg, traceback=traceback.format_exc())
+```
+
 
 #### boto3_tag_list_to_ansible_dict
 

@@ -245,7 +245,7 @@ except ImportError:
 
 import ansible.module_utils.ec2
 # import a class, otherwise we'll use a fully qualified path
-from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.ec2 import AWSRetry, boto_exception
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 
