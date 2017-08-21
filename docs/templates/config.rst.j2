@@ -22,7 +22,7 @@ Common Options
 
 {% if config['description'] %}
 {% if config['description'] != 'TODO: write it' %}
-:Description: {{''.join(config['description'])}}
+:Description: {{' '.join(config['description'])}}
 {% endif %}
 {% endif %}
 {% if config['type'] %}
