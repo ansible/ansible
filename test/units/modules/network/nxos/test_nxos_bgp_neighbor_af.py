@@ -70,15 +70,15 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
                              advertise_map_exist=['my_advertise_map', 'my_exist_map']))
         self.execute_module(
             changed=True, sort=False,
-            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map exist my_exist_map']
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map exist-map my_exist_map']
         )
 
     def test_nxos_bgp_neighbor_af_advertise_map_non_exist(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast',
-                             advertise_map_non_exist=['my_advertise_map', 'my_exist_map']))
+                             advertise_map_non_exist=['my_advertise_map', 'my_non_exist_map']))
         self.execute_module(
             changed=True, sort=False,
-            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map non-exist my_exist_map']
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map non-exist-map my_non_exist_map']
         )
 
     def test_nxos_bgp_neighbor_af_max_prefix_limit_default(self):
