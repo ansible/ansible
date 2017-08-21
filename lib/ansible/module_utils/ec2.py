@@ -65,23 +65,11 @@ def _botocore_exception_maybe():
 
 
 class AWSRetry(CloudRetry):
-    @staticmethod
-    def base_class(error):
-        if isinstance(error, botocore.exceptions.ClientError):
-            return botocore.exceptions.ClientError
-
-        elif isinstance(error, boto.compat.StandardError):
-            return boto.compat.StandardError
-
-        else:
-            return type(None)
+    base_class = _botocore_exception_maybe()
 
     @staticmethod
     def status_code_from_exception(error):
-        if isinstance(error, botocore.exceptions.ClientError):
-            return error.response['Error']['Code']
-        else:
-            return error.error_code
+        return error.response['Error']['Code']
 
     @staticmethod
     def found(response_code, added_exceptions):
@@ -100,13 +88,11 @@ class AWSRetry(CloudRetry):
             'InternalFailure', 'InternalError', 'TooManyRequestsException',
             'Throttling'
         ]
-        retry_on.extend(added_exceptions)
+        if added_exceptions:
+            retry_on.extend(added_exceptions)
 
         not_found = re.compile(r'^\w+.NotFound')
-        if response_code in retry_on or not_found.search(response_code):
-            return True
-        else:
-            return False
+        return response_code in retry_on or not_found.search(response_code)
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):

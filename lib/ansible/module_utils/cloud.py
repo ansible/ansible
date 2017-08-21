@@ -105,13 +105,7 @@ class CloudRetry(object):
     """
     # This is the base class of the exception.
     # AWS Example botocore.exceptions.ClientError
-    @staticmethod
-    def base_class(error):
-        """ Return the base class of the error you are matching against
-        Args:
-            error (object): The exception itself.
-        """
-        pass
+    base_class = None
 
     @staticmethod
     def status_code_from_exception(error):
@@ -122,7 +116,7 @@ class CloudRetry(object):
         pass
 
     @staticmethod
-    def found(response_code):
+    def found(response_code, added_exceptions=None):
         """ Return True if the Response Code to retry on was found.
         Args:
             response_code (str): This is the Response Code that is being matched against.
@@ -148,7 +142,7 @@ class CloudRetry(object):
                         if isinstance(e, cls.base_class):
                             response_code = cls.status_code_from_exception(e)
                             if cls.found(response_code, added_exceptions):
-                                msg = "{0}: Retrying in {1} seconds...".format(str(e), max_delay)
+                                msg = "{0}: Retrying in {1} seconds...".format(str(e), delay)
                                 syslog.syslog(syslog.LOG_INFO, msg)
                                 time.sleep(delay)
                             else:
@@ -202,7 +196,7 @@ class CloudRetry(object):
             retries=retries, delay=delay, max_delay=max_delay), added_exceptions)
 
     @classmethod
-    def backoff(cls, tries=10, delay=3, backoff=1.1):
+    def backoff(cls, tries=10, delay=3, backoff=1.1, added_exceptions=None):
         """
         Retry calling the Cloud decorated function using an exponential backoff.
 
@@ -220,4 +214,4 @@ class CloudRetry(object):
                 default=1.1
         """
         return cls.exponential_backoff(
-            retries=tries - 1, delay=delay, backoff=backoff, max_delay=None)
+            retries=tries - 1, delay=delay, backoff=backoff, max_delay=None, added_exceptions=added_exceptions)
