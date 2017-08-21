@@ -17,16 +17,28 @@
 #############################################
 '''
 DOCUMENTATION:
-    name: constructed_groups
+    name: constructed
     plugin_type: inventory
     version_added: "2.4"
-    short_description: Uses Jinja2 expressions to construct groups.
+    short_description: Uses Jinja2 to construct vars and groups based on existing inventory.
     description:
-        - Uses a YAML configuration file to identify group and the Jinja2 expressions that qualify a host for membership.
-        - Only variables already in inventory are available for expressions (no facts).
+        - Uses a YAML configuration file to define var expresisions and group conditionals
+        - The Jinja2 conditionals that qualify a host for membership.
+        - The JInja2 exprpessions are calculated and assigned to the variables
+        - Only variables already available from previous inventories can be used for templating.
         - Failed expressions will be ignored (assumes vars were missing).
+    compose:
+        description: create vars from jinja2 expressions
+        type: dictionary
+        default: {}
+    groups:
+        description: add hosts to group based on Jinja2 conditionals
+        type: dictionary
+        default: {}
 EXAMPLES: | # inventory.config file in YAML format
-    plugin: constructed_groups
+    plugin: comstructed
+    compose:
+        var_sum: var1 + var2
     groups:
         # simple name matching
         webservers: inventory_hostname.startswith('web')
@@ -48,15 +60,14 @@ import os
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin
-from ansible.template import Templar
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
 
 
 class InventoryModule(BaseInventoryPlugin):
-    """ constructs groups using Jinaj2 template expressions """
+    """ constructs groups and vars using Jinaj2 template expressions """
 
-    NAME = 'constructed_groups'
+    NAME = 'constructed'
 
     def __init__(self):
 
@@ -87,8 +98,6 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleParserError("%s is empty or not a constructed groups config file" % (to_native(path)))
 
         try:
-            templar = Templar(loader=loader)
-
             # Go over hosts (less var copies)
             for host in inventory.hosts:
 
@@ -96,16 +105,12 @@ class InventoryModule(BaseInventoryPlugin):
                 hostvars = inventory.hosts[host].get_vars()
                 if host in inventory.cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, inventory.cache[host])
-                templar.set_available_variables(hostvars)
 
-                # process each 'group entry'
-                for group_name in data.get('groups', {}):
-                    conditional = u"{%% if %s %%} True {%% else %%} False {%% endif %%}" % data['groups'][group_name]
-                    result = templar.template(conditional)
-                    if result and bool(result):
-                        # ensure group exists
-                        inventory.add_group(group_name)
-                        # add host to group
-                        inventory.add_child(group_name, host)
+                # create composite vars
+                self._set_composite_vars(data.get('compose'), hostvars, host)
+
+                # constructed groups based on conditionals
+                self._add_host_to_composed_groups(data.get('groups'), hostvars, host)
+
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))

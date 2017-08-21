@@ -50,6 +50,7 @@ class BaseInventoryPlugin(object):
 
         self.loader = loader
         self.inventory = inventory
+        self.templar = Templar(loader=loader)
 
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessability check '''
@@ -81,8 +82,30 @@ class BaseInventoryPlugin(object):
 
     def _compose(self, template, variables):
         ''' helper method for pluigns to compose variables for Ansible based on jinja2 expression and inventory vars'''
-        t = Templar(loader=self.loader, variables=variables)
+        t = self.templar
+        t.set_available_variables(variables)
         return t.do_template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
+
+    def _set_composite_vars(self, compose, variables, host):
+        ''' loops over compose entries to create vars for hosts '''
+        if compose and isinstance(compose, dict):
+            for varname in compose:
+                composite = self._compose(compose[varname], variables)
+                self.inventory.set_variable(host, varname, composite)
+
+    def _add_host_to_composed_groups(self, groups, variables, host):
+        ''' helper to create complex groups for plugins based on jinaj2 conditionals, hosts that meet the conditional are added to group'''
+        # process each 'group entry'
+        if groups and isinstance(groups, dict):
+            self.templar.set_available_variables(variables)
+            for group_name in groups:
+                conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
+                result = self.templar.template(conditional)
+                if result and bool(result):
+                    # ensure group exists
+                    self.inventory.add_group(group_name)
+                    # add host to group
+                    self.inventory.add_child(group_name, host)
 
 
 class BaseFileInventoryPlugin(BaseInventoryPlugin):
