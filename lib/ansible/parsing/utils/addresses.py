@@ -113,7 +113,7 @@ patterns = {
         r'''^
             (?:{i4}\.){{3}}{i4}         # Three parts followed by dots plus one
             $
-        '''.format(i4=ipv4_component), re.X|re.I
+        '''.format(i4=ipv4_component), re.X | re.I
     ),
 
     # This matches an IPv6 address, but also permits range expressions.
@@ -143,7 +143,7 @@ patterns = {
             ::(?:ffff:)?(?:{0}\.){{3}}{0}|
             (?:0:){{5}}ffff:(?:{0}\.){{3}}{0}
             $
-        '''.format(ipv6_component), re.X|re.I
+        '''.format(ipv6_component), re.X | re.I
     ),
 
     # This matches a hostname or host pattern including [x:y(:z)] ranges.
@@ -161,10 +161,11 @@ patterns = {
             {label}                     # We must have at least one label
             (?:\.{label})*              # Followed by zero or more .labels
             $
-        '''.format(label=label), re.X|re.I|re.UNICODE
+        '''.format(label=label), re.X | re.I | re.UNICODE
     ),
 
 }
+
 
 def parse_address(address, allow_ranges=False):
     """

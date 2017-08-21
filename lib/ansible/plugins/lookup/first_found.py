@@ -34,11 +34,11 @@ __metaclass__ = type
 # first file found with os.path.exists() is returned
 # no file matches raises ansibleerror
 # EXAMPLES
-#  - name: copy first existing file found to /some/file
-#    action: copy src=$item dest=/some/file
-#    with_first_found:
-#     - files: foo ${inventory_hostname} bar
-#       paths: /tmp/production /tmp/staging
+# - name: copy first existing file found to /some/file
+#   action: copy src=$item dest=/some/file
+#   with_first_found:
+#    - files: foo ${inventory_hostname} bar
+#      paths: /tmp/production /tmp/staging
 
 # that will look for files in this order:
 # /tmp/production/foo
@@ -48,10 +48,10 @@ __metaclass__ = type
 #              ${inventory_hostname}
 #              bar
 
-#  - name: copy first existing file found to /some/file
-#    action: copy src=$item dest=/some/file
-#    with_first_found:
-#     - files: /some/place/foo ${inventory_hostname} /some/place/else
+# - name: copy first existing file found to /some/file
+#   action: copy src=$item dest=/some/file
+#   with_first_found:
+#    - files: /some/place/foo ${inventory_hostname} /some/place/else
 
 #  that will look for files in this order:
 #  /some/place/foo
@@ -59,47 +59,47 @@ __metaclass__ = type
 #  /some/place/else
 
 # example - including tasks:
-#  tasks:
-#  - include: $item
-#    with_first_found:
-#     - files: generic
-#       paths: tasks/staging tasks/production
+# tasks:
+# - include: $item
+#   with_first_found:
+#    - files: generic
+#      paths: tasks/staging tasks/production
 # this will include the tasks in the file generic where it is found first (staging or production)
 
 # example simple file lists
-#tasks:
-#- name: first found file
-#  action: copy src=$item dest=/etc/file.cfg
-#  with_first_found:
-#  - files: foo.${inventory_hostname} foo
+# tasks:
+# - name: first found file
+#   action: copy src=$item dest=/etc/file.cfg
+#   with_first_found:
+#   - files: foo.${inventory_hostname} foo
 
 
 # example skipping if no matched files
 # First_found also offers the ability to control whether or not failing
 # to find a file returns an error or not
 #
-#- name: first found file - or skip
-#  action: copy src=$item dest=/etc/file.cfg
-#  with_first_found:
-#  - files: foo.${inventory_hostname}
-#    skip: true
+# - name: first found file - or skip
+#   action: copy src=$item dest=/etc/file.cfg
+#   with_first_found:
+#   - files: foo.${inventory_hostname}
+#     skip: true
 
 # example a role with default configuration and configuration per host
 # you can set multiple terms with their own files and paths to look through.
 # consider a role that sets some configuration per host falling back on a default config.
 #
-#- name: some configuration template
-#  template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
-#  with_first_found:
-#   - files:
-#      - ${inventory_hostname}/etc/file.cfg
-#     paths:
-#      - ../../../templates.overwrites
-#      - ../../../templates
-#   - files:
-#      - etc/file.cfg
-#     paths:
-#      - templates
+# - name: some configuration template
+#   template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
+#   with_first_found:
+#    - files:
+#       - ${inventory_hostname}/etc/file.cfg
+#      paths:
+#       - ../../../templates.overwrites
+#       - ../../../templates
+#    - files:
+#       - etc/file.cfg
+#      paths:
+#       - templates
 
 # the above will return an empty list if the files cannot be found at all
 # if skip is unspecificed or if it is set to false then it will return a list
@@ -110,22 +110,23 @@ __metaclass__ = type
 # first_available_file with with_first_found and leave the file listing in place
 #
 #
-#  - name: with_first_found like first_available_file
-#    action: copy src=$item dest=/tmp/faftest
-#    with_first_found:
-#     - ../files/foo
-#     - ../files/bar
-#     - ../files/baz
-#    ignore_errors: true
+# - name: with_first_found like first_available_file
+#   action: copy src=$item dest=/tmp/faftest
+#   with_first_found:
+#    - ../files/foo
+#    - ../files/bar
+#    - ../files/baz
+#   ignore_errors: true
 
 import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.module_utils.six import string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
-from ansible.constants import mk_boolean as boolean
+
 
 class LookupModule(LookupBase):
 
@@ -144,7 +145,7 @@ class LookupModule(LookupBase):
                 if isinstance(term, dict):
                     files = term.get('files', [])
                     paths = term.get('paths', [])
-                    skip  = boolean(term.get('skip', False))
+                    skip = boolean(term.get('skip', False), strict=False)
 
                     filelist = files
                     if isinstance(files, string_types):
@@ -188,5 +189,5 @@ class LookupModule(LookupBase):
             if skip:
                 return []
             else:
-                raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no files are found")
-
+                raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no "
+                                         "files are found")

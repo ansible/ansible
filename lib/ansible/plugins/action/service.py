@@ -33,29 +33,25 @@ class ActionModule(ActionBase):
         ''' handler for package operations '''
 
         self._supports_check_mode = True
-        self._supports_async      = True
+        self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        if result.get('skipped', False):
-            return result
 
         module = self._task.args.get('use', 'auto').lower()
 
         if module == 'auto':
             try:
-                if self._task.delegate_to: # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_service_mgr']}}" % self._task.delegate_to)
+                if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
+                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['ansible_service_mgr']}}" % self._task.delegate_to)
                 else:
-                    module = self._templar.template('{{ansible_service_mgr}}')
+                    module = self._templar.template('{{ansible_facts["ansible_service_mgr"]}}')
             except:
-                pass # could not get it from template!
+                pass  # could not get it from template!
 
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
             self._display.debug("Facts %s" % facts)
-            if 'ansible_facts' in facts and 'ansible_service_mgr' in facts['ansible_facts']:
-                module = facts['ansible_facts']['ansible_service_mgr']
+            module = facts.get('ansible_facts', {}).get('ansible_service_mgr', 'auto')
 
         if not module or module == 'auto' or module not in self._shared_loader_obj.module_loader:
             module = 'service'

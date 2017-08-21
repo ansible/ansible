@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -149,7 +150,8 @@ options:
     default: null
   root_disk_size:
     description:
-      - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
+      - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup
+        (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
     required: false
     default: null
   security_groups:
@@ -197,12 +199,6 @@ options:
       - Consider switching to HTTP_POST by using C(CLOUDSTACK_METHOD=post) to increase the HTTP_GET size limit of 2KB to 32 KB.
     required: false
     default: null
-  vpc:
-    description:
-      - Name of the VPC.
-    required: false
-    default: null
-    version_added: "2.3"
   force:
     description:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
@@ -523,22 +519,16 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         instance = self.instance
         if not instance:
             instance_name = self.get_or_fallback('name', 'display_name')
-            vpc_id = self.get_vpc(key='id')
             args = {
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id'),
                 'projectid': self.get_project(key='id'),
-                'vpcid': vpc_id,
             }
             # Do not pass zoneid, as the instance name must be unique across zones.
             instances = self.cs.listVirtualMachines(**args)
             if instances:
                 for v in instances['virtualmachine']:
-                    # Due the limitation of the API, there is no easy way (yet) to get only those VMs
-                    # not belonging to a VPC.
-                    if not vpc_id and self.is_vm_in_vpc(vm=v):
-                        continue
-                    if instance_name.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
+                    if instance_name.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                         self.instance = v
                         break
         return self.instance
@@ -571,36 +561,49 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             res.append({'networkid': ids[i], 'ip': data['ip']})
         return res
 
+    def get_ssh_keypair(self, key=None, name=None, fail_on_missing=True):
+        ssh_key_name = name or self.module.params.get('ssh_key')
+        if ssh_key_name is None:
+            return
+
+        args = {
+            'domainid': self.get_domain('id'),
+            'account': self.get_account('name'),
+            'projectid': self.get_project('id'),
+            'name': ssh_key_name,
+        }
+        ssh_key_pairs = self.cs.listSSHKeyPairs(**args)
+        if 'errortext' in ssh_key_pairs:
+            self.module.fail_json(msg="Failed: '%s'" % ssh_key_pairs['errortext'])
+
+        elif 'sshkeypair' in ssh_key_pairs:
+            return self._get_by_key(key=key, my_dict=ssh_key_pairs['sshkeypair'][0])
+
+        elif fail_on_missing:
+            self.module.fail_json(msg="SSH key not found: %s" % ssh_key_name)
 
     def ssh_key_has_changed(self):
         ssh_key_name = self.module.params.get('ssh_key')
         if ssh_key_name is None:
             return False
 
+        # Fails if keypair for param is inexistent
+        param_ssh_key_fp = self.get_ssh_keypair(key='fingerprint')
+
+        # CloudStack 4.5 does return keypair on instance for a non existent key.
         instance_ssh_key_name = self.instance.get('keypair')
         if instance_ssh_key_name is None:
             return True
 
-        if ssh_key_name == instance_ssh_key_name:
-            return False
+        # Get fingerprint for keypair of instance but do not fail if inexistent.
+        instance_ssh_key_fp = self.get_ssh_keypair(key='fingerprint', name=instance_ssh_key_name, fail_on_missing=False)
+        if not instance_ssh_key_fp:
+            return True
 
-        args = {
-            'domainid': self.get_domain('id'),
-            'account': self.get_account('name'),
-            'projectid': self.get_project('id')
-        }
-
-        args['name'] = instance_ssh_key_name
-        res = self.cs.listSSHKeyPairs(**args)
-        instance_ssh_key = res['sshkeypair'][0]
-
-        args['name'] = ssh_key_name
-        res = self.cs.listSSHKeyPairs(**args)
-        param_ssh_key = res['sshkeypair'][0]
-        if param_ssh_key['fingerprint'] != instance_ssh_key['fingerprint']:
+        # Compare fingerprints to ensure the keypair changed
+        if instance_ssh_key_fp != param_ssh_key_fp:
             return True
         return False
-
 
     def security_groups_has_changed(self):
         security_groups = self.module.params.get('security_groups')
@@ -635,7 +638,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
-            'vpcid': self.get_vpc(key='id'),
         }
         networks = self.cs.listNetworks(**args)
         if not networks:
@@ -721,7 +723,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['name']                = self.module.params.get('name')
         args['displayname']         = self.get_or_fallback('display_name', 'name')
         args['group']               = self.module.params.get('group')
-        args['keypair']             = self.module.params.get('ssh_key')
+        args['keypair']             = self.get_ssh_keypair(key='name')
         args['size']                = self.module.params.get('disk_size')
         args['startvm']             = start_vm
         args['rootdisksize']        = self.module.params.get('root_disk_size')
@@ -883,7 +885,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def stop_instance(self):
         instance = self.get_instance()
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             if instance['state'].lower() in ['stopping', 'stopped']:
                 return instance
@@ -904,7 +906,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def start_instance(self):
         instance = self.get_instance()
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             if instance['state'].lower() in ['starting', 'running']:
                 return instance
@@ -925,7 +927,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def restart_instance(self):
         instance = self.get_instance()
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             if instance['state'].lower() in [ 'running', 'starting' ]:
                 self.result['changed'] = True
@@ -947,7 +949,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def restore_instance(self):
         instance = self.get_instance()
         self.result['changed'] = True
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             args = {}
             args['templateid'] = self.get_template_or_iso(key='id')
@@ -996,7 +998,8 @@ def main():
         memory = dict(default=None, type='int'),
         template = dict(default=None),
         iso = dict(default=None),
-        template_filter = dict(default="executable", aliases=['iso_filter'], choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
+        template_filter = dict(default="executable", aliases=['iso_filter'], choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable',
+                                                                                      'community']),
         networks = dict(type='list', aliases=[ 'network' ], default=None),
         ip_to_networks = dict(type='list', aliases=['ip_to_network'], default=None),
         ip_address = dict(defaul=None),
@@ -1016,7 +1019,6 @@ def main():
         ssh_key = dict(default=None),
         force = dict(type='bool', default=False),
         tags = dict(type='list', aliases=[ 'tag' ], default=None),
-        vpc = dict(default=None),
         poll_async = dict(type='bool', default=True),
     ))
 

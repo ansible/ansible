@@ -56,7 +56,6 @@ def f5_argument_spec():
         server_port=dict(
             type='int',
             default=443,
-            required=False,
             fallback=(env_fallback, ['F5_SERVER_PORT'])
         ),
         state=dict(
@@ -80,7 +79,7 @@ def f5_parse_arguments(module):
         import ssl
         if not hasattr(ssl, 'SSLContext'):
             module.fail_json(
-                msg="bigsuds does not support verifying certificates with python < 2.7.9." \
+                msg="bigsuds does not support verifying certificates with python < 2.7.9."
                     "Either update python or set validate_certs=False on the task'")
 
     return (
@@ -122,23 +121,23 @@ def bigip_api(bigip, user, password, validate_certs, port=443):
 
 
 # Fully Qualified name (with the partition)
-def fq_name(partition,name):
+def fq_name(partition, name):
     if name is not None and not name.startswith('/'):
-        return '/%s/%s' % (partition,name)
+        return '/%s/%s' % (partition, name)
     return name
 
 
 # Fully Qualified name (with partition) for a list
-def fq_list_names(partition,list_names):
+def fq_list_names(partition, list_names):
     if list_names is None:
         return None
-    return map(lambda x: fq_name(partition,x),list_names)
-
-
-
+    return map(lambda x: fq_name(partition, x), list_names)
 
 
 # New style
+
+from abc import ABCMeta, abstractproperty
+from collections import defaultdict
 
 try:
     from f5.bigip import ManagementRoot as BigIpMgmt
@@ -147,14 +146,14 @@ try:
     from f5.bigiq import ManagementRoot as BigIqMgmt
 
     from f5.iworkflow import ManagementRoot as iWorkflowMgmt
-    from icontrol.session import iControlUnexpectedHTTPError
+    from icontrol.exceptions import iControlUnexpectedHTTPError
     HAS_F5SDK = True
 except ImportError:
     HAS_F5SDK = False
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems, with_metaclass
 
 
 F5_COMMON_ARGS = dict(
@@ -183,7 +182,6 @@ F5_COMMON_ARGS = dict(
     server_port=dict(
         type='int',
         default=443,
-        required=False,
         fallback=(env_fallback, ['F5_SERVER_PORT'])
     ),
     state=dict(
@@ -202,8 +200,10 @@ F5_COMMON_ARGS = dict(
 class AnsibleF5Client(object):
     def __init__(self, argument_spec=None, supports_check_mode=False,
                  mutually_exclusive=None, required_together=None,
-                 required_if=None, required_one_of=None,
+                 required_if=None, required_one_of=None, add_file_common_args=False,
                  f5_product_name='bigip'):
+
+        self.f5_product_name = f5_product_name
 
         merged_arg_spec = dict()
         merged_arg_spec.update(F5_COMMON_ARGS)
@@ -225,7 +225,8 @@ class AnsibleF5Client(object):
             mutually_exclusive=mutually_exclusive_params,
             required_together=required_together_params,
             required_if=required_if,
-            required_one_of=required_one_of
+            required_one_of=required_one_of,
+            add_file_common_args=add_file_common_args
         )
 
         self.check_mode = self.module.check_mode
@@ -277,54 +278,70 @@ class AnsibleF5Client(object):
                 token='local'
             )
 
+    def reconnect(self):
+        """Attempts to reconnect to a device
+
+        The existing token from a ManagementRoot can become invalid if you,
+        for example, upgrade the device (such as is done in the *_software
+        module.
+
+        This method can be used to reconnect to a remote device without
+        having to re-instantiate the ArgumentSpec and AnsibleF5Client classes
+        it will use the same values that were initially provided to those
+        classes
+
+        :return:
+        :raises iControlUnexpectedHTTPError
+        """
+        self.api = self._get_mgmt_root(
+            self.f5_product_name, **self._connect_params
+        )
+
 
 class AnsibleF5Parameters(object):
     def __init__(self, params=None):
-        self._partition = None
-        if params is None:
-            return
-        for key, value in iteritems(params):
-            setattr(self, key, value)
+        self._values = defaultdict(lambda: None)
+        if params:
+            for k, v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    dict_to_use = self.api_map
+                    map_key = self.api_map[k]
+                else:
+                    dict_to_use = self._values
+                    map_key = k
+
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
+
+    def __getattr__(self, item):
+        # Ensures that properties that weren't defined, and therefore stashed
+        # in the `_values` dict, will be retrievable.
+        return self._values[item]
 
     @property
     def partition(self):
-        if self._partition is None:
+        if self._values['partition'] is None:
             return 'Common'
-        return self._partition.strip('/')
+        return self._values['partition'].strip('/')
 
     @partition.setter
     def partition(self, value):
-        self._partition = value
+        self._values['partition'] = value
 
-    @classmethod
-    def from_api(cls, params):
-        for key,value in iteritems(cls.param_api_map):
-            params[key] = params.pop(value, None)
-        p = cls(params)
-        return p
-
-    def __getattr__(self, item):
-        return None
-
-    def api_params(self):
-        result = self._api_params_from_map()
-        return self._filter_none(result)
-
-    def _filter_none(self, params):
-        result = dict()
-        for k, v in iteritems(params):
-            if v is None:
-                continue
-            result[k] = v
-        return result
-
-    def _api_params_from_map(self):
-        result = dict()
-        pmap = self.__class__.param_api_map
-        for k,v in iteritems(pmap):
-            value = getattr(self, k)
-            result[v] = value
-        return result
+    def _filter_params(self, params):
+        return dict((k, v) for k, v in iteritems(params) if v is not None)
 
 
 class F5ModuleError(Exception):

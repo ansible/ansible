@@ -17,11 +17,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
@@ -33,17 +32,14 @@ description:
   - Runs one or more commands on remote devices running VyOS.
     This module can also be introspected to validate key parameters before
     returning successfully.
+extends_documentation_fragment: vyos
 options:
   hostname:
     description:
-      - The new hostname to apply to the device.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
       - The new domain name to apply to the device.
-    required: false
-    default: null
   name_server:
     description:
       - A list of name servers to use with the device. Mutually exclusive with
@@ -54,12 +50,9 @@ options:
     description:
       - A list of domain names to search. Mutually exclusive with
         I(name_server)
-    required: false
-    default: null
   state:
     description:
       - Whether to apply (C(present)) or remove (C(absent)) the settings.
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -78,7 +71,7 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   vyos_system:
     hostname: vyos01
-    domain_name: foo.example.com
+    domain_name: test.example.com
 
 - name: remove all configuration
   vyos_system:
@@ -182,7 +175,7 @@ def main():
         host_name=dict(type='str'),
         domain_name=dict(type='str'),
         domain_search=dict(type='list'),
-        name_server=dict(type='list'),
+        name_server=dict(type='list', aliases=['name_servers']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 

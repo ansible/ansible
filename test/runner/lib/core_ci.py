@@ -19,9 +19,12 @@ from lib.util import (
     ApplicationError,
     run_command,
     make_dirs,
-    EnvironmentConfig,
     display,
     is_shippable,
+)
+
+from lib.config import (
+    EnvironmentConfig,
 )
 
 AWS_ENDPOINTS = {
@@ -52,8 +55,11 @@ class AnsibleCoreCI(object):
         self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
 
         aws_platforms = (
+            'aws',
+            'azure',
             'windows',
             'freebsd',
+            'rhel',
             'vyos',
             'junos',
             'ios',
@@ -125,22 +131,19 @@ class AnsibleCoreCI(object):
             self.started = False
             self.instance_id = str(uuid.uuid4())
 
-            display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                         verbosity=1)
-
     def start(self):
         """Start instance."""
         if is_shippable():
-            self.start_shippable()
-        else:
-            self.start_remote()
+            return self.start_shippable()
+
+        return self.start_remote()
 
     def start_remote(self):
         """Start instance for remote development/testing."""
         with open(self.ci_key, 'r') as key_fd:
             auth_key = key_fd.read().strip()
 
-        self._start(dict(
+        return self._start(dict(
             remote=dict(
                 key=auth_key,
                 nonce=None,
@@ -149,7 +152,7 @@ class AnsibleCoreCI(object):
 
     def start_shippable(self):
         """Start instance on Shippable."""
-        self._start(dict(
+        return self._start(dict(
             shippable=dict(
                 run_id=os.environ['SHIPPABLE_BUILD_ID'],
                 job_number=int(os.environ['SHIPPABLE_JOB_NUMBER']),
@@ -179,7 +182,7 @@ class AnsibleCoreCI(object):
 
         raise self._create_http_error(response)
 
-    def get(self, tries=2, sleep=10, always_raise_on=None):
+    def get(self, tries=3, sleep=15, always_raise_on=None):
         """
         Get instance connection information.
         :type tries: int
@@ -264,9 +267,11 @@ class AnsibleCoreCI(object):
                          verbosity=1)
             return
 
+        display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
+
         if self.platform == 'windows':
-            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'r') as winrm_config_fd:
-                winrm_config = winrm_config_fd.read()
+            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'rb') as winrm_config_fd:
+                winrm_config = winrm_config_fd.read().decode('utf-8')
         else:
             winrm_config = None
 
@@ -286,8 +291,8 @@ class AnsibleCoreCI(object):
             'Content-Type': 'application/json',
         }
 
-        tries = 2
-        sleep = 10
+        tries = 3
+        sleep = 15
 
         while True:
             tries -= 1
@@ -308,6 +313,11 @@ class AnsibleCoreCI(object):
         self._save()
 
         display.info('Started %s/%s from: %s' % (self.platform, self.version, self._uri), verbosity=1)
+
+        if self.args.explain:
+            return {}
+
+        return response.json()
 
     def _clear(self):
         """Clear instance information."""

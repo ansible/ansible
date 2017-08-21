@@ -24,16 +24,15 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 import re
-import time
 import shlex
+import time
 
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils.six.moves import zip
+
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -49,20 +48,23 @@ class FailedConditionsError(Exception):
         super(FailedConditionsError, self).__init__(msg)
         self.failed_conditions = failed_conditions
 
+
 class FailedConditionalError(Exception):
     def __init__(self, msg, failed_conditional):
         super(FailedConditionalError, self).__init__(msg)
         self.failed_conditional = failed_conditional
+
 
 class AddCommandError(Exception):
     def __init__(self, msg, command):
         super(AddCommandError, self).__init__(msg)
         self.command = command
 
+
 class AddConditionError(Exception):
     def __init__(self, msg, condition):
         super(AddConditionError, self).__init__(msg)
-        self.condition=condition
+        self.condition = condition
 
 
 class Cli(object):
@@ -105,6 +107,7 @@ class Cli(object):
 
         return responses
 
+
 class Command(object):
 
     def __init__(self, command, output=None, prompt=None, response=None,
@@ -121,6 +124,7 @@ class Command(object):
 
     def __str__(self):
         return self.command_string
+
 
 class CommandRunner(object):
 
@@ -159,8 +163,7 @@ class CommandRunner(object):
     def add_conditional(self, condition):
         try:
             self.conditionals.add(Conditional(condition))
-        except AttributeError:
-            exc = get_exception()
+        except AttributeError as exc:
             raise AddConditionError(msg=str(exc), condition=condition)
 
     def run(self):
@@ -202,7 +205,6 @@ class Conditional(object):
 
     def __init__(self, conditional, encoding=None):
         self.raw = conditional
-        self.encoding = encoding or 'json'
 
         try:
             key, op, val = shlex.split(conditional)
@@ -236,36 +238,11 @@ class Conditional(object):
         raise AttributeError('unknown operator: %s' % oper)
 
     def get_value(self, result):
-        if self.encoding in ['json', 'text']:
-            try:
-                return self.get_json(result)
-            except (IndexError, TypeError, AttributeError):
-                msg = 'unable to apply conditional to result'
-                raise FailedConditionalError(msg, self.raw)
-
-        elif self.encoding == 'xml':
-            return self.get_xml(result.get('result'))
-
-    def get_xml(self, result):
-        parts = self.key.split('.')
-
-        value_index = None
-        match = re.match(r'^\S+(\[)(\d+)\]', parts[-1])
-        if match:
-            start, end = match.regs[1]
-            parts[-1] = parts[-1][0:start]
-            value_index = int(match.group(2))
-
-        path = '/'.join(parts[1:])
-        path = '/%s' % path
-        path += '/text()'
-
-        index = int(re.match(r'result\[(\d+)\]', parts[0]).group(1))
-        values = result[index].findall(path)
-
-        if value_index is not None:
-            return values[value_index].strip()
-        return [v.strip() for v in values]
+        try:
+            return self.get_json(result)
+        except (IndexError, TypeError, AttributeError):
+            msg = 'unable to apply conditional to result'
+            raise FailedConditionalError(msg, self.raw)
 
     def get_json(self, result):
         string = re.sub(r"\[[\'|\"]", ".", self.key)

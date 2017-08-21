@@ -16,7 +16,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'set system host-name foo' in result.updates"
+      - "'set system host-name foo' in result.commands"
 
 - name: check simple config command idempontent
   vyos_config:

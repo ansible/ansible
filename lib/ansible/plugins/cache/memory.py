@@ -14,10 +14,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+'''
+DOCUMENTATION:
+    cache: memory
+    short_description: RAM backed, non persistent
+    description:
+        - RAM backed cache that is not persistent.
+    version_added: historical
+    author: core team (@ansible-core)
+'''
+
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.cache.base import BaseCacheModule
+from ansible.plugins.cache import BaseCacheModule
+
 
 class CacheModule(BaseCacheModule):
 

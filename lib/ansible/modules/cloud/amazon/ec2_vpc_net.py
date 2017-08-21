@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = '''
 ---
@@ -60,7 +61,8 @@ options:
     required: false
   tags:
     description:
-      - The tags you want attached to the VPC. This is independent of the name value, note if you pass a 'Name' key it would override the Name of the VPC if it's different.
+      - The tags you want attached to the VPC. This is independent of the name value, note if you pass a 'Name' key it would override the Name of
+        the VPC if it's different.
     default: None
     required: false
     aliases: [ 'resource_tags' ]
@@ -72,7 +74,8 @@ options:
     choices: [ 'present', 'absent' ]
   multi_ok:
     description:
-      - By default the module will not create another VPC if there is another VPC with the same name and CIDR block. Specify this as true if you want duplicate VPCs created.
+      - By default the module will not create another VPC if there is another VPC with the same name and CIDR block. Specify this as true if you want
+        duplicate VPCs created.
     default: false
     required: false
 
@@ -230,7 +233,7 @@ def main():
         module.fail_json(msg="region must be specified")
 
     if dns_hostnames and not dns_support:
-        module.fail_json('In order to enable DNS Hostnames you must also enable DNS support')
+        module.fail_json(msg='In order to enable DNS Hostnames you must also enable DNS support')
 
     if state == 'present':
 

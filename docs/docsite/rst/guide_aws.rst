@@ -42,6 +42,13 @@ For storing these in a vars_file, ideally encrypted with ansible-vault::
     ec2_access_key: "--REMOVED--"
     ec2_secret_key: "--REMOVED--"
 
+Note that if you store your credentials in vars_file, you need to refer to them in each AWS-module. For example::
+
+    - ec2
+      aws_access_key: "{{ec2_access_key}}"
+      aws_secret_key: "{{ec2_secret_key}}"
+      image: "..."
+
 .. _aws_provisioning:
 
 Provisioning
@@ -110,7 +117,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
          add_host: hostname={{ item.public_ip }} groups=ec2hosts
          with_items: "{{ ec2.instances }}"
 
-With the host group now created, a second play at the bottom of the the same provisioning playbook file might now have some configuration steps::
+With the host group now created, a second play at the bottom of the same provisioning playbook file might now have some configuration steps::
 
     # demo_setup.yml
 

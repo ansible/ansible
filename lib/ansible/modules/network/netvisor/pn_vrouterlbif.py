@@ -18,16 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
 module: pn_vrouterlbif
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to add/remove vrouter-loopback-interface.
 description:
   - Execute vrouter-loopback-interface-add, vrouter-loopback-interface-remove
@@ -84,6 +84,8 @@ EXAMPLES = """
 RETURN = """
 command:
   description: The CLI command run on the target node(s).
+  returned: always
+  type: str
 stdout:
   description: The set of responses from the vrouterlb command.
   returned: always

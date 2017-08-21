@@ -1,38 +1,30 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: junos_command
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Run arbitrary commands on an Juniper junos device
+short_description: Run arbitrary commands on an Juniper JUNOS device
 description:
-  - Sends an arbitrary set of commands to an junos node and returns the results
+  - Sends an arbitrary set of commands to an JUNOS node and returns the results
     read from the device.  This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
+extends_documentation_fragment: junos
 options:
   commands:
     description:
@@ -41,7 +33,16 @@ options:
         is returned.  If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of I(retries) has been exceeded.
-    required: true
+    required: false
+    default: null
+  rpcs:
+    description:
+      - The C(rpcs) argument accepts a list of RPCs to be executed
+        over a netconf session and the results from the RPC execution
+        is return to the playbook via the modules results dictionary.
+    required: false
+    default: null
+    version_added: "2.3"
   wait_for:
     description:
       - Specifies what to evaluate from the output of the command
@@ -81,12 +82,28 @@ options:
         trying the command again.
     required: false
     default: 1
+  display:
+    description:
+      - Encoding scheme to use when serializing output from the device.
+        This handles how to properly understand the output and apply the
+        conditionals path to the result set. For I(rpcs) argument default
+        display is C(xml) and for I(commands) argument default display
+        is C(text). Value C(set) is applicable only for fetching configuration
+        from device.
+    required: false
+    default: depends on input argument I(rpcs) or I(commands)
+    aliases: ['format', 'output']
+    choices: ['text', 'json', 'xml', 'set']
+    version_added: "2.3"
+requirements:
+  - jxmlease
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
 - name: run show version on remote devices
   junos_command:
     commands: show version
@@ -113,36 +130,65 @@ EXAMPLES = """
 
 - name: run commands and specify the output format
   junos_command:
-    commands:
-      - command: show version
-        output: json
+    commands: show version
+    display: json
+
+- name: run rpc on the remote device
+  junos_command:
+    commands: show configuration
+    display: set
+
+- name: run rpc on the remote device
+  junos_command:
+    rpcs: get-software-information
 """
 
 RETURN = """
+stdout:
+  description: The set of responses from the commands
+  returned: always apart from low level errors (such as action plugin)
+  type: list
+  sample: ['...', '...']
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: always apart from low level errors (such as action plugin)
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
+output:
+  description: The set of transformed xml to json format from the commands responses
+  returned: If the I(display) is in C(xml) format.
+  type: list
+  sample: ['...', '...']
 failed_conditions:
-  description: the conditionals that failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
 """
 import time
+import re
+import shlex
 
-from functools import partial
-
-from ansible.module_utils.junos import run_commands
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.junos import junos_argument_spec, check_args, get_configuration
+from ansible.module_utils.netcli import Conditional, FailedConditionalError
+from ansible.module_utils.netconf import send_request
+from ansible.module_utils.six import string_types, iteritems
+from ansible.module_utils.connection import Connection
 
-def check_args(module, warnings):
-    junos_check_args(module, warnings)
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
-    if module.params['rpcs']:
-        module.fail_json(msg='argument rpcs has been deprecated, please use '
-                             'junos_rpc instead')
+try:
+    import jxmlease
+    HAS_JXMLEASE = True
+except ImportError:
+    HAS_JXMLEASE = False
+
+USE_PERSISTENT_CONNECTION = True
+
 
 def to_lines(stdout):
     lines = list()
@@ -152,42 +198,154 @@ def to_lines(stdout):
         lines.append(item)
     return lines
 
+
+def rpc(module, items):
+
+    responses = list()
+
+    for item in items:
+        name = item['name']
+        xattrs = item['xattrs']
+        fetch_config = False
+
+        args = item.get('args')
+        text = item.get('text')
+
+        name = str(name).replace('_', '-')
+
+        if all((module.check_mode, not name.startswith('get'))):
+            module.fail_json(msg='invalid rpc for running in check_mode')
+
+        if name == 'command' and text.startswith('show configuration') or name == 'get-configuration':
+            fetch_config = True
+
+        element = Element(name, xattrs)
+
+        if text:
+            element.text = text
+
+        elif args:
+            for key, value in iteritems(args):
+                key = str(key).replace('_', '-')
+                if isinstance(value, list):
+                    for item in value:
+                        child = SubElement(element, key)
+                        if item is not True:
+                            child.text = item
+                else:
+                    child = SubElement(element, key)
+                    if value is not True:
+                        child.text = value
+
+        if fetch_config:
+            reply = get_configuration(module, format=xattrs['format'])
+        else:
+            reply = send_request(module, element, ignore_warning=False)
+
+        if xattrs['format'] == 'text':
+            if fetch_config:
+                data = reply.find('.//configuration-text')
+            else:
+                data = reply.find('.//output')
+
+            if data is None:
+                module.fail_json(msg=tostring(reply))
+
+            responses.append(data.text.strip())
+
+        elif xattrs['format'] == 'json':
+            responses.append(module.from_json(reply.text.strip()))
+
+        elif xattrs['format'] == 'set':
+            data = reply.find('.//configuration-set')
+            if data is None:
+                module.fail_json(msg="Display format 'set' is not supported by remote device.")
+            responses.append(data.text.strip())
+
+        else:
+            responses.append(tostring(reply))
+
+    return responses
+
+
+def split(value):
+    lex = shlex.shlex(value)
+    lex.quotes = '"'
+    lex.whitespace_split = True
+    lex.commenters = ''
+    return list(lex)
+
+
+def parse_rpcs(module):
+    items = list()
+
+    for rpc in (module.params['rpcs'] or list()):
+        parts = split(rpc)
+
+        name = parts.pop(0)
+        args = dict()
+
+        for item in parts:
+            key, value = item.split('=')
+            if str(value).upper() in ['TRUE', 'FALSE']:
+                args[key] = bool(value)
+            elif re.match(r'^[0-9]+$', value):
+                args[key] = int(value)
+            else:
+                args[key] = str(value)
+
+        display = module.params['display'] or 'xml'
+
+        if display == 'set' and rpc != 'get-configuration':
+            module.fail_json(msg="Invalid display option '%s' given for rpc '%s'" % ('set', name))
+
+        xattrs = {'format': display}
+        items.append({'name': name, 'args': args, 'xattrs': xattrs})
+
+    return items
+
+
 def parse_commands(module, warnings):
-    spec = dict(
-        command=dict(key=True),
-        output=dict(default=module.params['display'], choices=['text', 'json']),
-        prompt=dict(),
-        response=dict()
-    )
+    items = list()
 
-    transform = ComplexList(spec, module)
-    commands = transform(module.params['commands'])
-
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
+    for command in (module.params['commands'] or list()):
+        if module.check_mode and not command.startswith('show'):
             warnings.append(
                 'Only show commands are supported when using check_mode, not '
-                'executing %s' % item['command']
+                'executing %s' % command
             )
 
-        if item['output'] == 'json' and 'display json' not in item['command']:
-            item['command'] += '| display json'
-        elif item['output'] == 'text' and 'display json' in item['command']:
-            item['command'] = item['command'].replace('| display json', '')
+        parts = command.split('|')
+        text = parts[0]
 
-        commands[index] = item
+        display = module.params['display'] or 'text'
 
-    return commands
+        if '| display json' in command:
+            display = 'json'
+
+        elif '| display xml' in command:
+            display = 'xml'
+
+        if display == 'set' or '| display set' in command:
+            if command.startswith('show configuration'):
+                display = 'set'
+            else:
+                module.fail_json(msg="Invalid display option '%s' given for command '%s'" % ('set', command))
+
+        xattrs = {'format': display}
+        items.append({'name': 'command', 'xattrs': xattrs, 'text': text})
+
+    return items
+
 
 def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        commands=dict(type='list', required=True),
-        display=dict(choices=['text', 'json'], default='text'),
-
-        # deprecated (Ansible 2.3) - use junos_rpc
+        commands=dict(type='list'),
         rpcs=dict(type='list'),
+
+        display=dict(choices=['text', 'json', 'xml', 'set'], aliases=['format', 'output']),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
@@ -198,14 +356,30 @@ def main():
 
     argument_spec.update(junos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    required_one_of = [('commands', 'rpcs')]
 
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
 
-    commands = parse_commands(module, warnings)
+    if module.params['provider'] and module.params['provider']['transport'] == 'cli':
+        if any((module.params['wait_for'], module.params['match'], module.params['rpcs'])):
+            module.warn('arguments wait_for, match, rpcs are not supported when using transport=cli')
+        commands = module.params['commands']
+        conn = Connection(module)
+        output = list()
+        for cmd in commands:
+            output.append(conn.get(cmd))
+        lines = [out.split('\n') for out in output]
+        result = {'changed': False, 'stdout': output, 'stdout_lines': lines}
+        module.exit_json(**result)
+
+    items = list()
+    items.extend(parse_commands(module, warnings))
+    items.extend(parse_rpcs(module))
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
@@ -215,14 +389,33 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_commands(module, commands)
+        responses = rpc(module, items)
+        transformed = list()
+        output = list()
+        for item, resp in zip(items, responses):
+            if item['xattrs']['format'] == 'xml':
+                if not HAS_JXMLEASE:
+                    module.fail_json(msg='jxmlease is required but does not appear to be installed. '
+                                         'It can be installed using `pip install jxmlease`')
+
+                try:
+                    json_resp = jxmlease.parse(resp)
+                    transformed.append(json_resp)
+                    output.append(json_resp)
+                except:
+                    raise ValueError(resp)
+            else:
+                transformed.append(resp)
 
         for item in list(conditionals):
-            if item(responses):
-                if match == 'any':
-                    conditionals = list()
-                    break
-                conditionals.remove(item)
+            try:
+                if item(transformed):
+                    if match == 'any':
+                        conditionals = list()
+                        break
+                    conditionals.remove(item)
+            except FailedConditionalError:
+                pass
 
         if not conditionals:
             break
@@ -242,9 +435,10 @@ def main():
         'stdout_lines': to_lines(responses)
     }
 
+    if output:
+        result['output'] = output
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()

@@ -3,26 +3,16 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = '''
 ---
@@ -36,6 +26,8 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+        aliases:
+            - resource_group_name
     name:
         description:
             - Name of the storage account to update or create.
@@ -148,21 +140,18 @@ state:
     }
 '''
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.storage.cloudstorageaccount import CloudStorageAccount
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
-    from azure.mgmt.storage.models.storage_management_client_enums import ProvisioningState, SkuName, SkuTier, Kind
+    from azure.common import AzureMissingResourceHttpError
+    from azure.mgmt.storage.models import ProvisioningState, SkuName, SkuTier, Kind
     from azure.mgmt.storage.models import StorageAccountUpdateParameters, CustomDomain, \
                                           StorageAccountCreateParameters, Sku
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):
@@ -174,7 +163,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             custom_domain=dict(type='dict'),
             location=dict(type='str'),
             name=dict(type='str', required=True),
-            resource_group=dict(required=True, type='str'),
+            resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
@@ -205,7 +194,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         resource_group = self.get_resource_group(self.resource_group)
@@ -250,7 +239,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         self.log('Checking name availability for {0}'.format(self.name))
         try:
             response = self.storage_client.storage_accounts.check_name_availability(self.name)
-        except AzureHttpError as e:
+        except CloudError as e:
             self.log('Error attempting to validate name.')
             self.fail("Error checking name availability: {0}".format(str(e)))
         if not response.name_available:
@@ -399,7 +388,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         try:
             poller = self.storage_client.storage_accounts.create(self.resource_group, self.name, parameters)
             self.get_poller_result(poller)
-        except AzureHttpError as e:
+        except CloudError as e:
             self.log('Error creating storage account.')
             self.fail("Failed to create account: {0}".format(str(e)))
         # the poller doesn't actually return anything
@@ -417,7 +406,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 status = self.storage_client.storage_accounts.delete(self.resource_group, self.name)
                 self.log("delete status: ")
                 self.log(str(status))
-            except AzureHttpError as e:
+            except CloudError as e:
                 self.fail("Failed to delete the account: {0}".format(str(e)))
         return True
 

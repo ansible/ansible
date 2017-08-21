@@ -29,8 +29,11 @@
 #  - /etc/openstack/clouds.yaml
 #  - /etc/ansible/openstack.yml
 # The clouds.yaml file can contain entries for multiple clouds and multiple
-# regions of those clouds. If it does, this inventory module will connect to
-# all of them and present them as one contiguous inventory.
+# regions of those clouds. If it does, this inventory module will by default
+# connect to all of them and present them as one contiguous inventory.  You
+# can limit to one cloud by passing the `--cloud` parameter, or use the
+# OS_CLOUD environment variable.  If caching is enabled, and a cloud is
+# selected, then per-cloud cache folders will be used.
 #
 # See the adjacent openstack.yml file for an example config file
 # There are two ansible inventory specific options that can be set in
@@ -44,6 +47,9 @@
 #                has failed (for example, bad credentials or being offline).
 #                When set to False, the inventory will return hosts from
 #                whichever other clouds it can contact. (Default: True)
+#
+# Also it is possible to pass the correct user by setting an ansible_user: $myuser
+# metadata attribute.
 
 import argparse
 import collections
@@ -108,8 +114,8 @@ def get_groups_from_server(server_vars, namegroup=True):
     return groups
 
 
-def get_host_groups(inventory, refresh=False):
-    (cache_file, cache_expiration_time) = get_cache_settings()
+def get_host_groups(inventory, refresh=False, cloud=None):
+    (cache_file, cache_expiration_time) = get_cache_settings(cloud)
     if is_cache_stale(cache_file, cache_expiration_time, refresh=refresh):
         groups = to_json(get_host_groups_from_cloud(inventory))
         open(cache_file, 'w').write(groups)
@@ -121,7 +127,13 @@ def get_host_groups(inventory, refresh=False):
 def append_hostvars(hostvars, groups, key, server, namegroup=False):
     hostvars[key] = dict(
         ansible_ssh_host=server['interface_ip'],
+        ansible_host=server['interface_ip'],
         openstack=server)
+
+    metadata = server.get('metadata', {})
+    if 'ansible_user' in metadata:
+        hostvars[key]['ansible_user'] = metadata['ansible_user']
+
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)
 
@@ -176,12 +188,14 @@ def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
     return True
 
 
-def get_cache_settings():
+def get_cache_settings(cloud=None):
     config = os_client_config.config.OpenStackConfig(
         config_files=os_client_config.config.CONFIG_FILES + CONFIG_FILES)
     # For inventory-wide caching
     cache_expiration_time = config.get_cache_expiration_time()
     cache_path = config.get_cache_path()
+    if cloud:
+        cache_path = '{0}_{1}'.format(cache_path, cloud)
     if not os.path.exists(cache_path):
         os.makedirs(cache_path)
     cache_file = os.path.join(cache_path, 'ansible-inventory.cache')
@@ -194,6 +208,8 @@ def to_json(in_dict):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='OpenStack Inventory Module')
+    parser.add_argument('--cloud', default=os.environ.get('OS_CLOUD'),
+                        help='Cloud name (default: None')
     parser.add_argument('--private',
                         action='store_true',
                         help='Use private address for ansible host')
@@ -218,6 +234,7 @@ def main():
             refresh=args.refresh,
             config_files=config_files,
             private=args.private,
+            cloud=args.cloud,
         )
         if hasattr(shade.inventory.OpenStackInventory, 'extra_config'):
             inventory_args.update(dict(
@@ -232,7 +249,7 @@ def main():
         inventory = shade.inventory.OpenStackInventory(**inventory_args)
 
         if args.list:
-            output = get_host_groups(inventory, refresh=args.refresh)
+            output = get_host_groups(inventory, refresh=args.refresh, cloud=args.cloud)
         elif args.host:
             output = to_json(inventory.get_host(args.host))
         print(output)

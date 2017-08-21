@@ -1,39 +1,28 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-#
 # Copyright (c) 2016 Dell Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
 module: dellos6_config
 version_added: "2.2"
 author: "Abirami N(@abirami-n)"
-short_description: Manage Dell OS6 configuration sections
+short_description: Manage Dell EMC Networking OS6 configuration sections
 description:
-  - Dell OS6 configurations use a simple block indent file syntax
+  - OS6 configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
-    an implementation for working with Dell OS6 configuration sections in
+    an implementation for working with OS6 configuration sections in
     a deterministic way.
 extends_documentation_fragment: dellos6
 options:
@@ -41,17 +30,15 @@ options:
     description:
       - The ordered set of commands that should be configured in the
         section.  The commands must be the exact same commands as found
-        in the device running-config.  Be sure to note the configuration
-        command syntax as some commands are automatically modified by the
-        device config parser. This argument is mutually exclusive with I(src).
+        in the device running-config. Note the configuration
+        command syntax as the device config parser automatically modifies some commands. This argument is mutually exclusive with I(src).
     required: false
     default: null
     aliases: ['commands']
   parents:
     description:
       - The ordered set of parents that uniquely identify the section
-        the commands should be checked against.  If the parents argument
-        is omitted, the commands are checked against the set of top
+        the commands should be checked against.  If you do not specify the parents argument, the commands are checked against the set of top
         level or global commands.
     required: false
     default: null
@@ -76,20 +63,19 @@ options:
   after:
     description:
       - The ordered set of commands to append to the end of the command
-        stack if a change needs to be made.  Just like with I(before) this
-        allows the playbook designer to append a set of commands to be
+        stack if a change needs to be made.  As with I(before), the playbook desinger can use this to append a set of commands to be
         executed after the command set.
     required: false
     default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
-        the set of commands against the current device config.  If
-        match is set to I(line), commands are matched line by line.  If
-        match is set to I(strict), command lines are matched with respect
-        to position.  If match is set to I(exact), command lines
-        must be an equal match.  Finally, if match is set to I(none), the
-        module will not attempt to compare the source configuration with
+        the set of commands against the current device config.  If you set
+        match to I(line), commands match line by line.  If you set
+        match to I(strict), command lines matched by respect
+        to position.  If you set match to I(exact), command lines
+        must be an equal match.  Finally, if you set match to I(none), the
+        module does  not attempt to compare the source configuration with
         the running configuration on the remote device.
     required: false
     default: line
@@ -97,9 +83,9 @@ options:
   replace:
     description:
       - Instructs the module on the way to perform the configuration
-        on the device.  If the replace argument is set to I(line) then
+        on the device.  If you set the replace argument to I(line), then
         the modified lines are pushed to the device in configuration
-        mode.  If the replace argument is set to I(block) then the entire
+        mode.  If you set the replace argument to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
     required: false
@@ -109,9 +95,9 @@ options:
     description:
       - The I(update) argument controls how the configuration statements
         are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
+        argument are I(merge) and I(check).  When you set this argument to
+        I(merge), the configuration changes merge with the current
+        device running configuration.  When you set this argument to I(check)
         the configuration updates are determined but not actually configured
         on the remote device.
     required: false
@@ -121,21 +107,21 @@ options:
     description:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
-        running.  If check mode is specified, this argument is ignored.
+        running.  If you specify check mode, this argument is ignored.
     required: false
     default: no
     choices: ['yes', 'no']
   config:
     description:
-      - The C(config) argument allows the playbook designer to supply
-        the base configuration to be used to validate configuration
-        changes necessary.  If this argument is provided, the module
-        will not download the running-config from the remote node.
+      - The playbook designer can use the C(config) argument to supply
+        the base configuration to be used to validate necessary configuration
+        changes.  If you specify this argument, the module
+        does not download the running-config from the remote node.
     required: false
     default: null
   backup:
     description:
-      - This argument will cause the module to create a full backup of
+      - This argument causes the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
@@ -177,28 +163,31 @@ EXAMPLES = """
 
 RETURN = """
 updates:
-  description: The set of commands that will be pushed to the remote device
-  returned: always
+  description: The set of commands pushed to the remote device.
+  returned: Always.
   type: list
   sample: ['...', '...']
 
 responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
+  description: The set of responses from issuing the commands on the device.
+  returned: When not check_mode.
   type: list
   sample: ['...', '...']
 
 saved:
   description: Returns whether the configuration is saved to the startup
                configuration or not.
-  returned: when not check_mode
+  returned: When not check_mode.
   type: bool
   sample: True
 
 """
-from ansible.module_utils.netcfg import dumps
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.dellos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
+from ansible.module_utils.dellos6 import dellos6_argument_spec, check_args
+from ansible.module_utils.dellos6 import load_config, run_commands
+from ansible.module_utils.dellos6 import WARNING_PROMPTS_RE
+from ansible.module_utils.netcfg import dumps
 
 
 def get_candidate(module):
@@ -225,16 +214,18 @@ def main():
         match=dict(default='line',
                    choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
+
         update=dict(choices=['merge', 'check'], default='merge'),
         save=dict(type='bool', default=False),
         config=dict(),
         backup=dict(type='bool', default=False)
     )
 
+    argument_spec.update(dellos6_argument_spec)
+
     mutually_exclusive = [('lines', 'src')]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
@@ -242,21 +233,26 @@ def main():
 
     match = module.params['match']
     replace = module.params['replace']
-    result = dict(changed=False, saved=False)
-    candidate = get_candidate(module)
 
+    warnings = list()
+    check_args(module, warnings)
+    result = dict(changed=False, saved=False, warnings=warnings)
+
+    candidate = get_candidate(module)
     if match != 'none':
         config = get_config(module)
+        config = Dellos6NetworkConfig(contents=config, indent=0)
         if parents:
             config = get_sublevel_config(config, module)
         configobjs = candidate.difference(config, match=match, replace=replace)
+
     else:
         configobjs = candidate.items
-
     if module.params['backup']:
-        result['__backup__'] = module.cli('show running-config')[0]
+        result['__backup__'] = get_config(module)
 
     commands = list()
+
     if configobjs:
         commands = dumps(configobjs, 'commands')
         commands = commands.split('\n')
@@ -268,18 +264,18 @@ def main():
             commands.extend(module.params['after'])
 
         if not module.check_mode and module.params['update'] == 'merge':
-            response = module.config.load_config(commands)
-            result['responses'] = response
+            load_config(module, commands)
 
             if module.params['save']:
-                module.config.save_config()
+                cmd = {'command': 'copy runing-config startup-config', 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
+                run_commands(module, [cmd])
                 result['saved'] = True
 
         result['changed'] = True
 
     result['updates'] = commands
-
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

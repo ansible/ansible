@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from ansible.plugins.shell import ShellBase
 
+
 class ShellModule(ShellBase):
 
     # Common shell filenames that this plugin handles

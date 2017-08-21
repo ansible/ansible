@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'version': '1.0',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
@@ -38,6 +37,7 @@ description:
     use a custom pager that can cause this module to hang.  If the
     value of the environment variable C(ANSIBLE_VYOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
+extends_documentation_fragment: vyos
 options:
   commands:
     description:
@@ -112,7 +112,7 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
@@ -121,7 +121,7 @@ stdout_lines:
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-  description: The conditionals that have failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
@@ -134,6 +134,7 @@ warnings:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
@@ -185,7 +186,11 @@ def main():
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()
-    conditionals = [Conditional(c) for c in wait_for]
+    try:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']

@@ -19,22 +19,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: ovirt_quotas_facts
-short_description: Retrieve facts about one or more oVirt quotas
+short_description: Retrieve facts about one or more oVirt/RHV quotas
 version_added: "2.3"
+author: "Red Hat"
 description:
-    - "Retrieve facts about one or more oVirt quotas."
+    - "Retrieve facts about one or more oVirt/RHV quotas."
 notes:
     - "This module creates a new top-level C(ovirt_quotas) fact, which
        contains a list of quotas."
 options:
-    datacenter:
+    data_center:
         description:
             - "Name of the datacenter where quota resides."
         required: true
@@ -50,7 +52,7 @@ EXAMPLES = '''
 
 # Gather facts about quota named C<myquota> in Default datacenter:
 - ovirt_quotas_facts:
-    datacenter: Default
+    data_center: Default
     name: myquota
 - debug:
     var: ovirt_quotas
@@ -59,7 +61,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_quotas:
     description: "List of dictionaries describing the quotas. Quota attribues are mapped to dictionary keys,
-                  all quotas attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/quota."
+                  all quotas attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/quota."
     returned: On success.
     type: list
 '''
@@ -79,16 +81,17 @@ from ansible.module_utils.ovirt import (
 
 def main():
     argument_spec = ovirt_facts_full_argument_spec(
-        datacenter=dict(required=True),
+        data_center=dict(required=True),
         name=dict(default=None),
     )
     module = AnsibleModule(argument_spec)
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         datacenters_service = connection.system_service().data_centers_service()
-        dc_name = module.params['datacenter']
+        dc_name = module.params['data_center']
         dc = search_by_name(datacenters_service, dc_name)
         if dc is None:
             raise Exception("Datacenter '%s' was not found." % dc_name)
@@ -118,7 +121,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':

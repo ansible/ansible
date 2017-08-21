@@ -1,0 +1,20 @@
+---
+- name: Set multiple users role
+  net_user:
+    aggregate:
+      - name: netop
+      - name: netend
+    role: network-operator
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"role network-operator" in result.commands'
+
+- name: tearDown
+  net_user:
+    purge: yes
+    provider: "{{ cli }}"

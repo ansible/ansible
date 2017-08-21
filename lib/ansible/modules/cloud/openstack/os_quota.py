@@ -15,9 +15,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -59,7 +60,13 @@ options:
     floating_ips:
         required: False
         default: None
-        description: Number of floating IP's to allow.
+        description: Number of floating IP's to allow in Compute.
+        aliases: ['compute_floating_ips']
+    floatingip:
+        required: False
+        default: None
+        description: Number of floating IP's to allow in Network.
+        aliases: ['network_floating_ips']
     gigabytes:
         required: False
         default: None
@@ -158,7 +165,7 @@ options:
         description: Number of LVM volumes to allow.
     availability_zone:
       description:
-        - Ignored. Present for backwards compatability
+        - Ignored. Present for backwards compatibility
       required: false
 
 
@@ -202,6 +209,7 @@ EXAMPLES = '''
     cores: "{{ item.cores }}"
     fixed_ips: "{{ item.fixed_ips }}"
     floating_ips: "{{ item.floating_ips }}"
+    floatingip: "{{ item.floatingip }}"
     gigabytes: "{{ item.gigabytes }}"
     injected_file_size: "{{ item.injected_file_size }}"
     injected_files: "{{ item.injected_files }}"
@@ -233,48 +241,48 @@ RETURN = '''
 openstack_quotas:
     description: Dictionary describing the project quota.
     returned: Regardless if changes where made or note
-    type: dictionary
-    contains example:
-    "openstack_quotas": {
-        "compute": {
-            "cores": 150,
-            "fixed_ips": -1,
-            "floating_ips": 10,
-            "injected_file_content_bytes": 10240,
-            "injected_file_path_bytes": 255,
-            "injected_files": 5,
-            "instances": 100,
-            "key_pairs": 100,
-            "metadata_items": 128,
-            "ram": 153600,
-            "security_group_rules": 20,
-            "security_groups": 10,
-            "server_group_members": 10,
-            "server_groups": 10
-        },
-        "network": {
-            "floatingip": 50,
-            "network": 10,
-            "port": 160,
-            "rbac_policy": 10,
-            "router": 10,
-            "security_group": 10,
-            "security_group_rule": 100,
-            "subnet": 10,
-            "subnetpool": -1
-        },
-        "volume": {
-            "backup_gigabytes": 1000,
-            "backups": 10,
-            "gigabytes": 1000,
-            "gigabytes_lvm": -1,
-            "per_volume_gigabytes": -1,
-            "snapshots": 10,
-            "snapshots_lvm": -1,
-            "volumes": 10,
-            "volumes_lvm": -1
+    type: complex
+    contains:
+        openstack_quotas: {
+            compute: {
+                cores: 150,
+                fixed_ips: -1,
+                floating_ips: 10,
+                injected_file_content_bytes: 10240,
+                injected_file_path_bytes: 255,
+                injected_files: 5,
+                instances: 100,
+                key_pairs: 100,
+                metadata_items: 128,
+                ram: 153600,
+                security_group_rules: 20,
+                security_groups: 10,
+                server_group_members: 10,
+                server_groups: 10
+            },
+            network: {
+                floatingip: 50,
+                network: 10,
+                port: 160,
+                rbac_policy: 10,
+                router: 10,
+                security_group: 10,
+                security_group_rule: 100,
+                subnet: 10,
+                subnetpool: -1
+            },
+            volume: {
+                backup_gigabytes: 1000,
+                backups: 10,
+                gigabytes: 1000,
+                gigabytes_lvm: -1,
+                per_volume_gigabytes: -1,
+                snapshots: 10,
+                snapshots_lvm: -1,
+                volumes: 10,
+                volumes_lvm: -1
+            }
         }
-    }
 
 '''
 
@@ -282,6 +290,7 @@ import sys
 
 try:
     import shade
+    from keystoneauth1 import exceptions
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
@@ -299,11 +308,19 @@ def _get_compute_quotas(cloud, project):
 
     return cloud.get_compute_quotas(project)
 
-def _get_quotas(cloud, project):
+def _get_quotas(module, cloud, project):
 
     quota = {}
-    quota['volume'] = _get_volume_quotas(cloud, project)
-    quota['network'] = _get_network_quotas(cloud, project)
+    try:
+        quota['volume'] = _get_volume_quotas(cloud, project)
+    except exceptions.EndpointNotFound:
+        module.warn("No public endpoint for volumev2 service was found. Ignoring volume quotas.")
+
+    try:
+        quota['network'] = _get_network_quotas(cloud, project)
+    except exceptions.EndpointNotFound:
+        module.warn("No public endpoint for network service was found. Ignoring network quotas.")
+
     quota['compute'] = _get_compute_quotas(cloud, project)
 
     for quota_type in quota.keys():
@@ -372,7 +389,8 @@ def main():
         backups=dict(required=False, type='int', default=None),
         cores=dict(required=False, type='int', default=None),
         fixed_ips=dict(required=False, type='int', default=None),
-        floating_ips=dict(required=False, type='int', default=None),
+        floating_ips=dict(required=False, type='int', default=None, aliases=['compute_floating_ips']),
+        floatingip=dict(required=False, type='int', default=None, aliases=['network_floating_ips']),
         gigabytes=dict(required=False, type='int', default=None),
         gigabytes_types=dict(required=False, type='dict', default={}),
         injected_file_size=dict(required=False, type='int', default=None),
@@ -423,7 +441,7 @@ def main():
                 module.params[k] = int(v)
 
         #Get current quota values
-        project_quota_output = _get_quotas(cloud, cloud_params['name'])
+        project_quota_output = _get_quotas(module, cloud, cloud_params['name'])
         changes_required = False
 
         if module.params['state'] == "absent":
@@ -452,7 +470,7 @@ def main():
                     else:
                         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-            project_quota_output = _get_quotas(cloud, cloud_params['name'])
+            project_quota_output = _get_quotas(module, cloud, cloud_params['name'])
             changes_required = True
 
 
@@ -471,7 +489,7 @@ def main():
                     quota_call(cloud_params['name'], **quota_change_request[quota_type])
 
                 #Get quota state post changes for validation
-                project_quota_update = _get_quotas(cloud, cloud_params['name'])
+                project_quota_update = _get_quotas(module, cloud, cloud_params['name'])
 
                 if project_quota_output == project_quota_update:
                     module.fail_json(msg='Could not apply quota update')

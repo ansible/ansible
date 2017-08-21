@@ -1,0 +1,74 @@
+---
+- debug: msg="START vyos_interface cli/intent.yaml"
+
+- name: Setup (interface is up)
+  vyos_interface:
+    name: eth1
+    enabled: True
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- name: Check intent arguments
+  vyos_interface:
+    name: eth1
+    state: up
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  vyos_interface:
+    name: eth1
+    state: down
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+
+- name: Config + intent
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: down
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Config + intent (fail)
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: up
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(up)' in result.failed_conditions"
+
+- name: Aggregate config + intent (pass)
+  vyos_interface:
+    aggregate:
+    - name: eth1
+      enabled: True
+      state: up
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"

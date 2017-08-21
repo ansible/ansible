@@ -1,27 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Ansible, inc
+# (c) 2015, Ansible Project
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -29,11 +20,10 @@ module: package
 version_added: 2.0
 author:
     - Ansible Inc
-maintainers:
-    - Ansible Core Team
 short_description: Generic OS package manager
 description:
      - Installs, upgrade and removes packages using the underlying OS package manager.
+     - For Windows targets, use the M(win_package) module instead.
 options:
   name:
     description:
@@ -54,6 +44,7 @@ requirements:
     - Whatever is required for the package plugins specific for each system.
 notes:
     - This module actually calls the pertinent package modules for each system (apt, yum, etc).
+    - For Windows targets, use the M(win_package) module instead.
 '''
 EXAMPLES = '''
 - name: install the latest version of ntpdate

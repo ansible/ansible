@@ -27,23 +27,17 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# standard ansible imports
-from ansible.module_utils.basic import get_exception
-
-# standard PG imports
-HAS_PSYCOPG2 = False
 try:
     import psycopg2
     import psycopg2.extras
-except ImportError:
-    pass
-else:
     HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
 
-from ansible.module_utils.six import iteritems
 
 class LibraryError(Exception):
     pass
+
 
 def ensure_libs(sslrootcert=None):
     if not HAS_PSYCOPG2:
@@ -54,14 +48,14 @@ def ensure_libs(sslrootcert=None):
     # no problems
     return None
 
+
 def postgres_common_argument_spec():
     return dict(
-        login_user        = dict(default='postgres'),
-        login_password    = dict(default='', no_log=True),
-        login_host        = dict(default=''),
-        login_unix_socket = dict(default=''),
-        port              = dict(type='int', default=5432),
-        ssl_mode          = dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert      = dict(default=None),
+        login_user=dict(default='postgres'),
+        login_password=dict(default='', no_log=True),
+        login_host=dict(default=''),
+        login_unix_socket=dict(default=''),
+        port=dict(type='int', default=5432),
+        ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ssl_rootcert=dict(),
     )
-

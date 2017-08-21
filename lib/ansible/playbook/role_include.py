@@ -23,7 +23,7 @@ from os.path import basename
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.task import Task
+from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 
@@ -36,12 +36,17 @@ except ImportError:
 __all__ = ['IncludeRole']
 
 
-class IncludeRole(Task):
+class IncludeRole(TaskInclude):
 
     """
     A Role include is derived from a regular role to handle the special
     circumstances related to the `- include_role: ...`
     """
+
+    BASE = frozenset(['name', 'role'])  # directly assigned
+    FROM_ARGS = frozenset(['tasks_from', 'vars_from', 'defaults_from'])  # used to populate from dict in role
+    OTHER_ARGS = frozenset(['private', 'allow_duplicates'])  # assigned to matching property
+    VALID_ARGS = frozenset(BASE.union(FROM_ARGS.union(OTHER_ARGS)))  # all valid args
 
     # =================================================================================
     # ATTRIBUTES
@@ -49,23 +54,21 @@ class IncludeRole(Task):
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
     _private = FieldAttribute(isa='bool', default=None, private=True)
-    _static = FieldAttribute(isa='bool', default=None)
 
     def __init__(self, block=None, role=None, task_include=None):
 
         super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
 
-        self.statically_loaded = False
         self._from_files = {}
         self._parent_role = role
         self._role_name = None
-
+        self._role_path = None
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
         # only need play passed in when dynamic
         if play is None:
-            myplay =  self._parent._play
+            myplay = self._parent._play
         else:
             myplay = play
 
@@ -76,13 +79,15 @@ class IncludeRole(Task):
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
+        # save this for later use
+        self._role_path = actual_role._role_path
+
         # compile role with parent roles as dependencies to ensure they inherit
         # variables
         if not self._parent_role:
             dep_chain = []
         else:
             dep_chain = list(self._parent_role._parents)
-            dep_chain.extend(self._parent_role.get_all_dependencies())
             dep_chain.append(self._parent_role)
 
         blocks = actual_role.compile(play=myplay, dep_chain=dep_chain)
@@ -90,34 +95,38 @@ class IncludeRole(Task):
             b._parent = self
 
         # updated available handlers in play
-        myplay.handlers = myplay.handlers + actual_role.get_handler_blocks(play=myplay)
-
-        return blocks
+        handlers = actual_role.get_handler_blocks(play=myplay)
+        myplay.handlers = myplay.handlers + handlers
+        return blocks, handlers
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        ### Process options
+        # Validate options
+        my_arg_names = frozenset(ir.args.keys())
+
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for include_role.")
 
+        # validate bad args, otherwise we silently ignore
+        bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
+        if bad_opts:
+            raise AnsibleParserError('Invalid options for include_role: %s' % ','.join(list(bad_opts)))
+
         # build options for role includes
-        for key in ['tasks', 'vars', 'defaults']:
-            from_key ='%s_from' % key
-            if ir.args.get(from_key):
-                ir._from_files[key] = basename(ir.args.get(from_key))
+        for key in IncludeRole.FROM_ARGS.intersection(my_arg_names):
+            from_key = key.replace('_from', '')
+            ir._from_files[from_key] = basename(ir.args.get(key))
 
-        #FIXME: find a way to make this list come from object ( attributes does not work as per below)
         # manual list as otherwise the options would set other task parameters we don't want.
-        for option in ['private', 'allow_duplicates']:
-            if option in ir.args:
-                setattr(ir, option, ir.args.get(option))
+        for option in IncludeRole.OTHER_ARGS.intersection(my_arg_names):
+            setattr(ir, option, ir.args.get(option))
 
-        return ir.load_data(data, variable_manager=variable_manager, loader=loader)
+        return ir
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
 
@@ -125,7 +134,8 @@ class IncludeRole(Task):
         new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
-        new_me._role_name   = self._role_name
+        new_me._role_name = self._role_name
+        new_me._role_path = self._role_path
 
         return new_me
 

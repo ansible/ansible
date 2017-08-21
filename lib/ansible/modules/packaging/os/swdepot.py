@@ -5,22 +5,16 @@
 # Written by Raul Melo <raulmelo@gmail.com>
 # Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -87,14 +81,24 @@ def compare_package(version1, version2):
 
     def normalize(v):
         return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
-    return cmp(normalize(version1), normalize(version2))
+    normalized_version1 = normalize(version1)
+    normalized_version2 = normalize(version2)
+    if normalized_version1 == normalized_version2:
+        rc = 0
+    elif normalized_version1 < normalized_version2:
+        rc = -1
+    else:
+        rc = 1
+    return rc
+
 
 def query_package(module, name, depot=None):
     """ Returns whether a package is installed or not and version. """
 
     cmd_list = '/usr/sbin/swlist -a revision -l product'
     if depot:
-        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)),
+                                                use_unsafe_shell=True)
     else:
         rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
     if rc == 0:
@@ -155,7 +159,7 @@ def main():
     else:
         installed = False
 
-    if ( state == 'present' or state == 'latest' ) and installed == False:
+    if ( state == 'present' or state == 'latest' ) and installed is False:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = install_package(module, depot, name)
@@ -167,7 +171,7 @@ def main():
         else:
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'latest' and installed == True:
+    elif state == 'latest' and installed is True:
         #Check depot version
         rc, version_depot = query_package(module, name, depot)
 
@@ -189,7 +193,7 @@ def main():
             output = "Software package not in repository " + depot
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'absent' and installed == True:
+    elif state == 'absent' and installed is True:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = remove_package(module, name)

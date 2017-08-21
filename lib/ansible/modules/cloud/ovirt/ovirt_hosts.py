@@ -19,22 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: ovirt_hosts
-short_description: Module to manage hosts in oVirt
+short_description: Module to manage hosts in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage hosts in oVirt"
+    - "Module to manage hosts in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the host to manage."
+            - "Name of the host to manage."
         required: true
     state:
         description:
@@ -73,7 +74,7 @@ options:
     override_iptables:
         description:
             - "If True host iptables will be overridden by host deploy script."
-            - "Note that C(override_iptables) is I(false) by default in oVirt."
+            - "Note that C(override_iptables) is I(false) by default in oVirt/RHV."
     force:
         description:
             - "If True host will be forcibly moved to desired state."
@@ -102,6 +103,11 @@ options:
             - "If I(undeploy) it means this host should un-deploy hosted engine
                components and this host will not function as part of the High
                Availability cluster."
+    power_management_enabled:
+        description:
+            - "Enable or disable power management of the host."
+            - "For more comprehensive setup of PM use C(ovirt_host_pm) module."
+        version_added: 2.4
 extends_documentation_fragment: ovirt
 '''
 
@@ -110,7 +116,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Add host with username/password supporting SR-IOV.
-# Note that override_iptables is false by default in oVirt:
+# Note that override_iptables is false by default in oVirt/RHV:
 - ovirt_hosts:
     cluster: Default
     name: myhost
@@ -172,11 +178,13 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 host:
-    description: "Dictionary of all the host attributes. Host attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host."
+    description: "Dictionary of all the host attributes. Host attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host."
     returned: On success if host is found.
+    type: dict
 '''
 
+import time
 import traceback
 
 try:
@@ -201,38 +209,42 @@ class HostsModule(BaseModule):
 
     def build_entity(self):
         return otypes.Host(
-            name=self._module.params['name'],
+            name=self.param('name'),
             cluster=otypes.Cluster(
-                name=self._module.params['cluster']
-            ) if self._module.params['cluster'] else None,
-            comment=self._module.params['comment'],
-            address=self._module.params['address'],
-            root_password=self._module.params['password'],
+                name=self.param('cluster')
+            ) if self.param('cluster') else None,
+            comment=self.param('comment'),
+            address=self.param('address'),
+            root_password=self.param('password'),
             ssh=otypes.Ssh(
                 authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY,
-            ) if self._module.params['public_key'] else None,
+            ) if self.param('public_key') else None,
             kdump_status=otypes.KdumpStatus(
-                self._module.params['kdump_integration']
-            ) if self._module.params['kdump_integration'] else None,
+                self.param('kdump_integration')
+            ) if self.param('kdump_integration') else None,
             spm=otypes.Spm(
-                priority=self._module.params['spm_priority'],
-            ) if self._module.params['spm_priority'] else None,
-            override_iptables=self._module.params['override_iptables'],
+                priority=self.param('spm_priority'),
+            ) if self.param('spm_priority') else None,
+            override_iptables=self.param('override_iptables'),
             display=otypes.Display(
-                address=self._module.params['override_display'],
-            ) if self._module.params['override_display'] else None,
+                address=self.param('override_display'),
+            ) if self.param('override_display') else None,
             os=otypes.OperatingSystem(
-                custom_kernel_cmdline=' '.join(self._module.params['kernel_params']),
-            ) if self._module.params['kernel_params'] else None,
+                custom_kernel_cmdline=' '.join(self.param('kernel_params')),
+            ) if self.param('kernel_params') else None,
+            power_management=otypes.PowerManagement(
+                enabled=self.param('power_management_enabled'),
+            ) if self.param('power_management_enabled') is not None else None,
         )
 
     def update_check(self, entity):
-        kernel_params = self._module.params.get('kernel_params')
+        kernel_params = self.param('kernel_params')
         return (
-            equal(self._module.params.get('comment'), entity.comment) and
-            equal(self._module.params.get('kdump_integration'), entity.kdump_status) and
-            equal(self._module.params.get('spm_priority'), entity.spm.priority) and
-            equal(self._module.params.get('override_display'), getattr(entity.display, 'address', None)) and
+            equal(self.param('comment'), entity.comment) and
+            equal(self.param('kdump_integration'), entity.kdump_status) and
+            equal(self.param('spm_priority'), entity.spm.priority) and
+            equal(self.param('power_management_enabled'), entity.power_management.enabled) and
+            equal(self.param('override_display'), getattr(entity.display, 'address', None)) and
             equal(
                 sorted(kernel_params) if kernel_params else None,
                 sorted(entity.os.custom_kernel_cmdline.split(' '))
@@ -248,7 +260,7 @@ class HostsModule(BaseModule):
         )
 
     def post_update(self, entity):
-        if entity.status != hoststate.UP and self._module.params['state'] == 'present':
+        if entity.status != hoststate.UP and self.param('state') == 'present':
             if not self._module.check_mode:
                 self._service.host_service(entity.id).activate()
             self.changed = True
@@ -258,8 +270,8 @@ class HostsModule(BaseModule):
             service=self._service.service(host.id),
             condition=lambda h: h.status != hoststate.MAINTENANCE,
             fail_condition=failed_state,
-            wait=self._module.params['wait'],
-            timeout=self._module.params['timeout'],
+            wait=self.param('wait'),
+            timeout=self.param('timeout'),
         )
 
 
@@ -307,6 +319,8 @@ def control_state(host_module):
             fail_condition=failed_state,
         )
 
+    return host
+
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -331,6 +345,7 @@ def main():
         override_display=dict(default=None),
         kernel_params=dict(default=None, type='list'),
         hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
+        power_management_enabled=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -339,7 +354,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
         hosts_module = HostsModule(
             connection=connection,
@@ -348,7 +364,7 @@ def main():
         )
 
         state = module.params['state']
-        control_state(hosts_module)
+        host = control_state(hosts_module)
         if state == 'present':
             hosts_module.create(
                 deploy_hosted_engine=(
@@ -372,10 +388,12 @@ def main():
             )
             ret = hosts_module.create()
         elif state == 'upgraded':
+            result_state = hoststate.MAINTENANCE if host.status == hoststate.MAINTENANCE else hoststate.UP
             ret = hosts_module.action(
                 action='upgrade',
                 action_condition=lambda h: h.update_available,
-                wait_condition=lambda h: h.status == hoststate.UP,
+                wait_condition=lambda h: h.status == result_state,
+                post_action=lambda h: time.sleep(module.params['poll_interval']),
                 fail_condition=failed_state,
             )
         elif state == 'started':
@@ -449,7 +467,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

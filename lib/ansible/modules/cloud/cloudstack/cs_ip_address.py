@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -131,8 +132,12 @@ domain:
   sample: example domain
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackIPAddress(AnsibleCloudStack):
@@ -146,8 +151,6 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
     def get_ip_address(self, key=None):
         if self.ip_address:
             return self._get_by_key(key, self.ip_address)
-
-        ip_address = self.module.params.get('ip_address')
         args = {
             'ipaddress': self.module.params.get('ip_address'),
             'account': self.get_account(key='name'),
@@ -169,12 +172,11 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'networkid': self.get_network(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'vpcid': self.get_vpc(key='id'),
         }
         ip_address = None
         if not self.module.check_mode:
             res = self.cs.associateIpAddress(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -191,8 +193,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         self.result['changed'] = True
         if not self.module.check_mode:
             res = self.cs.disassociateIpAddress(id=ip_address['id'])
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
             poll_async = self.module.params.get('poll_async')
             if poll_async:
                 self.poll_job(res, 'ipaddress')
@@ -202,15 +203,15 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        ip_address = dict(required=False),
-        state = dict(choices=['present', 'absent'], default='present'),
-        vpc = dict(default=None),
-        network = dict(default=None),
-        zone = dict(default=None),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        poll_async = dict(type='bool', default=True),
+        ip_address=dict(required=False),
+        state=dict(choices=['present', 'absent'], default='present'),
+        vpc=dict(),
+        network=dict(),
+        zone=dict(),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -222,23 +223,17 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_ip_address = AnsibleCloudStackIPAddress(module)
+    acs_ip_address = AnsibleCloudStackIPAddress(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            ip_address = acs_ip_address.disassociate_ip_address()
-        else:
-            ip_address = acs_ip_address.associate_ip_address()
+    state = module.params.get('state')
+    if state in ['absent']:
+        ip_address = acs_ip_address.disassociate_ip_address()
+    else:
+        ip_address = acs_ip_address.associate_ip_address()
 
-        result = acs_ip_address.get_result(ip_address)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_ip_address.get_result(ip_address)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

@@ -83,6 +83,27 @@ To see if a list includes or is included by another list, you can use 'issubset'
 
 .. _path_tests:
 
+.. versionadded:: 2.4
+
+You can use `any` and `all` to check if any or all elements in a list are true or not::
+
+  vars:
+    mylist:
+        - 1
+        - 3 == 3
+        - True
+    myotherlist:
+        - False
+        - True
+  tasks:
+
+    - debug: msg="all are true!"
+      when: mylist is all
+
+    - debug: msg="at least one is true"
+      when: myotherlist|any
+
+
 Testing paths
 `````````````
 
@@ -106,7 +127,7 @@ The following tests can provide information about a path on the controller::
       when: mypath|samefile(path2)
 
     - debug: msg="path is a mount"
-      when: mypath|ismount
+      when: mypath|is_mount
 
 
 .. _test_task_results:
@@ -154,7 +175,7 @@ The following tasks are illustrative of the tests meant to check the status of t
        All about variables
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

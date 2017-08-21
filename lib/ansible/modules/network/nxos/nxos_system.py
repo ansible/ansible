@@ -16,15 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: nxos_system
+extends_documentation_fragment: nxos
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage the system attributes on Cisco NXOS devices
@@ -36,54 +36,43 @@ description:
 options:
   hostname:
     description:
-      - The C(hostname) argument will configure the device hostname
-        parameter on Cisco NXOS devices.  The C(hostname) value is an
-        ASCII string value.
-    required: false
-    default: null
-  domain_lookup:
-    description:
-      - The C(domain_lookup) argument enables or disables the DNS
-        lookup feature in Cisco NXOS.  This argument accepts boolean
-        values.  When enabled, the system will try to resolve hostnames
-        using DNS and when disabled, hostnames will not be resolved.
-    required: false
-    default: null
-  domain_search:
-    description:
-      - The C(domain_search) argument configures a list of domain
-        name suffixes to search when performing DNS name resolution.
-        This argument accepts either a list of domain names or
-        a list of dicts that configure the domain name and VRF name.  See
-        examples.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
-      - The C(domain_name) argument configures the default domain
+      - Configures the default domain
         name suffix to be used when referencing this node by its
         FQDN.  This argument accepts either a list of domain names or
         a list of dicts that configure the domain name and VRF name.  See
         examples.
-    required: false
-    default: null
+  domain_lookup:
+    description:
+      - Enables or disables the DNS
+        lookup feature in Cisco NXOS.  This argument accepts boolean
+        values.  When enabled, the system will try to resolve hostnames
+        using DNS and when disabled, hostnames will not be resolved.
+  domain_search:
+    description:
+      - Configures a list of domain
+        name suffixes to search when performing DNS name resolution.
+        This argument accepts either a list of domain names or
+        a list of dicts that configure the domain name and VRF name.  See
+        examples.
   name_servers:
     description:
-      - The C(name_servers) argument accepts a list of DNS name servers by
-        way of either FQDN or IP address to use to perform name resolution
-        lookups.  This argument accepts wither a list of DNS servers or
+      - List of DNS name servers by IP address to use to perform name resolution
+        lookups.  This argument accepts either a list of DNS servers or
         a list of hashes that configure the name server and VRF name.  See
         examples.
-    required: false
-    default: null
+  system_mtu:
+    description:
+      - Specifies the mtu, must be an integer.
   state:
     description:
-      - The C(state) argument configures the state of the configuration
+      - State of the configuration
         values in the device's current active configuration.  When set
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -92,15 +81,11 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   nxos_system:
     hostname: nxos01
-    domain_name: eng.ansible.com
+    domain_name: test.example.com
 
 - name: remove configuration
   nxos_system:
     state: absent
-
-- name: configure DNS lookup sources
-  nxos_system:
-    lookup_source: Management1
 
 - name: configure name servers
   nxos_system:
@@ -122,7 +107,7 @@ commands:
   type: list
   sample:
     - hostname nxos01
-    - ip domain-name eng.ansible.com
+    - ip domain-name test.example.com
 """
 import re
 
@@ -179,6 +164,9 @@ def map_obj_to_commands(want, have, module):
             cmd = 'no ip name-server %s' % item['server']
             remove(cmd, commands, item['vrf'])
 
+        if have['system_mtu']:
+            commands.append('no system jumbomtu')
+
     if state == 'present':
         if needs_update('hostname'):
             commands.append('hostname %s' % want['hostname'])
@@ -212,6 +200,9 @@ def map_obj_to_commands(want, have, module):
             for item in difference(want, have, 'name_servers'):
                 cmd = 'ip name-server %s' % item['server']
                 add(cmd, commands, item['vrf'])
+
+        if needs_update('system_mtu'):
+            commands.append('system jumbomtu %s' % want['system_mtu'])
 
     return commands
 
@@ -256,11 +247,17 @@ def parse_name_servers(config, vrf_config):
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip name-server (\S+)', cfg, re.M):
-            for addr in match.group(1).split(' '):
+        vrf_match = re.search('ip name-server (.+)', cfg, re.M)
+        if vrf_match:
+            for addr in vrf_match.group(1).split(' '):
                 objects.append({'server': addr, 'vrf': vrf})
 
     return objects
+
+def parse_system_mtu(config):
+    match = re.search('^system jumbomtu (\d+)', config, re.M)
+    if match:
+        return int(match.group(1))
 
 def map_config_to_obj(module):
     config = get_config(module)
@@ -278,13 +275,19 @@ def map_config_to_obj(module):
         'domain_lookup': 'no ip domain-lookup' not in config,
         'domain_name': parse_domain_name(config, vrf_config),
         'domain_search': parse_domain_search(config, vrf_config),
-        'name_servers': parse_name_servers(config, vrf_config)
+        'name_servers': parse_name_servers(config, vrf_config),
+        'system_mtu': parse_system_mtu(config)
     }
+
+def validate_system_mtu(value, module):
+    if not 1500 <= value <= 9216:
+        module.fail_json(msg='system_mtu must be between 1500 and 9216')
 
 def map_params_to_obj(module):
     obj = {
         'hostname': module.params['hostname'],
         'domain_lookup': module.params['domain_lookup'],
+        'system_mtu': module.params['system_mtu']
     }
 
     domain_name = ComplexList(dict(
@@ -327,6 +330,8 @@ def main():
         # { server: <str>; vrf: <str> }
         name_servers=dict(type='list'),
 
+        system_mtu=dict(type='int'),
+        lookup_source=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

@@ -1,0 +1,29 @@
+---
+
+- name: Install python
+  raw:
+    test -e /usr/bin/python || apt-get -y update && apt-get install -y python-minimal
+  become: yes
+
+# network-integration test are ran with gather_facts: no
+# We need to explicitly call setup so ansible_distribution is set
+
+- name: Gather facts
+  setup:
+  become: yes
+
+- name: Install openvswitch-switch package if we are on Ubuntu
+  apt:
+    name: openvswitch-switch
+    state: installed
+    update_cache: yes
+  become: yes
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Install openvswitch package if we are on Fedora
+  yum:
+    name: openvswitch
+    state: installed
+    update_cache: yes
+  become: yes
+  when: ansible_distribution == 'Fedora'

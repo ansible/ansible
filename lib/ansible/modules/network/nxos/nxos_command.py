@@ -16,15 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: nxos_command
+extends_documentation_fragment: nxos
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Run arbitrary command on Cisco NXOS devices
@@ -138,19 +138,17 @@ vars:
 
 RETURN = """
 stdout:
-  description: the set of responses from the commands
-  returned: always
+  description: The set of responses from the commands
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
-
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
-
 failed_conditions:
-  description: the conditionals that failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
@@ -161,14 +159,14 @@ from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 
 def to_lines(stdout):
     lines = list()
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         lines.append(item)
     return lines
@@ -241,11 +239,15 @@ def main():
         responses = run_commands(module, commands)
 
         for item in list(conditionals):
-            if item(responses):
-                if match == 'any':
-                    conditionals = list()
-                    break
-                conditionals.remove(item)
+            try:
+                if item(responses):
+                    if match == 'any':
+                        conditionals = list()
+                        break
+                    conditionals.remove(item)
+            except FailedConditionalError:
+                exc = get_exception()
+                module.fail_json(msg=str(exc))
 
         if not conditionals:
             break

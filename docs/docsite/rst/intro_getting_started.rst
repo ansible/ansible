@@ -8,14 +8,13 @@ Getting Started
 Foreword
 ````````
 
-Now that you've read :doc:`intro_installation` and installed Ansible, it's time to dig in and get
-started with some commands.  
+Now that you've read :doc:`intro_installation` and installed Ansible, it's time to get
+started with some ad-hoc commands.  
 
 What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
 These features are handled by playbooks which are covered in a separate section.
 
-This section is about how to initially get going.  Once you have these concepts down, read :doc:`intro_adhoc` for some more
-detail, and then you'll be ready to dive into playbooks and explore the most interesting parts!
+This section is about how to initially get Ansible running.  Once you understand these concepts, read :doc:`intro_adhoc` for some more detail, and then you'll be ready to begin learning about playbooks and explore the most interesting parts!
 
 .. _remote_connection_information:
 
@@ -52,7 +51,8 @@ public SSH key should be located in ``authorized_keys`` on those systems::
     192.0.2.50
     aserver.example.org
     bserver.example.org
-
+   
+   
 This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
 We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
@@ -106,6 +106,20 @@ explore what you can do with different modules, and to learn about the Ansible
 :doc:`playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to
 explore, but you already have a fully working infrastructure!
+
+Tips
+
+When running commands, you can specify the local server by using "localhost" or "127.0.0.1" for the server name.
+
+Example:
+
+.. code-block:: bash
+
+    $ ansible localhost -m ping -e 'ansible_python_interpreter="/usr/bin/env python"'
+
+You can specify localhost explicitly by adding this to your inventory file::
+
+    localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
 
 .. _a_note_about_host_key_checking:
 

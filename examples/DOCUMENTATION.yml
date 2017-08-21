@@ -3,7 +3,7 @@
 # aliases) you can use the word 'null', or an empty list, [], where
 # appropriate.
 #
-# See docs.ansible.com/ansible/dev_guide/developing_modules.html for more information
+# See http://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html for more information
 #
 module: modulename
 short_description: This is a sentence describing the module

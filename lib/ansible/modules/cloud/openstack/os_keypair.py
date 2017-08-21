@@ -17,14 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: os_keypair
 short_description: Add/Delete a keypair from OpenStack
+author: "Benno Joy (@bennojoy)"
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
@@ -54,7 +56,7 @@ options:
     default: present
   availability_zone:
     description:
-      - Ignored. Present for backwards compatability
+      - Ignored. Present for backwards compatibility
     required: false
 requirements: []
 '''

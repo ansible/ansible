@@ -26,11 +26,19 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import re
+import hashlib
 
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.network_common import to_list
 
-DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
+DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
+
+DEFAULT_IGNORE_LINES_RE = set([
+    re.compile("Using \d+ out of \d+ bytes"),
+    re.compile("Building configuration"),
+    re.compile("Current configuration : \d+ bytes")
+])
 
 
 class ConfigLine(object):
@@ -67,6 +75,10 @@ class ConfigLine(object):
         return _obj_to_text(self._children)
 
     @property
+    def child_objs(self):
+        return self._children
+
+    @property
     def parents(self):
         return _obj_to_text(self._parents)
 
@@ -77,7 +89,7 @@ class ConfigLine(object):
         return '\n'.join(config)
 
     @property
-    def has_chilren(self):
+    def has_children(self):
         return len(self._children) > 0
 
     @property
@@ -88,13 +100,23 @@ class ConfigLine(object):
         assert isinstance(obj, ConfigLine), 'child must be of type `ConfigLine`'
         self._children.append(obj)
 
+
 def ignore_line(text, tokens=None):
     for item in (tokens or DEFAULT_COMMENT_TOKENS):
         if text.startswith(item):
             return True
+    for regex in DEFAULT_IGNORE_LINES_RE:
+        if regex.match(text):
+            return True
 
-_obj_to_text = lambda x: [o.text for o in x]
-_obj_to_raw = lambda x: [o.raw for o in x]
+
+def _obj_to_text(x):
+    return [o.text for o in x]
+
+
+def _obj_to_raw(x):
+    return [o.raw for o in x]
+
 
 def _obj_to_block(objects, visited=None):
     items = list()
@@ -105,6 +127,7 @@ def _obj_to_block(objects, visited=None):
                 if child not in items:
                     items.append(child)
     return _obj_to_raw(items)
+
 
 def dumps(objects, output='block', comments=False):
     if output == 'block':
@@ -126,11 +149,19 @@ def dumps(objects, output='block', comments=False):
 
     return '\n'.join(items)
 
+
 class NetworkConfig(object):
 
-    def __init__(self, indent=1, contents=None):
+    def __init__(self, indent=1, contents=None, ignore_lines=None):
         self._indent = indent
         self._items = list()
+        self._config_text = None
+
+        if ignore_lines:
+            for item in ignore_lines:
+                if not isinstance(item, re._pattern_type):
+                    item = re.compile(item)
+                DEFAULT_IGNORE_LINES_RE.add(item)
 
         if contents:
             self.load(contents)
@@ -138,6 +169,16 @@ class NetworkConfig(object):
     @property
     def items(self):
         return self._items
+
+    @property
+    def config_text(self):
+        return self._config_text
+
+    @property
+    def sha1(self):
+        sha1 = hashlib.sha1()
+        sha1.update(to_bytes(str(self), errors='surrogate_or_strict'))
+        return sha1.digest()
 
     def __getitem__(self, key):
         for line in self:
@@ -151,7 +192,11 @@ class NetworkConfig(object):
     def __str__(self):
         return '\n'.join([c.raw for c in self.items])
 
+    def __len__(self):
+        return len(self._items)
+
     def load(self, s):
+        self._config_text = s
         self._items = self.parse(s)
 
     def loadfp(self, fp):
@@ -160,6 +205,7 @@ class NetworkConfig(object):
     def parse(self, lines, comment_tokens=None):
         toplevel = re.compile(r'\S')
         childline = re.compile(r'^\s*(.+)$')
+        entry_reg = re.compile(r'([{};])')
 
         ancestors = list()
         config = list()
@@ -167,8 +213,8 @@ class NetworkConfig(object):
         curlevel = 0
         prevlevel = 0
 
-        for linenum, line in enumerate(str(lines).split('\n')):
-            text = str(re.sub(r'([{};])', '', line)).strip()
+        for linenum, line in enumerate(to_native(lines, errors='surrogate_or_strict').split('\n')):
+            text = entry_reg.sub('', line).strip()
 
             cfg = ConfigLine(line)
 
@@ -321,7 +367,7 @@ class NetworkConfig(object):
         offset = 0
         obj = None
 
-        ## global config command
+        # global config command
         if not parents:
             for line in lines:
                 item = ConfigLine(line)
@@ -364,22 +410,18 @@ class NetworkConfig(object):
 
 class CustomNetworkConfig(NetworkConfig):
 
+    def items_text(self):
+        return [item.text for item in self.items]
+
     def expand_section(self, configobj, S=None):
         if S is None:
             S = list()
         S.append(configobj)
-        for child in configobj.children:
+        for child in configobj.child_objs:
             if child in S:
                 continue
             self.expand_section(child, S)
         return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
 
     def to_block(self, section):
         return '\n'.join([item.raw for item in section])
@@ -398,55 +440,3 @@ class CustomNetworkConfig(NetworkConfig):
         if not obj:
             raise ValueError('path does not exist in config')
         return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-

@@ -14,15 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {
-    'version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'committer'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = '''
 ---
-module: kms
+module: aws_kms
 short_description: Perform various KMS management tasks.
 description:
      - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
@@ -166,12 +165,18 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             # do we want this grant type? Are we on its statement?
             # and does the role have this grant type?
 
+            # Ensure statement looks as expected
+            if not statement.get('Principal'):
+                statement['Principal'] = {'AWS': []}
+            if not isinstance(statement['Principal']['AWS'], list):
+                statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+
             if mode == 'grant' and statement['Sid'] == statement_label[granttype]:
                 # we're granting and we recognize this statement ID.
 
                 if granttype in granttypes:
                     invalid_entries = list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
-                    if clean_invalid_entries and len(list(invalid_entries)):
+                    if clean_invalid_entries and invalid_entries:
                         # we have bad/invalid entries. These are roles that were deleted.
                         # prune the list.
                         valid_entries = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
@@ -198,12 +203,12 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
     try:
         if len(changes_needed) and not dry_run:
             policy_json_string = json.dumps(policy)
-            kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
-    except:
-        raise Exception("{}: // {}".format("e", policy_json_string))
+    except Exception as e:
+            raise Exception("{0}: // {1}".format(e, repr(policy)))
+    kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
 
-        # returns nothing, so we have to just assume it didn't throw
-        ret['changed'] = True
+    # returns nothing, so we have to just assume it didn't throw
+    ret['changed'] = changes_needed and not had_invalid_entries
 
     ret['changes_needed'] = changes_needed
     ret['had_invalid_entries'] = had_invalid_entries
@@ -284,7 +289,8 @@ def main():
                 if not g in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode,
+                       clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#
 # (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible
@@ -43,7 +41,7 @@ class TestEosConfigModule(TestEosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('eos_config_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
 
@@ -73,7 +71,7 @@ class TestEosConfigModule(TestEosModule):
 
     def test_eos_config_before(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     before=['before command'])
+                    before=['before command'])
 
         set_module_args(args)
 
@@ -85,7 +83,7 @@ class TestEosConfigModule(TestEosModule):
 
     def test_eos_config_after(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     after=['after command'])
+                    after=['after command'])
 
         set_module_args(args)
 
@@ -135,5 +133,22 @@ class TestEosConfigModule(TestEosModule):
         result = self.execute_module()
         self.assertIn('__backup__', result)
 
+    def test_eos_config_save_when(self):
+        mock_run_commands = patch('ansible.modules.network.eos.eos_config.run_commands')
+        run_commands = mock_run_commands.start()
 
+        run_commands.return_value = [load_fixture('eos_config_config.cfg'),
+                                     load_fixture('eos_config_config.cfg')]
 
+        args = dict(save_when='modified')
+        set_module_args(args)
+        result = self.execute_module()
+
+        run_commands.return_value = [load_fixture('eos_config_config.cfg'),
+                                     load_fixture('eos_config_config_updated.cfg')]
+
+        args = dict(save_when='modified')
+        set_module_args(args)
+        result = self.execute_module(changed=True)
+
+        mock_run_commands.stop()

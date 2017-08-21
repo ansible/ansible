@@ -2,13 +2,19 @@
 
 from __future__ import absolute_import, print_function
 
+import abc
 import errno
+import inspect
 import os
 import pipes
+import pkgutil
 import shutil
 import subprocess
+import re
 import sys
 import time
+
+ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # compatible with Python 2 *and* 3
 
 
 def is_shippable():
@@ -79,7 +85,7 @@ def find_executable(executable, cwd=None, path=None, required=True):
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
-                cmd_verbosity=1):
+                cmd_verbosity=1, str_errors='strict'):
     """
     :type args: CommonConfig
     :type cmd: collections.Iterable[str]
@@ -91,15 +97,16 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
+    :type str_errors: str
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
-                       cmd_verbosity=cmd_verbosity)
+                       cmd_verbosity=cmd_verbosity, str_errors=str_errors)
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
-                cmd_verbosity=1):
+                cmd_verbosity=1, str_errors='strict'):
     """
     :type cmd: collections.Iterable[str]
     :type capture: bool
@@ -110,6 +117,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
+    :type str_errors: str
     :rtype: str | None, str | None
     """
     if not cwd:
@@ -165,10 +173,14 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         raise
 
     if communicate:
-        stdout, stderr = process.communicate(data)
+        encoding = 'utf-8'
+        data_bytes = data.encode(encoding) if data else None
+        stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+        stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
+        stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
     else:
         process.wait()
-        stdout, stderr = None, None
+        stdout_text, stderr_text = None, None
 
     status = process.returncode
     runtime = time.time() - start
@@ -176,9 +188,9 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     display.info('Command exited with status %s after %s seconds.' % (status, runtime), verbosity=4)
 
     if status == 0:
-        return stdout, stderr
+        return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout, stderr, runtime)
+    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime)
 
 
 def common_environment():
@@ -194,7 +206,8 @@ def common_environment():
 
     optional = (
         'HTTPTESTER',
-        'SSH_AUTH_SOCK'
+        'LD_LIBRARY_PATH',
+        'SSH_AUTH_SOCK',
     )
 
     env.update(pass_vars(required=required, optional=optional))
@@ -202,7 +215,7 @@ def common_environment():
     return env
 
 
-def pass_vars(required=None, optional=None):
+def pass_vars(required, optional):
     """
     :type required: collections.Iterable[str]
     :type optional: collections.Iterable[str]
@@ -266,6 +279,15 @@ def make_dirs(path):
             raise
 
 
+def is_binary_file(path):
+    """
+    :type path: str
+    :rtype: bool
+    """
+    with open(path, 'rb') as path_fd:
+        return b'\0' in path_fd.read(1024)
+
+
 class Display(object):
     """Manages color console output."""
     clear = '\033[0m'
@@ -287,6 +309,8 @@ class Display(object):
         self.verbosity = 0
         self.color = True
         self.warnings = []
+        self.warnings_unique = set()
+        self.info_stderr = False
 
     def __warning(self, message):
         """
@@ -304,10 +328,17 @@ class Display(object):
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message):
+    def warning(self, message, unique=False):
         """
         :type message: str
+        :type unique: bool
         """
+        if unique:
+            if message in self.warnings_unique:
+                return
+
+            self.warnings_unique.add(message)
+
         self.__warning(message)
         self.warnings.append(message)
 
@@ -330,7 +361,7 @@ class Display(object):
         """
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color)
+            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout)
 
     def print_message(self, message, color=None, fd=sys.stdout):  # pylint: disable=locally-disabled, invalid-name
         """
@@ -349,20 +380,12 @@ class Display(object):
 
 class ApplicationError(Exception):
     """General application error."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationError, self).__init__(message)
+    pass
 
 
 class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationWarning, self).__init__(message)
+    pass
 
 
 class SubprocessError(ApplicationError):
@@ -419,49 +442,6 @@ class CommonConfig(object):
         self.debug = args.debug  # type: bool
 
 
-class EnvironmentConfig(CommonConfig):
-    """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        """
-        super(EnvironmentConfig, self).__init__(args)
-
-        self.command = command
-
-        self.local = args.local is True
-
-        if args.tox is True or args.tox is False or args.tox is None:
-            self.tox = args.tox is True
-            self.tox_args = 0
-            self.python = args.python if 'python' in args else None  # type: str
-        else:
-            self.tox = True
-            self.tox_args = 1
-            self.python = args.tox  # type: str
-
-        self.docker = docker_qualify_image(args.docker)  # type: str
-        self.remote = args.remote  # type: str
-
-        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
-        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
-
-        self.tox_sitepackages = args.tox_sitepackages  # type: bool
-
-        self.remote_stage = args.remote_stage  # type: str
-        self.remote_aws_region = args.remote_aws_region  # type: str
-
-        self.requirements = args.requirements  # type: bool
-
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.delegate = self.tox or self.docker or self.remote
-
-        if self.delegate:
-            self.requirements = True
-
-
 def docker_qualify_image(name):
     """
     :type name: str
@@ -471,6 +451,62 @@ def docker_qualify_image(name):
         return name
 
     return 'ansible/ansible:%s' % name
+
+
+def parse_to_dict(pattern, value):
+    """
+    :type pattern: str
+    :type value: str
+    :return: dict[str, str]
+    """
+    match = re.search(pattern, value)
+
+    if match is None:
+        raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
+
+    return match.groupdict()
+
+
+def get_subclasses(class_type):
+    """
+    :type class_type: type
+    :rtype: set[str]
+    """
+    subclasses = set()
+    queue = [class_type]
+
+    while queue:
+        parent = queue.pop()
+
+        for child in parent.__subclasses__():
+            if child not in subclasses:
+                if not inspect.isabstract(child):
+                    subclasses.add(child)
+                queue.append(child)
+
+    return subclasses
+
+
+def import_plugins(directory):
+    """
+    :type directory: str
+    """
+    path = os.path.join(os.path.dirname(__file__), directory)
+    prefix = 'lib.%s.' % directory
+
+    for (_, name, _) in pkgutil.iter_modules([path], prefix=prefix):
+        __import__(name)
+
+
+def load_plugins(base_type, database):
+    """
+    :type base_type: type
+    :type database: dict[str, type]
+    """
+    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: dict [str, type]
+
+    for plugin in plugins:
+        database[plugin] = plugins[plugin]
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

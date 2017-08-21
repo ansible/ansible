@@ -4,24 +4,16 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2012, Jayson Vantuyl <jayson@aggressive.ly>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -200,7 +192,7 @@ def all_keys(module, keyring, short_format):
     results = []
     lines = to_native(out).split('\n')
     for line in lines:
-        if line.startswith("pub") or line.startswith("sub"):
+        if (line.startswith("pub") or line.startswith("sub")) and not "expired" in line:
             tokens = line.split()
             code = tokens[1]
             (len_type, real_code) = code.split("/")
@@ -366,7 +358,8 @@ def main():
             if remove_key(module, short_key_id, keyring):
                 keys = all_keys(module, keyring, short_format)
                 if fingerprint in keys:
-                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)", id=key_id)
+                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)",
+                                     id=key_id)
                 changed = True
             else:
                 # FIXME: module.fail_json or exit-json immediately at point of failure

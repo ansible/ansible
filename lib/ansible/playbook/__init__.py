@@ -26,7 +26,7 @@ from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_text
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
-from ansible.plugins import get_all_plugin_loaders
+from ansible.plugins.loader import get_all_plugin_loaders
 
 try:
     from __main__ import display
@@ -45,7 +45,7 @@ class Playbook:
         # be either a play or an include statement
         self._entries = []
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
-        self._loader  = loader
+        self._loader = loader
         self._file_name = None
 
     @staticmethod
@@ -89,7 +89,9 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if 'include' in entry:
+            if 'include' in entry or 'import_playbook' in entry:
+                if 'include' in entry:
+                    display.deprecated("You should use 'import_playbook' instead of 'include' for playbook includes")
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
                 if pb is not None:
                     self._entries.extend(pb._entries)

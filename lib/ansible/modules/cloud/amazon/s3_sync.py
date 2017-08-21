@@ -14,16 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: s3_sync
 short_description: Efficiently upload multiple files to S3
 description:
-     - The S3 module is great, but it is very slow for a large volume of files- even a dozen will be noticeable. In addition to speed, it handles globbing, inclusions/exclusions, mime types, expiration mapping, recursion, and smart directory mapping.
+     - The S3 module is great, but it is very slow for a large volume of files- even a dozen will be noticeable. In addition to speed, it handles globbing,
+       inclusions/exclusions, mime types, expiration mapping, recursion, cache control and smart directory mapping.
 version_added: "2.3"
 options:
   mode:
@@ -62,10 +64,10 @@ options:
     choices: [ '', private, public-read, public-read-write, authenticated-read, aws-exec-read, bucket-owner-read, bucket-owner-full-control ]
   mime_map:
     description:
-    - Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
-    type: dict
+    - >
+      Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
+      For example C({".txt": "application/text", ".yml": "appication/text"})
     required: false
-    sample: {".txt": "application/text", ".yml": "appication/text"}
   include:
     description:
     - Shell pattern-style file matching.
@@ -80,6 +82,17 @@ options:
     - For multiple patterns, comma-separate them.
     required: false
     default: ".*"
+  cache_control:
+    description:
+    - This is a string.
+    - Cache-Control header set on uploaded objects.
+    - Directives are separated by commmas.
+    required: false
+    version_added: "2.4"
+
+requirements:
+  - boto3 >= 1.4.4
+  - botocore
 
 author: tedder
 extends_documentation_fragment:
@@ -103,6 +116,7 @@ EXAMPLES = '''
     key_prefix: config_files/web
     file_change_strategy: force
     permission: public-read
+    cache_control: "public, max-age=31536000"
     include: "*"
     exclude: "*.txt,.*"
 '''
@@ -182,28 +196,26 @@ uploaded:
 
 '''
 
-import os
-import stat as osstat # os.stat constants
-import mimetypes
 import datetime
-from dateutil import tz
-import hashlib
 import fnmatch
+import hashlib
+import mimetypes
+import os
+import stat as osstat  # os.stat constants
+import traceback
+from dateutil import tz
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec
-
-# import a class, otherwise we'll use a fully qualified path
-#from ansible.module_utils.ec2 import AWSRetry
-import ansible.module_utils.ec2
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3
 
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    # Handled by imported HAS_BOTO3
+    pass
+
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -240,6 +252,8 @@ def boto_exception(err):
 # along with calculate_multipart_etag.  If not, see <http://www.gnu.org/licenses/>.
 
 DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024
+
+
 def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
 
     """
@@ -253,7 +267,7 @@ def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
 
     md5s = []
 
-    with open(source_path,'rb') as fp:
+    with open(source_path, 'rb') as fp:
         while True:
 
             data = fp.read(chunk_size)
@@ -264,11 +278,11 @@ def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
 
     if len(md5s) == 1:
         new_etag = '"{}"'.format(md5s[0].hexdigest())
-    else: # > 1
+    else:  # > 1
         digests = b"".join(m.digest() for m in md5s)
 
         new_md5 = hashlib.md5(digests)
-        new_etag = '"{}-{}"'.format(new_md5.hexdigest(),len(md5s))
+        new_etag = '"{}-{}"'.format(new_md5.hexdigest(), len(md5s))
 
     return new_etag
 
@@ -302,15 +316,16 @@ def gather_files(fileroot, include=None, exclude=None):
             f_size = fstat[osstat.ST_SIZE]
             f_modified_epoch = fstat[osstat.ST_MTIME]
             ret.append({
-                'fullpath':fullpath,
-                'chopped_path':chopped_path,
+                'fullpath': fullpath,
+                'chopped_path': chopped_path,
                 'modified_epoch': f_modified_epoch,
-                'bytes': f_size
-                })
+                'bytes': f_size,
+            })
         # dirpath = path *to* the directory
         # dirnames = subdirs *in* our directory
         # filenames
     return ret
+
 
 def calculate_s3_path(filelist, key_prefix=''):
     ret = []
@@ -320,6 +335,7 @@ def calculate_s3_path(filelist, key_prefix=''):
         retentry['s3_path'] = os.path.join(key_prefix, fileentry['chopped_path'])
         ret.append(retentry)
     return ret
+
 
 def calculate_local_etag(filelist, key_prefix=''):
     '''Really, "calculate md5", but since AWS uses their own format, we'll just call
@@ -331,6 +347,7 @@ def calculate_local_etag(filelist, key_prefix=''):
         retentry['local_etag'] = calculate_multipart_etag(fileentry['fullpath'])
         ret.append(retentry)
     return ret
+
 
 def determine_mimetypes(filelist, override_map):
     ret = []
@@ -355,6 +372,7 @@ def determine_mimetypes(filelist, override_map):
 
     return ret
 
+
 def head_s3(s3, bucket, s3keys):
     retkeys = []
     for entry in s3keys:
@@ -363,14 +381,18 @@ def head_s3(s3, bucket, s3keys):
         try:
             retentry['s3_head'] = s3.head_object(Bucket=bucket, Key=entry['s3_path'])
         except botocore.exceptions.ClientError as err:
-            if hasattr(err, 'response') and 'ResponseMetadata' in err.response and 'HTTPStatusCode' in err.response['ResponseMetadata'] and str(err.response['ResponseMetadata']['HTTPStatusCode']) == '404':
+            if (hasattr(err, 'response') and
+                    'ResponseMetadata' in err.response and
+                    'HTTPStatusCode' in err.response['ResponseMetadata'] and
+                    str(err.response['ResponseMetadata']['HTTPStatusCode']) == '404'):
                 pass
             else:
                 raise Exception(err)
-            #error_msg = boto_exception(err)
-            #return {'error': error_msg}
+            # error_msg = boto_exception(err)
+            # return {'error': error_msg}
         retkeys.append(retentry)
     return retkeys
+
 
 def filter_list(s3, bucket, s3filelist, strategy):
     keeplist = list(s3filelist)
@@ -393,20 +415,20 @@ def filter_list(s3, bucket, s3filelist, strategy):
                 else:
                     # file etags don't match, keep the entry.
                     pass
-            else: # we don't have an etag, so we'll keep it.
+            else:  # we don't have an etag, so we'll keep it.
                 pass
     elif strategy == 'date_size':
         for entry in keeplist:
             if entry.get('s3_head'):
-                #fstat = entry['stat']
+                # fstat = entry['stat']
                 local_modified_epoch = entry['modified_epoch']
                 local_size = entry['bytes']
 
                 # py2's datetime doesn't have a timestamp() field, so we have to revert to something more awkward.
-                #remote_modified_epoch = entry['s3_head']['LastModified'].timestamp()
+                # remote_modified_epoch = entry['s3_head']['LastModified'].timestamp()
                 remote_modified_datetime = entry['s3_head']['LastModified']
                 delta = (remote_modified_datetime - datetime.datetime(1970, 1, 1, tzinfo=tz.tzutc()))
-                remote_modified_epoch = delta.seconds + (delta.days*86400)
+                remote_modified_epoch = delta.seconds + (delta.days * 86400)
 
                 remote_size = entry['s3_head']['ContentLength']
 
@@ -424,6 +446,7 @@ def filter_list(s3, bucket, s3filelist, strategy):
     # prune 'please skip' entries, if any.
     return [x for x in keeplist if not x.get('skip_flag')]
 
+
 def upload_files(s3, bucket, filelist, params):
     ret = []
     for entry in filelist:
@@ -432,6 +455,9 @@ def upload_files(s3, bucket, filelist, params):
         }
         if params.get('permission'):
             args['ACL'] = params['permission']
+        if params.get('cache_control'):
+            args['CacheControl'] = params['cache_control']
+        # if this fails exception is caught in main()
         s3.upload_file(entry['fullpath'], bucket, entry['s3_path'], ExtraArgs=args, Callback=None, Config=None)
         ret.append(entry)
     return ret
@@ -440,17 +466,19 @@ def upload_files(s3, bucket, filelist, params):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        mode = dict(choices=['push'], default='push'),
-        file_change_strategy = dict(choices=['force','date_size','checksum'], default='date_size'),
-        bucket = dict(required=True),
-        key_prefix = dict(required=False, default=''),
-        file_root = dict(required=True, type='path'),
-        permission = dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read', 'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
-        retries = dict(required=False),
-        mime_map = dict(required=False, type='dict'),
-        exclude = dict(required=False, default=".*"),
-        include = dict(required=False, default="*"),
-        # future options: cache_control (string or map, perhaps), encoding, metadata, storage_class, retries
+        mode=dict(choices=['push'], default='push'),
+        file_change_strategy=dict(choices=['force', 'date_size', 'checksum'], default='date_size'),
+        bucket=dict(required=True),
+        key_prefix=dict(required=False, default=''),
+        file_root=dict(required=True, type='path'),
+        permission=dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read',
+                                                 'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
+        retries=dict(required=False),
+        mime_map=dict(required=False, type='dict'),
+        exclude=dict(required=False, default=".*"),
+        include=dict(required=False, default="*"),
+        cache_control=dict(required=False, default=''),
+        # future options: encoding, metadata, storage_class, retries
     )
     )
 
@@ -463,13 +491,10 @@ def main():
     result = {}
     mode = module.params['mode']
 
-
-    try:
-        region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
-        s3 = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        s3.list_buckets()
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg=str(e))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    if not region:
+        module.fail_json(msg="Region must be specified")
+    s3 = boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     if mode == 'push':
         try:
@@ -483,11 +508,10 @@ def main():
             # mark changed if we actually upload something.
             if result.get('uploads') and len(result.get('uploads')):
                 result['changed'] = True
-            #result.update(filelist=actionable_filelist)
-        except Exception as err:
+            # result.update(filelist=actionable_filelist)
+        except botocore.exceptions.ClientError as err:
             error_msg = boto_exception(err)
-            import traceback # traces get swallowed by Ansible.
-            module.fail_json(msg=error_msg, traceback=traceback.format_exc().splitlines())
+            module.fail_json(msg=error_msg, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
 
     module.exit_json(**result)
 

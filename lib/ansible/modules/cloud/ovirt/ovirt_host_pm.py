@@ -19,22 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: ovirt_host_pm
-short_description: Module to manage power management of hosts in oVirt
+short_description: Module to manage power management of hosts in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage power management of hosts in oVirt."
+    - "Module to manage power management of hosts in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the host to manage."
+            - "Name of the host to manage."
         required: true
         aliases: ['host']
     state:
@@ -53,7 +54,7 @@ options:
             - "Password of the user specified in C(username) parameter."
     type:
         description:
-            - "Type of the power management. oVirt predefined values are I(drac5), I(ipmilan), I(rsa),
+            - "Type of the power management. oVirt/RHV predefined values are I(drac5), I(ipmilan), I(rsa),
                I(bladecenter), I(alom), I(apc), I(apc_snmp), I(eps), I(wti), I(rsb), I(cisco_ucs),
                I(drac7), I(hpblade), I(ilo), I(ilo2), I(ilo3), I(ilo4), I(ilo_ssh),
                but user can have defined custom type."
@@ -108,9 +109,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 agent:
-    description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/agent."
+    description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/agent."
     returned: On success if agent is found.
+    type: dict
 '''
 
 import traceback
@@ -196,7 +198,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
         host = search_by_name(hosts_service, module.params['name'])
         fence_agents_service = hosts_service.host_service(host.id).fence_agents_service()
@@ -237,7 +240,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

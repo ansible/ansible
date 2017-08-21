@@ -19,23 +19,26 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import base64
+import crypt
+import glob
+import hashlib
 import itertools
 import json
-import os.path
 import ntpath
-import glob
+import os.path
 import re
-import crypt
-import hashlib
 import string
+import sys
+import time
+import uuid
+import yaml
+
+from collections import MutableMapping, MutableSequence
+from datetime import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
-from datetime import datetime
-import uuid
 
-import yaml
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 try:
@@ -45,9 +48,8 @@ except:
     HAS_PASSLIB = False
 
 from ansible import errors
-from ansible.compat.six import iteritems, string_types, integer_types
-from ansible.compat.six.moves import reduce
-from ansible.compat.six.moves import shlex_quote
+from ansible.module_utils.six import iteritems, string_types, integer_types
+from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
@@ -57,6 +59,7 @@ from ansible.vars.hostvars import HostVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
 
 class AnsibleJSONEncoder(json.JSONEncoder):
     '''
@@ -69,19 +72,23 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         else:
             return super(AnsibleJSONEncoder, self).default(o)
 
+
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
     transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, **kw)
     return to_text(transformed)
+
 
 def to_nice_yaml(a, indent=4, *args, **kw):
     '''Make verbose, human readable yaml'''
     transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
     return to_text(transformed)
 
+
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
     return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
+
 
 def to_nice_json(a, indent=4, *args, **kw):
     '''Make verbose, human readable JSON'''
@@ -106,28 +113,41 @@ def to_nice_json(a, indent=4, *args, **kw):
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
 
+
 def to_bool(a):
     ''' return a bool for the arg '''
-    if a is None or type(a) == bool:
+    if a is None or isinstance(a, bool):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in ['yes', 'on', '1', 'true', 1]:
+    if a in ('yes', 'on', '1', 'true', 1):
         return True
-    else:
-        return False
+    return False
 
-def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
+
+def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.strptime(string, format)
+
+
+def strftime(string_format, second=None):
+    ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
+    if second is not None:
+        try:
+            second = int(second)
+        except:
+            raise errors.AnsibleFilterError('Invalid value for epoch value (%s)' % second)
+    return time.strftime(string_format, time.localtime(second))
 
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
     return shlex_quote(a)
 
+
 def fileglob(pathname):
     ''' return list of matched regular files for glob '''
-    return [ g for g in glob.glob(pathname) if os.path.isfile(g) ]
+    return [g for g in glob.glob(pathname) if os.path.isfile(g)]
+
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
@@ -141,6 +161,7 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
 
+
 def regex_findall(value, regex, multiline=False, ignorecase=False):
     ''' Perform re.findall and return the list of matches '''
     flags = 0
@@ -149,6 +170,7 @@ def regex_findall(value, regex, multiline=False, ignorecase=False):
     if multiline:
         flags |= re.M
     return re.findall(regex, value, flags)
+
 
 def regex_search(value, regex, *args, **kwargs):
     ''' Perform re.search and return the list of matches or a backref '''
@@ -180,23 +202,25 @@ def regex_search(value, regex, *args, **kwargs):
                 items.append(match.group(item))
             return items
 
+
 def ternary(value, true_val, false_val):
     '''  value ? true_val : false_val '''
-    if value:
+    if bool(value):
         return true_val
     else:
         return false_val
-
 
 
 def regex_escape(string):
     '''Escape all regular expressions special characters from STRING.'''
     return re.escape(string)
 
+
 def from_yaml(data):
     if isinstance(data, string_types):
         return yaml.safe_load(data)
     return data
+
 
 @environmentfilter
 def rand(environment, end, start=None, step=None, seed=None):
@@ -217,6 +241,7 @@ def rand(environment, end, start=None, step=None, seed=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
+
 def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
@@ -229,24 +254,26 @@ def randomize_list(mylist, seed=None):
         pass
     return mylist
 
+
 def get_hash(data, hashtype='sha1'):
 
-    try: # see if hash is supported
+    try:  # see if hash is supported
         h = hashlib.new(hashtype)
     except:
         return None
 
-    h.update(to_bytes(data, errors='surrogate_then_strict'))
+    h.update(to_bytes(data, errors='surrogate_or_strict'))
     return h.hexdigest()
+
 
 def get_encrypted_password(password, hashtype='sha512', salt=None):
 
     # TODO: find a way to construct dynamically from system
-    cryptmethod= {
-        'md5':      '1',
+    cryptmethod = {
+        'md5': '1',
         'blowfish': '2a',
-        'sha256':   '5',
-        'sha512':   '6',
+        'sha256': '5',
+        'sha512': '6',
     }
 
     if hashtype in cryptmethod:
@@ -256,12 +283,13 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
                 saltsize = 8
             else:
                 saltsize = 16
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(saltsize)])
+            saltcharset = string.ascii_letters + string.digits + '/.'
+            salt = ''.join([r.choice(saltcharset) for _ in range(saltsize)])
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
                 raise errors.AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
-            saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
+            saltstring = "$%s$%s" % (cryptmethod[hashtype], salt)
             encrypted = crypt.crypt(password, saltstring)
         else:
             if hashtype == 'blowfish':
@@ -275,8 +303,10 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 
     return None
 
+
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
+
 
 def mandatory(a):
     from jinja2.runtime import Undefined
@@ -285,6 +315,7 @@ def mandatory(a):
     if isinstance(a, Undefined):
         raise errors.AnsibleFilterError('Mandatory variable not defined.')
     return a
+
 
 def combine(*terms, **kwargs):
     recursive = kwargs.get('recursive', False)
@@ -299,6 +330,7 @@ def combine(*terms, **kwargs):
         return reduce(merge_hash, terms)
     else:
         return dict(itertools.chain(*map(iteritems, terms)))
+
 
 def comment(text, style='plain', **kw):
     # Predefined comment types
@@ -382,6 +414,7 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
+
 def extract(item, container, morekeys=None):
     from jinja2.runtime import Undefined
 
@@ -397,46 +430,6 @@ def extract(item, container, morekeys=None):
             value = Undefined()
 
     return value
-
-def failed(*a, **kw):
-    ''' Test if task result yields failed '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
-    if rc != 0 or failed:
-        return True
-    else:
-        return False
-
-def success(*a, **kw):
-    ''' Test if task result yields success '''
-    return not failed(*a, **kw)
-
-def changed(*a, **kw):
-    ''' Test if task result yields changed '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|changed expects a dictionary")
-    if not 'changed' in item:
-        changed = False
-        if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
-            for result in item['results']:
-                changed = changed or result.get('changed', False)
-    else:
-        changed = item.get('changed', False)
-    return changed
-
-def skipped(*a, **kw):
-    ''' Test if task result yields skipped '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|skipped expects a dictionary")
-    skipped = item.get('skipped', False)
-    return skipped
 
 
 @environmentfilter
@@ -459,6 +452,14 @@ def do_groupby(environment, value, attribute):
     return [tuple(t) for t in _do_groupby(environment, value, attribute)]
 
 
+def b64encode(string):
+    return to_text(base64.b64encode(to_bytes(string, errors='surrogate_or_strict')))
+
+
+def b64decode(string):
+    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')))
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -468,8 +469,8 @@ class FilterModule(object):
             'groupby': do_groupby,
 
             # base 64
-            'b64decode': partial(unicode_wrap, base64.b64decode),
-            'b64encode': partial(unicode_wrap, base64.b64encode),
+            'b64decode': b64decode,
+            'b64encode': b64encode,
 
             # uuid
             'to_uuid': to_uuid,
@@ -484,7 +485,7 @@ class FilterModule(object):
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
 
-            #date
+            # date
             'to_datetime': to_datetime,
 
             # path
@@ -501,6 +502,9 @@ class FilterModule(object):
             # value as boolean
             'bool': to_bool,
 
+            # date formating
+            'strftime': strftime,
+
             # quote string for shell usage
             'quote': quote,
 
@@ -509,7 +513,7 @@ class FilterModule(object):
             'md5': md5s,
             # sha1 hex digeset of string
             'sha1': checksum_s,
-            # checksum of string as used by ansible for checksuming files
+            # checksum of string as used by ansible for checksumming files
             'checksum': checksum_s,
             # generic hashing
             'password_hash': get_encrypted_password,
@@ -542,20 +546,6 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
-
-            # failure testing
-            'failed'    : failed,
-            'failure'   : failed,
-            'success'   : success,
-            'succeeded' : success,
-
-            # changed testing
-            'changed' : changed,
-            'change'  : changed,
-
-            # skip testing
-            'skipped' : skipped,
-            'skip'    : skipped,
 
             # debug
             'type_debug': lambda o: o.__class__.__name__,

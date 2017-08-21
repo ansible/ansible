@@ -1,24 +1,15 @@
 #!/usr/bin/python
 # Copyright 2015 Google Inc. All Rights Reserved.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -137,7 +128,7 @@ RETURN = '''
 api_response:
     description: Raw response from Kubernetes API, content varies with API.
     returned: success
-    type: dictionary
+    type: complex
     contains:
         apiVersion: "v1"
         kind: "Namespace"
@@ -155,12 +146,17 @@ api_response:
 '''
 
 import base64
+import json
 
 try:
     import yaml
     has_lib_yaml = True
 except ImportError:
     has_lib_yaml = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 ############################################################################
 ############################################################################
@@ -191,9 +187,9 @@ except ImportError:
 #     for a in apis.keys():
 #         results.append('"%s": "%s"' % (a[3:].lower(), apis[a]))
 #     results.sort()
-#     print "KIND_URL = {"
-#     print ",\n".join(results)
-#     print "}"
+#     print("KIND_URL = {")
+#     print(",\n".join(results))
+#     print("}")
 #
 # if __name__ == '__main__':
 #     print_kind_url_map()
@@ -202,6 +198,7 @@ except ImportError:
 
 KIND_URL = {
     "binding": "/api/v1/namespaces/{namespace}/bindings",
+    "configmap": "/api/v1/namespaces/{namespace}/configmaps",
     "endpoints": "/api/v1/namespaces/{namespace}/endpoints",
     "limitrange": "/api/v1/namespaces/{namespace}/limitranges",
     "namespace": "/api/v1/namespaces",
@@ -214,7 +211,12 @@ KIND_URL = {
     "resourcequota": "/api/v1/namespaces/{namespace}/resourcequotas",
     "secret": "/api/v1/namespaces/{namespace}/secrets",
     "service": "/api/v1/namespaces/{namespace}/services",
-    "serviceaccount": "/api/v1/namespaces/{namespace}/serviceaccounts"
+    "serviceaccount": "/api/v1/namespaces/{namespace}/serviceaccounts",
+    "daemonset": "/apis/extensions/v1beta1/namespaces/{namespace}/daemonsets",
+    "deployment": "/apis/extensions/v1beta1/namespaces/{namespace}/deployments",
+    "horizontalpodautoscaler": "/apis/extensions/v1beta1/namespaces/{namespace}/horizontalpodautoscalers",  # NOQA
+    "ingress": "/apis/extensions/v1beta1/namespaces/{namespace}/ingresses",
+    "job": "/apis/extensions/v1beta1/namespaces/{namespace}/jobs",
 }
 USER_AGENT = "ansible-k8s-module/0.0.1"
 
@@ -400,11 +402,6 @@ def main():
         body.append(item_body)
 
     module.exit_json(changed=changed, api_response=body)
-
-
-# import module snippets
-from ansible.module_utils.basic import *    # NOQA
-from ansible.module_utils.urls import *     # NOQA
 
 
 if __name__ == '__main__':

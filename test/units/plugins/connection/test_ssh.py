@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
@@ -22,19 +21,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from io import StringIO
-
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
 from ansible.compat.selectors import SelectorKey, EVENT_READ
-from ansible.compat.six.moves import shlex_quote
+from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
-from ansible.module_utils._text import to_bytes
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -73,7 +71,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn = ssh.Connection(pc, new_stdin)
         conn._build_command('ssh')
 
-    def test_plugins_connection_ssh__exec_command(self):
+    def test_plugins_connection_ssh_exec_command(self):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = ssh.Connection(pc, new_stdin)
@@ -83,8 +81,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run = MagicMock()
         conn._run.return_value = (0, 'stdout', 'stderr')
 
-        res, stdout, stderr = conn._exec_command('ssh')
-        res, stdout, stderr = conn._exec_command('ssh', 'this is some data')
+        res, stdout, stderr = conn.exec_command('ssh')
+        res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
 
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
@@ -92,10 +90,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         conn = ssh.Connection(pc, new_stdin)
 
-        conn.check_password_prompt    = MagicMock()
-        conn.check_become_success     = MagicMock()
+        conn.check_password_prompt = MagicMock()
+        conn.check_become_success = MagicMock()
         conn.check_incorrect_password = MagicMock()
-        conn.check_missing_password   = MagicMock()
+        conn.check_missing_password = MagicMock()
 
         def _check_password_prompt(line):
             if b'foo' in line:
@@ -117,17 +115,17 @@ class TestConnectionBaseClass(unittest.TestCase):
                 return True
             return False
 
-        conn.check_password_prompt.side_effect    = _check_password_prompt
-        conn.check_become_success.side_effect     = _check_become_success
+        conn.check_password_prompt.side_effect = _check_password_prompt
+        conn.check_become_success.side_effect = _check_become_success
         conn.check_incorrect_password.side_effect = _check_incorrect_password
-        conn.check_missing_password.side_effect   = _check_missing_password
+        conn.check_missing_password.side_effect = _check_missing_password
 
         # test examining output for prompt
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = True
@@ -141,10 +139,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test examining output for become prompt
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = False
@@ -159,10 +157,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test examining output for become failure
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = False
@@ -177,10 +175,10 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test examining output for missing password
         conn._flags = dict(
-            become_prompt = False,
-            become_success = False,
-            become_error = False,
-            become_nopasswd_error = False,
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
         )
 
         pc.prompt = False
@@ -194,135 +192,112 @@ class TestConnectionBaseClass(unittest.TestCase):
         self.assertTrue(conn._flags['become_nopasswd_error'])
 
     @patch('time.sleep')
-    def test_plugins_connection_ssh_exec_command(self, mock_sleep):
-        pc = PlayContext()
-        new_stdin = StringIO()
-        conn = ssh.Connection(pc, new_stdin)
-        conn._build_command = MagicMock()
-        conn._exec_command = MagicMock()
-
-        C.ANSIBLE_SSH_RETRIES = 9
-
-        # test a regular, successful execution
-        conn._exec_command.return_value = (0, b'stdout', b'')
-        res = conn.exec_command('ssh', 'some data')
-        self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return what the _exec_command helper returned')
-
-        # test a retry, followed by success
-        conn._exec_command.return_value = None
-        conn._exec_command.side_effect = [(255, '', ''), (0, b'stdout', b'')]
-        res = conn.exec_command('ssh', 'some data')
-        self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return what the _exec_command helper returned')
-
-        # test multiple failures
-        conn._exec_command.side_effect = [(255, b'', b'')] * 10
-        self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
-
-        # test other failure from exec_command
-        conn._exec_command.side_effect = [Exception('bad')] * 10
-        self.assertRaises(Exception, conn.exec_command, 'ssh', 'some data')
-
     @patch('os.path.exists')
-    def test_plugins_connection_ssh_put_file(self, mock_ospe):
+    def test_plugins_connection_ssh_put_file(self, mock_ospe, mock_sleep):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = ssh.Connection(pc, new_stdin)
         conn._build_command = MagicMock()
-        conn._run = MagicMock()
+        conn._bare_run = MagicMock()
 
         mock_ospe.return_value = True
         conn._build_command.return_value = 'some command to run'
-        conn._run.return_value = (0, '', '')
+        conn._bare_run.return_value = (0, '', '')
         conn.host = "some_host"
+
+        C.ANSIBLE_SSH_RETRIES = 9
 
         # Test with C.DEFAULT_SCP_IF_SSH set to smart
         # Test when SFTP works
         C.DEFAULT_SCP_IF_SSH = 'smart'
         expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # Test when SFTP doesn't work but SCP does
-        conn._run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None, checkrc=False)
-        conn._run.side_effect = None
+        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.side_effect = None
 
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'put',
-            to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-            to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # test that a non-zero rc raises an error
-        conn._run.return_value = (1, 'stdout', 'some errors')
+        conn._bare_run.return_value = (1, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # test that a not-found path raises an error
         mock_ospe.return_value = False
-        conn._run.return_value = (0, 'stdout', '')
+        conn._bare_run.return_value = (0, 'stdout', '')
         self.assertRaises(AnsibleFileNotFound, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
-    def test_plugins_connection_ssh_fetch_file(self):
+    @patch('time.sleep')
+    def test_plugins_connection_ssh_fetch_file(self, mock_sleep):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = ssh.Connection(pc, new_stdin)
         conn._build_command = MagicMock()
-        conn._run = MagicMock()
+        conn._bare_run = MagicMock()
 
         conn._build_command.return_value = 'some command to run'
-        conn._run.return_value = (0, '', '')
+        conn._bare_run.return_value = (0, '', '')
         conn.host = "some_host"
+
+        C.ANSIBLE_SSH_RETRIES = 9
 
         # Test with C.DEFAULT_SCP_IF_SSH set to smart
         # Test when SFTP works
         C.DEFAULT_SCP_IF_SSH = 'smart'
         expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # Test when SFTP doesn't work but SCP does
-        conn._run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None, checkrc=False)
-        conn._run.side_effect = None
+        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.side_effect = None
 
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'get',
-            to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-            to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # test that a non-zero rc raises an error
-        conn._run.return_value = (1, 'stdout', 'some errors')
+        conn._bare_run.return_value = (1, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
 
@@ -440,7 +415,7 @@ class TestSSHConnectionRun(object):
             self.conn._flags['become_success'] = True
         return (b'', b'')
 
-    def test_pasword_with_prompt(self):
+    def test_password_with_prompt(self):
         # test with password prompting enabled
         self.pc.password = None
         self.pc.prompt = b'Password:'
@@ -465,7 +440,7 @@ class TestSSHConnectionRun(object):
         assert self.conn._send_initial_data.call_count == 1
         assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
 
-    def test_pasword_with_become(self):
+    def test_password_with_become(self):
         # test with some become settings
         self.pc.prompt = b'Password:'
         self.pc.become = True
@@ -536,3 +511,133 @@ class TestSSHConnectionRun(object):
         assert self.mock_selector.register.called is True
         assert self.mock_selector.register.call_count == 2
         assert self.conn._send_initial_data.called is False
+
+
+@pytest.mark.usefixtures('mock_run_env')
+class TestSSHConnectionRetries(object):
+    def test_retry_then_success(self, monkeypatch):
+        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
+        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
+
+        self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
+        self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            []
+        ]
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        return_code, b_stdout, b_stderr = self.conn.exec_command('ssh', 'some data')
+        assert return_code == 0
+        assert b_stdout == b'my_stdout\nsecond_line'
+        assert b_stderr == b'my_stderr'
+
+    def test_multiple_failures(self, monkeypatch):
+        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
+        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 9)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
+
+        self.mock_popen_res.stdout.read.side_effect = [b""] * 10
+        self.mock_popen_res.stderr.read.side_effect = [b""] * 10
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 30)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+        ] * 10
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        pytest.raises(AnsibleConnectionFailure, self.conn.exec_command, 'ssh', 'some data')
+        assert self.mock_popen.call_count == 10
+
+    def test_abitrary_exceptions(self, monkeypatch):
+        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
+        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 9)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        self.mock_popen.side_effect = [Exception('bad')] * 10
+        pytest.raises(Exception, self.conn.exec_command, 'ssh', 'some data')
+        assert self.mock_popen.call_count == 10
+
+    def test_put_file_retries(self, monkeypatch):
+        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
+        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
+        monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
+
+        self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
+        self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 4 + [0] * 4)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            []
+        ]
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'sftp'
+
+        return_code, b_stdout, b_stderr = self.conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        assert return_code == 0
+        assert b_stdout == b"my_stdout\nsecond_line"
+        assert b_stderr == b"my_stderr"
+        assert self.mock_popen.call_count == 2
+
+    def test_fetch_file_retries(self, monkeypatch):
+        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
+        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
+        monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
+
+        self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
+        self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 4 + [0] * 4)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            []
+        ]
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'sftp'
+
+        return_code, b_stdout, b_stderr = self.conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        assert return_code == 0
+        assert b_stdout == b"my_stdout\nsecond_line"
+        assert b_stderr == b"my_stderr"
+        assert self.mock_popen.call_count == 2

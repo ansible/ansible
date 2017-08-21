@@ -7,23 +7,16 @@
 # that was based on pacman module written by Afterburn <http://github.com/afterburn>
 #  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -71,14 +64,19 @@ options:
         description:
             - For pkgng versions 1.5 and later, pkg will install all packages
               within the specified root directory.
-            - Can not be used together with I(chroot) option.
+            - Can not be used together with I(chroot) or I(jail) options.
         required: false
     chroot:
         version_added: "2.1"
         description:
             - Pkg will chroot in the specified environment.
-            - Can not be used together with I(rootdir) option.
+            - Can not be used together with I(rootdir) or I(jail) options.
         required: false
+    jail:
+        version_added: "2.4"
+        description:
+            - Pkg will execute in the given jail name or id.
+            - Can not be used together with I(chroot) or I(rootdir) options.
     autoremove:
         version_added: "2.2"
         description:
@@ -222,7 +220,7 @@ def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
         rc, out, err = module.run_command('%s %s annotate -y -A %s %s "%s"'
             % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
-            module.fail_json("could not annotate %s: %s"
+            module.fail_json(msg="could not annotate %s: %s"
                 % (package, out), stderr=err)
         return True
     elif _value != value:
@@ -241,7 +239,7 @@ def annotation_delete(module, pkgng_path, package, tag, value, dir_arg):
         rc, out, err = module.run_command('%s %s annotate -y -D %s %s'
             % (pkgng_path, dir_arg, package, tag))
         if rc != 0:
-            module.fail_json("could not delete annotation to %s: %s"
+            module.fail_json(msg="could not delete annotation to %s: %s"
                 % (package, out), stderr=err)
         return True
     return False
@@ -250,7 +248,7 @@ def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
     _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if not value:
         # No such tag
-        module.fail_json("could not change annotation to %s: tag %s does not exist"
+        module.fail_json(msg="could not change annotation to %s: tag %s does not exist"
             % (package, tag))
     elif _value == value:
         # No change in value
@@ -259,7 +257,7 @@ def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
         rc,out,err = module.run_command('%s %s annotate -y -M %s %s "%s"'
             % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
-            module.fail_json("could not change annotation annotation to %s: %s"
+            module.fail_json(msg="could not change annotation annotation to %s: %s"
                 % (package, out), stderr=err)
         return True
 
@@ -313,9 +311,10 @@ def main():
             pkgsite         = dict(default="", required=False),
             rootdir         = dict(default="", required=False, type='path'),
             chroot          = dict(default="", required=False, type='path'),
+            jail            = dict(default="", required=False, type='str'),
             autoremove      = dict(default=False, type='bool')),
         supports_check_mode = True,
-        mutually_exclusive  =[["rootdir", "chroot"]])
+        mutually_exclusive  =[["rootdir", "chroot", "jail"]])
 
     pkgng_path = module.get_bin_path('pkg', True)
 
@@ -336,6 +335,9 @@ def main():
 
     if p["chroot"] != "":
         dir_arg = '--chroot %s' % (p["chroot"])
+
+    if p["jail"] != "":
+        dir_arg = '--jail %s' % (p["jail"])
 
     if p["state"] == "present":
         _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], dir_arg)

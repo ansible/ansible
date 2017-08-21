@@ -51,7 +51,6 @@ class TestIosSystemModule(TestIosModule):
         commands = ['hostname foo']
         self.execute_module(changed=True, commands=commands)
 
-
     def test_ios_system_domain_name(self):
         set_module_args(dict(domain_name=['test.com']))
         commands = ['ip domain name test.com',
@@ -120,4 +119,3 @@ class TestIosSystemModule(TestIosModule):
         name_servers = dict(server='8.8.8.8', vrf='missing')
         set_module_args(dict(name_servers=name_servers))
         self.execute_module(failed=True)
-

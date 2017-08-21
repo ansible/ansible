@@ -1,0 +1,159 @@
+# Test code for win_eventlog_entry
+
+# (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Add entry to fake log
+  win_eventlog_entry:
+    log: FakeLogName
+    source: "{{ win_test_log_source.source }}"
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry_to_fake_log
+  failed_when: add_entry_to_fake_log.changed != false or add_entry_to_fake_log.msg != "Log FakeLogName does not exist and cannot be written to"
+
+
+- name: Add entry from fake source
+  win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+    source: FakeSourceName
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry_from_fake_source
+  failed_when: add_entry_from_fake_source.changed != false or add_entry_from_fake_source.msg != "Source FakeSourceName does not exist"
+
+
+- name: Add entry with invalid event_id
+  win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+    source: "{{ win_test_log_source.source }}"
+    event_id: 67000
+    message: This is a test log entry message
+  register: add_entry_with_invalid_event_id
+  failed_when: add_entry_with_invalid_event_id.changed != false or add_entry_with_invalid_event_id.msg != "Event ID must be between 0 and 65535"
+
+
+- name: Add entry from other log source
+  win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+    source: "{{ win_test_log_source_extra.source }}"
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry_from_other_log_source
+  failed_when: add_entry_from_other_log_source.changed != false or add_entry_from_other_log_source.msg != "Source {{ win_test_log_source_extra.source }} does not belong to log {{ win_test_log_source.log }} and cannot be written to"
+
+
+- name: Add entry
+  win_eventlog_entry: &wele
+    log: "{{ win_test_log_source.log }}"
+    source: "{{ win_test_log_source.source }}"
+    event_id: 12345
+    message: This is a test log entry message
+  register: add_entry
+
+- name: Test add_entry
+  assert:
+    that:
+    - add_entry.changed == true
+    - add_entry.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+
+- name: Test add_entry count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_count
+  failed_when: add_entry_count.stdout_lines[0] != "1"
+  when: not in_check_mode
+
+- name: Test add_entry result (normal mode)
+  test_win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+  register: add_entry_result
+  when: not in_check_mode
+
+- name: Test add_entry_result (normal mode)
+  assert:
+    that:
+    - add_entry_result.source == win_test_log_source.source
+    - add_entry_result.event_id == 12345
+    - add_entry_result.message == "This is a test log entry message"
+  when: not in_check_mode
+
+
+- name: Add entry (again)
+  win_eventlog_entry: *wele
+  register: add_entry_again
+
+- name: Test add_entry_again (normal mode)
+  assert:
+    that:
+    - add_entry_again.changed == true
+    - add_entry_again.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+  when: not in_check_mode
+
+- name: Test add_entry_again count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_again_count
+  failed_when: add_entry_again_count.stdout_lines[0] != "2"
+  when: not in_check_mode
+
+
+- name: Add entry all options
+  win_eventlog_entry: &wele_ao
+    <<: *wele
+    event_id: 500
+    message: This is a test error message
+    entry_type: Error
+    category: 5
+    raw_data: 10,20
+  register: add_entry_all_options
+
+- name: Test add_entry_all_options
+  assert:
+    that:
+    - add_entry_all_options.changed == true
+    - add_entry_all_options.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+
+- name: Test add_entry_all_options count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_all_options_count
+  failed_when: add_entry_all_options_count.stdout_lines[0] != "3"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options result (normal mode)
+  test_win_eventlog_entry:
+    log: "{{ win_test_log_source.log }}"
+  register: add_entry_all_options_result
+  when: not in_check_mode
+
+- name: Test add_entry_all_options_result (normal mode)
+  assert:
+    that:
+    - add_entry_all_options_result.source == win_test_log_source.source
+    - add_entry_all_options_result.event_id == 500
+    - add_entry_all_options_result.message == "This is a test error message"
+    - add_entry_all_options_result.entry_type == "Error"
+    - add_entry_all_options_result.category == 5
+    - add_entry_all_options_result.raw_data == "10,20"
+  when: not in_check_mode
+
+
+- name: Add entry all options (again)
+  win_eventlog_entry: *wele_ao
+  register: add_entry_all_options_again
+
+- name: Test add_entry_all_options_again (normal mode)
+  assert:
+    that:
+    - add_entry_all_options_again.changed == true
+    - add_entry_all_options_again.msg == "Entry added to log {{ win_test_log_source.log }} from source {{ win_test_log_source.source }}"
+  when: not in_check_mode
+
+- name: Test add_entry_all_options_again count (normal mode)
+  win_shell: (Get-EventLog -LogName "{{ win_test_log_source.log }}").Count
+  register: add_entry_all_options_again_count
+  failed_when: add_entry_all_options_again_count.stdout_lines[0] != "4"
+  when: not in_check_mode
+
+
+- name: Clear event log entries
+  win_shell: Clear-EventLog -LogName "{{ win_test_log_source.log }}"
+  when: not in_check_mode

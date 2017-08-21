@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: os_server_facts
 short_description: Retrieve facts about one or more compute instances
+author: Monty
 version_added: "2.0"
 description:
     - Retrieve facts about server instances from OpenStack.
@@ -35,7 +37,7 @@ requirements:
 options:
    server:
      description:
-       - restrict results to servers with names matching
+       - restrict results to servers with names or UUID matching
          this glob expression (e.g., C<web*>).
      required: false
      default: None
@@ -47,7 +49,7 @@ options:
      default: false
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 extends_documentation_fragment: openstack
 '''
@@ -92,7 +94,7 @@ def main():
             # filter servers by name
             pattern = module.params['server']
             openstack_servers = [server for server in openstack_servers
-                                 if fnmatch.fnmatch(server['name'], pattern)]
+                                 if fnmatch.fnmatch(server['name'], pattern) or fnmatch.fnmatch(server['id'], pattern)]
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_servers=openstack_servers))
 

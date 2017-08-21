@@ -1,24 +1,15 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -37,6 +28,20 @@ options:
         stable debian image)
     required: false
     default: "debian-8"
+  image_family:
+    description:
+      - image family from which to select the image.  The most recent
+        non-deprecated image in the family will be used.
+    required: false
+    default: null
+    version_added: "2.4"
+  external_projects:
+    description:
+      - A list of other projects (accessible with the provisioning credentials)
+        to be searched for the image.
+    required: false
+    default: null
+    version_added: "2.4"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
@@ -143,7 +148,7 @@ options:
     default: null
   zone:
     description:
-      - the GCE zone to use
+      - the GCE zone to use. The list of available zones is at U(https://cloud.google.com/compute/docs/regions-zones/regions-zones#available).
     required: true
     default: "us-central1-a"
   ip_forward:
@@ -192,7 +197,7 @@ author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom
 EXAMPLES = '''
 # Basic provisioning example.  Create a single Debian 8 instance in the
 # us-central1-a Zone of the n1-standard-1 machine type.
-# Create multiple instances by specifying multiple names, seperated by
+# Create multiple instances by specifying multiple names, separated by
 # commas in the instance_names field
 # (e.g. my-test-instance1,my-test-instance2)
     gce:
@@ -200,6 +205,22 @@ EXAMPLES = '''
       zone: us-central1-a
       machine_type: n1-standard-1
       image: debian-8
+      state: present
+      service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+      credentials_file: "/path/to/your-key.json"
+      project_id: "your-project-name"
+      disk_size: 32
+
+# Create a single instance of an image from the "my-base-image" image family
+# in the us-central1-a Zone of the n1-standard-1 machine type.
+# This image family is in the "my-other-project" GCP project.
+    gce:
+      instance_names: my-test-instance1
+      zone: us-central1-a
+      machine_type: n1-standard-1
+      image_family: my-base-image
+      external_projects:
+        - my-other-project
       state: present
       service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
       credentials_file: "/path/to/your-key.json"
@@ -232,6 +253,7 @@ EXAMPLES = '''
         - storage-full
         - taskqueue
         - bigquery
+        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
       service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
       credentials_file: "/path/to/your-key.json"
       project_id: "your-project-name"
@@ -299,6 +321,13 @@ EXAMPLES = '''
 '''
 
 import socket
+import logging
+
+try:
+    from ast import literal_eval
+    HAS_PYTHON26 = True
+except ImportError:
+    HAS_PYTHON26 = False
 
 try:
     import libcloud
@@ -312,11 +341,10 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect, unexpected_error_msg
+from ansible.module_utils.gcp import get_valid_location
+from ansible.module_utils.six.moves import reduce
 
 
 def get_instance_info(inst):
@@ -366,13 +394,15 @@ def get_instance_info(inst):
     })
 
 
-def create_instances(module, gce, instance_names, number):
+def create_instances(module, gce, instance_names, number, lc_zone):
     """Creates new instances. Attributes other than instance_names are picked
     up from 'module'
 
     module : AnsibleModule object
     gce: authenticated GCE libcloud driver
     instance_names: python list of instance names to create
+    number: number of instances to create
+    lc_zone: GCEZone object
 
     Returns:
         A list of dictionaries with instance information
@@ -380,22 +410,21 @@ def create_instances(module, gce, instance_names, number):
 
     """
     image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     machine_type = module.params.get('machine_type')
     metadata = module.params.get('metadata')
     network = module.params.get('network')
     subnetwork = module.params.get('subnetwork')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
     disks = module.params.get('disks')
-    state = module.params.get('state')
     tags = module.params.get('tags')
-    zone = module.params.get('zone')
     ip_forward = module.params.get('ip_forward')
     external_ip = module.params.get('external_ip')
     disk_auto_delete = module.params.get('disk_auto_delete')
     preemptible = module.params.get('preemptible')
     disk_size = module.params.get('disk_size')
     service_account_permissions = module.params.get('service_account_permissions')
-    service_account_email = module.params.get('service_account_email')
 
     if external_ip == "none":
         instance_external_ip = None
@@ -420,15 +449,14 @@ def create_instances(module, gce, instance_names, number):
     disk_modes = []
     for i, disk in enumerate(disks or []):
         if isinstance(disk, dict):
-            lc_disks.append(gce.ex_get_volume(disk['name']))
+            lc_disks.append(gce.ex_get_volume(disk['name'], lc_zone))
             disk_modes.append(disk['mode'])
         else:
-            lc_disks.append(gce.ex_get_volume(disk))
+            lc_disks.append(gce.ex_get_volume(disk, lc_zone))
             # boot disk is implicitly READ_WRITE
             disk_modes.append('READ_ONLY' if i > 0 else 'READ_WRITE')
     lc_network = gce.ex_get_network(network)
-    lc_machine_type = gce.ex_get_size(machine_type)
-    lc_zone = gce.ex_get_zone(zone)
+    lc_machine_type = gce.ex_get_size(machine_type, lc_zone)
 
     # Try to convert the user's metadata value into the format expected
     # by GCE.  First try to ensure user has proper quoting of a
@@ -457,12 +485,12 @@ def create_instances(module, gce, instance_names, number):
         else:
             metadata = md
 
-    lc_image = LazyDiskImage(module, gce, image, lc_disks)
+    lc_image = LazyDiskImage(module, gce, image, lc_disks, family=image_family, projects=external_projects)
     ex_sa_perms = []
     bad_perms = []
     if service_account_permissions:
         for perm in service_account_permissions:
-            if perm not in gce.SA_SCOPES_MAP:
+            if perm not in gce.SA_SCOPES_MAP and not perm.startswith('https://www.googleapis.com/auth'):
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))
@@ -561,14 +589,14 @@ def create_instances(module, gce, instance_names, number):
 
     return (changed, instance_json_data, instance_names)
 
-def change_instance_state(module, gce, instance_names, number, zone_name, state):
+def change_instance_state(module, gce, instance_names, number, zone, state):
     """Changes the state of a list of instances. For example,
     change from started to stopped, or started to absent.
 
     module: Ansible module object
     gce: authenticated GCE connection object
     instance_names: a list of instance names to terminate
-    zone_name: the zone where the instances reside prior to termination
+    zone: GCEZone object where the instances reside prior to termination
     state: 'state' parameter passed into module as argument
 
     Returns a dictionary of instance names that were changed.
@@ -588,7 +616,7 @@ def change_instance_state(module, gce, instance_names, number, zone_name, state)
     for name in node_names:
         inst = None
         try:
-            inst = gce.ex_get_node(name, zone_name)
+            inst = gce.ex_get_node(name, zone)
         except ResourceNotFoundError:
             state_instance_names.append(name)
         except Exception as e:
@@ -620,6 +648,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             image = dict(default='debian-8'),
+            image_family = dict(),
+            external_projects = dict(type='list'),
             instance_names = dict(),
             machine_type = dict(default='n1-standard-1'),
             metadata = dict(),
@@ -656,18 +686,14 @@ def main():
     gce = gce_connect(module)
 
     image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     instance_names = module.params.get('instance_names')
-    machine_type = module.params.get('machine_type')
-    metadata = module.params.get('metadata')
     name = module.params.get('name')
     number = module.params.get('num_instances')
-    network = module.params.get('network')
     subnetwork = module.params.get('subnetwork')
-    persistent_boot_disk = module.params.get('persistent_boot_disk')
     state = module.params.get('state')
-    tags = module.params.get('tags')
     zone = module.params.get('zone')
-    ip_forward = module.params.get('ip_forward')
     preemptible = module.params.get('preemptible')
     changed = False
 
@@ -684,6 +710,7 @@ def main():
     if not zone:
         module.fail_json(msg='Must specify a "zone"', changed=False)
 
+    lc_zone = get_valid_location(module, gce, zone)
     if preemptible is not None and hasattr(libcloud, '__version__') and libcloud.__version__ < '0.20':
         module.fail_json(msg="Apache Libcloud 0.20.0+ is required to use 'preemptible' option",
                          changed=False)
@@ -696,7 +723,7 @@ def main():
     if state in ['absent', 'deleted', 'started', 'stopped', 'terminated']:
         json_output['state'] = state
         (changed, state_instance_names) = change_instance_state(
-            module, gce, inames, number, zone, state)
+            module, gce, inames, number, lc_zone, state)
 
         # based on what user specified, return the same variable, although
         # value could be different if an instance could not be destroyed
@@ -708,7 +735,7 @@ def main():
     elif state in ['active', 'present']:
         json_output['state'] = 'present'
         (changed, instance_data, instance_name_list) = create_instances(
-            module, gce, inames, number)
+            module, gce, inames, number, lc_zone)
         json_output['instance_data'] = instance_data
         if instance_names:
             json_output['instance_names'] = instance_name_list
@@ -724,26 +751,28 @@ class LazyDiskImage:
     Object for lazy instantiation of disk image
     gce.ex_get_image is a very expensive call, so we want to avoid calling it as much as possible.
     """
-    def __init__(self, module, gce, name, has_pd):
+    def __init__(self, module, gce, name, has_pd, family=None, projects=None):
         self.image = None
         self.was_called = False
         self.gce = gce
         self.name = name
         self.has_pd = has_pd
         self.module = module
+        self.family = family
+        self.projects = projects
 
     def __call__(self):
         if not self.was_called:
             self.was_called = True
             if not self.has_pd:
-                self.image = self.gce.ex_get_image(self.name)
+                if self.family:
+                    self.image = self.gce.ex_get_image_from_family(self.family, ex_project_list=self.projects)
+                else:
+                    self.image = self.gce.ex_get_image(self.name, ex_project_list=self.projects)
                 if not self.image:
                     self.module.fail_json(msg='image or disks missing for create instance', changed=False)
         return self.image
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 if __name__ == '__main__':
     main()

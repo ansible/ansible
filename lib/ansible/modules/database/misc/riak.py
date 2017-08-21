@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, James Martin <jmartin@basho.com>, Drew Kerrigan <dkerrigan@basho.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -39,46 +30,37 @@ options:
       - The command you would like to perform against the cluster.
     required: false
     default: null
-    aliases: []
     choices: ['ping', 'kv_test', 'join', 'plan', 'commit']
   config_dir:
     description:
       - The path to the riak configuration directory
     required: false
     default: /etc/riak
-    aliases: []
   http_conn:
     description:
       - The ip address and port that is listening for Riak HTTP queries
     required: false
     default: 127.0.0.1:8098
-    aliases: []
   target_node:
     description:
       - The target node for certain operations (join, ping)
     required: false
     default: riak@127.0.0.1
-    aliases: []
   wait_for_handoffs:
     description:
       - Number of seconds to wait for handoffs to complete.
     required: false
     default: null
-    aliases: []
-    type: 'int'
   wait_for_ring:
     description:
       - Number of seconds to wait for all nodes to agree on the ring.
     required: false
     default: null
-    aliases: []
-    type: 'int'
   wait_for_service:
     description:
       - Waits for a riak service to come online before continuing.
     required: false
     default: None
-    aliases: []
     choices: ['kv']
   validate_certs:
     description:
@@ -105,18 +87,11 @@ EXAMPLES = '''
     wait_for_service: kv
 '''
 
+import json
 import time
-import socket
-import sys
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
 def ring_check(module, riak_admin_bin):
@@ -145,13 +120,11 @@ def main():
 
 
     command = module.params.get('command')
-    config_dir = module.params.get('config_dir')
     http_conn = module.params.get('http_conn')
     target_node = module.params.get('target_node')
     wait_for_handoffs = module.params.get('wait_for_handoffs')
     wait_for_ring = module.params.get('wait_for_ring')
     wait_for_service = module.params.get('wait_for_service')
-    validate_certs =  module.params.get('validate_certs')
 
 
     #make sure riak commands are on the path
@@ -263,8 +236,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

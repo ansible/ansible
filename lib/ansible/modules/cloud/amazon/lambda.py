@@ -15,9 +15,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -40,11 +41,13 @@ options:
     choices: [ 'present', 'absent' ]
   runtime:
     description:
-      - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs. Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
+      - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs.
+        Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
     required: true
   role:
     description:
-      - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS) resources. You may use the bare ARN if the role belongs to the same AWS account.
+      - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
+        resources. You may use the bare ARN if the role belongs to the same AWS account.
     default: null
   handler:
     description:
@@ -88,7 +91,8 @@ options:
     default: 128
   vpc_subnet_ids:
     description:
-      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run the function in a VPC.
+      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run
+        the function in a VPC.
     required: false
     default: None
   vpc_security_group_ids:
@@ -102,6 +106,12 @@ options:
     required: false
     default: None
     aliases: [ 'environment' ]
+    version_added: "2.3"
+  dead_letter_arn:
+    description:
+      - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
+    required: false
+    default: None
     version_added: "2.3"
 author:
     - 'Steyn Huizinga (@steynovich)'
@@ -236,6 +246,7 @@ def main():
         vpc_subnet_ids=dict(type='list', default=None),
         vpc_security_group_ids=dict(type='list', default=None),
         environment_variables=dict(type='dict', default=None),
+        dead_letter_arn=dict(type='str', default=None),
         )
     )
 
@@ -266,6 +277,7 @@ def main():
     vpc_subnet_ids = module.params.get('vpc_subnet_ids')
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
+    dead_letter_arn = module.params.get('dead_letter_arn')
 
     check_mode = module.check_mode
     changed = False
@@ -322,8 +334,15 @@ def main():
             func_kwargs.update({'Timeout': timeout})
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
-        if (environment_variables is not None) and (current_config['Environment']['Variables'] != environment_variables):
+        if (environment_variables is not None) and (current_config.get('Environment', {}).get('Variables', {}) != environment_variables):
             func_kwargs.update({'Environment':{'Variables': environment_variables}})
+        if dead_letter_arn is not None:
+            if current_config.get('DeadLetterConfig'):
+                if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+            else:
+                if dead_letter_arn != "":
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
@@ -345,14 +364,14 @@ def main():
                 subnet_net_id_changed = sorted(vpc_subnet_ids) != sorted(current_vpc_subnet_ids)
                 vpc_security_group_ids_changed = sorted(vpc_security_group_ids) != sorted(current_vpc_security_group_ids)
 
-                if any((subnet_net_id_changed, vpc_security_group_ids_changed)):
-                    func_kwargs.update({'VpcConfig':
-                                        {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
+            if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
+                func_kwargs.update({'VpcConfig':
+                                    {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
         else:
             # No VPC configuration is desired, assure VPC config is empty when present in current config
             if ('VpcConfig' in current_config and
-                'VpcId' in current_config['VpcConfig'] and
-                current_config['VpcConfig']['VpcId'] != ''):
+                    'VpcId' in current_config['VpcConfig'] and
+                    current_config['VpcConfig']['VpcId'] != ''):
                 func_kwargs.update({'VpcConfig':{'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
@@ -439,8 +458,13 @@ def main():
                        'Code': code,
                        'Timeout': timeout,
                        'MemorySize': memory_size,
-                       'Environment':{'Variables': environment_variables}
                        }
+
+        if environment_variables:
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
+
+        if dead_letter_arn:
+            func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:

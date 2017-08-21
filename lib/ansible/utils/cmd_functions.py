@@ -19,17 +19,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import sys
+import select
 import shlex
 import subprocess
-import select
+import sys
 
-from ansible.compat.six import PY2, PY3
+from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_bytes
+
 
 def run_cmd(cmd, live=False, readsize=10):
 
-    #readsize = 10
+    # readsize = 10
 
     # On python2, shlex needs byte strings
     if PY2:

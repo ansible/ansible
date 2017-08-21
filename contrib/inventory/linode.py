@@ -113,11 +113,15 @@ load_chube_config()
 # Imports for ansible
 import ConfigParser
 
+
 class LinodeInventory(object):
+    def _empty_inventory(self):
+        return {"_meta": {"hostvars": {}}}
+
     def __init__(self):
         """Main execution path."""
         # Inventory grouped by display group
-        self.inventory = {}
+        self.inventory = self._empty_inventory()
         # Index of label to Linode ID
         self.index = {}
         # Local cache of Datacenter objects populated by populate_datacenter_cache()
@@ -138,7 +142,7 @@ class LinodeInventory(object):
             data_to_print = self.get_host_info()
         elif self.args.list:
             # Display list of nodes for inventory
-            if len(self.inventory) == 0:
+            if len(self.inventory) == 1:
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
@@ -171,11 +175,11 @@ class LinodeInventory(object):
         """Command line argument processing"""
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Linode')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List nodes (default: True)')
+                            help='List nodes (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific node')
+                            help='Get all the variables about a specific node')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
+                            help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
@@ -197,7 +201,7 @@ class LinodeInventory(object):
         try:
             return Linode.find(api_id=linode_id)
         except chube_api.linode_api.ApiError as e:
-            sys.exit("Looks like Linode's API is down:\n%" % e)
+            sys.exit("Looks like Linode's API is down:\n%s" % e)
 
     def populate_datacenter_cache(self):
         """Creates self._datacenter_cache, containing all Datacenters indexed by ID."""
@@ -231,8 +235,14 @@ class LinodeInventory(object):
         # Inventory: Group by datacenter city
         self.push(self.inventory, self.get_datacenter_city(node), dest)
 
-        # Inventory: Group by dipslay group
+        # Inventory: Group by display group
         self.push(self.inventory, node.display_group, dest)
+
+        # Inventory: Add a "linode" global tag group
+        self.push(self.inventory, "linode", dest)
+
+        # Add host info to hostvars
+        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info(node)
 
     def get_node_public_ip(self, node):
         """Returns a the public IP address of the node"""
@@ -245,16 +255,19 @@ class LinodeInventory(object):
             # Need to load index from cache
             self.load_index_from_cache()
 
-        if not self.args.host in self.index:
+        if self.args.host not in self.index:
             # try updating the cache
             self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
+            if self.args.host not in self.index:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 
         node_id = self.index[self.args.host]
-
         node = self.get_node(node_id)
+
+        return self.json_format_dict(self.get_host_info(node), True)
+
+    def get_host_info(self, node):
         node_vars = {}
         for direct_attr in [
             "api_id",
@@ -295,7 +308,7 @@ class LinodeInventory(object):
         if private_ips:
             node_vars["private_ip"] = private_ips[0]
 
-        return self.json_format_dict(node_vars, True)
+        return node_vars
 
     def push(self, my_dict, key, element):
         """Pushed an element onto an array that may not have been defined in the dict."""

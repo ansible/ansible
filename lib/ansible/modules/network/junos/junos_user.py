@@ -1,46 +1,39 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: junos_user
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage local user accounts on Juniper devices
+short_description: Manage local user accounts on Juniper JUNOS devices
 description:
   - This module manages locally configured user accounts on remote
     network devices running the JUNOS operating system.  It provides
     a set of arguments for creating, removing and updating locally
     defined accounts
+extends_documentation_fragment: junos
 options:
-  users:
+  aggregate:
     description:
-      - The C(users) argument defines a list of users to be configured
+      - The C(aggregate) argument defines a list of users to be configured
         on the remote device.  The list of users will be compared against
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
-        the name argument.
+        the name argument. alias C(users).
+    version_added: "2.4"
     required: False
     default: null
   name:
@@ -48,7 +41,7 @@ options:
       - The C(name) argument defines the username of the user to be created
         on the system.  This argument must follow appropriate usernaming
         conventions for the target device running JUNOS.  This argument is
-        mutually exclusive with the C(users) argument.
+        mutually exclusive with the C(aggregate) argument.
     required: false
     default: null
   full_name:
@@ -91,6 +84,17 @@ options:
     required: false
     default: present
     choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
+    version_added: "2.4"
+requirements:
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed.
 """
 
 EXAMPLES = """
@@ -110,23 +114,55 @@ EXAMPLES = """
   junos_user:
     name: ansible
     purge: yes
+
+- name: Create list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: present}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: present}
+
+- name: Delete list of users
+  junos_user:
+    aggregate:
+      - {name: test_user1, full_name: test_user2, role: operator, state: absent}
+      - {name: test_user2, full_name: test_user2, role: read-only, state: absent}
 """
 
 RETURN = """
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
+  type: string
+  sample: >
+          [edit system login]
+          +    user test-user {
+          +        uid 2005;
+          +        class read-only;
+          +    }
 """
 from functools import partial
 
-from ncclient.xml_ import new_ele, sub_ele, to_xml
+from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load
+from ansible.module_utils.network_common import remove_default_spec
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import commit_configuration, discard_changes
+from ansible.module_utils.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring
+
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
+USE_PERSISTENT_CONNECTION = True
+
 
 def map_obj_to_ele(want):
-    element = new_ele('system')
-    login = sub_ele(element, 'login', {'replace': 'replace'})
+    element = Element('system')
+    login = SubElement(element, 'login', {'replace': 'replace'})
 
     for item in want:
         if item['state'] != 'present':
@@ -134,22 +170,28 @@ def map_obj_to_ele(want):
         else:
             operation = 'replace'
 
-        user = sub_ele(login, 'user', {'operation': operation})
+        user = SubElement(login, 'user', {'operation': operation})
 
-        sub_ele(user, 'name').text = item['name']
+        SubElement(user, 'name').text = item['name']
 
         if operation == 'replace':
-            sub_ele(user, 'class').text = item['role']
+            if item['active']:
+                user.set('active', 'active')
+            else:
+                user.set('inactive', 'inactive')
+
+            SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
-                sub_ele(user, 'full-name').text = item['full_name']
+                SubElement(user, 'full-name').text = item['full_name']
 
             if item.get('sshkey'):
-                auth = sub_ele(user, 'authentication')
-                ssh_rsa = sub_ele(auth, 'ssh-rsa')
-                key = sub_ele(ssh_rsa, 'name').text = item['sshkey']
+                auth = SubElement(user, 'authentication')
+                ssh_rsa = SubElement(auth, 'ssh-rsa')
+                key = SubElement(ssh_rsa, 'name').text = item['sshkey']
 
     return element
+
 
 def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
@@ -170,9 +212,10 @@ def get_param_value(key, item, module):
 
     return value
 
+
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
         elif not module.params['name']:
@@ -181,7 +224,7 @@ def map_params_to_obj(module):
             collection = [{'name': module.params['name']}]
     else:
         collection = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
             elif 'name' not in item:
@@ -197,7 +240,8 @@ def map_params_to_obj(module):
             'full_name': get_value('full_name'),
             'role': get_value('role'),
             'sshkey': get_value('sshkey'),
-            'state': get_value('state')
+            'state': get_value('state'),
+            'active': get_value('active')
         })
 
         for key, value in iteritems(item):
@@ -214,41 +258,62 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        users=dict(type='list'),
+    element_spec = dict(
         name=dict(),
-
         full_name=dict(),
         role=dict(choices=ROLES, default='unauthorized'),
         sshkey=dict(),
-
-        purge=dict(type='bool'),
-
-        state=dict(choices=['present', 'absent'], default='present')
+        state=dict(choices=['present', 'absent'], default='present'),
+        active=dict(type='bool', default=True)
     )
 
-    mutually_exclusive = [('users', 'name')]
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['collection', 'users']),
+        purge=dict(default=False, type='bool')
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(junos_argument_spec)
+
+    mutually_exclusive = [['aggregate', 'name']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    result = {'changed': False}
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     ele = map_obj_to_ele(want)
 
-    kwargs = {'commit': not module.check_mode}
+    kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
+    else:
+        kwargs['action'] = 'merge'
 
-    diff = load(module, ele, **kwargs)
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, **kwargs)
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff}
-        })
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

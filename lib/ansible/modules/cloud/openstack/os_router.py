@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -52,13 +53,11 @@ options:
      description:
         - Unique name or ID of the external gateway network.
         - required I(interfaces) or I(enable_snat) are provided.
-     type: string
      required: false
      default: None
    project:
      description:
         - Unique name or ID of the project.
-     type: string
      required: false
      default: None
      version_added: "2.2"
@@ -77,7 +76,7 @@ options:
      default: None
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -134,7 +133,7 @@ RETURN = '''
 router:
     description: Dictionary describing the router.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Router ID.
@@ -181,6 +180,18 @@ except ImportError:
 
 from distutils.version import StrictVersion
 
+ROUTER_INTERFACE_OWNERS = set([
+    'network:router_interface',
+    'network:router_interface_distributed',
+    'network:ha_router_replicated_interface'
+])
+
+
+def _router_internal_interfaces(cloud, router):
+    for port in cloud.list_router_interfaces(router, 'internal'):
+        if port['device_owner'] in ROUTER_INTERFACE_OWNERS:
+            yield port
+
 
 def _needs_update(cloud, module, router, network, internal_subnet_ids):
     """Decide if the given router needs an update.
@@ -222,7 +233,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids):
     # check internal interfaces
     if module.params['interfaces']:
         existing_subnet_ids = []
-        for port in cloud.list_router_interfaces(router, 'internal'):
+        for port in _router_internal_interfaces(cloud, router):
             if 'fixed_ips' in port:
                 for fixed_ip in port['fixed_ips']:
                     existing_subnet_ids.append(fixed_ip['subnet_id'])
@@ -378,7 +389,7 @@ def main():
                     # just detach all existing internal interfaces and attach the new.
                     elif internal_ids:
                         router = updated_router
-                        ports = cloud.list_router_interfaces(router, 'internal')
+                        ports = _router_internal_interfaces(cloud, router)
                         for port in ports:
                             cloud.remove_router_interface(router, port_id=port['id'])
                         for internal_subnet_id in internal_ids:
@@ -395,7 +406,7 @@ def main():
             else:
                 # We need to detach all internal interfaces on a router before
                 # we will be allowed to delete it.
-                ports = cloud.list_router_interfaces(router, 'internal')
+                ports = _router_internal_interfaces(cloud, router)
                 router_id = router['id']
                 for port in ports:
                     cloud.remove_router_interface(router, port_id=port['id'])

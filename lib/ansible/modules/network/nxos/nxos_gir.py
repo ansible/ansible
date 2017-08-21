@@ -16,13 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_gir
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Trigger a graceful removal or insertion (GIR) of the switch.
 description:
@@ -164,7 +166,6 @@ import re
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
@@ -220,11 +221,11 @@ def get_commands(module, state, mode):
     elif module.params['system_mode_maintenance_timeout']:
         timeout = get_maintenance_timeout(module)
         if (state == 'present' and
-            timeout != module.params['system_mode_maintenance_timeout']):
+                timeout != module.params['system_mode_maintenance_timeout']):
             commands.append('system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
         elif (state == 'absent' and
-              timeout == module.params['system_mode_maintenance_timeout']):
+                timeout == module.params['system_mode_maintenance_timeout']):
             commands.append('no system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
 
@@ -234,9 +235,7 @@ def get_commands(module, state, mode):
     elif module.params['system_mode_maintenance_on_reload_reset_reason']:
         reset_reasons = get_reset_reasons(module)
         if (state == 'present' and
-            module.params[
-                'system_mode_maintenance_on_reload_reset_reason'].lower() not
-            in reset_reasons.lower()):
+                module.params['system_mode_maintenance_on_reload_reset_reason'].lower() not in reset_reasons.lower()):
             commands.append('system mode maintenance on-reload '
                             'reset-reason {0}'.format(
                                 module.params[
@@ -305,7 +304,6 @@ def main():
             changed = True
 
     result = {}
-    result['connected'] = module.connected
     result['changed'] = changed
     if module._verbosity > 0:
         final_system_mode = get_system_mode(module)

@@ -27,7 +27,6 @@ __metaclass__ = type
 import warnings
 import os
 import socket
-import logging
 import tempfile
 import traceback
 import fcntl
@@ -37,14 +36,13 @@ import re
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
-from ansible.compat.six import iteritems
-
 from ansible import constants as C
-from ansible.compat.six.moves import input
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     from __main__ import display
@@ -53,7 +51,7 @@ except ImportError:
     display = Display()
 
 
-AUTHENTICITY_MSG="""
+AUTHENTICITY_MSG = """
 paramiko: The authenticity of host '%s' can't be established.
 The %s key fingerprint is %s.
 Are you sure you want to continue connecting (yes/no)?
@@ -63,13 +61,12 @@ Are you sure you want to continue connecting (yes/no)?
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
-HAVE_PARAMIKO=False
+HAVE_PARAMIKO = False
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         import paramiko
-        HAVE_PARAMIKO=True
-        logging.getLogger("paramiko").setLevel(logging.WARNING)
+        HAVE_PARAMIKO = True
     except ImportError:
         pass
 
@@ -110,7 +107,7 @@ class MyAddPolicy(object):
 
             self.connection.connection_unlock()
 
-            if inp not in ['yes','y','']:
+            if inp not in ['yes', 'y', '']:
                 raise AnsibleError("host connection rejected by user")
 
         key._added_by_ansible_this_time = True
@@ -132,6 +129,14 @@ class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
     transport = 'paramiko'
+
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        host = self._play_context.remote_addr
+        port = int(self._play_context.port or 22)
+        display.vvv("attempting transport test to %s:%s" % (host, port))
+        sock = socket.create_connection((host, port), connect_timeout)
+        sock.close()
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
@@ -196,7 +201,8 @@ class Connection(ConnectionBase):
             raise AnsibleError("paramiko is not installed")
 
         port = self._play_context.port or 22
-        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
+        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+                    host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
 
@@ -205,11 +211,11 @@ class Connection(ConnectionBase):
         if C.HOST_KEY_CHECKING:
             for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
                 try:
-                    #TODO: check if we need to look at several possible locations, possible for loop
+                    # TODO: check if we need to look at several possible locations, possible for loop
                     ssh.load_system_host_keys(ssh_known_hosts)
                     break
                 except IOError:
-                    pass # file was not found, but not required to function
+                    pass  # file was not found, but not required to function
             ssh.load_system_host_keys()
 
         sock_kwarg = self._parse_proxy_command(port)
@@ -237,6 +243,8 @@ class Connection(ConnectionBase):
                 port=port,
                 **sock_kwarg
             )
+        except paramiko.ssh_exception.BadHostKeyException as e:
+            raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except Exception as e:
             msg = str(e)
             if "PID check failed" in msg:
@@ -294,11 +302,11 @@ class Connection(ConnectionBase):
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
-                        if 'unknown user' in become_output:
-                            raise AnsibleError( 'user %s does not exist' % self._play_context.become_user)
+                        if b'unknown user' in become_output:
+                            raise AnsibleError('user %s does not exist' % self._play_context.become_user)
                         else:
                             break
-                            #raise AnsibleError('ssh connection closed waiting for password prompt')
+                            # raise AnsibleError('ssh connection closed waiting for password prompt')
                     become_output += chunk
 
                     # need to check every line because we might get lectured
@@ -366,7 +374,7 @@ class Connection(ConnectionBase):
         try:
             self.sftp = self._connect_sftp()
         except Exception as e:
-            raise AnsibleError("failed to open a SFTP connection (%s)", e)
+            raise AnsibleError("failed to open a SFTP connection (%s)" % to_native(e))
 
         try:
             self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
@@ -431,7 +439,7 @@ class Connection(ConnectionBase):
             # (This doesn't acquire the connection lock because it needs
             # to exclude only other known_hosts writers, not connections
             # that are starting up.)
-            lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock")
+            lockfile = self.keyfile.replace("known_hosts", ".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
             makedirs_safe(dirname)
 
@@ -447,7 +455,7 @@ class Connection(ConnectionBase):
                 # gather information about the current key file, so
                 # we can ensure the new file has the correct mode/owner
 
-                key_dir  = os.path.dirname(self.keyfile)
+                key_dir = os.path.dirname(self.keyfile)
                 if os.path.exists(self.keyfile):
                     key_stat = os.stat(self.keyfile)
                     mode = key_stat.st_mode

@@ -19,25 +19,26 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: ovirt_vmpools_facts
-short_description: Retrieve facts about one or more oVirt vmpools
+short_description: Retrieve facts about one or more oVirt/RHV vmpools
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt vmpools."
+    - "Retrieve facts about one or more oVirt/RHV vmpools."
 notes:
     - "This module creates a new top-level C(ovirt_vmpools) fact, which
        contains a list of vmpools."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search vmpool X: name=X"
 extends_documentation_fragment: ovirt_facts
 '''
@@ -56,7 +57,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_vm_pools:
     description: "List of dictionaries describing the vmpools. Vm pool attribues are mapped to dictionary keys,
-                  all vmpools attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm_pool."
+                  all vmpools attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm_pool."
     returned: On success.
     type: list
 '''
@@ -80,7 +81,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         vmpools_service = connection.system_service().vm_pools_service()
         vmpools = vmpools_service.list(search=module.params['pattern'])
         module.exit_json(
@@ -99,7 +101,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 if __name__ == '__main__':
     main()

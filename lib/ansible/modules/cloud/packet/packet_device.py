@@ -3,24 +3,16 @@
 # (c) 2016, Matt Baldwin <baldwin@stackpointcloud.com>
 # (c) 2016, Thibaud Morel l'Horset <teebes@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -29,12 +21,16 @@ module: packet_device
 short_description: create, destroy, start, stop, and reboot a Packet Host machine.
 
 description:
-    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an IP address before returning. This module has a dependency on packet >= 1.0.
+    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an
+      IP address before returning. This module has a dependency on packet >= 1.0.
     - API is documented at U(https://www.packet.net/help/api/#page:devices,header:devices-devices-post).
 
 version_added: 2.3
 
-author: Tomas Karasek <tom.to.the.k@gmail.com>, Matt Baldwin <baldwin@stackpointcloud.com>, Thibaud Morel l'Horset <teebes@gmail.com>
+author:
+    - Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>
+    - Matt Baldwin <baldwin@stackpointcloud.com>
+    - Thibaud Morel l'Horset <teebes@gmail.com>
 
 options:
   auth_token:
@@ -156,7 +152,7 @@ EXAMPLES = '''
       user_data: |
         #cloud-config
         ssh_authorized_keys:
-          - ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2
+          - {{ lookup('file', 'my_packet_sshkey') }}
         coreos:
           etcd:
             discovery: https://discovery.etcd.io/6a28e078895c5ec737174db2419bb2f3
@@ -203,25 +199,24 @@ changed:
     returned: always
 devices:
     description: Information about each device that was processed
-    type: array
+    type: list
     sample: '[{"hostname": "my-server.com", "id": "server-id", "public-ipv4": "147.229.15.12", "private-ipv4": "10.0.15.12", "public-ipv6": ""2604:1380:2:5200::3"}]'
     returned: always
-'''
+'''  # NOQA
 
 
 import os
+import re
 import time
 import uuid
-import re
-
-from ansible.module_utils.basic import AnsibleModule
 
 HAS_PACKET_SDK = True
-
 try:
     import packet
 except ImportError:
     HAS_PACKET_SDK = False
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]','[a-zA-Z0-9\-]')
@@ -333,7 +328,7 @@ def listify_string_name_or_id(s):
 
 def get_hostname_list(module):
     # hostname is a list-typed param, so I guess it should return list
-    # (and it does, in Ansbile 2.2.1) but in order to be defensive,
+    # (and it does, in Ansible 2.2.1) but in order to be defensive,
     # I keep here the code to convert an eventual string to list
     hostnames = module.params.get('hostnames')
     count = module.params.get('count')
@@ -563,7 +558,6 @@ def main():
         module.exit_json(**act_on_devices(state, module, packet_conn))
     except Exception as e:
         module.fail_json(msg='failed to set machine state %s, error: %s' % (state,str(e)))
-
 
 
 if __name__ == '__main__':

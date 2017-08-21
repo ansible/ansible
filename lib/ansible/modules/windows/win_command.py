@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -34,10 +35,11 @@ description:
        processed through the shell, so variables like C($env:HOME) and operations
        like C("<"), C(">"), C("|"), and C(";") will not work (use the M(win_shell)
        module if you need these features).
+     - For non-Windows targets, use the M(command) module instead.
 options:
   free_form:
     description:
-      - the win_command module takes a free form command to run.  There is no parameter actually named 'free form'.
+      - the C(win_command) module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: true
   creates:
@@ -50,11 +52,13 @@ options:
     description:
       - set the specified path as the current working directory before executing a command
 notes:
-    -  If you want to run a command through a shell (say you are using C(<),
-       C(>), C(|), etc), you actually want the M(win_shell) module instead. The
-       C(win_command) module is much more secure as it's not affected by the user's
-       environment.
-    -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+    - If you want to run a command through a shell (say you are using C(<),
+      C(>), C(|), etc), you actually want the M(win_shell) module instead. The
+      C(win_command) module is much more secure as it's not affected by the user's
+      environment.
+    - C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not
+      exist, use this.
+    - For non-Windows targets, use the M(command) module instead.
 author:
     - Matt Davis
 '''
@@ -120,6 +124,6 @@ rc:
 stdout_lines:
     description: The command standard output split in lines
     returned: always
-    type: list of strings
+    type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
 '''

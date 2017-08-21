@@ -27,7 +27,7 @@ of hosts, groups the hosts are in, and even variables to assign to each host.
 
 To use this:
  - copy this file over /etc/ansible/hosts and chmod +x the file.
- - Copy both files (.py and .ini) in your prefered directory
+ - Copy both files (.py and .ini) in your preferred directory
 
 More information about Ansible Dynamic Inventory here
 http://unix.stackexchange.com/questions/205479/in-ansible-dynamic-inventory-json-can-i-render-hostvars-based-on-the-hostname
@@ -49,23 +49,25 @@ This script has been inspired by the cobbler.py inventory. thanks
 Author: Damien Garros (@dgarros)
 Version: 0.2.0
 """
+import json
 import os
-import argparse
+import re
+import sys
 
-from ansible.compat.six.moves import configparser
-import os
+try:
+    import argparse
+    HAS_ARGPARSE = True
+except ImportError:
+    HAS_ARGPARSE = False
 
 try:
     from apstra.aosom.session import Session
-
     HAS_AOS_PYEZ = True
 except ImportError:
     HAS_AOS_PYEZ = False
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from ansible.module_utils.six.moves import configparser
+
 
 """
 ##
@@ -278,9 +280,11 @@ Expected output format in Device mode
 }
 """
 
+
 def fail(msg):
     sys.stderr.write("%s\n" % msg)
     sys.exit(1)
+
 
 class AosInventory(object):
 
@@ -290,6 +294,8 @@ class AosInventory(object):
 
         if not HAS_AOS_PYEZ:
             raise Exception('aos-pyez is not installed.  Please see details here: https://github.com/Apstra/aos-pyez')
+        if not HAS_ARGPARSE:
+            raise Exception('argparse is not installed.  Please install the argparse library or upgrade to python-2.7')
 
         # Initialize inventory
         self.inventory = dict()  # A list of groups and the hosts in that group
@@ -303,15 +309,21 @@ class AosInventory(object):
         # ----------------------------------------------------
         # Open session to AOS
         # ----------------------------------------------------
-        aos = Session(  server=self.aos_server,
-                        port=self.aos_server_port,
-                        user=self.aos_username,
-                        passwd=self.aos_password)
+        aos = Session(server=self.aos_server,
+                      port=self.aos_server_port,
+                      user=self.aos_username,
+                      passwd=self.aos_password)
 
         aos.login()
 
         # Save session information in variables of group all
         self.add_var_to_group('all', 'aos_session', aos.session)
+
+        # Add the AOS server itself in the inventory
+        self.add_host_to_group("all", 'aos')
+        self.add_var_to_host("aos", "ansible_ssh_host", self.aos_server)
+        self.add_var_to_host("aos", "ansible_ssh_pass", self.aos_password)
+        self.add_var_to_host("aos", "ansible_ssh_user", self.aos_username)
 
         # ----------------------------------------------------
         # Build the inventory
@@ -330,10 +342,17 @@ class AosInventory(object):
             for dev_name, dev_id in bp.params['devices'].value.items():
 
                 self.add_host_to_group('all', dev_name)
-                device = aos.Devices.find( uid=dev_id)
+                device = aos.Devices.find(uid=dev_id)
 
                 if 'facts' in device.value.keys():
                     self.add_device_facts_to_var(dev_name, device)
+
+                # Define admin State and Status
+                if 'user_config' in device.value.keys():
+                    if 'admin_state' in device.value['user_config'].keys():
+                        self.add_var_to_host(dev_name, 'admin_state', device.value['user_config']['admin_state'])
+
+                self.add_device_status_to_var(dev_name, device)
 
                 # Go over the contents data structure
                 for node in bp.contents['system']['nodes']:
@@ -399,9 +418,7 @@ class AosInventory(object):
                 self.add_host_to_group('all', device.name)
 
                 # populate information for this host
-                if 'status' in device.value.keys():
-                    for key, value in device.value['status'].items():
-                        self.add_var_to_host(device.name, key, value)
+                self.add_device_status_to_var(device.name, device)
 
                 if 'user_config' in device.value.keys():
                     for key, value in device.value['user_config'].items():
@@ -503,13 +520,16 @@ class AosInventory(object):
 
     def add_host_to_group(self, group, host):
 
-        # Check if the group exist, if not initialize it
-        if group not in self.inventory.keys():
-            self.inventory[group] = {}
-            self.inventory[group]['hosts'] = []
-            self.inventory[group]['vars'] = {}
+        # Cleanup group name first
+        clean_group = self.cleanup_group_name(group)
 
-        self.inventory[group]['hosts'].append(host)
+        # Check if the group exist, if not initialize it
+        if clean_group not in self.inventory.keys():
+            self.inventory[clean_group] = {}
+            self.inventory[clean_group]['hosts'] = []
+            self.inventory[clean_group]['vars'] = {}
+
+        self.inventory[clean_group]['hosts'].append(host)
 
     def add_var_to_host(self, host, var, value):
 
@@ -521,13 +541,16 @@ class AosInventory(object):
 
     def add_var_to_group(self, group, var, value):
 
-        # Check if the group exist, if not initialize it
-        if group not in self.inventory.keys():
-            self.inventory[group] = {}
-            self.inventory[group]['hosts'] = []
-            self.inventory[group]['vars'] = {}
+        # Cleanup group name first
+        clean_group = self.cleanup_group_name(group)
 
-        self.inventory[group]['vars'][var] = value
+        # Check if the group exist, if not initialize it
+        if clean_group not in self.inventory.keys():
+            self.inventory[clean_group] = {}
+            self.inventory[clean_group]['hosts'] = []
+            self.inventory[clean_group]['vars'] = {}
+
+        self.inventory[clean_group]['vars'][var] = value
 
     def add_device_facts_to_var(self, device_name, device):
 
@@ -535,6 +558,8 @@ class AosInventory(object):
         self.add_var_to_host(device_name,
                              'ansible_ssh_host',
                              device.value['facts']['mgmt_ipaddr'])
+
+        self.add_var_to_host(device_name, 'id', device.id)
 
         # self.add_host_to_group('all', device.name)
         for key, value in device.value['facts'].items():
@@ -545,6 +570,23 @@ class AosInventory(object):
             elif key == 'hw_model':
                 self.add_host_to_group(value, device_name)
 
+    def cleanup_group_name(self, group_name):
+        """
+        Clean up group name by :
+          - Replacing all non-alphanumeric caracter by underscore
+          - Converting to lowercase
+        """
+
+        rx = re.compile('\W+')
+        clean_group = rx.sub('_', group_name).lower()
+
+        return clean_group
+
+    def add_device_status_to_var(self, device_name, device):
+
+        if 'status' in device.value.keys():
+            for key, value in device.value['status'].items():
+                self.add_var_to_host(device.name, key, value)
 
 # Run the script
 if __name__ == '__main__':

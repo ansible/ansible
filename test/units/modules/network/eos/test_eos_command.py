@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_command
 from .eos_module import TestEosModule, load_fixture, set_module_args
 
+
 class TestEosCommandModule(TestEosModule):
 
     module = eos_command
@@ -36,7 +37,7 @@ class TestEosCommandModule(TestEosModule):
     def tearDown(self):
         self.mock_run_commands.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, transport='cli'):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()

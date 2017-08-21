@@ -24,11 +24,13 @@ DOCUMENTATION = '''
 module: panos_nat_policy
 short_description: create a policy NAT rule
 description:
-    - Create a policy nat rule. Keep in mind that we can either end up configuring source NAT, destination NAT, or both. Instead of splitting it into two we will make a fair attempt to determine which one the user wants.
+    - Create a policy nat rule. Keep in mind that we can either end up configuring source NAT, destination NAT, or both. Instead of splitting it
+      into two we will make a fair attempt to determine which one the user wants.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - pan-python
+deprecated: In 2.4 use M(panos_nat_rule) instead.
 options:
     ip_address:
         description:
@@ -140,9 +142,10 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_exception
@@ -281,6 +284,10 @@ def main():
         commit=dict(type='bool', default=True)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+
+    if module._name == 'panos_nat_policy':
+        module.deprecate("The 'panos_nat_policy' module is being renamed 'panos_nat_rule'", version=2.8)
+
     if not HAS_LIB:
         module.fail_json(msg='pan-python is required for this module')
 

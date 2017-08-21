@@ -25,18 +25,19 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
+import glob
 import os
+import pickle
+import platform
+import select
 import shlex
 import subprocess
-import glob
-import select
-import pickle
 import traceback
 
 from ansible.module_utils.six import PY2, b
 from ansible.module_utils._text import to_bytes, to_text
+
 
 def sysv_is_enabled(name):
     '''
@@ -46,6 +47,7 @@ def sysv_is_enabled(name):
     :arg name: name of the service to test for
     '''
     return bool(glob.glob('/etc/rc?.d/S??%s' % name))
+
 
 def get_sysv_script(name):
     '''
@@ -61,21 +63,23 @@ def get_sysv_script(name):
 
     return result
 
+
 def sysv_exists(name):
     '''
     This function will return True or False depending on
-    the existance of an init script corresponding to the service name supplied.
+    the existence of an init script corresponding to the service name supplied.
 
     :arg name: name of the service to test for
     '''
     return os.path.exists(get_sysv_script(name))
+
 
 def fail_if_missing(module, found, service, msg=''):
     '''
     This function will return an error or exit gracefully depending on check mode status
     and if the service is missing or not.
 
-    :arg module: is an  AnsbileModule object, used for it's utility methods
+    :arg module: is an  AnsibleModule object, used for it's utility methods
     :arg found: boolean indicating if services was found or not
     :arg service: name of service
     :kw msg: extra info to append to error/success msg when missing
@@ -86,11 +90,12 @@ def fail_if_missing(module, found, service, msg=''):
         else:
             module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
 
+
 def daemonize(module, cmd):
     '''
-    Execute a command while detaching as a deamon, returns rc, stdout, and stderr.
+    Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
 
-    :arg module: is an  AnsbileModule object, used for it's utility methods
+    :arg module: is an  AnsibleModule object, used for it's utility methods
     :arg cmd: is a list or string representing the command and options to run
 
     This is complex because daemonization is hard for people.
@@ -99,10 +104,10 @@ def daemonize(module, cmd):
     '''
 
     # init some vars
-    chunk = 4096 #FIXME: pass in as arg?
+    chunk = 4096  # FIXME: pass in as arg?
     errors = 'surrogate_or_strict'
 
-    #start it!
+    # start it!
     try:
         pipe = os.pipe()
         pid = os.fork()
@@ -154,14 +159,14 @@ def daemonize(module, cmd):
         # make sure we always use byte strings
         run_cmd = []
         for c in cmd:
-            end_cmd.append(to_bytes(c, errors=errors))
+            run_cmd.append(to_bytes(c, errors=errors))
 
         # execute the command in forked process
         p = subprocess.Popen(run_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
         fds = [p.stdout, p.stderr]
 
         # loop reading output till its done
-        output = { p.stdout: b(""), p.sterr: b("") }
+        output = {p.stdout: b(""), p.sterr: b("")}
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
             if (rfd + wfd + efd) or p.poll():
@@ -175,8 +180,8 @@ def daemonize(module, cmd):
         # even after fds close, we might want to wait for pid to die
         p.wait()
 
-        # Return a pickled data o parent
-        return_data = pickle.dumps([p.returncode, to_text(output[p.stdout]), to_text(output[p.stderr])])
+        # Return a pickled data of parent
+        return_data = pickle.dumps([p.returncode, to_text(output[p.stdout]), to_text(output[p.stderr])], protocol=pickle.HIGHEST_PROTOCOL)
         os.write(pipe[1], to_bytes(return_data, errors=errors))
 
         # clean up
@@ -197,11 +202,15 @@ def daemonize(module, cmd):
             rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
             if pipe[0] in rfd:
                 data = os.read(pipe[0], chunk)
-                if not dat:
+                if not data:
                     break
                 return_data += b(data)
 
-        return pickle.loads(to_text(return_data, errors=errors))
+        # Note: no need to specify encoding on py3 as this module sends the
+        # pickle to itself (thus same python interpreter so we aren't mixing
+        # py2 and py3)
+        return pickle.loads(to_bytes(return_data, errors=errors))
+
 
 def check_ps(module, pattern):
 

@@ -4,21 +4,26 @@ from __future__ import absolute_import, print_function
 
 import ast
 import os
-import uuid
 
 from lib.util import (
     display,
     ApplicationError,
 )
 
+VIRTUAL_PACKAGES = set([
+    'ansible.module_utils.six',
+])
+
 
 def get_python_module_utils_imports(compile_targets):
-    """Return a dictionary of python file paths mapped to sets of module_utils names.
+    """Return a dictionary of module_utils names mapped to sets of python file paths.
     :type compile_targets: list[TestTarget]
     :rtype: dict[str, set[str]]
     """
-    module_utils_files = (os.path.splitext(filename) for filename in os.listdir('lib/ansible/module_utils'))
-    module_utils = sorted(name[0] for name in module_utils_files if name[0] != '__init__' and name[1] == '.py')
+
+    module_utils = enumerate_module_utils()
+    virtual_utils = set(m for m in module_utils if any(m.startswith('%s.' % v) for v in VIRTUAL_PACKAGES))
+    module_utils -= virtual_utils
 
     imports_by_target_path = {}
 
@@ -39,9 +44,33 @@ def get_python_module_utils_imports(compile_targets):
 
         results = set([import_name])
 
-        import_path = os.path.join('lib/ansible/module_utils', '%s.py' % import_name)
+        # virtual packages depend on the modules they contain instead of the reverse
+        if import_name in VIRTUAL_PACKAGES:
+            for sub_import in sorted(virtual_utils):
+                if sub_import.startswith('%s.' % import_name):
+                    if sub_import in seen:
+                        continue
 
-        for name in sorted(imports_by_target_path.get(import_path, set())):
+                    seen.add(sub_import)
+
+                    matches = sorted(recurse_import(sub_import, depth + 1, seen))
+
+                    for result in matches:
+                        results.add(result)
+
+        import_path = os.path.join('lib/', '%s.py' % import_name.replace('.', '/'))
+
+        if import_path not in imports_by_target_path:
+            import_path = os.path.join('lib/', import_name.replace('.', '/'), '__init__.py')
+
+            if import_path not in imports_by_target_path:
+                raise ApplicationError('Cannot determine path for module_utils import: %s' % import_name)
+
+        # process imports in reverse so the deepest imports come first
+        for name in sorted(imports_by_target_path[import_path], reverse=True):
+            if name in virtual_utils:
+                continue
+
             if name in seen:
                 continue
 
@@ -67,17 +96,51 @@ def get_python_module_utils_imports(compile_targets):
                         display.info('%s inherits import %s via %s' % (target_path, module_util_import, module_util), verbosity=6)
                         imports_by_target_path[target_path].add(module_util_import)
 
-    imports = dict([(module_util, set()) for module_util in module_utils])
+    imports = dict([(module_util, set()) for module_util in module_utils | virtual_utils])
 
     for target_path in imports_by_target_path:
         for module_util in imports_by_target_path[target_path]:
             imports[module_util].add(target_path)
 
+    # for purposes of mapping module_utils to paths, treat imports of virtual utils the same as the parent package
+    for virtual_util in virtual_utils:
+        parent_package = '.'.join(virtual_util.split('.')[:-1])
+        imports[virtual_util] = imports[parent_package]
+        display.info('%s reports imports from parent package %s' % (virtual_util, parent_package), verbosity=6)
+
     for module_util in sorted(imports):
-        if not len(imports[module_util]):
+        if not imports[module_util]:
             display.warning('No imports found which use the "%s" module_util.' % module_util)
 
     return imports
+
+
+def enumerate_module_utils():
+    """Return a list of available module_utils imports.
+    :rtype: set[str]
+    """
+    module_utils = []
+    base_path = 'lib/ansible/module_utils'
+
+    for root, _, file_names in os.walk(base_path):
+        for file_name in file_names:
+            path = os.path.join(root, file_name)
+            name, ext = os.path.splitext(file_name)
+
+            if path == 'lib/ansible/module_utils/__init__.py':
+                continue
+
+            if ext != '.py':
+                continue
+
+            if name == '__init__':
+                module_util = root
+            else:
+                module_util = os.path.join(root, name)
+
+            module_utils.append(module_util[4:].replace('/', '.'))
+
+    return set(module_utils)
 
 
 def extract_python_module_utils_imports(path, module_utils):
@@ -92,11 +155,10 @@ def extract_python_module_utils_imports(path, module_utils):
         try:
             tree = ast.parse(code)
         except SyntaxError as ex:
-            # Setting the full path to the filename results in only the filename being given for str(ex).
-            # As a work-around, set the filename to a UUID and replace it in the final string output with the actual path.
-            ex.filename = str(uuid.uuid4())
-            error = str(ex).replace(ex.filename, path)
-            raise ApplicationError('AST parse error: %s' % error)
+            # Treat this error as a warning so tests can be executed as best as possible.
+            # The compile test will detect and report this syntax error.
+            display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
+            return set()
 
         finder = ModuleUtilFinder(path, module_utils)
         finder.visit(tree)
@@ -110,11 +172,20 @@ class ModuleUtilFinder(ast.NodeVisitor):
         :type path: str
         :type module_utils: set[str]
         """
-        super(ModuleUtilFinder, self).__init__()
-
         self.path = path
         self.module_utils = module_utils
         self.imports = set()
+
+        # implicitly import parent package
+
+        if path.endswith('/__init__.py'):
+            path = os.path.split(path)[0]
+
+        if path.startswith('lib/ansible/module_utils/'):
+            package = os.path.split(path)[0].replace('/', '.')[4:]
+
+            if package != 'ansible.module_utils' and package not in VIRTUAL_PACKAGES:
+                self.add_import(package, 0)
 
     # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
@@ -127,7 +198,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
         for alias in node.names:
             if alias.name.startswith('ansible.module_utils.'):
                 # import ansible.module_utils.MODULE[.MODULE]
-                self.add_import(alias.name.split('.')[2], node.lineno)
+                self.add_import(alias.name, node.lineno)
 
     # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
@@ -140,28 +211,32 @@ class ModuleUtilFinder(ast.NodeVisitor):
         if not node.module:
             return
 
-        if node.module == 'ansible.module_utils':
+        if node.module == 'ansible.module_utils' or node.module.startswith('ansible.module_utils.'):
             for alias in node.names:
                 # from ansible.module_utils import MODULE[, MODULE]
-                self.add_import(alias.name, node.lineno)
-        elif node.module.startswith('ansible.module_utils.'):
-            # from ansible.module_utils.MODULE[.MODULE]
-            self.add_import(node.module.split('.')[2], node.lineno)
+                # from ansible.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
+                self.add_import('%s.%s' % (node.module, alias.name), node.lineno)
 
     def add_import(self, name, line_number):
         """
         :type name: str
         :type line_number: int
         """
-        if name in self.imports:
-            return  # duplicate imports are ignored
+        import_name = name
 
-        if name not in self.module_utils:
-            if self.path.startswith('test/'):
-                return  # invalid imports in tests are ignored
+        while len(name) > len('ansible.module_utils.'):
+            if name in self.module_utils:
+                if name not in self.imports:
+                    display.info('%s:%d imports module_utils: %s' % (self.path, line_number, name), verbosity=5)
+                    self.imports.add(name)
 
-            raise Exception('%s:%d Invalid module_util import: %s' % (self.path, line_number, name))
+                return  # duplicate imports are ignored
 
-        display.info('%s:%d imports module_utils: %s' % (self.path, line_number, name), verbosity=5)
+            name = '.'.join(name.split('.')[:-1])
 
-        self.imports.add(name)
+        if self.path.startswith('test/'):
+            return  # invalid imports in tests are ignored
+
+        # Treat this error as a warning so tests can be executed as best as possible.
+        # This error should be detected by unit or integration tests.
+        display.warning('%s:%d Invalid module_utils import: %s' % (self.path, line_number, import_name))

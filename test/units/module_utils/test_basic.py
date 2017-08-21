@@ -29,11 +29,12 @@ from io import BytesIO, StringIO
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
-from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
+from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
+
 
 class TestModuleUtilsBasic(ModuleTestCase):
 
@@ -95,10 +96,10 @@ class TestModuleUtilsBasic(ModuleTestCase):
         mod = builtins.__import__('ansible.module_utils.basic')
 
     # FIXME: doesn't work yet
-    #@patch.object(builtins, 'bytes')
-    #def test_module_utils_basic_bytes(self, mock_bytes):
-    #    mock_bytes.side_effect = NameError()
-    #    from ansible.module_utils import basic
+    # @patch.object(builtins, 'bytes')
+    # def test_module_utils_basic_bytes(self, mock_bytes):
+    #     mock_bytes.side_effect = NameError()
+    #     from ansible.module_utils import basic
 
     @patch.object(builtins, '__import__')
     @unittest.skipIf(sys.version_info[0] >= 3, "literal_eval is available in every version of Python3")
@@ -118,12 +119,12 @@ class TestModuleUtilsBasic(ModuleTestCase):
         self.assertEqual(mod.module_utils.basic.literal_eval("'1'"), "1")
         self.assertEqual(mod.module_utils.basic.literal_eval("1"), 1)
         self.assertEqual(mod.module_utils.basic.literal_eval("-1"), -1)
-        self.assertEqual(mod.module_utils.basic.literal_eval("(1,2,3)"), (1,2,3))
+        self.assertEqual(mod.module_utils.basic.literal_eval("(1,2,3)"), (1, 2, 3))
         self.assertEqual(mod.module_utils.basic.literal_eval("[1]"), [1])
         self.assertEqual(mod.module_utils.basic.literal_eval("True"), True)
         self.assertEqual(mod.module_utils.basic.literal_eval("False"), False)
         self.assertEqual(mod.module_utils.basic.literal_eval("None"), None)
-        #self.assertEqual(mod.module_utils.basic.literal_eval('{"a": 1}'), dict(a=1))
+        # self.assertEqual(mod.module_utils.basic.literal_eval('{"a": 1}'), dict(a=1))
         self.assertRaises(ValueError, mod.module_utils.basic.literal_eval, "asdfasdfasdf")
 
     @patch.object(builtins, '__import__')
@@ -162,13 +163,13 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 self.assertEqual(get_distribution(), "Foo")
 
             with patch('os.path.isfile', return_value=True):
-                with patch('platform.linux_distribution', side_effect=[("AmazonFooBar",)]):
+                with patch('platform.linux_distribution', side_effect=[("AmazonFooBar", )]):
                     self.assertEqual(get_distribution(), "Amazonfoobar")
 
-                with patch('platform.linux_distribution', side_effect=(("",), ("AmazonFooBam",))):
+                with patch('platform.linux_distribution', side_effect=(("", ), ("AmazonFooBam",))):
                     self.assertEqual(get_distribution(), "Amazon")
 
-                with patch('platform.linux_distribution', side_effect=[("",),("",)]):
+                with patch('platform.linux_distribution', side_effect=[("", ), ("", )]):
                     self.assertEqual(get_distribution(), "OtherLinux")
 
                 def _dist(distname='', version='', id='', supported_dists=(), full_distribution_name=1):
@@ -241,11 +242,11 @@ class TestModuleUtilsBasic(ModuleTestCase):
         from ansible.module_utils.basic import json_dict_unicode_to_bytes, json_dict_bytes_to_unicode
 
         test_data = dict(
-            item1 = u"Fóo",
-            item2 = [u"Bár", u"Bam"],
-            item3 = dict(sub1=u"Súb"),
-            item4 = (u"föo", u"bär", u"©"),
-            item5 = 42,
+            item1=u"Fóo",
+            item2=[u"Bár", u"Bam"],
+            item3=dict(sub1=u"Súb"),
+            item4=(u"föo", u"bär", u"©"),
+            item5=42,
         )
         res = json_dict_unicode_to_bytes(test_data)
         res2 = json_dict_bytes_to_unicode(res)
@@ -259,16 +260,18 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_creation(self):
         from ansible.module_utils import basic
+        from ansible.module_utils.parsing.convert_bool import BOOLEANS
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )
 
         arg_spec = dict(
-            foo = dict(required=True),
-            bar = dict(),
-            bam = dict(),
-            baz = dict(),
+            foo=dict(required=True),
+            bar=dict(),
+            bam=dict(),
+            baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
+            bar1=dict(type='bool', choices=BOOLEANS)
         )
         mut_ex = (('bar', 'bam'),)
         req_to = (('bam', 'baz'),)
@@ -279,9 +282,9 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -298,9 +301,9 @@ class TestModuleUtilsBasic(ModuleTestCase):
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -308,16 +311,16 @@ class TestModuleUtilsBasic(ModuleTestCase):
             )
 
         # fail because of mutually exclusive parameters
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo":"hello", "bar": "bad", "bam": "bad"}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bar": "bad", "bam": "bad"}))
 
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -332,9 +335,238 @@ class TestModuleUtilsBasic(ModuleTestCase):
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
-                argument_spec = arg_spec,
-                mutually_exclusive = mut_ex,
-                required_together = req_to,
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # test fallback, should test ok as value of param required due to another param
+        # is set by environment variable
+        os.environ['BAZ'] = 'bad'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bam": "bad"}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+        os.environ.pop('BAZ', None)
+
+        # should test ok, check for boolean values
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bar1": "yes"}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                mutually_exclusive=mut_ex,
+                required_together=req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+    def test_module_utils_basic_ansible_module_with_options_creation(self):
+        from ansible.module_utils import basic
+        from ansible.module_utils.parsing.convert_bool import BOOLEANS
+
+        options_spec = dict(
+            foo=dict(required=True, aliases=['dup']),
+            bar=dict(),
+            bam=dict(),
+            baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
+            bam1=dict(),
+            bam2=dict(default='test'),
+            bam3=dict(type='bool', choices=BOOLEANS)
+        )
+        arg_spec = dict(
+            foobar=dict(
+                type='list',
+                elements='dict',
+                options=options_spec,
+                mutually_exclusive=[
+                    ['bam', 'bam1']
+                ],
+                required_if=[
+                    ['foo', 'hello', ['bam']],
+                    ['foo', 'bam2', ['bam2']]
+                ],
+                required_one_of=[
+                    ['bar', 'bam']
+                ],
+                required_together=[
+                    ['bam1', 'baz']
+                ]
+            )
+        )
+
+        # should test ok, tests basic foo requirement and required_if
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bam": "good"}, {"foo": "test", "bar": "good"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, handles aliases
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"dup": "test", "bar": "good"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail, because a required param was not specified
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because of mutually exclusive parameters (mutually_exclusive, baz is added as it is required_together with bam1)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because a param required if for foo=hello is missing (required_if)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "hello", "bar": "bad"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because one of param is required (required_one_of)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # fail because one parameter requires another (required_together, bar is added for the required_one_of field)
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "test", "bar": "required_one_of", "bam1": "bad"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, the required param is set by default from spec (required_if together with default value, bar added for required_one_of
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"foo": "bam2", "bar": "required_one_of"}]}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should test ok, for options in dict format.
+        arg_spec = dict(foobar=dict(type='dict', options=options_spec))
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': {"foo": "hello"}}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # should fail, check for invalid agrument
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': {"foo1": "hello"}}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=True,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+
+        # test fallback, should test ok as value of param required due to another param
+        # is set by environment variable
+        os.environ['BAZ'] = 'bad'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bam": "bad"}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+        os.environ.pop('BAZ', None)
+
+        # should test ok, check for boolean values
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello", "bam3": "yes"}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -345,26 +577,26 @@ class TestModuleUtilsBasic(ModuleTestCase):
         from ansible.module_utils import basic
 
         arg_spec = dict(
-            foo = dict(type='float'),
-            foo2 = dict(type='float'),
-            foo3 = dict(type='float'),
-            bar = dict(type='int'),
-            bar2 = dict(type='int'),
+            foo=dict(type='float'),
+            foo2=dict(type='float'),
+            foo3=dict(type='float'),
+            bar=dict(type='int'),
+            bar2=dict(type='int'),
         )
 
         # should test ok
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={
-            "foo": 123.0, # float
-            "foo2": 123, # int
-            "foo3": "123", # string
-            "bar": 123, # int
-            "bar2": "123", # string
+            "foo": 123.0,  # float
+            "foo2": 123,  # int
+            "foo3": "123",  # string
+            "bar": 123,  # int
+            "bar2": "123",  # string
         }))
 
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
-                argument_spec = arg_spec,
+                argument_spec=arg_spec,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -379,7 +611,53 @@ class TestModuleUtilsBasic(ModuleTestCase):
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
-                argument_spec = arg_spec,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+    def test_module_utils_basic_ansible_module_options_type_check(self):
+        from ansible.module_utils import basic
+
+        options_spec = dict(
+            foo=dict(type='float'),
+            foo2=dict(type='float'),
+            foo3=dict(type='float'),
+            bar=dict(type='int'),
+            bar2=dict(type='int'),
+        )
+
+        arg_spec = dict(foobar=dict(type='list', elements='dict', options=options_spec))
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{
+            "foo": 123.0,  # float
+            "foo2": 123,  # int
+            "foo3": "123",  # string
+            "bar": 123,  # int
+            "bar2": "123",  # string
+        }]}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"bar": 123.0}]}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -391,7 +669,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_mls_enabled = MagicMock()
@@ -404,25 +682,25 @@ class TestModuleUtilsBasic(ModuleTestCase):
         self.assertEqual(res, dict())
 
         base_params = dict(
-            path = '/path/to/file',
-            mode = 0o600,
-            owner = 'root',
-            group = 'root',
-            seuser = '_default',
-            serole = '_default',
-            setype = '_default',
-            selevel = '_default',
+            path='/path/to/file',
+            mode=0o600,
+            owner='root',
+            group='root',
+            seuser='_default',
+            serole='_default',
+            setype='_default',
+            selevel='_default',
         )
 
         extended_params = base_params.copy()
         extended_params.update(dict(
-            follow = True,
-            foo = 'bar',
+            follow=True,
+            foo='bar',
         ))
 
         final_params = base_params.copy()
         final_params.update(dict(
-            path = '/path/to/real_file',
+            path='/path/to/real_file',
             secontext=['unconfined_u', 'object_r', 'default_t', 's0'],
             attributes=None,
         ))
@@ -441,7 +719,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         basic.HAVE_SELINUX = False
@@ -461,7 +739,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_mls_enabled = MagicMock()
@@ -475,7 +753,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         # we first test the cases where the python selinux lib is
@@ -486,7 +764,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.get_bin_path = MagicMock()
         am.get_bin_path.return_value = '/path/to/selinuxenabled'
         am.run_command = MagicMock()
-        am.run_command.return_value=(0, '', '')
+        am.run_command.return_value = (0, '', '')
         self.assertRaises(SystemExit, am.selinux_enabled)
         am.get_bin_path.return_value = None
         self.assertEqual(am.selinux_enabled(), False)
@@ -507,7 +785,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_initial_context = MagicMock(return_value=[None, None, None, None])
@@ -543,7 +821,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         am.selinux_initial_context = MagicMock(return_value=[None, None, None, None])
@@ -588,7 +866,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
-                argument_spec = dict(),
+                argument_spec=dict(),
             )
 
             def _mock_find_mount_point(path):
@@ -628,7 +906,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         mock_stat = MagicMock()
@@ -643,11 +921,11 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         def _mock_ismount(path):
-            if path == '/':
+            if path == b'/':
                 return True
             return False
 
@@ -655,7 +933,9 @@ class TestModuleUtilsBasic(ModuleTestCase):
             self.assertEqual(am.find_mount_point('/root/fs/../mounted/path/to/whatever'), '/')
 
         def _mock_ismount(path):
-            if path == '/subdir/mount':
+            if path == b'/subdir/mount':
+                return True
+            if path == b'/':
                 return True
             return False
 
@@ -667,7 +947,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         basic.HAVE_SELINUX = False
@@ -712,7 +992,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         self.assertEqual(am.set_owner_if_different('/path/to/file', None, True), True)
@@ -751,7 +1031,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         self.assertEqual(am.set_group_if_different('/path/to/file', None, True), True)
@@ -822,7 +1102,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
-            argument_spec = dict(),
+            argument_spec=dict(),
         )
 
         environ = dict()
@@ -883,7 +1163,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         stat1.st_mode = 0o0644
         stat1.st_uid = 0
         stat1.st_gid = 0
-        _os_stat.side_effect = [stat1,]
+        _os_stat.side_effect = [stat1, ]
         am.selinux_enabled.return_value = False
         _os_chmod.reset_mock()
         _os_chown.reset_mock()
@@ -902,7 +1182,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         stat1.st_mode = 0o0644
         stat1.st_uid = 0
         stat1.st_gid = 0
-        _os_stat.side_effect = [stat1,]
+        _os_stat.side_effect = [stat1, ]
         mock_context = MagicMock()
         am.selinux_context.return_value = mock_context
         am.selinux_enabled.return_value = True
@@ -991,43 +1271,3 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.selinux_default_context.return_value = mock_context
         am.selinux_enabled.return_value = True
         am.atomic_move('/path/to/src', '/path/to/dest')
-
-    def test_module_utils_basic_ansible_module__symbolic_mode_to_octal(self):
-
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-
-        mock_stat = MagicMock()
-
-        # FIXME: trying many more combinations here would be good
-        # directory, give full perms to all, then one group at a time
-        mock_stat.st_mode = 0o040000
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a+rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx,g+rwx,o+rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o+rwx'), 0o0007)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g+rwx'), 0o0070)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx'), 0o0700)
-
-        # same as above, but in reverse so removing permissions
-        mock_stat.st_mode = 0o040777
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a-rwx'), 0o0000)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx,g-rwx,o-rwx'), 0o0000)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o-rwx'), 0o0770)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g-rwx'), 0o0707)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx'), 0o0077)
-
-        # now using absolute assignment
-        mock_stat.st_mode = 0o040000
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a=rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx,g=rwx,o=rwx'), 0o0777)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o=rwx'), 0o0007)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g=rwx'), 0o0070)
-        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
-
-        # invalid modes
-        mock_stat.st_mode = 0o040000
-        self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')

@@ -15,6 +15,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+'''
+DOCUMENTATION:
+    connection: local
+    short_description: execute on controller
+    description:
+        - This connection plugin allows ansible to execute tasks on the Ansible 'controller' instead of on a remote host.
+    author: ansible (@core)
+    version_added: historical
+    notes:
+        - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
+'''
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -26,8 +38,8 @@ import getpass
 
 import ansible.constants as C
 from ansible.compat import selectors
-from ansible.compat.six import text_type, binary_type
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 
@@ -78,7 +90,7 @@ class Connection(ConnectionBase):
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, (text_type, binary_type)),
-            executable=executable, #cwd=...
+            executable=executable,  # cwd=...
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

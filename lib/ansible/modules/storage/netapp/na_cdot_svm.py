@@ -1,25 +1,16 @@
 #!/usr/bin/python
 
 # (c) 2017, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -49,13 +40,12 @@ options:
 
   root_volume:
     description:
-    - Root volume of the SVM.
-    note: required when C(state=present)
+    - Root volume of the SVM. Required when C(state=present).
 
   root_volume_aggregate:
     description:
     - The aggregate on which the root volume will be created.
-    note: required when C(state=present)
+    - Required when C(state=present).
 
   root_volume_security_style:
     description:
@@ -65,7 +55,7 @@ options:
     -   Possible values are 'unix', 'ntfs', 'mixed'.
     -   The 'unified' security style, which applies only to Infinite Volumes, cannot be applied to a Vserver's root volume.
     -   Valid options are "unix" for NFS, "ntfs" for CIFS, "mixed" for Mixed, "unified" for Unified.
-    note: required when C(state=present)
+    -   Required when C(state=present)
     choices: ['unix', 'ntfs', 'mixed', 'unified']
 
 '''
@@ -88,10 +78,12 @@ EXAMPLES = """
 RETURN = """
 
 """
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -105,8 +97,8 @@ class NetAppCDOTSVM(object):
             name=dict(required=True, type='str'),
             root_volume=dict(type='str'),
             root_volume_aggregate=dict(type='str'),
-            root_volume_security_style=dict(type='str', choices=['nfs',
-                                                                 'cifs',
+            root_volume_security_style=dict(type='str', choices=['unix',
+                                                                 'ntfs',
                                                                  'mixed',
                                                                  'unified'
                                                                  ]),
@@ -182,11 +174,10 @@ class NetAppCDOTSVM(object):
         try:
             self.server.invoke_successfully(vserver_create,
                                             enable_tunneling=False)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error provisioning SVM %s with root volume %s on aggregate %s'
-                                      % (self.name, self.root_volume, self.root_volume_aggregate),
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error provisioning SVM %s with root volume %s on aggregate %s: %s'
+                                      % (self.name, self.root_volume, self.root_volume_aggregate, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def delete_vserver(self):
         vserver_delete = netapp_utils.zapi.NaElement.create_node_with_children(
@@ -195,11 +186,10 @@ class NetAppCDOTSVM(object):
         try:
             self.server.invoke_successfully(vserver_delete,
                                             enable_tunneling=False)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error deleting SVM %s with root volume %s on aggregate %s'
-                                      % (self.name, self.root_volume, self.root_volume_aggregate),
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error deleting SVM %s with root volume %s on aggregate %s: %s'
+                                      % (self.name, self.root_volume, self.root_volume_aggregate, to_native(e)),
+                                      exception=traceback.format_exc())
 
     def rename_vserver(self):
         vserver_rename = netapp_utils.zapi.NaElement.create_node_with_children(
@@ -209,9 +199,9 @@ class NetAppCDOTSVM(object):
         try:
             self.server.invoke_successfully(vserver_rename,
                                             enable_tunneling=False)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error renaming SVM %s' % self.name, exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error renaming SVM %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def apply(self):
         changed = False

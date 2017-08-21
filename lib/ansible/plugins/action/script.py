@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
@@ -27,17 +28,16 @@ from ansible.plugins.action import ActionBase
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
+    # On Windows platform, absolute paths begin with a (back)slash
+    # after chopping off a potential drive letter.
+    windows_absolute_path_detection = re.compile(r'^(?:[a-zA-Z]\:)?(\\|\/)')
+
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
         if task_vars is None:
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        if self._play_context.check_mode:
-            result['skipped'] = True
-            result['msg'] = 'check mode not supported for this module'
-            return result
 
         if not tmp:
             tmp = self._make_tmp_path()
@@ -60,16 +60,28 @@ class ActionModule(ActionBase):
                 self._remove_tmp_path(tmp)
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
 
+        # The chdir must be absolute, because a relative path would rely on
+        # remote node behaviour & user config.
+        chdir = self._task.args.get('chdir')
+        if chdir:
+            # Powershell is the only Windows-path aware shell
+            if self._connection._shell.SHELL_FAMILY == 'powershell' and \
+                    not self.windows_absolute_path_detection.matches(chdir):
+                return dict(failed=True, msg='chdir %s must be an absolute path for a Windows remote node' % chdir)
+            # Every other shell is unix-path-aware.
+            if self._connection._shell.SHELL_FAMILY != 'powershell' and not chdir.startswith('/'):
+                return dict(failed=True, msg='chdir %s must be an absolute path for a Unix-aware remote node' % chdir)
+
         # the script name is the first item in the raw params, so we split it
         # out now so we know the file name we need to transfer to the remote,
         # and everything else is an argument to the script which we need later
         # to append to the remote command
-        parts  = self._task.args.get('_raw_params', '').strip().split()
+        parts = self._task.args.get('_raw_params', '').strip().split()
         source = parts[0]
-        args   = ' '.join(parts[1:])
+        args = ' '.join(parts[1:])
 
         try:
-            source = self._loader.get_real_file(self._find_needle('files', source))
+            source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
         except AnsibleError as e:
             return dict(failed=True, msg=to_native(e))
 
@@ -81,15 +93,25 @@ class ActionModule(ActionBase):
         self._fixup_perms2((tmp, tmp_src), execute=True)
 
         # add preparation steps to one ssh roundtrip executing the script
-        env_string = self._compute_environment_string()
+        env_dict = dict()
+        env_string = self._compute_environment_string(env_dict)
         script_cmd = ' '.join([env_string, tmp_src, args])
         script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
-        result.update(self._low_level_execute_command(cmd=script_cmd, sudoable=True))
+        exec_data = None
+        # HACK: come up with a sane way to pass around env outside the command
+        if self._connection.transport == "winrm":
+            exec_data = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
+
+        result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
 
         # clean up after
         self._remove_tmp_path(tmp)
 
         result['changed'] = True
+
+        if 'rc' in result and result['rc'] != 0:
+            result['failed'] = True
+            result['msg'] = 'non-zero return code'
 
         return result

@@ -134,6 +134,38 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
+Installing multiple roles from multiple files
+=============================================
+
+At a basic level, including requirements files allows you to break up bits of roles into smaller files. Role includes pull in roles from other files.
+
+Use the following command to install roles includes in *requirements.yml*  + *webserver,yml*
+
+::
+
+    ansible-galaxy install -r requirements.yml
+
+Content of the *requirements.yml* file:
+
+::
+
+    # from galaxy
+    - src: yatesr.timezone
+
+    - include: <path_to_requirements>/webserver.yml
+
+
+Content of the *webserver.yml* file:
+
+::
+
+    # from github
+    - src: https://github.com/bennojoy/nginx
+
+    # from Bitbucket
+    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+      version: v1.4
+
 Dependencies
 ============
 
@@ -162,7 +194,7 @@ The complex form can also be used as follows:
         name: composer
 
 When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the *roles_path*. To understand how dependencies 
-are handled during play execution, see :doc:`playbooks_roles`.
+are handled during play execution, see :doc:`playbooks_reuse_roles`.
 
 .. note::
 
@@ -211,7 +243,31 @@ If you are creating a Container Enabled role, use the *--container-enabled* opti
 with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
 the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
 
-Search for roles
+Using a Custom Role Skeleton
+============================
+
+A custom role skeleton directory can be supplied as follows:
+
+::
+
+   $ ansible-galaxy init --role-skeleton=/path/to/skeleton role_name
+
+When a skeleton is provided, init will:
+
+- copy all files and directories from the skeleton to the new role
+- any .j2 files found outside of a templates folder will be rendered as templates. The only useful variable at the moment is role_name
+- The .git folder and any .git_keep files will not be copied
+
+Alternatively, the role_skeleton and ignoring of files can be configured via ansible.cfg
+
+::
+
+  [galaxy]
+  role_skeleton = /path/to/skeleton
+  role_skeleton_ignore = ^.git$,^.*/.git_keep$
+
+
+Search for Roles
 ----------------
 
 Search the Galaxy database by tags, platforms, author and multiple keywords. For example:
@@ -447,7 +503,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
 .. seealso::
 
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        All about ansible roles
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

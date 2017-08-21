@@ -16,13 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_reboot
+extends_documentation_fragment: nxos
 version_added: 2.2
 short_description: Reboot a network device.
 description:
@@ -57,7 +59,7 @@ rebooted:
     sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
@@ -69,28 +71,22 @@ def reboot(module):
     ]
     run_commands(module, cmds)
 
+
 def main():
     argument_spec = {}
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
+    results = dict(changed=False, warnings=warnings)
 
     if not module.check_mode:
         reboot(module)
-    changed = True
-
-    results = {
-        'changed': True,
-        'warnings': warnings
-    }
+    results['changed'] = True
 
     module.exit_json(**results)
 
-
 if __name__ == '__main__':
     main()
-

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#
 # (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible
@@ -39,13 +37,23 @@ class TestEosEapiModule(TestEosModule):
         self.mock_load_config = patch('ansible.modules.network.eos.eos_eapi.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_verify_state = patch('ansible.modules.network.eos.eos_eapi.verify_state')
+        self.verify_state = self.mock_verify_state.start()
+
         self.command_fixtures = {}
 
     def tearDown(self):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+        # hack for older version of mock
+        # should be using patch.stopall() but CI is still failing
+        try:
+            self.mock_verify_state.stop()
+        except RuntimeError:
+            pass
+
+    def load_fixtures(self, commands=None, transport='eapi'):
         def run_commands(module, commands, **kwargs):
             output = list()
             for cmd in commands:
@@ -87,8 +95,7 @@ class TestEosEapiModule(TestEosModule):
 
     def test_eos_eapi_http_invalid(self):
         set_module_args(dict(http_port=80000))
-        commands = []
-        self.start_unconfigured(failed=True, commands=commands)
+        self.start_unconfigured(failed=True)
 
     def test_eos_eapi_https_enable(self):
         set_module_args(dict(https=True))
@@ -129,11 +136,21 @@ class TestEosEapiModule(TestEosModule):
 
     def test_eos_eapi_vrf_missing(self):
         set_module_args(dict(vrf='missing'))
-        commands = []
-        self.start_unconfigured(failed=True, commands=commands)
+        self.start_unconfigured(failed=True)
 
     def test_eos_eapi_state_absent(self):
         set_module_args(dict(state='stopped'))
         commands = ['management api http-commands', 'shutdown']
         self.start_configured(changed=True, commands=commands)
 
+    def test_eos_eapi_state_failed(self):
+        self.mock_verify_state.stop()
+        set_module_args(dict(state='stopped', timeout=1))
+        result = self.start_configured(failed=True)
+        'timeout expired before eapi running state changed' in result['msg']
+
+    def test_eos_eapi_state_failed(self):
+        self.mock_verify_state.stop()
+        set_module_args(dict(state='stopped', timeout=1))
+        result = self.start_configured(failed=True)
+        'timeout expired before eapi running state changed' in result['msg']

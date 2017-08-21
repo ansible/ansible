@@ -18,9 +18,10 @@
 
 #TODO(mordred): we need to support "location"(v1) and "locations"(v2)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -36,6 +37,12 @@ options:
      description:
         - Name that has to be given to the image
      required: true
+     default: None
+   id:
+     version_added: "2.4"
+     description:
+        - The Id of the image
+     required: false
      default: None
    disk_format:
      description:
@@ -94,7 +101,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -130,8 +137,9 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name              = dict(required=True),
-        disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso']),
-        container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova']),
+        id                = dict(default=None),
+        disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
+        container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
         owner             = dict(default=None),
         min_disk          = dict(type='int', default=0),
         min_ram           = dict(type='int', default=0),
@@ -158,6 +166,7 @@ def main():
             if not image:
                 image = cloud.create_image(
                     name=module.params['name'],
+                    id=module.params['id'],
                     filename=module.params['filename'],
                     disk_format=module.params['disk_format'],
                     container_format=module.params['container_format'],

@@ -1,4 +1,4 @@
-# (c) 2016 Red Hat Inc.
+# (c) 2017 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -21,10 +21,14 @@ __metaclass__ = type
 
 import os
 import json
-import sys
+
+try:
+    from lxml.etree import parse
+except ImportError:
+    from xml.etree.ElementTree import parse
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
+from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 
@@ -36,44 +40,42 @@ def set_module_args(args):
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
 
+def load_fixture(name, content='xml'):
+    path = os.path.join(fixture_path, name)
     if path in fixture_data:
         return fixture_data[path]
 
-    with open(path) as f:
-        data = f.read()
-
-    try:
-        data = json.loads(data)
-    except:
-        pass
+    if content == 'str':
+        with open(path) as f:
+            data = f.read()
+        try:
+            data = json.load(path)
+        except:
+            pass
+    else:
+        try:
+            data = parse(path).getroot()
+        except:
+            pass
 
     fixture_data[path] = data
     return data
 
+
 class AnsibleExitJson(Exception):
     pass
+
 
 class AnsibleFailJson(Exception):
     pass
 
 
-mock_modules = {
-    'ncclient': Mock(),
-    'ncclient.xml_': Mock()
-}
-patch_import = patch.dict('sys.modules', mock_modules)
-patch_import.start()
-
-
 class TestJunosModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True, defaults=False):
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False, format='text'):
 
-        self.load_fixtures(commands)
+        self.load_fixtures(commands, format, changed=changed)
 
         if failed:
             result = self.failed()
@@ -81,12 +83,6 @@ class TestJunosModule(unittest.TestCase):
         else:
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
-
-        if commands:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
-            else:
-                self.assertEqual(commands, result['commands'], result['commands'])
 
         return result
 
@@ -117,6 +113,5 @@ class TestJunosModule(unittest.TestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, format=None, changed=None):
         pass
-

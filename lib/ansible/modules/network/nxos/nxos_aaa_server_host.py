@@ -17,13 +17,15 @@
 #
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_aaa_server_host
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages AAA server host-specific configuration.
 description:
@@ -130,6 +132,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {}
 end_state:

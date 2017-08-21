@@ -33,9 +33,9 @@ import re
 from distutils.version import LooseVersion
 
 import ansible.constants as C
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 
@@ -51,10 +51,7 @@ class Connection(ConnectionBase):
 
     transport = 'docker'
     has_pipelining = True
-    # su currently has an undiagnosed issue with calculating the file
-    # checksums (so copy, for instance, doesn't work right)
-    # Have to look into that before re-enabling this
-    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -116,7 +113,7 @@ class Connection(ConnectionBase):
         p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         cmd_output, err = p.communicate()
 
-        return old_docker_cmd, cmd_output, err, p.returncode
+        return old_docker_cmd, to_native(cmd_output), err, p.returncode
 
     def _new_docker_version(self):
         # no result yet, must be newer Docker version
@@ -129,7 +126,7 @@ class Connection(ConnectionBase):
         new_docker_cmd = [self.docker_cmd] + cmd_args + new_version_subcommand
         p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         cmd_output, err = p.communicate()
-        return new_docker_cmd, cmd_output, err, p.returncode
+        return new_docker_cmd, to_native(cmd_output), err, p.returncode
 
     def _get_docker_version(self):
 
@@ -238,7 +235,7 @@ class Connection(ConnectionBase):
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
             try:
                 p = subprocess.Popen(args, stdin=in_file,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError:
                 raise AnsibleError("docker connection requires dd command in the container to put files")
             stdout, stderr = p.communicate()
@@ -260,7 +257,7 @@ class Connection(ConnectionBase):
         args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
 
         # Rename if needed

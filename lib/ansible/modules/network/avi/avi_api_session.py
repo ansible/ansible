@@ -23,11 +23,14 @@
 #
 """
 
-ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
-module: avi_api
+module: avi_api_session
 author: Gaurav Rastogi (grastogi@avinetworks.com)
 
 short_description: Avi API Module
@@ -69,6 +72,7 @@ EXAMPLES = '''
       path: pool
       params:
         name: "{{ pool_name }}"
+      api_version: 16.4
     register: pool_results
 
   - name: Patch Pool with list of servers
@@ -78,6 +82,7 @@ EXAMPLES = '''
       password: "{{ password }}"
       http_method: patch
       path: "{{ pool_path }}"
+      api_version: 16.4
       data:
         add:
           servers:
@@ -96,6 +101,7 @@ EXAMPLES = '''
       password: "{{ password }}"
       http_method: get
       path: analytics/metrics/pool
+      api_version: 16.4
       params:
         name: "{{ pool_name }}"
         metric_id: l4_server.avg_bandwidth,l4_server.avg_complete_conns
@@ -116,11 +122,11 @@ obj:
 import json
 import time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.avi import avi_common_argument_spec, ansible_return
 from copy import deepcopy
 
-HAS_AVI = True
 try:
+    from ansible.module_utils.avi import (
+        avi_common_argument_spec, ansible_return, HAS_AVI)
     from avi.sdk.avi_api import ApiSession
     from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
 except ImportError:
@@ -156,7 +162,8 @@ def main():
     path = module.params.get('path', '')
     params = module.params.get('params', None)
     data = module.params.get('data', None)
-
+    # Get the api_version from module.
+    api_version = module.params.get('api_version', '16.4')
     if data is not None:
         data = json.loads(data)
     method = module.params['http_method']
@@ -171,7 +178,7 @@ def main():
         # change the method to be put
         gparams['name'] = data['name']
         rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                      params=gparams)
+                      params=gparams, api_version=api_version)
         try:
             existing_obj = rsp.json()['results'][0]
         except IndexError:
@@ -190,7 +197,7 @@ def main():
                 gparams['name'] = data['name']
                 using_collection = True
             rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                          params=gparams)
+                          params=gparams, api_version=api_version)
             rsp_data = rsp.json()
             if using_collection:
                 if rsp_data['results']:
@@ -208,13 +215,13 @@ def main():
             cleanup_absent_fields(data)
     if method == 'patch':
         rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                      params=gparams)
+                      params=gparams, api_version=api_version)
         existing_obj = rsp.json()
 
     if (method == 'put' and changed) or (method != 'put'):
         fn = getattr(api, method)
         rsp = fn(path, tenant=tenant, tenant_uuid=tenant, timeout=timeout,
-                 params=params, data=data)
+                 params=params, data=data, api_version=api_version)
     else:
         rsp = None
     if method == 'delete' and rsp.status_code == 404:
@@ -230,7 +237,7 @@ def main():
         gparams = deepcopy(params) if params else {}
         gparams.update({'include_refs': '', 'include_name': ''})
         rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                      params=gparams)
+                      params=gparams, api_version=api_version)
         new_obj = rsp.json()
         changed = not avi_obj_cmp(new_obj, existing_obj)
     if rsp is None:

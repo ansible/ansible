@@ -15,24 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: vyos_facts
 version_added: "2.2"
 author: "Nathaniel Case (@qalthos)"
-short_description: Collect facts from remote devices running OS
+short_description: Collect facts from remote devices running VyOS
 description:
   - Collects a base set of device facts from a remote device that
     is running VyOS.  This module prepends all of the
     base network fact keys with U(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
+extends_documentation_fragment: vyos
 options:
   gather_subset:
     description:
@@ -210,6 +210,8 @@ class Neighbors(FactsBase):
                 if values:
                     parsed.append(values)
                 values = line
+        if values:
+            parsed.append(values)
         return parsed
 
     def parse_neighbors(self, data):

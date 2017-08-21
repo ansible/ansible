@@ -21,17 +21,12 @@ __metaclass__ = type
 
 import fnmatch
 
-from ansible.compat.six import iteritems
 from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.module_utils.six import cmp
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
-from ansible.playbook.role_include import IncludeRole
 
-boolean = C.mk_boolean
-
-__all__ = ['PlayIterator']
 
 try:
     from __main__ import display
@@ -40,23 +35,26 @@ except ImportError:
     display = Display()
 
 
+__all__ = ['PlayIterator']
+
+
 class HostState:
     def __init__(self, blocks):
-        self._blocks          = blocks[:]
+        self._blocks = blocks[:]
 
-        self.cur_block          = 0
-        self.cur_regular_task   = 0
-        self.cur_rescue_task    = 0
-        self.cur_always_task    = 0
-        self.cur_dep_chain      = None
-        self.run_state          = PlayIterator.ITERATING_SETUP
-        self.fail_state         = PlayIterator.FAILED_NONE
-        self.pending_setup      = False
-        self.tasks_child_state  = None
+        self.cur_block = 0
+        self.cur_regular_task = 0
+        self.cur_rescue_task = 0
+        self.cur_always_task = 0
+        self.cur_dep_chain = None
+        self.run_state = PlayIterator.ITERATING_SETUP
+        self.fail_state = PlayIterator.FAILED_NONE
+        self.pending_setup = False
+        self.tasks_child_state = None
         self.rescue_child_state = None
         self.always_child_state = None
-        self.did_rescue         = False
-        self.did_start_at_task  = False
+        self.did_rescue = False
+        self.did_start_at_task = False
 
     def __repr__(self):
         return "HostState(%r)" % self._blocks
@@ -70,7 +68,7 @@ class HostState:
                 return "UNKNOWN STATE"
 
         def _failed_state_to_string(n):
-            states = {1:"FAILED_SETUP", 2:"FAILED_TASKS", 4:"FAILED_RESCUE", 8:"FAILED_ALWAYS"}
+            states = {1: "FAILED_SETUP", 2: "FAILED_TASKS", 4: "FAILED_RESCUE", 8: "FAILED_ALWAYS"}
             if n == 0:
                 return "FAILED_NONE"
             else:
@@ -80,30 +78,29 @@ class HostState:
                         ret.append(states[i])
                 return "|".join(ret)
 
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
-            self.cur_block,
-            self.cur_regular_task,
-            self.cur_rescue_task,
-            self.cur_always_task,
-            _run_state_to_string(self.run_state),
-            _failed_state_to_string(self.fail_state),
-            self.pending_setup,
-            self.tasks_child_state,
-            self.rescue_child_state,
-            self.always_child_state,
-            self.did_rescue,
-            self.did_start_at_task,
-        )
+        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), "
+                "rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
+                    self.cur_block,
+                    self.cur_regular_task,
+                    self.cur_rescue_task,
+                    self.cur_always_task,
+                    _run_state_to_string(self.run_state),
+                    _failed_state_to_string(self.fail_state),
+                    self.pending_setup,
+                    self.tasks_child_state,
+                    self.rescue_child_state,
+                    self.always_child_state,
+                    self.did_rescue,
+                    self.did_start_at_task,
+                ))
 
     def __eq__(self, other):
         if not isinstance(other, HostState):
             return False
 
-        for attr in (
-            '_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
-            'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
-            'tasks_child_state', 'rescue_child_state', 'always_child_state'
-            ):
+        for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
+                     'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
+                     'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
 
@@ -133,26 +130,28 @@ class HostState:
             new_state.always_child_state = self.always_child_state.copy()
         return new_state
 
+
 class PlayIterator:
 
     # the primary running states for the play iteration
-    ITERATING_SETUP    = 0
-    ITERATING_TASKS    = 1
-    ITERATING_RESCUE   = 2
-    ITERATING_ALWAYS   = 3
+    ITERATING_SETUP = 0
+    ITERATING_TASKS = 1
+    ITERATING_RESCUE = 2
+    ITERATING_ALWAYS = 3
     ITERATING_COMPLETE = 4
 
     # the failure states for the play iteration, which are powers
     # of 2 as they may be or'ed together in certain circumstances
-    FAILED_NONE        = 0
-    FAILED_SETUP       = 1
-    FAILED_TASKS       = 2
-    FAILED_RESCUE      = 4
-    FAILED_ALWAYS      = 8
+    FAILED_NONE = 0
+    FAILED_SETUP = 1
+    FAILED_TASKS = 2
+    FAILED_RESCUE = 4
+    FAILED_ALWAYS = 8
 
     def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
         self._blocks = []
+        self._variable_manager = variable_manager
 
         self._task_uuid_cache = dict()
 
@@ -175,8 +174,8 @@ class PlayIterator:
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags   = ['always']
-        setup_task.args   = {
+        setup_task.tags = ['always']
+        setup_task.args = {
             'gather_subset': gather_subset,
         }
         if gather_timeout:
@@ -206,10 +205,6 @@ class PlayIterator:
         start_at_matched = False
         for host in inventory.get_hosts(self._play.hosts):
             self._host_states[host.name] = HostState(blocks=self._blocks)
-            # if the host's name is in the variable manager's fact cache, then set
-            # its _gathered_facts flag to true for smart gathering tests later
-            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get(host.name).get('module_setup', False):
-                host._gathered_facts = True
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
             if play_context.start_at_task is not None and not start_at_done:
@@ -266,7 +261,6 @@ class PlayIterator:
             display.debug("host %s is done iterating, returning" % host.name)
             return (s, None)
 
-        old_s = s
         (s, task) = self._get_next_task_from_state(s, host=host, peek=peek)
 
         if not peek:
@@ -276,7 +270,6 @@ class PlayIterator:
         display.debug(" ^ task is: %s" % task)
         display.debug(" ^ state is: %s" % s)
         return (s, task)
-
 
     def _get_next_task_from_state(self, state, host, peek, in_child=False):
 
@@ -307,20 +300,16 @@ class PlayIterator:
                     # NOT explicitly set gather_facts to False.
 
                     gathering = C.DEFAULT_GATHERING
-                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts)
+                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
 
                     if (gathering == 'implicit' and implied) or \
-                       (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
-                       (gathering == 'smart' and implied and not host._gathered_facts):
+                       (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
                         if setup_block.has_tasks() and len(setup_block.block) > 0:
                             task = setup_block.block[0]
-                            if not peek:
-                                # mark the host as having gathered facts, because we're
-                                # returning the setup task to be executed
-                                host.set_gathered_facts(True)
                 else:
                     # This is the second trip through ITERATING_SETUP, so we clear
                     # the flag and move onto the next block in the list while setting
@@ -331,8 +320,8 @@ class PlayIterator:
                     if not state.did_start_at_task:
                         state.cur_block += 1
                         state.cur_regular_task = 0
-                        state.cur_rescue_task  = 0
-                        state.cur_always_task  = 0
+                        state.cur_rescue_task = 0
+                        state.cur_always_task = 0
                         state.child_state = None
 
             elif state.run_state == self.ITERATING_TASKS:
@@ -342,7 +331,7 @@ class PlayIterator:
 
                 # First, we check for a child task state that is not failed, and if we
                 # have one recurse into it for the next task. If we're done with the child
-                # state, we clear it and drop back to geting the next task from the list.
+                # state, we clear it and drop back to getting the next task from the list.
                 if state.tasks_child_state:
                     (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.tasks_child_state):
@@ -427,8 +416,8 @@ class PlayIterator:
                         else:
                             state.cur_block += 1
                             state.cur_regular_task = 0
-                            state.cur_rescue_task  = 0
-                            state.cur_always_task  = 0
+                            state.cur_rescue_task = 0
+                            state.cur_always_task = 0
                             state.run_state = self.ITERATING_TASKS
                             state.tasks_child_state = None
                             state.rescue_child_state = None
@@ -507,9 +496,9 @@ class PlayIterator:
         elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
             return True
         elif state.fail_state != self.FAILED_NONE:
-            if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
+            if state.run_state == self.ITERATING_RESCUE and state.fail_state & self.FAILED_RESCUE == 0:
                 return False
-            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
+            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state & self.FAILED_ALWAYS == 0:
                 return False
             else:
                 return not state.did_rescue
@@ -551,7 +540,7 @@ class PlayIterator:
             else:
                 target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
                 before = target_block.block[:state.cur_regular_task]
-                after  = target_block.block[state.cur_regular_task:]
+                after = target_block.block[state.cur_regular_task:]
                 target_block.block = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == self.ITERATING_RESCUE:
@@ -560,7 +549,7 @@ class PlayIterator:
             else:
                 target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
                 before = target_block.rescue[:state.cur_rescue_task]
-                after  = target_block.rescue[state.cur_rescue_task:]
+                after = target_block.rescue[state.cur_rescue_task:]
                 target_block.rescue = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == self.ITERATING_ALWAYS:
@@ -569,7 +558,7 @@ class PlayIterator:
             else:
                 target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
                 before = target_block.always[:state.cur_always_task]
-                after  = target_block.always[state.cur_always_task:]
+                after = target_block.always[state.cur_always_task:]
                 target_block.always = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         return state
@@ -578,4 +567,3 @@ class PlayIterator:
         for b in task_list:
             self.cache_block_tasks(b)
         self._host_states[host.name] = self._insert_tasks_into_state(self.get_host_state(host), task_list)
-

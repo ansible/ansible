@@ -25,9 +25,26 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
+# This module initially matched the namespace of network module avi. However,
+# that causes namespace import error when other modules from avi namespaces
+# are imported. Added import of absolute_import to avoid import collisions for
+# avi.sdk.
+
+from __future__ import absolute_import
 import os
+from pkg_resources import parse_version
+
+HAS_AVI = True
+try:
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or (sdk_version and (parse_version(sdk_version) < parse_version('17.1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+except ImportError:
+    HAS_AVI = False
 
 
 def avi_common_argument_spec():
@@ -40,7 +57,8 @@ def avi_common_argument_spec():
         username=dict(default=os.environ.get('AVI_USERNAME', '')),
         password=dict(default=os.environ.get('AVI_PASSWORD', ''), no_log=True),
         tenant=dict(default='admin'),
-        tenant_uuid=dict(default=''))
+        tenant_uuid=dict(default=''),
+        api_version=dict(default='16.4'))
 
 
 def ansible_return(module, rsp, changed, req=None, existing_obj=None):

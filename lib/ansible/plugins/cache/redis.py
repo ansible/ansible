@@ -23,12 +23,13 @@ import json
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.cache.base import BaseCacheModule
+from ansible.plugins.cache import BaseCacheModule
 
 try:
     from redis import StrictRedis
 except ImportError:
     raise AnsibleError("The 'redis' python module is required for the redis fact cache, 'pip install redis'")
+
 
 class CacheModule(BaseCacheModule):
     """
@@ -65,7 +66,7 @@ class CacheModule(BaseCacheModule):
 
     def set(self, key, value):
         value2 = json.dumps(value)
-        if self._timeout > 0: # a timeout of 0 is handled as meaning 'never expire'
+        if self._timeout > 0:  # a timeout of 0 is handled as meaning 'never expire'
             self._cache.setex(self._make_key(key), int(self._timeout), value2)
         else:
             self._cache.set(self._make_key(key), value2)
@@ -83,7 +84,7 @@ class CacheModule(BaseCacheModule):
 
     def contains(self, key):
         self._expire_keys()
-        return (self._cache.zrank(self._keys_set, key) >= 0)
+        return (self._cache.zrank(self._keys_set, key) is not None)
 
     def delete(self, key):
         self._cache.delete(self._make_key(key))

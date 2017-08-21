@@ -58,6 +58,8 @@ class CallbackModule(CallbackBase):
                                      Default: ~/.ansible.log
         JUNIT_TASK_CLASS (optional): Configure the output to be one class per yaml file
                                      Default: False
+        JUNIT_FAIL_ON_CHANGE (optional): Consider any tasks reporting "changed" as a junit test failure
+                                     Default: False
 
     Requires:
         junit_xml
@@ -74,6 +76,7 @@ class CallbackModule(CallbackBase):
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
         self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
+        self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -128,6 +131,9 @@ class CallbackModule(CallbackBase):
             host_name = 'include'
 
         task_data = self._task_data[task_uuid]
+
+        if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
+            status = 'failed'
 
         if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
             status = 'ok'

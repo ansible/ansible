@@ -22,24 +22,7 @@
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 
-$parsed_args = Parse-Args $args $false
-
-$raw_command_line = $(Get-AnsibleParam $parsed_args "_raw_params" -failifempty $true).Trim()
-$chdir = Get-AnsibleParam $parsed_args "chdir" -type "path"
-$creates = Get-AnsibleParam $parsed_args "creates" -type "path"
-$removes = Get-AnsibleParam $parsed_args "removes" -type "path"
-
-$result = @{changed=$true; warnings=@(); cmd=$raw_command_line}
-
-If($creates -and $(Test-Path $creates)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $creates exists"; changed=$false; skipped=$true; rc=0}
-}
-
-If($removes -and -not $(Test-Path $removes)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $removes does not exist"; changed=$false; skipped=$true; rc=0}
-}
-
-$util_def = @'
+$helper_def = @'
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -101,11 +84,33 @@ namespace Ansible.Command
 }
 '@
 
-$util_type = Add-Type -TypeDefinition $util_def
+$params = Parse-Args $args -supports_check_mode $false
 
-# FUTURE: extract this code to separate module_utils as Windows module API version of run_command
+$raw_command_line = Get-AnsibleParam -obj $params -name "_raw_params" -type "str" -failifempty $true
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
+$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
+$removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
+
+$raw_command_line = $raw_command_line.Trim()
+
+$result = @{
+    changed = $true
+    cmd = $raw_command_line
+}
+
+If($creates -and $(Test-Path -Path $creates)) {
+    Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
+}
+
+If($removes -and -not $(Test-Path -Path $removes)) {
+    Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
+}
+
+Add-Type -TypeDefinition $helper_def
 
 $exec_args = $null
+
+# FUTURE: extract this code to separate module_utils as Windows module API version of run_command
 
 # Parse the command-line with the Win32 parser to get the application name to run. The Win32 parser
 # will deal with quoting/escaping for us...
@@ -138,7 +143,7 @@ Catch [System.ComponentModel.Win32Exception] {
     # fail nicely for "normal" error conditions
     # FUTURE: this probably won't work on Nano Server
     $excep = $_
-    Exit-Json @{failed=$true;changed=$false;cmd=$raw_command_line;rc=$excep.Exception.NativeErrorCode;msg=$excep.Exception.Message}
+    Exit-Json @{msg = $excep.Exception.Message; cmd = $raw_command_line; changed = $false; rc = $excep.Exception.NativeErrorCode}
 }
 
 $stdout = $stderr = [string] $null
@@ -147,6 +152,8 @@ $stdout = $stderr = [string] $null
 
 $result.stdout = $stdout
 $result.stderr = $stderr
+
+# TODO: decode CLIXML stderr output (and other streams?)
 
 $proc.WaitForExit() | Out-Null
 
@@ -157,5 +164,9 @@ $end_datetime = [DateTime]::UtcNow
 $result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
+
+If ($result.rc -ne 0) {
+    Fail-Json -obj $result -message "non-zero return code"
+}
 
 Exit-Json $result

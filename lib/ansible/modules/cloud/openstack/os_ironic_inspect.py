@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -60,7 +61,7 @@ options:
       default: 1200
     availability_zone:
       description:
-        - Ignored. Present for backwards compatability
+        - Ignored. Present for backwards compatibility
       required: false
 
 requirements: ["shade"]
@@ -70,7 +71,7 @@ RETURN = '''
 ansible_facts:
     description: Dictionary of new facts representing discovered properties of the node..
     returned: changed
-    type: dictionary
+    type: complex
     contains:
         memory_mb:
             description: Amount of node memory as updated in the node properties

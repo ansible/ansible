@@ -69,7 +69,7 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'toooo fast!!')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
+        # with self.assertRaises(botocore.exceptions.ClientError):
         try:
             fail()
         except Exception as e:
@@ -85,13 +85,10 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'unexpected error')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
+        # with self.assertRaises(botocore.exceptions.ClientError):
         try:
             raise_unexpected_error()
         except Exception as e:
             self.assertEqual(e.response['Error']['Code'], 'AuthFailure')
 
         self.assertEqual(self.counter, 1)
-
-if __name__ == '__main__':
-    unittest.main()

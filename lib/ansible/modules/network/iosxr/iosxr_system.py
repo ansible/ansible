@@ -1,96 +1,71 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: iosxr_system
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage the system attributes on Cisco IOS-XR devices
+short_description: Manage the system attributes on Cisco IOS XR devices
 description:
   - This module provides declarative management of node system attributes
-    on Cisco IOS-XR devices.  It provides an option to configure host system
+    on Cisco IOS XR devices.  It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
+extends_documentation_fragment: iosxr
 options:
   hostname:
     description:
-      - The C(hostname) argument will configure the device hostname
-        parameter on Cisco IOS-XR devices.  The C(hostname) value is an
-        ASCII string value.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
-      - The C(description) argument will configure the IP domain name
-        on the remote device to the provided value.  The C(domain_name)
-        argument should be in the dotted name form and will be
+      - Configure the IP domain name
+        on the remote device to the provided value. Value
+        should be in the dotted name form and will be
         appended to the C(hostname) to create a fully-qualified
-        domain name
-    required: false
-    default: null
+        domain name.
   domain_search:
     description:
-      - The C(domain_list) provides the list of domain suffixes to
+      - Provides the list of domain suffixes to
         append to the hostname for the purpose of doing name resolution.
         This argument accepts a list of names and will be reconciled
         with the current active configuration on the running node.
-    required: false
-    default: null
   lookup_source:
     description:
       - The C(lookup_source) argument provides one or more source
         interfaces to use for performing DNS lookups.  The interface
         provided in C(lookup_source) must be a valid interface configured
         on the device.
-    required: false
-    default: null
   lookup_enabled:
     description:
-      - The C(lookup_enabled) argument provides administrative control
+      - Provides administrative control
         for enabling or disabling DNS lookups.  When this argument is
         set to True, lookups are performed and when it is set to False,
         lookups are not performed.
-    required: false
-    default: null
-    choices: ['true', 'false']
+    type: bool
   name_servers:
     description:
       - The C(name_serves) argument accepts a list of DNS name servers by
         way of either FQDN or IP address to use to perform name resolution
         lookups.  This argument accepts wither a list of DNS servers See
         examples.
-    required: false
-    default: null
   state:
     description:
-      - The C(state) argument configures the state of the configuration
+      - State of the configuration
         values in the device's current active configuration.  When set
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -99,7 +74,7 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   iosxr_system:
     hostname: iosxr01
-    domain_name: eng.ansible.com
+    domain_name: test.example.com
     domain-search:
       - ansible.com
       - redhat.com
@@ -125,7 +100,7 @@ commands:
   type: list
   sample:
     - hostname iosxr01
-    - ip domain-name eng.ansible.com
+    - ip domain-name test.example.com
 """
 import re
 
@@ -257,10 +232,8 @@ def main():
     result['commands'] = commands
 
     if commands:
-        commit = not module.check_mode
-        response = load_config(module, commands, commit=commit)
-        if response.get('diff') and module._diff:
-            result['diff'] = {'prepared': response.get('diff')}
+        if not module.check_mode:
+            load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
 
     module.exit_json(**result)

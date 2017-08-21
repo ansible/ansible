@@ -27,15 +27,19 @@ import collections
 import os
 import time
 
+from ansible.module_utils.six.moves import reduce
 from ansible.plugins.callback import CallbackBase
-from ansible.compat.six.moves import reduce
+
 
 # define start time
 t0 = tn = time.time()
 
+
 def secondsToStr(t):
     # http://bytes.com/topic/python/answers/635958-handy-short-cut-formatting-elapsed-time-floating-point-seconds
-    rediv = lambda ll, b: list(divmod(ll[0], b)) + ll[1:]
+    def rediv(ll, b):
+        return list(divmod(ll[0], b)) + ll[1:]
+
     return "%d:%02d:%02d.%03d" % tuple(reduce(rediv, [[t * 1000, ], 1000, 60, 60]))
 
 
@@ -102,7 +106,7 @@ class CallbackModule(CallbackBase):
         self.current = task._uuid
         self.stats[self.current] = {'time': time.time(), 'name': task.get_name()}
         if self._display.verbosity >= 2:
-            self.stats[self.current][ 'path'] = task.get_path()
+            self.stats[self.current]['path'] = task.get_path()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._record_task(task)
@@ -125,7 +129,7 @@ class CallbackModule(CallbackBase):
         if self.sort_order != 'none':
             results = sorted(
                 self.stats.items(),
-                key=lambda x:x[1]['time'],
+                key=lambda x: x[1]['time'],
                 reverse=self.sort_order,
             )
 
@@ -134,7 +138,7 @@ class CallbackModule(CallbackBase):
 
         # Print the timings
         for uuid, result in results:
-            msg=u"{0:-<70}{1:->9}".format(result['name'] + u' ',u' {0:.02f}s'.format(result['time']))
+            msg = u"{0:-<{2}}{1:->9}".format(result['name'] + u' ', u' {0:.02f}s'.format(result['time']), self._display.columns - 9)
             if 'path' in result:
-                msg += u"\n{0:-<79}".format(result['path'] + u' ')
+                msg += u"\n{0:-<{1}}".format(result['path'] + u' ', self._display.columns)
             self._display.display(msg)

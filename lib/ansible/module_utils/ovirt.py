@@ -135,7 +135,7 @@ def create_connection(auth):
     :return: Python SDK connection
     """
 
-    connection = sdk.Connection(
+    return sdk.Connection(
         url=auth.get('url'),
         username=auth.get('username'),
         password=auth.get('password'),
@@ -143,16 +143,8 @@ def create_connection(auth):
         insecure=auth.get('insecure', False),
         token=auth.get('token', None),
         kerberos=auth.get('kerberos', None),
+        headers=auth.get('headers', None),
     )
-    api_version = LooseVersion(engine_version(connection))
-    python_sdk_version = LooseVersion(sdk_version.VERSION)
-    if python_sdk_version < api_version:
-        raise Exception(
-            "Your SDK version is lower than engine version, please use same "
-            "version of the SDK as engine, or unexpected errors may appear."
-        )
-
-    return connection
 
 
 def convert_to_bytes(param):
@@ -513,8 +505,15 @@ class BaseModule(object):
                 after[k] = update[k]
         return after
 
-
-    def create(self, entity=None, result_state=None, fail_condition=lambda e: False, search_params=None, **kwargs):
+    def create(
+        self,
+        entity=None,
+        result_state=None,
+        fail_condition=lambda e: False,
+        search_params=None,
+        update_params=None,
+        **kwargs
+    ):
         """
         Method which is called when state of the entity is 'present'. If user
         don't provide `entity` parameter the entity is searched using
@@ -530,6 +529,7 @@ class BaseModule(object):
         :param result_state: State which should entity has in order to finish task.
         :param fail_condition: Function which checks incorrect state of entity, if it returns `True` Exception is raised.
         :param search_params: Dictionary of parameters to be used for search.
+        :param update_params: The params which should be passed to update method.
         :param kwargs: Additional parameters passed when creating entity.
         :return: Dictionary with values returned by Ansible module.
         """
@@ -544,10 +544,14 @@ class BaseModule(object):
             if not self.update_check(entity):
                 new_entity = self.build_entity()
                 if not self._module.check_mode:
-                    updated_entity = entity_service.update(new_entity)
+                    update_params = update_params or {}
+                    updated_entity = entity_service.update(
+                        new_entity,
+                        **update_params
+                    )
                     self.post_update(entity)
 
-                # Update diffs only if user specified --diff paramter,
+                # Update diffs only if user specified --diff parameter,
                 # so we don't useless overload API:
                 if self._module._diff:
                     before = get_dict_of_struct(
@@ -575,9 +579,14 @@ class BaseModule(object):
         # Wait for the entity to be created and to be in the defined state:
         entity_service = self._service.service(entity.id)
 
-        state_condition = lambda entity: entity
+        def state_condition(entity):
+            return entity
+
         if result_state:
-            state_condition = lambda entity: entity and entity.status == result_state
+
+            def state_condition(entity):
+                return entity and entity.status == result_state
+
         wait(
             service=entity_service,
             condition=state_condition,

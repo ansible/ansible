@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -113,6 +114,12 @@ EXAMPLES = r'''
     physical_path: c:\sites\acme
     parameters: logfile.directory:c:\sites\logs
   register: website
+
+# Remove Default Web Site and the standard port 80 binding
+- name: Remove Default Web Site
+  win_iis_website:
+    name: "Default Web Site"
+    state: absent
 
 # Some commandline examples:
 

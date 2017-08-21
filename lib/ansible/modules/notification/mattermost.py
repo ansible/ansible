@@ -7,25 +7,17 @@
 #    # (c) 2016, René Moser <mail@renemoser.net>
 #    # (c) 2015, Stefan Berggren <nsg@nsg.cc>
 #    # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>)
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: mattermost
@@ -42,7 +34,7 @@ options:
   api_key:
     description:
       - Mattermost webhook api key. Log into your mattermost site, go to
-        Menu -> Integration -> Incomming Webhook -> Add Incomming Webhook.
+        Menu -> Integration -> Incoming Webhook -> Add Incoming Webhook.
         This will give you full URL. api_key is the last part.
         http://mattermost.example.com/hooks/C(API_KEY)
     required: true
@@ -78,7 +70,7 @@ EXAMPLES = """
     api_key: my_api_key
     text: '{{ inventory_hostname }} completed'
 
-- name: Send notification message via Slack all options
+- name: Send notification message via Mattermost all options
   mattermost:
     url: http://mattermost.example.com
     api_key: my_api_key
@@ -101,6 +93,7 @@ webhook_url:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+
 
 def main():
     module = AnsibleModule(
@@ -146,7 +139,7 @@ def main():
     if module.check_mode is False:
         response, info = fetch_url(module=module, url=webhook_url, headers=headers, method='POST', data=payload)
 
-        #somthing's wrong
+        #something's wrong
         if info['status'] != 200:
             #some problem
             result['msg'] = "Failed to send mattermost message, the error was: {0}".format(info['msg'])

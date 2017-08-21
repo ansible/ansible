@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = r'''
 module: win_region
@@ -40,14 +41,12 @@ options:
               for a list of GeoIDs you can use and what location it relates to.
               This needs to be set if C(format) or C(unicode_language) is not
               set.
-        required: false
     format:
         description:
             - The language format to set for the current user, see
               U(https://msdn.microsoft.com/en-us/library/system.globalization.cultureinfo.aspx)
               for a list of culture names to use. This needs to be set if
               C(location) or C(unicode_language) is not set.
-        required: false
     unicode_language:
         description:
             - The unicode language format to set for all users, see
@@ -55,7 +54,6 @@ options:
               for a list of culture names to use. This needs to be set if
               C(location) or C(format) is not set. After setting this
               value a reboot is required for it to take effect.
-        required: false
     copy_settings:
         description:
             - This will copy the current format and location values to new user
@@ -63,7 +61,6 @@ options:
               C(location), C(format) or C(unicode_language) has resulted in a
               change. If this process runs then it will always result in a
               change.
-        required: false
         default: false
         choices: ['true', 'false']
 author: "Jordan Borean (@jborean93)"
@@ -79,26 +76,26 @@ EXAMPLES = r'''
     format: en-AU
     copy_settings: True
 
-# Set the unicode language to English Great Britain
+# Set the unicode language to English Great Britain, reboot if required
 - win_region:
     unicode_language: en-GB
   register: result
 
-- action: win_reboot
+- win_reboot:
   when: result.restart_required
 
 # Set the location to United States
 - win_region:
     location: 244
 
-# Set format, location and unicode to English Australia and copy settings
+# Set format, location and unicode to English Australia and copy settings, reboot if required
 - win_region:
     location: 12
     format: en-AU
     unicode_language: en-AU
   register: result
 
-- action: win_reboot
+- win_reboot:
   when: result.restart_required
 '''
 

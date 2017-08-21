@@ -14,7 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+'''
+DOCUMENTATION:
+    cache: jsonfile
+    short_description: JSON formatted files.
+    description:
+        - This cache uses JSON formatted, per host, files saved to the filesystem.
+    version_added: "1.9"
+    author: Brian Coca (@bcoca)
+'''
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -27,7 +35,8 @@ except ImportError:
     import json
 
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.plugins.cache.base import BaseFileCacheModule
+from ansible.plugins.cache import BaseFileCacheModule
+
 
 class CacheModule(BaseFileCacheModule):
     """

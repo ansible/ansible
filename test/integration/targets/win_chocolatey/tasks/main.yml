@@ -1,0 +1,61 @@
+# test code for the win_chocolatey module
+# (c) 2017, Dag Wieers <dag@wieers.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install sysinternals
+  win_chocolatey:
+    name: sysinternals
+    state: present
+  register: install_sysinternals
+
+- name: verify install sysinternals
+  assert:
+    that:
+    - 'install_sysinternals.changed == true'
+
+- name: install sysinternals again
+  win_chocolatey:
+    name: sysinternals
+    state: present
+  register: install_sysinternals_again
+
+- name: verify install sysinternals again
+  assert:
+    that:
+    - 'install_sysinternals_again.changed == false'
+
+- name: remove sysinternals
+  win_chocolatey:
+    name: sysinternals
+    state: absent
+  register: remove_sysinternals
+
+- name: verify remove sysinternals
+  assert:
+    that:
+    - 'remove_sysinternals.changed == true'
+
+- name: remove sysinternals again
+  win_chocolatey:
+    name: sysinternals
+    state: absent
+  register: remove_sysinternals_again
+
+- name: verify remove sysinternals again
+  assert:
+    that:
+    - 'remove_sysinternals_again.changed == false'

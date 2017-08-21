@@ -1,0 +1,37 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: '{{ role_path }}/fixtures/ansible-xml-beers.xml'
+      dest: /tmp/ansible-xml-beers.xml
+
+  - name: Add 2nd '/business/rating' with value '5'
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business
+      add_children:
+        - rating: "5"
+
+  - name: Set '/business/rating' to '5'
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business/rating
+      value: "5"
+    register: set_element_first_run
+
+  - name: Set '/business/rating' to 'false'... again
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business/rating
+      value: "5"
+    register: set_element_second_run
+
+  - name: Test expected result
+    command: diff -u {{ role_path }}/results/test-set-element-value.xml /tmp/ansible-xml-beers.xml
+    changed_when: no
+
+  - name: Test registered 'changed' on run 1 and unchanged on run 2
+    assert:
+      that:
+        - set_element_first_run.changed
+        - not set_element_second_run.changed
+...

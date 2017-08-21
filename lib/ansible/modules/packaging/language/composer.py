@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Dimitrios Tydeas Mengidis <tydeas.dr@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -32,82 +22,104 @@ author:
 short_description: Dependency Manager for PHP
 version_added: "1.6"
 description:
-    - Composer is a tool for dependency management in PHP. It allows you to declare the dependent libraries your project needs and it will install them in your project for you
+    - >
+      Composer is a tool for dependency management in PHP. It allows you to
+      declare the dependent libraries your project needs and it will install
+      them in your project for you.
 options:
     command:
         version_added: "1.8"
         description:
-            - Composer command like "install", "update" and so on
+            - Composer command like "install", "update" and so on.
         required: false
         default: install
     arguments:
         version_added: "2.0"
         description:
-            - Composer arguments like required package, version and so on
+            - Composer arguments like required package, version and so on.
         required: false
         default: null
+    executable:
+        version_added: "2.4"
+        description:
+            - Path to PHP Executable on the remote host, if PHP is not in PATH
+        required: false
+        default: null
+        aliases: [ "php_path" ]
     working_dir:
         description:
-            - Directory of your project ( see --working-dir )
-        required: true
+            - Directory of your project (see --working-dir). This is required when
+              the command is not run globally.
+            - Will be ignored if C(global_command=true).
+        required: false
         default: null
         aliases: [ "working-dir" ]
+    global_command:
+        version_added: "2.4"
+        description:
+            - Runs the specified command globally.
+        required: false
+        choices: [ true, false]
+        default: false
+        aliases: [ "global-command" ]
     prefer_source:
         description:
-            - Forces installation from package sources when possible ( see --prefer-source )
+            - Forces installation from package sources when possible (see --prefer-source).
         required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        default: false
+        choices: [ true, false]
         aliases: [ "prefer-source" ]
     prefer_dist:
         description:
-            - Forces installation from package dist even for dev versions ( see --prefer-dist )
+            - Forces installation from package dist even for dev versions (see --prefer-dist).
         required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        default: false
+        choices: [ true, false]
         aliases: [ "prefer-dist" ]
     no_dev:
         description:
-            - Disables installation of require-dev packages ( see --no-dev )
+            - Disables installation of require-dev packages (see --no-dev).
         required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
+        default: true
+        choices: [ true, false]
         aliases: [ "no-dev" ]
     no_scripts:
         description:
-            - Skips the execution of all scripts defined in composer.json ( see --no-scripts )
+            - Skips the execution of all scripts defined in composer.json (see --no-scripts).
         required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        default: false
+        choices: [ true, false]
         aliases: [ "no-scripts" ]
     no_plugins:
         description:
-            - Disables all plugins ( see --no-plugins )
+            - Disables all plugins ( see --no-plugins ).
         required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        default: false
+        choices: [ true, false]
         aliases: [ "no-plugins" ]
     optimize_autoloader:
         description:
-            - Optimize autoloader during autoloader dump ( see --optimize-autoloader ). Convert PSR-0/4 autoloading to classmap to get a faster autoloader. This is recommended especially for production, but can take a bit of time to run so it is currently not done by default.
+            - Optimize autoloader during autoloader dump (see --optimize-autoloader).
+            - Convert PSR-0/4 autoloading to classmap to get a faster autoloader.
+            - Recommended especially for production, but can take a bit of time to run.
         required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
+        default: true
+        choices: [ true, false]
         aliases: [ "optimize-autoloader" ]
     ignore_platform_reqs:
         version_added: "2.0"
         description:
             - Ignore php, hhvm, lib-* and ext-* requirements and force the installation even if the local machine does not fulfill these.
         required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        default: false
+        choices: [ true, false]
         aliases: [ "ignore-platform-reqs" ]
 requirements:
     - php
     - composer installed in bin path (recommended /usr/local/bin)
 notes:
     - Default options that are always appended in each execution are --no-ansi, --no-interaction and --no-progress if available.
-    - We received reports about issues on macOS if composer was installed by Homebrew. Please use the official install method to avoid it.
+    - We received reports about issues on macOS if composer was installed by Homebrew. Please use the official install method to avoid issues.
 '''
 
 EXAMPLES = '''
@@ -127,26 +139,26 @@ EXAMPLES = '''
     arguments: package/package /path/to/project ~1.0
     working_dir: /path/to/project
     prefer_dist: yes
+
+# Installs package globally
+- composer:
+    command: require
+    global_command: yes
+    arguments: my/package
 '''
 
-import os
 import re
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+from ansible.module_utils.basic import AnsibleModule
 
 
 def parse_out(string):
     return re.sub("\s+", " ", string).strip()
 
+
 def has_changed(string):
     return "Nothing to install or update" not in string
+
 
 def get_available_options(module, command='install'):
     # get all available options from a composer command using composer help to json
@@ -155,29 +167,41 @@ def get_available_options(module, command='install'):
         output = parse_out(err)
         module.fail_json(msg=output)
 
-    command_help_json = json.loads(out)
+    command_help_json = module.from_json(out)
     return command_help_json['definition']['options']
 
-def composer_command(module, command, arguments = "", options=[]):
-    php_path      = module.get_bin_path("php", True, ["/usr/local/bin"])
+
+def composer_command(module, command, arguments="", options=None, global_command=False):
+    if options is None:
+        options = []
+
+    if module.params['executable'] is None:
+        php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
+    else:
+        php_path = module.params['executable']
+
     composer_path = module.get_bin_path("composer", True, ["/usr/local/bin"])
-    cmd           = "%s %s %s %s %s" % (php_path, composer_path, command, " ".join(options), arguments)
+    cmd = "%s %s %s %s %s %s" % (php_path, composer_path, "global" if global_command else "", command, " ".join(options), arguments)
     return module.run_command(cmd)
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            command              = dict(default="install", type="str", required=False),
-            arguments            = dict(default="", type="str", required=False),
-            working_dir          = dict(aliases=["working-dir"], required=True),
-            prefer_source        = dict(default="no", type="bool", aliases=["prefer-source"]),
-            prefer_dist          = dict(default="no", type="bool", aliases=["prefer-dist"]),
-            no_dev               = dict(default="yes", type="bool", aliases=["no-dev"]),
-            no_scripts           = dict(default="no", type="bool", aliases=["no-scripts"]),
-            no_plugins           = dict(default="no", type="bool", aliases=["no-plugins"]),
-            optimize_autoloader  = dict(default="yes", type="bool", aliases=["optimize-autoloader"]),
-            ignore_platform_reqs = dict(default="no", type="bool", aliases=["ignore-platform-reqs"]),
+        argument_spec=dict(
+            command=dict(default="install", type="str", required=False),
+            arguments=dict(default="", type="str", required=False),
+            executable=dict(type="path", required=False, aliases=["php_path"]),
+            working_dir=dict(type="path", aliases=["working-dir"]),
+            global_command=dict(default=False, type="bool", aliases=["global-command"]),
+            prefer_source=dict(default=False, type="bool", aliases=["prefer-source"]),
+            prefer_dist=dict(default=False, type="bool", aliases=["prefer-dist"]),
+            no_dev=dict(default=True, type="bool", aliases=["no-dev"]),
+            no_scripts=dict(default=False, type="bool", aliases=["no-scripts"]),
+            no_plugins=dict(default=False, type="bool", aliases=["no-plugins"]),
+            optimize_autoloader=dict(default=True, type="bool", aliases=["optimize-autoloader"]),
+            ignore_platform_reqs=dict(default=False, type="bool", aliases=["ignore-platform-reqs"]),
         ),
+        required_if=[('global_command', False, ['working_dir'])],
         supports_check_mode=True
     )
 
@@ -187,6 +211,7 @@ def main():
         module.fail_json(msg="Use the 'arguments' param for passing arguments with the 'command'")
 
     arguments = module.params['arguments']
+    global_command = module.params['global_command']
     available_options = get_available_options(module=module, command=command)
 
     options = []
@@ -203,17 +228,18 @@ def main():
             option = "--%s" % option
             options.append(option)
 
-    options.extend(['--working-dir', os.path.abspath(module.params['working_dir'])])
+    if not global_command:
+        options.extend(['--working-dir', "'%s'" % module.params['working_dir']])
 
     option_params = {
-        'prefer_source':        'prefer-source',
-        'prefer_dist':          'prefer-dist',
-        'no_dev':               'no-dev',
-        'no_scripts':           'no-scripts',
-        'no_plugins':           'no_plugins',
-        'optimize_autoloader':  'optimize-autoloader',
+        'prefer_source': 'prefer-source',
+        'prefer_dist': 'prefer-dist',
+        'no_dev': 'no-dev',
+        'no_scripts': 'no-scripts',
+        'no_plugins': 'no_plugins',
+        'optimize_autoloader': 'optimize-autoloader',
         'ignore_platform_reqs': 'ignore-platform-reqs',
-        }
+    }
 
     for param, option in option_params.items():
         if module.params.get(param) and option in available_options:
@@ -223,7 +249,7 @@ def main():
     if module.check_mode:
         options.append('--dry-run')
 
-    rc, out, err = composer_command(module, command, arguments, options)
+    rc, out, err = composer_command(module, command, arguments, options, global_command)
 
     if rc != 0:
         output = parse_out(err)
@@ -231,9 +257,8 @@ def main():
     else:
         # Composer version > 1.0.0-alpha9 now use stderr for standard notification messages
         output = parse_out(out + err)
-        module.exit_json(changed=has_changed(output), msg=output, stdout=out+err)
+        module.exit_json(changed=has_changed(output), msg=output, stdout=out + err)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
