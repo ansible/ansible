@@ -69,7 +69,7 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
-    version_added: "2.3"
+    version_added: "2.4"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -107,12 +107,12 @@ EXAMPLES = '''
     state: import
     name: all
     target: /tmp/{{ inventory_hostname }}.sql
-    
- # Example of skipping binary logging while creating database 'metrics_eu'
- - mysql_db: 
-     name: metrics_eu
-     state: present
-     sql_log_bin: no
+
+- name: Create a database with binary log turned off
+  mysql_db:
+    name: metrics_eu
+    state: present
+    sql_log_bin: no
 '''
 
 import os
@@ -335,8 +335,8 @@ def main():
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
     if not sql_log_bin:
-      cursor.execute("SET SQL_LOG_BIN=0;")
-            
+        cursor.execute("SET SQL_LOG_BIN=0;")
+
     changed = False
     if not os.path.exists(config_file):
         config_file = None
