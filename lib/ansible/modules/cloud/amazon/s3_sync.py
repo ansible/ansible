@@ -277,12 +277,12 @@ def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
             md5s.append(hashlib.md5(data))
 
     if len(md5s) == 1:
-        new_etag = '"{}"'.format(md5s[0].hexdigest())
+        new_etag = '"{0}"'.format(md5s[0].hexdigest())
     else:  # > 1
         digests = b"".join(m.digest() for m in md5s)
 
         new_md5 = hashlib.md5(digests)
-        new_etag = '"{}-{}"'.format(new_md5.hexdigest(), len(md5s))
+        new_etag = '"{0}-{1}"'.format(new_md5.hexdigest(), len(md5s))
 
     return new_etag
 
@@ -432,8 +432,8 @@ def filter_list(s3, bucket, s3filelist, strategy):
 
                 remote_size = entry['s3_head']['ContentLength']
 
-                entry['whytime'] = '{} / {}'.format(local_modified_epoch, remote_modified_epoch)
-                entry['whysize'] = '{} / {}'.format(local_size, remote_size)
+                entry['whytime'] = '{0} / {1}'.format(local_modified_epoch, remote_modified_epoch)
+                entry['whysize'] = '{0} / {1}'.format(local_size, remote_size)
 
                 if local_modified_epoch <= remote_modified_epoch or local_size == remote_size:
                     entry['skip_flag'] = True
