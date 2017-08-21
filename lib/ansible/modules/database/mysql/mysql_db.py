@@ -63,6 +63,13 @@ options:
     required: false
     default: true
     version_added: "2.1"
+  sql_log_bin:
+    description:
+      - Whether binary logging should be enabled or disabled or not for the connection mysql_db makes.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+    version_added: "2.3"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -100,6 +107,12 @@ EXAMPLES = '''
     state: import
     name: all
     target: /tmp/{{ inventory_hostname }}.sql
+    
+ # Example of skipping binary logging while creating database 'metrics_eu'
+ - mysql_db: 
+     name: metrics_eu
+     state: present
+     sql_log_bin: no
 '''
 
 import os
@@ -271,6 +284,7 @@ def main():
             config_file=dict(default="~/.my.cnf", type='path'),
             single_transaction=dict(default=False, type='bool'),
             quick=dict(default=True, type='bool'),
+            sql_log_bin=dict(default=True, type='bool')
         ),
         supports_check_mode=True
     )
@@ -297,6 +311,7 @@ def main():
     login_host = module.params["login_host"]
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
+    sql_log_bin = module.params["sql_log_bin"]
 
     if state in ['dump', 'import']:
         if target is None:
@@ -319,6 +334,9 @@ def main():
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
+    if not sql_log_bin:
+      cursor.execute("SET SQL_LOG_BIN=0;")
+            
     changed = False
     if not os.path.exists(config_file):
         config_file = None
