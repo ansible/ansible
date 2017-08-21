@@ -7,103 +7,98 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: purefa_volume
-version_added: "2.4"
-short_description:  Create, Delete, Copy or Extend a volume on Pure Storage FlashArray
+version_added: '2.4'
+short_description:  Manage volumes on Pure Storage FlashArrays
 description:
-    - This module creates, deletes or extends the capacity of a volume on Pure Storage FlashArray.
-author: Simon Dodsley (@sdodsley)
+- Create, delete or extend the capacity of a volume on Pure Storage FlashArray.
+author:
+- Simon Dodsley (@sdodsley)
 options:
   name:
     description:
-      - Volume Name.
+    - The name of the volume.
     required: true
   target:
     description:
-      - Target Volume Name if copying.
-    required: false
+    - The name of the target volume, if copying.
   state:
     description:
-      - Create, delete, copy or extend capacity of a volume.
-    required: false
+    - Define whether the volume should exist or not.
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ absent, present ]
   eradicate:
     description:
-      - Define whether to eradicate the volume on delete or leave in trash.
-    required: false
+    - Define whether to eradicate the volume on delete or leave in trash.
     type: bool
-    default: false
+    default: 'no'
   overwrite:
     description:
-      - Define whether to overwrite a target volume if it already exisits.
-    required: false
+    - Define whether to overwrite a target volume if it already exisits.
     type: bool
-    default: false
+    default: 'no'
   size:
     description:
-      - Volume size in M, G, T or P units. See examples.
-    required: false
+    - Volume size in M, G, T or P units.
 extends_documentation_fragment:
-    - purestorage
+- purestorage
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create new volume named foo
   purefa_volume:
     name: foo
     size: 1T
-    state: present
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: present
 
 - name: Extend the size of an existing volume named foo
   purefa_volume:
     name: foo
     size: 2T
-    state: present
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: present
 
 - name: Delete and eradicate volume named foo
   purefa_volume:
     name: foo
-    eradicate: true
-    state: absent
+    eradicate: yes
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: absent
 
 - name: Create clone of volume bar named foo
   purefa_volume:
     name: foo
     target: bar
-    state: present
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: present
 
 - name: Overwrite volume bar with volume foo
   purefa_volume:
     name: foo
     target: bar
-    overwrite: true
-    state: present
+    overwrite: yes
     fa_url: 10.10.10.2
-    api_token: e31060a7-21fc-e277-6240-25983c6c4592'''
-
-RETURN = '''
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: present
 '''
 
-HAS_PURESTORAGE = True
+RETURN = r'''
+'''
+
 try:
     from purestorage import purestorage
+    HAS_PURESTORAGE = True
 except ImportError:
     HAS_PURESTORAGE = False
 
@@ -184,12 +179,12 @@ def copy_from_volume(module, array):
 def update_volume(module, array):
     """Update Volume"""
     changed = True
-    if not module.check_mode:
-        vol = array.get_volume(module.params['name'])
-        if human_to_bytes(module.params['size']) > vol['size']:
+    vol = array.get_volume(module.params['name'])
+    if human_to_bytes(module.params['size']) > vol['size']:
+        if not module.check_mode:
             array.extend_volume(module.params['name'], module.params['size'])
-        else:
-            changed = False
+    else:
+        changed = False
     module.exit_json(changed=changed)
 
 
@@ -204,16 +199,14 @@ def delete_volume(module, array):
 
 def main():
     argument_spec = purefa_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            target=dict(),
-            overwrite=dict(default=False, type='bool'),
-            eradicate=dict(default=False, type='bool'),
-            state=dict(default='present', choices=['present', 'absent']),
-            size=dict()
-        )
-    )
+    argument_spec.update(dict(
+        name=dict(type='str', required=True),
+        target=dict(type='str'),
+        overwrite=dict(type='bool', default=False),
+        eradicate=dict(type='bool', default=False),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        size=dict(type='str'),
+    ))
 
     mutually_exclusive = [['size', 'target']]
 
