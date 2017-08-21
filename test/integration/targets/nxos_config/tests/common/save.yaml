@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/save.yaml"
+- debug: msg="START {{ connection.transport }}/save.yaml"
 
 - name: setup
   nxos_config:
@@ -9,13 +9,13 @@
     parents:
       - interface Ethernet2/5
     match: none
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
 
 
 - name: save config
   nxos_config:
     save: true
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -25,11 +25,11 @@
 - name: save should always run
   nxos_config:
     save: true
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - "result.changed == true"
 
-- debug: msg="END cli/save.yaml"
+- debug: msg="END {{ connection.transport }}/save.yaml"

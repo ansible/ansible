@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/negative.yaml"
+- debug: msg="START {{ connection.transport }}/negative.yaml"
 
 - name: run 11 commands
   nxos_command:
@@ -15,7 +15,7 @@
       - show version
       - show version
       - show version
-    provier: "{{ cli }}"
+    provier: "{{ connection }}"
   ignore_errors: yes
   register: result
 
@@ -24,4 +24,4 @@
       - result.failed
 
 
-- debug: msg="END cli/negative.yaml"
+- debug: msg="END {{ connection.transport }}/negative.yaml"

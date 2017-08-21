@@ -1,17 +1,16 @@
 ---
-- debug: msg="START cli/nonidempotent.yaml"
+- debug: msg='START {{ connection.transport }}/toplevel.yaml'
 
 - name: setup
   nxos_config:
     lines: hostname {{ inventory_hostname_short }}
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
     match: none
 
 - name: configure top level command
   nxos_config:
     lines: hostname foo
-    provider: "{{ cli }}"
-    match: strict
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -22,18 +21,17 @@
 - name: configure top level command idempotent check
   nxos_config:
     lines: hostname foo
-    provider: "{{ cli }}"
-    match: strict
+    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
-      - "result.changed == true"
+      - "result.changed == false"
 
 - name: teardown
   nxos_config:
     lines: hostname {{ inventory_hostname_short }}
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
     match: none
 
-- debug: msg="END cli/nonidempotent.yaml"
+- debug: msg='END {{ connection.transport }}/toplevel.yaml'

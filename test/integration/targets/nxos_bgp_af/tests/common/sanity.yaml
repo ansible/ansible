@@ -1,28 +1,28 @@
 ---
-- debug: msg="START TRANSPORT:CLI nxos_bgp_af sanity test"
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp_af sanity test"
 
 - set_fact: advertise_l2vpn_evpn="true"
   when: platform | search('N9K')
 
 - name: "Enable feature BGP"
-  nxos_feature: 
+  nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Enable feature nv overlay"
   nxos_feature:
     feature: nv overlay
     state: enabled
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp: &remove
     asn: 65535
     state: absent
-    provider: "{{ cli }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -30,7 +30,7 @@
     nxos_config:
       lines:
         - nv overlay evpn
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     when: platform | search('N9K')
 
   - name: "Configure BGP_AF defaults"
@@ -41,7 +41,7 @@
       safi: unicast
       advertise_l2vpn_evpn: "{{advertise_l2vpn_evpn|default(omit)}}"
       state: present
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -67,7 +67,7 @@
     register: result
 
   - assert: *false
-  
+
   - name: "Configure BGP_AF non defaults"
     nxos_bgp_af: &configure_non_default
       asn: 65535
@@ -97,9 +97,9 @@
       table_map: RouteMap
       table_map_filter: true
       state: present
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     register: result
-  
+
   - assert: *true
 
   - name: "Check Idempotence"
@@ -113,13 +113,13 @@
     register: result
 
   - assert: *true
-  
+
   - name: "Check Idempotence"
     nxos_bgp: *remove
     register: result
 
   - assert: *false
-  
+
   rescue:
   - name: "Cleanup BGP"
     nxos_bgp: *remove
@@ -130,20 +130,20 @@
     nxos_feature: &disable_bgp
       feature: bgp
       state: disabled
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
 
   - name: "Disable feature nv overlay"
     nxos_feature: &disable_nvoverlay
       feature: nv overlay
       state: disabled
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "Remove nv overlay evpn"
     nxos_config:
       lines:
         - no nv overlay evpn
-      provider: "{{ cli }}"
+      provider: "{{ connection }}"
     when: platform | search('N9K')
 
-  - debug: msg="END TRANSPORT:CLI nxos_bgp_af sanity test"  
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_bgp_af sanity test"
