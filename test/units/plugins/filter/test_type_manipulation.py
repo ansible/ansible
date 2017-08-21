@@ -39,11 +39,11 @@ class TestTypeFilter(unittest.TestCase):
         dict_original = {'eigrp': {'state': 'enabled', 'as': '1'}, 'ospf': {'state': 'enabled', 'as': '2'}}
         key_name = 'proto'
         list_return = [{'state': 'enabled', 'proto': 'ospf', 'as': '2'}, {'state': 'enabled', 'proto': 'eigrp', 'as': '1'}]
+        actual_return = dict_to_list(dict_original, key_name)
         try:
             _assertItemsEqual = self.assertCountEqual
             _assertItemsEqual(actual_return, list_return)
         except AttributeError:
-            actual_return = dict_to_list(dict_original, key_name)
             self.assertEqual(sorted(actual_return), sorted(list_return))
 
         # Fail when dict key is already used
