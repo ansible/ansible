@@ -257,12 +257,12 @@ def get_pim_interface(module, interface):
             body = execute_show_command(command, module)
 
     try:
-        get_data = body[0]['TABLE_iod']['ROW_iod']
+        get_data = body[0]['TABLE_vrf']['ROW_vrf']['TABLE_iod']['ROW_iod']
 
-        if isinstance(get_data.get('dr-priority'), string_types):
-            pim_interface['dr_prio'] = get_data.get('dr-priority')
-        else:
+        if isinstance(get_data.get('dr-priority'), list):
             pim_interface['dr_prio'] = get_data.get('dr-priority')[0]
+        else:
+            pim_interface['dr_prio'] = str(get_data.get('dr-priority'))
 
         hello_interval = get_data.get('hello-interval-sec')
         if hello_interval:
