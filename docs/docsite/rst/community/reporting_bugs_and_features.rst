@@ -1,10 +1,11 @@
+**************************************
 Reporting Bugs And Requesting Features
-======================================
+***************************************
 
 .. contents:: Topics
 
 Reporting A Bug
----------------
+===============
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
@@ -27,7 +28,7 @@ If you are not sure if something is a bug yet, you are welcome to ask about some
 As we are a very high volume project, if you determine that you do have a bug, please be sure to open the issue yourself to ensure we have a record of it. Don’t rely on someone else in the community to file the bug report for you.
 
 Requesting a feature
---------------------
+====================
 
 The best way to get a feature into Ansible is to submit a pull request.
 

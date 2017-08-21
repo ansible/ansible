@@ -1,14 +1,16 @@
+****************************
 Module Maintainer Guidelines
-============================
+****************************
 
 .. contents:: Topics
 
 Thank you for being a maintainer of one Ansible's community modules! This guide provides module maintainers an overview of their responsibilities, resources for additional information, and links to helpful tools.
 
 In addition to the information below, module maintainers should be familiar with:
-* General Ansible community development practices (http://docs.ansible.com/ansible/community.html)
-* Documentation on module development (http://docs.ansible.com/ansible/developing_modules.html)
-* Any namespace-specific module guidelines (identified as GUIDELINES.md in the appropriate file tree).
+
+* :ref:`General Ansible community development practices <../community>`
+* Documentation on :ref:`module development <developing_modules.html>`_
+
 
 Maintainer Responsibilities
 ===========================

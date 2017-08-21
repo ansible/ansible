@@ -95,7 +95,7 @@ Workflow Labels
 Informational Labels
 ~~~~~~~~~~~~~~~~~~~~
 
--  **backport**: this is applied automatically if the PR is requested against any branch that is not devel. The bot immediately assigns the labels backport and “core_review”.
+-  **backport**: this is applied automatically if the PR is requested against any branch that is not devel. The bot immediately assigns the labels backport and ``core_review``.
 -  **bugfix_pull_request**: applied by the bot based on the templatized description of the PR.
 -  **cloud**: applied by the bot based on the paths of the modified files.
 -  **docs_pull_request**: applied by the bot based on the templatized description of the PR.
@@ -103,11 +103,12 @@ Informational Labels
 -  **feature_pull_request**: applied by the bot based on the templatized description of the PR.
 -  **networking**: applied by the bot based on the paths of the modified files.
 -  **owner_pr**: largely deprecated. Formerly workflow, now informational. Originally, PRs submitted by the maintainer would automatically go to **shipit** based on this label. If the submitter is also a maintainer, we notify the other maintainers and still require one of the maintainers (including the submitter) to give a **shipit**.
--  **P1 - P5**: deprecated for modules because they were wildly inconsistent and not useful. The bot now strips these.
 -  **pending_action**: applied by the bot to PRs that are not moving. Reviewed every couple of weeks by the community team, who tries to figure out the appropriate action (closure, asking for new maintainers, etc).
 
 
 Special Labels
 ~~~~~~~~~~~~~~
 
--  **new_plugin**: this is for new modules or plugins that are not yet in Ansible. **Note: this kicks off a completely separate process, and frankly it doesn’t work very well at present. We’re working our best to improve this process.**
+-  **new_plugin**: this is for new modules or plugins that are not yet in Ansible.
+
+   **Note:** `new_plugin` kicks off a completely separate process, and frankly it doesn’t work very well at present. We’re working our best to improve this process.
