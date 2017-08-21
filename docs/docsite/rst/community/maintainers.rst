@@ -9,7 +9,7 @@ Thank you for being a maintainer of one Ansible's community modules! This guide 
 In addition to the information below, module maintainers should be familiar with:
 
 * :ref:`General Ansible community development practices <../community>`
-* Documentation on :ref:`module development <developing_modules.html>`_
+* Documentation on :ref:`module development <developing_modules.html>`
 
 
 Maintainer Responsibilities
