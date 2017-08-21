@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -372,7 +373,7 @@ options:
 
   tags:
     description:
-      - (Dictionary) a dictionary of tags to configure in the elastigroup. Please specify list of keys and values (key comma value);
+      - (Dictionary) a dictionary of tags to configure in the elastigroup. Please specify list of keys and values (key colon value);
     required: false
 
   target:
@@ -485,7 +486,6 @@ options:
         Only works if wait_for_instances is True.
     required: false
 """
-
 EXAMPLES = '''
 # Basic configuration YAML example
 
@@ -529,11 +529,15 @@ EXAMPLES = '''
     - name: create elastigroup
       spotinst_aws_elastigroup:
           state: present
+          account_id: act-1a9dd2b
           risk: 100
           availability_vs_cost: balanced
           availability_zones:
             - name: us-west-2a
               subnet_id: subnet-2b68a15c
+          tags:
+            - Environment: someEnvValue
+            - OtherTagKey: otherValue
           image_id: ami-f173cc91
           key_pair: spotinst-oregon
           max_size: 5
@@ -546,6 +550,11 @@ EXAMPLES = '''
           product: Linux/UNIX
           security_group_ids:
             - sg-8f4b8fe9
+          block_device_mappings:
+            - device_name: '/dev/sda1'
+              ebs:
+                volume_size: 100
+                volume_type: gp2
           spot_instance_types:
             - c3.large
           do_not_update:
@@ -558,8 +567,99 @@ EXAMPLES = '''
       shell: echo {{ item.private_ip }}\\n >> list-of-private-ips
       with_items: "{{ result.instances }}"
     - debug: var=result
-'''
 
+# In this example, we create an elastigroup with multiple block device mappings, tags, and also an account id
+# In organizations with more than one account, it is required to specify an account_id
+
+- hosts: localhost
+  tasks:
+    - name: create elastigroup
+      spotinst_aws_elastigroup:
+          state: present
+          account_id: act-1a9dd2b
+          risk: 100
+          availability_vs_cost: balanced
+          availability_zones:
+            - name: us-west-2a
+              subnet_id: subnet-2b68a15c
+          tags:
+            - Environment: someEnvValue
+            - OtherTagKey: otherValue
+          image_id: ami-f173cc91
+          key_pair: spotinst-oregon
+          max_size: 5
+          min_size: 0
+          target: 0
+          unit: instance
+          monitoring: True
+          name: ansible-group-tal
+          on_demand_instance_type: c3.large
+          product: Linux/UNIX
+          security_group_ids:
+            - sg-8f4b8fe9
+          block_device_mappings:
+            - device_name: '/dev/xvda'
+              ebs:
+                volume_size: 60
+                volume_type: gp2
+            - device_name: '/dev/xvdb'
+              ebs:
+                volume_size: 120
+                volume_type: gp2
+          spot_instance_types:
+            - c3.large
+          do_not_update:
+            - image_id
+          wait_for_instances: True
+          wait_timeout: 600
+      register: result
+
+    - name: Store private ips to file
+      shell: echo {{ item.private_ip }}\\n >> list-of-private-ips
+      with_items: "{{ result.instances }}"
+    - debug: var=result
+
+# In this example we have set up block device mapping with ephemeral devices
+
+- hosts: localhost
+  tasks:
+    - name: create elastigroup
+      spotinst_aws_elastigroup:
+          state: present
+          risk: 100
+          availability_vs_cost: balanced
+          availability_zones:
+            - name: us-west-2a
+              subnet_id: subnet-2b68a15c
+          image_id: ami-f173cc91
+          key_pair: spotinst-oregon
+          max_size: 15
+          min_size: 0
+          target: 0
+          unit: instance
+          block_device_mappings:
+            - device_name: '/dev/xvda'
+              virtual_name: ephemeral0
+            - device_name: '/dev/xvdb/'
+              virtual_name: ephemeral1
+          monitoring: True
+          name: ansible-group
+          on_demand_instance_type: c3.large
+          product: Linux/UNIX
+          load_balancers:
+            - test-lb-1
+          security_group_ids:
+            - sg-8f4b8fe9
+          spot_instance_types:
+            - c3.large
+          state: absent
+          do_not_update:
+            - image_id
+            - target
+      register: result
+    - debug: var=result
+
+'''
 RETURN = '''
 ---
 instances:
@@ -587,6 +687,7 @@ group_id:
 '''
 
 HAS_SPOTINST_SDK = False
+__metaclass__ = type
 
 import os
 import time
