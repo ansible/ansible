@@ -30,41 +30,28 @@ options:
   instance_id:
     description:
       - Instance ID to create the AMI from.
-    required: false
-    default: null
   name:
     description:
       - The name of the new AMI.
-    required: false
-    default: null
   architecture:
     version_added: "2.3"
     description:
-      - The target architecture of the image to register
-    required: false
-    default: null
+      - The target architecture of the image to register.
   kernel_id:
     version_added: "2.3"
     description:
-      - The target kernel id of the image to register
-    required: false
-    default: null
+      - The target kernel id of the image to register.
   virtualization_type:
     version_added: "2.3"
     description:
-      - The virtualization type of the image to register
-    required: false
-    default: null
+      - The virtualization type of the image to register.
   root_device_name:
     version_added: "2.3"
     description:
-      - The root device name of the image to register
-    required: false
-    default: null
+      - The root device name of the image to register.
   wait:
     description:
       - Wait for the AMI to be in state 'available' before returning.
-    required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -74,64 +61,47 @@ options:
   state:
     description:
       - Register or deregister an AMI.
-    required: false
     default: 'present'
     choices: [ "absent", "present" ]
   description:
     description:
       - Human-readable string describing the contents and purpose of the AMI.
-    required: false
-    default: null
   no_reboot:
     description:
       - Flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the
         responsibility of maintaining file system integrity is left to the owner of the instance.
-    required: false
     default: no
     choices: [ "yes", "no" ]
   image_id:
     description:
       - Image ID to be deregistered.
-    required: false
-    default: null
   device_mapping:
     version_added: "2.0"
     description:
-      - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
+      - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters).
       - >
         Valid properties include: device_name, volume_type, size/volume_size (in GB), delete_on_termination (boolean), no_device (boolean),
         snapshot_id, iops (for io1 volume_type), encrypted
-    required: false
-    default: null
   delete_snapshot:
     description:
       - Delete snapshots when deregistering the AMI.
-    required: false
     default: "no"
     choices: [ "yes", "no" ]
   tags:
     description:
       - A dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
     version_added: "2.0"
   launch_permissions:
     description:
-      - Users and groups that should be able to launch the AMI. Expects
-        dictionary with a key of user_ids and/or group_names. user_ids should
-        be a list of account ids. group_name should be a list of groups, "all"
-        is the only acceptable value currently.
-    required: false
-    default: null
+      - Users and groups that should be able to launch the AMI. Expects dictionary with a key of user_ids and/or group_names. user_ids should
+        be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
     version_added: "2.0"
   image_location:
     description:
       - The s3 location of an image to use for the AMI.
-      default: null
   ena_support:
     description:
       - A boolean representing whether enhanced networking with ENA is enabled or not.
-      default: null
   billing_products:
     description:
       - A list of valid billing codes. To be used with valid accounts by aws marketplace vendors.
@@ -140,8 +110,7 @@ options:
       - The ID of the RAM disk.
   sriov_net_support:
     description:
-      - Set to simple to enable enhanced networking with the Intel 82599 Virtual Function interface for the AMI and any instances
-        that you launch from the AMI.
+      - Set to simple to enable enhanced networking with the Intel 82599 Virtual Function interface for the AMI and any instances that you launch from the AMI.
 author:
     - "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
     - "Constantin Bugneac (@Constantin07) <constantin.bugneac@endava.com>"
