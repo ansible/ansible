@@ -25,7 +25,6 @@ options:
   name:
     description:
       - Name of the record.
-    required: false
     default: ""
   domain:
     description:
@@ -34,7 +33,6 @@ options:
   record_type:
     description:
       - Type of the record.
-    required: false
     default: A
     choices: ['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL']
     aliases: ['rtype', 'type']
@@ -42,27 +40,20 @@ options:
     description:
       - Content of the record.
       - Required if C(state=present) or C(name="")
-    required: false
-    default: null
     aliases: ['value', 'address']
   ttl:
     description:
       - TTL of the record in seconds.
-    required: false
     default: 3600
   prio:
     description:
       - Priority of the record.
-    required: false
-    default: null
     aliases: ['priority']
   multiple:
     description:
       - Whether there are more than one records with similar C(name).
       - Only allowed with C(record_type=A).
       - C(content) will not be updated as it is used as key to find the record.
-    required: false
-    default: null
     aliases: ['priority']
   state:
     description:
@@ -70,96 +61,58 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
-  api_key:
-    description:
-      - API key of the Exoscale DNS API.
-    required: false
-    default: null
-  api_secret:
-    description:
-      - Secret key of the Exoscale DNS API.
-    required: false
-    default: null
-  api_timeout:
-    description:
-      - HTTP timeout to Exoscale DNS API.
-    required: false
-    default: 10
-  api_region:
-    description:
-      - Name of the ini section in the C(cloustack.ini) file.
-    required: false
-    default: cloudstack
-  validate_certs:
-    description:
-      - Validate SSL certs of the Exoscale DNS API.
-    required: false
-    default: true
-requirements:
-  - "python >= 2.6"
-notes:
-  - As Exoscale DNS uses the same API key and secret for all services, we reuse the config used for Exscale Compute based on CloudStack.
-    The config is read from several locations, in the following order.
-    The C(CLOUDSTACK_KEY), C(CLOUDSTACK_SECRET) environment variables.
-    A C(CLOUDSTACK_CONFIG) environment variable pointing to an C(.ini) file,
-    A C(cloudstack.ini) file in the current working directory.
-    A C(.cloudstack.ini) file in the users home directory.
-    Optionally multiple credentials and endpoints can be specified using ini sections in C(cloudstack.ini).
-    Use the argument C(api_region) to select the section name, default section is C(cloudstack).
-  - This module does not support multiple A records and will complain properly if you try.
-  - More information Exoscale DNS can be found on https://community.exoscale.ch/documentation/dns/.
-  - This module supports check mode and diff.
+extends_documentation_fragment: exoscale
 '''
 
 EXAMPLES = '''
-# Create or update an A record.
-- local_action:
+- name: Create or update an A record
+  local_action:
     module: exo_dns_record
     name: web-vm-1
     domain: example.com
     content: 1.2.3.4
 
-# Update an existing A record with a new IP.
-- local_action:
+- name: Update an existing A record with a new IP
+  local_action:
     module: exo_dns_record
     name: web-vm-1
     domain: example.com
     content: 1.2.3.5
 
-# Create another A record with same name.
-- local_action:
+- name: Create another A record with same name
+  local_action:
     module: exo_dns_record
     name: web-vm-1
     domain: example.com
     content: 1.2.3.6
     multiple: yes
 
-# Create or update a CNAME record.
-- local_action:
+- name: Create or update a CNAME record
+  local_action:
     module: exo_dns_record
     name: www
     domain: example.com
     record_type: CNAME
     content: web-vm-1
 
-# Create or update a MX record.
-- local_action:
+- name: Create or update a MX record
+  local_action:
     module: exo_dns_record
     domain: example.com
     record_type: MX
     content: mx1.example.com
     prio: 10
 
-# delete a MX record.
-- local_action:
+- name: Delete a MX record
+  local_action:
     module: exo_dns_record
     domain: example.com
     record_type: MX
     content: mx1.example.com
     state: absent
 
-# Remove a record.
-- local_action:
+- name: Remove a record
+  local_action:
     module: exo_dns_record
     name: www
     domain: example.com
