@@ -191,23 +191,23 @@ $IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -def
 
 # Convert variable for disk size
 if(($Size.GetType()).Name -eq 'String'){
-[int32]$Size = [convert]::ToInt32($Size, 10)
+        [int32]$Size = [convert]::ToInt32($Size, 10)
 }
 if(($AllocUnitSize.GetType()).Name -eq 'String'){
-[int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
+        [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
 }
 
 if($check_mode){
-$result.general_log.check_mode = "successful"
-Exit-Json $result;
+        $result.general_log.check_mode = "successful"
+        Exit-Json $result;
 }
 else{
 # Rescan disks
 try{
-Invoke-Expression '"rescan" | diskpart' | Out-Null
-   }
+    Invoke-Expression '"rescan" | diskpart' | Out-Null
+}
 catch{
-$result.general_log.rescan_disks = "failed"
+    $result.general_log.rescan_disks = "failed"
 }
 
 $result.general_log.rescan_disks = "successful"
@@ -220,11 +220,11 @@ $result.general_log.rescan_disks = "successful"
 
 # Search disk
 try{
-$disk = Search-Disk @ParamsDisk
+    $disk = Search-Disk @ParamsDisk
 }
 catch{
-$result.general_log.search_disk = "failed"
-Fail-Json -obj $result -message "Failed to search and/or select the disk with the specified parameter options: $($_.Exception.Message)"
+    $result.general_log.search_disk = "failed"
+    Fail-Json -obj $result -message "Failed to search and/or select the disk with the specified parameter options: $($_.Exception.Message)"
 }
 
 if($disk){
@@ -741,3 +741,4 @@ else{
 }
 
 Exit-Json $result;
+}
