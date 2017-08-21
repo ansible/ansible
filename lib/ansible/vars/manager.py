@@ -104,7 +104,7 @@ def remove_internal_keys(data):
 class VariableManager:
 
     _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
-                'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
+                          'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
     def __init__(self, loader=None, inventory=None):
 

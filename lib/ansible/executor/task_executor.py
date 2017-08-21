@@ -415,7 +415,7 @@ class TaskExecutor:
             # a certain subset of variables exist.
             self._play_context.update_vars(variables)
 
-            #FIXME: update connection/shell plugin options
+            # FIXME: update connection/shell plugin options
         except AnsibleError as e:
             # save the error, which we'll raise later if we don't end up
             # skipping this task during the conditional evaluation step
