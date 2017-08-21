@@ -100,7 +100,7 @@ options:
       - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
       - >
         Valid properties include: device_name, volume_type, size/volume_size (in GB), delete_on_termination (boolean), no_device (boolean),
-        snapshot_id, iops (for io1 volume_type)
+        snapshot_id, iops (for io1 volume_type), encrypted
     required: false
     default: null
   delete_snapshot:
@@ -124,6 +124,24 @@ options:
     required: false
     default: null
     version_added: "2.0"
+  image_location:
+    description:
+      - The s3 location of an image to use for the AMI.
+      default: null
+  ena_support:
+    description:
+      - A boolean representing whether enhanced networking with ENA is enabled or not.
+      default: null
+  billing_products:
+    description:
+      - A list of valid billing codes. To be used with valid accounts by aws marketplace vendors.
+  ramdisk_id:
+    description:
+      - The ID of the RAM disk.
+  sriov_net_support:
+    description:
+      - Set to simple to enable enhanced networking with the Intel 82599 Virtual Function interface for the AMI and any instances
+        that you launch from the AMI.
 author:
     - "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
     - "Constantin Bugneac (@Constantin07) <constantin.bugneac@endava.com>"
@@ -165,7 +183,7 @@ EXAMPLES = '''
     root_device_name: /dev/xvda
     device_mapping:
       - device_name: /dev/xvda
-        size: 8
+        volume_size: 8
         snapshot_id: snap-xxxxxxxx
         delete_on_termination: true
         volume_type: gp2
@@ -395,7 +413,6 @@ def create_image(module, connection):
                 device = rename_item_if_exists(device, 'virtual_name', 'VirtualName')
                 device = rename_item_if_exists(device, 'no_device', 'NoDevice')
                 device = rename_item_if_exists(device, 'volume_type', 'VolumeType', 'Ebs')
-                device = rename_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
                 device = rename_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
                 device = rename_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
                 device = rename_item_if_exists(device, 'size', 'VolumeSize', 'Ebs')
