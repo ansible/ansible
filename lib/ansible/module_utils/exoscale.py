@@ -56,7 +56,7 @@ class ExoDns(object):
     def __init__(self, module):
         self.module = module
 
-        self.api_key = self.module.params. get('api_key')
+        self.api_key = self.module.params.get('api_key')
         self.api_secret = self.module.params.get('api_secret')
         if not (self.api_key and self.api_secret):
             try:
