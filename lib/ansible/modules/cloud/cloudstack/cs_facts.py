@@ -131,7 +131,7 @@ class CloudStackFacts(object):
 
     def __init__(self):
         collector = ansible_collector.get_ansible_collector(all_collector_classes=default_collectors.collectors,
-                                                            filter_spec='default_ipv4',
+                                                            filter_spec=['default_ipv4'],
                                                             gather_subset=['!all', 'network'],
                                                             gather_timeout=10)
         self.facts = collector.collect(module)

@@ -49,7 +49,7 @@ def ansible_facts(module, gather_subset=None):
 
     gather_subset = gather_subset or module.params.get('gather_subset', ['all'])
     gather_timeout = module.params.get('gather_timeout', 10)
-    filter_spec = module.params.get('filter', '*')
+    filter_spec = module.params.get('filter', ['*'])
 
     minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
                                        'distribution', 'dns', 'env', 'fips', 'local', 'lsb',
