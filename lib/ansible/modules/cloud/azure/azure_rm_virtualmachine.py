@@ -136,48 +136,53 @@ options:
             - Linux
         default:
             - Linux
-    data_disk_lun:
+    data_disks:
         description:
-            - The logical unit number for data disk
-        default: 0
+            - Describes list of data disks.
+        required: false
+        default: null
         version_added: "2.4"
-    data_disk_size_gb:
-        description:
-            - The initial disk size in GB for blank data disks
-        version_added: "2.4"
-    data_disk_managed_disk_type:
-        description:
-            - Managed data disk type
-        choices:
-            - Standard_LRS
-            - Premium_LRS
-        version_added: "2.4"
-    data_disk_storage_account_name:
-        description:
-            - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
-              a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
-        version_added: "2.4"
-    data_disk_storage_container_name:
-        description:
-            - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
-              default container will created.
-        default: vhds
-        version_added: "2.4"
-    data_disk_storage_blob_name:
-        description:
-            - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
-              the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
-        aliases:
-            - data_disk_storage_blob
-        version_added: "2.4"
-    data_disk_caching:
-        description:
-            - Type of data disk caching.
-        choices:
-            - ReadOnly
-            - ReadWrite
-        default: ReadOnly
-        version_added: "2.4"
+        suboptions:
+            lun:
+                description:
+                    - The logical unit number for data disk
+                default: 0
+                version_added: "2.4"
+            disk_size_gb:
+                description:
+                    - The initial disk size in GB for blank data disks
+                version_added: "2.4"
+            managed_disk_type:
+                description:
+                    - Managed data disk type
+                choices:
+                    - Standard_LRS
+                    - Premium_LRS
+                version_added: "2.4"
+            storage_account_name:
+                description:
+                    - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
+                      a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+                version_added: "2.4"
+            storage_container_name:
+                description:
+                    - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
+                      default container will created.
+                default: vhds
+                version_added: "2.4"
+            storage_blob_name:
+                description:
+                    - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
+                      the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
+                version_added: "2.4"
+            caching:
+                description:
+                    - Type of data disk caching.
+                choices:
+                    - ReadOnly
+                    - ReadWrite
+                default: ReadOnly
+                version_added: "2.4"
     public_ip_allocation_method:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
@@ -299,12 +304,12 @@ EXAMPLES = '''
       sku: Stable
       version: latest
     data_disks:
-        - data_disk_lun: 0
-          data_disk_size_gb: 64
-          data_disk_managed_disk_type: Standard_LRS
-        - data_disk_lun: 1
-          data_disk_size_gb: 128
-          data_disk_managed_disk_type: Premium_LRS
+        - lun: 0
+          disk_size_gb: 64
+          managed_disk_type: Standard_LRS
+        - lun: 1
+          disk_size_gb: 128
+          managed_disk_type: Premium_LRS
 
 - name: Create a VM with OS and multiple data storage accounts
   azure_rm_virtualmachine:
@@ -325,14 +330,14 @@ EXAMPLES = '''
     sku: Stable
     version: latest
     data_disks:
-    - data_disk_lun: 0
-      data_disk_size_gb: 64
-      data_disk_storage_container_name: datadisk1
-      data_disk_storage_blob_name: datadisk1.vhd
-    - data_disk_lun: 1
-      data_disk_size_gb: 128
-      data_disk_storage_container_name: datadisk2
-      data_disk_storage_blob_name: datadisk2.vhd
+    - lun: 0
+      disk_size_gb: 64
+      storage_container_name: datadisk1
+      storage_blob_name: datadisk1.vhd
+    - lun: 1
+      disk_size_gb: 128
+      storage_container_name: datadisk2
+      storage_blob_name: datadisk2.vhd
 
 - name: Power Off
   azure_rm_virtualmachine:
@@ -893,50 +898,50 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         count = 0
 
                         for data_disk in self.data_disks:
-                            if not data_disk.get('data_disk_managed_disk_type'):
-                                if not data_disk.get('data_disk_storage_blob_name'):
-                                    data_disk['data_disk_storage_blob_name'] = self.name + str(count) + '-data.vhd'
+                            if not data_disk.get('managed_disk_type'):
+                                if not data_disk.get('storage_blob_name'):
+                                    data_disk['storage_blob_name'] = self.name + '-data-' + str(count) + '.vhd'
                                     count += 1
 
-                                if data_disk.get('data_disk_storage_account_name'):
-                                    self.get_storage_account(data_disk['data_disk_storage_account_name'])
-                                    data_disk_storage_account.name = data_disk['data_disk_storage_account_name']
+                                if data_disk.get('storage_account_name'):
+                                    self.get_storage_account(data_disk['storage_account_name'])
+                                    data_disk_storage_account.name = data_disk['storage_account_name']
                                 else:
                                     data_disk_storage_account = self.create_default_storage_account()
                                     self.log("data disk storage account:")
                                     self.log(self.serialize_obj(data_disk_storage_account, 'StorageAccount'), pretty_print=True)
 
-                                if not data_disk.get('data_disk_storage_container_name'):
-                                    data_disk['data_disk_storage_container_name'] = 'vhds'
+                                if not data_disk.get('storage_container_name'):
+                                    data_disk['storage_container_name'] = 'vhds'
 
                                 data_disk_requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(
                                     data_disk_storage_account.name,
-                                    data_disk['data_disk_storage_container_name'],
-                                    data_disk['data_disk_storage_blob_name']
+                                    data_disk['storage_container_name'],
+                                    data_disk['storage_blob_name']
                                 )
 
-                            if not data_disk.get('data_disk_managed_disk_type'):
+                            if not data_disk.get('managed_disk_type'):
                                 data_disk_managed_disk = None
-                                disk_name = data_disk['data_disk_storage_blob_name']
+                                disk_name = data_disk['storage_blob_name']
                                 data_disk_vhd = VirtualHardDisk(uri=data_disk_requested_vhd_uri)
                             else:
                                 data_disk_vhd = None
-                                data_disk_managed_disk = ManagedDiskParameters(storage_account_type=data_disk['data_disk_managed_disk_type'])
+                                data_disk_managed_disk = ManagedDiskParameters(storage_account_type=data_disk['managed_disk_type'])
                                 disk_name = self.name + "-datadisk-" + str(count)
                                 count += 1
 
-                            data_disk['data_disk_caching'] = data_disk.get(
-                                'data_disk_caching',
+                            data_disk['caching'] = data_disk.get(
+                                'caching',
                                 CachingTypes.read_only
                             )
 
                             data_disks.append(DataDisk(
-                                lun=data_disk['data_disk_lun'],
+                                lun=data_disk['lun'],
                                 name=disk_name,
                                 vhd=data_disk_vhd,
-                                caching=data_disk['data_disk_caching'],
+                                caching=data_disk['caching'],
                                 create_option=DiskCreateOptionTypes.empty,
-                                disk_size_gb=data_disk['data_disk_size_gb'],
+                                disk_size_gb=data_disk['disk_size_gb'],
                                 managed_disk=data_disk_managed_disk,
                             ))
 
