@@ -86,6 +86,19 @@ options:
     required: false
     default: 'true'
     aliases: []
+  tags:
+    version_added: "2.4"
+    description:
+      - A dictionary of one or more tags to assign to the security group.
+    required: false
+  purge_tags:
+    version_added: "2.4"
+    description:
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
+        tags will not be modified.
+    required: false
+    default: yes
+    choices: [ 'yes', 'no' ]
 
 extends_documentation_fragment:
     - aws
@@ -252,14 +265,13 @@ owner_id:
 
 import json
 import re
-import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import HAS_BOTO3
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 from ansible.module_utils.ec2 import AWSRetry
 import traceback
 
@@ -501,9 +513,7 @@ def serialize_group_grant(group_id, rule):
                   'ToPort': rule['to_port'],
                   'UserIdGroupPairs': [{'GroupId': group_id}]}
 
-    convert_ports_to_int(permission)
-
-    return permission
+    return fix_port_and_protocol(permission)
 
 
 def serialize_revoke(grant, rule):
@@ -514,7 +524,7 @@ def serialize_revoke(grant, rule):
         permission = {'IpProtocol': rule['IpProtocol'],
                       'FromPort': fromPort,
                       'ToPort': toPort,
-                      'UserIdGroupPairs': [{'GroupId': grant['GroupId'], 'UserId': grant['UserId']}]
+                      'UserIdGroupPairs': [{'GroupId': grant['GroupId']}]
                       }
     elif 'CidrIp' in grant:
         permission = {'IpProtocol': rule['IpProtocol'],
@@ -528,10 +538,7 @@ def serialize_revoke(grant, rule):
                       'ToPort': toPort,
                       'Ipv6Ranges': [grant]
                       }
-    if rule['IpProtocol'] in ('all', '-1', -1):
-        del permission['FromPort']
-        del permission['ToPort']
-    return permission
+    return fix_port_and_protocol(permission)
 
 
 def serialize_ip_grant(rule, thisip, ethertype):
@@ -539,19 +546,24 @@ def serialize_ip_grant(rule, thisip, ethertype):
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port']}
     if ethertype == "ipv4":
-        permission.update({'IpRanges': [{'CidrIp': thisip}]})
+        permission['IpRanges'] = [{'CidrIp': thisip}]
     elif ethertype == "ipv6":
-        permission.update({'Ipv6Ranges': [{'CidrIpv6': thisip}]})
+        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip}]
 
-    convert_ports_to_int(permission)
+    return fix_port_and_protocol(permission)
+
+
+def fix_port_and_protocol(permission):
+    for key in ['FromPort', 'ToPort']:
+        if key in permission:
+            if permission[key] is None:
+                del permission[key]
+            else:
+                permission[key] = int(permission[key])
+
+    permission['IpProtocol'] = str(permission['IpProtocol'])
 
     return permission
-
-
-def convert_ports_to_int(permission):
-    for key in ['FromPort', 'ToPort']:
-        if permission[key] is not None:
-            permission[key] = int(permission[key])
 
 
 def main():
@@ -565,7 +577,9 @@ def main():
         rules_egress=dict(type='list'),
         state=dict(default='present', type='str', choices=['present', 'absent']),
         purge_rules=dict(default=True, required=False, type='bool'),
-        purge_rules_egress=dict(default=True, required=False, type='bool')
+        purge_rules_egress=dict(default=True, required=False, type='bool'),
+        tags=dict(required=False, type='dict', aliases=['resource_tags']),
+        purge_tags=dict(default=True, required=False, type='bool')
     )
     )
     module = AnsibleModule(
@@ -587,6 +601,8 @@ def main():
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
+    tags = module.params['tags']
+    purge_tags = module.params['purge_tags']
 
     if state == 'present' and not description:
         module.fail_json(msg='Must provide description when state is present.')
@@ -670,11 +686,30 @@ def main():
                 while True:
                     group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
                     if not group['IpPermissionsEgress']:
-                        time.sleep(0.1)
+                        pass
                     else:
                         break
 
             changed = True
+
+        if tags is not None:
+            current_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []))
+            tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
+            if tags_to_delete:
+                try:
+                    client.delete_tags(Resources=[group['GroupId']], Tags=[{'Key': tag} for tag in tags_to_delete])
+                except botocore.exceptions.ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
+
+            # Add/update tags
+            if tags_need_modify:
+                try:
+                    client.create_tags(Resources=[group['GroupId']], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
+                except botocore.exceptions.ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
+
     else:
         module.fail_json(msg="Unsupported state requested: %s" % state)
 
@@ -838,11 +873,12 @@ def main():
     if group:
         security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group)
-        security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', {}),
+        security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', []),
                                                                 tag_name_key_name='key', tag_value_key_name='value')
         module.exit_json(changed=changed, **security_group)
     else:
         module.exit_json(changed=changed, group_id=None)
+
 
 if __name__ == '__main__':
     main()
