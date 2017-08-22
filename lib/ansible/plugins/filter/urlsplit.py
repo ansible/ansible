@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
 }
 
 
-from urlparse import urlsplit
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.errors import AnsibleFilterError
 
 
