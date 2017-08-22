@@ -29,13 +29,11 @@ options:
         description:
             - The source input to diff. Can be a string, contents of a file or output from a command, depending on I(source_type).
         required: true
-        aliases: []
 
     target:
         description:
             - The target input to diff. Can be a string, contents of a file or output from a command, depending on I(target_type).
         required: true
-        aliases: []
 
     source_type:
         description:
@@ -43,7 +41,6 @@ options:
         required: true
         default: string
         choices: [ string, file, command ]
-        aliases: []
 
     target_type:
         description:
@@ -51,7 +48,6 @@ options:
         required: true
         default: string
         choices: [ string, file, command ]
-        aliases: []
 '''
 
 EXAMPLES = '''
