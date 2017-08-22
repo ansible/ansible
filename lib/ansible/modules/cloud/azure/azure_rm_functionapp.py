@@ -47,6 +47,23 @@ author:
 '''
 
 EXAMPLES = '''
+- name: create function app
+  azure_rm_functionapp:
+      resource_group: ansible-rg
+      name: myfunctionapp
+
+- name: create a function app with app settings
+  azure_rm_functionapp:
+      resource_group: ansible-rg
+      name: myfunctionapp
+      app_settings:
+          setting1: value1
+          setting2: value2
+
+- name: delete a function app
+  azure_rm_functionapp:
+      name: myfunctionapp
+      state: absent
 '''
 
 RETURN = '''
@@ -54,34 +71,41 @@ state:
     description: Current state of the Azure Function App
     returned: success
     type: complex
-    contains:
-        address_prefix:
-          description: IP address CIDR.
-          type: str
-          example: "10.1.0.0/16"
-        id:
-          description: Subnet resource path.
-          type: str
-          example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/My_Virtual_Network/subnets/foobar"
-        name:
-          description: Subnet name.
-          type: str
-          example: "foobar"
-        network_security_group:
-          type: complex
-          contains:
-            id:
-              description: Security group resource identifier.
-              type: str
-              example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroupfoo"
-            name:
-              description: Name of the security group.
-              type: str
-              example: "secgroupfoo"
-        provisioning_state:
-          description: Success or failure of the provisioning event.
-          type: str
-          example: "Succeeded"
+    example:
+        id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/sites/myfunctionapp
+        name: myfunctionapp
+        kind: functionapp
+        location: East US
+        type: Microsoft.Web/sites
+        state: Running
+        host_names:
+          - myfunctionapp.azurewebsites.net
+        repository_site_name: myfunctionapp
+        usage_state: Normal
+        enabled: true
+        enabled_host_names:
+          - myfunctionapp.azurewebsites.net
+          - myfunctionapp.scm.azurewebsites.net
+        availability_state: Normal
+        host_name_ssl_states:
+          - name: myfunctionapp.azurewebsites.net
+            ssl_state: Disabled
+            host_type: Standard
+          - name: myfunctionapp.scm.azurewebsites.net
+            ssl_state: Disabled
+            host_type: Repository
+        server_farm_id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/serverfarms/EastUSPlan
+        reserved: false
+        last_modified_time_utc: 2017-08-22T18:54:01.190Z
+        scm_site_also_stopped: false
+        client_affinity_enabled: true
+        client_cert_enabled: false
+        host_names_disabled: false
+        outbound_ip_addresses: ............
+        container_size: 1536
+        daily_memory_time_quota: 0
+        resource_group: ansible-rg
+        default_host_name: myfunctionapp.azurewebsites.net
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

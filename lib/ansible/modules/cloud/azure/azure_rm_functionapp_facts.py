@@ -67,49 +67,41 @@ azure_functionapps:
     description: List of Azure Function Apps dicts
     returned: always
     type: list
-    example: [{
-        "id": "/subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/sites/myfunctionapp",
-        "name": "myfunctionapp",
-        "kind": "functionapp",
-        "location": "East US",
-        "type": "Microsoft.Web/sites",
-        "state": "Running",
-        "host_names": [
-          "myfunctionapp.azurewebsites.net"
-        ],
-        "repository_site_name": "myfunctionapp",
-        "usage_state": "Normal",
-        "enabled": true,
-        "enabled_host_names": [
-          "myfunctionapp.azurewebsites.net",
-          "myfunctionapp.scm.azurewebsites.net"
-        ],
-        "availability_state": "Normal",
-        "host_name_ssl_states": [
-          {
-            "name": "myfunctionapp.azurewebsites.net",
-            "ssl_state": "Disabled",
-            "host_type": "Standard"
-          },
-          {
-            "name": "myfunctionapp.scm.azurewebsites.net",
-            "ssl_state": "Disabled",
-            "host_type": "Repository"
-          }
-        ],
-        "server_farm_id": "/subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/serverfarms/EastUSPlan",
-        "reserved": false,
-        "last_modified_time_utc": "2017-08-22T18:54:01.190Z",
-        "scm_site_also_stopped": false,
-        "client_affinity_enabled": true,
-        "client_cert_enabled": false,
-        "host_names_disabled": false,
-        "outbound_ip_addresses": "...,...,...,...,
-        "container_size": 1536,
-        "daily_memory_time_quota": 0,
-        "resource_group": "ansible-rg",
-        "default_host_name": "myfunctionapp.azurewebsites.net"
-    }]
+    example:
+        id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/sites/myfunctionapp
+        name: myfunctionapp
+        kind: functionapp
+        location: East US
+        type: Microsoft.Web/sites
+        state: Running
+        host_names:
+          - myfunctionapp.azurewebsites.net
+        repository_site_name: myfunctionapp
+        usage_state: Normal
+        enabled: true
+        enabled_host_names:
+          - myfunctionapp.azurewebsites.net
+          - myfunctionapp.scm.azurewebsites.net
+        availability_state: Normal
+        host_name_ssl_states:
+          - name: myfunctionapp.azurewebsites.net
+            ssl_state: Disabled
+            host_type: Standard
+          - name: myfunctionapp.scm.azurewebsites.net
+            ssl_state: Disabled
+            host_type: Repository
+        server_farm_id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/serverfarms/EastUSPlan
+        reserved: false
+        last_modified_time_utc: 2017-08-22T18:54:01.190Z
+        scm_site_also_stopped: false
+        client_affinity_enabled: true
+        client_cert_enabled: false
+        host_names_disabled: false
+        outbound_ip_addresses: ............
+        container_size: 1536
+        daily_memory_time_quota: 0
+        resource_group: ansible-rg
+        default_host_name: myfunctionapp.azurewebsites.net
 '''
 
 try:
