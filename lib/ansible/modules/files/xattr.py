@@ -38,7 +38,7 @@ options:
       - The value to set the named name/key to, it automatically sets the C(state) to 'set'
   state:
     required: false
-    default: get
+    default: read
     choices: [ 'read', 'present', 'all', 'keys', 'absent' ]
     description:
       - defines which state you want to do.
