@@ -211,7 +211,7 @@ EXAMPLES = '''
         password: 'smartvm'
         verify_ssl: False
 
-  - name: Create a new Amazon provider in ManageIQ
+  - name: Create a new Amazon provider in ManageIQ using token authentication
     manageiq_provider:
       name: 'EngAmazon'
       type: 'Amazon'
@@ -223,8 +223,7 @@ EXAMPLES = '''
           password: 'world'
       manageiq_connection:
         url: 'http://127.0.0.1:3000'
-        username: 'admin'
-        password: 'smartvm'
+        token: 'VeryLongToken'
         verify_ssl: False
 
 '''
