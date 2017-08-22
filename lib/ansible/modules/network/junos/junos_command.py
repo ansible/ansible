@@ -314,6 +314,7 @@ def parse_commands(module, warnings):
                 'Only show commands are supported when using check_mode, not '
                 'executing %s' % command
             )
+            continue
 
         parts = command.split('|')
         text = parts[0]

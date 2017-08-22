@@ -155,14 +155,16 @@ def parse_commands(module, warnings):
         answer=dict(),
     ), module)
     commands = command(module.params['commands'])
+    items = []
 
-    for index, cmd in enumerate(commands):
-        if module.check_mode and not cmd['command'].startswith('show'):
+    for item in commands:
+        if module.check_mode and not item['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        commands[index] = module.jsonify(cmd)
+                            'check mode, not executing `%s`' % item['command'])
+        else:
+            items.append(module.jsonify(item))
 
-    return commands
+    return items
 
 
 def main():
