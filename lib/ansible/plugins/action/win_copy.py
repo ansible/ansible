@@ -479,13 +479,13 @@ class ActionModule(ActionBase):
             result.update(query_return)
             return result
 
-        if query_return['will_change'] is False:
+        if query_return.get('will_change') is False:
             # no changes need to occur
             result['failed'] = False
             result['changed'] = False
             return result
 
-        if query_return['zip_available'] is True and result['operation'] != 'file_copy':
+        if query_return.get('zip_available') is True and result['operation'] != 'file_copy':
             # if the PS zip utils are available and we need to copy more than a
             # single file/folder, create a local zip file of all the changed
             # files and send that to the server to be expanded
