@@ -140,6 +140,8 @@ def main():
     nobuf_stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     nobuf_stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
+    # 37/0
+
     def nobuf_stdout_write(what):
         nobuf_stdout.write(what)
         nobuf_stdout.flush()
@@ -213,11 +215,14 @@ def main():
         # lookup exception_type in scope
         exc = locals().get(exception_type, None) or globals().get(exception_type, None) or getattr(__builtins__, exception_type, None)
         if not exc:
-            module.fail_json(msg='It is very exceptional of you to want to fail as %s, but that is not even a thing. Not a thing in locals, globals, or builtins. Next time maybe try an exception that exists.' % exception_type)
+            module.fail_json(msg='It is very exceptional of you to want to fail as %s,' % exception_type +
+                             'but that is not even a thing.  ' +
+                             'a thing in locals, globals, or builtins. Next time maybe try an exception that exists.')
         exc_args = exception_args or []
         try:
             exc_instance = exc(*exception_args)
         except Exception as e:
+            raise
             module.fail_json(msg='There are rules man! Also, your argument is invalid. I tried to make an exception for you, but all it got me was: %s' % e)
         raise exc_instance
     # TODO: implement other failure modes
