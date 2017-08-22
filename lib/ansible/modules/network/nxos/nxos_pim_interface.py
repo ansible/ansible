@@ -226,9 +226,9 @@ def get_interface_type(interface):
 
 
 def get_interface_mode(interface, intf_type, module):
-    command = 'show interface {0} | json'.format(interface)
     mode = 'unknown'
-    body = run_commands(module, [command])
+    command = 'show interface {0}'.format(interface)
+    body = execute_show_command(command, module)
 
     try:
         interface_table = body[0]['TABLE_interface']['ROW_interface']
@@ -249,7 +249,6 @@ def get_interface_mode(interface, intf_type, module):
 def get_pim_interface(module, interface):
     pim_interface = {}
     command = 'show ip pim interface {0}'.format(interface)
-
     body = execute_show_command(command, module, text=True)
 
     if body:
