@@ -1,5 +1,4 @@
-#!/usr/bin/python
-from __future__ import (absolute_import, division, print_function)
+# !/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,10 +13,10 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import (absolute_import, division, print_function)
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
-
+                    'supported_by': 'certified'}
 DOCUMENTATION = """
 ---
 module: spotinst_aws_elastigroup
@@ -697,6 +696,7 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     import spotinst
     from spotinst import SpotinstClientException
+
     HAS_SPOTINST_SDK = True
 
 except ImportError:
