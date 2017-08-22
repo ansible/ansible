@@ -152,7 +152,7 @@ def main():
     argument_spec = purefa_argument_spec()
     argument_spec.update(dict(
         host=dict(type='str', required=True),
-        state=dict(type='str', default='present', choices=['absent,' 'present']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         protocol=dict(type='str', default='iscsi', choices=['fc', 'iscsi']),
         iqn=dict(type='list'),
         wwns=dict(type='list'),
