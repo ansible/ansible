@@ -95,6 +95,7 @@ try:
     from azure.mgmt.compute.version import VERSION as compute_client_version
     from azure.mgmt.resource.version import VERSION as resource_client_version
     from azure.mgmt.dns.version import VERSION as dns_client_version
+    from azure.mgmt.web.version import VERSION as web_client_version
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.storage import StorageManagementClient
@@ -130,7 +131,8 @@ AZURE_EXPECTED_VERSIONS = dict(
     compute_client_version="1.0.0",
     network_client_version="1.0.0",
     resource_client_version="1.1.0",
-    dns_client_version="1.0.1"
+    dns_client_version="1.0.1",
+    web_client_version="0.32.0"
 )
 
 AZURE_MIN_RELEASE = '2.0.0'
@@ -703,12 +705,15 @@ class AzureRMModuleBase(object):
             self._register('Microsoft.Dns')
         return self._dns_client
 
+    @property
     def web_client(self):
         self.log('Getting web client')
         if not self._web_client:
+            self.check_client_version('web', web_client_version, AZURE_EXPECTED_VERSIONS['web_client_version'])
             self._web_client = WebSiteManagementClient(
                 credentials=self.azure_credentials,
                 subscription_id=self.subscription_id,
                 base_url=self.base_url
             )
+            self._register('Microsoft.Web')
         return self._web_client
