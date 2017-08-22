@@ -262,7 +262,9 @@ def k8s_create_resource(module, url, data):
         info, body = api_request(module, url + "/" + name)
         return False, body
     elif info['status'] >= 400:
-        module.fail_json(msg="failed to create the resource: %s" % info['msg'], url=url)
+        parsed_info_body = json.loads(info['body'])
+        module.fail_json(msg="failed to create the resource: %s - %s" %
+                (info['msg'], parsed_info_body['message']), url=url)
     return True, body
 
 
