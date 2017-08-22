@@ -360,7 +360,7 @@ def main():
     else:
         check_lv = snapshot
     for test_lv in lvs:
-        if test_lv['name'] == check_lv:
+        if test_lv['name'] in (check_lv, check_lv.rsplit('/', 1)[-1]):
             this_lv = test_lv
             break
     else:
