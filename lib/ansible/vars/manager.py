@@ -336,6 +336,7 @@ class VariableManager:
             # finally, the facts caches for this host, if it exists
             try:
                 host_facts = wrap_var(self._fact_cache.get(host.name, {}))
+
                 # push facts to main namespace
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
