@@ -2,7 +2,12 @@ import pytest
 
 import unittest
 
-import ansible.modules.cloud.amazon.s3 as s3
+try:
+    import ansible.modules.cloud.amazon.s3 as s3
+except ImportError:
+    from nose.plugins.skip import SkipTest
+    raise SkipTest("This test requires the s3 Python libraries")
+
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 boto3 = pytest.importorskip("boto3")
