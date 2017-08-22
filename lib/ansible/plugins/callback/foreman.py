@@ -82,6 +82,13 @@ class CallbackModule(CallbackBase):
         else:
             self._disable_plugin('The `requests` python module is not installed.')
 
+        if self.FOREMAN_URL.startswith('https://'):
+            if not os.path.exists(self.FOREMAN_SSL_CERT[0]):
+                self._disable_plugin('FOREMAN_SSL_CERT %s not found.' % self.FOREMAN_SSL_CERT[0])
+
+            if not os.path.exists(self.FOREMAN_SSL_CERT[1]):
+                self._disable_plugin('FOREMAN_SSL_KEY %s not found.' % self.FOREMAN_SSL_CERT[1])
+
     def _disable_plugin(self, msg):
         self.disabled = True
         self._display.warning(msg + ' Disabling the Foreman callback plugin.')
@@ -94,7 +101,7 @@ class CallbackModule(CallbackBase):
             self._display.warning("SSL verification of %s disabled" %
                                   self.FOREMAN_URL)
             verify = False
-        else:  # Set ta a CA bundle:
+        else:  # Set to a CA bundle:
             verify = self.FOREMAN_SSL_VERIFY
         return verify
 
