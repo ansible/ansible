@@ -46,6 +46,10 @@ if ($name -ne $null) {
 }
 
 # validate initial arguments, more is done after analysing the exec path
+if ($expected_return_code -eq "") {
+    Add-DeprecationWarning -obj $result -message "an empty string for expected_return_code will be deprecated in the future, omit the value or set it explicitly if you wish to override it" -version 2.6
+    $expected_return_code = @(0, 3010)
+}
 $valid_return_codes = @()
 foreach ($rc in ($expected_return_code)) {
     try {

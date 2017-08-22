@@ -12,7 +12,7 @@
   - { url: '{{test_win_package_good_url}}', name: 'good.msi' }
   - { url: '{{test_win_package_reboot_url}}', name: 'reboot.msi' }
   - { url: '{{test_win_package_bad_url}}', name: 'bad.msi' }
-  - { url: '{{test_win_package_exe_url}}', name: '7z.exe' }
+  # - { url: '{{test_win_package_exe_url}}', name: '7z.exe' }
 
 - name: make sure all test msi's are uninstalled before test
   win_package:
@@ -22,21 +22,18 @@
   with_items:
   - { id: '{{test_win_package_good_id}}' }
   - { id: '{{test_win_package_reboot_id}}' }
-  - { id: '{{msi_product_code}}' }
-  - { id: '{{test_win_package_exe_id}}', args: '/S' }
+  # - { id: '{{test_win_package_exe_id}}', args: '/S' }
 
 - block:
-  - name: run old tests for sanity
-    include_tasks: old_tests.yml
-
   - name: run tests for expected failures
     include_tasks: failure_tests.yml
 
   - name: run tests for local and URL msi files
     include_tasks: msi_tests.yml
 
-  - name: run tests for local and URL exe files
-    include_tasks: exe_tests.yml
+  # doesn't work 100% on AWS hosts, disabling for now until we get a better exe example
+  # - name: run tests for local and URL exe files
+  #   include_tasks: exe_tests.yml
 
   # these tests can be run manually by defining test_win_package_network_path
   - name: run tests for network msi files (manual)
@@ -52,5 +49,4 @@
     with_items:
     - { id: '{{test_win_package_good_id}}' }
     - { id: '{{test_win_package_reboot_id}}' }
-    - { id: '{{msi_product_code}}' }
-    - { id: '{{test_win_package_exe_id}}', args: '/S' }
+    # - { id: '{{test_win_package_exe_id}}', args: '/S' }
