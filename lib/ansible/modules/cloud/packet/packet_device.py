@@ -63,17 +63,12 @@ options:
       - If only one hostname, it might be expanded to list if I(count)>1.
     aliases: [name]
 
-  lock:
-    description:
-      - Whether to lock a created device.
-      - This option has been deprecated in favor of C(locked).
-    default: false
-
   locked:
     description:
       - Whether to lock a created device.
     default: false
     version_added: "2.4"
+    aliases: [lock]
 
   operating_system:
     description:
@@ -602,7 +597,7 @@ def main():
             facility=dict(),
             features=dict(type='dict'),
             hostnames=dict(type='list', aliases=['name']),
-            locked=dict(type='bool', default=False),
+            locked=dict(type='bool', default=False, aliases=['lock']),
             operating_system=dict(),
             plan=dict(),
             project_id=dict(required=True),
