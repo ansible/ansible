@@ -316,56 +316,72 @@
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_logging' ]"
+            test_failed: true
 
     - block:
       - include_role:
           name: nxos_bgp
         when: "limit_to in ['*', 'nxos_bgp']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_bgp' ]"
+            test_failed: true
 
     - block:
       - include_role:
           name: nxos_bgp_af
         when: "limit_to in ['*', 'nxos_bgp_af']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_bgp_af' ]"
+            test_failed: true
 
     - block:
       - include_role:
           name: nxos_bgp_neighbor
         when: "limit_to in ['*', 'nxos_bgp_neighbor']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_bgp_neighbor' ]"
+            test_failed: true
 
     - block:
       - include_role:
           name: nxos_bgp_neighbor_af
         when: "limit_to in ['*', 'nxos_bgp_neighbor_af']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_bgp_neighbor_af' ]"
+            test_failed: true
 
     - block:
       - include_role:
           name: nxos_overlay_global
         when: "limit_to in ['*', 'nxos_overlay_global']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_overlay_global' ]"
+            test_failed: true
 
     - block:
       - include_role:
           name: nxos_pim_interface
         when: "limit_to in ['*', 'nxos_pim_interface']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_pim_interface' ]"
+            test_failed: true
 
     - block:
       - include_role:
           name: nxos_snmp_community
         when: "limit_to in ['*', 'nxos_snmp_community']"
       rescue:
-        - set_fact: test_failed=true
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_snmp_community' ]"
+            test_failed: true
 ###########
     - debug: var=failed_modules
       when: test_failed
