@@ -227,6 +227,7 @@ Ansible Changes By Release
   * telnet
 
 #### Crypto
+  * openssl_certificate
   * openssl_csr
 
 #### Files
