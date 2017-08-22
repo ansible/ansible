@@ -474,7 +474,6 @@ Ansible Changes By Release
   * net_static_route
 - system
   * net_banner
-  * net_command
   * net_logging
   * net_system
   * net_user
