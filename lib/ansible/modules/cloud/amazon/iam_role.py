@@ -36,12 +36,12 @@ options:
       - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
         To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
     aliases: [ managed_policies ]
-  remove_unlisted_policies:
+  purge_policies:
     description:
       - Detaches any managed policies not listed in the "managed_policy" option. Set to false if you want to attach policies elsewhere.
     type: bool
     default: true
-    version_added: "2.4"
+    version_added: "2.5"
   state:
     description:
       - Create or remove the IAM role
@@ -207,7 +207,7 @@ def remove_policies(connection, module, policies_to_remove, params):
         try:
             connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
         except ClientError as e:
-             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         return True
 
 
@@ -250,7 +250,7 @@ def create_or_update_role(connection, module):
         current_attached_policies_arn_list = [policy['PolicyArn'] for policy in current_attached_policies]
 
         # If a single empty list item then all managed policies to be removed
-        if len(managed_policies) == 1 and not managed_policies[0] and module.params.get('remove_unlisted_policies'):
+        if len(managed_policies) == 1 and not managed_policies[0] and module.params.get('purge_policies'):
 
             # Detach policies not present
             if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
@@ -259,7 +259,7 @@ def create_or_update_role(connection, module):
             # Make a list of the ARNs from the attached policies
 
             # Detach roles not defined in task
-            if module.params.get('remove_unlisted_policies'):
+            if module.params.get('purge_policies'):
                 if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
                     changed = True
 
@@ -368,8 +368,8 @@ def main():
             managed_policy=dict(type='list', aliases=['managed_policies']),
             state=dict(type='str', choices=['present', 'absent'], default='present'),
             description=dict(type='str'),
-            create_instance_profile=dict(type='bool', default=True)
-            remove_unlisted_policies=dict(type='bool', default=True),
+            create_instance_profile=dict(type='bool', default=True),
+            purge_policies=dict(type='bool', default=True),
         )
     )
 
