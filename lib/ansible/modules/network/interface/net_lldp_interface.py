@@ -62,15 +62,15 @@ EXAMPLES = """
 - name: Create aggregate of LLDP interface configurations
   net_lldp_interface:
     aggregate:
-    - name: eth1
-    - name: eth2
+    - { name: eth1 }
+    - { name: eth2 }
     state: present
 
 - name: Delete aggregate of LLDP interface configurations
   net_lldp_interface:
     aggregate:
-    - name: eth1
-    - name: eth2
+    - { name: eth1 }
+    - { name: eth2 }
     state: absent
 """
 
