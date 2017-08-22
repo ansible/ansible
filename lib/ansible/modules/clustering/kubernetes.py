@@ -42,6 +42,14 @@ options:
         This option is mutually exclusive with C('inline_data').
     required: false
     default: null
+  patch_operation:
+    description: >
+      - Specify patch operation for Kubernetes resource update. For details, see the description of PATCH operations at
+        U(https://github.com/kubernetes/kubernetes/blob/release-1.5/docs/devel/api-conventions.md#patch-operations).
+    default: Strategic Merge Patch
+    aliases: ["patch_strategy"]
+    choices: ["JSON Patch", "Merge Patch", "Strategic Merge Patch"]
+    version_added: 2.4
   certificate_authority_data:
     description:
       - Certificate Authority data for Kubernetes server. Should be in either
@@ -297,12 +305,20 @@ def k8s_replace_resource(module, url, data):
     return True, body
 
 
-def k8s_update_resource(module, url, data):
+def k8s_update_resource(module, url, data, patch_operation):
+    # PATCH operations are explained in details at:
+    # https://github.com/kubernetes/kubernetes/blob/release-1.5/docs/devel/api-conventions.md#patch-operations
+    PATCH_OPERATIONS_MAP = {
+        'JSON Patch': 'application/json-patch+json',
+        'Merge Patch': 'application/merge-patch+json',
+        'Strategic Merge Patch': 'application/strategic-merge-patch+json',
+    }
+
     name = data.get('metadata', {}).get('name')
     if name is None:
         module.fail_json(msg="Missing a named resource in object metadata when trying to update a resource")
 
-    headers = {"Content-Type": "application/strategic-merge-patch+json"}
+    headers = {"Content-Type": PATCH_OPERATIONS_MAP[patch_operation]}
     url = url + '/' + name
     info, body = api_request(module, url, method="PATCH", data=data, headers=headers)
     if info['status'] == 409:
@@ -326,6 +342,7 @@ def main():
             certificate_authority_data=dict(required=False),
             insecure=dict(default=False, type='bool'),
             api_endpoint=dict(required=True),
+            patch_operation=dict(default='Strategic Merge Patch', aliases=['patch_strategy'], choices=['JSON Patch', 'Merge Patch', 'Strategic Merge Patch']),
             file_reference=dict(required=False),
             inline_data=dict(required=False),
             state=dict(default="present", choices=["present", "absent", "update", "replace"])
@@ -346,6 +363,7 @@ def main():
     insecure = module.params.get('insecure')
     inline_data = module.params.get('inline_data')
     file_reference = module.params.get('file_reference')
+    patch_operation = module.params.get('patch_operation')
 
     if inline_data:
         if not isinstance(inline_data, dict) and not isinstance(inline_data, list):
@@ -396,7 +414,7 @@ def main():
         elif state == 'replace':
             item_changed, item_body = k8s_replace_resource(module, url, item)
         elif state == 'update':
-            item_changed, item_body = k8s_update_resource(module, url, item)
+            item_changed, item_body = k8s_update_resource(module, url, item, patch_operation)
 
         changed |= item_changed
         body.append(item_body)
