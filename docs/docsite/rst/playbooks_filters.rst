@@ -594,6 +594,32 @@ which will produce this output:
 
 .. _other_useful_filters:
 
+.. uri_filter:
+
+URI Filter
+`````````````````
+
+.. versionadded:: 2.4
+
+The ``uri`` filter extracts the hostname, path, port or scheme from an URI. With no arguments, it extracts the base URL::
+
+    {{ "http://www.acme.com:9000/dir/index.html" | uri }}
+    # => 'http://www.acme.com:9000'
+
+    {{ "http://www.acme.com:9000/dir/index.html" | uri('hostname') }}
+    # => 'www.acme.com'
+
+    {{ "http://www.acme.com:9000/dir/index.html" | uri('path') }}
+    # => '/dir/index.html'
+
+    {{ "http://www.acme.com:9000/dir/index.html" | uri('port') }}
+    # => '9000'
+
+    {{ "http://www.acme.com:9000/dir/index.html" | uri('scheme') }}
+    # => 'http'
+
+
+
 Other Useful Filters
 ````````````````````
 
@@ -681,7 +707,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost, 80" using named groups
     {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
-    
+
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
 
@@ -728,7 +754,7 @@ Combinations always require a set size::
 
 To get a list combining the elements of other lists use ``zip``::
 
-    - name: give me list combo of 2 lists 
+    - name: give me list combo of 2 lists
       debug: msg="{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
 
     - name: give me shortest combo of 2 lists
