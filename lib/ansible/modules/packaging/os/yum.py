@@ -342,6 +342,18 @@ def po_to_nevra(po):
     else:
         return '%s-%s-%s.%s' % (po.name, po.version, po.release, po.arch)
 
+
+def is_group_installed(name):
+    my = yum_base()
+    groups_list = my.doGroupLists()
+    for group in groups_list[0]:  # list of the installed groups on the first index
+        name_lower = name.lower()
+        if name_lower.endswith(group.name.lower()) or name_lower.endswith(group.groupid.lower()):
+            return True
+
+    return False
+
+
 def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
     if en_repos is None:
         en_repos = []
@@ -746,16 +758,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
         # groups
         elif spec.startswith('@'):
-            found = False
-            my = yum_base()
-            groups_list = my.doGroupLists()
-            for group in groups_list[0]:  # list of the installed groups on the first index
-                spec_lower = spec.lower()
-                if spec_lower.endswith(group.name.lower()) or spec_lower.endswith(group.groupid.lower()):
-                    found = True
-                    break
-
-            if found:
+            if is_group_installed(spec):
                 continue
 
             pkg = spec
@@ -860,23 +863,22 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     res['rc'] = 0
 
     for pkg in items:
-        is_group = False
-        # group remove - this is doom on a stick
         if pkg.startswith('@'):
-            is_group = True # nopep8 this will be fixed in next MR this module needs major rewrite anyway.
+            installed = is_group_installed(pkg)
         else:
-            if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                res['results'].append('%s is not installed' % pkg)
-                continue
+            installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
-        pkgs.append(pkg)
+        if installed:
+            pkgs.append(pkg)
+        else:
+            res['results'].append('%s is not installed' % pkg)
 
     if pkgs:
-        # run an actual yum transaction
-        cmd = yum_basecmd + ["remove"] + pkgs
-
         if module.check_mode:
             module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
+
+        # run an actual yum transaction
+        cmd = yum_basecmd + ["remove"] + pkgs
 
         rc, out, err = module.run_command(cmd)
 
@@ -884,23 +886,25 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         res['results'].append(out)
         res['msg'] = err
 
+        if rc != 0:
+            module.fail_json(**res)
+
         # compile the results into one batch. If anything is changed
         # then mark changed
         # at the end - if we've end up failed then fail out of the rest
         # of the process
 
-        # at this point we should check to see if the pkg is no longer present
-
+        # at this point we check to see if the pkg is no longer present
         for pkg in pkgs:
-            if not pkg.startswith('@'): # we can't sensibly check for a group being uninstalled reliably
-                # look to see if the pkg shows up from is_installed. If it doesn't
-                if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                    res['changed'] = True
-                else:
-                    module.fail_json(**res)
+            if pkg.startswith('@'):
+                installed = is_group_installed(pkg)
+            else:
+                installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
-        if rc != 0:
-            module.fail_json(**res)
+            if installed:
+                module.fail_json(**res)
+
+        res['changed'] = True
 
     return res
 
