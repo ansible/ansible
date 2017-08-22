@@ -29,6 +29,9 @@ class TestNxosIPInterfaceModule(TestNxosModule):
     module = nxos_pim_interface
 
     def setUp(self):
+        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_pim_interface.get_config')
+        self.get_config = self.mock_get_config.start()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_pim_interface.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -36,6 +39,7 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
 
@@ -53,6 +57,7 @@ class TestNxosIPInterfaceModule(TestNxosModule):
                 output.append(load_fixture(module_name, filename))
             return output
 
+        self.get_config.return_value = load_fixture(module_name, 'config.cfg')
         self.load_config.return_value = None
         self.run_commands.side_effect = load_from_file
 
