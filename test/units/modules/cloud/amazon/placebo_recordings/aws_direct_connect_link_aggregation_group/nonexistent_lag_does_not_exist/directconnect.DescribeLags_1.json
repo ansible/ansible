@@ -1,0 +1,21 @@
+{
+    "data": {
+        "Error": {
+            "Code": "DirectConnectClientException",
+            "Message": "Could not find Lag with ID dxlag-XXXXXXXX"
+        },
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 400,
+            "HTTPHeaders": {
+                "connection": "close",
+                "content-type": "application/x-amz-json-1.1",
+                "x-amzn-requestid": "b7f55ff2-70a7-11e7-83ab-ef16f9ac5159",
+                "content-length": "95",
+                "date": "Mon, 24 Jul 2017 19:38:50 GMT"
+            },
+            "RequestId": "b7f55ff2-70a7-11e7-83ab-ef16f9ac5159"
+        }
+    },
+    "status_code": 400
+}
