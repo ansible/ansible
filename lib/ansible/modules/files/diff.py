@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: diff
-author: cytopia (@cytopia)
-
+author:
+    - cytopia (@cytopia)
 short_description: Diff compare strings, files or command outputs
 description:
     - Diff compare a string, file or command output against a string file or command output.
