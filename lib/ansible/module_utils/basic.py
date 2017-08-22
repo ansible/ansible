@@ -982,7 +982,7 @@ class AnsibleModule(object):
     def _set_excepthook(self):
         # NOTE: we will be exiting if we get an unhandled exception
         #       so shouldn't need to unset the excepthook
-        #sys.excepthook = except_hook
+        # sys.excepthook = except_hook
         sys.excepthook = self._excepthook
 
     def load_file_common_arguments(self, params):
