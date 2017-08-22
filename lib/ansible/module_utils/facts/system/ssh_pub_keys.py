@@ -47,6 +47,9 @@ class SshPubKeyFactCollector(BaseFactCollector):
                 key_filename = '%s/ssh_host_%s_key.pub' % (keydir, type_)
                 keydata = get_file_content(key_filename)
                 if keydata is not None:
-                    ssh_pub_key_facts[factname] = keydata.split()[1]
+                    (key_type, keydata) = keydata.split(None, 1)
+                    ssh_pub_key_facts[factname] = keydata
+                    type_factname = '{}_type'.format(factname)
+                    ssh_pub_key_facts[type_factname] = key_type
 
         return ssh_pub_key_facts
