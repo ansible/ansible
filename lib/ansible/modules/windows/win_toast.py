@@ -33,10 +33,10 @@ short_description: Sends Toast windows notification to Windows 10 or later hosts
 description:
     - Sends alerts which appear in the Action Center area of the windows desktop.
 options:
-  expire_mins:
+  expire_secs:
     description:
-      - How long in minutes before the notification expires.
-    default: 5
+      - How long in seconds before the notification expires.
+    default: 45
   group:
     description:
       - Which notification group to add the notification to.
@@ -63,19 +63,22 @@ author:
 notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
    - Messages are only sent to the local host where the module is run.
+   - You must run this module with async, otherwise it will hang until the expire_secs period has passed.
 '''
 
 EXAMPLES = r'''
-- name: Warn logged in users of impending upgrade
+- name: Warn logged in users of impending upgrade (note use of async to stop the module from waiting until notification expires).
   win_toast:
-    expire_mins: 60
+    expire_secs: 60
     title: System Upgrade Notification
     msg: Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time }}
+  async: 60
+  poll: 0
 '''
 
 RETURN = r'''
-expire_mins:
-    description: Requested time in minutes before notification expires.
+expire_secs:
+    description: Requested time in seconds before notification expires.
     returned: allways
     type: int
     sample: 5

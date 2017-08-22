@@ -36,20 +36,20 @@ $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 # $expire_at = Get-AnsibleParam -obj $params -name "msg" -type "str"
-$expire_mins = Get-AnsibleParam -obj $params -name "expire_mins" -type "int" -default 5
+$expire_secs = Get-AnsibleParam -obj $params -name "expire_secs" -type "int" -default 45
 $group = Get-AnsibleParam -obj $params -name "group" -type "str" -default "Powershell"
 $msg = Get-AnsibleParam -obj $params -name "msg" -type "str" -default "Hello world!"
 $popup = Get-AnsibleParam -obj $params -name "popup" -type "bool" -default $true
 $tag = Get-AnsibleParam -obj $params -name "tag" -type "str" -default "Ansible"
 $title = Get-AnsibleParam -obj $params -name "title" -type "str" -default $default_title
 
-$timespan = New-TimeSpan -Minutes $expire_mins
+$timespan = New-TimeSpan -Seconds $expire_secs
 $expire_at = $now + $timespan
 $expire_at_utc = $($expire_at.ToUniversalTime()|Out-String).Trim()
 
 $result = @{
     changed = $false
-    expire_mins = $expire_mins
+    expire_secs = $expire_secs
     expire_at = $expire_at.ToString()
     expire_at_utc = $expire_at_utc
     group = $group    
@@ -81,7 +81,8 @@ $toast.SuppressPopup = -not $popup
 try {
    $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($msg)
    if (-not $check_mode) {
-      $notifier.Show($toast);
+      $notifier.Show($toast)
+      Start-Sleep -Seconds $expire_secs
    }
 } catch {
   $excep= $_
