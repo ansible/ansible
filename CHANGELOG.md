@@ -540,6 +540,7 @@ Ansible Changes By Release
   * win_route
   * win_security_policy
   * win_user_right
+  * win_wait_for
   * win_wakeonlan
 
 <a id="2.3"></a>
