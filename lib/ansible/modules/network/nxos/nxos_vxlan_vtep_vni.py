@@ -32,6 +32,7 @@ description:
     overlay interface.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - default, where supported, restores params default value.
 options:
   interface:
