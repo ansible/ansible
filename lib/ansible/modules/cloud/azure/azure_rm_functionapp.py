@@ -157,6 +157,9 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
         if self.state == 'absent':
             if exists:
+                if self.check_mode:
+                    self.results['changed'] = True
+                    return self.results
                 try:
                     self.web_client.web_apps.delete(
                         resource_group_name=self.resource_group,
@@ -181,7 +184,9 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             else:
                 self.results['changed'], function_app = self.update(function_app)
 
-            if self.results['changed']:
+            if self.check_mode:
+                self.results['state'] = function_app.as_dict()
+            elif self.results['changed']:
                 try:
                     new_function_app = self.web_client.web_apps.create_or_update(
                         resource_group_name=self.resource_group,
