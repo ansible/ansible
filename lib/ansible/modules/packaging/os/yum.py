@@ -744,9 +744,20 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 continue
             pkg = package
 
-        #groups :(
+        # groups
         elif spec.startswith('@'):
-            # complete wild ass guess b/c it's a group
+            found = False
+            my = yum_base()
+            groups_list = my.doGroupLists()
+            for group in groups_list[0]:  # list of the installed groups on the first index
+                spec_lower = spec.lower()
+                if spec_lower.endswith(group.name.lower()) or spec_lower.endswith(group.groupid.lower()):
+                    found = True
+                    break
+
+            if found:
+                continue
+
             pkg = spec
 
         # range requires or file-requires or pkgname :(
