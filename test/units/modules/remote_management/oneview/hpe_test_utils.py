@@ -68,7 +68,7 @@ class OneViewBaseTestCase(object):
         # Load scenarios from module examples (Also checks if it is a valid yaml)
         ansible = __import__('ansible')
         testing_module = self.testing_class.__module__.split('.')[-1]
-        self.testing_module = getattr(ansible.modules.remote_management.hpe, testing_module)
+        self.testing_module = getattr(ansible.modules.remote_management.oneview, testing_module)
 
         try:
             # Load scenarios from module examples (Also checks if it is a valid yaml)
