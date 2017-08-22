@@ -238,13 +238,18 @@ def gather_vm_facts(content, vm):
         if not hasattr(entry, 'macAddress'):
             continue
 
+        mac_addr = mac_addr_dash = None
+        if entry.macAddress:
+            mac_addr_dash = entry.macAddress.replace(':', '-')
+            mac_addr = entry.macAddress
+
         factname = 'hw_eth' + str(ethernet_idx)
         facts[factname] = {
             'addresstype': entry.addressType,
             'label': entry.deviceInfo.label,
-            'macaddress': entry.macAddress,
+            'macaddress': mac_addr,
             'ipaddresses': net_dict.get(entry.macAddress, None),
-            'macaddress_dash': entry.macAddress.replace(':', '-'),
+            'macaddress_dash': mac_addr_dash,
             'summary': entry.deviceInfo.summary,
         }
         facts['hw_interfaces'].append('eth' + str(ethernet_idx))
