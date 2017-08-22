@@ -1403,8 +1403,9 @@ NETWORK_GROUP_MODULES:
   - {key: network_group_modules, section: defaults}
   type: list
   yaml: {key: defaults.network_group_modules}
-# Deffered to 2.5
 #ONLY_NAMESPACE_FACTS:
+# Deffered to 2.5
+# FIXME: reenable when we can remove ansible_ prefix from namespaced facts
 #  default: False
 #  description:
 #    - Facts normally get injected as top level variables, this setting prevents that.
