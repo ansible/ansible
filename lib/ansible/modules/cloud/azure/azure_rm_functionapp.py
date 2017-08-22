@@ -106,7 +106,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             location=dict(type='str', required=False),
             storage_account=dict(
                 type='str',
-                required=True,
+                required=False,
                 aliases=['storage', 'storage_account_name']
             ),
             app_settings=dict(type='dict')
@@ -122,17 +122,22 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.state = None
         self.location = None
         self.storage_account = None
-        self.app_settings = dict()
+        self.app_settings = None
+
+        required_if = [('state', 'present', ['storage_account'])]
 
         super(AzureRMFunctionApp, self).__init__(
             self.module_arg_spec,
-            supports_check_mode=True
+            supports_check_mode=True,
+            required_if=required_if
         )
 
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
+        if self.app_settings is None:
+            self.app_settings = dict()
 
         try:
             resource_group = self.rm_client.resource_groups.get(self.resource_group)
