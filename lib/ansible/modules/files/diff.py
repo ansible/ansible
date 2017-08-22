@@ -29,14 +29,12 @@ options:
         description:
             - The source input to diff. Can be a string, contents of a file or output from a command, depending on I(source_type).
         required: true
-        default: null
         aliases: []
 
     target:
         description:
             - The target input to diff. Can be a string, contents of a file or output from a command, depending on I(target_type).
         required: true
-        default: null
         aliases: []
 
     source_type:
