@@ -1086,33 +1086,15 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     if cmd:     # update all
         rc, out, err = module.run_command(cmd)
         res['changed'] = True
-    else:
-        if len(pkgs['install']) > 0:    # install missing
-            cmd = yum_basecmd + ['install'] + pkgs['install']
-            rc, out, err = module.run_command(cmd)
-            out_lower = out.strip().lower()
-            if not out_lower.endswith("no packages marked for update") and \
-                    not out_lower.endswith("nothing to do"):
-                res['changed'] = True
-        else:
-            rc, out, err = [0, '', '']
+    elif len(pkgs['install']) or len(will_update):
+        cmd = yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
+        rc, out, err = module.run_command(cmd)
+        out_lower = out.strip().lower()
+        if not out_lower.endswith("no packages marked for update") and \
+                not out_lower.endswith("nothing to do"):
+            res['changed'] = True
 
-        if len(will_update) > 0:     # update present
-            cmd = yum_basecmd + ['install'] + pkgs['update']
-            rc2, out2, err2 = module.run_command(cmd)
-            out2_lower = out2.strip().lower()
-            if not out2_lower.endswith("no packages marked for update") and \
-                    not out2_lower.endswith("nothing to do"):
-                res['changed'] = True
-        else:
-            rc2, out2, err2 = [0, '', '']
-
-    if not update_all:
-        rc += rc2
-        out += out2
-        err += err2
-
-    res['rc'] += rc
+    res['rc'] = rc
     res['msg'] += err
     res['results'].append(out)
 
