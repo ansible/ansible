@@ -5,7 +5,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -26,7 +26,7 @@ author:
 options:
   function_name:
     description:
-      - "Name of the Lambda function whose resource policy you are updating by adding a new permission."
+      - "Name of the Labda function whose resource policy you are updating by adding a new permission."
       - "You can specify a function name (for example, Thumbnail ) or you can specify Amazon Resource Name (ARN) of the"
       - "function (for example, arn:aws:lambda:us-west-2:account-id:function:ThumbNail ). AWS Lambda also allows you to"
       - "specify partial ARN (for example, account-id:Thumbnail ). Note that the length constraint applies only to the"
@@ -48,7 +48,6 @@ options:
   version:
     description:
       -  Version of the Lambda function. Mutually exclusive with C(alias).
-    default: 0
 
   statement_id:
     description:
@@ -150,15 +149,11 @@ def pc(key):
 
 
 def policy_equal(module, current_statement):
-
-    equal = True
-
     for param in ('action', 'principal', 'source_arn', 'source_account', 'event_source_token'):
         if module.params.get(param) != current_statement.get(param):
-            equal = False
-            break
+            return False
 
-    return equal
+    return True
 
 
 def set_api_params(module, module_params):
@@ -182,7 +177,7 @@ def set_api_params(module, module_params):
 
 def validate_params(module):
     """
-    Performs basic parameter validation.
+    Performs parameter validation beyond the module framework's validation.
 
     :param module:
     :return:
@@ -208,8 +203,6 @@ def validate_params(module):
         if len(function_name) > 140:
             module.fail_json(msg='ARN name "{0}" exceeds 140 character limit'.format(function_name))
 
-    return
-
 
 def get_qualifier(module):
     """
@@ -220,7 +213,7 @@ def get_qualifier(module):
     """
 
     qualifier = None
-    if module.params['version'] > 0:
+    if module.params.get('version') is not None:
         qualifier = str(module.params['version'])
     elif module.params['alias']:
         qualifier = str(module.params['alias'])
@@ -371,22 +364,17 @@ def manage_state(module, lambda_client):
         current_state = 'present'
 
     if state == 'present':
-        if current_state == 'present':
-            # check if policy has changed and update if necessary
-            # since there's no API to update a policy statement, it must first be removed
-            if not policy_equal(module, current_policy_statement):
-                remove_policy_permission(module, lambda_client)
-                changed = add_policy_permission(module, lambda_client)
-                action_taken = 'updated'
-        else:
-            # add policy statement
+        if current_state == 'present' and not policy_equal(module, current_policy_statement):
+            remove_policy_permission(module, lambda_client)
+            changed = add_policy_permission(module, lambda_client)
+            action_taken = 'updated'
+        if not current_state == 'present':
             changed = add_policy_permission(module, lambda_client)
             action_taken = 'added'
-    else:
-        if current_state == 'present':
-            # remove the policy statement
-            changed = remove_policy_permission(module, lambda_client)
-            action_taken = 'deleted'
+    elif current_state == 'present':
+        # remove the policy statement
+        changed = remove_policy_permission(module, lambda_client)
+        action_taken = 'deleted'
 
     return dict(changed=changed, ansible_facts=dict(lambda_policy_action=action_taken))
 
@@ -406,7 +394,7 @@ def setup_module_object():
         function_name=dict(required=True, aliases=['lambda_function_arn', 'function_arn']),
         statement_id=dict(required=True, aliases=['sid']),
         alias=dict(),
-        version=dict(type='int', default=0),
+        version=dict(type='int'),
         action=dict(required=True, ),
         principal=dict(required=True, ),
         source_arn=dict(),
