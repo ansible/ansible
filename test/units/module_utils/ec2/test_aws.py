@@ -48,7 +48,7 @@ class RetryTestCase(unittest.TestCase):
         self.counter = 0
         err_msg = {'Error': {'Code': 'MalformedPolicyDocument'}}
 
-        @AWSRetry.backoff(tries=2, delay=0.1, added_exceptions=['MalformedPolicyDocument'])
+        @AWSRetry.backoff(tries=2, delay=0.1, catch_extra_error_codes=['MalformedPolicyDocument'])
         def extend_failures():
             self.counter += 1
             if self.counter < 2:

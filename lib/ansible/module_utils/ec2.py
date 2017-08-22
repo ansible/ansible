@@ -72,7 +72,7 @@ class AWSRetry(CloudRetry):
         return error.response['Error']['Code']
 
     @staticmethod
-    def found(response_code, added_exceptions):
+    def found(response_code, catch_extra_error_codes):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
         #
@@ -88,8 +88,8 @@ class AWSRetry(CloudRetry):
             'InternalFailure', 'InternalError', 'TooManyRequestsException',
             'Throttling'
         ]
-        if added_exceptions:
-            retry_on.extend(added_exceptions)
+        if catch_extra_error_codes:
+            retry_on.extend(catch_extra_error_codes)
 
         not_found = re.compile(r'^\w+.NotFound')
         return response_code in retry_on or not_found.search(response_code)
