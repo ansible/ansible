@@ -55,6 +55,7 @@ Ansible Changes By Release
 * panos_service (use M(panos_object) instead)
 * panos_security_policy: In 2.4 use M(panos_security_rule) instead.
 * panos_nat_policy, In 2.4 use M(panos_nat_rule) instead.
+* s3 (removed in 2.7), replaced by aws_s3
 
 #### Removed Deprecated Modules:
 * eos_template (use eos_config instead)
@@ -170,6 +171,7 @@ Ansible Changes By Release
 #### Cloud
 - amazon
   * aws_api_gateway
+  * aws_s3
   * aws_s3_bucket_facts
   * data_pipeline
   * dynamodb_ttl
