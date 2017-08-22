@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -308,7 +308,7 @@ def lag_changed(current_status, name, min_links):
 def ensure_present(client, num_connections, lag_id, lag_name, location, bandwidth, connection_id, min_links, wait, wait_timeout):
     exists = lag_exists(client, lag_id, lag_name)
     if not exists and lag_id:
-        raise DirectConnectError(msg="The Direct Connect link aggregation group {0} does not exist.".format(module.params.get('link_aggregation_group_id')), last_traceback=None, response="")
+        raise DirectConnectError(msg="The Direct Connect link aggregation group {0} does not exist.".format(lag_id), last_traceback=None, response="")
 
     # the connection is found; get the latest state and see if it needs to be updated
     if exists:
