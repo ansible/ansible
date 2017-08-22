@@ -922,7 +922,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             else:
                                 data_disk_vhd = None
                                 data_disk_managed_disk = ManagedDiskParameters(storage_account_type=data_disk['data_disk_managed_disk_type'])
-                                disk_name = "datadisk-" + str(count)
+                                disk_name = self.name + "-datadisk-" + str(count)
                                 count += 1
 
                             data_disk['data_disk_caching'] = data_disk.get(
