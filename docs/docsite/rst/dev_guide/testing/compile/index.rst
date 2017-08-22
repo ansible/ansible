@@ -1,4 +1,4 @@
 Compile Tests
 =============
 
-See :doc:`testing_compile` for more information.
+See :doc:`../../testing_compile` for more information.
