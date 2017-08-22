@@ -202,6 +202,15 @@ def convert_friendly_names_to_arns(connection, module, policy_names):
         module.fail_json(msg="Couldn't find policy: " + str(e))
 
 
+def remove_policies(connection, module, policies_to_remove, params):
+    for policy in policies_to_remove:
+        try:
+            connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
+        except ClientError as e:
+             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        return True
+
+
 def create_or_update_role(connection, module):
 
     params = dict()
@@ -238,40 +247,24 @@ def create_or_update_role(connection, module):
     if managed_policies is not None:
         # Get list of current attached managed policies
         current_attached_policies = get_attached_policy_list(connection, module, params['RoleName'])
+        current_attached_policies_arn_list = [policy['PolicyArn'] for policy in current_attached_policies]
 
         # If a single empty list item then all managed policies to be removed
-        if len(managed_policies) == 1 and not managed_policies[0]:
-            for policy in current_attached_policies:
-                try:
-                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
-                except (ClientError, ParamValidationError) as e:
-                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        if len(managed_policies) == 1 and not managed_policies[0] and module.params.get('remove_unlisted_policies'):
 
             # Detach policies not present
-            current_attached_policies_arn_list = [policy['PolicyArn'] for policy in current_attached_policies]
-
-            for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
-                try:
-                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
                 changed = True
         else:
             # Make a list of the ARNs from the attached policies
-            current_attached_policies_arn_list = []
-            for policy in current_attached_policies:
-                current_attached_policies_arn_list.append(policy['PolicyArn'])
 
             # Detach roles not defined in task
-            for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
-                try:
-                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                changed = True
+            if module.params.get('remove_unlisted_policies'):
+                if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
+                    changed = True
 
             # Attach roles not already attached
-            for policy_arn in list(set(managed_policies) - set(current_attached_policies_arn_list)):
+            for policy_arn in set(managed_policies) - set(current_attached_policies_arn_list):
                 try:
                     connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
                 except ClientError as e:
