@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: s3
+module: aws_s3
 short_description: manage objects in S3.
 description:
     - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and
@@ -144,14 +144,14 @@ extends_documentation_fragment: aws
 
 EXAMPLES = '''
 - name: Simple PUT operation
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     src: /usr/local/myfile.txt
     mode: put
 
 - name: Simple PUT operation in Ceph RGW S3
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     src: /usr/local/myfile.txt
@@ -160,14 +160,14 @@ EXAMPLES = '''
     s3_url: "http://localhost:8000"
 
 - name: Simple GET operation
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     dest: /usr/local/myfile.txt
     mode: get
 
 - name: Get a specific version of an object.
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     version: 48c9ee5131af7a716edc22df9772aa6f
@@ -175,7 +175,7 @@ EXAMPLES = '''
     mode: get
 
 - name: PUT/upload with metadata
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     src: /usr/local/myfile.txt
@@ -183,7 +183,7 @@ EXAMPLES = '''
     metadata: 'Content-Encoding=gzip,Cache-Control=no-cache'
 
 - name: PUT/upload with custom headers
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     src: /usr/local/myfile.txt
@@ -191,12 +191,12 @@ EXAMPLES = '''
     headers: 'x-amz-grant-full-control=emailAddress=owner@example.com'
 
 - name: List keys simple
-  s3:
+  aws_s3:
     bucket: mybucket
     mode: list
 
 - name: List keys all options
-  s3:
+  aws_s3:
     bucket: mybucket
     mode: list
     prefix: /my/desired/
@@ -204,25 +204,25 @@ EXAMPLES = '''
     max_keys: 472
 
 - name: Create an empty bucket
-  s3:
+  aws_s3:
     bucket: mybucket
     mode: create
     permission: public-read
 
 - name: Create a bucket with key as directory, in the EU region
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/directory/path
     mode: create
     region: eu-west-1
 
 - name: Delete a bucket and all contents
-  s3:
+  aws_s3:
     bucket: mybucket
     mode: delete
 
 - name: GET an object but don't download if the file checksums match. New in 2.0
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     dest: /usr/local/myfile.txt
@@ -230,7 +230,7 @@ EXAMPLES = '''
     overwrite: different
 
 - name: Delete an object from a bucket
-  s3:
+  aws_s3:
     bucket: mybucket
     object: /my/desired/key.txt
     mode: delobj
@@ -536,6 +536,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if module._name == 's3':
+        module.deprecate("The 's3' module is being renamed 'aws_s3'", version=2.7)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore required for this module')
