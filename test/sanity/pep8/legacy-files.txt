@@ -146,7 +146,6 @@ lib/ansible/modules/cloud/ovirt/ovirt_affinity_group.py
 lib/ansible/modules/cloud/ovirt/ovirt_nics.py
 lib/ansible/modules/cloud/ovirt/ovirt_permissions.py
 lib/ansible/modules/cloud/ovirt/ovirt_vms.py
-lib/ansible/modules/cloud/packet/packet_device.py
 lib/ansible/modules/cloud/packet/packet_sshkey.py
 lib/ansible/modules/cloud/profitbricks/profitbricks.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_datacenter.py
