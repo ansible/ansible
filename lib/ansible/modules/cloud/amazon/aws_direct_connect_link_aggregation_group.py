@@ -308,7 +308,7 @@ def lag_changed(current_status, name, min_links):
 def ensure_present(client, num_connections, lag_id, lag_name, location, bandwidth, connection_id, min_links, wait, wait_timeout):
     exists = lag_exists(client, lag_id, lag_name)
     if not exists and lag_id:
-        module.fail_json(msg="The Direct Connect link aggregation group {0} does not exist.".format(module.params.get('link_aggregation_group_id')))
+        raise DirectConnectError(msg="The Direct Connect link aggregation group {0} does not exist.".format(module.params.get('link_aggregation_group_id')), last_traceback=None, response="")
 
     # the connection is found; get the latest state and see if it needs to be updated
     if exists:
