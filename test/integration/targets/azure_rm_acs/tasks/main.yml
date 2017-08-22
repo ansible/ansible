@@ -4,16 +4,16 @@
      resource_group: "{{ resource_group }}"
      orchestration_platform: DCOS
      master_profile:
-         - count: 3
+         - count: 1
            dns_prefix: "acstestdcos{{ resource_group | hash('md5') | truncate(10, True, '') }}"
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
      agent_pool_profiles:
          - name: default
-           count: 5
+           count: 1
            dns_prefix: "acstestdcos{{ resource_group | hash('md5') | truncate(12, True, '') }}"
-           vm_size: Standard_D2_v2
+           vm_size: Standard_A0
      diagnostics_profile: false
    register: results
 
@@ -29,16 +29,16 @@
      resource_group: "{{ resource_group }}"
      orchestration_platform: DCOS
      master_profile:
-         - count: 3
+         - count: 1
            dns_prefix: "acstestdcos{{ resource_group | hash('md5') | truncate(10, True, '') }}"
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
      agent_pool_profiles:
          - name: default
-           count: 7
+           count: 2
            dns_prefix: "acstestdcos{{ resource_group | hash('md5') | truncate(12, True, '') }}"
-           vm_size: Standard_D2_v2
+           vm_size: Standard_A0
      diagnostics_profile: false
    register: results
 
@@ -55,16 +55,16 @@
      orchestration_platform: DCOS
      state: absent
      master_profile:
-         - count: 3
+         - count: 1
            dns_prefix: "acstestdcos{{ resource_group | hash('md5') | truncate(10, True, '') }}"
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
      agent_pool_profiles:
          - name: default
-           count: 5
+           count: 2
            dns_prefix: "acstestdcos{{ resource_group | hash('md5') | truncate(12, True, '') }}"
-           vm_size: Standard_D2_v2
+           vm_size: Standard_A0
      diagnostics_profile: false
 
  - name: Create an ACS instance - Swarm
@@ -73,16 +73,16 @@
      resource_group: "{{ resource_group }}"
      orchestration_platform: Swarm
      master_profile:
-         - count: 3
+         - count: 1
            dns_prefix: "acstestsw{{ resource_group | hash('md5') | truncate(10, True, '') }}"
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
      agent_pool_profiles:
          - name: default
-           count: 5
+           count: 1
            dns_prefix: "acstestsw{{ resource_group | hash('md5') | truncate(12, True, '') }}"
-           vm_size: Standard_D2_v2
+           vm_size: Standard_A0
      diagnostics_profile: false
    register: results
 
@@ -98,16 +98,16 @@
      resource_group: "{{ resource_group }}"
      orchestration_platform: Swarm
      master_profile:
-         - count: 3
+         - count: 1
            dns_prefix: "acstestsw{{ resource_group | hash('md5') | truncate(10, True, '') }}"
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
      agent_pool_profiles:
          - name: default
-           count: 7
+           count: 2
            dns_prefix: "acstestsw{{ resource_group | hash('md5') | truncate(12, True, '') }}"
-           vm_size: Standard_D2_v2
+           vm_size: Standard_A0
      diagnostics_profile: false
    register: results
 
@@ -124,14 +124,14 @@
      orchestration_platform: Swarm
      state: absent
      master_profile:
-         - count: 3
+         - count: 1
            dns_prefix: "acstestsw{{ resource_group | hash('md5') | truncate(10, True, '') }}"
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
      agent_pool_profiles:
          - name: default
-           count: 5
+           count: 2
            dns_prefix: "acstestsw{{ resource_group | hash('md5') | truncate(12, True, '') }}"
-           vm_size: Standard_D2_v2
+           vm_size: Standard_A0
      diagnostics_profile: false
