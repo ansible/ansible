@@ -247,14 +247,14 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/modules/'):
-            module = self.module_names_by_path.get(path)
+            module_name = self.module_names_by_path.get(path)
 
-            if module:
+            if module_name:
                 return {
-                    'units': module if module in self.units_modules else None,
-                    'integration': self.posix_integration_by_module.get(module) if ext == '.py' else None,
-                    'windows-integration': self.windows_integration_by_module.get(module) if ext == '.ps1' else None,
-                    'network-integration': self.network_integration_by_module.get(module),
+                    'units': module_name if module_name in self.units_modules else None,
+                    'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
+                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext == '.ps1' else None,
+                    'network-integration': self.network_integration_by_module.get(module_name),
                 }
 
             return minimal

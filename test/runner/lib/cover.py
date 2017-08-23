@@ -92,11 +92,11 @@ def command_coverage_combine(args):
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
             elif '/ansible_module_' in filename:
-                module = re.sub('^.*/ansible_module_(?P<module>.*).py$', '\\g<module>', filename)
-                if module not in modules:
-                    display.warning('Skipping coverage of unknown module: %s' % module)
+                module_name = re.sub('^.*/ansible_module_(?P<module>.*).py$', '\\g<module>', filename)
+                if module_name not in modules:
+                    display.warning('Skipping coverage of unknown module: %s' % module_name)
                     continue
-                new_name = os.path.abspath(modules[module])
+                new_name = os.path.abspath(modules[module_name])
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
             elif re.search('^(/.*?)?/root/ansible/', filename):
