@@ -152,23 +152,23 @@ class EthernetNetworkModule(OneViewModuleBase):
 
         if self.state == 'present':
             if self.data.get('vlanIdRange'):
-                return self.__bulk_present()
+                return self._bulk_present()
             else:
-                return self.__present(resource)
+                return self._present(resource)
         elif self.state == 'absent':
             return self.resource_absent(resource)
         elif self.state == 'default_bandwidth_reset':
-            changed, msg, ansible_facts = self.__default_bandwidth_reset(resource)
+            changed, msg, ansible_facts = self._default_bandwidth_reset(resource)
             return dict(changed=changed, msg=msg, ansible_facts=ansible_facts)
 
-    def __present(self, resource):
+    def _present(self, resource):
 
         bandwidth = self.data.pop('bandwidth', None)
         scope_uris = self.data.pop('scopeUris', None)
         result = self.resource_present(resource, self.RESOURCE_FACT_NAME)
 
         if bandwidth:
-            if self.__update_connection_template(result['ansible_facts']['ethernet_network'], bandwidth)[0]:
+            if self._update_connection_template(result['ansible_facts']['ethernet_network'], bandwidth)[0]:
                 result['changed'] = True
                 result['msg'] = self.MSG_UPDATED
 
@@ -177,7 +177,7 @@ class EthernetNetworkModule(OneViewModuleBase):
 
         return result
 
-    def __bulk_present(self):
+    def _bulk_present(self):
         vlan_id_range = self.data['vlanIdRange']
         result = dict(ansible_facts={})
         ethernet_networks = self.resource_client.get_range(self.data['namePrefix'], vlan_id_range)
@@ -208,7 +208,7 @@ class EthernetNetworkModule(OneViewModuleBase):
 
         return result
 
-    def __update_connection_template(self, ethernet_network, bandwidth):
+    def _update_connection_template(self, ethernet_network, bandwidth):
 
         if 'connectionTemplateUri' not in ethernet_network:
             return False, None
@@ -224,15 +224,14 @@ class EthernetNetworkModule(OneViewModuleBase):
         else:
             return False, None
 
-    def __default_bandwidth_reset(self, resource):
+    def _default_bandwidth_reset(self, resource):
 
         if not resource:
             raise OneViewModuleResourceNotFound(self.MSG_ETHERNET_NETWORK_NOT_FOUND)
 
         default_connection_template = self.oneview_client.connection_templates.get_default()
 
-        changed, connection_template = self.__update_connection_template(resource,
-                                                                         default_connection_template['bandwidth'])
+        changed, connection_template = self._update_connection_template(resource, default_connection_template['bandwidth'])
 
         return changed, self.MSG_CONNECTION_TEMPLATE_RESET, dict(
             ethernet_network_connection_template=connection_template)

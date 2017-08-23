@@ -254,7 +254,7 @@ class EthernetNetworkModuleSpec(unittest.TestCase,
         )
 
     def test_should_create_all_ethernet_networks(self):
-        self.resource.get_range.return_value = []
+        self.resource.get_range.side_effect = [[], DEFAULT_BULK_ENET_TEMPLATE]
         self.resource.create_bulk.return_value = DEFAULT_BULK_ENET_TEMPLATE
 
         self.mock_ansible_module.params = PARAMS_FOR_BULK_CREATED
