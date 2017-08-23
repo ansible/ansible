@@ -59,6 +59,58 @@
     that:
         - "not yum_result.changed"
 
+# INSTALL AGAIN WITH LATEST
+- name: install sos again with state latest in check mode
+  yum: name=sos state=latest
+  check_mode: true
+  register: yum_result
+- name: verify install sos again with state latest in check mode
+  assert:
+    that:
+        - "not yum_result.changed"
+
+- name: install sos again with state latest idempotence
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos again with state latest idempotence
+  assert:
+    that:
+        - "not yum_result.changed"
+
+# INSTALL WITH LATEST
+- name: uninstall sos
+  yum: name=sos state=removed
+  register: yum_result
+- name: verify uninstall sos
+  assert:
+    that:
+        - "yum_result|success"
+
+- name: install sos with state latest in check mode
+  yum: name=sos state=latest
+  check_mode: true
+  register: yum_result
+- name: verify install sos with state latest in check mode
+  assert:
+    that:
+        - "yum_result.changed"
+
+- name: install sos with state latest
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos with state latest
+  assert:
+    that:
+        - "yum_result.changed"
+
+- name: install sos with state latest idempotence
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos with state latest idempotence
+  assert:
+    that:
+        - "not yum_result.changed"
+
 # Multiple packages
 - name: uninstall sos and bc
   yum: name=sos,bc state=removed
