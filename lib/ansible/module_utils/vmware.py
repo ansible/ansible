@@ -365,7 +365,8 @@ def gather_vm_facts(content, vm):
     vmnet = _get_vm_prop(vm, ('guest', 'net'))
     if vmnet:
         for device in vmnet:
-            net_dict[device.macAddress] = list(device.ipAddress)
+            if device.deviceConfigId > 0:
+                net_dict[device.macAddress] = list(device.ipAddress)
 
     if vm.guest.ipAddress:
         if ':' in vm.guest.ipAddress:
