@@ -153,6 +153,7 @@ EXAMPLES = '''
     size: 10GiB
     format: cow
     interface: virtio
+    storage_domain: data
 
 # Attach logical unit to VM rhel7
 - ovirt_disk:
