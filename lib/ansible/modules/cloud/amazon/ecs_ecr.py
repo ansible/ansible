@@ -141,18 +141,6 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-def boto_exception(err):
-    '''boto error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
-
-
 def build_kwargs(registry_id):
     """
     Builds a kwargs dict which may contain the optional registryId.

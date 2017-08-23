@@ -207,7 +207,7 @@ from dateutil import tz
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3, boto_exception
 
 
 try:
@@ -216,17 +216,6 @@ except ImportError:
     # Handled by imported HAS_BOTO3
     pass
 
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 # the following function, calculate_multipart_etag, is from tlastowka
 # on github and is used under its (compatible) GPL license. So this
