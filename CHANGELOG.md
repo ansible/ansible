@@ -21,6 +21,7 @@ Ansible Changes By Release
   * digital_ocean_tag module
   * Fix the zip filter
   * Fix user module combining bytes and text
+  * Fix for security groups in the amazon efs module
 * ios_config: Fix traceback when the efaults parameter is not set
 * iosxr_config: Fixed unicode error when UTF-8 characters are in configs
 * Fix check mode in archive module
