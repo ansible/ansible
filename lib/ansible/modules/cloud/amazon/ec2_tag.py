@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 - name: Ensure one dbserver is running
   ec2:
-    count_tags:
+    count_tag:
       Name: dbserver
       Env: production
     exact_count: 1
