@@ -115,6 +115,37 @@ options:
         choices:
             - Standard_LRS
             - Premium_LRS
+    data_disks:
+        description:
+            - Describes list of data disks.
+        required: false
+        default: null
+        version_added: "2.4"
+        suboptions:
+            lun:
+                description:
+                    - The logical unit number for data disk
+                default: 0
+                version_added: "2.4"
+            disk_size_gb:
+                description:
+                    - The initial disk size in GB for blank data disks
+                version_added: "2.4"
+            managed_disk_type:
+                description:
+                    - Managed data disk type
+                choices:
+                    - Standard_LRS
+                    - Premium_LRS
+                version_added: "2.4"
+            caching:
+                description:
+                    - Type of data disk caching.
+                choices:
+                    - ReadOnly
+                    - ReadWrite
+                default: ReadOnly
+                version_added: "2.4"
     virtual_network_name:
         description:
             - Virtual Network name
@@ -161,6 +192,11 @@ EXAMPLES = '''
       publisher: CoreOS
       sku: Stable
       version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
 '''
 
 RETURN = '''
@@ -218,6 +254,17 @@ azure_vmss:
                     "secrets": []
                 },
                 "storageProfile": {
+                    "dataDisks": [
+                        {
+                            "caching": "ReadWrite",
+                            "createOption": "empty",
+                            "diskSizeGB": 64,
+                            "lun": 0,
+                            "managedDisk": {
+                                "storageAccountType": "Standard_LRS"
+                            }
+                        }
+                    ],
                     "imageReference": {
                         "offer": "CoreOS",
                         "publisher": "CoreOS",
@@ -543,19 +590,19 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                         for data_disk in self.data_disks:
                             data_disk_managed_disk = VirtualMachineScaleSetManagedDiskParameters(
-                                storage_account_type=data_disk['data_disk_managed_disk_type']
+                                storage_account_type=data_disk['managed_disk_type']
                             )
 
-                            data_disk['data_disk_caching'] = data_disk.get(
-                                'data_disk_caching',
+                            data_disk['caching'] = data_disk.get(
+                                'caching',
                                 CachingTypes.read_only
                             )
 
                             data_disks.append(VirtualMachineScaleSetDataDisk(
-                                lun=data_disk['data_disk_lun'],
-                                caching=data_disk['data_disk_caching'],
+                                lun=data_disk['lun'],
+                                caching=data_disk['caching'],
                                 create_option=DiskCreateOptionTypes.empty,
-                                disk_size_gb=data_disk['data_disk_size_gb'],
+                                disk_size_gb=data_disk['disk_size_gb'],
                                 managed_disk=data_disk_managed_disk,
                             ))
 
@@ -575,12 +622,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     data_disks = []
                     for data_disk in self.data_disks:
                         data_disks.append(VirtualMachineScaleSetDataDisk(
-                            lun=data_disk['data_disk_lun'],
-                            caching=data_disk['data_disk_caching'],
+                            lun=data_disk['lun'],
+                            caching=data_disk['caching'],
                             create_option=DiskCreateOptionTypes.empty,
-                            disk_size_gb=data_disk['data_disk_size_gb'],
+                            disk_size_gb=data_disk['disk_size_gb'],
                             managed_disk=VirtualMachineScaleSetManagedDiskParameters(
-                                storage_account_type=data_disk['data_disk_managed_disk_type']
+                                storage_account_type=data_disk['managed_disk_type']
                             ),
                         ))
                     vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
