@@ -12,13 +12,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: oneview_ethernet_network
-short_description: Manage OneView Ethernet Network resources.
+short_description: Manage OneView Ethernet Network resources
 description:
     - Provides an interface to manage Ethernet Network resources. Can create, update, or delete.
 version_added: "2.4"
 requirements:
-    - "hpOneView >= 3.1.0"
-author: "Felipe Bulsoni (@fgbulsoni)"
+    - hpOneView >= 3.1.0
+author:
+    - Felipe Bulsoni (@fgbulsoni)
+    - Thiago Miotto (@tmiotto)
 options:
     state:
         description:
@@ -26,7 +28,7 @@ options:
               C(present) will ensure data properties are compliant with OneView.
               C(absent) will remove the resource from OneView, if it exists.
               C(default_bandwidth_reset) will reset the network connection template to the default.
-        choices: ['present', 'absent', 'default_bandwidth_reset']
+        choices: [present, absent, default_bandwidth_reset]
     data:
         description:
             - List with Ethernet Network properties.
@@ -133,11 +135,8 @@ class EthernetNetworkModule(OneViewModuleBase):
     def __init__(self):
 
         argument_spec = dict(
-            state=dict(
-                required=True,
-                choices=['present', 'absent', 'default_bandwidth_reset']
-            ),
-            data=dict(required=True, type='dict'),
+            state=dict(type='str', required=True, choices=['absent', 'default_bandwidth_reset', 'present']),
+            data=dict(type='dict', required=True),
         )
 
         super(EthernetNetworkModule, self).__init__(additional_arg_spec=argument_spec, validate_etag_support=True)
@@ -171,9 +170,8 @@ class EthernetNetworkModule(OneViewModuleBase):
 
         if bandwidth:
             if self.__update_connection_template(result['ansible_facts']['ethernet_network'], bandwidth)[0]:
-                if not result['changed']:
-                    result['changed'] = True
-                    result['msg'] = self.MSG_UPDATED
+                result['changed'] = True
+                result['msg'] = self.MSG_UPDATED
 
         if scope_uris is not None:
             result = self.resource_scopes_set(result, 'ethernet_network', scope_uris)
