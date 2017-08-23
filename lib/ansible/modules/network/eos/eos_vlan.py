@@ -33,6 +33,8 @@ short_description: Manage VLANs on Arista EOS network devices
 description:
   - This module provides declarative management of VLANs
     on Arista EOS network devices.
+notes:
+  - Tested against EOS 4.15
 options:
   name:
     description:

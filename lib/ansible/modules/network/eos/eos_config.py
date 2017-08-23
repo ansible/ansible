@@ -34,6 +34,8 @@ description:
     a deterministic way.  This module works with either CLI or eAPI
     transports.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   lines:
     description:
