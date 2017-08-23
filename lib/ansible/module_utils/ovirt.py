@@ -746,6 +746,17 @@ class BaseModule(object):
             'diff': self._diff,
         }
 
+    def wait_for_import(self):
+        if self._module.params['wait']:
+            start = time.time()
+            timeout = self._module.params['timeout']
+            poll_interval = self._module.params['poll_interval']
+            while time.time() < start + timeout:
+                entity = self.search_entity()
+                if entity:
+                    return entity
+                time.sleep(poll_interval)
+
     def search_entity(self, search_params=None):
         """
         Always first try to search by `ID`, if ID isn't specified,
@@ -755,10 +766,10 @@ class BaseModule(object):
         entity = None
 
         if 'id' in self._module.params and self._module.params['id'] is not None:
-            entity = search_by_attributes(self._service, id=self._module.params['id'])
+            entity = get_entity(self._service.service(self._module.params['id']))
         elif search_params is not None:
             entity = search_by_attributes(self._service, **search_params)
-        elif 'name' in self._module.params and self._module.params['name'] is not None:
+        elif self._module.params.get('name') is not None:
             entity = search_by_attributes(self._service, name=self._module.params['name'])
 
         return entity
