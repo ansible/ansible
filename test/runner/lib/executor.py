@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 import json
 import os
+import collections
 import re
 import tempfile
 import time
@@ -244,8 +245,9 @@ def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
     """
-    internal_targets = command_integration_filter(args, walk_posix_integration_targets())
-    command_integration_filtered(args, internal_targets)
+    all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
+    internal_targets = command_integration_filter(args, all_targets)
+    command_integration_filtered(args, internal_targets, all_targets)
 
 
 def command_network_integration(args):
@@ -270,7 +272,8 @@ def command_network_integration(args):
             'See also inventory template: %s.template' % (filename, default_filename)
         )
 
-    internal_targets = command_integration_filter(args, walk_network_integration_targets())
+    all_targets = tuple(walk_network_integration_targets(include_hidden=True))
+    internal_targets = command_integration_filter(args, all_targets)
     platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
     if args.platform:
@@ -309,7 +312,7 @@ def command_network_integration(args):
     else:
         install_command_requirements(args)
 
-    command_integration_filtered(args, internal_targets)
+    command_integration_filtered(args, internal_targets, all_targets)
 
 
 def network_run(args, platform, version):
@@ -377,7 +380,8 @@ def command_windows_integration(args):
     if not args.explain and not args.windows and not os.path.isfile(filename):
         raise ApplicationError('Use the --windows option or provide an inventory file (see %s.template).' % filename)
 
-    internal_targets = command_integration_filter(args, walk_windows_integration_targets())
+    all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
+    internal_targets = command_integration_filter(args, all_targets)
 
     if args.windows:
         instances = []  # type: list [lib.thread.WrappedThread]
@@ -405,7 +409,7 @@ def command_windows_integration(args):
         install_command_requirements(args)
 
     try:
-        command_integration_filtered(args, internal_targets)
+        command_integration_filtered(args, internal_targets, all_targets)
     finally:
         pass
 
@@ -477,7 +481,7 @@ def command_integration_filter(args, targets):
     :type targets: collections.Iterable[IntegrationTarget]
     :rtype: tuple[IntegrationTarget]
     """
-    targets = tuple(targets)
+    targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
     require = (args.require or []) + changes
     exclude = (args.exclude or [])
@@ -507,16 +511,29 @@ def command_integration_filter(args, targets):
     return internal_targets
 
 
-def command_integration_filtered(args, targets):
+def command_integration_filtered(args, targets, all_targets):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
+    :type all_targets: tuple[IntegrationTarget]
     """
     found = False
     passed = []
     failed = []
 
     targets_iter = iter(targets)
+    all_targets_dict = dict((target.name, target) for target in all_targets)
+
+    setup_errors = []
+    setup_targets_executed = set()
+
+    for target in all_targets:
+        for setup_target in target.setup_once + target.setup_always:
+            if setup_target not in all_targets_dict:
+                setup_errors.append('Target "%s" contains invalid setup target: %s' % (target.name, setup_target))
+
+    if setup_errors:
+        raise ApplicationError('Found %d invalid setup aliases:\n%s' % (len(setup_errors), '\n'.join(setup_errors)))
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
@@ -561,12 +578,15 @@ def command_integration_filtered(args, targets):
             while tries:
                 tries -= 1
 
-                if not args.explain:
-                    # create a fresh test directory for each test target
-                    remove_tree(test_dir)
-                    make_dirs(test_dir)
-
                 try:
+                    run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, False)
+                    run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, True)
+
+                    if not args.explain:
+                        # create a fresh test directory for each test target
+                        remove_tree(test_dir)
+                        make_dirs(test_dir)
+
                     if target.script_path:
                         command_integration_script(args, target)
                     else:
@@ -609,6 +629,34 @@ def command_integration_filtered(args, targets):
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
             len(failed), len(passed) + len(failed), '\n'.join(target.name for target in failed)))
+
+
+def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, always):
+    """
+    :param args: IntegrationConfig
+    :param test_dir: str
+    :param target_names: list[str]
+    :param targets_dict: dict[str, IntegrationTarget]
+    :param targets_executed: set[str]
+    :param always: bool
+    """
+    for target_name in target_names:
+        if not always and target_name in targets_executed:
+            continue
+
+        target = targets_dict[target_name]
+
+        if not args.explain:
+            # create a fresh test directory for each test target
+            remove_tree(test_dir)
+            make_dirs(test_dir)
+
+        if target.script_path:
+            command_integration_script(args, target)
+        else:
+            command_integration_role(args, target, None)
+
+        targets_executed.add(target_name)
 
 
 def integration_environment(args, target, cmd):
@@ -667,7 +715,7 @@ def command_integration_role(args, target, start_at_task):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
-    :type start_at_task: str
+    :type start_at_task: str | None
     """
     display.info('Running %s integration test role' % target.name)
 
