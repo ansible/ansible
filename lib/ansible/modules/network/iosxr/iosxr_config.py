@@ -24,6 +24,8 @@ description:
     an implementation for working with IOS XR configuration sections in
     a deterministic way.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   lines:
     description:
