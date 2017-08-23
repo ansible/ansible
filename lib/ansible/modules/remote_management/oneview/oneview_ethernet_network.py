@@ -152,15 +152,14 @@ class EthernetNetworkModule(OneViewModuleBase):
 
         if self.state == 'present':
             if self.data.get('vlanIdRange'):
-                changed, msg, ansible_facts = self.__bulk_present()
+                return self.__bulk_present()
             else:
                 return self.__present(resource)
         elif self.state == 'absent':
             return self.resource_absent(resource)
         elif self.state == 'default_bandwidth_reset':
             changed, msg, ansible_facts = self.__default_bandwidth_reset(resource)
-
-        return dict(changed=changed, msg=msg, ansible_facts=ansible_facts)
+            return dict(changed=changed, msg=msg, ansible_facts=ansible_facts)
 
     def __present(self, resource):
 
@@ -180,13 +179,13 @@ class EthernetNetworkModule(OneViewModuleBase):
 
     def __bulk_present(self):
         vlan_id_range = self.data['vlanIdRange']
-
+        result = dict(ansible_facts={})
         ethernet_networks = self.resource_client.get_range(self.data['namePrefix'], vlan_id_range)
 
         if not ethernet_networks:
-            ethernet_networks = self.resource_client.create_bulk(self.data)
-            changed = True
-            msg = self.MSG_BULK_CREATED
+            self.resource_client.create_bulk(self.data)
+            result['changed'] = True
+            result['msg'] = self.MSG_BULK_CREATED
 
         else:
             vlan_ids = self.resource_client.dissociate_values_or_ranges(vlan_id_range)
@@ -194,8 +193,8 @@ class EthernetNetworkModule(OneViewModuleBase):
                 vlan_ids.remove(net['vlanId'])
 
             if len(vlan_ids) == 0:
-                msg = self.MSG_BULK_ALREADY_EXIST
-                changed = False
+                result['msg'] = self.MSG_BULK_ALREADY_EXIST
+                result['changed'] = False
             else:
                 if len(vlan_ids) == 1:
                     self.data['vlanIdRange'] = '{0}-{1}'.format(vlan_ids[0], vlan_ids[0])
@@ -203,11 +202,11 @@ class EthernetNetworkModule(OneViewModuleBase):
                     self.data['vlanIdRange'] = ','.join(map(str, vlan_ids))
 
                 self.resource_client.create_bulk(self.data)
-                ethernet_networks = self.resource_client.get_range(self.data['namePrefix'], vlan_id_range)
-                changed = True
-                msg = self.MSG_MISSING_BULK_CREATED
+                result['changed'] = True
+                result['msg'] = self.MSG_MISSING_BULK_CREATED
+        result['ansible_facts']['ethernet_network_bulk'] = self.resource_client.get_range(self.data['namePrefix'], vlan_id_range)
 
-        return changed, msg, dict(ethernet_network_bulk=ethernet_networks)
+        return result
 
     def __update_connection_template(self, ethernet_network, bandwidth):
 
