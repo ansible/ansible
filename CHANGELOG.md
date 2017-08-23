@@ -230,6 +230,7 @@ Ansible Changes By Release
 #### Crypto
   * openssl_certificate
   * openssl_csr
+  * openssl_pkcs12
 
 #### Files
   * xml
