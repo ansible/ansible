@@ -308,6 +308,8 @@ class DockerNetworkManager(object):
                 self.results['changed'] = True
 
     def disconnect_missing(self):
+        if not self.existing_network:
+            return
         containers = self.existing_network['Containers']
         if not containers:
             return
