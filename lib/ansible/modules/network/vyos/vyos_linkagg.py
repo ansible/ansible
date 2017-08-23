@@ -33,6 +33,8 @@ short_description: Manage link aggregation groups on VyOS network devices
 description:
   - This module provides declarative management of link aggregation groups
     on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   name:
     description:
