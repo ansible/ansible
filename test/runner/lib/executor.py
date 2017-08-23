@@ -635,7 +635,7 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
     :param args: IntegrationConfig
     :param test_dir: str
     :param target_names: list[str]
-    :param targets_dict: list[IntegrationTarget]
+    :param targets_dict: dict[str, IntegrationTarget]
     :param targets_executed: set[str]
     :param always: bool
     """
