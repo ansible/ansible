@@ -70,7 +70,7 @@ EXAMPLES = '''
 
 # Get a session token (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html)
 sts_session_token:
-  duration: 3600
+  duration_seconds: 3600
 register: session_credentials
 
 # Use the session token obtained above to tag an instance in account 123456789012
