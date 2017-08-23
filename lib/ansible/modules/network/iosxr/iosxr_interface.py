@@ -22,6 +22,8 @@ short_description: Manage Interface on Cisco IOS XR network devices
 description:
   - This module provides declarative management of Interfaces
     on Cisco IOS XR network devices.
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   name:
     description:
