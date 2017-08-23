@@ -38,8 +38,6 @@ description:
     value of the environment variable C(ANSIBLE_VYOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
 extends_documentation_fragment: vyos
-notes:
-  - Tested against VYOS 1.1.7
 options:
   commands:
     description:
@@ -88,6 +86,7 @@ options:
     default: 1
 
 notes:
+  - Tested against VYOS 1.1.7
   - Running C(show system boot-messages all) will cause the module to hang since
     VyOS is using a custom pager setting to display the output of that command.
 """
