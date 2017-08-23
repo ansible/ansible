@@ -12,7 +12,6 @@ import sys
 
 from lib.util import (
     ApplicationError,
-    ABC,
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -520,13 +519,13 @@ class IntegrationTarget(CompletionTarget):
         # modules
 
         if self.name in modules:
-            module = self.name
+            module_name = self.name
         elif self.name.startswith('win_') and self.name[4:] in modules:
-            module = self.name[4:]
+            module_name = self.name[4:]
         else:
-            module = None
+            module_name = None
 
-        self.modules = tuple(sorted(a for a in static_aliases + tuple([module]) if a in modules))
+        self.modules = tuple(sorted(a for a in static_aliases + tuple([module_name]) if a in modules))
 
         # groups
 

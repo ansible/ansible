@@ -10,6 +10,7 @@ from lib.util import (
 
 from lib.diff import (
     parse_diff,
+    FileDiff,
 )
 
 
