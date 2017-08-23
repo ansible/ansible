@@ -699,7 +699,7 @@ Looping over the inventory
 ``````````````````````````
 
 If you wish to loop over the inventory, or just a subset of it, there is multiple ways.
-One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` variables, like this::
+One can use a regular ``with_items`` with the ``ansible_play_batch`` or ``groups`` variables, like this::
 
     # show all the hosts in the inventory
     - debug:
@@ -711,7 +711,7 @@ One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` varia
     - debug:
         msg: "{{ item }}"
       with_items:
-        - "{{ play_hosts }}"
+        - "{{ ansible_play_batch }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
