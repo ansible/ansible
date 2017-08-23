@@ -23,7 +23,7 @@
        - results.changed
        - "results.state.provisioning_state == 'Succeeded'"
 
- - name: Scale the ACS instance from 5 to 7 - DCOS
+ - name: Scale the ACS instance from 1 to 2 - DCOS
    azure_rm_acs:
      name: "acsdcos{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
@@ -46,7 +46,7 @@
    assert:
      that:
        - results.changed
-       - "results.state.agent_pool_profiles.count == 7"
+       - "results.state.agent_pool_profiles.count == 2"
 
  - name: Delete the DCOS ACS instance - DCOS
    azure_rm_acs:
@@ -92,7 +92,7 @@
        - results.changed
        - "results.state.provisioning_state == 'Succeeded'"
 
- - name: Scale the ACS instance from 5 to 7 - Swarm
+ - name: Scale the ACS instance from 1 to 2 - Swarm
    azure_rm_acs:
      name: "acssw{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
@@ -115,7 +115,7 @@
    assert:
      that:
        - results.changed
-       - "results.state.agent_pool_profiles.count == 7"
+       - "results.state.agent_pool_profiles.count == 2"
 
  - name: Delete the ACS instance - Swarm
    azure_rm_acs:
