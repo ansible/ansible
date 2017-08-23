@@ -33,6 +33,8 @@ description:
     the entire VRF collection.  It also supports purging VRF definitions from
     the configuration that are not explicitly defined.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   vrfs:
     description:

@@ -33,6 +33,8 @@ description:
     an implementation for working with IOS configuration sections in
     a deterministic way.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   lines:
     description:

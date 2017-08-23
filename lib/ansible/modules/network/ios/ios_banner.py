@@ -32,6 +32,8 @@ description:
     running Cisco IOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   banner:
     description:

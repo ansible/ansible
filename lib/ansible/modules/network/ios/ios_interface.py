@@ -22,6 +22,8 @@ short_description: Manage Interface on Cisco IOS network devices
 description:
   - This module provides declarative management of Interfaces
     on Cisco IOS network devices.
+notes:
+  - Tested against IOS 15.6
 options:
   name:
     description:
