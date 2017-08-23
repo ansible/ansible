@@ -233,8 +233,6 @@ stack_outputs:
 
 import json
 import time
-import random
-import string
 import traceback
 from hashlib import sha1
 
