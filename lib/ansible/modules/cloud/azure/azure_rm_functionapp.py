@@ -70,7 +70,7 @@ RETURN = '''
 state:
     description: Current state of the Azure Function App
     returned: success
-    type: complex
+    type: dict
     example:
         id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/sites/myfunctionapp
         name: myfunctionapp
