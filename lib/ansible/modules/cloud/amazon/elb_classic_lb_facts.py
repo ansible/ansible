@@ -76,6 +76,72 @@ EXAMPLES = '''
 
 '''
 
+RETURN = '''
+elb_classic_facts:
+  description: a
+  returned: always
+  type: list
+  sample:
+    elb_classic_facts:
+      - attributes:
+          access_log:
+            enabled: false
+          connection_draining:
+            enabled: true
+            timeout: 300
+          connection_settings:
+            idle_timeout: 60
+          cross_zone_load_balancing:
+            enabled: true
+        availability_zones:
+          - "us-east-1a"
+          - "us-east-1b"
+          - "us-east-1c"
+          - "us-east-1d"
+          - "us-east-1e"
+        backend_server_description: []
+        canonical_hosted_zone_name: test-lb-XXXXXXXXXXXX.us-east-1.elb.amazonaws.com
+        canonical_hosted_zone_name_id: XXXXXXXXXXXXXX
+        created_time: 2017-08-23T18:25:03.280000+00:00
+        dns_name: test-lb-XXXXXXXXXXXX.us-east-1.elb.amazonaws.com
+        health_check:
+          healthy_threshold: 10
+          interval: 30
+          target: HTTP:80/index.html
+          timeout: 5
+          unhealthy_threshold: 2
+        instances: []
+        instances_inservice: []
+        instances_inservice_count: 0
+        instances_outofservice: []
+        instances_outofservice_count: 0
+        instances_unknownservice: []
+        instances_unknownservice_count: 0
+        listener_descriptions:
+          - listener:
+              instance_port: 80
+              instance_protocol: HTTP
+              load_balancer_port: 80
+              protocol: HTTP
+            policy_names: []
+        load_balancer_name: test-lb
+        policies:
+          app_cookie_stickiness_policies: []
+          lb_cookie_stickiness_policies: []
+          other_policies: []
+        scheme: internet-facing
+        security_groups:
+          - sg-29d13055
+        source_security_group:
+          group_name: default
+          owner_alias: XXXXXXXXXXXX
+        subnets:
+          - subnet-XXXXXXXX
+          - subnet-XXXXXXXX
+        tags: {}
+        vpc_id: vpc-c248fda4
+'''
+
 import traceback
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
