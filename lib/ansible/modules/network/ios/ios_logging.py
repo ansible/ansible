@@ -27,11 +27,13 @@ DOCUMENTATION = """
 ---
 module: ios_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on Cisco Ios devices.
+notes:
+  - Tested against IOS 15.6
 options:
   dest:
     description:
