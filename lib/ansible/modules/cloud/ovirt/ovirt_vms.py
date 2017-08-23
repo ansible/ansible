@@ -138,6 +138,11 @@ options:
             - "If I(True) Virtual Machine will be set as highly available."
             - "If I(False) Virtual Machine won't be set as highly available."
             - "If no value is passed, default value is set by oVirt/RHV engine."
+    lease:
+        description:
+            - "Name of the storage domain this virtual machine lease reside on."
+            - "C(Note): Supported since oVirt 4.1."
+        version_added: "2.4"
     delete_protected:
         description:
             - "If I(True) Virtual Machine will be set as delete protected."
@@ -649,6 +654,14 @@ class VmsModule(BaseModule):
             high_availability=otypes.HighAvailability(
                 enabled=self.param('high_availability')
             ) if self.param('high_availability') is not None else None,
+            lease=otypes.StorageDomainLease(
+                storage_domain=otypes.StorageDomain(
+                    id=get_id_by_name(
+                        service=self._connection.system_service().storage_domains_service(),
+                        name=self.param('lease')
+                    )
+                )
+            ) if self.param('lease') is not None else None,
             cpu=otypes.Cpu(
                 topology=otypes.CpuTopology(
                     cores=self.param('cpu_cores'),
@@ -707,6 +720,7 @@ class VmsModule(BaseModule):
             and equal(self.param('type'), str(entity.type))
             and equal(self.param('operating_system'), str(entity.os.type))
             and equal(self.param('high_availability'), entity.high_availability.enabled)
+            and equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None)))
             and equal(self.param('stateless'), entity.stateless)
             and equal(self.param('cpu_shares'), entity.cpu_shares)
             and equal(self.param('delete_protected'), entity.delete_protected)
@@ -1123,6 +1137,7 @@ def main():
         cd_iso=dict(default=None),
         boot_devices=dict(default=None, type='list'),
         high_availability=dict(type='bool'),
+        lease=dict(default=None),
         stateless=dict(type='bool'),
         delete_protected=dict(type='bool'),
         force=dict(type='bool', default=False),
