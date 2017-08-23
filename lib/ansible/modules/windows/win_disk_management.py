@@ -36,6 +36,9 @@ description:
    - If parameter file_system is set to "refs" the parameter allocation_unit_size will be automatically adjusted to "64" (KB).
    - The module recognizes whether the selected switches are suitable with the selected parameters.
    - If they do not fit with the selected parameters, the switches will be automatically deactivated.
+   - The modul will set the disk to online and writeable (read-only eq. false) if it's not the state of the disk already.
+   - If the disk was initilaized already the modul will try to convert the partition style of the disk to the selected partition style.
+   - The module will stop and start the service "ShellHWService" again in order to avoid disk management GUI messages.
 requirements:
     - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
 author:
@@ -64,6 +67,11 @@ options:
       choices:
         - offline
         - online
+  read_only:
+      description:
+        - Read-only status of the disk which will be selected (true,yes=read-only, false,no=writeable)
+      type: bool
+      default: 'yes'
   partition_style_set:
       description:
         - Partition style which will be set on selected disk
@@ -124,6 +132,7 @@ EXAMPLES = r'''
     disk_size: 100
     partition_style_select: raw
     operational_status: offline
+    read_only: true
     partition_style_set: mbr
     drive_letter: e
     file_system: ntfs
@@ -136,6 +145,7 @@ EXAMPLES = r'''
     disk_size: 50
     partition_style_select: mbr
     operational_status: online
+    read_only: false
     partition_style_set: gpt
     drive_letter: f
     file_system: refs
@@ -175,9 +185,9 @@ general_log:
             returned: success or failed (only displayed if operational status was set)
             type: string
             sample: "successful"
-        set_writeable_status:
-            description: Documents whether setting the writeable status of the disk was successful or not
-            returned: success or failed (only displayed if writeable status was set)
+        set_read_only_false:
+            description: Documents whether setting the read-only status of the disk to false was successful or not
+            returned: success or failed (only displayed if read-only status was set)
             type: string
             sample: "successful"
         check_parameters:
@@ -211,7 +221,9 @@ general_log:
             type: string
             sample: "successful"
         maintain_shellhw_service:
-            description: Documents whether maintaining the ShellHWService (Start,Stop) was successful or not
+            description: 
+              - Documents whether maintaining the ShellHWService was successful or not
+              - Service needs to be stopped in order to avoid GUI messages for disk management in Windows
             returned: success or failed
             type: string
             sample: "failed"
@@ -260,6 +272,11 @@ search_log:
                     returned: success or failed
                     type: string
                     sample: "GPT"
+                read_only:
+                    description: Information about the read-only status of the disk chosen (True=read-only, False=writeable)
+                    returned: success or failed
+                    type: string
+                    sample: "True"
         existing_volumes:
             description: Detailed information about existing volumes on the disk chosen
             returned: always
@@ -291,25 +308,25 @@ search_log:
                     type: string
                     sample: "Basic"
         shellhw_service_state:
-            description: Detailed information about maintaining ShellHWService (check)
+            description: Information about ShellHWService state (check)
             returned: success or failed
             type: string
-            sample: "Service check failed"
+            sample: "started"
 change_log:
     description: dictionary containing all the detailed information about changes on the selected disk
     returned: always
     type: complex
     contains:
-        operational_status:
+        operational_status_disk:
             description: Detailed information about setting operational status of the disk
             returned: success or failed (only displayed if operational status was set)
             type: string
-            sample: "Disk set not online because partition style is RAW"
-        disk_writeable:
-            description: Detailed information if disk was set to writeable and if not why it was not set to it
-            returned: success or failed (only displayed if writeable status was set)
+            sample: "No changes because partition style is RAW and disk will be set to online in intialization part"
+        read_only_disk:
+            description: Detailed information if disk was set from read-only to writeable and if not why it was not set to it
+            returned: success or failed (only displayed if read-only status was set)
             type: string
-            sample: "Disk need not set to writeable because partition style is RAW"
+            sample: "Disk set from read-only to writeable state"
         initialize_disk:
             description: Detailed information about initializing the disk
             returned: success or failed (only displayed if disk was initialized)
@@ -331,7 +348,7 @@ change_log:
             type: string
             sample: "Volume ReFS was created successfully on partition Basic"
         shellhw_service_state:
-            description: Detailed information about maintaining ShellHWService (start, stop)
+            description: Detailed information about executed ShellHWService action (start, stop)
             returned: success or failed
             type: string
             sample: "Service was stopped already and need not to be started again"

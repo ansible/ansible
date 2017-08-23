@@ -23,12 +23,13 @@ function Search-Disk{
 param(
     $DiskSize,
     $PartitionStyle,
-    $OperationalStatus
+    $OperationalStatus,
+    $ReadOnly
 )
 
 $DiskSize = $DiskSize *1GB
 
-Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.Size -eq $DiskSize)}
+Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Size -eq $DiskSize)}
 
 }
 
@@ -111,7 +112,6 @@ param(
             )
 
 $Disk | New-Partition -UseMaximumSize -DriveLetter $SetDriveLetter
-
 }
 
 function Create-Volume{
@@ -136,7 +136,7 @@ $Alloc = $FileSystemAllocUnitSize *1KB
 
 if($FileSystem -eq "ntfs"){
 
-        if(!($FileSystemLargeFRS)){
+        if(-not $FileSystemLargeFRS){
                 $Volume | Format-Volume @ParaVol -ShortFileNameSupport $FileSystemShortNames -Force -Confirm:$false
         }
         else{
@@ -177,6 +177,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $Size = Get-AnsibleParam -obj $params -name "disk_size" -type "str/int" -failifempty $true
 $FindPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_select" -type "str" -default "raw" -ValidateSet "raw","mbr","gpt"
 $OperationalStatus = Get-AnsibleParam -obj $params -name "operational_status" -type "str" -default "offline" -ValidateSet "offline","online"
+$ReadOnly = Get-AnsibleParam -obj $params -name "read_only" -default $true -type "bool"
 
 # Set attributes partition
 $SetPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_set" -type "str" -default "gpt" -ValidateSet "gpt","mbr"
@@ -197,11 +198,6 @@ if(($AllocUnitSize.GetType()).Name -eq 'String'){
         [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
 }
 
-if($check_mode){
-        $result.general_log.check_mode = "successful"
-        Exit-Json $result;
-}
-else{
 # Rescan disks
 try{
     Invoke-Expression '"rescan" | diskpart' | Out-Null
@@ -216,6 +212,7 @@ $result.general_log.rescan_disks = "successful"
                           DiskSize = $Size
                           PartitionStyle = $FindPartitionStyle
                           OperationalStatus = $OperationalStatus
+                          ReadOnly = $ReadOnly
                           }
 
 # Search disk
@@ -238,6 +235,7 @@ if($disk){
                                                                                         $result.search_log.disk.unique_id = "$([string]$disk.UniqueId)"
                                                                                         $result.search_log.disk.operational_status = "$([string]$DOperSt = $disk.OperationalStatus)$DOperSt"
                                                                                         $result.search_log.disk.partition_style = "$([string]$DPartStyle = $disk.PartitionStyle)$DPartStyle"
+                                                                                        $result.search_log.disk.read_only = "$([string]$DROState = $disk.IsReadOnly)$DROState"
                                                                                         }
                                                       else{
                                                             $result.search_log.disk.disks_found = "$diskcount"
@@ -247,6 +245,7 @@ if($disk){
                                                             $result.search_log.disk.unique_id = "$([string]$disk.UniqueId)"
                                                             $result.search_log.disk.operational_status = "$([string]$DOperSt = $disk.OperationalStatus)$DOperSt"
                                                             $result.search_log.disk.partition_style = "$([string]$DPartStyle = $disk.PartitionStyle)$DPartStyle"
+                                                            $result.search_log.disk.read_only = "$([string]$DROState = $disk.IsReadOnly)$DROState"
                                                               }
 }
 else{
@@ -256,44 +255,86 @@ else{
 
 $result.general_log.search_disk = "successful"
 
-# Check and set Operational Status and writeable state
+# Check and set Operational Status and Read-Only state
 $SetOnline = $false
-if($DPartStyle -eq "RAW"){
-    $result.change_log.operational_status = "Disk set not online because partition style is $DPartStyle"
-    $result.change_log.disk_writeable = "Disk need not set to writeable because partition style is $DPartStyle"
+if(-not $check_mode){
+                if($DPartStyle -eq "RAW"){     
+                        $result.change_log.operational_status_disk = "No changes because partition style is $($DPartStyle) and disk will be set to online in intialization part"                        
+                        $result.general_log.set_operational_status = "successful"                       
+                        if($DROState -ne "True"){
+                                    $result.change_log.read_only_disk = "No changes because read-only state is 'False' (writeable)"
+                                    $result.general_log.set_read_only_false = "successful"
+                        }
+                        else{
+                            try{
+                                Set-DiskWriteable -Disk $disk
+                            }
+                            catch{
+                                        $result.general_log.set_read_only_false = "failed"
+                                        $result.change_log.read_only_disk = "Disk failed to set from read-only to writeable state"
+                                        Fail-Json -obj $result -message "Failed to set the disk from read-only to writeable state: $($_.Exception.Message)"
+                                        }
+                            $result.change_log.read_only_disk = "Disk set from read-only to writeable state"
+                            $result.general_log.set_read_only_false = "successful"
+                            $result.changed = $true
+                        }
+                }
+                else{
+                        if($DOperSt -eq "Online"){               
+                                    $result.change_log.operational_status_disk = "No changes because disk is online"
+                                    $result.general_log.set_operational_status = "successful"
+                                    if($DROState -ne "True"){
+                                                $result.change_log.read_only_disk = "No changes because read-only state is 'False' (writeable)"
+                                                $result.general_log.set_read_only_false = "successful"
+                                    }
+                                    else{
+                                        try{
+                                            Set-DiskWriteable -Disk $disk
+                                        }
+                                        catch{
+                                                    $result.general_log.set_read_only_false = "failed"
+                                                    $result.change_log.read_only_disk = "Disk failed to set from read-only to writeable state"
+                                                    Fail-Json -obj $result -message "Failed to set the disk from read-only to writeable state: $($_.Exception.Message)"
+                                                    }
+                                        $result.change_log.read_only_disk = "Disk set from read-only to writeable state"
+                                        $result.general_log.set_read_only_false = "successful"
+                                        $result.changed = $true
+                                    }       
+                        }
+                        else{
+                                try{
+                                    Set-OperationalStatus -Online -Disk $disk
+                                }
+                                catch{
+                                            $result.general_log.set_operational_status = "failed"
+                                            $result.change_log.operational_status_disk = "Disk failed to set online"
+                                            Fail-Json -obj $result -message "Failed to set the disk online: $($_.Exception.Message)"
+                                            }
+                                $result.change_log.operational_status_disk = "Disk set online"
+                                $result.general_log.set_operational_status = "successful"
+                                $result.changed = $true
+                                $SetOnline = $true
+                
+                                try{
+                                    Set-DiskWriteable -Disk $disk
+                                }
+                                catch{
+                                            $result.general_log.set_read_only_false = "failed"
+                                            $result.change_log.read_only_disk = "Disk failed to set from read-only to writeable state"
+                                            Fail-Json -obj $result -message "Failed to set the disk from read-only to writeable state: $($_.Exception.Message)"
+                                            }
+                                $result.change_log.read_only_disk = "Disk set from read-only to writeable state"
+                                $result.general_log.set_read_only_false = "successful"
+                                $result.changed = $true
+                        }      
+                }
 }
 else{
-        if($DOperSt -eq "Online"){
-                $result.change_log.operational_status = "Disk is online already"
-        }
-        else{
-                try{
-                    Set-OperationalStatus -Online -Disk $disk
-                }
-                catch{
-                            $result.general_log.set_operational_status = "failed"
-                            $result.change_log.operational_status = "Disk failed to set online"
-                            Fail-Json -obj $result -message "Failed to set the disk online: $($_.Exception.Message)"
-                            }
-                $result.change_log.operational_status = "Disk set online"
-                $result.changed = $true
-                $SetOnline = $true   
-                
-                try{
-                    Set-DiskWriteable -Disk $disk
-                }
-                catch{
-                            $result.general_log.set_writeable_status = "failed"
-                            $result.change_log.disk_writeable = "Disk failed to set from read-only to writeable"
-                            Fail-Json -obj $result -message "Failed to set the disk from read-only to writeable: $($_.Exception.Message)"
-                            }
-                $result.change_log.disk_writeable = "Disk set set from read-only to writeable"
-                $result.changed = $true                         
-        }      
+        $result.change_log.operational_status_disk = "check_mode"
+        $result.change_log.read_only_disk = "check_mode"
+        $result.general_log.set_operational_status = "check_mode"
+        $result.general_log.set_read_only_false = "check_mode"
 }
-
-$result.general_log.set_operational_status = "successful"
-$result.general_log.set_writeable_status = "successful"
 
 # Check volumes and partitions
 [string]$PartNumber = $disk.NumberOfPartitions
@@ -319,7 +360,7 @@ if($PartNumber -ge 1){
                                         catch{
                                                 $OPStatusFailed = $true
                                         }
-                                        if(!$OPStatusFailed){
+                                        if(-not $OPStatusFailed){
                                                         $result.general_log.set_operational_status = "successful"
                                                         $result.change_log.operational_status = "Disk set online and now offline again"
                                                         $result.changed = $true
@@ -336,7 +377,7 @@ if($PartNumber -ge 1){
                             }
                 
 
-                if(!$volume){
+                if(-not $volume){
                                         $result.search_log.existing_volumes.volumes_found = "0"
                                                 $result.search_log.existing_partitions.partitions_found = "$PartNumber"
                                                 $result.search_log.existing_partitions.partitions_types = "$([string]$Fpartition.Type)"
@@ -348,7 +389,7 @@ if($PartNumber -ge 1){
                                                             catch{
                                                                     $OPStatusFailed = $true
                                                             }
-                                                            if(!$OPStatusFailed){
+                                                            if(-not $OPStatusFailed){
                                                                             $result.general_log.set_operational_status = "successful"
                                                                             $result.change_log.operational_status = "Disk set online and now offline again"
                                                                             $result.changed = $true
@@ -377,7 +418,7 @@ if($PartNumber -ge 1){
                                 catch{
                                         $OPStatusFailed = $true
                                 }
-                                if(!$OPStatusFailed){
+                                if(-not $OPStatusFailed){
                                                 $result.general_log.set_operational_status = "successful"
                                                 $result.change_log.operational_status = "Disk set online and now offline again"
                                                 $result.changed = $true
@@ -440,7 +481,7 @@ if($FileSystem -eq "ntfs"){
                                                                 catch{
                                                                         $OPStatusFailed = $true
                                                                 }
-                                                                if(!$OPStatusFailed){
+                                                                if(-not $OPStatusFailed){
                                                                                 $result.general_log.set_operational_status = "successful"
                                                                                 $result.change_log.operational_status = "Disk set online and now offline again"
                                                                                 $result.changed = $true
@@ -515,50 +556,60 @@ $result.general_log.check_switches = "successful"
 
 # Initialize / convert disk
 if($DPartStyle -eq "RAW"){
-                            try{
-                                $Initialize = Set-Initialized -Disk $disk -PartitionStyle $SetPartitionStyle
+                            if(-not $check_mode){
+                                            try{
+                                                $Initialize = Set-Initialized -Disk $disk -PartitionStyle $SetPartitionStyle
+                                            }
+                                            catch{
+                                                    $result.general_log.initialize_convert_disk = "failed"
+                                                    $result.change_log.initialize_disk = "Disk initialization failed - Partition style $DPartStyle (partition_style_select) could not be initalized to $SetPartitionStyle (partition_style_set)"
+                                                    Fail-Json -obj $result -message "Failed to initialize the disk: $($_.Exception.Message)"
+                                            }
+                                            $result.change_log.initialize_disk = "Disk initialization successful - Partition style $DPartStyle (partition_style_select) was initalized to $SetPartitionStyle (partition_style_set)"
+                                            $result.changed = $true
                             }
-                            catch{
-                                    $result.general_log.initialize_convert_disk = "failed"
-                                    $result.change_log.initialize_disk = "Disk initialization failed - Partition style $DPartStyle (partition_style_select) could not be initalized to $SetPartitionStyle (partition_style_set)"
-                                    Fail-Json -obj $result -message "Failed to initialize the disk: $($_.Exception.Message)"
+                            else{
+                                   $result.change_log.initialize_disk = "check_mode"
                             }
-                            $result.change_log.initialize_disk = "Disk initialization successful - Partition style $DPartStyle (partition_style_select) was initalized to $SetPartitionStyle (partition_style_set)"
-                            $result.changed = $true
 }
 else{
     # Convert disk
     if($DPartStyle -ne $SetPartitionStyle){
-    try{
-        $Convert = Convert-PartitionStyle -Disk $disk -PartitionStyle $SetPartitionStyle
-    }
-    catch{
-        $result.general_log.initialize_convert_disk = "failed"
-        $result.change_log.convert_disk = "Partition style $DPartStyle (partition_style_select) could not be converted to $SetPartitionStyle (partition_style_set)"
-            if($SetOnline){
-                       try{
-                            Set-OperationalStatus -Offline -Disk $disk
-                        }
-                        catch{
-                                $OPStatusFailed = $true
-                        }
-                        if(!$OPStatusFailed){
-                                        $result.general_log.set_operational_status = "successful"
-                                        $result.change_log.operational_status = "Disk set online and now offline again"
-                                        $result.changed = $true
-                        }
-                        else{
-                                $result.general_log.set_operational_status = "failed"
-                                $result.change_log.operational_status = "Disk failed to set offline again"
-                        }
+            if(-not $check_mode){
+                            try{
+                                $Convert = Convert-PartitionStyle -Disk $disk -PartitionStyle $SetPartitionStyle
+                            }
+                            catch{
+                                $result.general_log.initialize_convert_disk = "failed"
+                                $result.change_log.convert_disk = "Partition style $DPartStyle (partition_style_select) could not be converted to $SetPartitionStyle (partition_style_set)"
+                                    if($SetOnline){
+                                               try{
+                                                    Set-OperationalStatus -Offline -Disk $disk
+                                                }
+                                                catch{
+                                                        $OPStatusFailed = $true
+                                                }
+                                                if(-not $OPStatusFailed){
+                                                                $result.general_log.set_operational_status = "successful"
+                                                                $result.change_log.operational_status = "Disk set online and now offline again"
+                                                                $result.changed = $true
+                                                }
+                                                else{
+                                                        $result.general_log.set_operational_status = "failed"
+                                                        $result.change_log.operational_status = "Disk failed to set offline again"
+                                                }
+                                    }
+                                    else{
+                                            $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+                                    }
+                                Fail-Json -obj $result -message "Failed to convert the disk: $($_.Exception.Message)"
+                            }
+                            $result.change_log.convert_disk = "Partition style $DPartStyle (partition_style_select) was converted to $SetPartitionStyle (partition_style_set)"
+                            $result.changed = $true
             }
             else{
-                    $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+                   $result.general_log.initialize_convert_disk = "check_mode" 
             }
-        Fail-Json -obj $result -message "Failed to convert the disk: $($_.Exception.Message)"
-    }
-    $result.change_log.convert_disk = "Partition style $DPartStyle (partition_style_select) was converted to $SetPartitionStyle (partition_style_set)"
-    $result.changed = $true
     }
     else{
     # No convertion
@@ -566,179 +617,222 @@ else{
     }
 }
 
-$result.general_log.initialize_convert_disk = "successful"
+if(-not $check_mode){
+            $result.general_log.initialize_convert_disk = "successful"
+}
+else{
+        $result.general_log.initialize_convert_disk = "check_mode"
+}
 
 # Maintain ShellHWService (not module terminating)
 $StopSuccess = $false
 $StopFailed = $false
 $StartFailed = $false
+$CheckFailed = $false
 try{
     $Check = Manage-ShellHWService -Action "Check"
 }
 catch{
-        $result.general_log.maintain_shellhw_service = "failed"
-        $result.search_log.shellhw_service_state = "Service check failed"
+        $CheckFailed = $true
 }
 
 if($Check){
-                try{
-                    Manage-ShellHWService -Action "Stop"
-                    }
-                catch{
-                        $StopFailed = $true
-                          }
-                if(!$StopFailed){
-                            $result.general_log.maintain_shellhw_service = "successful"
-                            $result.change_log.shellhw_service_state = "Set from 'Running' to 'Stopped'"
-                            $StopSuccess = $true
-                            $result.changed = $true
+                $result.search_log.shellhw_service_state = "running"
+                if(-not $check_mode){
+                                try{
+                                    Manage-ShellHWService -Action "Stop"
+                                    }
+                                catch{
+                                        $StopFailed = $true
+                                          }
+                                if(-not $StopFailed){
+                                            $result.general_log.maintain_shellhw_service = "successful"
+                                            $result.change_log.shellhw_service_state = "Set from 'Running' to 'Stopped'"
+                                            $StopSuccess = $true
+                                            $result.changed = $true
+                                }
+                                else{
+                                        $result.general_log.maintain_shellhw_service = "failed"
+                                        $result.change_log.shellhw_service_state = "Could not be set from 'Running' to 'Stopped'"
+                                }
                 }
                 else{
-                        $result.general_log.maintain_shellhw_service = "failed"
-                        $result.change_log.shellhw_service_state = "Could not be set from 'Running' to 'Stopped'"
+                        $result.change_log.shellhw_service_state = "check_mode"
+                        $result.general_log.maintain_shellhw_service = "check_mode"
                 }
 }
+elseif($CheckFailed){
+        $result.search_log.shellhw_service_state = "check_failed"
+        $result.general_log.maintain_shellhw_service = "failed"
+}
 else{
-$result.change_log.shellhw_service_state = "Already 'Stopped'"
-$result.general_log.maintain_shellhw_service = "successful"
+    $result.search_log.shellhw_service_state = "stopped"
+    if(-not $check_mode){
+                    $result.general_log.maintain_shellhw_service = "successful"
+    }
+    else{
+        $result.general_log.maintain_shellhw_service = "check_mode"
+    }
 }
 
 # Part disk
-try{
-    $CPartition = Create-Partition -Disk $disk -SetDriveLetter $DriveLetter
-}
-catch{
-        $result.general_log.create_partition = "failed"
-        $result.change_log.partitioning = "Partition was failed to create on disk with partition style $SetPartitionStyle"
-            if($SetOnline){
-                    try{
-                        Set-OperationalStatus -Offline -Disk $disk
-                    }
-                    catch{
-                            $OPStatusFailed = $true
-                    }
-                    if(!$OPStatusFailed){
-                                    $result.general_log.set_operational_status = "successful"
-                                    $result.change_log.operational_status = "Disk set online and now offline again"
-                                    $result.changed = $true
-                    }
-                    else{
-                            $result.general_log.set_operational_status = "failed"
-                            $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
-            }
-            else{
-                    $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
-            }
-            if($StopSuccess){
+if(-not $check_mode){
+                try{
+                    $CPartition = Create-Partition -Disk $disk -SetDriveLetter $DriveLetter
+                }
+                catch{
+                        $result.general_log.create_partition = "failed"
+                        $result.change_log.partitioning = "Partition was failed to create on disk with partition style $SetPartitionStyle"
+                            if($SetOnline){
                                     try{
-                                        Manage-ShellHWService -Action "Start"
-                                        }
+                                        Set-OperationalStatus -Offline -Disk $disk
+                                    }
                                     catch{
-                                            $StartFailed = $true
-                                                }
-                                    if(!$StartFailed){
-                                                $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
-                                                $result.changed = $true
+                                            $OPStatusFailed = $true
+                                    }
+                                    if(-not $OPStatusFailed){
+                                                    $result.general_log.set_operational_status = "successful"
+                                                    $result.change_log.operational_status = "Disk set online and now offline again"
+                                                    $result.changed = $true
                                     }
                                     else{
-                                            $result.general_log.maintain_shellhw_service = "failed"
-                                            $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
+                                            $result.general_log.set_operational_status = "failed"
+                                            $result.change_log.operational_status = "Disk failed to set offline again"
                                     }
-            }
-            else{
-                    $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"  
-            }
-        Fail-Json -obj $result -message "Failed to create the partition on the disk: $($_.Exception.Message)"
-}
-
-$result.change_log.partitioning = "Initial partition $($CPartition.Type) was created successfully on partition style $SetPartitionStyle"
-$result.general_log.create_partition = "successful"
-$result.changed = $true
-
-# Create volume
-[hashtable]$ParamsVol = @{
-                                                    Volume = $CPartition
-                                                    FileSystem = $FileSystem
-                                                    FileSystemLabel = $Label
-                                                    FileSystemAllocUnitSize = $AllocUnitSize
-                                                    FileSystemLargeFRS = $LargeFRS
-                                                    FileSystemShortNames = $ShortNames
-                                                    FileSystemIntegrityStreams = $IntegrityStreams
-                                                    }
-
-try{
-    $CVolume = Create-Volume @ParamsVol
-}
-catch{
-        $result.general_log.create_volume = "failed"
-        $result.change_log.formatting = "Volume was failed to create on disk with partition $($CPartition.Type)"
-            if($SetOnline){
-                    try{
-                        Set-OperationalStatus -Offline -Disk $disk
-                    }
-                    catch{
-                            $OPStatusFailed = $true
-                    }
-                    if(!$OPStatusFailed){
-                                    $result.general_log.set_operational_status = "successful"
-                                    $result.change_log.operational_status = "Disk set online and now offline again"
-                                    $result.changed = $true
-                    }
-                    else{
-                            $result.general_log.set_operational_status = "failed"
-                            $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
-            }
-            else{
-                    $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
-            }
-            if($StopSuccess){
-                                    try{
-                                        Manage-ShellHWService -Action "Start"
-                                        }
-                                    catch{
-                                            $StartFailed = $true
-                                                }
-                                    if(!$StartFailed){
-                                                $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
-                                                $result.changed = $true
-                                    }
-                                    else{
-                                            $result.general_log.maintain_shellhw_service = "failed"
-                                            $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
-                                    }
-            }
-            else{
-                    $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"  
-            }
-        Fail-Json -obj $result -message "Failed to create the volume on the disk: $($_.Exception.Message)"
-}
-
-$result.change_log.formatting = "Volume $($CVolume.FileSystem) was created successfully on partition $($CPartition.Type)"
-$result.general_log.create_volume = "successful"
-$result.changed = $true
-
-# Finally check if ShellHWService needs to be started again
-if($StopSuccess){
-                        try{
-                            Manage-ShellHWService -Action "Start"
                             }
-                        catch{
-                                $StartFailed = $true
-                                    }
-                        if(!$StartFailed){
-                                    $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
-                                    $result.changed = $true
-                        }
-                        else{
-                                $result.general_log.maintain_shellhw_service = "failed"
-                                $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
-                        }
+                            else{
+                                    $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+                            }
+                            if($StopSuccess){
+                                                        try{
+                                                            Manage-ShellHWService -Action "Start"
+                                                            }
+                                                        catch{
+                                                                $StartFailed = $true
+                                                                    }
+                                                        if(-not $StartFailed){
+                                                                    $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
+                                                                    $result.changed = $true
+                                                        }
+                                                        else{
+                                                                $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
+                                                                $result.general_log.maintain_shellhw_service = "failed"             
+                                                        }
+                            }
+                            elseif($CheckFailed){
+                                    $result.change_log.shellhw_service_state = "Because service check has failed no starting action will be performed"
+                            }
+                            else{
+                                    $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"
+                            }
+                        Fail-Json -obj $result -message "Failed to create the partition on the disk: $($_.Exception.Message)"
+                }
+
+                $result.change_log.partitioning = "Initial partition $($CPartition.Type) was created successfully on partition style $SetPartitionStyle"
+                $result.general_log.create_partition = "successful"
+                $result.changed = $true
 }
 else{
-        $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"  
+        $result.change_log.partitioning = "check_mode"
+        $result.general_log.create_partition = "check_mode"
 }
 
-Exit-Json $result;
+# Create volume
+if(-not $check_mode){
+                [hashtable]$ParamsVol = @{
+                                                                    Volume = $CPartition
+                                                                    FileSystem = $FileSystem
+                                                                    FileSystemLabel = $Label
+                                                                    FileSystemAllocUnitSize = $AllocUnitSize
+                                                                    FileSystemLargeFRS = $LargeFRS
+                                                                    FileSystemShortNames = $ShortNames
+                                                                    FileSystemIntegrityStreams = $IntegrityStreams
+                                                                    }
+
+                try{
+                    $CVolume = Create-Volume @ParamsVol
+                }
+                catch{
+                        $result.general_log.create_volume = "failed"
+                        $result.change_log.formatting = "Volume was failed to create on disk with partition $($CPartition.Type)"
+                            if($SetOnline){
+                                    try{
+                                        Set-OperationalStatus -Offline -Disk $disk
+                                    }
+                                    catch{
+                                            $OPStatusFailed = $true
+                                    }
+                                    if(-not $OPStatusFailed){
+                                                    $result.general_log.set_operational_status = "successful"
+                                                    $result.change_log.operational_status = "Disk set online and now offline again"
+                                                    $result.changed = $true
+                                    }
+                                    else{
+                                            $result.general_log.set_operational_status = "failed"
+                                            $result.change_log.operational_status = "Disk failed to set offline again"
+                                    }
+                            }
+                            else{
+                                    $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+                            }
+                            if($StopSuccess){
+                                                        try{
+                                                            Manage-ShellHWService -Action "Start"
+                                                            }
+                                                        catch{
+                                                                $StartFailed = $true
+                                                                    }
+                                                        if(-not $StartFailed){
+                                                                    $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
+                                                                    $result.changed = $true
+                                                        }
+                                                        else{
+                                                                $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
+                                                                $result.general_log.maintain_shellhw_service = "failed"        
+                                                        }
+                            }
+                            elseif($CheckFailed){
+                                    $result.change_log.shellhw_service_state = "Because service check has failed no starting action will be performed"
+                            }
+                            else{
+                                    $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"  
+                            }
+                        Fail-Json -obj $result -message "Failed to create the volume on the disk: $($_.Exception.Message)"
+                }
+
+                $result.change_log.formatting = "Volume $($CVolume.FileSystem) was created successfully on partition $($CPartition.Type)"
+                $result.general_log.create_volume = "successful"
+                $result.changed = $true
 }
+else{
+        $result.change_log.formatting = "check_mode"
+        $result.general_log.create_volume = "check_mode"
+}
+
+# Finally check if ShellHWService needs to be started again
+if(-not $check_mode){
+                if($StopSuccess){
+                                            try{
+                                                Manage-ShellHWService -Action "Start"
+                                                }
+                                            catch{
+                                                    $StartFailed = $true
+                                                        }
+                                            if(-not $StartFailed){
+                                                        $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
+                                                        $result.changed = $true
+                                            }
+                                            else{
+                                                    $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
+                                                    $result.general_log.maintain_shellhw_service = "failed"
+                                            }
+                }
+                elseif($CheckFailed){
+                        $result.change_log.shellhw_service_state = "Because service check has failed no starting action will be performed"
+                }
+                else{
+                        $result.change_log.shellhw_service_state = "Service was stopped already and need not to be started again"  
+                }
+}
+
+Exit-Json -obj $result
