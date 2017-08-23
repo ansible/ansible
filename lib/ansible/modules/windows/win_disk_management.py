@@ -221,7 +221,7 @@ general_log:
             type: string
             sample: "successful"
         maintain_shellhw_service:
-            description: 
+            description:
               - Documents whether maintaining the ShellHWService was successful or not
               - Service needs to be stopped in order to avoid GUI messages for disk management in Windows
             returned: success or failed
