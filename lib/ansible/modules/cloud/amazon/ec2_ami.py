@@ -349,7 +349,10 @@ snapshots_deleted:
     ]
 '''
 
-import sys
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_connect, ec2_argument_spec
+
 import time
 
 try:
@@ -369,7 +372,7 @@ def get_block_device_mapping(image):
     bdm_dict = dict()
 
     if image is not None and hasattr(image, 'block_device_mapping'):
-        bdm = getattr(image,'block_device_mapping')
+        bdm = getattr(image, 'block_device_mapping')
         for device_name in bdm.keys():
             bdm_dict[device_name] = {
                 'size': bdm[device_name].size,
@@ -398,7 +401,7 @@ def get_ami_info(image):
         root_device_name=image.root_device_name,
         root_device_type=image.root_device_type,
         tags=image.tags,
-        virtualization_type = image.virtualization_type
+        virtualization_type=image.virtualization_type
     )
 
 
@@ -421,7 +424,7 @@ def create_image(module, ec2):
     virtualization_type = module.params.get('virtualization_type')
     no_reboot = module.params.get('no_reboot')
     device_mapping = module.params.get('device_mapping')
-    tags =  module.params.get('tags')
+    tags = module.params.get('tags')
     launch_permissions = module.params.get('launch_permissions')
 
     try:
@@ -439,7 +442,7 @@ def create_image(module, ec2):
             bdm = BlockDeviceMapping()
             for device in device_mapping:
                 if 'device_name' not in device:
-                    module.fail_json(msg = 'Device name must be set for volume')
+                    module.fail_json(msg='Device name must be set for volume')
                 device_name = device['device_name']
                 del device['device_name']
                 bd = BlockDeviceType(**device)
@@ -489,7 +492,7 @@ def create_image(module, ec2):
         try:
             ec2.create_tags(image_id, tags)
         except boto.exception.EC2ResponseError as e:
-            module.fail_json(msg = "Image tagging failed => %s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="Image tagging failed => %s: %s" % (e.error_code, e.error_message))
     if launch_permissions:
         try:
             img = ec2.get_image(image_id)
@@ -512,7 +515,7 @@ def deregister_image(module, ec2):
 
     img = ec2.get_image(image_id)
     if img is None:
-        module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
+        module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
 
     # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable
     snapshots = []
@@ -526,11 +529,11 @@ def deregister_image(module, ec2):
         try:
             params = {'image_id': image_id,
                       'delete_snapshot': delete_snapshot}
-            res = ec2.deregister_image(**params)
+            ec2.deregister_image(**params)
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
     else:
-        module.exit_json(msg = "Image %s has already been deleted" % image_id, changed=False)
+        module.exit_json(msg="Image %s has already been deleted" % image_id, changed=False)
 
     # wait here until the image is gone
     img = ec2.get_image(image_id)
@@ -540,7 +543,7 @@ def deregister_image(module, ec2):
         time.sleep(3)
     if wait and wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "timed out waiting for image to be deregistered/deleted")
+        module.fail_json(msg="timed out waiting for image to be deregistered/deleted")
 
     # Boto library has hardcoded the deletion of the snapshot for the root volume mounted as '/dev/sda1' only
     # Make it possible to delete all snapshots which belong to image, including root block device mapped as '/dev/xvda'
@@ -568,45 +571,48 @@ def update_image(module, ec2, image_id):
 
     img = ec2.get_image(image_id)
     if img is None:
-        module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
+        module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
 
     try:
         set_permissions = img.get_launch_permissions()
         if set_permissions != launch_permissions:
             if (('user_ids' in launch_permissions and launch_permissions['user_ids']) or
                     ('group_names' in launch_permissions and launch_permissions['group_names'])):
-                res = img.set_launch_permissions(**launch_permissions)
+                img.set_launch_permissions(**launch_permissions)
             elif ('user_ids' in set_permissions and set_permissions['user_ids']) or ('group_names' in set_permissions and set_permissions['group_names']):
-                res = img.remove_launch_permissions(**set_permissions)
+                img.remove_launch_permissions(**set_permissions)
             else:
-                module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
-            module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True)
+                module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False, **get_ami_info(img))
+            module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions,
+                             set_perms=set_permissions, changed=True, **get_ami_info(img))
         else:
-            module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
+            module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False, **get_ami_info(img))
 
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
+
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        instance_id = dict(),
-        image_id = dict(),
-        architecture = dict(default="x86_64"),
-        kernel_id = dict(),
-        virtualization_type = dict(default="hvm"),
-        root_device_name = dict(),
-        delete_snapshot = dict(default=False, type='bool'),
-        name = dict(),
-        wait = dict(type='bool', default=False),
-        wait_timeout = dict(default=900),
-        description = dict(default=""),
-        no_reboot = dict(default=False, type='bool'),
-        state = dict(default='present'),
-        device_mapping = dict(type='list'),
-        tags = dict(type='dict'),
-        launch_permissions = dict(type='dict')
-    )
+    argument_spec.update(
+        dict(
+            instance_id=dict(),
+            image_id=dict(),
+            architecture=dict(default="x86_64"),
+            kernel_id=dict(),
+            virtualization_type=dict(default="hvm"),
+            root_device_name=dict(),
+            delete_snapshot=dict(default=False, type='bool'),
+            name=dict(),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(default=900),
+            description=dict(default=""),
+            no_reboot=dict(default=False, type='bool'),
+            state=dict(default='present'),
+            device_mapping=dict(type='list'),
+            tags=dict(type='dict'),
+            launch_permissions=dict(type='dict')
+        )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -627,7 +633,7 @@ def main():
     elif module.params.get('state') == 'present':
         if module.params.get('image_id') and module.params.get('launch_permissions'):
             # Update image's launch permissions
-            update_image(module, ec2,module.params.get('image_id'))
+            update_image(module, ec2, module.params.get('image_id'))
 
         # Changed is always set to true when provisioning new AMI
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
@@ -636,10 +642,6 @@ def main():
             module.fail_json(msg='name parameter is required for new image')
         create_image(module, ec2)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
