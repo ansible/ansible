@@ -37,6 +37,7 @@ files:
     notify:
     - willthames
   $modules/cloud/amazon/aws_api_gateway.py: mikedlr willthames
+  $modules/cloud/amazon/aws_direct_connect_connection.py: s-hertel
   $modules/cloud/amazon/aws_direct_connect_link_aggregation_group.py: s-hertel
   $modules/cloud/amazon/aws_kms.py: willthames
   $modules/cloud/amazon/cloudformation.py: jsmartin ryansb tedder
