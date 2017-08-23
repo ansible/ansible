@@ -245,9 +245,6 @@ def supported_providers():
         ),
         Amazon=dict(
             class_name='ManageIQ::Providers::Amazon::CloudManager',
-            authtype='default',
-            default_role='default',
-            metrics_role=None,
         ),
     )
 
@@ -339,7 +336,7 @@ class ManageIQProvider(object):
         """
         return self.manageiq.find_collection_resource_by('providers', name=name)
 
-    def build_connection_configurations(self, provider_type, raw_endpoints):
+    def build_connection_configurations(self, provider_type, endpoints):
         """ Build "connection_configurations" objects from
         requested endpoints provided by user
 
@@ -347,48 +344,41 @@ class ManageIQProvider(object):
             the user requested provider endpoints list
         """
         connection_configurations = []
-        provider_defaults = supported_providers().get(provider_type)
+        endpoint_keys = endpoint_list_spec().keys()
+        provider_defaults = supported_providers().get(provider_type, {})
 
-        # build default endpoint
-        endpoint = raw_endpoints.get('default')
+        # get endpoint defaults
+        endpoint = endpoints.get('default')
         default_auth_key = endpoint.get('auth_key')
-        if endpoint:
-            connection_configurations.append({
-                'endpoint': {
-                    'role': endpoint.get('role') or provider_defaults['default_role'],
-                    'hostname': endpoint['hostname'],
-                    'port': endpoint['port'],
-                    'verify_ssl': [0, 1][endpoint.get('verify_ssl', True)],
-                    'security_protocol': endpoint.get('security_protocol'),
-                    'certificate_authority': endpoint.get('certificate_authority'),
-                },
-                'authentication': {
-                    'authtype': provider_defaults['authtype'],
-                    'userid': endpoint.get('userid'),
-                    'password': endpoint.get('password'),
-                    'auth_key': endpoint.get('auth_key'),
-                }
-            })
 
-        # build metrics endpoint
-        endpoint = raw_endpoints.get('metrics')
-        if endpoint:
-            connection_configurations.append({
-                'endpoint': {
-                    'role': endpoint.get('role') or provider_defaults['metrics_role'],
-                    'hostname': endpoint['hostname'],
-                    'port': endpoint['port'],
-                    'verify_ssl': [0, 1][endpoint.get('verify_ssl', True)],
-                    'security_protocol': endpoint.get('security_protocol'),
-                    'certificate_authority': endpoint.get('certificate_authority'),
-                },
-                'authentication': {
-                    'authtype': endpoint.get('role') or provider_defaults['metrics_role'],
-                    'userid': endpoint.get('userid'),
-                    'password': endpoint.get('password'),
-                    'auth_key': endpoint.get('auth_key') or default_auth_key,
-                }
-            })
+        # build a connection_configuration object for each endpoint
+        for endpoint_key in endpoint_keys:
+            endpoint = endpoints.get(endpoint_key)
+            if endpoint:
+                # get role and authtype
+                role = endpoint.get('role') or provider_defaults.get(endpoint_key + '_role', 'default')
+                if role == 'default':
+                    authtype = provider_defaults.get('authtype', role)
+                else:
+                    authtype = role
+
+                # set a connection_configuration
+                connection_configurations.append({
+                    'endpoint': {
+                        'role': role,
+                        'hostname': endpoint.get('hostname'),
+                        'port': endpoint.get('port'),
+                        'verify_ssl': [0, 1][endpoint.get('verify_ssl', True)],
+                        'security_protocol': endpoint.get('security_protocol'),
+                        'certificate_authority': endpoint.get('certificate_authority'),
+                    },
+                    'authentication': {
+                        'authtype': authtype,
+                        'userid': endpoint.get('userid'),
+                        'password': endpoint.get('password'),
+                        'auth_key': endpoint.get('auth_key', default_auth_key),
+                    }
+                })
 
         return connection_configurations
 
@@ -520,6 +510,16 @@ def main():
         # if we do not have a provider_type, use the current provider_type
         if provider and not provider_type:
             provider_type = manageiq_provider.class_name_to_type(provider['type'])
+
+        # check supported_providers types
+        if not provider_type:
+            manageiq_provider.module.fail_json(
+                msg="missing required argument: provider_type")
+
+        # check supported_providers types
+        if provider_type not in supported_providers().keys():
+            manageiq_provider.module.fail_json(
+                msg="provider_type %s is not supported" % (provider_type))
 
         # build "connection_configurations" objects from user requsted endpoints
         if raw_endpoints:
