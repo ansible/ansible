@@ -27,6 +27,7 @@ import string
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import string_types
 from ansible.template import Templar
 
 try:
@@ -129,14 +130,17 @@ class BaseInventoryPlugin(object):
                     key = keyed.get('key')
                     if key is not None:
                         try:
-                            group_name = to_safe_group_name('%s_%s' % (prefix, self._compose(key, variables)))
+                            groups = to_safe_group_name('%s_%s' % (prefix, self._compose(key, variables)))
                         except Exception as e:
                             if strict:
                                 raise AnsibleOptionsError("Could not generate group on %s: %s" % (key, to_native(e)))
                             continue
-                        if group_name not in self.inventory.groups:
-                            self.inventory.add_group(group_name)
-                            self.inventory.add_child(group_name, host)
+                        if isinstance(groups, string_types):
+                            groups = [groups]
+                        for group_name in groups:
+                            if group_name not in self.inventory.groups:
+                                self.inventory.add_group(group_name)
+                                self.inventory.add_child(group_name, host)
                     else:
                         raise AnsibleOptionsError("No key supplied, invalid entry")
                 else:
