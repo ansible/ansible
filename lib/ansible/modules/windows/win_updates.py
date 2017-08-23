@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -72,6 +72,9 @@ notes:
 - C(win_updates) does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
+- C(win_updates) runs the module as a scheduled task, this task is set to start and continue to run even if the Windows host
+  swaps to battery power. This behaviour was changed from Ansible 2.4, before this the scheduled task would fail to start on
+  battery power.
 '''
 
 EXAMPLES = r'''

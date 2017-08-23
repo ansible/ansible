@@ -31,8 +31,6 @@ class TestNxosVrfafModule(TestNxosModule):
     module = nxos_vrf_af
 
     def setUp(self):
-        self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_vrf_af.run_commands')
-        self.run_commands = self.mock_run_commands.start()
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vrf_af.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -40,7 +38,6 @@ class TestNxosVrfafModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
-        self.mock_run_commands.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 

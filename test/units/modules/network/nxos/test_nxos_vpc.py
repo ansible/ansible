@@ -59,7 +59,7 @@ class TestNxosVpcModule(TestNxosModule):
                              pkl_dest='192.168.100.4', pkl_src='10.1.100.20',
                              peer_gw=True, auto_recovery=True))
         self.execute_module(changed=True, commands=[
-            'vpc domain 100', 'role priority 32667', 'system-priority 2000',
+            'vpc domain 100', 'terminal dont-ask', 'role priority 32667', 'system-priority 2000',
             'peer-keepalive destination 192.168.100.4 source 10.1.100.20 vrf management',
             'peer-gateway', 'auto-recovery',
         ])

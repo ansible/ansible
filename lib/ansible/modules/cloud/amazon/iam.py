@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -172,17 +172,6 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
-
 
 def _paginate(func, attr):
     '''
@@ -244,42 +233,60 @@ def create_user(module, iam, name, pwd, path, key_state, key_count):
         return (user_info, changed)
 
 
-def delete_user(module, iam, name):
+def delete_dependencies_first(module, iam, name):
     changed = False
+    # try to delete any keys
     try:
         current_keys = [ck['access_key_id'] for ck in
             iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
         for key in current_keys:
             iam.delete_access_key(key, name)
-        try:
-            login_profile = iam.get_login_profiles(name).get_login_profile_response
-        except boto.exception.BotoServerError as err:
-            error_msg = boto_exception(err)
-            if ('Cannot find Login Profile') in error_msg:
-                iam.delete_user(name)
-        else:
-            iam.delete_login_profile(name)
-            iam.delete_user(name)
-    except Exception as ex:
-        module.fail_json(changed=False, msg="delete failed %s" %ex)
-        if ('must detach all policies first') in error_msg:
-            for policy in iam.get_all_user_policies(name).list_user_policies_result.policy_names:
-                iam.delete_user_policy(name, policy)
-            try:
-                iam.delete_user(name)
-            except boto.exception.BotoServerError as err:
-                error_msg = boto_exception(err)
-                if ('must detach all policies first') in error_msg:
-                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                          "that %s has Managed Polices. This is not "
-                                                          "currently supported by boto. Please detach the polices "
-                                                          "through the console and try again." % name)
-                else:
-                    module.fail_json(changed=changed, msg=str(error_msg))
-            else:
-                changed = True
-        else:
-            module.fail_json(changed=changed, msg=str(error_msg))
+        changed = True
+    except boto.exception.BotoServerError as err:
+        module.fail_json(changed=changed, msg="Failed to delete keys: %s" % err, exception=traceback.format_exc())
+
+    # try to delete login profiles
+    try:
+        login_profile = iam.get_login_profiles(name).get_login_profile_response
+        iam.delete_login_profile(name)
+        changed = True
+    except boto.exception.BotoServerError as err:
+        error_msg = boto_exception(err)
+        if 'Cannot find Login Profile' not in error_msg:
+            module.fail_json(changed=changed, msg="Failed to delete login profile: %s" % err, exception=traceback.format_exc())
+
+    # try to detach policies
+    try:
+        for policy in iam.get_all_user_policies(name).list_user_policies_result.policy_names:
+            iam.delete_user_policy(name, policy)
+        changed = True
+    except boto.exception.BotoServerError as err:
+        error_msg = boto_exception(err)
+        if 'must detach all policies first' in error_msg:
+            module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                  "that %s has Managed Polices. This is not "
+                                                  "currently supported by boto. Please detach the polices "
+                                                  "through the console and try again." % name)
+        module.fail_json(changed=changed, msg="Failed to delete policies: %s" % err, exception=traceback.format_exc())
+
+    # try to deactivate associated MFA devices
+    try:
+        mfa_devices = iam.get_all_mfa_devices(name).get('list_mfa_devices_response', {}).get('list_mfa_devices_result', {}).get('mfa_devices', [])
+        for device in mfa_devices:
+            iam.deactivate_mfa_device(name, device['serial_number'])
+        changed = True
+    except boto.exception.BotoServerError as err:
+        module.fail_json(changed=changed, msg="Failed to deactivate associated MFA devices: %s" % err, exception=traceback.format_exc())
+
+    return changed
+
+
+def delete_user(module, iam, name):
+    changed = delete_dependencies_first(module, iam, name)
+    try:
+        iam.delete_user(name)
+    except boto.exception.BotoServerError as ex:
+        module.fail_json(changed=changed, msg="Failed to delete user %s: %s" % (name, ex), exception=traceback.format_exc())
     else:
         changed = True
     return name, changed

@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -149,11 +149,6 @@ options:
             - >-
                 C(no) - Do not send probes to check the health of the service. With the NO option, the appliance shows
                 the service as UP at all times.
-        type: bool
-
-    sc:
-        description:
-            - "State of the SureConnect feature for the service group."
         type: bool
 
     sp:
@@ -693,7 +688,6 @@ def main():
         pathmonitorindv=dict(type='bool'),
         useproxyport=dict(type='bool'),
         healthmonitor=dict(type='bool'),
-        sc=dict(type='bool'),
         sp=dict(type='bool'),
         rtspsessionidremap=dict(type='bool'),
         clttimeout=dict(type='float'),
@@ -789,7 +783,6 @@ def main():
         'pathmonitorindv',
         'useproxyport',
         'healthmonitor',
-        'sc',
         'sp',
         'rtspsessionidremap',
         'clttimeout',
@@ -862,7 +855,6 @@ def main():
         'healthmonitor': ['bool_yes_no'],
         'useproxyport': ['bool_yes_no'],
         'rtspsessionidremap': ['bool_on_off'],
-        'sc': ['bool_on_off'],
         'graceful': ['bool_yes_no'],
         'cmp': ['bool_yes_no'],
     }
@@ -926,7 +918,11 @@ def main():
                 if not servicegroup_exists(client, module):
                     module.fail_json(msg='Service group is not present', **module_result)
                 if not servicegroup_identical(client, module, servicegroup_proxy):
-                    module.fail_json(msg='Service group is not identical to configuration', **module_result)
+                    module.fail_json(
+                        msg='Service group is not identical to configuration',
+                        diff=diff(client, module, servicegroup_proxy),
+                        **module_result
+                    )
                 if not servicemembers_identical(client, module):
                     module.fail_json(msg='Service group members differ from configuration', **module_result)
                 if not monitor_bindings_identical(client, module):

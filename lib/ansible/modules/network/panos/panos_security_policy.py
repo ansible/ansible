@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -35,6 +35,7 @@ description:
       traffic is applied, the more specific rules must precede the more general ones.
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
+deprecated: In 2.4 use M(panos_security_rule) instead.
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
@@ -420,6 +421,10 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
+
+    if module._name == 'panos_security_policy':
+        module.deprecate("The 'panos_security_policy' module is being renamed 'panos_security_rule'", version=2.8)
+
     if not HAS_LIB:
         module.fail_json(msg='Missing required pan-python and pandevice modules.')
 

@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -306,7 +306,7 @@ def remove_check(module, check_id):
 
 
 def add_service(module, service):
-    ''' registers a service with the the current agent '''
+    ''' registers a service with the current agent '''
     result = service
     changed = False
 

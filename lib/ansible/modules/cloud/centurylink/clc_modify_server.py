@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -661,7 +661,7 @@ class ClcModifyServer:
     def _ensure_aa_policy_absent(
             self, server, server_params):
         """
-        ensures the the provided anti affinity policy is removed from the server
+        ensures the provided anti affinity policy is removed from the server
         :param server: the CLC server object
         :param server_params: the dictionary of server parameters
         :return: (changed, group) -

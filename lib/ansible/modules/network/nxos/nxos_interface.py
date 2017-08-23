@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -281,6 +279,8 @@ def get_interface(intf, module):
 
     if body:
         interface_table = body['TABLE_interface']['ROW_interface']
+        if interface_table['eth_mode'] == 'fex-fabric':
+            module.fail_json(msg='nxos_interface does not support interfaces with mode "fex-fabric"')
         intf_type = get_interface_type(intf)
         if intf_type in ['portchannel', 'ethernet']:
             if not interface_table.get('eth_mode'):

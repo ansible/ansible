@@ -12,9 +12,9 @@ __metaclass__ = type
 # - move create/update code out of main
 # - unit tests
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -245,21 +245,10 @@ except ImportError:
 
 import ansible.module_utils.ec2
 # import a class, otherwise we'll use a fully qualified path
-from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.ec2 import AWSRetry, boto_exception
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 
 def get_stack_events(cfn, stack_name):
@@ -417,13 +406,10 @@ def stack_operation(cfn, stack_name, operation):
             time.sleep(5)
     return {'failed': True, 'output':'Failed for unknown reasons.'}
 
-@AWSRetry.backoff(tries=3, delay=5)
-def describe_stacks(cfn, stack_name):
-    return cfn.describe_stacks(StackName=stack_name)
 
 def get_stack_facts(cfn, stack_name):
     try:
-        stack_response = describe_stacks(cfn, stack_name)
+        stack_response = cfn.describe_stacks(StackName=stack_name)
         stack_info = stack_response['Stacks'][0]
     #except AmazonCloudFormationException as e:
     except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
@@ -508,6 +494,18 @@ def main():
         cfn = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='cloudformation', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=boto_exception(e))
+
+    # Wrap the cloudformation client methods that this module uses with
+    # automatic backoff / retry for throttling error codes
+    backoff_wrapper = AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30)
+    cfn.describe_stack_events = backoff_wrapper(cfn.describe_stack_events)
+    cfn.create_stack = backoff_wrapper(cfn.create_stack)
+    cfn.list_change_sets = backoff_wrapper(cfn.list_change_sets)
+    cfn.create_change_set = backoff_wrapper(cfn.create_change_set)
+    cfn.update_stack = backoff_wrapper(cfn.update_stack)
+    cfn.describe_stacks = backoff_wrapper(cfn.describe_stacks)
+    cfn.list_stack_resources = backoff_wrapper(cfn.list_stack_resources)
+    cfn.delete_stack = backoff_wrapper(cfn.delete_stack)
 
     stack_info = get_stack_facts(cfn, stack_params['StackName'])
 

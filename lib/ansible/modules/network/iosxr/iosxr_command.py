@@ -7,9 +7,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -26,6 +26,8 @@ description:
   - This module does not support running commands in configuration mode.
     Please use M(iosxr_config) to configure iosxr devices.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   commands:
     description:
@@ -145,12 +147,13 @@ def parse_commands(module, warnings):
     ), module)
     commands = command(module.params['commands'])
 
-    for index, item in enumerate(commands):
+    for item in list(commands):
         if module.check_mode and not item['command'].startswith('show'):
             warnings.append(
                 'only show commands are supported when using check mode, not '
                 'executing `%s`' % item['command']
             )
+            commands.remove(item)
         elif item['command'].startswith('conf'):
             module.fail_json(
                 msg='iosxr_command does not support running config mode '

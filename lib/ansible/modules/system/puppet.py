@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -213,7 +213,7 @@ def main():
     else:
         base_cmd = PUPPET_CMD
 
-    if not p['manifest']:
+    if not p['manifest'] and not p['execute']:
         cmd = ("%(base_cmd)s agent --onetime"
                " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
                " --detailed-exitcodes --verbose --color 0") % dict(
@@ -243,15 +243,16 @@ def main():
             cmd += "--environment '%s' " % p['environment']
         if p['certname']:
             cmd += " --certname='%s'" % p['certname']
-        if p['execute']:
-            cmd += " --execute '%s'" % p['execute']
         if p['tags']:
             cmd += " --tags '%s'" % ','.join(p['tags'])
         if module.check_mode:
             cmd += "--noop "
         else:
             cmd += "--no-noop "
-        cmd += pipes.quote(p['manifest'])
+        if p['execute']:
+            cmd += " --execute '%s'" % p['execute']
+        else:
+            cmd += pipes.quote(p['manifest'])
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:

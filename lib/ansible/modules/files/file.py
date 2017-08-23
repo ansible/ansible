@@ -8,7 +8,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -250,6 +250,7 @@ def main():
         if basename:
             params['path'] = path = os.path.join(path, basename)
             b_path = to_bytes(path, errors='surrogate_or_strict')
+            prev_state = get_state(b_path)
 
     # make sure the target path is a directory when we're doing a recursive operation
     if recurse and state != 'directory':

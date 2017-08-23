@@ -6,16 +6,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
+---
 module: aci_contract
-short_description: Manage contract resources on Cisco ACI fabrics
+short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
 description:
-- Manage contract resources on Cisco ACI fabrics.
-- This does not include subjects although subjects can be removed using this module.
+- Manage Contract resources on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(vz:BrCP) at U(https://developer.cisco.com/media/mim-ref/MO-vzBrCP.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,7 +26,10 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
+- This module does not manage Contract Subjects, see M(aci_contract_subject) to do this.
+  Contract Subjects can still be removed using this module.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 options:
   contract:
     description:
@@ -113,7 +118,7 @@ def main():
     description = module.params['description']
     scope = module.params['scope']
     priority = module.params['priority']
-    target = module.params['target']
+    dscp = module.params['dscp']
     state = module.params['state']
 
     aci = ACIModule(module)
@@ -138,7 +143,7 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzBrCP', class_config=dict(name=contract, descr=description, scope=scope, prio=priority, targetDscp=target))
+        aci.payload(aci_class='vzBrCP', class_config=dict(name=contract, descr=description, scope=scope, prio=priority, targetDscp=dscp))
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzBrCP')

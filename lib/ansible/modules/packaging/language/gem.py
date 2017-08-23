@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,6 +50,7 @@ options:
     description:
       - Install gem in user's local gems cache or for all users
     required: false
+    choices: ["yes", "no"]
     default: "yes"
     version_added: "1.3"
   executable:

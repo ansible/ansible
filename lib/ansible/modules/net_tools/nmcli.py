@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -810,6 +810,9 @@ class Nmcli(object):
             cmd.append(self.ifname)
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
+        if self.mode is not None:
+            cmd.append('mode')
+            cmd.append(self.mode)
         if self.ip4 is not None:
             cmd.append('ip4')
             cmd.append(self.ip4)
@@ -825,9 +828,6 @@ class Nmcli(object):
         if self.autoconnect is not None:
             cmd.append('autoconnect')
             cmd.append(self.bool_to_string(self.autoconnect))
-        if self.mode is not None:
-            cmd.append('mode')
-            cmd.append(self.mode)
         if self.miimon is not None:
             cmd.append('miimon')
             cmd.append(self.miimon)
@@ -1155,8 +1155,8 @@ def main():
                 module.exit_json(changed=True)
             (rc, out, err)=nmcli.down_connection()
             (rc, out, err)=nmcli.remove_connection()
-        if rc!=0:
-            module.fail_json(name =('No Connection named %s exists' % nmcli.conn_name), msg=err, rc=rc)
+            if rc!=0:
+                module.fail_json(name =('No Connection named %s exists' % nmcli.conn_name), msg=err, rc=rc)
 
     elif nmcli.state=='present':
         if nmcli.connection_exists():

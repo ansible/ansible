@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -157,7 +157,7 @@ class Zfs(object):
         if volsize:
             cmd += ['-V', volsize]
         if volblocksize:
-            cmd += ['-b', 'volblocksize']
+            cmd += ['-b', volblocksize]
         if properties:
             for prop, value in properties.items():
                 cmd += ['-o', '%s="%s"' % (prop, value)]

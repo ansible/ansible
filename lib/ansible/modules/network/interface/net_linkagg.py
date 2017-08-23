@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -70,6 +70,18 @@ EXAMPLES = """
     name: bond0
     state: absent
 
+- name: Create aggregate of linkagg definitions
+  net_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
+
+- name: Remove aggregate of linkagg definitions
+  net_linkagg:
+    aggregate:
+      - name: bond0
+      - name: bond1
+    state: absent
 """
 
 RETURN = """

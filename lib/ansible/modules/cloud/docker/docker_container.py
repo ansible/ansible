@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -1288,7 +1288,6 @@ class Container(DockerBaseClass):
         # Map parameters to container inspect results
         config_mapping = dict(
             auto_remove=host_config.get('AutoRemove'),
-            image=config.get('Image'),
             expected_cmd=config.get('Cmd'),
             hostname=config.get('Hostname'),
             user=config.get('User'),

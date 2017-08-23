@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -140,7 +140,7 @@ output:
     description: The output of running the robocopy command.
     returned: success
     type: string
-    sample: "----------------------------------------\n   ROBOCOPY     ::     Robust File Copy for Windows         \n----------------------------------------\n"
+    sample: "------------------------------------\\n   ROBOCOPY     ::     Robust File Copy for Windows         \\n------------------------------------\\n "
 msg:
     description: Output intrepreted into a concise message.
     returned: always

@@ -116,7 +116,7 @@ class CloudRetry(object):
         pass
 
     @staticmethod
-    def found(response_code):
+    def found(response_code, catch_extra_error_codes=None):
         """ Return True if the Response Code to retry on was found.
         Args:
             response_code (str): This is the Response Code that is being matched against.
@@ -124,7 +124,7 @@ class CloudRetry(object):
         pass
 
     @classmethod
-    def _backoff(cls, backoff_strategy):
+    def _backoff(cls, backoff_strategy, catch_extra_error_codes=None):
         """ Retry calling the Cloud decorated function using the provided
         backoff strategy.
         Args:
@@ -141,7 +141,7 @@ class CloudRetry(object):
                     except Exception as e:
                         if isinstance(e, cls.base_class):
                             response_code = cls.status_code_from_exception(e)
-                            if cls.found(response_code):
+                            if cls.found(response_code, catch_extra_error_codes):
                                 msg = "{0}: Retrying in {1} seconds...".format(str(e), delay)
                                 syslog.syslog(syslog.LOG_INFO, msg)
                                 time.sleep(delay)
@@ -158,7 +158,7 @@ class CloudRetry(object):
         return deco
 
     @classmethod
-    def exponential_backoff(cls, retries=10, delay=3, backoff=2, max_delay=60):
+    def exponential_backoff(cls, retries=10, delay=3, backoff=2, max_delay=60, catch_extra_error_codes=None):
         """
         Retry calling the Cloud decorated function using an exponential backoff.
 
@@ -174,10 +174,10 @@ class CloudRetry(object):
                 default=60
         """
         return cls._backoff(_exponential_backoff(
-            retries=retries, delay=delay, backoff=backoff, max_delay=max_delay))
+            retries=retries, delay=delay, backoff=backoff, max_delay=max_delay), catch_extra_error_codes)
 
     @classmethod
-    def jittered_backoff(cls, retries=10, delay=3, max_delay=60):
+    def jittered_backoff(cls, retries=10, delay=3, max_delay=60, catch_extra_error_codes=None):
         """
         Retry calling the Cloud decorated function using a jittered backoff
         strategy. More on this strategy here:
@@ -193,10 +193,10 @@ class CloudRetry(object):
                 default=60
         """
         return cls._backoff(_full_jitter_backoff(
-            retries=retries, delay=delay, max_delay=max_delay))
+            retries=retries, delay=delay, max_delay=max_delay), catch_extra_error_codes)
 
     @classmethod
-    def backoff(cls, tries=10, delay=3, backoff=1.1):
+    def backoff(cls, tries=10, delay=3, backoff=1.1, catch_extra_error_codes=None):
         """
         Retry calling the Cloud decorated function using an exponential backoff.
 
@@ -214,4 +214,4 @@ class CloudRetry(object):
                 default=1.1
         """
         return cls.exponential_backoff(
-            retries=tries - 1, delay=delay, backoff=backoff, max_delay=None)
+            retries=tries - 1, delay=delay, backoff=backoff, max_delay=None, catch_extra_error_codes=catch_extra_error_codes)

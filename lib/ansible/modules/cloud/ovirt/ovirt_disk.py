@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -138,6 +138,15 @@ options:
             - "Name of the openstack volume type. This is valid when working
                with cinder."
         version_added: "2.4"
+    image_provider:
+        description:
+            - "When C(state) is I(exported) disk is exported to given Glance image provider."
+            - "C(**IMPORTANT**)"
+            - "There is no reliable way to achieve idempotency, so every time
+               you specify this parameter the disk is exported, so please handle
+               your playbook accordingly to not export the disk all the time.
+               This option is valid only for template disks."
+        version_added: "2.4"
 extends_documentation_fragment: ovirt
 '''
 
@@ -153,6 +162,7 @@ EXAMPLES = '''
     size: 10GiB
     format: cow
     interface: virtio
+    storage_domain: data
 
 # Attach logical unit to VM rhel7
 - ovirt_disk:
@@ -188,6 +198,13 @@ EXAMPLES = '''
 - ovirt_disk:
     id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
     download_image_path: /home/user/mydisk.qcow2
+
+# Export disk as image to Glance domain
+# Since Ansible 2.4
+- ovirt_disks:
+    id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+    image_provider: myglance
+    state: exported
 '''
 
 
@@ -515,7 +532,7 @@ class DiskAttachmentsModule(DisksModule):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'attached', 'detached'],
+            choices=['present', 'absent', 'attached', 'detached', 'exported'],
             default='present'
         ),
         id=dict(default=None),
@@ -536,6 +553,7 @@ def main():
         force=dict(default=False, type='bool'),
         sparsify=dict(default=None, type='bool'),
         openstack_volume_type=dict(default=None),
+        image_provider=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -566,7 +584,7 @@ def main():
 
         ret = None
         # First take care of creating the VM, if needed:
-        if state == 'present' or state == 'detached' or state == 'attached':
+        if state in ('present', 'detached', 'attached'):
             ret = disks_module.create(
                 entity=disk,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
@@ -595,6 +613,22 @@ def main():
                     action='sparsify',
                     action_condition=lambda d: module.params['sparsify'],
                     wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                )
+
+        # Export disk as image to glance domain
+        elif state == 'exported':
+            disk = disks_module.search_entity()
+            if disk is None:
+                module.fail_json(
+                    msg="Can not export given disk '%s', it doesn't exist" %
+                        module.params.get('name') or module.params.get('id')
+                )
+            if disk.storage_type == otypes.DiskStorageType.IMAGE:
+                ret = disks_module.action(
+                    action='export',
+                    action_condition=lambda d: module.params['image_provider'],
+                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                    storage_domain=otypes.StorageDomain(name=module.params['image_provider']),
                 )
         elif state == 'absent':
             ret = disks_module.remove()

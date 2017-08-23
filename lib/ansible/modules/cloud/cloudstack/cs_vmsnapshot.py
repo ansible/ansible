@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -145,7 +145,7 @@ description:
   type: string
   sample: snapshot brought to you by Ansible
 domain:
-  description: Domain the the vm snapshot is related to.
+  description: Domain the vm snapshot is related to.
   returned: success
   type: string
   sample: example domain

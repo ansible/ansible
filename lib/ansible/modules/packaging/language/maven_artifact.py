@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -102,7 +102,7 @@ options:
             - If C(yes), the downloaded artifact's name is preserved, i.e the version number remains part of it.
             - This option only has effect when C(dest) is a directory and C(version) is set to C(latest).
         required: false
-        default: no
+        default: 'no'
         choices: ['yes', 'no']
         version_added: "2.4"
 '''
@@ -166,7 +166,7 @@ from ansible.module_utils.urls import fetch_url
 
 
 class Artifact(object):
-    def __init__(self, group_id, artifact_id, version, classifier=None, extension='jar'):
+    def __init__(self, group_id, artifact_id, version, classifier='', extension='jar'):
         if not group_id:
             raise ValueError("group_id must be set")
         if not artifact_id:
@@ -261,10 +261,9 @@ class MavenDownloader:
             timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
-                if (len(snapshotArtifact.xpath("classifier/text()")) > 0 and
-                        snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and
-                        len(snapshotArtifact.xpath("extension/text()")) > 0 and
-                        snapshotArtifact.xpath("extension/text()")[0] == artifact.extension):
+                artifact_classifier = snapshotArtifact.xpath("classifier/text()")[0] if len(snapshotArtifact.xpath("classifier/text()")) > 0 else ''
+                artifact_extension = snapshotArtifact.xpath("extension/text()")[0] if len(snapshotArtifact.xpath("extension/text()")) > 0 else ''
+                if artifact_classifier == artifact.classifier and artifact_extension == artifact.extension:
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
 
@@ -375,7 +374,7 @@ def main():
             group_id = dict(default=None),
             artifact_id = dict(default=None),
             version = dict(default="latest"),
-            classifier = dict(default=None),
+            classifier = dict(default=''),
             extension = dict(default='jar'),
             repository_url = dict(default=None),
             username = dict(default=None,aliases=['aws_secret_key']),

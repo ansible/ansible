@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -124,7 +124,7 @@ USE_PERSISTENT_CONNECTION = True
 
 
 def validate_vlan_id(value, module):
-    if not 1 <= value <= 4094:
+    if value and not 1 <= value <= 4094:
         module.fail_json(msg='vlan_id must be between 1 and 4094')
 
 
@@ -152,15 +152,12 @@ def main():
 
     aggregate_spec = deepcopy(element_spec)
     aggregate_spec['name'] = dict(required=True)
-    aggregate_spec['vlan_id'] = dict(required=True, type='int')
 
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)
 
-    required_together = [['name', 'vlan_id']]
-
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec, required_together=required_together)
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec)
     )
 
     argument_spec.update(element_spec)
@@ -171,7 +168,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
-                           required_together=required_together,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
@@ -210,7 +206,7 @@ def main():
 
     with locked_config(module):
         for req in requests:
-            diff = load_config(module, tostring(req), warnings, action='replace')
+            diff = load_config(module, tostring(req), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

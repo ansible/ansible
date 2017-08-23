@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -339,6 +339,8 @@ class ImageManager(DockerBaseClass):
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'] = self.client.pull_image(self.name, tag=self.tag)
+                    if image and image == self.results['image']:
+                        self.results['changed'] = False
 
         if self.archive_path:
             self.archive_image(self.name, self.tag)

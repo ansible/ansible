@@ -5,27 +5,13 @@
 #     Tim Bielawa <tbielawa@redhat.com>
 #     Magnus Hedemark <mhedemar@redhat.com>
 # Copyright 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -78,7 +64,7 @@ options:
       or a hash where the key is an element name and the value is the element value.
   set_children:
     description:
-    - Set the the child-element(s) of a selected element.
+    - Set the child-element(s) of a selected element.
     - Removes any existing children.
     - Child elements must be specified as in C(add_children).
   count:
@@ -115,8 +101,6 @@ author:
 - Tim Bielawa (@tbielawa)
 - Magnus Hedemark (@magnus919)
 - Dag Wieers (@dagwieers)
-- Marko Stanković (@sm4rk0)
-- Christopher Prescott (@cmprescott)
 '''
 
 EXAMPLES = r'''
@@ -260,7 +244,7 @@ _RE_SPLITSUBLAST = re.compile("^(.*)/(" + _NSIDENT + ")\\[(.*)\\]$")
 _RE_SPLITONLYEQVALUE = re.compile("^(.*)/text\\(\\)=" + _XPSTR + "$")
 
 
-def print_match(module, tree, xpath, namespaces):
+def do_print_match(module, tree, xpath, namespaces):
     match = tree.xpath(xpath, namespaces=namespaces)
     match_xpaths = []
     for m in match:
@@ -721,7 +705,7 @@ def main():
         module.fail_json(msg="Error while parsing path: %s" % e)
 
     if print_match:
-        print_match(module, doc, xpath, namespaces)
+        do_print_match(module, doc, xpath, namespaces)
 
     if count:
         count_nodes(module, doc, xpath, namespaces)

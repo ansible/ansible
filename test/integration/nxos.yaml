@@ -7,7 +7,7 @@
     limit_to: "*"
     debug: false
 
-# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# Run the tests within blocks allows the next module to be tested if the previous one fails.
 # This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
 
 
@@ -170,6 +170,15 @@
 
     - block:
       - include_role:
+          name: nxos_vpc
+        when: "limit_to in ['*', 'nxos_vpc']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vpc' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_vtp_domain
         when: "limit_to in ['*', 'nxos_vtp_domain']"
       rescue:
@@ -312,6 +321,12 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: nxos_bgp_neighbor_af
+        when: "limit_to in ['*', 'nxos_bgp_neighbor_af']"
+      rescue:
+        - set_fact: test_failed=true
 ###########
     - debug: var=failed_modules
       when: test_failed

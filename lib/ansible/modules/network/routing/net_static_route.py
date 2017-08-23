@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -70,6 +70,13 @@ EXAMPLES = """
     aggregate:
       - { prefix: 192.168.2.0, mask 255.255.255.0, next_hop: 10.0.0.1 }
       - { prefix: 192.168.3.0, mask 255.255.255.0, next_hop: 10.0.2.1 }
+
+- name: Remove static route collections
+  net_static_route:
+    aggregate:
+      - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
+      - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
+    state: absent
 """
 
 RETURN = """

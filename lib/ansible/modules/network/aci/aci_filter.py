@@ -6,16 +6,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_filter
-short_description: Manages top level filter objects on Cisco ACI fabrics
+short_description: Manages top level filter objects on Cisco ACI fabrics (vz:Filter)
 description:
 - Manages top level filter objects on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(vz:Filter) at U(https://developer.cisco.com/media/mim-ref/MO-vzFilter.html).
 - This modules does not manage filter entries, see M(aci_filter_entry) for this functionality.
 author:
 - Swetha Chunduri (@schunduri)
@@ -25,7 +27,8 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 options:
   filter:
     description:
@@ -122,7 +125,7 @@ def main():
     # TODO: Investigate for a URI to query objects for a specific tenant
     if filter_name is not None:
         # Work with a specific object
-        path = 'api/mo/uni/tn-%(tenant)s/flt-%(filter_name)s.json' % module.params
+        path = 'api/mo/uni/tn-%s/flt-%s.json' % (tenant, filter_name)
     elif state == 'query':
         # Query all objects
         path = 'api/node/class/vzFilter.json'

@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -360,7 +360,7 @@ def main():
     else:
         check_lv = snapshot
     for test_lv in lvs:
-        if test_lv['name'] == check_lv:
+        if test_lv['name'] in (check_lv, check_lv.rsplit('/', 1)[-1]):
             this_lv = test_lv
             break
     else:

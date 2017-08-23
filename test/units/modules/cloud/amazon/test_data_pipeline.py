@@ -16,13 +16,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-import boto3
 import os
 import json
 import collections
 from . placebo_fixtures import placeboify, maybe_sleep
+from nose.plugins.skip import SkipTest
+
 from ansible.modules.cloud.amazon import data_pipeline
 from ansible.module_utils._text import to_text
+
+try:
+    import boto3
+except ImportError:
+    raise SkipTest("test_api_gateway.py requires the `boto3` and `botocore` modules")
 
 
 @pytest.fixture(scope='module')

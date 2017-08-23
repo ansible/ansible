@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -314,6 +314,7 @@ def parse_commands(module, warnings):
                 'Only show commands are supported when using check_mode, not '
                 'executing %s' % command
             )
+            continue
 
         parts = command.split('|')
         text = parts[0]

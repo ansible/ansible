@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -46,10 +46,15 @@ options:
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate
+      - Transmit rate.
   rx_rate:
     description:
-      - Receiver rate
+      - Receiver rate.
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
   aggregate:
     description: List of Interfaces definitions.
   purge:
@@ -87,6 +92,35 @@ EXAMPLES = """
     name: ge-0/0/1
     description: test-interface
     enabled: False
+
+- name: Create interface using aggregate
+  net_interface:
+    aggregate:
+      - { name: ge-0/0/1, description: test-interface-1 }
+      - { name: ge-0/0/2, description: test-interface-2 }
+    speed: 1g
+    duplex: full
+    mtu: 512
+
+- name: Delete interface using aggregate
+  junos_interface:
+    aggregate:
+      - { name: ge-0/0/1 }
+      - { name: ge-0/0/2 }
+    state: absent
+
+- name: Check intent arguments
+  net_interface:
+    name: fxp0
+    state: up
+    tx_rate: ge(0)
+    rx_rate: le(0)
+
+- name: Config + intent
+  net_interface:
+    name: fxp0
+    enabled: False
+    state: down
 """
 
 RETURN = """

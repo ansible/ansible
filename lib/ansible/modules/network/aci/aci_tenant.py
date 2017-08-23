@@ -6,16 +6,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_tenant
-short_description: Manage tenants on Cisco ACI fabrics
+short_description: Manage tenants on Cisco ACI fabrics (fv:Tenant)
 description:
 - Manage tenants on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(fv:Tenant) at U(https://developer.cisco.com/media/mim-ref/MO-fvTenant.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

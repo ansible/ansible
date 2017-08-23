@@ -29,20 +29,24 @@ DOCUMENTATION:
             description:
                 - the list of keys to lookup on the etcd server
             type: list
-            element_type: string
+            elements: string
             required: True
         _etcd_url:
             description:
                 - Environment variable with the url for the etcd server
             default: 'http://127.0.0.1:4001'
-            env_vars:
-                - name: ANSIBLE_ETCD_URL
+            env:
+              - name: ANSIBLE_ETCD_URL
+            yaml:
+              - key: etcd.url
         _etcd_version:
             description:
                 - Environment variable with the etcd protocol version
             default: 'v1'
-            env_vars:
-                - name: ANSIBLE_ETCD_VERSION
+            env:
+              - name: ANSIBLE_ETCD_VERSION
+            yaml:
+              - key: etcd.version
 EXAMPLES:
     - name: "a value from a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo/bar') }}
@@ -50,10 +54,11 @@ EXAMPLES:
     - name: "a values from a folder on a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo') }}
 RETURN:
-    _list:
+    _raw:
         description:
             - list of values associated with input keys
-        type: strings
+        type: list
+        elements: strings
 '''
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type

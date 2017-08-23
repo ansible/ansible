@@ -10,7 +10,7 @@
         # output_dir is hardcoded in test/runner/lib/executor.py and created there
         remote_dir: '{{ output_dir }}'
 
-    - name: create remote unprivileged remote user
+    - name: Create remote unprivileged remote user
       user:
         name: '{{ remote_unprivileged_user }}'
       register: user
@@ -21,7 +21,7 @@
         state: directory
         mode: 0700
 
-    - name: 'duplicate authorized_keys'
+    - name: Duplicate authorized_keys
       copy:
         src: $HOME/.ssh/authorized_keys
         dest: '{{ user.home }}/.ssh/authorized_keys'
@@ -46,7 +46,7 @@
         state: absent
       connection: local
 
-    - name: remote unprivileged remote user
+    - name: Remote unprivileged remote user
       user:
         name: '{{ remote_unprivileged_user }}'
         state: absent

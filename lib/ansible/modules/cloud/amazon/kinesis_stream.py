@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -351,7 +351,7 @@ def find_stream(client, stream_name, check_mode=False):
 
 def wait_for_status(client, stream_name, status, wait_timeout=300,
                     check_mode=False):
-    """Wait for the the status to change for a Kinesis Stream.
+    """Wait for the status to change for a Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client
         stream_name (str): The name of the kinesis stream.
