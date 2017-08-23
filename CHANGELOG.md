@@ -171,6 +171,7 @@ Ansible Changes By Release
 #### Cloud
 - amazon
   * aws_api_gateway
+  * aws_direct_connect_connection
   * aws_direct_connect_link_aggregation_group
   * aws_s3
   * aws_s3_bucket_facts
