@@ -175,6 +175,7 @@ Ansible Changes By Release
   * aws_direct_connect_link_aggregation_group
   * aws_s3
   * aws_s3_bucket_facts
+  * aws_waf_facts
   * data_pipeline
   * dynamodb_ttl
   * ec2_instance_facts
