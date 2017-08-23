@@ -295,7 +295,7 @@ def main():
         sys.exit("FAIL: %s" % e)
 
     ssh = connection_loader.get('ssh', class_only=True)
-    cp = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user)
+    cp = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user, pc.connection)
 
     # create the persistent connection dir if need be and create the paths
     # which we will be using later
