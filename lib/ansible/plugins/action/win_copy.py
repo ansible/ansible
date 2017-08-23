@@ -7,6 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import base64
 import json
 import os
 import os.path
@@ -231,37 +232,28 @@ class ActionModule(ActionBase):
         zip_file_path = os.path.join(tmpdir, "win_copy.zip")
         zip_file = zipfile.ZipFile(zip_file_path, "w")
 
-        # need to write in byte string with utf-8 encoding to support unicode
-        # characters in the filename.
+        # encoding the file/dir name with base64 so Windows can unzip a unicode
+        # filename and get the right name, Windows doesn't handle unicode names
+        # very well
         for directory in directories:
             directory_path = to_bytes(directory['src'], errors='surrogate_or_strict')
             archive_path = to_bytes(directory['dest'], errors='surrogate_or_strict')
-            zip_file.write(directory_path, archive_path, zipfile.ZIP_DEFLATED)
+
+            encoded_path = to_text(base64.b64encode(archive_path), errors='surrogate_or_strict')
+            zip_file.write(directory_path, encoded_path, zipfile.ZIP_DEFLATED)
 
         for file in files:
             file_path = to_bytes(file['src'], errors='surrogate_or_strict')
             archive_path = to_bytes(file['dest'], errors='surrogate_or_strict')
-            zip_file.write(file_path, archive_path, zipfile.ZIP_DEFLATED)
+
+            encoded_path = to_text(base64.b64encode(archive_path), errors='surrogate_or_strict')
+            zip_file.write(file_path, encoded_path, zipfile.ZIP_DEFLATED)
 
         return zip_file_path
 
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):
         if content is not None:
             os.remove(content_tempfile)
-
-    def _create_directory(self, dest, source_rel, task_vars):
-        dest_path = self._connection._shell.join_path(dest, source_rel)
-        file_args = self._task.args.copy()
-        file_args.update(
-            dict(
-                path=dest_path,
-                state="directory"
-            )
-        )
-        file_args.pop('content', None)
-
-        file_result = self._execute_module(module_name='file', module_args=file_args, task_vars=task_vars)
-        return file_result
 
     def _copy_single_file(self, local_file, dest, source_rel, task_vars):
         if self._play_context.check_mode:
@@ -311,9 +303,9 @@ class ActionModule(ActionBase):
             os.removedirs(os.path.dirname(zip_path))
             return module_return
 
-        # send zip file to remote
+        # send zip file to remote, file must end in .zip so Com Shell.Application works
         tmp_path = self._make_tmp_path()
-        tmp_src = self._connection._shell.join_path(tmp_path, 'source')
+        tmp_src = self._connection._shell.join_path(tmp_path, 'source.zip')
         self._transfer_file(zip_path, tmp_src)
 
         # run the explode operation of win_copy on remote
@@ -475,47 +467,30 @@ class ActionModule(ActionBase):
         query_args.pop('content', None)
         query_return = self._execute_module(module_args=query_args, task_vars=task_vars)
 
-        if query_return.get('failed', False) is True:
+        if query_return.get('failed') is True:
             result.update(query_return)
             return result
 
-        if query_return.get('will_change') is False:
-            # no changes need to occur
-            result['failed'] = False
-            result['changed'] = False
-            return result
+        if len(query_return['files']) == 1 and len(query_return['directories']) == 0:
+            # we only need to copy 1 file, don't mess around with zips
+            file_src = query_return['files'][0]['src']
+            file_dest = query_return['files'][0]['dest']
+            copy_result = self._copy_single_file(file_src, dest, file_dest, task_vars)
 
-        if query_return.get('zip_available') is True and result['operation'] != 'file_copy':
-            # if the PS zip utils are available and we need to copy more than a
-            # single file/folder, create a local zip file of all the changed
-            # files and send that to the server to be expanded
+            result['changed'] = True
+            if copy_result.get('failed') is True:
+                result['failed'] = True
+                result['msg'] = "failed to copy file %s: %s" % (file_src, copy_result['msg'])
+        elif len(query_return['files']) > 0 or len(query_return['directories']) > 0:
+            # either multiple files or directories need to be copied, compress
+            # to a zip and 'explode' the zip on the server
             # TODO: handle symlinks
             result.update(self._copy_zip_file(dest, source_files['files'], source_files['directories'], task_vars))
+            result['changed'] = True
         else:
-            # the PS zip assemblies are not available or only a single file
-            # needs to be copied. Instead of zipping up into one task this
-            # will handle each file/folder as an individual task
-            # TODO: Handle symlinks
-
-            for directory in query_return['directories']:
-                file_result = self._create_directory(dest, directory['dest'], task_vars)
-
-                result['changed'] = file_result.get('changed', False)
-                if file_result.get('failed', False) is True:
-                    self._remove_tempfile_if_content_defined(content, content_tempfile)
-                    result['failed'] = True
-                    result['msg'] = "failed to create directory %s" % file_result['msg']
-                    return result
-
-            for file in query_return['files']:
-                copy_result = self._copy_single_file(file['src'], dest, file['dest'], task_vars)
-
-                result['changed'] = copy_result.get('changed', False)
-                if copy_result.get('failed', False) is True:
-                    self._remove_tempfile_if_content_defined(content, content_tempfile)
-                    result['failed'] = True
-                    result['msg'] = "failed to copy file %s: %s" % (file['src'], copy_result['msg'])
-                    return result
+            # no operations need to occur
+            result['failed'] = False
+            result['changed'] = False
 
         # remove the content temp file if it was created
         self._remove_tempfile_if_content_defined(content, content_tempfile)

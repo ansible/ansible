@@ -158,10 +158,90 @@ Function Get-FileSize($path) {
     $size
 }
 
+Function Extract-Zip($src, $dest) {
+    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
+    foreach ($entry in $archive.Entries) {
+        $archive_name = $entry.FullName
+
+        # FullName may be appended with / or \, determine if it is padded and remove it
+        $padding_length = $archive_name.Length % 4
+        if ($padding_length -eq 0) {
+            $is_dir = $false
+            $base64_name = $archive_name
+        } elseif ($padding_length -eq 1) {
+            $is_dir = $true
+            if ($archive_name.EndsWith("/") -or $archive_name.EndsWith("`\")) {
+                $base64_name = $archive_name.Substring(0, $archive_name.Length - 1)
+            } else {
+                throw "invalid base64 archive name $archive_name"
+            }
+        } else {
+            throw "invalid base64 length $archive_name"
+        }
+
+        # to handle unicode character, win_copy action plugin has encoded the filename
+        $decoded_archive_name = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64_name))
+        # re-add the / to the entry full name if it was a directory
+        if ($is_dir) {
+            $decoded_archive_name = "$decoded_archive_name/"
+        }
+        $entry_target_path = [System.IO.Path]::Combine($dest, $decoded_archive_name)
+        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
+
+        if (-not (Test-Path -Path $entry_dir)) {
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+        }
+
+        if ($is_dir -eq $false) {
+            if (-not $check_mode) {
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
+            }
+        }
+    }
+}
+
+Function Extract-ZipLegacy($src, $dest) {
+    if (-not (Test-Path -Path $dest)) {
+        New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode | Out-Null
+    }
+    $shell = New-Object -ComObject Shell.Application
+    $zip = $shell.NameSpace($src)
+    $dest_path = $shell.NameSpace($dest)
+
+    foreach ($entry in $zip.Items()) {
+        $is_dir = $entry.IsFolder
+        $encoded_archive_entry = $entry.Name
+        # to handle unicode character, win_copy action plugin has encoded the filename
+        $decoded_archive_entry = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encoded_archive_entry))
+        if ($is_dir) {
+            $decoded_archive_entry = "$decoded_archive_entry/"
+        }
+
+        $entry_target_path = [System.IO.Path]::Combine($dest, $decoded_archive_entry)
+        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
+
+        if (-not (Test-Path -Path $entry_dir)) {
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+        }
+
+        if ($is_dir -eq $false -and (-not $check_mode)) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx
+            # From Folder.CopyHere documentation, 1044 means:
+            #  - 1024: do not display a user interface if an error occurs
+            #  -   16: respond with "yes to all" for any dialog box that is displayed
+            #  -    4: do not display a progress dialog box
+            $dest_path.CopyHere($entry, 1044)
+
+            # once file is extraced, we need to rename it with non base64 name
+            $combined_encoded_path = [System.IO.Path]::Combine($dest, $encoded_archive_entry)
+            Move-Item -Path $combined_encoded_path -Destination $entry_target_path -Force | Out-Null
+        }
+    }
+}
+
 if ($mode -eq "query") {
     # we only return a list of files/directories that need to be copied over
     # the source of the local file will be the key used
-    $will_change = $false
     $changed_files = @()
     $changed_directories = @()
     $changed_symlinks = @()
@@ -182,7 +262,6 @@ if ($mode -eq "query") {
         } elseif (Test-Path -Path $filepath -PathType Container) {
             Fail-Json -obj $result -message "cannot copy file to dest $($filepath): object at path is already a directory"
         } else {
-            $will_change = $true
             $changed_files += $file
         }
     }
@@ -198,24 +277,12 @@ if ($mode -eq "query") {
         if (Test-Path -Path $dirpath -PathType Leaf) {
             Fail-Json -obj $result -message "cannot copy folder to dest $($dirpath): object at path is already a file"
         } elseif (-not (Test-Path -Path $dirpath -PathType Container)) {
-            $will_change = $true
             $changed_directories += $directory
         }
     }
 
     # TODO: Handle symlinks
 
-    # Detect if the PS zip assemblies are available, this will control whether
-    # the win_copy plugin will use explode as the mode or single
-    try {
-        Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
-        Add-Type -Assembly System.IO.Compression | Out-Null
-        $result.zip_available = $true
-    } catch {
-        $result.zip_available = $false
-    }
-
-    $result.will_change = $will_change
     $result.files = $changed_files
     $result.directories = $changed_directories
     $result.symlinks = $changed_symlinks
@@ -227,23 +294,18 @@ if ($mode -eq "query") {
         Fail-Json -obj $result -message "Cannot expand src zip file file: $src as it does not exist"
     }
 
-    Add-Type -Assembly System.IO.Compression.FileSystem | Out-Null
-    Add-Type -Assembly System.IO.Compression | Out-Null
-
-    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
-    foreach ($entry in $archive.Entries) {
-        $entry_target_path = [System.IO.Path]::Combine($dest, $entry.FullName)
-        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
-
-        if (-not (Test-Path -Path $entry_dir)) {
-            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
-        }
-
-        if (-not ($entry_target_path.EndsWith("`\") -or $entry_target_path.EndsWith("/"))) {
-            if (-not $check_mode) {
-                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
-            }
-        }
+    # Detect if the PS zip assemblies are available or whether to use Shell
+    $use_legacy = $false
+    try {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+        Add-Type -AssemblyName System.IO.Compression | Out-Null
+    } catch {
+        $use_legacy = $true
+    }
+    if ($use_legacy) {
+        Extract-ZipLegacy -src $src -dest $dest
+    } else {
+        Extract-Zip -src $src -dest $dest
     }
 
     $result.changed = $true
