@@ -126,6 +126,23 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
 boto3_inventory_conn = _boto3_conn
 
 
+def boto_exception(err):
+    """
+    Extracts the error message from a boto exception.
+
+    :param err: Exception from boto
+    :return: Error message
+    """
+    if hasattr(err, 'error_message'):
+        error = err.error_message
+    elif hasattr(err, 'message'):
+        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
+    else:
+        error = '%s: %s' % (Exception, err)
+
+    return error
+
+
 def aws_common_argument_spec():
     return dict(
         ec2_url=dict(),
