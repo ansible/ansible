@@ -403,10 +403,9 @@ class EFSConnection(object):
             targets_to_create, intersection, targets_to_delete = dict_diff(current_targets,
                                                                            targets, True)
 
-            """ To modify mount target it should be deleted and created again """
-            changed = filter(
-                lambda sid: not targets_equal(['SubnetId', 'IpAddress', 'NetworkInterfaceId'],
-                                              current_targets[sid], targets[sid]), intersection)
+            # To modify mount target it should be deleted and created again
+            changed = [sid for sid in intersection if not targets_equal(['SubnetId', 'IpAddress', 'NetworkInterfaceId'],
+                                                                        current_targets[sid], targets[sid])]
             targets_to_delete = list(targets_to_delete) + changed
             targets_to_create = list(targets_to_create) + changed
 
@@ -434,17 +433,16 @@ class EFSConnection(object):
                 )
                 result = True
 
-            security_groups_to_update = filter(
-                lambda sid: 'SecurityGroups' in targets[sid] and
-                            current_targets[sid]['SecurityGroups'] != targets[sid]['SecurityGroups'],
-                intersection
-            )
+            # If no security groups were passed into the module, then do not change it.
+            security_groups_to_update = [sid for sid in intersection if
+                                         'SecurityGroups' in targets[sid] and
+                                         current_targets[sid]['SecurityGroups'] != targets[sid]['SecurityGroups']]
 
             if security_groups_to_update:
                 for sid in security_groups_to_update:
                     self.connection.modify_mount_target_security_groups(
                         MountTargetId=current_targets[sid]['MountTargetId'],
-                        SecurityGroups=targets[sid]['SecurityGroups']
+                        SecurityGroups=targets[sid].get('SecurityGroups', None)
                     )
                 result = True
 
