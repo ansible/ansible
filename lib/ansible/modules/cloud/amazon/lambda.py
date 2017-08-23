@@ -361,10 +361,7 @@ def main():
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
-            try:
-                assert len(vpc_subnet_ids) > 0
-                assert len(vpc_security_group_ids) > 0
-            except (AssertionError, TypeError):
+            if  vpc_subnet_ids is None or len(vpc_subnet_ids) == 0 or vpc_security_group_ids is None or len(vpc_security_group_ids) == 0:
                 module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             if 'VpcConfig' in current_config:
@@ -485,10 +482,7 @@ def main():
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
-            try:
-                assert len(vpc_subnet_ids) > 0
-                assert len(vpc_security_group_ids) > 0
-            except (AssertionError, TypeError):
+            if  vpc_subnet_ids is None or len(vpc_subnet_ids) == 0 or vpc_security_group_ids is None or len(vpc_security_group_ids) == 0:
                 module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             func_kwargs.update({'VpcConfig': {'SubnetIds': vpc_subnet_ids,
