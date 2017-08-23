@@ -33,6 +33,8 @@ description:
     parameters or remove those parameters from the device active
     configuration.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   hostname:
     description:
