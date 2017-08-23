@@ -352,6 +352,21 @@ Ansible format, this function will convert the keys to snake_case.
 Converts a an Ansible list of filters to a boto3 friendly list of dicts.  This is useful for any
 boto3 `_facts` modules.
 
+### boto_exception
+
+Pass an exception returned from boto or boto3, and this function will consistently get the message from the exception.
+
+```
+import traceback
+from ansible.module_utils.ec2 import boto_exception
+try:
+    ...
+except boto.exception.BotoServerError as err:
+    error_msg = boto_exception(err)
+    module.fail_json(msg=error_msg, exception=traceback.format_exc())
+```
+
+
 #### boto3_tag_list_to_ansible_dict
 
 Converts a boto3 tag list to an Ansible dict. Boto3 returns tags as a list of dicts containing keys

@@ -172,17 +172,6 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
-
 
 def _paginate(func, attr):
     '''
