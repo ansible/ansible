@@ -30,14 +30,13 @@ description:
      Number of rows affected are returned as "row_count".
    - Can read queries from a .sql script files.
    - SQL scripts may be templated with ansible variables at execution time.
-   - Run queries in check_mode (will roll them back, autocommit must be disabled). This may affect performance of a busy cluster and it may incur side effects.
 version_added: "2.4"
 options:
   db:
     description:
       - name of the database to run queries against.
     required: false
-    default: postgres
+    default: None
   port:
     description:
       - Database port to connect to.
@@ -66,7 +65,7 @@ options:
   query:
     description:
       - SQL query to run. Variables can be escaped with psycopg2 syntax.
-      - Can be a sql scripts file.
+      - Can be a SQL scripts file.
     required: true
   positional_args:
     description:
@@ -77,7 +76,6 @@ options:
   autocommit:
       description:
         - Enable transaction autocommit.
-        - If enabled, This WILL run the query in check_mode.
       required: false
       default: false
       type: bool
@@ -190,18 +188,9 @@ row_count:
     sample: 5
 '''
 
-HAS_PSYCOPG2 = False
-try:
-    import psycopg2
-    import psycopg2.extras
-except ImportError:
-    pass
-else:
-    HAS_PSYCOPG2 = True
-
 import traceback
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.basic import AnsibleModule, get_exception, BOOLEANS
+from ansible.module_utils.basic import AnsibleModule, BOOLEANS
 import ansible.module_utils.postgres as pgutils
 
 
@@ -222,13 +211,14 @@ def main():
         mutually_exclusive=[
             ["positional_args", "named_args"]
         ],
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg="the python psycopg2 module is required")
-
     changed = False
+    psycopg2 = pgutils.psycopg2
+    ansible_facts = {}
+    query_results = []
+    rowcount = 0
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -266,51 +256,48 @@ def main():
         # Using RealDictCursor allows access to row results by real column name
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    except TypeError:
-        e = get_exception()
+    except TypeError as e:
         if 'sslrootcert' in e.args[0]:
             module.fail_json(msg='''Postgresql server must be at least version
                              8.4 to support sslrootcert.
                              Exception: {0}'''.format(e), exception=traceback.format_exc())
         module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
+        db_connection.close()
 
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
+        db_connection.close()
 
     # if query is a file, load the file and run it
     query = module.params["query"]
     if query.endswith('.sql'):
         try:
             query = open(query, 'r').read().strip('\n')
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             module.fail_json(msg="Unable to find '%s' in given path." % query)
-
-    arguments = None
+            db_connection.close()
 
     # prepare args
     if module.params["positional_args"] is not None:
         arguments = module.params["positional_args"]
-
     elif module.params["named_args"] is not None:
         arguments = module.params["named_args"]
+    else:
+        arguments = None
 
     try:
         cursor.execute(query, arguments)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="Unable to execute query: %s" % e,
                          query_arguments=arguments)
+        db_connection.close()
 
-    ansible_facts = {}
-    query_results = []
     if cursor.rowcount > 0:
         # There's no good way to return results arbitrarily without inspecting
         # the SQL, so we act consistent and return the empty set when there's
         # nothing to return.
         try:
-            query_results = cursor.fetchall()
+            query_results = [dict(row) for row in cursor.fetchall()]
         except psycopg2.ProgrammingError:
             pass
 
@@ -318,27 +305,23 @@ def main():
         fact = module.params["fact"]
         if fact is not None:
             ansible_facts = {fact: query_results}
-    else:
-        rowcount = 0
 
     statusmessage = cursor.statusmessage
-
     changed = False
 
     # set changed flag only on non read-only command
     if ("UPDATE" in statusmessage or "INSERT" in statusmessage or
-            "UPSERT" in statusmessage or "DELETE" in statusmessage):
+            "UPSERT" in statusmessage or "DELETE" in statusmessage or
+            "CREATE DATABASE" in statusmessage or
+            "CREATE TABLE" in statusmessage or
+            "DROP DATABASE" in statusmessage or
+            "DROP TABLE" in statusmessage):
         changed = True
-
-    if changed:
-        if module.check_mode:
-            db_connection.rollback()
-        else:
-            db_connection.commit()
+        db_connection.commit()
 
     db_connection.close()
 
-    module.exit_json(changed=changed, stout_lines=statusmessage,
+    module.exit_json(changed=changed, stdout_lines=statusmessage,
                      query_results=query_results,
                      ansible_facts=ansible_facts,
                      rowcount=rowcount)
