@@ -40,9 +40,10 @@ options:
     state:
         description:
             - "State which should a host to be in after successful completion."
+            - "I(iscsilogin) and I(iscsidiscover) are supported since version 2.4."
         choices: [
             'present', 'absent', 'maintenance', 'upgraded', 'started',
-            'restarted', 'stopped', 'reinstalled'
+            'restarted', 'stopped', 'reinstalled', 'iscsidiscover', 'iscsilogin'
         ]
         default: present
     comment:
@@ -108,6 +109,13 @@ options:
             - "Enable or disable power management of the host."
             - "For more comprehensive setup of PM use C(ovirt_host_pm) module."
         version_added: 2.4
+    iscsi:
+        description:
+          - "If C(state) is I(iscsidiscover) it means that the iscsi attribute is being
+             used to discover targets"
+          - "If C(state) is I(iscsilogin) it means that the iscsi attribute is being
+             used to login to the specified targets passed as part of the iscsi attribute"
+        version_added: "2.4"
 extends_documentation_fragment: ovirt
 '''
 
@@ -158,6 +166,29 @@ EXAMPLES = '''
     state: upgraded
     name: myhost
 
+# discover iscsi targets
+- ovirt_hosts:
+    state: iscsidiscover
+    name: myhost
+    iscsi:
+      username: iscsi_user
+      password: secret
+      address: 10.34.61.145
+      port: 3260
+
+
+# login to iscsi targets
+- ovirt_hosts:
+    state: iscsilogin
+    name: myhost
+    iscsi:
+      username: iscsi_user
+      password: secret
+      address: 10.34.61.145
+      target: "iqn.2015-07.com.mlipchuk2.redhat:444"
+      port: 3260
+
+
 # Reinstall host using public key
 - ovirt_hosts:
     state: reinstalled
@@ -182,6 +213,10 @@ host:
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host."
     returned: On success if host is found.
     type: dict
+iscsi_targets:
+    description: "List of host iscsi targets"
+    returned: On success if host is found and state is iscsidiscover.
+    type: list
 '''
 
 import time
@@ -200,6 +235,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     equal,
+    get_id_by_name,
     ovirt_full_argument_spec,
     wait,
 )
@@ -327,7 +363,7 @@ def main():
         state=dict(
             choices=[
                 'present', 'absent', 'maintenance', 'upgraded', 'started',
-                'restarted', 'stopped', 'reinstalled',
+                'restarted', 'stopped', 'reinstalled', 'iscsidiscover', 'iscsilogin'
             ],
             default='present',
         ),
@@ -346,10 +382,15 @@ def main():
         kernel_params=dict(default=None, type='list'),
         hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
         power_management_enabled=dict(default=None, type='bool'),
+        iscsi=dict(default=None, type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'iscsidiscover', ['iscsi']],
+            ['state', 'iscsilogin', ['iscsi']]
+        ]
     )
     check_sdk(module)
 
@@ -395,6 +436,33 @@ def main():
                 wait_condition=lambda h: h.status == result_state,
                 post_action=lambda h: time.sleep(module.params['poll_interval']),
                 fail_condition=failed_state,
+            )
+        elif state == 'iscsidiscover':
+            host_id = get_id_by_name(hosts_service, module.params['name'])
+            iscsi_targets = hosts_service.service(host_id).iscsi_discover(
+                iscsi=otypes.IscsiDetails(
+                    port=int(module.params['iscsi']['port']) if module.params['iscsi']['port'].isdigit() else None,
+                    username=module.params['iscsi']['username'],
+                    password=module.params['iscsi']['password'],
+                    address=module.params['iscsi']['address'],
+                ),
+            )
+            ret = {
+                'changed': False,
+                'id': host_id,
+                'iscsi_targets': iscsi_targets,
+            }
+        elif state == 'iscsilogin':
+            host_id = get_id_by_name(hosts_service, module.params['name'])
+            ret = hosts_module.action(
+                action='iscsi_login',
+                iscsi=otypes.IscsiDetails(
+                    port=int(module.params['iscsi']['port']) if module.params['iscsi']['port'].isdigit() else None,
+                    username=module.params['iscsi']['username'],
+                    password=module.params['iscsi']['password'],
+                    address=module.params['iscsi']['address'],
+                    target=module.params['iscsi']['target'],
+                ),
             )
         elif state == 'started':
             ret = hosts_module.action(
