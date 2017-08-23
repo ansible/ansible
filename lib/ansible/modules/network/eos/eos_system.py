@@ -33,6 +33,8 @@ description:
     parameters or remove those parameters from the device active
     configuration.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   hostname:
     description:
