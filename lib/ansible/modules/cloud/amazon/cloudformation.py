@@ -415,16 +415,14 @@ def check_mode_changeset(module, stack_params, cfn):
     stack_params['ChangeSetName'] = build_changeset_name(stack_params)
     try:
         change_set = cfn.create_change_set(**stack_params)
-        success = False
         for i in range(60): # total time 5 min
             description = cfn.describe_change_set(ChangeSetName=change_set['Id'])
-            if description['Status'] in ['CREATE_COMPLETE', 'FAILED']:
-                success = True
+            if description['Status'] in ('CREATE_COMPLETE', 'FAILED'):
                 break
             time.sleep(5)
-
-        if not success:
-            module.fail_json(msg="Failed to create change set "+name)
+        else:
+            # if the changeset doesn't finish in 5 mins, this `else` will trigger and fail
+            module.fail_json(msg="Failed to create change set %s" % stack_params['ChangeSetName'])
 
         cfn.delete_change_set(ChangeSetName=change_set['Id'])
 
