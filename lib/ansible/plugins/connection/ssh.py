@@ -268,9 +268,11 @@ class Connection(ConnectionBase):
         sock.close()
 
     @staticmethod
-    def _create_control_path(host, port, user):
+    def _create_control_path(host, port, user, connection=None):
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
+        if connection:
+            pstring += '-%s' % connection
         m = hashlib.sha1()
         m.update(to_bytes(pstring))
         digest = m.hexdigest()
