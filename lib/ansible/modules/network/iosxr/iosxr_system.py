@@ -23,6 +23,8 @@ description:
     parameters or remove those parameters from the device active
     configuration.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   hostname:
     description:

@@ -16,12 +16,14 @@ DOCUMENTATION = """
 ---
 module: iosxr_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on Cisco IOS XR devices
 description:
   - This will configure both exec and motd banners on remote devices
     running Cisco IOS XR. It allows playbooks to add or remote
     banner text from the active running configuration.
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   banner:
     description:

@@ -26,6 +26,8 @@ description:
   - This module does not support running commands in configuration mode.
     Please use M(iosxr_config) to configure iosxr devices.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   commands:
     description:
