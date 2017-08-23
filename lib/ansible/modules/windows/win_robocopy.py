@@ -140,7 +140,7 @@ output:
     description: The output of running the robocopy command.
     returned: success
     type: string
-    sample: "----------------------------------------\n   ROBOCOPY     ::     Robust File Copy for Windows         \n----------------------------------------\n"
+    sample: "------------------------------------\\n   ROBOCOPY     ::     Robust File Copy for Windows         \\n------------------------------------\\n "
 msg:
     description: Output intrepreted into a concise message.
     returned: always
