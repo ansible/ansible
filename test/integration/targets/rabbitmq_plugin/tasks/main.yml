@@ -1,0 +1,4 @@
+- name: Ensure that rabbitmq_management plugin disabled
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: disabled
