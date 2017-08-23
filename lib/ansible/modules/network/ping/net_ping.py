@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: net_vlan
+module: net_ping
 version_added: "2.4"
 author: "Jacob McGill (@jmcgill298)"
 short_description: Tests reachability using ping from a network device
@@ -50,11 +50,11 @@ options:
 
 
 EXAMPLES = r'''
-provider:
-  host: "{{ ansible_host }}"
-  username: "{{ username }}"
-  password: "{{ password }}"
-  network_os: "{{ network_os }}"
+- provider:
+    host: "{{ ansible_host }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    network_os: "{{ network_os }}"
 
 - name: Test reachability to 10.10.10.10 using default vrf
   net_ping:
