@@ -22,7 +22,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -111,6 +111,7 @@ changed:
   sample: True
   returned: success
 device_id:
+  type: string
   description: UUID of the device associated with the specified IP address.
   returned: success
 ip_address:
