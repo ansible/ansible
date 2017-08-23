@@ -40,6 +40,7 @@ files:
   $modules/cloud/amazon/aws_direct_connect_connection.py: s-hertel
   $modules/cloud/amazon/aws_direct_connect_link_aggregation_group.py: s-hertel
   $modules/cloud/amazon/aws_kms.py: willthames
+  $modules/cloud/amazon/aws_waf_facts.py: willthames
   $modules/cloud/amazon/cloudformation.py: jsmartin ryansb tedder
   $modules/cloud/amazon/cloudformation_facts.py: jmenga
   $modules/cloud/amazon/cloudfront_facts.py: willthames wilvk
