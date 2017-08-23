@@ -157,6 +157,50 @@ options:
         default: null
         description:
           - The CA bundle string with custom certificates. defaults to None.
+      alerts:
+        required: false
+        default: null
+        description:
+          - Alerts endpoint connection information.
+      alerts[hostname]:
+        description:
+          - The provider's api hostname.
+        required: true
+      alerts[port]:
+        description:
+          - The provider's api port.
+        required: false
+      alerts[userid]:
+        required: false
+        default: null
+        description:
+          - Provider's api endpoint authentication userid. defaults to None.
+      alerts[password]:
+        required: false
+        default: null
+        description:
+          - Provider's api endpoint authentication password. defaults to None.
+      alerts[auth_key]:
+        required: false
+        default: null
+        description:
+          - Provider's api endpoint authentication bearer token. defaults to None.
+      alerts[verify_ssl]:
+        required: false
+        default: true
+        description:
+          - Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+      alerts[security_protocol]:
+        required: false
+        default: None
+        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+        description:
+          - How SSL certificates should be used for HTTPS requests. defaults to None.
+      alerts[certificate_authority]:
+        required: false
+        default: null
+        description:
+          - The CA bundle string with custom certificates. defaults to None.
 '''
 
 EXAMPLES = '''
@@ -254,6 +298,7 @@ def endpoint_list_spec():
         default=dict(required=True,
                      type='dict', options=endpoint_argument_spec()),
         metrics=dict(type='dict', options=endpoint_argument_spec()),
+        alerts=dict(type='dict', options=endpoint_argument_spec()),
     )
 
 
