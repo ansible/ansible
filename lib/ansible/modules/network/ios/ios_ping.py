@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
@@ -49,10 +48,10 @@ options:
 '''
 
 EXAMPLES = r'''
-provider:
-  host: "{{ ansible_host }}"
-  username: "{{ username }}"
-  password: "{{ password }}"
+- provider:
+    host: "{{ ansible_host }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
 
 - name: Test reachability to 10.10.10.10 using default vrf
   ios_ping:
@@ -173,8 +172,6 @@ def main():
     results["rtt"] = rtt
 
     validate_results(module, loss, results)
-    
-    # module.exit_json(**results)
 
 
 def build_ping(dest, count=None, source=None, vrf=None):
@@ -207,7 +204,7 @@ def parse_ping(ping_stats):
 
     rate = rate_re.match(ping_stats)
     rtt = rtt_re.match(ping_stats)
-    
+
     return rate.group("pct"), rate.group("rx"), rate.group("tx"), rtt.groupdict()
 
 
