@@ -242,11 +242,9 @@ class PlayContext(Base):
     _verbosity = FieldAttribute(isa='int', default=0)
     _only_tags = FieldAttribute(isa='set', default=set())
     _skip_tags = FieldAttribute(isa='set', default=set())
-    _check_mode = FieldAttribute(isa='bool', default=False)
     _force_handlers = FieldAttribute(isa='bool', default=False)
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
-    _diff = FieldAttribute(isa='bool')
 
     # Fact gathering settings
     _gather_subset = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
@@ -336,6 +334,7 @@ class PlayContext(Base):
         self.become_user = options.become_user
 
         self.check_mode = boolean(options.check, strict=False)
+        self.diff = boolean(options.diff, strict=False)
 
         #  general flags (should we move out?)
         # for flag in ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff'):
@@ -510,6 +509,9 @@ class PlayContext(Base):
         # check_mode replaces always_run, overwrite always_run if both are given
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
+
+        if task.diff is not None:
+            new_info.diff = task.diff
 
         return new_info
 
