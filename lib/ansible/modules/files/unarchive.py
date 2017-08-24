@@ -77,6 +77,14 @@ options:
     type: 'bool'
     default: 'no'
     version_added: "2.2"
+  download_pipe:
+    description:
+      - Set to C(yes) to indicate the archived file will by downloaded to named pipe. It does not require additional space in 
+        temporary directory. But does not support check_mode.
+      - This option is mutually exclusive with C(copy).
+    type: 'bool'
+    default: 'no'
+    version_added: "proposal"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
@@ -752,7 +760,22 @@ class TarXzArchive(TgzArchive):
 
 
 # try handlers in order and return the one that works or bail if none work
-def pick_handler(src, dest, file_args, module):
+def pick_handler(src, dest, file_args, module,pipe):
+    # can not read src whem using named pipes
+    # so guessing handler by file extentsion
+    if pipe:
+        (f,ext) = os.path.splitext(src)
+        ext = ext.lower()
+        if ext == ".zip":
+            handler=ZipArchive;
+        elif ext == ".gz":
+            handler=TgzArchive
+        elif ext == ".bz2":
+            handler=TarBzipArchive
+        elif ext == ".xz":
+            handler=TarXzArchive
+        return handler(src, dest, file_args, module)
+    # try to open file and read archive
     handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive]
     reasons = set()
     for handler in handlers:
@@ -773,6 +796,7 @@ def main():
             original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             dest=dict(type='path', required=True),
             remote_src=dict(type='bool', default=False),
+            download_pipe=dict(type='bool', default=False),
             creates=dict(type='path'),
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
@@ -788,7 +812,15 @@ def main():
     src = module.params['src']
     dest = module.params['dest']
     remote_src = module.params['remote_src']
+    if remote_src:
+        download_pipe = module.params['download_pipe']
+    else:
+        download_pipe = False
     file_args = module.load_file_common_arguments(module.params)
+
+    proc_parent=False
+    proc_child=False
+    proc_pid=None
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -803,22 +835,41 @@ def main():
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
+                if download_pipe:
+                    if module.check_mode:
+                        module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using download_pipe" % module._name)
 
-                # open in binary mode for python3
-                f = open(package, 'wb')
-                # Read 1kb at a time to save on ram
-                while True:
-                    data = rsp.read(BUFSIZE)
-                    data = to_bytes(data, errors='surrogate_or_strict')
+                    #make Pipe
+                    os.mkfifo(package)
+                    proc_pid=os.fork()
+                    if proc_pid != 0:
+                        proc_parent=True
+                        src=package
+                    else:
+                        proc_child=True
+                        
 
-                    if len(data) < 1:
-                        break  # End of file, break while loop
+                if not download_pipe or proc_child:
+                    # open in binary mode for python3
+                    f = open(package, 'wb')
+                    # Read 1kb at a time to save on ram
+                    while True:
+                        data = rsp.read(BUFSIZE)
+                        data = to_bytes(data, errors='surrogate_or_strict')
 
-                    f.write(data)
-                f.close()
-                src = package
+                        if len(data) < 1:
+                            break  # End of file, break while loop
+
+                        f.write(data)
+                    f.close()
+                    if proc_child:
+                        os._exit(0)
+                    src = package
             except Exception as e:
-                module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
+                if proc_child:
+                    os._exit(127)
+                else:
+                    module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
@@ -826,7 +877,7 @@ def main():
 
     # skip working with 0 size archives
     try:
-        if os.path.getsize(src) == 0:
+        if not download_pipe and os.path.getsize(src) == 0:
             module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
     except Exception as e:
         module.fail_json(msg="Source '%s' not readable, %s" % (src, to_native(e)))
@@ -835,37 +886,46 @@ def main():
     if not os.path.isdir(dest):
         module.fail_json(msg="Destination '%s' is not a directory" % dest)
 
-    handler = pick_handler(src, dest, file_args, module)
+    handler = pick_handler(src, dest, file_args, module,download_pipe)
 
     res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
-    # do we need to do unpack?
-    check_results = handler.is_unarchived()
+    check_results=None
+    if not download_pipe:
+        # do we need to do unpack?
+        check_results = handler.is_unarchived()
 
-    # DEBUG
-    # res_args['check_results'] = check_results
-
-    if module.check_mode:
-        res_args['changed'] = not check_results['unarchived']
-    elif check_results['unarchived']:
-        res_args['changed'] = False
-    else:
-        # do the unpack
+        # DEBUG
+        # res_args['check_results'] = check_results
+        if module.check_mode:
+            res_args['changed'] = not check_results['unarchived']
+        elif check_results['unarchived']:
+            res_args['changed'] = False
+        # Get diff if required
+        if check_results.get('diff', False):
+            res_args['diff'] = {'prepared': check_results['diff']}
+            
+    # do the unpack
+    if download_pipe  or ( not module.check_mode and 
+		check_results['unarchived']) :
         try:
             res_args['extract_results'] = handler.unarchive()
-            if res_args['extract_results']['rc'] != 0:
-                module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
-        except IOError:
-            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
-        else:
-            res_args['changed'] = True
+            if proc_parent:
+                #wait for child
+                pid,child_status = os.waitpid(proc_pid,0)
+                #something failed
+                if child_status:
+                    module.fail_json(msg="Download failed to namped pipe %s to %s with status %d" % (src, dest,child_status), **res_args)
 
-    # Get diff if required
-    if check_results.get('diff', False):
-        res_args['diff'] = {'prepared': check_results['diff']}
+            if res_args['extract_results']['rc'] != 0:
+            	module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+        except IOError:
+              module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+        else:
+             res_args['changed'] = True
 
     # Run only if we found differences (idempotence) or diff was missing
-    if res_args.get('diff', True) and not module.check_mode:
+    if not download_pipe and res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
@@ -878,7 +938,6 @@ def main():
         res_args['files'] = handler.files_in_archive
 
     module.exit_json(**res_args)
-
 
 if __name__ == '__main__':
     main()
