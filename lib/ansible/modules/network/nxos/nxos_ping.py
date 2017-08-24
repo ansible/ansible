@@ -87,18 +87,17 @@ rtt:
     description: Show RTT stats
     returned: always
     type: dict
-    sample: {"avg": "6.264","max":"6.564",
-            "min": "5.978"}
+    sample: {"avg": 6.264, "max": 6.564, "min": 5.978}
 packets_rx:
     description: Packets successfully received
     returned: always
-    type: string
-    sample: "2"
+    type: int
+    sample: 2
 packets_tx:
     description: Packets successfully transmitted
     returned: always
-    type: string
-    sample: "2"
+    type: int
+    sample: 2
 packet_loss:
     description: Percentage of packets lost
     returned: always
@@ -113,12 +112,12 @@ from ansible.module_utils.basic import AnsibleModule
 def get_summary(results_list, reference_point):
     summary_string = results_list[reference_point+1]
     summary_list = summary_string.split(',')
-    pkts_tx = summary_list[0].split('packets')[0].strip()
-    pkts_rx = summary_list[1].split('packets')[0].strip()
-    pkt_loss = summary_list[2].split('packet')[0].strip()
-    summary = dict(packets_tx=pkts_tx,
-                   packets_rx=pkts_rx,
-                   packet_loss=pkt_loss)
+
+    summary = dict(
+        packets_tx=int(summary_list[0].split('packets')[0].strip()),
+        packets_rx=int(summary_list[1].split('packets')[0].strip()),
+        packet_loss=summary_list[2].split('packet')[0].strip(),
+    )
 
     if 'bytes from' not in results_list[reference_point-2]:
         ping_pass = False
@@ -129,16 +128,16 @@ def get_summary(results_list, reference_point):
 
 
 def get_rtt(results_list, packet_loss, location):
+    rtt = dict(min=None, avg=None, max=None)
+
     if packet_loss != '100.00%':
         rtt_string = results_list[location]
         base = rtt_string.split('=')[1]
         rtt_list = base.split('/')
-        min_rtt = rtt_list[0].lstrip()
-        avg_rtt = rtt_list[1]
-        max_rtt = rtt_list[2][:-3]
-        rtt = dict(min=min_rtt, avg=avg_rtt, max=max_rtt)
-    else:
-        rtt = dict(min=None, avg=None, max=None)
+
+        rtt['min'] = float(rtt_list[0].lstrip())
+        rtt['avg'] = float(rtt_list[1])
+        rtt['max'] = float(rtt_list[2][:-3])
 
     return rtt
 
