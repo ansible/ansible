@@ -92,13 +92,11 @@ from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(want, have, module):
     commands = list()
-    want, have = updates
     state = module.params['state']
 
-    if state == 'absent' or (state == 'absent' and
-                             'text' in have.keys() and have['text']):
+    if state == 'absent' and have.get('text'):
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
@@ -159,7 +157,7 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:
@@ -168,6 +166,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
