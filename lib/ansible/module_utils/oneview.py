@@ -36,10 +36,6 @@ import traceback
 
 try:
     from hpOneView.oneview_client import OneViewClient
-    from hpOneView.exceptions import (HPOneViewException,
-                                      HPOneViewTaskError,
-                                      HPOneViewValueError,
-                                      HPOneViewResourceNotFound)
     HAS_HPE_ONEVIEW = True
 except ImportError:
     HAS_HPE_ONEVIEW = False
@@ -132,6 +128,69 @@ def _standardize_value(value):
     return str(value)
 
 
+class OneViewModuleException(Exception):
+    """
+    OneView base Exception.
+
+    Attributes:
+       msg (str): Exception message.
+       oneview_response (dict): OneView rest response.
+   """
+
+    def __init__(self, data):
+        self.msg = None
+        self.oneview_response = None
+
+        if isinstance(data, six.string_types):
+            self.msg = data
+        else:
+            self.oneview_response = data
+
+            if data and isinstance(data, dict):
+                self.msg = data.get('message')
+
+        if self.oneview_response:
+            Exception.__init__(self, self.msg, self.oneview_response)
+        else:
+            Exception.__init__(self, self.msg)
+
+
+class OneViewModuleTaskError(OneViewModuleException):
+    """
+    OneView Task Error Exception.
+
+    Attributes:
+       msg (str): Exception message.
+       error_code (str): A code which uniquely identifies the specific error.
+    """
+
+    def __init__(self, msg, error_code=None):
+        super(OneViewModuleTaskError, self).__init__(msg)
+        self.error_code = error_code
+
+
+class OneViewModuleValueError(OneViewModuleException):
+    """
+    OneView Value Error.
+    The exception is raised when the data contains an inappropriate value.
+
+    Attributes:
+       msg (str): Exception message.
+    """
+    pass
+
+
+class OneViewModuleResourceNotFound(OneViewModuleException):
+    """
+    OneView Resource Not Found Exception.
+    The exception is raised when an associated resource was not found.
+
+    Attributes:
+       msg (str): Exception message.
+    """
+    pass
+
+
 @six.add_metaclass(abc.ABCMeta)
 class OneViewModuleBase(object):
     MSG_CREATED = 'Resource created successfully.'
@@ -221,7 +280,7 @@ class OneViewModuleBase(object):
 
         It calls the inheritor 'execute_module' function and sends the return to the Ansible.
 
-        It handles any HPOneViewException in order to signal a failure to Ansible, with a descriptive error message.
+        It handles any OneViewModuleException in order to signal a failure to Ansible, with a descriptive error message.
 
         """
         try:
@@ -236,7 +295,7 @@ class OneViewModuleBase(object):
 
             self.module.exit_json(**result)
 
-        except HPOneViewException as exception:
+        except OneViewModuleException as exception:
             error_msg = '; '.join(to_native(e) for e in exception.args)
             self.module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
