@@ -1,0 +1,41 @@
+{
+    "status_code": 200, 
+    "data": {
+        "VpnConnections": [
+            {
+                "VpnConnectionId": "vpn-d7d1cac5", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-32d70c2c", 
+                "CustomerGatewayId": "cgw-9e13c880", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-d5d1cac7", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-32d70c2c", 
+                "CustomerGatewayId": "cgw-9e13c880", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }
+        ], 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "312ddaf3-437c-4a61-973b-1c9eca412cb0", 
+            "HTTPHeaders": {
+                "transfer-encoding": "chunked", 
+                "vary": "Accept-Encoding", 
+                "server": "AmazonEC2", 
+                "content-type": "text/xml;charset=UTF-8", 
+                "date": "Mon, 12 Jun 2017 20:22:25 GMT"
+            }
+        }
+    }
+}
