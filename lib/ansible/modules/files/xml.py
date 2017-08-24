@@ -710,7 +710,7 @@ def main():
         parser = etree.XMLParser(remove_blank_text=pretty_print)
         doc = etree.parse(infile, parser)
     except etree.XMLSyntaxError as e:
-        module.fail_json(msg="Error while parsing path: %s (%s)" % (xml_file or 'xml_string', e))
+        module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))
 
     if print_match:
         do_print_match(module, doc, xpath, namespaces)
