@@ -38,6 +38,7 @@ except ImportError:
 
 _SAFE_GROUP = re.compile("[^A-Za-z0-9\_]")
 
+
 class BaseInventoryPlugin(object):
     """ Parses an Inventory Source"""
 
@@ -162,6 +163,7 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
 def to_safe_group_name(name):
     ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
     return _SAFE_GROUP.sub("_", name)
+
 
 def detect_range(line=None):
     '''

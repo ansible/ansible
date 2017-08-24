@@ -268,7 +268,7 @@ class InventoryManager(object):
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
-                        display.warning('\n* Failed to parse %s with %s inventory plugin: %s' % (to_native(fail['src']), fail['plugin'], to_native(fail['exc'])))
+                        display.warning('\n* Failed to parse %s with %s plugin: %s' % (to_native(fail['src']), fail['plugin'], to_native(fail['exc'])))
                         display.vvv(fail['exc'].tb)
 
         if not parsed:
