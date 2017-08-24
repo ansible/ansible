@@ -33,6 +33,8 @@ description:
     This module can also be introspected to validate key parameters before
     returning successfully.
 extends_documentation_fragment: vyos
+notes:
+  - Tested against VYOS 1.1.7
 options:
   hostname:
     description:

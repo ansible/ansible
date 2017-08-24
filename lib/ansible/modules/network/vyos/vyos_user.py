@@ -35,6 +35,8 @@ description:
     either individual usernames or the collection of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   aggregate:
     description:

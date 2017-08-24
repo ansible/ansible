@@ -28,11 +28,13 @@ DOCUMENTATION = """
 ---
 module: vyos_static_route
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage static IP routes on Cisco VyOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Vyatta VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   prefix:
     description:

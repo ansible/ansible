@@ -33,6 +33,8 @@ short_description: Manage LLDP configuration on VyOS network devices
 description:
   - This module provides declarative management of LLDP service
     on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   state:
     description:
