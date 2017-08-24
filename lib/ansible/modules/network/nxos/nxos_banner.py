@@ -99,19 +99,18 @@ def map_obj_to_commands(want, have, module):
     if state == 'absent' and have.get('text'):
         commands.append('no banner %s' % module.params['banner'])
 
-    elif state == 'present':
-        if want['text'] and (want['text'] != have.get('text')):
-            banner_cmd = 'banner %s' % module.params['banner']
-            banner_cmd += ' @\n'
-            banner_cmd += want['text'].strip()
-            banner_cmd += '\n@'
-            commands.append(banner_cmd)
+    elif state == 'present' and want.get('text') != have.get('text'):
+        banner_cmd = 'banner %s @\n%s\n@' % (module.params['banner'], want['text'].strip())
+        commands.append(banner_cmd)
 
     return commands
 
 
 def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])[0]
+    if isinstance(output, dict):
+        output = list(output.values())[0]
+
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
         obj['text'] = output
