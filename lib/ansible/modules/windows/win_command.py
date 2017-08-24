@@ -64,10 +64,11 @@ EXAMPLES = r'''
   win_command: whoami
   register: whoami_out
 
-- name: Move to C:\somedir\ and create a backup using additional argument to change folder
+- name: Run command that only runs if folder exists and runs from a specific folder
   win_command: wbadmin -backupTarget:C:\backup\
   args:
     chdir: C:\somedir\
+    creates: C:\backup\
 '''
 
 RETURN = r'''
