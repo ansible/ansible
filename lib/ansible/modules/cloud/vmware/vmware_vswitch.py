@@ -18,67 +18,64 @@ DOCUMENTATION = '''
 module: vmware_vswitch
 short_description: Add or remove a VMware Standard Switch to an ESXi host
 description:
-    - Add or remove a VMware Standard Switch to an ESXi host
+- Add or remove a VMware Standard Switch to an ESXi host.
 version_added: 2.0
 author:
-    - Joseph Callen (@jcpowermac)
-    - Russell Teague (@mtnbikenc)
+- Joseph Callen (@jcpowermac)
+- Russell Teague (@mtnbikenc)
 notes:
-    - Tested on vSphere 5.5
+- Tested on vSphere 5.5
 requirements:
-    - "python >= 2.6"
-    - PyVmomi
+- python >= 2.6
+- PyVmomi
 options:
-    switch:
-        description:
-            - vSwitch name to add
-            - Alias C('switch') is added in version 2.4
-        required: True
-        aliases: ['switch_name']
-    nics:
-        description:
-            - A list of vmnic names or vmnic name to attach to vSwitch
-            - Alias C('nics') is added in version 2.4
-        required: False
-        aliases: ['nic_name']
-    number_of_ports:
-        description:
-            - Number of port to configure on vSwitch
-        default: 128
-        required: False
-    mtu:
-        description:
-            - MTU to configure on vSwitch
-        required: False
-    state:
-        description:
-            - Add or remove the switch
-        default: 'present'
-        choices:
-            - 'present'
-            - 'absent'
-        required: False
-extends_documentation_fragment: vmware.documentation
+  switch:
+    description:
+    - vSwitch name to add.
+    - Alias C(switch) is added in version 2.4.
+    required: yes
+    aliases: [ switch_name ]
+  nics:
+    description:
+    - A list of vmnic names or vmnic name to attach to vSwitch.
+    - Alias C(nics) is added in version 2.4.
+    aliases: [ nic_name ]
+  number_of_ports:
+    description:
+    - Number of port to configure on vSwitch.
+    default: 128
+  mtu:
+    description:
+    - MTU to configure on vSwitch.
+  state:
+    description:
+    - Add or remove the switch.
+    default: present
+    choices: [ absent, present ]
+extends_documentation_fragment:
+- vmware.documentation
 '''
 
 EXAMPLES = '''
 - name: Add a VMware vSwitch
-  local_action:
+  action:
     module: vmware_vswitch
     hostname: esxi_hostname
     username: esxi_username
     password: esxi_password
-    switch_name: vswitch_name
-    nic_name: vmnic_name
+    switch: vswitch_name
+    nics: vmnic_name
     mtu: 9000
+  delegate_to: localhost
 
 - name: Add a VMWare vSwitch without any physical NIC attached
   vmware_vswitch:
     hostname: 192.168.10.1
     username: admin
     password: password123
-    switch_name: vswitch_0001
+    switch: vswitch_0001
     mtu: 9000
+  delegate_to: localhost
 
 - name: Add a VMWare vSwitch with multiple NICs
   vmware_vswitch:
@@ -86,8 +83,11 @@ EXAMPLES = '''
     username: esxi_username
     password: esxi_password
     switch: vmware_vswitch_0004
-    nics: ['vmnic1', 'vmnic2']
+    nics:
+    - vmnic1
+    - vmnic2
     mtu: 9000
+  delegate_to: localhost
 '''
 
 try:
@@ -197,11 +197,13 @@ class VMwareHostVirtualSwitch(object):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(switch=dict(required=True, type='str', aliases=['switch_name']),
-                              nics=dict(required=False, type='list', aliases=['nic_name']),
-                              number_of_ports=dict(required=False, type='int', default=128),
-                              mtu=dict(required=False, type='int', default=1500),
-                              state=dict(default='present', choices=['present', 'absent'], type='str')))
+    argument_spec.update(dict(
+        switch=dict(type='str', required=True, aliases=['switch_name']),
+        nics=dict(type='list', aliases=['nic_name']),
+        number_of_ports=dict(type='int', default=128),
+        mtu=dict(type='int', default=1500),
+        state=dict(type='str', default='present', choices=['absent', 'present'])),
+    )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 

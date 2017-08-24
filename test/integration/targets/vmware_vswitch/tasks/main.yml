@@ -1,69 +1,128 @@
 # Test code for the vmware_vswitch
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: make sure pyvmomi is installed
+- name: Make sure pyvmomi is installed
   pip:
     name: pyvmomi
     state: latest
 
 - name: store the vcenter container ip
   set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-- debug: var=vcsim
+    vcsim: '{{ lookup("env", "vcenter_host") }}'
+
+- debug:
+    var: vcsim
 
 - name: Wait for Flask controller to come up online
   wait_for:
-    host: "{{ vcsim }}"
+    host: '{{ vcsim }}'
     port: 5000
     state: started
 
-- name: kill vcsim
+- name: Kill vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-- name: start vcsim
+    url: http://{{ vcsim }}:5000/killall
+
+- name: Start vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
   register: vcsim_instance
 
 - name: Wait for Flask controller to come up online
   wait_for:
-    host: "{{ vcsim }}"
+    host: '{{ vcsim }}'
     port: 443
     state: started
 
-- debug: var=vcsim_instance
+- debug:
+    var: vcsim_instance
 
-- name: find folders for each vm
-  vmware_vswitch:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: vmswitch_0001
-    nic_name: vnic_1
-  register: vswitch
+# FIXME: Implement check-mode support
+- name: Add a nic to a switch (check-mode)
+  vmware_vswitch: &add_nic
+    hostname: '{{ vcsim }}'
+    username: '{{ vcsim_instance.json.username }}'
+    password: '{{ vcsim_instance.json.password }}'
+    validate_certs: no
+    switch: vmswitch_0001
+    nics: vnic_1
+    state: present
+  check_mode: yes
+  register: add_nic_check
 
-- debug: var=vswitch
-
-# Currently, we don't return anything about vswitch, will
-# extend this TC once we have something to test more than
-# the state of task.
 - assert:
     that:
-        - "{{ vswitch.changed == true }}"
+#    - add_nic_check.changed == true
+    - add_nic_check.skipped == true
+
+- name: Add a nic to a switch
+  vmware_vswitch: *add_nic
+  register: add_nic_run
+
+- assert:
+    that:
+    - add_nic_run.changed == true
+
+## FIXME: Implement check-mode support
+#- name: Add a nic to a switch again (check-mode)
+#  vmware_vswitch: *add_nic
+#  check_mode: yes
+#  register: add_nic_again_check
+#
+#- assert:
+#    that:
+#    - add_nic_again_check.changed == false
+#
+#- name: Add a nic to a switch again
+#  vmware_vswitch: *add_nic
+#  register: add_nic_again_run
+#
+#- assert:
+#    that:
+#    - add_nic_again_run.changed == false
+#
+#- name: Remove a switch (check-mode)
+#  vmware_vswitch: &remove_nic
+#    hostname: '{{ vcsim }}'
+#    username: '{{ vcsim_instance.json.username }}'
+#    password: '{{ vcsim_instance.json.password }}'
+#    validate_certs: no
+#    switch: vmswitch_0001
+#    state: absent
+#  check_mode: yes
+#  register: remove_nic_check
+#
+## FIXME: Implement check-mode support
+#- assert:
+#    that:
+#    - remove_nic_check.changed == true
+
+## FIXME: Removing a switch fails
+#- name: Remove a switch
+#  vmware_vswitch: *remove_nic
+#  register: remove_nic_run
+#
+#- assert:
+#    that:
+#    - remove_nic_run.changed == true
+#
+#- name: Remove a switch again (check-mode)
+#  vmware_vswitch: *remove_nic
+#  check_mode: yes
+#  register: remove_nic_again_check
+#
+## FIXME: Implement check-mode support
+#- assert:
+#    that:
+#    - remove_nic_again_check_mode.changed == false
+#
+## FIXME: Removing a switch fails
+#- name: Remove a switch again
+#  vmware_vswitch: *remove_nic
+#  register: remove_nic_again_run
+#
+#- assert:
+#    that:
+#    - remove_nic_again_run.changed == false
