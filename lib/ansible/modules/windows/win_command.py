@@ -64,17 +64,12 @@ author:
 '''
 
 EXAMPLES = r'''
-# Example from Ansible Playbooks.
-- win_command: whoami
+- name: Save the result of 'whoami' in 'whoami_out'
+  win_command: whoami
   register: whoami_out
 
-# Run the command only if the specified file does not exist.
-- win_command: wbadmin -backupTarget:C:\backup\ creates=C:\backup\
-
-# You can also use the 'args' form to provide the options. This command
-# will change the working directory to C:\somedir\\ and will only run when
-# C:\backup\ doesn't exist.
-- win_command: wbadmin -backupTarget:C:\backup\ creates=C:\backup\
+- name: Run command that only runs if folder exists and runs from a specific folder
+  win_command: wbadmin -backupTarget:C:\backup\
   args:
     chdir: C:\somedir\
     creates: C:\backup\
