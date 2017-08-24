@@ -33,6 +33,8 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: vyos
+notes:
+  - Tested against VYOS 1.1.7
 options:
   gather_subset:
     description:

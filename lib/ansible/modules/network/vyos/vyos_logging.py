@@ -27,11 +27,13 @@ DOCUMENTATION = """
 ---
 module: vyos_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on Vyatta Vyos devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   dest:
     description:

@@ -27,12 +27,14 @@ DOCUMENTATION = """
 ---
 module: vyos_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on VyOS devices
 description:
   - This will configure both pre-login and post-login banners on remote
     devices running VyOS. It allows playbooks to add or remote
     banner text from the active running configuration.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   banner:
     description:
