@@ -211,7 +211,37 @@ EXAMPLES = '''
     force: yes
 '''
 
-RETURN = ''' # '''
+RETURN = '''
+lv:
+    description: describes logical volume
+    returned: changed and state present
+    type: complex
+    contains:
+        name:
+            description: name of logical volume
+            type: string
+            sample: mythinlv
+        cachemode:
+            description: cache mode of lv
+            type: string
+            sample: writethrough/writeback
+        pool_lv:
+            description: pool logical volume of logical volume, in case of thin logical volume
+            type: string
+            sample: mypoollv
+        pvs:
+            description: list of physical volumes on which logical volume will be created
+            type: string
+            sample: "/dev/sdb /dev/sdc"
+        size:
+            description: size of logical volume
+            type: string
+            sample: 20G
+        vg:
+            description: name of volume group of logical volume
+            type: string
+            sample: myvg
+'''
 
 __metaclass__ = type
 import re
@@ -243,7 +273,7 @@ class Vg(object):
         vgs_cmd = self.module.get_bin_path("vgs", required=True)
         cmd = (
             "%s --noheadings -o vg_name,size,free,vg_extent_size"
-            "--units %s --separator ';' %s" % (vgs_cmd, unit, vg_name)
+            " --units %s --separator ';' %s" % (vgs_cmd, unit, vg_name)
         )
 
         rc, current_vgs, err = self.module.run_command(cmd)
@@ -367,7 +397,7 @@ class Lvol(object):
         rc, current_lvs, err = self.module.run_command(
             (
                 "%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,cachemode"
-                "--units %s --separator ';' %s/%s" % (lvs_cmd, unit, vg_name, lv_name)
+                " --units %s --separator ';' %s/%s" % (lvs_cmd, unit, vg_name, lv_name)
             )
         )
 
@@ -577,8 +607,10 @@ class ThinPoolLvol(Lvol):
         lvs_cmd = self.module.get_bin_path("lvs", required=True)
 
         rc, current_lvs, err = self.module.run_command(
-            ("%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,lv_layout"
-                "--units %s --separator ';' %s" % (lvs_cmd, self.unit, self.vg.name))
+            (
+                "%s -a --noheadings --nosuffix -o lv_name,size,pool_lv,lv_layout"
+                " --units %s --separator ';' %s" % (lvs_cmd, self.unit, self.vg.name)
+            )
         )
 
         if rc != 0:
@@ -911,7 +943,14 @@ def main():
                         changed = True
                         msg += "Volume %s resized to %s." % (lv, size)
 
-    module.exit_json(changed=changed, msg=msg)
+    if changed and state == 'present':
+        lvol = Lvol(module, vg, lv, unit, opts, pvs)
+        lvol_info = lvol.get_lv_info(vg, lv, unit)
+        lvol_info['vg'] = vg
+        lvol_info['pvs'] = pvs
+        module.exit_json(changed=changed, msg=msg, lv=lvol_info)
+    else:
+        module.exit_json(changed=changed, msg=msg)
 
 
 if __name__ == '__main__':
