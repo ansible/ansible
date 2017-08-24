@@ -208,8 +208,15 @@ def main():
         commands = str(candidate).split('\n')
 
     if commands:
+        if module.params['before']:
+            commands[:0] = module.params['before']
+
+        if module.params['after']:
+            commands.extend(module.params['after'])
+
         if not module.check_mode:
             load_config(module, commands)
+
         result['changed'] = True
 
     result['updates'] = commands
