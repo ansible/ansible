@@ -288,7 +288,7 @@ class Nxapi:
             except ValueError:
                 self._module.fail_json(msg='unable to parse response')
 
-            if 'outputs' in response['ins_api'].keys():
+            if response['ins_api'].get('outputs'):
                 output = response['ins_api']['outputs']['output']
                 for item in to_list(output):
                     if check_status and item['code'] != '200':
