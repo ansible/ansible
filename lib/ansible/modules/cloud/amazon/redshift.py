@@ -448,7 +448,7 @@ def main():
         cluster_type                        = dict(choices=['multi-node', 'single-node', ], default='single-node'),
         cluster_security_groups             = dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids              = dict(aliases=['vpc_security_groups'], type='list'),
-        skip_final_cluster_snapshot         = dict(aliases=['skip_final_snapshot'], type='bool'),
+        skip_final_cluster_snapshot         = dict(aliases=['skip_final_snapshot'], type='bool', default=False),
         final_cluster_snapshot_identifier   = dict(aliases=['final_snapshot_id'], required=False),
         cluster_subnet_group_name           = dict(aliases=['subnet']),
         availability_zone                   = dict(aliases=['aws_zone', 'zone']),
