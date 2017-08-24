@@ -117,37 +117,34 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['tenant', 'vrf']],
+            ['state', 'present', ['tenant', 'vrf']],
+        ],
     )
 
     description = module.params['description']
     policy_control_direction = module.params['policy_control_direction']
     policy_control_preference = module.params['policy_control_preference']
     state = module.params['state']
-    tenant = module.params['tenant']
     vrf = module.params['vrf']
 
     aci = ACIModule(module)
-
-    if vrf is not None:
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/ctx-%(vrf)s.json' % module.params
-        elif state == 'query':
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=fvCtx&rsp-subtree-include=no-scoped' % module.params
-        else:
-            module.fail_json(msg="Parameter 'tenant' is required for state 'absent' or 'present'")
-    elif state == 'query':
-        path = 'api/class/fvCtx.json'
-    else:
-        module.fail_json(msg="Parameter 'vrf' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class="tenant", subclass_1="vrf")
     aci.get_existing()
 
     if state == 'present':
         # Filter out module params with null values
-        aci.payload(aci_class='fvCtx', class_config=dict(descr=description, pcEnfDir=policy_control_direction, pcEnfPref=policy_control_preference, name=vrf))
+        aci.payload(
+            aci_class='fvCtx',
+            class_config=dict(
+                descr=description,
+                pcEnfDir=policy_control_direction,
+                pcEnfPref=policy_control_preference,
+                name=vrf,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvCtx')
