@@ -33,7 +33,7 @@
       assert:
         that:
            - 'result.changed'
-           - 'result.db_parameter_group_name == rds_param_group.name'
+           - "'{{ result.db_parameter_group_name | lower }}' == '{{ rds_param_group.name | lower }}'"
            - 'result.tags == {}'
 
     # ============================================================
