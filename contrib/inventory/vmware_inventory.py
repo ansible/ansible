@@ -175,7 +175,7 @@ class VMWareInventory(object):
         elif self.args.list:
             # Display list of instances for inventory
             data_to_print = self.inventory
-        return json.dumps(data_to_print, sort_keys=True, indent=2)
+        return json.dumps(data_to_print, indent=2)
 
     def is_cache_valid(self):
 
