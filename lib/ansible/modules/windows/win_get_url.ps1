@@ -43,7 +43,7 @@ $result = @{
 
 # If skip_certificate_validation was specified, use validate_certs
 if ($skip_certificate_validation -ne $null) {
-    Add-DeprecationWarning -obj $result -msg "The parameter 'skip_vertificate_validation' is being replaced with 'validate_certs'" -version 2.8
+    Add-DeprecationWarning -obj $result -message "The parameter 'skip_certificate_validation' is being replaced with 'validate_certs'" -version 2.8
     $validate_certs = -not $skip_certificate_validation
 }
 
