@@ -185,7 +185,11 @@ def map_obj_to_commands(updates, module):
             continue
 
         if not have.get('state'):
-            commands.append('vrf definition %s' % want['name'])
+            commands.extend([
+                'vrf definition %s' % want['name'],
+                'address-family ipv4', 'exit',
+                'address-family ipv6', 'exit',
+            ])
 
         if needs_update(want, have, 'description'):
             cmd = 'description %s' % want['description']
@@ -337,6 +341,9 @@ def check_declarative_intent_params(want, module):
 
         if rc == 0:
             data = out.strip().split()
+            # data will be empty if the vrf was just added
+            if not data:
+                return
             vrf = data[0]
             interface = data[-1]
 
@@ -356,6 +363,7 @@ def main():
         name=dict(),
         description=dict(),
         rd=dict(),
+
         interfaces=dict(type='list'),
 
         delay=dict(default=10, type='int'),
