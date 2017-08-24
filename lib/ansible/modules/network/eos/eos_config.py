@@ -61,7 +61,7 @@ options:
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) and
-        I(parents) arguments.
+        I(parents) arguments. It can be a Jinja2 template as well.
     required: false
     default: null
     version_added: "2.2"
