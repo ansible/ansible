@@ -79,12 +79,12 @@ options:
     version_added: "2.2"
   download_pipe:
     description:
-      - Set to C(yes) to indicate the archived file will by downloaded to named pipe. It does not require additional space in 
+      - Set to C(yes) to indicate the archived file will by downloaded to named pipe. It does not require additional space in
         temporary directory. But does not support check_mode.
       - This option is mutually exclusive with C(copy).
     type: 'bool'
     default: 'no'
-    version_added: "proposal"
+    version_added: "2.4"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
@@ -760,21 +760,21 @@ class TarXzArchive(TgzArchive):
 
 
 # try handlers in order and return the one that works or bail if none work
-def pick_handler(src, dest, file_args, module,pipe):
+def pick_handler(src, dest, file_args, module, pipe):
     # can not read src whem using named pipes
     # so guessing handler by file extentsion
     if pipe:
-        handler=None
-        (f,ext) = os.path.splitext(src)
+        handler = None
+        (f, ext) = os.path.splitext(src)
         ext = ext.lower()
         if ext == ".zip":
-            handler=ZipArchive;
+            handler = ZipArchive
         elif ext == ".gz":
-            handler=TgzArchive
+            handler = TgzArchive
         elif ext == ".bz2":
-            handler=TarBzipArchive
+            handler = TarBzipArchive
         elif ext == ".xz":
-            handler=TarXzArchive
+            handler = TarXzArchive
         if handler:
             return handler(src, dest, file_args, module)
         else:
@@ -822,9 +822,9 @@ def main():
         download_pipe = False
     file_args = module.load_file_common_arguments(module.params)
 
-    proc_parent=False
-    proc_child=False
-    proc_pid=None
+    proc_parent = False
+    proc_child = False
+    proc_pid = None
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -843,15 +843,14 @@ def main():
                     if module.check_mode:
                         module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using download_pipe" % module._name)
 
-                    #make Pipe
+                    # make Pipe
                     os.mkfifo(package)
-                    proc_pid=os.fork()
+                    proc_pid = os.fork()
                     if proc_pid != 0:
-                        proc_parent=True
-                        src=package
+                        proc_parent = True
+                        src = package
                     else:
-                        proc_child=True
-                        
+                        proc_child = True
 
                 if not download_pipe or proc_child:
                     # open in binary mode for python3
@@ -890,11 +889,11 @@ def main():
     if not os.path.isdir(dest):
         module.fail_json(msg="Destination '%s' is not a directory" % dest)
 
-    handler = pick_handler(src, dest, file_args, module,download_pipe)
+    handler = pick_handler(src, dest, file_args, module, download_pipe)
 
     res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
-    check_results=None
+    check_results = None
     if not download_pipe:
         # do we need to do unpack?
         check_results = handler.is_unarchived()
@@ -908,25 +907,24 @@ def main():
         # Get diff if required
         if check_results.get('diff', False):
             res_args['diff'] = {'prepared': check_results['diff']}
-            
+
     # do the unpack
-    if download_pipe  or ( not module.check_mode and 
-		check_results['unarchived']) :
+    if download_pipe or (not module.check_mode and check_results['unarchived']):
         try:
             res_args['extract_results'] = handler.unarchive()
             if proc_parent:
-                #wait for child
-                pid,child_status = os.waitpid(proc_pid,0)
-                #something failed
+                # wait for child
+                pid, child_status = os.waitpid(proc_pid, 0)
+                # something failed
                 if child_status:
-                    module.fail_json(msg="Download failed to namped pipe %s to %s with status %d" % (src, dest,child_status), **res_args)
+                    module.fail_json(msg="Download failed to namped pipe %s to %s with status %d" % (src, dest, child_status), **res_args)
 
             if res_args['extract_results']['rc'] != 0:
-            	module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+                module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
         except IOError:
-              module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+                module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
         else:
-             res_args['changed'] = True
+                res_args['changed'] = True
 
     # Run only if we found differences (idempotence) or diff was missing
     if not download_pipe and res_args.get('diff', True) and not module.check_mode:
