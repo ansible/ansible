@@ -170,7 +170,7 @@ def get_ping_results(command, module):
         summary, ping_pass = get_summary(splitted_ping, reference_point)
         rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point+2)
 
-    return (splitted_ping, summary, rtt, ping_pass)
+    return (summary, rtt, ping_pass)
 
 
 def main():
@@ -209,7 +209,7 @@ def main():
         if arg:
             ping_command += ' {0} {1}'.format(command, arg)
 
-    ping_results, summary, rtt, ping_pass = get_ping_results(ping_command, module)
+    summary, rtt, ping_pass = get_ping_results(ping_command, module)
 
     results = {}
     results['commands'] = [ping_command]
