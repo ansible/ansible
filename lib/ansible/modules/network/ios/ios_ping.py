@@ -80,51 +80,34 @@ EXAMPLES = r'''
 '''
 
 RETURN = '''
-action:
-  description: Show what action has been performed.
-  returned: always
-  type: str
-  sample: "Sending 5, 100-byte ICMP Echos to 10.1.100.1, timeout is 2 seconds:"
-updates:
+commands:
   description: Show the command sent.
   returned: always
   type: list
   sample: ["ping vrf prod 10.40.40.40 count 20 source loopback0"]
-count:
-  description: Show amount of packets sent.
-  returned: always
-  type: str
-  sample: "2"
-dest:
-  description: Show the ping destination.
-  returned: always
-  type: str
-  sample: "10.40.40.40"
-rtt:
-  description: Show RTT stats.
-  returned: always
-  type: dict
-  sample: {"avg": "2", "max":"8", "min": "1"}
-packets_rx:
-  description: Packets successfully received.
-  returned: always
-  type: str
-  sample: "20"
-packets_tx:
-  description: Packets successfully transmitted.
-  returned: always
-  type: str
-  sample: "20"
 packet_loss:
   description: Percentage of packets lost.
   returned: always
   type: str
   sample: "0%"
+packets_rx:
+  description: Packets successfully received.
+  returned: always
+  type: int
+  sample: 20
+packets_tx:
+  description: Packets successfully transmitted.
+  returned: always
+  type: int
+  sample: 20
+rtt:
+  description: Show RTT stats.
+  returned: always
+  type: dict
+  sample: {"avg": "2", "max":"8", "min": "1"}
 '''
 
-from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
 from ansible.module_utils.ios import run_commands
 from ansible.module_utils.ios import ios_argument_spec, check_args
 import re
@@ -157,21 +140,26 @@ def main():
     if warnings:
         results["warnings"] = warnings
 
-    results["updates"] = [build_ping(dest, count, source, vrf)]
+    results["commands"] = [build_ping(dest, count, source, vrf)]
 
-    ping_results = run_commands(module, commands=results["updates"])
+    ping_results = run_commands(module, commands=results["commands"])
     ping_results_list = ping_results[0].split("\n")
-    results["action"] = ping_results_list[1]
 
     success, rx, tx, rtt = parse_ping(ping_results_list[3])
     loss = abs(100 - int(success))
     results["packet_loss"] = str(loss) + "%"
-    results["packets_rx"] = rx
-    results["packets_tx"] = tx
-    results["count"] = tx
+    results["packets_rx"] = int(rx)
+    results["packets_tx"] = int(tx)
+
+    # Convert rtt values to int
+    for k,v in rtt.items():
+      rtt[k] = int(v)
+
     results["rtt"] = rtt
 
     validate_results(module, loss, results)
+
+    module.exit_json(**results)
 
 
 def build_ping(dest, count=None, source=None, vrf=None):
@@ -210,16 +198,12 @@ def parse_ping(ping_stats):
 
 def validate_results(module, loss, results):
     """
-    This function is used to validate whether the ping results were expected per "state" param.
+    This function is used to validate whether the ping results were unexpected per "state" param.
     """
     state = module.params["state"]
-    if state == "present" and loss != 100:
-        module.exit_json(msg="Ping succeeded expectedly", **results)
-    elif state == "present":
+    if state == "present" and loss == 100:
         module.fail_json(msg="Ping failed unexpectedly", **results)
-    elif state == "absent" and loss == 100:
-        module.exit_json(msg="Ping failed expectedly", **results)
-    else:
+    elif state == "absent" and loss < 100:
         module.fail_json(msg="Ping succeeded unexpectedly", **results)
 
 
