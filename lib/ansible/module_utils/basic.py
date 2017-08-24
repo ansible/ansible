@@ -257,14 +257,14 @@ DEFAULT_PERM = 0o0666    # default file permission bits
 def json_dumps(data, default=None):
     for encoding in ("utf-8", "latin-1"):
         try:
-            return json.dumps(data, encoding=encoding, default=default)
+            return json.dumps(data, encoding=encoding, default=default, cls=_SetEncoder)
         # Old systems using old simplejson module does not support encoding keyword.
         except TypeError:
             try:
                 new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
             except UnicodeDecodeError:
                 continue
-            return json.dumps(new_data, default=default)
+            return json.dumps(new_data, default=default, cls=_SetEncoder)
         except UnicodeDecodeError:
             continue
 
@@ -273,17 +273,20 @@ def json_dumps(data, default=None):
 
 
 class AnsibleModuleExit(Exception):
+    # maybe make a dist between module 'rc' and the code sys.exit() is called with?
+    default_return_code = 0
+
     # exception_data here is a dict, basically kwargs from fail_json
     # for the rarely used extra info (path, invocation, etc)
     def __init__(self, return_code=None, exception_data=None):
-        self.return_code = return_code or 0
+        self.return_code = return_code
+        if return_code is None:
+            self.return_code = self.default_return_code
         self.data = {}
         exception_data = exception_data or {}
 
-        default_msg = '%s' % self.__class__.__name__
-        self.data['msg'] = exception_data.pop('msg', default_msg)
-        self.data['exc_class'] = self.__class__.__name__
-        self.data['rc'] = self.return_code
+        if 'msg' in exception_data:
+            self.data['msg'] = exception_data.pop('msg')
 
         self.data.update(exception_data)
 
@@ -291,12 +294,13 @@ class AnsibleModuleExit(Exception):
     # the exception/exit and remove this.
     def __repr__(self):
         """Return the json repr of error ala jsonify."""
+        # default_msg = '%s' % self.__class__.__name__
         buf = '\n%s' % json_dumps(self.data)
         return buf
 
 
 class AnsibleModuleFatalError(AnsibleModuleExit):
-    pass
+    default_return_code = 1
 
 
 # The original excepthook
@@ -947,18 +951,33 @@ class AnsibleModule(object):
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
 
+    def _exception_to_stderr(self, exc_type, exc_value, exc_traceback):
+        '''write the exception traceback to modules stderr so action's output parsing sets results['stderr']'''
+        exception_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        sys.stderr.write('%s\n' % exception_msg)
+
     def _excepthook(self, exc_type, exc_value, exc_traceback):
         # slightly weird construct, kind of an experiment
         # advantage: can use try/except for exception matching
         # disadvantage: kind of weird looking
         try:
             raise exc_value
+        except SystemExit as e:
+            raise SystemExit
+            #sys.__excepthook__(exc_type, exc_value, exc_traceback)
         except AnsibleModuleFatalError as e:
             # Note: writing to stdout since we are returned a valid json object with error data in it
+            #print('\n\n e.return_code: %s' % e.return_code)
+            # action _low_level_execute_module sets module results['stderr'] based on... stderr
+            self._exception_to_stderr(exc_type, exc_value, exc_traceback)
             print(repr(e))
+            #sys.exit(int(e.return_code))
             sys.exit(e.return_code)
         except AnsibleModuleExit as e:
             print(repr(e))
+            # print
+            self._exception_to_stderr(exc_type, exc_value, exc_traceback)
+            #sys.exit(int(e.return_code))
             sys.exit(e.return_code)
         except exc_type:
             exception = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
@@ -971,12 +990,14 @@ class AnsibleModule(object):
                                             exc_type=str(exc_type),
                                             exc_traceback=''.join(traceback.format_tb(exc_traceback)))
             # Could also print info to stderr, but that confuses controller side if we also provide 'exception' field
+            self._exception_to_stderr(exc_type, exc_value, exc_traceback)
             print(json_dumps(result))
             sys.exit(1)
         # TODO: An exception mapper would go here, if we want to provide more info about specific exceptions or ignore
         #       certain exceptions
 
         # Something busted in the above, fallback to builtin
+        sys.stderr.write('\nNot sure, fallback to builtin exchook\n')
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
     def _set_excepthook(self):
@@ -1981,7 +2002,7 @@ class AnsibleModule(object):
             return value.strip()
         else:
             if isinstance(value, (list, tuple, dict)):
-                return self.jsonify(value)
+                return json_dumps(value)
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
     def _check_type_raw(self, value):
@@ -2353,8 +2374,7 @@ class AnsibleModule(object):
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         kwargs = self._format_exit_json(**kwargs)
-        raise AnsibleModuleExit(return_code=0,
-                                exception_data=kwargs)
+        raise AnsibleModuleExit(exception_data=kwargs)
 
     def _format_fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
@@ -2374,8 +2394,9 @@ class AnsibleModule(object):
 
     def fail_json(self, **kwargs):
         kwargs = self._format_fail_json(**kwargs)
-        raise AnsibleModuleFatalError(return_code=1,
-                                      exception_data=kwargs)
+        # TODO: why/what calls fail_json() wanting a rc=0 exit code?
+        #       command seems to be able to
+        raise AnsibleModuleFatalError(exception_data=kwargs)
 
     def fail_on_missing_params(self, required_params=None):
         ''' This is for checking for required params when we can not check via argspec because we

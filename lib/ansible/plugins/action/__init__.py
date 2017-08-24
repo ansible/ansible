@@ -735,9 +735,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # actually execute
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
-
+        import pprint
+        display.debug('exec_command res %s' % pprint.pformat(res))
         # parse the main result
         data = self._parse_returned_data(res)
+        display.debug('exec_command res post parser_returned %s' % pprint.pformat(data))
 
         # NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
         # get internal info before cleaning
@@ -826,20 +828,27 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = dict(failed=True, _ansible_parsed=False)
             data['msg'] = "MODULE FAILURE"
 
-        if data.get('failed', False):
             data['module_stdout'] = res.get('stdout', u'')
-            if 'stderr' in res:
-                data['module_stderr'] = res['stderr']
-                # don't parse stderr for exceptions if task explicitly returned a non empty exception field
-                # if res['stderr'].startswith(u'Traceback'):
-                #    data['exception'] = res['stderr']
+            _stderr = res.get('stderr', u'')
+            # TODO: stderr should always be a string, but verify/convert in case?
+            if _stderr:
+                data['module_stderr'] = _stderr
+
+                # FIXME: for debug purposes atm, so we can see the 'exception' returned in results data and whatever
+                #        we found in the stderr output
+                # data['stderr_traceback'] = _stderr
+                # data['results_exception_traceback'] = data.get('exception', u'')
+
+                # TODO: try to not parse stderr for exceptions if task explicitly returned a non empty exception field
+                if _stderr.startswith(u'Traceback'):
+                    data['exception'] = _stderr
+
             if 'rc' in res:
                 data['rc'] = res['rc']
-        if not data.get('exception', None):
-            if res.get('stderr', False) and res['stderr'].startswith(u'Traceback'):
-                    data['exception'] = res['stderr']
-#        if 'rc' in res:
-#            data['rc'] = res['rc']
+
+        # TODO: figure out why we don't want to always return rc and possibly change that if it makes sense
+        # if 'rc' in res:
+        #    data['rc'] = res['rc']
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
@@ -879,7 +888,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 executable = self._play_context.executable
                 # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
                 # only applied for the default executable to avoid interfering with the raw action
-                cmd = self._connection._shell.append_command(cmd, 'sleep 0')
+                # cmd = self._connection._shell.append_command(cmd, 'sleep 0')
             if executable:
                 cmd = executable + ' -c ' + shlex_quote(cmd)
 
@@ -895,6 +904,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if self._connection.transport == 'local':
                 os.chdir(cwd)
 
+        display.debug("_low_level_execute_command rc: %s" % (rc))
+        display.debug('stdout: %s' % stdout)
+        display.debug('stderr: %s' % stderr)
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
         if isinstance(stdout, binary_type):
@@ -914,6 +926,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if rc is None:
             rc = 0
 
+        display.debug("_low_level_execute_command rc(2) : %s" % (rc))
         # be sure to remove the BECOME-SUCCESS message now
         out = self._strip_success_message(out)
 

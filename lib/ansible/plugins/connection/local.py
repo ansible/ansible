@@ -133,7 +133,7 @@ class Connection(ConnectionBase):
         display.debug("getting output with communicate()")
         stdout, stderr = p.communicate(in_data)
         display.debug("done communicating")
-
+        display.debug('p.returncode=%s' % p.returncode)
         display.debug("done with local.exec_command()")
         return (p.returncode, stdout, stderr)
 
