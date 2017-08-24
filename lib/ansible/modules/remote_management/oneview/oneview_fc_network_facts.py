@@ -17,7 +17,7 @@ description:
     - Retrieve the facts about one or more of the Fibre Channel Networks from OneView.
 version_added: "2.4"
 requirements:
-    - "hpOneView >= 2.0.1"
+    - hpOneView >= 2.0.1
 author:
     - Felipe Bulsoni (@fgbulsoni)
     - Thiago Miotto (@tmiotto)
@@ -26,7 +26,6 @@ options:
     name:
       description:
         - Fibre Channel Network name.
-      required: false
 
 extends_documentation_fragment:
     - oneview
@@ -36,14 +35,14 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Gather facts about all Fibre Channel Networks
   oneview_fc_network_facts:
-    config: '/etc/oneview/oneview_config.json'
+    config: /etc/oneview/oneview_config.json
   delegate_to: localhost
 
 - debug: var=fc_networks
 
 - name: Gather paginated, filtered and sorted facts about Fibre Channel Networks
   oneview_fc_network_facts:
-    config: '/etc/oneview/oneview_config.json'
+    config: /etc/oneview/oneview_config.json
     params:
       start: 1
       count: 3
@@ -54,7 +53,7 @@ EXAMPLES = '''
 
 - name: Gather facts about a Fibre Channel Network by name
   oneview_fc_network_facts:
-    config: '/etc/oneview/oneview_config.json'
+    config: /etc/oneview/oneview_config.json
     name: network name
   delegate_to: localhost
 
