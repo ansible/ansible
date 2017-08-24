@@ -5,6 +5,7 @@
     operational_status: offline
     read_only: true
   register: add_specified_disk
+  failed_when: add_specified_disk.msg == 'No disk could be found and selected with the specified parameter options.'
 
 - name: Test add_specified_disk
   assert:
@@ -99,7 +100,7 @@
   failed_when: fail_part_disk.msg == 'Existing volumes found on the selected disk.'
 
   #  Use result of module (disk number)
-- name: Select a specified disk and manage it with default set option values
+- name: Select a specified disk and set it up with default set option values
   win_disk_management:
     disk_size: 100
     partition_style_select: raw
