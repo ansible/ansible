@@ -26,7 +26,7 @@ author:
 options:
   function_name:
     description:
-      - "Name of the Labda function whose resource policy you are updating by adding a new permission."
+      - "Name of the Lambda function whose resource policy you are updating by adding a new permission."
       - "You can specify a function name (for example, Thumbnail ) or you can specify Amazon Resource Name (ARN) of the"
       - "function (for example, arn:aws:lambda:us-west-2:account-id:function:ThumbNail ). AWS Lambda also allows you to"
       - "specify partial ARN (for example, account-id:Thumbnail ). Note that the length constraint applies only to the"
@@ -139,7 +139,7 @@ except:
 
 def pc(key):
     """
-    Changes python key into Pascale case equivalent. For example, 'this_function_name' becomes 'ThisFunctionName'.
+    Changes python key into Pascal case equivalent. For example, 'this_function_name' becomes 'ThisFunctionName'.
 
     :param key:
     :return:
@@ -212,13 +212,12 @@ def get_qualifier(module):
     :return:
     """
 
-    qualifier = None
     if module.params.get('version') is not None:
-        qualifier = str(module.params['version'])
+        return str(module.params['version'])
     elif module.params['alias']:
-        qualifier = str(module.params['alias'])
+        return str(module.params['alias'])
 
-    return qualifier
+    return None
 
 
 def extract_statement(policy, sid):
@@ -279,7 +278,7 @@ def get_policy_statement(module, client):
         try:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 return {}
-        except:  # catches ClientErrors without response, e.g. fail before connect
+        except AttributeError:  # catches ClientErrors without response, e.g. fail before connect
             pass
         module.fail_json_aws(e, msg="retrieving function policy")
     except Exception as e:
