@@ -21,6 +21,7 @@ requirements:
 author:
     - Felipe Bulsoni (@fgbulsoni)
     - Thiago Miotto (@tmiotto)
+    - Adriane Cardozo (@adriane-cardozo)
 options:
     state:
         description:
