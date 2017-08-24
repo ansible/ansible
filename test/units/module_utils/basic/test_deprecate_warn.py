@@ -40,7 +40,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
 
                 am.warn('warning1')
 
-                with self.assertRaises(SystemExit):
+                with self.assertRaises(ansible.module_utils.basic.AnsibleModuleExit):
                     am.exit_json(warnings=['warning2'])
                 self.assertEquals(json.loads(sys.stdout.getvalue())['warnings'], ['warning1', 'warning2'])
 
@@ -58,7 +58,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
                 am.deprecate('deprecation1')
                 am.deprecate('deprecation2', '2.3')
 
-                with self.assertRaises(SystemExit):
+                with self.assertRaises(ansible.module_utils.basic.AnsibleModuleExit):
                     am.exit_json(deprecations=['deprecation3', ('deprecation4', '2.4')])
                 output = json.loads(sys.stdout.getvalue())
                 self.assertTrue('warnings' not in output or output['warnings'] == [])
@@ -80,7 +80,7 @@ class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
                 )
                 am._name = 'unittest'
 
-                with self.assertRaises(SystemExit):
+                with self.assertRaises(ansible.module_utils.basic.AnsibleModuleExit):
                     am.exit_json(deprecations='Simple deprecation warning')
                 output = json.loads(sys.stdout.getvalue())
                 self.assertTrue('warnings' not in output or output['warnings'] == [])

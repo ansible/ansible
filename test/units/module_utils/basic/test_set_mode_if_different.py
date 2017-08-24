@@ -52,6 +52,7 @@ class TestSetModeIfDifferentBase(ModuleTestCase):
         self.am = basic.AnsibleModule(
             argument_spec=dict(),
         )
+        self.module_fatal_error = basic.AnsibleModuleFatalError
 
     def tearDown(self):
         super(TestSetModeIfDifferentBase, self).tearDown()
@@ -99,7 +100,7 @@ class TestSetModeIfDifferent(TestSetModeIfDifferentBase):
             with patch('os.lchmod', return_value=None, create=True) as m_os:
                 m.side_effect = [self.mock_stat1, self.mock_stat2, self.mock_stat2]
                 self.am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
-                with pytest.raises(SystemExit):
+                with pytest.raises(self.module_fatal_error):
                     self.am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False)
 
         original_hasattr = hasattr

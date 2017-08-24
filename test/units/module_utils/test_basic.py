@@ -299,7 +299,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 mutually_exclusive=mut_ex,
@@ -316,7 +316,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 mutually_exclusive=mut_ex,
@@ -333,7 +333,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 mutually_exclusive=mut_ex,
@@ -439,7 +439,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -453,7 +453,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -467,7 +467,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -481,7 +481,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -495,7 +495,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -536,7 +536,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -609,7 +609,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -655,7 +655,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
             self.assertRaises(
-                SystemExit,
+                basic.AnsibleModuleFatalError,
                 basic.AnsibleModule,
                 argument_spec=arg_spec,
                 no_log=True,
@@ -765,7 +765,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.get_bin_path.return_value = '/path/to/selinuxenabled'
         am.run_command = MagicMock()
         am.run_command.return_value = (0, '', '')
-        self.assertRaises(SystemExit, am.selinux_enabled)
+        self.assertRaises(basic.AnsibleModuleFatalError, am.selinux_enabled)
         am.get_bin_path.return_value = None
         self.assertEqual(am.selinux_enabled(), False)
 
@@ -850,11 +850,14 @@ class TestModuleUtilsBasic(ModuleTestCase):
             e = OSError()
             e.errno = errno.ENOENT
             with patch('selinux.lgetfilecon_raw', side_effect=e):
-                self.assertRaises(SystemExit, am.selinux_context, path='/foo/bar')
+                basic.AnsibleModuleFatalError,
+                self.assertRaises(basic.AnsibleModuleFatalError,
+                                  am.selinux_context, path='/foo/bar')
 
             e = OSError()
             with patch('selinux.lgetfilecon_raw', side_effect=e):
-                self.assertRaises(SystemExit, am.selinux_context, path='/foo/bar')
+                self.assertRaises(basic.AnsibleModuleFatalError,
+                                  am.selinux_context, path='/foo/bar')
 
         delattr(basic, 'selinux')
 
@@ -974,10 +977,10 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 am.check_mode = False
 
             with patch('selinux.lsetfilecon', return_value=1) as m:
-                self.assertRaises(SystemExit, am.set_context_if_different, '/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
+                self.assertRaises(basic.AnsibleModuleFatalError, am.set_context_if_different, '/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
             with patch('selinux.lsetfilecon', side_effect=OSError) as m:
-                self.assertRaises(SystemExit, am.set_context_if_different, '/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
+                self.assertRaises(basic.AnsibleModuleFatalError, am.set_context_if_different, '/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
             am.is_special_selinux_path = MagicMock(return_value=(True, ['sp_u', 'sp_r', 'sp_t', 's0']))
 
@@ -1015,7 +1018,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 m.assert_called_with(b'/path/to/file', 0, -1)
 
             with patch('pwd.getpwnam', side_effect=KeyError):
-                self.assertRaises(SystemExit, am.set_owner_if_different, '/path/to/file', 'root', False)
+                self.assertRaises(basic.AnsibleModuleFatalError, am.set_owner_if_different, '/path/to/file', 'root', False)
 
             m.reset_mock()
             am.check_mode = True
@@ -1024,7 +1027,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             am.check_mode = False
 
         with patch('os.lchown', side_effect=OSError) as m:
-            self.assertRaises(SystemExit, am.set_owner_if_different, '/path/to/file', 'root', False)
+            self.assertRaises(basic.AnsibleModuleFatalError, am.set_owner_if_different, '/path/to/file', 'root', False)
 
     def test_module_utils_basic_ansible_module_set_group_if_different(self):
         from ansible.module_utils import basic
@@ -1054,7 +1057,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 m.assert_called_with(b'/path/to/file', -1, 0)
 
             with patch('grp.getgrnam', side_effect=KeyError):
-                self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
+                self.assertRaises(basic.AnsibleModuleFatalError, am.set_group_if_different, '/path/to/file', 'root', False)
 
             m.reset_mock()
             am.check_mode = True
@@ -1063,7 +1066,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             am.check_mode = False
 
         with patch('os.lchown', side_effect=OSError) as m:
-            self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
+            self.assertRaises(basic.AnsibleModuleFatalError, am.set_group_if_different, '/path/to/file', 'root', False)
 
     @patch('tempfile.mkstemp')
     @patch('os.umask')
@@ -1225,7 +1228,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
         _os_umask.side_effect = [18, 0]
         _os_rename.side_effect = OSError(errno.EIO, 'failing with EIO')
-        self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
+        self.assertRaises(basic.AnsibleModuleFatalError, am.atomic_move, '/path/to/src', '/path/to/dest')
 
         # next we test with EPERM so it continues to the alternate code for moving
         # test with mkstemp raising an error first
@@ -1239,7 +1242,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         _tempfile_mkstemp.return_value = None
         _tempfile_mkstemp.side_effect = OSError()
         am.selinux_enabled.return_value = False
-        self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
+        self.assertRaises(basic.AnsibleModuleFatalError, am.atomic_move, '/path/to/src', '/path/to/dest')
 
         # then test with it creating a temp file
         _os_path_exists.side_effect = [False, False, False]

@@ -51,7 +51,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.stdout_swap_ctx.__exit__(None, None, None)
 
     def test_exit_json_no_args_exits(self):
-        with self.assertRaises(SystemExit) as ctx:
+        with self.assertRaises(basic.AnsibleModuleExit) as ctx:
             self.module.exit_json()
         if isinstance(ctx.exception, int):
             # Python2.6... why does sys.exit behave this way?
@@ -62,7 +62,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.assertEquals(return_val, dict(invocation=empty_invocation))
 
     def test_exit_json_args_exits(self):
-        with self.assertRaises(SystemExit) as ctx:
+        with self.assertRaises(basic.AnsibleModuleExit) as ctx:
             self.module.exit_json(msg='message')
         if isinstance(ctx.exception, int):
             # Python2.6... why does sys.exit behave this way?
@@ -73,7 +73,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.assertEquals(return_val, dict(msg="message", invocation=empty_invocation))
 
     def test_fail_json_exits(self):
-        with self.assertRaises(SystemExit) as ctx:
+        with self.assertRaises(basic.AnsibleModuleExit) as ctx:
             self.module.fail_json(msg='message')
         if isinstance(ctx.exception, int):
             # Python2.6... why does sys.exit behave this way?
@@ -84,7 +84,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.assertEquals(return_val, dict(msg="message", failed=True, invocation=empty_invocation))
 
     def test_exit_json_proper_changed(self):
-        with self.assertRaises(SystemExit) as ctx:
+        with self.assertRaises(basic.AnsibleModuleExit) as ctx:
             self.module.exit_json(changed=True, msg='success')
         return_val = json.loads(self.fake_stream.getvalue())
         self.assertEquals(return_val, dict(changed=True, msg='success', invocation=empty_invocation))
@@ -123,7 +123,8 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
             params = dict(ANSIBLE_MODULE_ARGS=args)
-            params = json.dumps(params)
+            #params = json.dumps(params)
+            params = basic.json_dumps(params)
 
             with swap_stdin_and_argv(stdin_data=params):
                 with swap_stdout():
@@ -135,7 +136,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
                             token=dict(no_log=True),
                         ),
                     )
-                    with self.assertRaises(SystemExit) as ctx:
+                    with self.assertRaises(basic.AnsibleModuleExit) as ctx:
                         self.assertEquals(module.exit_json(**return_val), expected)
                     self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
 
@@ -145,7 +146,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             expected = copy.deepcopy(expected)
             expected['failed'] = True
             params = dict(ANSIBLE_MODULE_ARGS=args)
-            params = json.dumps(params)
+            params = basic.json_dumps(params)
             with swap_stdin_and_argv(stdin_data=params):
                 with swap_stdout():
                     basic._ANSIBLE_ARGS = None
@@ -156,6 +157,6 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
                             token=dict(no_log=True),
                         ),
                     )
-                    with self.assertRaises(SystemExit) as ctx:
+                    with self.assertRaises(basic.AnsibleModuleExit) as ctx:
                         self.assertEquals(module.fail_json(**return_val), expected)
                     self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
