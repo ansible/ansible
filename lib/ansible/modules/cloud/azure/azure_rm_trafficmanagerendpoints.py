@@ -8,11 +8,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'curated'}
-
 
 DOCUMENTATION = '''
 ---
@@ -38,7 +36,6 @@ options:
     endpoint_type:
         description:
             - The type of the Traffic Manager endpoint to be created or updated.
-    # XXX
     target_resource_id:
         description:
             - The Azure Resource URI of the of the endpoint. Not applicable to 
@@ -60,13 +57,13 @@ options:
             Possible values are from 1 to 1000.
     priority:
         description:
-            - The priority of this endpoint when using the ‘Priority’ traffic routing method.
+            - The priority of this endpoint when using the 'Priority' traffic routing method.
              Possible values are from 1 to 1000, lower values represent higher priority. 
              This is an optional parameter. If specified, it must be specified on all endpoints, 
              and no two endpoints can share the same priority value.
     endpoint_location:
         description:
-            - Specifies the location of the external or nested endpoints when using the ‘Performance’ 
+            - Specifies the location of the external or nested endpoints when using the 'Performance' 
             traffic routing method.
     min_child_endpoints:
         description:
@@ -74,7 +71,7 @@ options:
             for the parent profile to be considered available. Only applicable to endpoint of type 'NestedEndpoints'.
     geo_mapping:
         description:
-            - The list of countries/regions mapped to this endpoint when using the ‘Geographic’ traffic routing method. 
+            - The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method. 
             Please consult Traffic Manager Geographic documentation for a full list of accepted values.
     state:
         description:
@@ -128,16 +125,31 @@ changed:
     type: bool
 '''
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.trafficmanager.models import Endpoint, Profile
+    from azure.mgmt.trafficmanager.models import (
+        Endpoint,
+        Profile
+    )
 except ImportError:
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-
+def endpoint_to_dict(endpoint, resource_group, profile_name, endpoint_type, endpoint_name):
+    ''' Converts a traffic manager endpoint to a dictionary '''
+    result = dict(
+        resource_group=resource_group,
+        profile_name=profile_name,
+        endpoint_type=endpoint_type,
+        endpoint_name=endpoint_name,
+        target=endpoint.target,
+        endpoint_status=endpoint.endpoint_status
+    )
+    return result
 
 class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
+    """Class definition for the Endpoints"""
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
@@ -178,66 +190,66 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
         results = dict()
         changed = False
 
+        # Before we proceed, let's make sure the Traffic Manager Profile exists
         try:
-            # Check if the endpoint exists.
-            endpoint = self.trafficmanager_client.endpoints.get(
-                self.resource_group,
-                self.profile_name,
-                self.endpoint_type,
-                self.endpoint_name
-            )
-            if self.state == 'present':
-                if endpoint is None:
-                    # Create the endpoint
-                    changed = True
-                    endpoint = self.create_or_update_traffic_manager_endpoints(
-                        self.resource_group,
-                        self.profile_name,
-                        self.endpoint_type,
-                        self.endpoint_name,
-                        self.properties
-                    )
-                    results = self.endpoint_to_dict(
-                        endpoint,
-                        self.resource_group,
-                        self.profile_name,
-                        self.endpoint_type,
-                        self.endpoint_name
-                    )
-                elif endpoint:
-                    # Upgrade an existing endpoint and report back what changed
-                    # results = compare_endpoints(endpoint, )
-                    endpoint = self.create_or_update_traffic_manager_endpoints(
-                        self.resource_group,
-                        self.profile_name,
-                        self.endpoint_type,
-                        self.endpoint_name,
-                        self.properties
-                    )
-
-            # Handle the case where the user wants to remove this endpoint
-            elif self.state == 'absent':
-                try:
-                    self.trafficmanager_client.endpoints.delete(
-                        self.resource_group,
-                        self.profile_name,
-                        self.endpoint_type,
-                        self.endpoint_name
-                    )
-                    changed = True
-                except CloudError:
-                    changed = False
-
-            results = self.endpoint_to_dict(
-                endpoint,
-                self.resource_group,
-                self.profile_name,
-                self.endpoint_type,
-                self.endpoint_name
-            )
+            self.trafficmanager_client.profiles.get(self.resource_group, self.profile_name)
         except CloudError:
-            if self.state == 'present':
+            self.fail("traffic manager {0} not found.".format(self.profile_name))
+
+        if self.state == 'present':
+            endpoint_status = None
+            try:
+                endpoint_status = self.trafficmanager_client.endpoints.get(
+                    self.resource_group,
+                    self.profile_name,
+                    self.endpoint_type,
+                    self.endpoint_name
+
+                )
+            except CloudError:
                 changed = True
+                # Create the endpoint
+                azure_endpoint = self.create_or_update(
+                    self.resource_group,
+                    self.profile_name,
+                    self.endpoint_type,
+                    self.endpoint_name,
+                    self.properties
+                )
+                results = endpoint_to_dict(
+                    azure_endpoint,
+                    self.resource_group,
+                    self.profile_name,
+                    self.endpoint_type,
+                    self.endpoint_name
+                )
+            if endpoint_status is not None:
+                # Upgrade an existing endpoint and report back what changed
+                changed = True
+                # Updates the endpoint at Azure
+                azure_endpoint = self.create_or_update(
+                    self.resource_group,
+                    self.profile_name,
+                    self.endpoint_type,
+                    self.endpoint_name,
+                    self.properties
+                )
+                # Compare the current endpoint information from Azure with the
+                # information provided by the user.
+                results = self.compare_endpoints(endpoint_status, self.properties)
+
+        # Handle the case where the user wants to remove this endpoint
+        if self.state == 'absent':
+            try:
+                self.trafficmanager_client.endpoints.delete(
+                    self.resource_group,
+                    self.profile_name,
+                    self.endpoint_type,
+                    self.endpoint_name
+                )
+                changed = True
+            except CloudError:
+                changed = False
 
         self.results['changed'] = changed
         self.results['state'] = results
@@ -247,19 +259,30 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
 
         return self.results
 
-    def endpoint_to_dict(self, endpoint, resource_group, profile_name, endpoint_type, endpoint_name):
-        ''' Converts a traffic manager endpoint to a dictionary '''
-        result = dict(
-            resource_group=resource_group,
-            profile_name=profile_name,
-            endpoint_type=endpoint_type,
-            endpoint_name=endpoint_name,
+    def compare_endpoints(self, endpoint, properties):
+        """Compare endpoints"""
+        result = dict()
+        azure_endpoint = dict(
+            target_resource_id=endpoint.target_resource_id,
             target=endpoint.target,
-            endpoint_status=endpoint.endpoint_status
+            endpoint_status=endpoint.endpoint_status,
+            weight=endpoint.weight,
+            priority=endpoint.priority,
+            endpoint_location=endpoint.endpoint_location,
+            min_child_endpoints=endpoint.min_child_endpoints,
+            geo_mapping=endpoint.geo_mapping
         )
+
+        # Check to see if the endpoint properties have changed
+        for key in properties:
+            if azure_endpoint.get(key) != properties.get(key):
+                if properties.get(key) is not None:
+                    result[key] = properties.get(key)
         return result
 
-    def create_or_update_traffic_manager_endpoints(self, resource_group, profile_name, endpoint_type, endpoint_name, parameters):
+    def create_or_update(self, resource_group, profile_name, endpoint_type,
+                         endpoint_name, parameters):
+        """Create an Endpoint"""
         target_resource_id = parameters.get('target_resource_id', None)
         target = parameters.get('target', None)
         endpoint_status = parameters.get('endpoint_status', None)
@@ -283,14 +306,19 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
         )
 
         try:
-            return self.trafficmanager_client.endpoints.create_or_update(resource_group, profile_name, endpoint_type, endpoint_name, endpoint_parameters)
-        except CloudError as cloudError:
-            self.fail("Error creating or updating traffic manager endpoint with name {0}.  {1}"
-                      .format(endpoint_name, cloudError))
-        except Exception as exc:
-            self.fail("Error retrieving traffic manager {0} - {1}".format(profile_name, str(exc)))
+            return self.trafficmanager_client.endpoints.create_or_update(
+                resource_group,
+                profile_name,
+                endpoint_type,
+                endpoint_name,
+                endpoint_parameters
+            )
+        except CloudError as cloud_error:
+            self.fail("Error creating or updating traffic manager endpoint with name {0}. {1}"
+                      .format(endpoint_name, cloud_error))
 
 def main():
+    """Entry point"""
     AzureRMTrafficManagerEndpoints()
 
 if __name__ == '__main__':
