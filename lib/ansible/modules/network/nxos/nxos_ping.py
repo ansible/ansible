@@ -52,6 +52,11 @@ options:
             - Outgoing VRF.
         required: false
         default: null
+    state:
+        description:
+            - Determines if the expected result is success or fail.
+        choices: [ absent, present ]
+        default: present
 '''
 
 EXAMPLES = '''
@@ -73,27 +78,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-action:
-    description:
-        - Show what action has been performed
-    returned: always
-    type: string
-    sample: "PING 8.8.8.8 (8.8.8.8): 56 data bytes"
-updates:
+commands:
     description: Show the command sent
     returned: always
     type: list
     sample: ["ping 8.8.8.8 count 2 vrf management"]
-count:
-    description: Show amount of packets sent
-    returned: always
-    type: string
-    sample: "2"
-dest:
-    description: Show the ping destination
-    returned: always
-    type: string
-    sample: "8.8.8.8"
 rtt:
     description: Show RTT stats
     returned: always
@@ -116,9 +105,10 @@ packet_loss:
     type: string
     sample: "0.00%"
 '''
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
 
 def get_summary(results_list, reference_point):
     summary_string = results_list[reference_point+1]
@@ -160,7 +150,7 @@ def get_statistics_summary_line(response_as_list):
     return index
 
 
-def get_ping_results(command, module, transport):
+def get_ping_results(command, module):
     cmd = {'command': command, 'output': 'text'}
     ping = run_commands(module, [cmd])[0]
 
@@ -190,21 +180,15 @@ def main():
         count=dict(required=False, default=2),
         vrf=dict(required=False),
         source=dict(required=False),
-        state=dict(required=False, choices=['present', 'absent'],
-                       default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(required=False, choices=['present', 'absent'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     destination = module.params['dest']
     count = module.params['count']
@@ -212,13 +196,8 @@ def main():
     source = module.params['source']
     state = module.params['state']
 
-    if count:
-        try:
-            if int(count) < 1 or int(count) > 655350:
-                raise ValueError
-        except ValueError:
-            module.fail_json(msg="'count' must be an integer between 1 "
-                                 "and 655350.", count=count)
+    if count and not (1 <= int(count) <= 655350):
+        module.fail_json(msg="'count' must be an integer between 1 and 655350.", count=count)
 
     OPTIONS = {
         'vrf': vrf,
@@ -231,32 +210,20 @@ def main():
         if arg:
             ping_command += ' {0} {1}'.format(command, arg)
 
-    ping_results, summary, rtt, ping_pass = get_ping_results(
-        ping_command, module, module.params['transport'])
-
-    packet_loss = summary['packet_loss']
-    packets_rx = summary['packets_rx']
-    packets_tx = summary['packets_tx']
+    ping_results, summary, rtt, ping_pass = get_ping_results(ping_command, module)
 
     results = {}
-    results['updates'] = [ping_command]
-    results['action'] = ping_results[1]
-    results['dest'] = destination
-    results['count'] = count
-    results['packets_tx'] = packets_tx
-    results['packets_rx'] = packets_rx
-    results['packet_loss'] = packet_loss
+    results['commands'] = [ping_command]
     results['rtt'] = rtt
-    results['state'] = module.params['state']
+    results.update(summary)
 
     if ping_pass and state == 'absent':
-        module.fail_json(msg="Ping succeeded unexpectedly", results=results)
+        module.fail_json(msg="Ping succeeded unexpectedly")
     elif not ping_pass and state == 'present':
-        module.fail_json(msg="Ping failed unexpectedly", results=results)
-    else:
-        module.exit_json(**results)
+        module.fail_json(msg="Ping failed unexpectedly")
+
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-
