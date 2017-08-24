@@ -764,6 +764,7 @@ def pick_handler(src, dest, file_args, module,pipe):
     # can not read src whem using named pipes
     # so guessing handler by file extentsion
     if pipe:
+        handler=None
         (f,ext) = os.path.splitext(src)
         ext = ext.lower()
         if ext == ".zip":
@@ -774,7 +775,10 @@ def pick_handler(src, dest, file_args, module,pipe):
             handler=TarBzipArchive
         elif ext == ".xz":
             handler=TarXzArchive
-        return handler(src, dest, file_args, module)
+        if handler:
+            return handler(src, dest, file_args, module)
+        else:
+            raise Exception("No Handler found for download_pipe and {}".format(src))
     # try to open file and read archive
     handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive]
     reasons = set()
