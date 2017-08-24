@@ -25,9 +25,10 @@ options:
     state:
         description:
             - Indicates the desired state for the Ethernet Network resource.
-              C(present) will ensure data properties are compliant with OneView.
-              C(absent) will remove the resource from OneView, if it exists.
-              C(default_bandwidth_reset) will reset the network connection template to the default.
+                - C(present) will ensure data properties are compliant with OneView.
+                - C(absent) will remove the resource from OneView, if it exists.
+                - C(default_bandwidth_reset) will reset the network connection template to the default.
+        default: present
         choices: [present, absent, default_bandwidth_reset]
     data:
         description:
@@ -41,15 +42,16 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Ensure that the Ethernet Network is present using the default configuration
   oneview_ethernet_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: present
     data:
       name: 'Test Ethernet Network'
       vlanId: '201'
+  delegate_to: localhost
 
 - name: Update the Ethernet Network changing bandwidth and purpose
   oneview_ethernet_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: present
     data:
       name: 'Test Ethernet Network'
@@ -61,22 +63,24 @@ EXAMPLES = '''
 
 - name: Ensure that the Ethernet Network is present with name 'Renamed Ethernet Network'
   oneview_ethernet_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: present
     data:
       name: 'Test Ethernet Network'
       newName: 'Renamed Ethernet Network'
+  delegate_to: localhost
 
 - name: Ensure that the Ethernet Network is absent
   oneview_ethernet_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: absent
     data:
       name: 'New Ethernet Network'
+  delegate_to: localhost
 
 - name: Create Ethernet networks in bulk
   oneview_ethernet_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: present
     data:
       vlanIdRange: '1-10,15,17'
@@ -87,10 +91,11 @@ EXAMPLES = '''
       bandwidth:
         maximumBandwidth: 10000
         typicalBandwidth: 2000
+  delegate_to: localhost
 
 - name: Reset to the default network connection template
   oneview_ethernet_network:
-    config: "{{ config_file_path }}"
+    config: '/etc/oneview/oneview_config.json'
     state: default_bandwidth_reset
     data:
       name: 'Test Ethernet Network'
@@ -135,7 +140,7 @@ class EthernetNetworkModule(OneViewModuleBase):
     def __init__(self):
 
         argument_spec = dict(
-            state=dict(type='str', required=True, choices=['absent', 'default_bandwidth_reset', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'default_bandwidth_reset', 'present']),
             data=dict(type='dict', required=True),
         )
 
