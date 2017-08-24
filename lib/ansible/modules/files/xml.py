@@ -549,6 +549,8 @@ def pretty(module, tree):
             if xml_string != xml_content.read():
                 result['changed'] = True
                 if not module.check_mode:
+                    if module.params['backup']:
+                        result['backup_file'] = module.backup_local(module.params['path'])
                     tree.write(xml_file, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
         finally:
             xml_content.close()
@@ -647,12 +649,11 @@ def finish(module, tree, xpath, namespaces, changed=False, msg="", hitcount=0, m
             after=etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print']),
         )
 
-    if module.params['path']:
-        if not module.check_mode:
-            if module.params['backup']:
-                result['backup_file'] = module.backup_local(module.params['path'])
+    if module.params['path'] and not module.check_mode:
+        if module.params['backup']:
+            result['backup_file'] = module.backup_local(module.params['path'])
 
-            tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+        tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
 
     if module.params['xmlstring']:
         result['xmlstring'] = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
