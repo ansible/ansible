@@ -57,7 +57,8 @@ notes:
   - Ensure I(config_format) used to retrieve configuration from device
     is supported by junos version running on device.
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
