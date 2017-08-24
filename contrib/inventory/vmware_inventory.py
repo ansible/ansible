@@ -745,7 +745,7 @@ class VMWareInventory(object):
             return self.inventory['_meta']['hostvars'][host]
         elif self.args.host and self.inventory['_meta']['hostvars']:
             match = None
-            for k, v in self.inventory['_meta']['hostvars']:
+            for k, v in self.inventory['_meta']['hostvars'].items():
                 if self.inventory['_meta']['hostvars'][k]['name'] == self.args.host:
                     match = k
                     break
