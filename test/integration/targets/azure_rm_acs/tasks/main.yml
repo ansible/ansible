@@ -15,13 +15,13 @@
            dns_prefix: "acsdcos{{ resource_group | hash('md5') | truncate(12, True, '') }}"
            vm_size: Standard_A0
      diagnostics_profile: false
-   register: results
+   register: output
 
  - name: Assert the ACS instance is well created
    assert:
      that:
-       - results.changed
-       - "results.state.provisioning_state == 'Succeeded'"
+       - output.changed
+       - output.state.provisioning_state == 'Succeeded'
 
  - name: Scale the ACS instance from 1 to 2 - DCOS
    azure_rm_acs:
@@ -40,13 +40,13 @@
            dns_prefix: "acsdcos{{ resource_group | hash('md5') | truncate(12, True, '') }}"
            vm_size: Standard_A0
      diagnostics_profile: false
-   register: results
+   register: output
 
  - name: Assert the ACS instance is well scaled
    assert:
      that:
-       - results.changed
-       - "results.state.agent_pool_profiles.count == 2"
+       - output.changed
+       - output.state.agent_pool_profiles[0].count == 2
 
  - name: Delete the DCOS ACS instance - DCOS
    azure_rm_acs:
@@ -84,13 +84,13 @@
            dns_prefix: "acssw{{ resource_group | hash('md5') | truncate(12, True, '') }}"
            vm_size: Standard_A0
      diagnostics_profile: false
-   register: results
+   register: output
 
  - name: Assert the ACS instance is well created
    assert:
      that:
-       - results.changed
-       - "results.state.provisioning_state == 'Succeeded'"
+       - output.changed
+       - output.state.provisioning_state == 'Succeeded'
 
  - name: Scale the ACS instance from 1 to 2 - Swarm
    azure_rm_acs:
@@ -109,13 +109,13 @@
            dns_prefix: "acssw{{ resource_group | hash('md5') | truncate(12, True, '') }}"
            vm_size: Standard_A0
      diagnostics_profile: false
-   register: results
+   register: output
 
  - name: Assert the ACS instance is well scaled
    assert:
      that:
-       - results.changed
-       - "results.state.agent_pool_profiles.count == 2"
+       - output.changed
+       - output.state.agent_pool_profiles[0].count == 2
 
  - name: Delete the ACS instance - Swarm
    azure_rm_acs:
