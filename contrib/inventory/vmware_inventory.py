@@ -175,7 +175,7 @@ class VMWareInventory(object):
         elif self.args.list:
             # Display list of instances for inventory
             data_to_print = self.inventory
-        return json.dumps(data_to_print, indent=2)
+        return json.dumps(data_to_print, sort_keys=True, indent=2)
 
     def is_cache_valid(self):
 
@@ -578,18 +578,28 @@ class VMWareInventory(object):
 
                 for idx, x in enumerate(parts):
 
-                    # if the val wasn't set yet, get it from the parent
-                    if not val:
-                        try:
-                            val = getattr(vm, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                    if isinstance(val, dict):
+                        val = val.get(x)
+                        self.debugl('val set to ' + str(val))
+                        #import epdb; epdb.st()
                     else:
-                        # in a subkey, get the subprop from the previous attrib
-                        try:
-                            val = getattr(val, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                        # if the val wasn't set yet, get it from the parent
+                        if not val:
+                            try:
+                                val = getattr(vm, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+                        else:
+                            # in a subkey, get the subprop from the previous attrib
+                            try:
+                                val = getattr(val, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+
+                        # make sure it serializes
+                        #val = self.facts_from_vobj(val)
+                        val = self._process_object_types(val)
+                        self.debugl('val is now {}'.format(val))
 
                     # lowercase keys if requested
                     if self.lowerkeys:
@@ -653,7 +663,7 @@ class VMWareInventory(object):
 
         return rdata
 
-    def _process_object_types(self, vobj, thisvm=None, inkey=None, level=0):
+    def _process_object_types(self, vobj, thisvm=None, inkey='', level=0):
         ''' Serialize an object '''
         rdata = {}
 
@@ -707,7 +717,8 @@ class VMWareInventory(object):
             methods = dir(vobj)
             methods = [str(x) for x in methods if not x.startswith('_')]
             methods = [x for x in methods if x not in self.bad_types]
-            methods = [x for x in methods if not inkey + '.' + x.lower() in self.skip_keys]
+            if inkey:
+                methods = [x for x in methods if not inkey + '.' + x.lower() in self.skip_keys]
             methods = sorted(methods)
 
             for method in methods:
@@ -724,12 +735,21 @@ class VMWareInventory(object):
                     method = method.lower()
                 if level + 1 <= self.maxlevel:
                     try:
-                        rdata[method] = self._process_object_types(
-                            methodToCall,
-                            thisvm=thisvm,
-                            inkey=inkey + '.' + method,
-                            level=(level + 1)
-                        )
+                        if inkey:
+                            rdata[method] = self._process_object_types(
+                                methodToCall,
+                                thisvm=thisvm,
+                                inkey=inkey + '.' + method,
+                                level=(level + 1)
+                            )
+                        else:
+                            rdata[method] = self._process_object_types(
+                                methodToCall,
+                                thisvm=thisvm,
+                                inkey=method,
+                                level=(level + 1)
+                            )
+
                     except vim.fault.NoPermission:
                         self.debugl("Skipping method %s (NoPermission)" % method)
         else:
