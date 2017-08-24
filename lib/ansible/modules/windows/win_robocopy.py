@@ -25,52 +25,45 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_robocopy
-version_added: "2.2"
-short_description: Synchronizes the contents of two directories using Robocopy.
+version_added: '2.2'
+short_description: Synchronizes the contents of two directories using Robocopy
 description:
-    - Synchronizes the contents of two directories on the remote machine. Under the hood this just calls out to RoboCopy, since that should be available
-      on most modern Windows Systems.
+- Synchronizes the contents of two directories on the remote machine.
+- Under the hood this just calls out to RoboCopy, since that should be available
+  on most modern Windows Systems.
 options:
   src:
     description:
-      - Source file/directory to sync.
+    - Source file/directory to sync.
     required: true
   dest:
     description:
-      - Destination file/directory to sync (Will receive contents of src).
+    - Destination file/directory to sync (Will receive contents of src).
     required: true
   recurse:
     description:
-      - Includes all subdirectories (Toggles the `/e` flag to RoboCopy). If "flags" is set, this will be ignored.
-    choices:
-      - true
-      - false
-    default: false
-    required: false
+    - Includes all subdirectories (Toggles the C(/e) flag to RoboCopy).
+    - If C(flags) is set, this will be ignored.
+    type: bool
+    default: 'no'
   purge:
     description:
-      - Deletes any files/directories found in the destination that do not exist in the source (Toggles the `/purge` flag to RoboCopy). If "flags" is
-        set, this will be ignored.
-    choices:
-      - true
-      - false
-    default: false
-    required: false
+    - Deletes any files/directories found in the destination that do not exist in the source.
+    - Toggles the C(/purge) flag to RoboCopy. If C(flags) is set, this will be ignored.
+    type: bool
+    default: 'no'
   flags:
     description:
-      - Directly supply Robocopy flags. If set, purge and recurse will be ignored.
-    default: None
-    required: false
-author: Corwin Brown (@blakfeld)
+      - Directly supply Robocopy flags. If set, C(purge) and C(recurse) will be ignored.
+author:
+- Corwin Brown (@blakfeld)
 notes:
-    - This is not a complete port of the "synchronize" module. Unlike the "synchronize" module this only performs the sync/copy on the remote machine,
-      not from the master to the remote machine.
-    - This module does not currently support all Robocopy flags.
-    - Works on Windows 7, Windows 8, Windows Server 2k8, and Windows Server 2k12
+- This is not a complete port of the M(synchronize) module. Unlike the M(synchronize) module this only performs the sync/copy on the remote machine,
+  not from the master to the remote machine.
+- This module does not currently support all Robocopy flags.
 '''
 
 EXAMPLES = r'''
@@ -83,22 +76,22 @@ EXAMPLES = r'''
   win_robocopy:
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
-    recurse: True
+    recurse: yes
 
 - name: Sync the contents of one directory to another, and remove any files/directories found in destination that do not exist in the source
   win_robocopy:
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
-    purge: True
+    purge: yes
 
 - name: Sync content in recursive mode, removing any files/directories found in destination that do not exist in the source
   win_robocopy:
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
-    recurse: True
-    purge: True
+    recurse: yes
+    purge: yes
 
-- name: Sync Two Directories in recursive and purging mode, specifying additional special flags
+- name: Sync two directories in recursive and purging mode, specifying additional special flags
   win_robocopy:
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
@@ -106,16 +99,21 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+cmd:
+    description: The used command line
+    returned: always
+    type: string
+    sample: robocopy C:\DirectoryOne C:\DirectoryTwo /e /purge
 src:
     description: The Source file/directory of the sync.
     returned: always
     type: string
-    sample: c:\Some\Path
+    sample: C:\Some\Path
 dest:
     description: The Destination file/directory of the sync.
     returned: always
     type: string
-    sample: c:\Some\Path
+    sample: C:\Some\Path
 recurse:
     description: Whether or not the recurse flag was toggled.
     returned: always
@@ -130,9 +128,9 @@ flags:
     description: Any flags passed in by the user.
     returned: always
     type: string
-    sample: "/e /purge"
+    sample: /e /purge
 rc:
-    description: The return code retuned by robocopy.
+    description: The return code returned by robocopy.
     returned: success
     type: int
     sample: 1
@@ -146,9 +144,4 @@ msg:
     returned: always
     type: string
     sample: No files copied!
-changed:
-    description: Whether or not any changes were made.
-    returned: always
-    type: bool
-    sample: False
 '''
