@@ -76,8 +76,8 @@ options:
     choices: [thin, thin-pool, normal]
     default: normal
     description:
-    - Type of logical volume, thin is thind lvol, thin-pool is thin pool
-      supplying thind lvol, normal is lvol without any type. To create thin
+    - Type of logical volume, thin is thin lvol, thin-pool is thin pool
+      supplying thin lvol, normal is lvol without any type. To create thin
       lvol, thin pool must already exist.
   vg:
     description:
