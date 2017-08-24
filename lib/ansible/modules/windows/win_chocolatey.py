@@ -94,6 +94,12 @@ options:
     type: bool
     default: 'no'
     version_added: '2.1'
+  allow_multiple_versions:
+    description:
+      - Allow multiple versions of the same package to be installed
+    type: bool
+    default: 'no'
+    version_added: '2.4'
   timeout:
     description:
       - The time to allow chocolatey to finish before timing out.
