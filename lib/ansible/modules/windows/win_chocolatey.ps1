@@ -176,8 +176,6 @@ Function Choco-Upgrade
         [Parameter(Mandatory=$false, Position=9)]
         [bool]$ignoredependencies,
         [Parameter(Mandatory=$false, Position=10)]
-        [Parameter(Mandatory=$false, Position=11)]
-        [bool]$allowmultipleversions
         [int]$timeout,
         [Parameter(Mandatory=$false, Position=12)]
         [bool]$skipscripts
@@ -287,10 +285,12 @@ Function Choco-Install
         [Parameter(Mandatory=$false, Position=11)]
         [int]$timeout,
         [Parameter(Mandatory=$false, Position=12)]
+        [bool]$allowmultipleversions,
+        [Parameter(Mandatory=$false, Position=13)]
         [bool]$skipscripts
     )
 
-    if (Choco-IsInstalled $package) -and (-not $allowmultipleversions))
+    if (Choco-IsInstalled $package)
     {
         if ($state -eq "latest")
         {
@@ -354,6 +354,11 @@ Function Choco-Install
         $cmd += " -ignoredependencies"
     }
 
+    if ($allowmultipleversions)
+    {
+        $cmd += " -m"
+    }
+
     if ($skipscripts)
     {
         $cmd += " --skip-scripts"
@@ -386,6 +391,8 @@ Function Choco-Uninstall
         [Parameter(Mandatory=$false, Position=4)]
         [int]$timeout,
         [Parameter(Mandatory=$false, Position=5)]
+        [bool]$allowmultipleversions,
+        [Parameter(Mandatory=$false, Position=6)]
         [bool]$skipscripts
 
     )
@@ -417,6 +424,11 @@ Function Choco-Uninstall
         $cmd += " -params '$packageparams'"
     }
 
+    if ($allowmultipleversions)
+    {
+        $cmd += " -m"
+    }
+
     if ($skipscripts)
     {
         $cmd += " --skip-scripts"
@@ -444,12 +456,13 @@ Try
         Choco-Install -package $package -version $version -source $source -force $force `
             -installargs $installargs -packageparams $packageparams `
             -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-            -ignoredependencies $ignoredependencies -timeout $timeout -skipscripts $skipscripts
+            -ignoredependencies $ignoredependencies -timeout $timeout `
+            -allowmultipleversions $allowmultipleversions -skipscripts $skipscripts
     }
     elseif ($state -eq "absent")
     {
         Choco-Uninstall -package $package -version $version -force $force -timeout $timeout `
-            -skipscripts $skipscripts
+            -allowmultipleversions $allowmultipleversions -skipscripts $skipscripts
     }
     elseif ($state -eq "reinstalled")
     {
