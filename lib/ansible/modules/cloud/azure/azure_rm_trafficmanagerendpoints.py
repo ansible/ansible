@@ -204,8 +204,17 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
                     self.profile_name,
                     self.endpoint_type,
                     self.endpoint_name
-
                 )
+                if self.check_mode:
+                    results = endpoint_to_dict(
+                        endpoint_status,
+                        self.resource_group,
+                        self.profile_name,
+                        self.endpoint_type,
+                        self.endpoint_name
+                    )
+                    self.results['state'] = results
+                    return self.results
             except CloudError:
                 changed = True
                 # Create the endpoint
@@ -241,6 +250,24 @@ class AzureRMTrafficManagerEndpoints(AzureRMModuleBase):
         # Handle the case where the user wants to remove this endpoint
         if self.state == 'absent':
             try:
+                endpoint_status = self.trafficmanager_client.endpoints.get(
+                    self.resource_group,
+                    self.profile_name,
+                    self.endpoint_type,
+                    self.endpoint_name
+                )
+
+                if self.check_mode:
+                    results = endpoint_to_dict(
+                        endpoint_status,
+                        self.resource_group,
+                        self.profile_name,
+                        self.endpoint_type,
+                        self.endpoint_name
+                    )
+                    self.results['state'] = results
+                    return self.results
+
                 self.trafficmanager_client.endpoints.delete(
                     self.resource_group,
                     self.profile_name,
