@@ -96,9 +96,10 @@ Function Nssm-Remove
 
     if (Service-Exists -name $name)
     {
-        $cmd = "stop ""$name"""
-        $results = Nssm-Invoke $cmd
-
+        if ((Get-Service -Name $name).Status -ne "Stopped") {
+            $cmd = "stop ""$name"""
+            $results = Nssm-Invoke $cmd
+        }
         $cmd = "remove ""$name"" confirm"
         $results = Nssm-Invoke $cmd
 
