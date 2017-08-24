@@ -381,7 +381,8 @@ class DataLoader:
                             search.append(os.path.join(b_upath, b_dirname, b_source))
                         search.append(os.path.join(b_upath, b_source))
 
-                elif b_dirname not in b_source.split(b'/'):
+                #elif b_dirname not in b_source.split(b'/'):
+                else:
                     # don't add dirname if user already is using it in source
                     if b_source.split(b'/')[0] != dirname:
                         search.append(os.path.join(b_upath, b_dirname, b_source))

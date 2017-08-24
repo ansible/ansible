@@ -99,11 +99,7 @@ class Task(Base, Conditional, Taggable, Become):
 
     def get_path(self):
         ''' return the absolute path of the task with its line number '''
-
-        path = ""
-        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
-            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
-        return path
+        return self._src_path
 
     def get_name(self):
         ''' return the name of the task '''
@@ -444,10 +440,15 @@ class Task(Base, Conditional, Taggable, Become):
         if dep_chain:
             path_stack.extend(reversed([x._role_path for x in dep_chain]))
 
+        parent = self._parent
+        while parent:
+            if parent._src_path is not None and parent._src_path not in path_stack:
+                path_stack.append(parent._src_path)
+            parent = parent._parent
+
         # add path of task itself, unless it is already in the list
-        task_dir = os.path.dirname(self.get_path())
-        if task_dir not in path_stack:
-            path_stack.append(task_dir)
+        if self._src_path not in path_stack:
+            path_stack.append(self._src_path)
 
         return path_stack
 
