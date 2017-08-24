@@ -94,6 +94,7 @@ options:
 requirements:
 - lxml >= 2.3.0
 notes:
+- Use the C(--check) and C(--diff) options when testing your expressions.
 - This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
 - Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter.
 - Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
@@ -216,13 +217,13 @@ import re
 import traceback
 
 from collections import MutableMapping
+import copy
 from distutils.version import LooseVersion
 from io import BytesIO
 
-
-HAS_LXML = True
 try:
     from lxml import etree
+    HAS_LXML = True
 except ImportError:
     HAS_LXML = False
 
@@ -621,19 +622,29 @@ def children_to_nodes(module=None, children=[], type='yaml'):
 
 
 def finish(module, tree, xpath, namespaces, changed=False, msg="", hitcount=0, matches=tuple()):
-    actions = dict(xpath=xpath, namespaces=namespaces, state=module.params['state'])
 
-    if not changed:
-        module.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches)
+    result = dict(
+        actions=dict(xpath=xpath, namespaces=namespaces, state=module.params['state']),
+        changed=changed,
+        count=hitcount,
+        matches=matches,
+        msg=msg,
+    )
+
+    if changed and module._diff:
+        result['diff'] = dict(
+            before=etree.tostring(orig_doc, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print']),
+            after=etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print']),
+        )
 
     if module.params['path']:
         if not module.check_mode:
             tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
-        module.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches)
 
     if module.params['xmlstring']:
-        xml_string = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
-        module.exit_json(changed=changed, actions=actions, msg=msg, count=hitcount, matches=matches, xmlstring=xml_string)
+        result['xmlstring'] = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+
+    module.exit_json(**result)
 
 
 def main():
@@ -703,6 +714,11 @@ def main():
         doc = etree.parse(infile, parser)
     except etree.XMLSyntaxError as e:
         module.fail_json(msg="Error while parsing path: %s" % e)
+
+    # Ensure we have the original copy to compare
+    if module._diff:
+        global orig_doc
+        orig_doc = copy.deepcopy(doc)
 
     if print_match:
         do_print_match(module, doc, xpath, namespaces)
