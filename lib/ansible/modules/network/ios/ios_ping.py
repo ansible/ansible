@@ -150,12 +150,7 @@ def main():
     results["packet_loss"] = str(loss) + "%"
     results["packets_rx"] = int(rx)
     results["packets_tx"] = int(tx)
-
-    # Convert rtt values to int
-    for k,v in rtt.items():
-      rtt[k] = int(v)
-
-    results["rtt"] = rtt
+    results["rtt"] = {k:int(v) for (k, v) in rtt.items()}
 
     validate_results(module, loss, results)
 
