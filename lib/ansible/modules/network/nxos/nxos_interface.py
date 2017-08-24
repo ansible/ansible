@@ -31,6 +31,7 @@ description:
     - Manages physical attributes of interfaces of NX-OS switches.
 author: Jason Edelman (@jedelman8)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - This module is also used to create logical interfaces such as
     svis and loopbacks.
   - Be cautious of platform specific idiosyncrasies. For example,

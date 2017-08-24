@@ -32,6 +32,7 @@ description:
     rendezvous point (RP) address instance.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) remove the whole rp-address configuration, if existing.
 options:
   rp_address:

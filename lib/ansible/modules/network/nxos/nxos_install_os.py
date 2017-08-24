@@ -30,6 +30,7 @@ description:
     - Install an operating system by setting the boot options like boot
       image and kickstart image.
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - The module will fail due to timeout issues, but the install will go on
       anyway. Ansible's block and rescue can be leveraged to handle this kind
       of failure and check actual module results. See EXAMPLE for more about

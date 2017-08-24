@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=absent), it unconfigures existing settings C(msg_time) and set it
       to its default value of 15.  It is cleaner to always use C(state=present).
     - Module will fail if the udld feature has not been previously enabled.

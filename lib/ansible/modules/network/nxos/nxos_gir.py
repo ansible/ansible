@@ -32,6 +32,7 @@ description:
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(state) has effect only in combination with
       C(system_mode_maintenance_timeout) or
       C(system_mode_maintenance_on_reload_reset_reason).

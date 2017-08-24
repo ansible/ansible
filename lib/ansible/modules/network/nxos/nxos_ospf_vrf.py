@@ -30,6 +30,7 @@ description:
   - Manages a VRF for an OSPF router.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - Value I(default) restores params default value, if any.
     Otherwise it removes the existing param configuration.
 options:

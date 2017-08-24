@@ -34,6 +34,7 @@ description:
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - This module is not idempotent when C(state=present).
     - C(state=absent) removes the whole profile.
 options:

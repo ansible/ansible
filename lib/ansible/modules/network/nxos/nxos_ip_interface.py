@@ -32,6 +32,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Interface must already be a L3 port when using this module.
     - Logical interfaces (po, loop, svi) must be created first.
     - C(mask) must be inserted in decimal format (i.e. 24) for

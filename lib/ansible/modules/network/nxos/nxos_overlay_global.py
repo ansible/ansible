@@ -30,6 +30,7 @@ description:
   - Configures anycast gateway MAC of the switch.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - Default restores params default value
   - Supported MAC address format are "E.E.E", "EE-EE-EE-EE-EE-EE",
     "EE:EE:EE:EE:EE:EE" and "EEEE.EEEE.EEEE"

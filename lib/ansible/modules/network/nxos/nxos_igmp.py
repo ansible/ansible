@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), all supported params will be reset to a
       default state.
     - If restart is set to true with other params set, the restart will happen
