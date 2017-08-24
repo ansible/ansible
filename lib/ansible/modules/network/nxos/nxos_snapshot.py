@@ -34,6 +34,7 @@ description:
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(transport=cli) may cause timeout errors.
     - The C(element_key1) and C(element_key2) parameter specify the tags used
       to distinguish among row entries. In most cases, only the element_key1

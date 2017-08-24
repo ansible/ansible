@@ -32,6 +32,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - Either vpc or peer_link param is required, but not both.
   - C(state=absent) removes whatever VPC config is on a port-channel
     if one exists.

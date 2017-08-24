@@ -32,6 +32,7 @@ description:
     - Manages AAA server host-specific configuration.
 author: Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Changes to the AAA server host key (shared secret) are not idempotent.
     - If C(state=absent) removes the whole host configuration.
 options:

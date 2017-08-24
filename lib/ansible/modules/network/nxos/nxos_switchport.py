@@ -30,6 +30,7 @@ description:
   - Manages Layer 2 interfaces
 author: Jason Edelman (@jedelman8)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - When C(state=absent), VLANs can be added/removed from trunk links and
     the existing access VLAN can be 'unconfigured' to just having VLAN 1
     on that interface.

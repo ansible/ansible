@@ -32,6 +32,7 @@ description:
     that terminates VXLAN tunnels.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The module is used to manage NVE properties, not to create NVE
     interfaces. Use M(nxos_interface) if you wish to do so.
   - C(state=absent) removes the interface.

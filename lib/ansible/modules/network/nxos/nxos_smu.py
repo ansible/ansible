@@ -31,6 +31,7 @@ description:
     - Perform software maintenance upgrades (SMUs) on Cisco NX-OS devices.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - The module can only activate and commit a package,
       not remove or deactivate it.
     - Use C(transport=nxapi) to avoid connection timeout

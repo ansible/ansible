@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - If C(state=absent), the module will attempt to remove the given key configuration.
       If a matching key configuration isn't found on the device, the module will fail.
     - If C(state=absent) and C(authentication=on), authentication will be turned off.

@@ -31,6 +31,7 @@ description:
   - Manages BGP neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the whole BGP neighbor configuration.
   - Default, where supported, restores params default value.
 options:

@@ -30,6 +30,7 @@ description:
   - Manages VRF AF
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - Default, where supported, restores params default value.
 options:
   vrf:
