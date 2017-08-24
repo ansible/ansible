@@ -123,6 +123,7 @@ Ansible Changes By Release
   of handling IP addresses. (PR# 26566)
 * datetime filter updated to use default format of datetime.datetime (ISO8601)
 * The junit plugin now has an option to report a junit test failure on changes for idempotent testing.
+* New 'diff' keyword allows setting diff mode on playbook objects, overriding command line option and config.
 
 #### New Callbacks:
 - full_skip
