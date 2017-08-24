@@ -49,7 +49,7 @@ options:
     default: false
   socket:
     description:
-      - Path to the HAProxy socket file.
+      - Path to the HAProxy socket file. If you want to connect via TCP, use the format 'tcp://host:port'.
     required: false
     default: /var/run/haproxy.sock
   state:
@@ -114,6 +114,13 @@ EXAMPLES = '''
     socket: /var/run/haproxy.sock
     backend: www
 
+# disable server, provide TCP socket
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: tcp://host:9999
+    backend: www
+
 # disable server, provide socket file, wait until status reports in maintenance
 - haproxy:
     state: disabled
@@ -175,6 +182,7 @@ EXAMPLES = '''
 '''
 
 import csv
+import re
 import socket
 import time
 from string import Template
@@ -196,7 +204,7 @@ class TimeoutException(Exception):
 
 class HAProxy(object):
     """
-    Used for communicating with HAProxy through its local UNIX socket interface.
+    Used for communicating with HAProxy through its admin socket interface.
     Perform common tasks in Haproxy related to enable server and
     disable server.
 
@@ -223,11 +231,10 @@ class HAProxy(object):
 
     def execute(self, cmd, timeout=200, capture_output=True):
         """
-        Executes a HAProxy command by sending a message to a HAProxy's local
-        UNIX socket and waiting up to 'timeout' milliseconds for the response.
+        Executes a HAProxy command by sending a message to a HAProxy's admin
+        socket and waiting up to 'timeout' milliseconds for the response.
         """
-        self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.client.connect(self.socket)
+        self.client = self.openSocket()
         self.client.sendall('%s\n' % cmd)
         result = ''
         buf = ''
@@ -239,6 +246,23 @@ class HAProxy(object):
             self.capture_command_output(cmd, result.strip())
         self.client.close()
         return result
+
+    def openSocket(self):
+        """
+        Opens a socket to HAProxy's socket, either as a UNIX socket or as
+        a TCP socket, depending on the format of the configuration option.
+        """
+        if self.socket.startswith('tcp:'):
+            match = re.search('^tcp://(.+):(\d+)$', self.socket)
+            if not match:
+                raise Exception('Invalid TCP address: %s' % self.socket)
+            address = (match.group(1), int(match.group(2)))
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect(address)
+        else:
+            client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            client.connect(self.socket)
+        return client
 
     def capture_command_output(self, cmd, output):
         """
