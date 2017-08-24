@@ -580,8 +580,6 @@ class VMWareInventory(object):
 
                     if isinstance(val, dict):
                         val = val.get(x)
-                        self.debugl('val set to ' + str(val))
-                        #import epdb; epdb.st()
                     else:
                         # if the val wasn't set yet, get it from the parent
                         if not val:
@@ -597,9 +595,7 @@ class VMWareInventory(object):
                                 self.debugl(e)
 
                         # make sure it serializes
-                        #val = self.facts_from_vobj(val)
                         val = self._process_object_types(val)
-                        self.debugl('val is now {}'.format(val))
 
                     # lowercase keys if requested
                     if self.lowerkeys:
