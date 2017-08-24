@@ -130,7 +130,7 @@ flags:
     type: string
     sample: /e /purge
 rc:
-    description: The return code retuned by robocopy.
+    description: The return code returned by robocopy.
     returned: success
     type: int
     sample: 1
