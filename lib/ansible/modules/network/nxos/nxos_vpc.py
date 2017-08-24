@@ -33,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The feature vpc must be enabled before this module can be used
   - If not using management vrf, vrf must be globally on the device
     before using in the pkl config

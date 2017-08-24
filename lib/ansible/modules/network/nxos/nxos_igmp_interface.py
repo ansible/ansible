@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), supported params will be reset to a default state.
       These include C(version), C(startup_query_interval),
       C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
