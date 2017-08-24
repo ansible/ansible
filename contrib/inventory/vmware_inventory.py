@@ -579,7 +579,10 @@ class VMWareInventory(object):
                 for idx, x in enumerate(parts):
 
                     if isinstance(val, dict):
-                        val = val.get(x)
+                        if x in val:
+                            val = val.get(x)
+                        elif x.lower() in val:
+                            val = val.get(x.lower())
                     else:
                         # if the val wasn't set yet, get it from the parent
                         if not val:
