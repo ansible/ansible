@@ -2,6 +2,7 @@
    azure_rm_acs:
      name: "acsdcos{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
+     location: eastus
      orchestration_platform: DCOS
      master_profile:
          - count: 1
@@ -27,6 +28,7 @@
    azure_rm_acs:
      name: "acsdcos{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
+     location: eastus
      orchestration_platform: DCOS
      master_profile:
          - count: 1
@@ -52,6 +54,7 @@
    azure_rm_acs:
      name: "acsdcos{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
+     location: eastus
      orchestration_platform: DCOS
      state: absent
      master_profile:
@@ -71,6 +74,7 @@
    azure_rm_acs:
      name: "acssw{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
+     location: eastus
      orchestration_platform: Swarm
      master_profile:
          - count: 1
@@ -96,6 +100,7 @@
    azure_rm_acs:
      name: "acssw{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
+     location: eastus
      orchestration_platform: Swarm
      master_profile:
          - count: 1
@@ -121,6 +126,7 @@
    azure_rm_acs:
      name: "acssw{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
+     location: eastus
      orchestration_platform: Swarm
      state: absent
      master_profile:
