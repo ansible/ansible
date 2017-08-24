@@ -713,8 +713,7 @@ class VMWareInventory(object):
             methods = dir(vobj)
             methods = [str(x) for x in methods if not x.startswith('_')]
             methods = [x for x in methods if x not in self.bad_types]
-            if inkey:
-                methods = [x for x in methods if not inkey + '.' + x.lower() in self.skip_keys]
+            methods = [x for x in methods if not inkey + '.' + x.lower() in self.skip_keys]
             methods = sorted(methods)
 
             for method in methods:
