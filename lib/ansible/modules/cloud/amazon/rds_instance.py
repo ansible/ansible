@@ -19,7 +19,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -300,16 +300,20 @@ changed:
     - whether the RDS instance configuration has been changed.  Please see the main module
       description.  Changes may be delayed so, unless the correct parameters are given
       this does not mean that the changed configuration has already been implemented.
+  returned: success
+  type: bool
 response:
   description:
     - the raw response from the last call to AWS if available.  This will likely include
       the configuration of the RDS in CamelCase if needed
+  returned: when available
+  type: dict
 '''
 
 import time
 import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
@@ -837,47 +841,45 @@ def select_parameters(module, required_vars, valid_vars):
     return params
 
 
-argument_spec = ec2_argument_spec()
-argument_spec.update(
-    dict(
-        state=dict(choices=['absent', 'present', 'rebooted', 'restarted'], default='present'),
-        db_instance_identifier=dict(aliases=["id"], required=True),
-        source_instance=dict(),
-        db_engine=dict(choices=DB_ENGINES),
-        size=dict(type='int'),
-        instance_type=dict(aliases=['type']),
-        username=dict(),
-        password=dict(no_log=True),
-        db_name=dict(),
-        engine_version=dict(),
-        parameter_group=dict(),
-        license_model=dict(choices=LICENSE_MODELS),
-        multi_zone=dict(type='bool', default=False),
-        iops=dict(type='int'),
-        storage_type=dict(choices=['standard', 'io1', 'gp2'], default='standard'),
-        security_groups=dict(),
-        vpc_security_groups=dict(type='list'),
-        port=dict(type='int'),
-        upgrade=dict(type='bool', default=False),
-        option_group=dict(),
-        maint_window=dict(),
-        backup_window=dict(),
-        backup_retention=dict(type='int'),
-        zone=dict(aliases=['aws_zone', 'ec2_zone']),
-        subnet=dict(),
-        wait=dict(type='bool', default=False),
-        wait_timeout=dict(type='int', default=600),
-        snapshot=dict(),
-        skip_final_snapshot=dict(type='bool'),
-        apply_immediately=dict(type='bool', default=False),
-        old_db_instance_identifier=dict(aliases=['old_id']),
-        tags=dict(type='dict'),
-        publicly_accessible=dict(type='bool'),
-        character_set_name=dict(),
-        force_failover=dict(type='bool', default=False),
-        force_password_update=dict(type='bool', default=False),
-    )
+argument_spec = dict(
+    state=dict(choices=['absent', 'present', 'rebooted', 'restarted'], default='present'),
+    db_instance_identifier=dict(aliases=["id"], required=True),
+    source_instance=dict(),
+    db_engine=dict(choices=DB_ENGINES),
+    size=dict(type='int'),
+    instance_type=dict(aliases=['type']),
+    username=dict(),
+    password=dict(no_log=True),
+    db_name=dict(),
+    engine_version=dict(),
+    parameter_group=dict(),
+    license_model=dict(choices=LICENSE_MODELS),
+    multi_zone=dict(type='bool', default=False),
+    iops=dict(type='int'),
+    storage_type=dict(choices=['standard', 'io1', 'gp2'], default='standard'),
+    security_groups=dict(),
+    vpc_security_groups=dict(type='list'),
+    port=dict(type='int'),
+    upgrade=dict(type='bool', default=False),
+    option_group=dict(),
+    maint_window=dict(),
+    backup_window=dict(),
+    backup_retention=dict(type='int'),
+    zone=dict(aliases=['aws_zone', 'ec2_zone']),
+    subnet=dict(),
+    wait=dict(type='bool', default=False),
+    wait_timeout=dict(type='int', default=600),
+    snapshot=dict(),
+    skip_final_snapshot=dict(type='bool'),
+    apply_immediately=dict(type='bool', default=False),
+    old_db_instance_identifier=dict(aliases=['old_id']),
+    tags=dict(type='dict'),
+    publicly_accessible=dict(type='bool'),
+    character_set_name=dict(),
+    force_failover=dict(type='bool', default=False),
+    force_password_update=dict(type='bool', default=False),
 )
+
 required_if = [
     ('storage_type', 'io1', ['iops']),
 ]
@@ -891,7 +893,7 @@ def setup_client(module):
 
 
 def setup_module_object():
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=required_if
     )
@@ -908,6 +910,7 @@ def set_module_defaults(module):
         else:
             engine = module.params['db_engine']
         module.params['port'] = DEFAULT_PORTS[engine.lower()]
+
 
 """creating instances from replicas, renames and so on
 
