@@ -97,8 +97,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['state', 'absent', ['aep']],
-                     ['state', 'present', ['aep']]],
+        required_if=[
+            ['state', 'absent', ['aep']],
+            ['state', 'present', ['aep']],
+        ],
     )
 
     aep = module.params['aep']
@@ -113,7 +115,10 @@ def main():
         # Filter out module parameters with null values
         aci.payload(
             aci_class='infraAttEntityP',
-            class_config=dict(name=aep, descr=description),
+            class_config=dict(
+                name=aep,
+                descr=description,
+            ),
         )
 
         # Generate config diff which will be used as POST request body
