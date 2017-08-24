@@ -17,16 +17,18 @@
 
 import sys
 from ansible.compat.tests.mock import patch, Mock
+
 sys.modules['hpOneView'] = Mock()
 sys.modules['hpOneView.oneview_client'] = Mock()
-sys.modules['hpOneView.exceptions'] = Mock()
 sys.modules['future'] = Mock()
 sys.modules['__future__'] = Mock()
 
 ONEVIEW_MODULE_UTILS_PATH = 'ansible.module_utils.oneview'
-from ansible.module_utils.oneview import (HPOneViewException,
-                                          HPOneViewTaskError,
+from ansible.module_utils.oneview import (OneViewModuleException,
+                                          OneViewModuleTaskError,
+                                          OneViewModuleResourceNotFound,
                                           OneViewModuleBase)
 
+from ansible.modules.remote_management.oneview.oneview_ethernet_network import EthernetNetworkModule
 from ansible.modules.remote_management.oneview.oneview_fc_network import FcNetworkModule
 from ansible.modules.remote_management.oneview.oneview_fcoe_network import FcoeNetworkModule
