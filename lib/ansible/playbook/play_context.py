@@ -432,6 +432,11 @@ class PlayContext(Base):
                 if exe_var in variables:
                     setattr(new_info, 'executable', variables.get(exe_var))
 
+        # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
+        # this needs to be done before the MAGIC_VARIABLE_MAPPING happens below
+        if new_info.connection == 'local':
+            new_info.connection_user = new_info.remote_user
+
         attrs_considered = []
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
@@ -493,9 +498,7 @@ class PlayContext(Base):
 
         # if the final connection type is local, reset the remote_user value to that of the currently logged in user
         # this ensures any become settings are obeyed correctly
-        # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
         if new_info.connection == 'local':
-            new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
