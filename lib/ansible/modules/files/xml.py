@@ -91,6 +91,12 @@ options:
     - Type of input for C(add_children) and C(set_children).
     choices: [ xml, yaml ]
     default: yaml
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: 'no'
 requirements:
 - lxml >= 2.3.0
 notes:
@@ -192,6 +198,11 @@ actions:
     type: dict
     returned: success
     sample: {xpath: xpath, namespaces: [namespace1, namespace2], state=present}
+backup_file:
+    description: The name of the backup file that was created
+    type: str
+    returned: when backup=yes
+    sample: /path/to/file.xml.1942.2017-08-24@14:16:01~
 count:
     description: The count of xpath matches.
     type: int
@@ -638,6 +649,9 @@ def finish(module, tree, xpath, namespaces, changed=False, msg="", hitcount=0, m
 
     if module.params['path']:
         if not module.check_mode:
+            if module.params['backup']:
+                result['backup_file'] = module.backup_local(module.params['path'])
+
             tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
 
     if module.params['xmlstring']:
@@ -662,7 +676,8 @@ def main():
             print_match=dict(type='bool', default=False),
             pretty_print=dict(type='bool', default=False),
             content=dict(type='str', choices=['attribute', 'text']),
-            input_type=dict(type='str', default='yaml', choices=['xml', 'yaml'])
+            input_type=dict(type='str', default='yaml', choices=['xml', 'yaml']),
+            backup=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -690,6 +705,7 @@ def main():
     input_type = module.params['input_type']
     print_match = module.params['print_match']
     count = module.params['count']
+    backup = module.params['backup']
 
     # Check if we have lxml 2.3.0 or newer installed
     if not HAS_LXML:
