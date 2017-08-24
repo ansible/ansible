@@ -491,12 +491,9 @@ class PlayContext(Base):
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
-        # if the final connection type is local, reset the remote_user value to that of the currently logged in user
-        # this ensures any become settings are obeyed correctly
-        # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
+        # set connection_user from either the new_info for remote_user or the play if it is not set
         if new_info.connection == 'local':
-            new_info.connection_user = new_info.remote_user
-            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
+            new_info.connection_user = new_info.remote_user or self.remote_user
 
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
