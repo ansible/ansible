@@ -164,9 +164,9 @@ EXAMPLES = '''
     password=1nsecure
 
 # Cluster delete example
-- redshift: >
-    command: "delete"
-    identifier: "new_cluster"
+- redshift:
+    command: delete
+    identifier: new_cluster
     skip_final_cluster_snapshot: true
     wait: true
 '''
@@ -347,10 +347,10 @@ def delete_cluster(module, redshift):
     redshift: authenticated redshift connection object
     """
 
-    identifier                        = module.params.get('identifier')
-    wait                              = module.params.get('wait')
-    wait_timeout                      = module.params.get('wait_timeout')
-    skip_final_cluster_snapshot       = module.params.get('skip_final_cluster_snapshot')
+    identifier = module.params.get('identifier')
+    wait = module.params.get('wait')
+    wait_timeout = module.params.get('wait_timeout')
+    skip_final_cluster_snapshot = module.params.get('skip_final_cluster_snapshot')
     final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
 
     try:
@@ -465,8 +465,7 @@ def main():
         new_cluster_identifier              = dict(aliases=['new_identifier']),
         wait                                = dict(type='bool', default=False),
         wait_timeout                        = dict(type='int', default=300),
-    ),
-    )
+    ))
 
     required_if = [
         ('command', 'delete', ['skip_final_cluster_snapshot']),
