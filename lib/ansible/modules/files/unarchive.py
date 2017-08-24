@@ -907,6 +907,9 @@ def main():
         # Get diff if required
         if check_results.get('diff', False):
             res_args['diff'] = {'prepared': check_results['diff']}
+    else:
+        # Always changed using download_pipe
+        res_args['changed'] = True
 
     # do the unpack
     if download_pipe or (not module.check_mode and check_results['unarchived']):
