@@ -111,9 +111,9 @@
   win_command: powershell.exe (get-disk -number 1).Number
   register: get_disk_actual
 
-- name: assert install hotfix
+- name: assert setup disk
   assert:
     that:
     - setup_specified_disk|changed
-    - setup_specified_disk.disk_number_chosen == get_disk_actual
+    - setup_specified_disk.disk.disk_number_chosen == get_disk_actual
     - get_disk_actual.rc == 0
