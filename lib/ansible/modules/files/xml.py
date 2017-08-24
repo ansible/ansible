@@ -291,8 +291,7 @@ def xpath_matches(tree, xpath, namespaces):
     """ Test if a node exists """
     if tree.xpath(xpath, namespaces=namespaces):
         return True
-    else:
-        return False
+    return False
 
 
 def delete_xpath_target(module, tree, xpath, namespaces):
@@ -708,12 +707,21 @@ def main():
     else:
         module.fail_json(msg="The target XML source '%s' does not exist." % xml_file)
 
+    # Parse and evaluate xpath expression
+    if xpath:
+        try:
+            etree.XPath(xpath)
+        except etree.XPathSyntaxError as e:
+            module.fail_json(msg="Syntax error in xpath expression: %s (%s)" % (xpath, e))
+        except etree.XPathEvalError as e:
+            module.fail_json(msg="Evaluation error in xpath expression: %s (%s)" % (xpath, e))
+
     # Try to parse in the target XML file
     try:
         parser = etree.XMLParser(remove_blank_text=pretty_print)
         doc = etree.parse(infile, parser)
     except etree.XMLSyntaxError as e:
-        module.fail_json(msg="Error while parsing path: %s" % e)
+        module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))
 
     # Ensure we have the original copy to compare
     if module._diff:
