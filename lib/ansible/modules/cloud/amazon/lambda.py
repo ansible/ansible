@@ -350,17 +350,14 @@ def main():
         if dead_letter_arn is not None:
             if current_config.get('DeadLetterConfig'):
                 if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
-                    func_kwargs.update(
-                        {'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
             else:
                 if dead_letter_arn != "":
-                    func_kwargs.update(
-                        {'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
-            module.fail_json(
-                msg='Cannot change runtime. Please recreate the function')
+            module.fail_json(msg='Cannot change runtime. Please recreate the function')
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
@@ -382,15 +379,14 @@ def main():
         else:
             # No VPC configuration is desired, assure VPC config is empty when
             # present in current config
-            if 'VpcConfig' in current_config and 'VpcId' in current_config['VpcConfig'] and current_config['VpcConfig']['VpcId'] != ''):
+            if 'VpcConfig' in current_config and 'VpcId' in current_config['VpcConfig'] and current_config['VpcConfig']['VpcId'] != '':
                 func_kwargs.update({'VpcConfig': {'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
         if len(func_kwargs) > 1:
             try:
                 if not check_mode:
-                    response = client.update_function_configuration(
-                        **func_kwargs)
+                    response = client.update_function_configuration(**func_kwargs)
                     current_version = response['Version']
                 changed = True
             except (ParamValidationError, ClientError) as e:
@@ -437,8 +433,7 @@ def main():
         response = get_current_function(
             client, name, qualifier=current_version)
         if not response:
-            module.fail_json(
-                msg='Unable to get function information after updating')
+            module.fail_json(msg='Unable to get function information after updating')
 
         # We're done
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
@@ -481,8 +476,7 @@ def main():
             func_kwargs.update({'Handler': handler})
 
         if environment_variables:
-            func_kwargs.update(
-                {'Environment': {'Variables': environment_variables}})
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
 
         if dead_letter_arn:
             func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
@@ -507,8 +501,7 @@ def main():
         response = get_current_function(
             client, name, qualifier=current_version)
         if not response:
-            module.fail_json(
-                msg='Unable to get function information after creating')
+            module.fail_json(msg='Unable to get function information after creating')
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
 
     # Delete existing Lambda function
