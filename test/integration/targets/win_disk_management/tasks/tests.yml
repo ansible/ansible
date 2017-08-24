@@ -1,0 +1,119 @@
+- name: Select a specified disk and manage it with default set option values
+  win_disk_management:
+    disk_size: 100
+    partition_style_select: raw
+    operational_status: offline
+    read_only: true
+  register: add_specified_disk
+
+- name: Test add_specified_disk
+  assert:
+    that:
+    - add_specified_disk.changed == true
+    - add_specified_disk.general_log.create_volume == 'successful'
+
+- name: Test add_specified_disk_again (normal mode)
+  assert:
+    that:
+    - add_specified_disk_again.changed == true
+    - add_specified_disk_again.general_log.create_volume == 'successful'
+  when: not in_check_mode
+
+- name: Test add_specified_disk_again (check-mode)
+  assert:
+    that:
+    - add_specified_disk_again.changed == false
+    - add_specified_disk_again.general_log.create_volume == 'check_mode'
+  when: in_check_mode
+
+- name: Select a specified disk and manage it with the specified values for set options
+  win_disk_management:
+    disk_size: 50
+    partition_style_select: mbr
+    operational_status: online
+    read_only: false
+    partition_style_set: gpt
+    drive_letter: f
+    file_system: refs
+    label: application_disk
+    allocation_unit_size: 64
+    integrity_streams: true
+
+- name: Test manage_specified_disk
+  assert:
+    that:
+    - manage_specified_disk.changed == true
+    - manage_specified_disk.general_log.create_volume == 'successful'
+
+- name: Test manage_specified_disk_again (normal mode)
+  assert:
+    that:
+    - manage_specified_disk_again.changed == true
+    - manage_specified_disk_again.general_log.create_volume == 'successful'
+  when: not in_check_mode
+
+- name: Test add_specified_disk_again (check-mode)
+  assert:
+    that:
+    - manage_specified_disk_again.changed == false
+    - manage_specified_disk_again.general_log.create_volume == 'check_mode'
+  when: in_check_mode
+
+- name: fail select disk because specified disk is not attached
+  win_disk_management:
+    disk_size: 100
+    partition_style_select: raw
+    operational_status: offline
+    read_only: true
+  register: fail_select_disk
+  failed_when: fail_select_disk.msg == 'No disk could be found and selected with the specified parameter options.'
+
+- name: fail manage disk because selected disk contains partition
+  win_disk_management:
+    disk_size: 50
+    partition_style_select: mbr
+    operational_status: online
+    read_only: false
+    partition_style_set: gpt
+    drive_letter: f
+    file_system: refs
+    label: application_disk
+    allocation_unit_size: 64
+    integrity_streams: true
+  register: fail_part_disk
+  failed_when: fail_part_disk.msg == 'Existing partitions found on the selected disk.'
+
+- name: fail manage disk because selected disk contains volume
+  win_disk_management:
+    disk_size: 50
+    partition_style_select: mbr
+    operational_status: online
+    read_only: false
+    partition_style_set: gpt
+    drive_letter: f
+    file_system: refs
+    label: application_disk
+    allocation_unit_size: 64
+    integrity_streams: true
+  register: fail_part_disk
+  failed_when: fail_part_disk.msg == 'Existing volumes found on the selected disk.'
+
+  #  Use result of module (disk number)
+- name: Select a specified disk and manage it with default set option values
+  win_disk_management:
+    disk_size: 100
+    partition_style_select: raw
+    operational_status: offline
+    read_only: true
+  register: setup_specified_disk
+  
+- name: get result of disk setup
+  win_command: powershell.exe (get-disk -number 1).Number
+  register: get_disk_actual
+
+- name: assert install hotfix
+  assert:
+    that:
+    - setup_specified_disk|changed
+    - setup_specified_disk.disk_number_chosen == get_disk_actual
+    - get_disk_actual.rc == 0
