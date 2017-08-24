@@ -123,7 +123,6 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
             params = dict(ANSIBLE_MODULE_ARGS=args)
-            #params = json.dumps(params)
             params = basic.json_dumps(params)
 
             with swap_stdin_and_argv(stdin_data=params):

@@ -282,6 +282,7 @@ class AnsibleModuleExit(Exception):
         self.return_code = return_code
         if return_code is None:
             self.return_code = self.default_return_code
+
         self.data = {}
         exception_data = exception_data or {}
 
@@ -964,20 +965,15 @@ class AnsibleModule(object):
             raise exc_value
         except SystemExit as e:
             raise SystemExit
-            #sys.__excepthook__(exc_type, exc_value, exc_traceback)
         except AnsibleModuleFatalError as e:
             # Note: writing to stdout since we are returned a valid json object with error data in it
-            #print('\n\n e.return_code: %s' % e.return_code)
             # action _low_level_execute_module sets module results['stderr'] based on... stderr
             self._exception_to_stderr(exc_type, exc_value, exc_traceback)
             print(repr(e))
-            #sys.exit(int(e.return_code))
             sys.exit(e.return_code)
         except AnsibleModuleExit as e:
             print(repr(e))
-            # print
             self._exception_to_stderr(exc_type, exc_value, exc_traceback)
-            #sys.exit(int(e.return_code))
             sys.exit(e.return_code)
         except exc_type:
             exception = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
