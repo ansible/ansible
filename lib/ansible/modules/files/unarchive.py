@@ -904,6 +904,11 @@ def main():
             res_args['changed'] = not check_results['unarchived']
         elif check_results['unarchived']:
             res_args['changed'] = False
+        elif 'err' in res_args:
+            # error occurs during check
+            # try to unpack
+            check_results['unarchived'] = True
+            res_args['changed'] = False
         # Get diff if required
         if check_results.get('diff', False):
             res_args['diff'] = {'prepared': check_results['diff']}
@@ -935,6 +940,10 @@ def main():
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
             try:
+                # don't know why changed is not in 
+                # res args but in case it is not 
+                if 'changed' not in res_args:
+                    res_args['changed'] = False
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
