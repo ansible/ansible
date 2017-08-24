@@ -129,7 +129,10 @@ def main():
         # Filter out module parameters with null values
         aci.payload(
             aci_class='fvAp',
-            class_config=dict(name=ap, descr=description),
+            class_config=dict(
+                name=ap,
+                descr=description,
+            ),
         )
 
         # Generate config diff which will be used as POST request body
