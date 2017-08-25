@@ -6,7 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '2.4',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -62,6 +62,8 @@ EXAMPLES = '''
     username:"{{ username }}"
     password:"{{ password }}"
 '''
+
+RETURN ''' # '''
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
