@@ -253,7 +253,7 @@ lib/ansible/modules/network/asa/asa_command.py
 lib/ansible/modules/network/asa/asa_config.py
 lib/ansible/modules/network/bigswitch/bigmon_chain.py
 lib/ansible/modules/network/bigswitch/bigmon_policy.py
-lib/ansible/modules/network/citrix/netscaler.py
+lib/ansible/modules/network/citrix/_netscaler.py
 lib/ansible/modules/net_tools/cloudflare_dns.py
 lib/ansible/modules/network/cumulus/_cl_bond.py
 lib/ansible/modules/network/cumulus/_cl_img_install.py
