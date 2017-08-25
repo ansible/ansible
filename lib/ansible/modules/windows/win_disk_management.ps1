@@ -100,7 +100,7 @@ switch($action){
 Stop {Stop-Service -Name ShellHWDetection -PassThru -ErrorAction Stop}
 Start {Start-Service -Name ShellHWDetection -PassThru -ErrorAction Stop}
 Check {(Get-Service ShellHWDetection -ErrorAction Stop).Status -eq "Running"}
-default {throw "Neither '-Stop', '-Start' nor 'Check' switch was passed to the function when invoked. Without the switches the service can not be maintained."}
+default {throw "Neither '-Stop', '-Start' nor 'Check' switch was passed to the function when invoked, without the switches the service can not be maintained"}
 }
 }
 
@@ -250,7 +250,7 @@ if($disk){
 }
 else{
         $result.search_log.disk.disks_found = "0"
-        Fail-Json -obj $result -message "No disk could be found and selected with the specified parameter options."
+        Fail-Json -obj $result -message "No disk could be found and selected with the specified parameter options"
 }
 
 $result.general_log.search_disk = "successful"
@@ -402,7 +402,7 @@ if($PartNumber -ge 1){
                                                 else{
                                                         $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                                                 }
-                                                Fail-Json -obj $result -message "Existing partitions found on the selected disk."
+                                                Fail-Json -obj $result -message "Existing partitions found on the selected disk"
                 }
                 else{
                     $result.search_log.existing_volumes.volumes_found = "$((($volume | Measure-Object).Count).ToString())"
@@ -431,7 +431,7 @@ if($PartNumber -ge 1){
                     else{
                             $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                     }
-                    Fail-Json -obj $result -message "Existing volumes found on the selected disk."
+                    Fail-Json -obj $result -message "Existing volumes found on the selected disk"
                 }
  
 }
@@ -453,7 +453,7 @@ else{
     $result.parameters.drive_letter_set = "$DriveLetter"
     $result.parameters.drive_letter_used = "yes"
     $result.general_log.check_parameters = "failed"
-    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter is already set on another partition on this server which is not allowed."
+    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter is already set on another partition on this server which is not allowed"
 }
 
 if($DriveLetter -ne "C" -and $DriveLetter -ne "D"){
@@ -462,7 +462,7 @@ if($DriveLetter -ne "C" -and $DriveLetter -ne "D"){
 else{
     $result.parameters.forbidden_drive_letter_set = "yes"
     $result.general_log.check_parameters = "failed"
-    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter contains protected letters C or D."
+    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter contains protected letters C or D"
 }
 
 if($FileSystem -eq "ntfs"){
@@ -494,7 +494,7 @@ if($FileSystem -eq "ntfs"){
                                                     else{
                                                             $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                                                     }
-                                                    Fail-Json -obj $result -message "Option disk_size with value $Size GB is not a valid size for NTFS. The disk can not be not formatted with this file system."
+                                                    Fail-Json -obj $result -message "Option disk_size with value $Size GB is not a valid size for NTFS, the disk can not be not formatted with this file system"
                                                 }
 }
 elseif($FileSystem -eq "refs"){
