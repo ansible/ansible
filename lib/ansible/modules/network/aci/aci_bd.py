@@ -72,7 +72,7 @@ options:
     - Determines if GARP should be enabled to detect when End Points move.
     - The APIC defaults new Bridge Domains to C(garp).
     choices: [ default, garp ]
-    defautl: garp
+    default: garp
   endpoint_retention_action:
    description:
    - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
@@ -174,6 +174,7 @@ EXAMPLES = r'''
     l2_unknown_unicast: flood
 
 - name: Query All Bridge Domains
+  aci_bd:
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
@@ -181,6 +182,7 @@ EXAMPLES = r'''
     state: query
 
 - name: Query a Bridge Domain
+  aci_bd:
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
@@ -190,6 +192,7 @@ EXAMPLES = r'''
     bd: web_servers
 
 - name: Delete a Bridge Domain
+  aci_bd:
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
