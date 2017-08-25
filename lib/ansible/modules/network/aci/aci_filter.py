@@ -103,7 +103,7 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         filter=dict(type='str', required=False, aliases=['name', 'filter_name']),  # Not required for querying all objects
-        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all objects
+        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -112,33 +112,29 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['filter', 'tenant']],
+            ['state', 'present', ['filter', 'tenant']],
+        ],
     )
 
     filter_name = module.params['filter']
-    tenant = module.params['tenant']
     description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    # TODO: Currently we require a tenant for a query, we could make this optional
-    # TODO: Investigate for a URI to query objects for a specific tenant
-    if filter_name is not None:
-        # Work with a specific object
-        path = 'api/mo/uni/tn-%s/flt-%s.json' % (tenant, filter_name)
-    elif state == 'query':
-        # Query all objects
-        path = 'api/node/class/vzFilter.json'
-    else:
-        module.fail_json(msg="Parameter 'filter' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class="tenant", subclass_1="filter")
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzFilter', class_config=dict(name=filter_name, descr=description))
+        aci.payload(
+            aci_class='vzFilter',
+            class_config=dict(
+                name=filter_name,
+                descr=description,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzFilter')
