@@ -167,7 +167,11 @@ def get_interface_type(interface):
 
 def add_command_to_vrf(name, cmd, commands):
     if 'vrf definition %s' % name not in commands:
-        commands.append('vrf definition %s' % name)
+        commands.extend([
+            'vrf definition %s' % name,
+            'address-family ipv4', 'exit',
+            'address-family ipv6', 'exit',
+        ])
     commands.append(cmd)
 
 def map_obj_to_commands(updates, module):
