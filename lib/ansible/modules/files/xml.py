@@ -21,7 +21,8 @@ module: xml
 short_description: Manage bits and pieces of XML files or strings
 description:
 - A CRUD-like interface to managing bits of XML files.
-- You might also be interested in a brief tutorial from U(http://www.w3schools.com/xpath/).
+- You might also be interested in a brief tutorial from U(http://www.w3schools.com/xpath/)
+  and U(https://developer.mozilla.org/en-US/docs/Web/XPath).
 version_added: '2.4'
 options:
   path:
@@ -101,6 +102,7 @@ requirements:
 - lxml >= 2.3.0
 notes:
 - Use the C(--check) and C(--diff) options when testing your expressions.
+- The diff output is automatically pretty-printed, so may not reflect the actual file content, only the file structure.
 - This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
 - Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter.
 - Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
@@ -233,7 +235,7 @@ from distutils.version import LooseVersion
 from io import BytesIO
 
 try:
-    from lxml import etree
+    from lxml import etree, objectify
     HAS_LXML = True
 except ImportError:
     HAS_LXML = False
@@ -254,6 +256,12 @@ _RE_SPLITSIMPLEATTRLAST = re.compile("^(.*)/(@(?:" + _NSIDENT + "))$")
 _RE_SPLITSIMPLEATTRLASTEQVALUE = re.compile("^(.*)/(@(?:" + _NSIDENT + "))=" + _XPSTR + "$")
 _RE_SPLITSUBLAST = re.compile("^(.*)/(" + _NSIDENT + ")\\[(.*)\\]$")
 _RE_SPLITONLYEQVALUE = re.compile("^(.*)/text\\(\\)=" + _XPSTR + "$")
+
+
+def has_changed(doc):
+    orig_obj = etree.tostring(objectify.fromstring(etree.tostring(orig_doc)))
+    obj = etree.tostring(objectify.fromstring(etree.tostring(doc)))
+    return (orig_obj != obj)
 
 
 def do_print_match(module, tree, xpath, namespaces):
@@ -535,34 +543,6 @@ def set_target(module, tree, xpath, namespaces, attribute, value):
     finish(module, tree, xpath, namespaces, changed)
 
 
-def pretty(module, tree):
-    xml_string = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
-
-    result = dict(
-        changed=False,
-    )
-
-    if module.params['path']:
-        xml_file = module.params['path']
-        xml_content = open(xml_file)
-        try:
-            if xml_string != xml_content.read():
-                result['changed'] = True
-                if not module.check_mode:
-                    if module.params['backup']:
-                        result['backup_file'] = module.backup_local(module.params['path'])
-                    tree.write(xml_file, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
-        finally:
-            xml_content.close()
-
-    elif module.params['xmlstring']:
-        result['xmlstring'] = xml_string
-        if xml_string != module.params['xmlstring']:
-            result['changed'] = True
-
-    module.exit_json(**result)
-
-
 def get_element_text(module, tree, xpath, namespaces):
     if not is_node(tree, xpath, namespaces):
         module.fail_json(msg="Xpath %s does not reference a node!" % xpath)
@@ -633,27 +613,56 @@ def children_to_nodes(module=None, children=[], type='yaml'):
     return [child_to_element(module, child, type) for child in children]
 
 
+def pretty(module, tree):
+    xml_string = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+
+    result = dict(
+        changed=False,
+    )
+
+    if module.params['path']:
+        xml_file = module.params['path']
+        xml_content = open(xml_file)
+        try:
+            if xml_string != xml_content.read():
+                result['changed'] = True
+                if not module.check_mode:
+                    if module.params['backup']:
+                        result['backup_file'] = module.backup_local(module.params['path'])
+                    tree.write(xml_file, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+        finally:
+            xml_content.close()
+
+    elif module.params['xmlstring']:
+        result['xmlstring'] = xml_string
+        # NOTE: Modifying a string is not considered a change !
+        if xml_string != module.params['xmlstring']:
+            result['changed'] = True
+
+    module.exit_json(**result)
+
+
 def finish(module, tree, xpath, namespaces, changed=False, msg="", hitcount=0, matches=tuple()):
 
     result = dict(
         actions=dict(xpath=xpath, namespaces=namespaces, state=module.params['state']),
-        changed=changed,
+        changed=has_changed(tree),
         count=hitcount,
         matches=matches,
         msg=msg,
     )
 
-    if changed and module._diff:
-        result['diff'] = dict(
-            before=etree.tostring(orig_doc, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print']),
-            after=etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print']),
-        )
+    if result['changed']:
+        if module._diff:
+            result['diff'] = dict(
+                before=etree.tostring(orig_doc, xml_declaration=True, encoding='UTF-8', pretty_print=True),
+                after=etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=True),
+            )
 
-    if module.params['path'] and not module.check_mode:
-        if module.params['backup']:
-            result['backup_file'] = module.backup_local(module.params['path'])
-
-        tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+        if module.params['path'] and not module.check_mode:
+            if module.params['backup']:
+                result['backup_file'] = module.backup_local(module.params['path'])
+            tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
 
     if module.params['xmlstring']:
         result['xmlstring'] = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
@@ -741,9 +750,8 @@ def main():
         module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))
 
     # Ensure we have the original copy to compare
-    if module._diff:
-        global orig_doc
-        orig_doc = copy.deepcopy(doc)
+    global orig_doc
+    orig_doc = copy.deepcopy(doc)
 
     if print_match:
         do_print_match(module, doc, xpath, namespaces)
