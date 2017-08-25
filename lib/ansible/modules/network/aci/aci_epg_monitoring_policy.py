@@ -84,37 +84,29 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['monitoring_policy', 'tenant']],
+            ['state', 'present', ['monitoring_policy', 'tenant']],
+        ],
     )
 
     monitoring_policy = module.params['monitoring_policy']
-    tenant = module.params['tenant']
     description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    if monitoring_policy is not None:
-        # Work with a specific object
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/monepg-%(monitoring_policy)s.json' % module.params
-        elif state == 'query':
-            path = 'api/class/monEPGPol.json?query-target-filter=eq(monEPGPol.name,"%(monitoring_policy)s")' % module.params
-    elif state == 'query':
-        # Query all objects
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=monEPGPol&rsp-subtree-include=no-scoped' % module.params
-        else:
-            path = 'api/node/class/monEPGPol.json'
-    else:
-        module.fail_json(msg="Parameter 'monitoring_policy' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='tenant', subclass_1='monitoring_policy')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='monEPGPol', class_config=dict(name=monitoring_policy, descr=description))
+        aci.payload(
+            aci_class='monEPGPol',
+            class_config=dict(
+                name=monitoring_policy,
+                descr=description,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='monEPGPol')
