@@ -35,6 +35,16 @@ options:
     description:
     - The description of the Layer 2 interface policy.
     aliases: [ descr ]
+  qinq:
+    description:
+    - Determines if QinQ is disabled or if the port should be considered a core or edge port.
+    choices: [ core, disabled, edge ]
+    default: disabled
+  vepa:
+    description:
+    - Determines if Virtual Ethernet Port Aggregator is disabled or enabled.
+    choices: [ disabled, enabled ]
+    default: disabled
   vlan_scope:
     description:
     - The scope of the VLAN.
@@ -67,7 +77,7 @@ from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 # Mapping dicts are used to normalize the proposed data to what the APIC expects, which will keep diffs accurate
-QINQ_MAPPING = dict(core_port='corePort', disabled='disabled', edge_port='edgePort')
+QINQ_MAPPING = dict(core='corePort', disabled='disabled', edge='edgePort')
 
 
 def main():
@@ -76,7 +86,7 @@ def main():
         l2_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all policies
         description=dict(type='str', aliases=['descr']),
         vlan_scope=dict(type='str', choices=['global', 'portlocal']),  # No default provided on purpose
-        qinq=dict(type='str', choices=['core_port', 'disabled', 'edge_port']),
+        qinq=dict(type='str', choices=['core', 'disabled', 'edge']),
         vepa=dict(type='str', choices=['disabled', 'enabled']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -85,6 +95,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['l2_policy']],
+            ['state', 'present', ['l2_policy']],
+        ],
     )
 
     l2_policy = module.params['l2_policy']
@@ -92,28 +106,25 @@ def main():
     qinq = module.params['qinq']
     if qinq is not None:
         qinq = QINQ_MAPPING[qinq]
-    vepa = module.param['vepa']
+    vepa = module.params['vepa']
     description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    if l2_policy is not None:
-        # Work with a specific object
-        path = 'api/mo/uni/infra/l2IfP-%(l2_policy)s.json' % module.params
-    elif state == 'query':
-        # Query all objects
-        path = 'api/class/l2IfPol.json'
-    else:
-        module.fail_json(msg="Parameter 'l2_policy' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='l2_policy')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='l2IfPol', class_config=dict(name=l2_policy, descr=description, vlanScope=vlan_scope, qinq=qinq, vepa=vepa))
+        aci.payload(
+            aci_class='l2IfPol',
+            class_config=dict(
+                name=l2_policy,
+                descr=description,
+                vlanScope=vlan_scope,
+                qinq=qinq, vepa=vepa,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='l2IfPol')
