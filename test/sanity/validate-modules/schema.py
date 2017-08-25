@@ -67,6 +67,7 @@ ansible_module_kwargs_schema = Schema(
         'add_file_common_args': bool,
         'supports_check_mode': bool,
         'required_if': sequence_of_sequences(min=3),
+        'required_by': dict,
     }
 )
 
