@@ -40,8 +40,9 @@ options:
   enable_vip:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
-    - The APIC defaults new Subnets to disable VIP feature.
+    - The APIC defaults new Subnets to C(no).
     choices: [ no, yes ]
+    default: no
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
@@ -59,14 +60,15 @@ options:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
       can be preferred in the Bridge Domain.
-    - The APIC defaults new Subnets to not be preffered.
+    - The APIC defaults new Subnets to C(no).
     choices: [ no, yes ]
+    default: no
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
   route_profile_l3_out:
     description:
-    - The L3 Out that contains  the assocated Route Profile.
+    - The L3 Out that contains the assocated Route Profile.
   scope:
     description:
     - Determines if scope of the Subnet.
@@ -74,16 +76,18 @@ options:
     - The public option allows the Subnet to be advertised outside of the ACI Fabric, and allows communication with
       hosts in other VRFs.
     - The shared option limits communication to hosts in either the same VRF or the shared VRF.
-    - The APIC defaults new Subnets to be private.
+    - The APIC defaults new Subnets to C(private).
     choices: [ private, public, shared ]
+    default: private
   subnet_control:
     description:
     - Determines the Subnet's Control State.
     - The querier_ip option is used to treat the gateway_ip as an IGMP querier source IP.
     - The nd_ra option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The no_gw option is used to remove default gateway functionality from the gateway address.
-    - The APIC defaults new Subnets to ND RA.
+    - The APIC defaults new Subnets to C(nd_ra).
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
+    default: nd_ra
   subnet_name:
     description:
     - The name of the Subnet.
@@ -96,7 +100,7 @@ options:
 
 EXAMPLES = r''' # '''
 
-RETURN = ''' # '''
+RETURN = r''' # '''
 
 SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
 
@@ -122,18 +126,19 @@ def main():
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6')  # Deprecated starting from v2.6
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_together=[['gateway', 'mask']],
-        required_if=[['state', 'present', ['bd', 'gateway', 'mask', 'tenant']],
-                     ['state', 'absent', ['bd', 'gateway', 'mask', 'tenant']]]
+        required_if=[
+            ['state', 'present', ['bd', 'gateway', 'mask', 'tenant']],
+            ['state', 'absent', ['bd', 'gateway', 'mask', 'tenant']],
+        ],
     )
 
-    bd = module.params['bd']
     description = module.params['description']
     enable_vip = module.params['enable_vip']
     gateway = module.params['gateway']
@@ -141,8 +146,6 @@ def main():
     if mask is not None and mask not in range(0, 129):
         # TODO: split checkes between IPv4 and IPv6 Addresses
         module.fail_json(msg='Valid Subnet Masks are 0 to 32 for IPv4 Addresses and 0 to 128 for IPv6 addresses')
-    if gateway is not None and mask is not None:
-        gateway_addr = '{}/{}'.format(gateway, str(mask))
     subnet_name = module.params['subnet_name']
     nd_prefix_policy = module.params['nd_prefix_policy']
     preferred = module.params['preferred']
@@ -153,68 +156,37 @@ def main():
     subnet_control = module.params['subnet_control']
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
-    tenant = module.params['tenant']
+
+    # Construct gateway_addr and add to module.params for constructing URL
+    if gateway is not None and mask is not None:
+        gateway_addr = '{}/{}'.format(gateway, str(mask))
+        module.params['gateway_addr'] = gateway_addr
 
     aci = ACIModule(module)
-
-    if gateway is not None:
-        if tenant is not None and bd is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/BD-%(bd)s/subnet-[%(gateway)s/%(mask)s].json' % module.params
-            filter_string = '?rsp-subtree=full&rsp-subtree-class=fvRsBDSubnetToProfile,fvRsNdPfxPol&rsp-prop-include=config-only'
-        elif tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s.json' % module.params
-            filter_string = ('?rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-                             '&rsp-subtree-filter=eq(fvSubnet.ip, \"%(gateway)s/%(mask)s\")') % module.params
-        elif bd is not None:
-            path = 'api/class/fvBD.json'
-            filter_string = ('?query-target-filter=eq(fvBD.name, \"%(bd)s\")&rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-                             '&rsp-subtree-filter=eq(fvSubnet.ip, \"%(gateway)s/%(mask)s\")') % module.params
-        else:
-            path = 'api/class/fvSubnet.json'
-            filter_string = '?query-target-filter=eq(fvSubnet.ip, \"%(gateway)s/%(mask)s\")&rsp-subtree=children' % module.params
-    elif subnet_name is not None:
-        if tenant is not None and bd is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/BD-%(bd)s.json' % module.params
-            filter_string = ('?rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-                             '&rsp-subtree-filter=eq(fvSubnet.name, \"%(name)s\")') % module.params
-        elif tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s.json' % module.params
-            filter_string = ('?rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-                             '&rsp-subtree-filter=eq(fvSubnet.name, \"%(name)s\")') % module.params
-        elif bd is not None:
-            path = 'api/class/fvBD.json'
-            filter_string = ('?query-target-filter=eq(fvBD.name, \"%(bd)s\")&rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-                             '&rsp-subtree-filter=eq(fvSubnet.name, \"%(name)s\")') % module.params
-        else:
-            path = 'api/class/fvSubnet.json'
-            filter_string = '?query-target-filter=eq(fvSubnet.name, \"%(name)s\")&rsp-subtree=children' % module.params
-    elif tenant is not None:
-        if bd is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/BD-%(bd)s.json' % module.params
-            filter_string = '?rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-        else:
-            path = 'api/mo/uni/tn-%(tenant)s.json' % module.params
-            filter_string = '?rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-    elif bd is not None:
-        path = 'api/class/fvBD.json'
-        filter_string = ('?query-target-filter=eq(fvBD.name, \"%(bd)s\")&rsp-subtree=full'
-                         '&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol') % module.params
-    else:
-        path = 'api/class/fvSubnet.json'
-        filter_string = '?rsp-subtree=full&rsp-subtree-class=fvSubnet,fvRsBDSubnetToProfile,fvRsNdPfxPol'
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
-    aci.get_existing(filter_string=filter_string)
+    aci.construct_url(
+        root_class='tenant', subclass_1='bd', subclass_2='gateway_addr',
+        child_classes=['fvRsBDSubnetToProfile', 'fvRsNdPfxPol'],
+    )
+    aci.get_existing()
 
     if state == 'present':
         # Filter out module params with null values
-        aci.payload(aci_class='fvSubnet',
-                    class_config=dict(ctrl=subnet_control, descr=description, ip=gateway_addr, name=subnet_name,
-                                      preferred=preferred, scope=scope, virtual=enable_vip),
-                    child_configs=[{'fvRsBDSubnetToProfile': {'attributes': {'tnL3extOutName': route_profile_l3_out,
-                                    'tnRtctrlProfileName': route_profile}}},
-                                   {'fvRsNdPfxPol': {'attributes': {'tnNdPfxPolName': nd_prefix_policy}}}])
+        aci.payload(
+            aci_class='fvSubnet',
+            class_config=dict(
+                ctrl=subnet_control,
+                descr=description,
+                ip=gateway_addr,
+                name=subnet_name,
+                preferred=preferred,
+                scope=scope,
+                virtual=enable_vip,
+            ),
+            child_configs=[
+                {'fvRsBDSubnetToProfile': {'attributes': {'tnL3extOutName': route_profile_l3_out, 'tnRtctrlProfileName': route_profile}}},
+                {'fvRsNdPfxPol': {'attributes': {'tnNdPfxPolName': nd_prefix_policy}}},
+            ],
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvSubnet')
@@ -224,6 +196,9 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
+
+    # Remove gateway_addr used to form URL from module.params
+    module.params.pop("gateway_addr", None)
 
     module.exit_json(**aci.result)
 
