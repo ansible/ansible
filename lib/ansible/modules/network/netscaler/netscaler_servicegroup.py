@@ -105,8 +105,8 @@ options:
 
     cip:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Insert the Client IP header in requests forwarded to the service."
 
@@ -204,8 +204,8 @@ options:
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with all the services in the service group whose state
@@ -230,8 +230,8 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging of AppFlow information for the specified service group."
 
@@ -698,8 +698,8 @@ def main():
         cip=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         cipheader=dict(type='str'),
@@ -720,8 +720,8 @@ def main():
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         tcpprofilename=dict(type='str'),
@@ -730,8 +730,8 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         netprofile=dict(type='str'),
@@ -881,6 +881,9 @@ def main():
         'rtspsessionidremap': ['bool_on_off'],
         'graceful': ['bool_yes_no'],
         'cmp': ['bool_yes_no'],
+        'cip': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
     }
 
     # Instantiate config proxy
