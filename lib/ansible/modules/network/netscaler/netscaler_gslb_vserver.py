@@ -174,15 +174,15 @@ options:
 
     mir:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Include multiple IP addresses in the DNS responses sent to clients."
 
     disableprimaryondown:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Continue to direct traffic to the backup chain even after the primary GSLB virtual server returns to
@@ -246,8 +246,8 @@ options:
 
     sopersistence:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 If spillover occurs, maintain source IP address based persistence for both primary and backup GSLB
@@ -281,8 +281,8 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging appflow flow information."
 
@@ -323,8 +323,8 @@ options:
 
     disabled:
         description:
-            - When set to C(yes) the GSLB Vserver state will be set to DISABLED.
-            - When set to C(no) the GSLB Vserver state will be set to ENABLED.
+            - When set to C(yes) the GSLB Vserver state will be set to C(disabled).
+            - When set to C(no) the GSLB Vserver state will be set to C(enabled).
             - >-
                 Note that due to limitations of the underlying NITRO API a C(disabled) state change alone
                 does not cause the module result to report a changed status.
@@ -680,15 +680,15 @@ def main():
         mir=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         disableprimaryondown=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         dynamicweight=dict(
@@ -720,8 +720,8 @@ def main():
         sopersistence=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         sopersistencetimeout=dict(type='float'),
@@ -737,8 +737,8 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         domainname=dict(type='str'),
@@ -844,6 +844,13 @@ def main():
         'servicetype',
     ]
 
+    transforms = {
+        'mir': [lambda v: v.upper()],
+        'disableprimaryondown': [lambda v: v.upper()],
+        'sopersistence': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
+    }
+
     # Instantiate config proxy
     gslb_vserver_proxy = ConfigProxy(
         actual=gslbvserver(),
@@ -852,6 +859,7 @@ def main():
         readwrite_attrs=readwrite_attrs,
         readonly_attrs=readonly_attrs,
         immutable_attrs=immutable_attrs,
+        transforms=transforms,
     )
 
     try:

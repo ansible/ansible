@@ -27,30 +27,30 @@
     v6persistmasklen: 64
     m: IP
     tosid: 6
-    sessionless: DISABLED
+    sessionless: disabled
     redirurl: http://somewhere.com
     cacheable: no
     clttimeout: 111
     somethod: CONNECTION
-    sopersistence: DISABLED
+    sopersistence: disabled
     sopersistencetimeout: 222
     sothreshold: 4096
     healththreshold: 55
     sobackupaction: DROP
-    redirectportrewrite: DISABLED
-    downstateflush: DISABLED
-    disableprimaryondown: DISABLED
+    redirectportrewrite: disabled
+    downstateflush: disabled
+    disableprimaryondown: disabled
     insertvserveripport: VIPADDR
     vipheader: vip
     authenticationhost: authenticate.me
     authentication: off
     authn401: off
     authnvsname: somename
-    push: DISABLED
+    push: disabled
     pushmulticlients: no
     comment: Vserver comment
     l2conn: "OFF"
-    appflowlog: DISABLED
+    appflowlog: disabled
     icmpvsrresponse: PASSIVE
     rhistate: PASSIVE
     newservicerequest: 11
@@ -58,10 +58,10 @@
     newservicerequestincrementinterval: 5
     minautoscalemembers: 8
     maxautoscalemembers: 10
-    macmoderetainvlan: DISABLED
-    dns64: DISABLED
+    macmoderetainvlan: disabled
+    dns64: disabled
     bypassaaaa: no
-    processlocal: DISABLED
+    processlocal: disabled
     backuplbmethod: LEASTCONNECTION
     hashlength: 100
     servicebindings:
