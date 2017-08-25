@@ -81,6 +81,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['fc_policy']],
+            ['state', 'present', ['fc_policy']],
+        ],
     )
 
     fc_policy = module.params['fc_policy']
@@ -89,23 +93,19 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    if fc_policy is not None:
-        # Work with a specific object
-        path = 'api/mo/uni/infra/fcIfPol-%(fc_policy)s.json' % module.params
-    elif state == 'query':
-        # Query all objects
-        path = 'api/infra/class/fcIfPol.json'
-    else:
-        module.fail_json(msg="Parameter 'fc_policy' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='fc_policy')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='fcIfPol', class_config=dict(name=fc_policy, descr=description, portMode=port_mode))
+        aci.payload(
+            aci_class='fcIfPol',
+            class_config=dict(
+                name=fc_policy,
+                descr=description,
+                portMode=port_mode,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fcIfPol')
