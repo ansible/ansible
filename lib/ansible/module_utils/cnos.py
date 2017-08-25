@@ -3176,10 +3176,10 @@ def checkOutputForError(output):
         startIndex = index + 8
         if(index == -1):
             index = output.lower().find("Cannot be enabled in L2 Interface")
-            startIndex = index + 9
+            startIndex = index + 34
             if(index == -1):
                 index = output.lower().find("incorrect")
-                startIndex = index + 33
+                startIndex = index + 10
                 if(index == -1):
                     index = output.lower().find("failure")
                     startIndex = index + 8
