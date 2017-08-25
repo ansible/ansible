@@ -77,11 +77,11 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
     installroot:
+        version_added: "2.4"
         description:
           - Corresponds to the C(--root ) option for I(zypper)
         required: false
         default: None
-        type: "str"
     disable_recommends:
         version_added: "1.8"
         description:
