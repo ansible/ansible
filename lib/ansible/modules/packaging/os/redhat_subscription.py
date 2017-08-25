@@ -21,58 +21,43 @@ description:
     - Manage registration and subscription to the Red Hat Subscription Management entitlement platform using the C(subscription-manager) command
 version_added: "1.2"
 author: "Barnaby Court (@barnabycourt)"
-notes:
-    - In order to register a system, subscription-manager requires either a username and password, or an activationkey and an Organization ID.
-requirements:
-    - subscription-manager
 options:
     state:
         description:
-          - whether to register and subscribe (C(present)), or unregister (C(absent)) a system
-        required: false
+          - Set whether to register and subscribe (C(present)) or unregister (C(absent)) a system.
         choices: [ "present", "absent" ]
         default: "present"
     username:
         description:
-            - access.redhat.com or Sat6  username
-        required: False
-        default: null
+            - Username for access.redhat.com or Sat6
     password:
         description:
-            - access.redhat.com or Sat6 password
-        required: False
-        default: null
+            - Password for access.redhat.com or Sat6
     server_hostname:
         description:
-            - Specify an alternative Red Hat Subscription Management or Sat6 server
-        required: False
+            - Specify an alternative Red Hat Subscription Management or Sat6 server.
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_insecure:
         description:
-            - Enable or disable https server certificate verification when connecting to C(server_hostname)
-        required: False
+            - Enable or disable HTTPS server certificate verification when connecting to C(server_hostname)
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     rhsm_baseurl:
         description:
             - Specify CDN baseurl
-        required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_proxy_hostname:
         description:
             - Specify a HTTP proxy hostname
-        required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
     server_proxy_port:
         description:
             - Specify a HTTP proxy port
-        required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
     server_proxy_user:
         description:
             - Specify a user for HTTP proxy with basic authentication
-        required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
     server_proxy_password:
@@ -85,7 +70,6 @@ options:
         description:
             - Upon successful registration, auto-consume available subscriptions
             - Added in favor of depracated autosubscribe in 2.5.
-        required: False
         default: False
         type: bool
         version_added: "2.5"
@@ -93,65 +77,58 @@ options:
     activationkey:
         description:
             - supply an activation key for use with registration
-        required: False
-        default: null
     org_id:
         description:
             - Organization ID to use in conjunction with activationkey
-        required: False
-        default: null
         version_added: "2.0"
     environment:
         description:
             - Register with a specific environment in the destination org. Used with Red Hat Satellite 6.x or Katello
-        required: False
-        default: null
         version_added: "2.2"
     pool:
         description:
             - |
-              Specify a subscription pool name to consume.  Regular expressions accepted. Use I(pool_ids) instead if
-              possible, as it is much faster. Mutually exclusive with I(pool_ids).
-        required: False
+              Specify a subscription pool name to consume. Regular expressions accepted. Use I(pool_ids) instead if
+              possible, as it is much faster.
+            - Mutually exclusive with I(pool_ids).
         default: '^$'
     pool_ids:
         description:
             - |
-              Specify subscription pool IDs to consume. Prefer over I(pool) when possible as it is much faster.
+              Specify subscription pool IDs to consume. Prefer over I(pool) when possible as this is much faster.
               A pool ID may be specified as a C(string) - just the pool ID (ex. C(0123456789abcdef0123456789abcdef)),
               or as a C(dict) with the pool ID as the key, and a quantity as the value (ex.
               C(0123456789abcdef0123456789abcdef: 2). If the quantity is provided, it is used to consume multiple
-              entitlements from a pool (the pool must support this). Mutually exclusive with I(pool).
+              entitlements from a pool. (The pool must support this).
+            - Mutually exclusive with I(pool).
         default: []
         version_added: "2.4"
     consumer_type:
         description:
-            - The type of unit to register, defaults to system
-        required: False
-        default: null
+            - The type of unit to register; defaults to system.
         version_added: "2.1"
     consumer_name:
         description:
-            - Name of the system to register, defaults to the hostname
-        required: False
-        default: null
+            - Name of the system to register; defaults to the hostname.
         version_added: "2.1"
     consumer_id:
         description:
             - |
               References an existing consumer ID to resume using a previous registration
-              for this system. If the  system's identity certificate is lost or corrupted,
+              for this system. If the system's identity certificate is lost or corrupted,
               this option allows it to resume using its previous identity and subscriptions.
               The default is to not specify a consumer ID so a new ID is created.
-        required: False
-        default: null
         version_added: "2.1"
     force_register:
         description:
             -  Register the system even if it is already registered
-        required: False
         default: False
+        type: bool
         version_added: "2.2"
+notes:
+    - In order to register a system, subscription-manager requires either a username and password, or an activationkey and an Organization ID.
+requirements:
+    - subscription-manager
 '''
 
 EXAMPLES = '''
@@ -348,9 +325,9 @@ class Rhsm(RegistrationBase):
     @property
     def is_registered(self):
         '''
-            Determine whether the current system
+            Determine whether the current system is registered to RHSM.
             Returns:
-              * Boolean - whether the current system is currently registered to
+              * Boolean - whether the current system is registered to
                           RHSM.
         '''
 
@@ -444,113 +421,158 @@ class Rhsm(RegistrationBase):
         self.update_plugin_conf('rhnplugin', False)
         self.update_plugin_conf('subscription-manager', False)
 
-    def subscribe(self, regexp):
+    def get_matching_pools(self, regexp):
+        '''
+            Get list of pools available for subscription.
+            Match regexp against available pool IDs first. If any pool IDs
+            match, return those immediately.
+
+            If no pool IDs match, then match regexp against available pool
+            product names. Note that this can still easily match many pools.
+            Then subscribe to those pools.
+
+            Since a pool is a more specific match, we only fall back to
+            matching against names if we didn't match pool IDs.
+
+            Returns:
+              * List - Matching pools
+        '''
+        available_pools = RhsmPools(self.module)
+
+        # See https://github.com/ansible/ansible/issues/19466
+        # Try to match pools whose pool ID matches regexp
+        # This round, we are checking the pool ID ONLY
+        matching_pools = list(available_pools.filter_pools(regexp))
+        if not matching_pools:
+            # We didn't match any pool IDs.
+            # Now try to match pools based on product name.
+            # Note: This can match lots of product names.
+            matching_pools = list(available_pools.filter_products(regexp))
+
+        return matching_pools
+
+    def get_unavailable_pool_ids(self, pool_ids):
+        '''
+            Get list of requested pool IDs that are unavailable for
+            subscription.
+
+            Returns:
+              * List - Unavailable pool IDs (sublist of requested pool IDs)
+        '''
+        available_pools = RhsmPools(self.module)
+        available_pool_ids = [pool.get_pool_id() for pool in available_pools]
+        unavailable_pool_ids = []
+
+        for pool_id in pool_ids:
+            if pool_id not in available_pool_ids:
+                unavailable_pool_ids.append(pool_id)
+
+        return unavailable_pool_ids
+
+    def subscribe(self, regexp, matching_pools=None):
         '''
             Subscribe current system to available pools matching the specified
-            regular expression. It matches regexp against available pool ids first.
-            If any pool ids match, subscribe to those pools and return.
+            regular expression.
 
-            If no pool ids match, then match regexp against available pool product
-            names. Note this can still easily match many many pools. Then subscribe
-            to those pools.
-
-            Since a pool id is a more specific match, we only fallback to matching
-            against names if we didn't match pool ids.
-
+            Returns:
+              * List - subscribed pool IDs
             Raises:
-              * Exception - if error occurs while running command
+              * Exception - if error occurs while running command, or no
+                available pools match regexp
         '''
-        # See https://github.com/ansible/ansible/issues/19466
+        if matching_pools is None:
+            # Not initially registered or force-register is enabled
+            matching_pools = self.get_matching_pools()
+            if matching_pools is None:
+                # We didn't match anything in previous step
+                raise Exception("No matching pools for regexp '%s'" % regexp)
 
-        # subscribe to pools whose pool id matches regexp (and only the pool id)
-        subscribed_pool_ids = self.subscribe_pool(regexp)
+        subscribed_pool_ids = []
+        for pool in matching_pools:
+            pool.subscribe()
+            subscribed_pool_ids.append(pool.get_pool_id())
 
-        # If we found any matches, we are done
-        # Don't attempt to match pools by product name
-        if subscribed_pool_ids:
-            return subscribed_pool_ids
-
-        # We didn't match any pool ids.
-        # Now try subscribing to pools based on product name match
-        # Note: This can match lots of product names.
-        subscribed_by_product_pool_ids = self.subscribe_product(regexp)
-        if subscribed_by_product_pool_ids:
-            return subscribed_by_product_pool_ids
-
-        # no matches
-        return []
+        return subscribed_pool_ids
 
     def subscribe_by_pool_ids(self, pool_ids):
+        '''
+            Subscribe current system to available pools with pool IDs matching
+            the specified list of pool IDs
+            Returns:
+              * List - subscribed pool IDs
+            Raises:
+              * Exception - if error occurs while running command, or any of
+                the listed pool IDs are unavailable
+        '''
+        unavailable_pool_ids = self.get_unavailable_pool_ids()
+
+        if unavailable_pool_ids:
+            raise Exception('Pool IDs %s not available' % unavailable_pool_ids)
+
         for pool_id, quantity in pool_ids.items():
             args = [SUBMAN_CMD, 'attach', '--pool', pool_id, '--quantity', quantity]
             rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+
         return pool_ids
 
-    def subscribe_pool(self, regexp):
-        '''
-            Subscribe current system to available pools matching the specified
-            regular expression
-            Raises:
-              * Exception - if error occurs while running command
-        '''
-
-        # Available pools ready for subscription
-        available_pools = RhsmPools(self.module)
-
-        subscribed_pool_ids = []
-        for pool in available_pools.filter_pools(regexp):
-            pool.subscribe()
-            subscribed_pool_ids.append(pool.get_pool_id())
-        return subscribed_pool_ids
-
-    def subscribe_product(self, regexp):
-        '''
-            Subscribe current system to available pools matching the specified
-            regular expression
-            Raises:
-              * Exception - if error occurs while running command
-        '''
-
-        # Available pools ready for subscription
-        available_pools = RhsmPools(self.module)
-
-        subscribed_pool_ids = []
-        for pool in available_pools.filter_products(regexp):
-            pool.subscribe()
-            subscribed_pool_ids.append(pool.get_pool_id())
-        return subscribed_pool_ids
-
     def update_subscriptions(self, regexp):
+        '''
+            Ensure subscribed to all pools matching regexp, and not subscribed
+            to any that do not.
+
+            Fall back to matching regexp against product names if no pool IDs
+            are matched.
+
+            Run if system is already registered and force-register is not
+            enabled.
+
+            Raises:
+              * Exception - if error occurs while running command, or no pools
+                match regexp
+        '''
         changed = False
+        matching_pools = self.get_matching_pools(self, regexp)
+
+        if not matching_pools:
+            raise Exception("No matching subscriptions for regexp '%s'" % regexp)
+
         consumed_pools = RhsmPools(self.module, consumed=True)
+
         pool_ids_to_keep = [p.get_pool_id() for p in consumed_pools.filter_pools(regexp)]
         pool_ids_to_keep.extend([p.get_pool_id() for p in consumed_pools.filter_products(regexp)])
 
+        # Remove nonmatching serials first in case site is running low on
+        # subscriptions.
         serials_to_remove = [p.Serial for p in consumed_pools if p.get_pool_id() not in pool_ids_to_keep]
         serials = self.unsubscribe(serials=serials_to_remove)
 
-        subscribed_pool_ids = self.subscribe(regexp)
+        subscribed_pool_ids = self.subscribe(regexp, matching_pools)
 
         if subscribed_pool_ids or serials:
             changed = True
+
         return {'changed': changed, 'subscribed_pool_ids': subscribed_pool_ids,
                 'unsubscribed_serials': serials}
 
     def update_subscriptions_by_pool_ids(self, pool_ids):
         changed = False
-        consumed_pools = RhsmPools(self.module, consumed=True)
 
+        unavailable_pool_ids = self.get_unavailable_pool_ids(pool_ids)
+        if unavailable_pool_ids:
+            raise Exception('Pool IDs %s not available' % unavailable_pool_ids)
+
+        consumed_pools = RhsmPools(self.module, consumed=True)
         existing_pools = {}
         for p in consumed_pools:
             existing_pools[p.get_pool_id()] = p.QuantityUsed
-
-        serials_to_remove = [p.Serial for p in consumed_pools if pool_ids.get(p.get_pool_id(), 0) != p.QuantityUsed]
-        serials = self.unsubscribe(serials=serials_to_remove)
 
         missing_pools = {}
         for pool_id, quantity in pool_ids.items():
             if existing_pools.get(pool_id, 0) != quantity:
                 missing_pools[pool_id] = quantity
+
+        serials_to_remove = [p.Serial for p in consumed_pools if pool_ids.get(p.get_pool_id(), 0) != p.QuantityUsed]
+        serials = self.unsubscribe(serials=serials_to_remove)
 
         self.subscribe_by_pool_ids(missing_pools)
 
@@ -660,48 +682,26 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present',
-                       choices=['present', 'absent']),
-            username=dict(default=None,
-                          required=False),
-            password=dict(default=None,
-                          required=False,
-                          no_log=True),
-            server_hostname=dict(default=rhsm.config.get_option('server.hostname'),
-                                 required=False),
-            server_insecure=dict(default=rhsm.config.get_option('server.insecure'),
-                                 required=False),
-            rhsm_baseurl=dict(default=rhsm.config.get_option('rhsm.baseurl'),
-                              required=False),
+            state=dict(default='present', choices=['present', 'absent']),
+            username=dict(default=None),
+            password=dict(default=None, no_log=True),
+            server_hostname=dict(default=rhsm.config.get_option('server.hostname')),
+            server_insecure=dict(default=rhsm.config.get_option('server.insecure')),
+            rhsm_baseurl=dict(default=rhsm.config.get_option('rhsm.baseurl')),
             auto_attach=dict(aliases=['autosubscribe'], default=False, type='bool'),
-            activationkey=dict(default=None,
-                               required=False),
-            org_id=dict(default=None,
-                        required=False),
-            environment=dict(default=None,
-                             required=False, type='str'),
-            pool=dict(default='^$',
-                      required=False,
-                      type='str'),
-            pool_ids=dict(default=[],
-                          required=False,
-                          type='list'),
-            consumer_type=dict(default=None,
-                               required=False),
-            consumer_name=dict(default=None,
-                               required=False),
-            consumer_id=dict(default=None,
-                             required=False),
-            force_register=dict(default=False,
-                                type='bool'),
-            server_proxy_hostname=dict(default=rhsm.config.get_option('server.proxy_hostname'),
-                                       required=False),
-            server_proxy_port=dict(default=rhsm.config.get_option('server.proxy_port'),
-                                   required=False),
-            server_proxy_user=dict(default=rhsm.config.get_option('server.proxy_user'),
-                                   required=False),
+            activationkey=dict(default=None),
+            org_id=dict(default=None),
+            environment=dict(default=None),
+            pool=dict(default='^$'),
+            pool_ids=dict(default=[], type='list'),
+            consumer_type=dict(default=None),
+            consumer_name=dict(default=None),
+            consumer_id=dict(default=None),
+            force_register=dict(default=False, type='bool'),
+            server_proxy_hostname=dict(default=rhsm.config.get_option('server.proxy_hostname')),
+            server_proxy_port=dict(default=rhsm.config.get_option('server.proxy_port')),
+            server_proxy_user=dict(default=rhsm.config.get_option('server.proxy_user')),
             server_proxy_password=dict(default=rhsm.config.get_option('server.proxy_password'),
-                                       required=False,
                                        no_log=True),
         ),
         required_together=[['username', 'password'], ['activationkey', 'org_id'],
@@ -731,10 +731,10 @@ def main():
         else:
             pool_id, quantity = value, 1
         pool_ids[pool_id] = str(quantity)
-    consumer_type = module.params["consumer_type"]
-    consumer_name = module.params["consumer_name"]
-    consumer_id = module.params["consumer_id"]
-    force_register = module.params["force_register"]
+    consumer_type = module.params['consumer_type']
+    consumer_name = module.params['consumer_name']
+    consumer_id = module.params['consumer_id']
+    force_register = module.params['force_register']
     server_proxy_hostname = module.params['server_proxy_hostname']
     server_proxy_port = module.params['server_proxy_port']
     server_proxy_user = module.params['server_proxy_user']
@@ -754,8 +754,7 @@ def main():
                         result = rhsm.update_subscriptions_by_pool_ids(pool_ids)
                     else:
                         result = rhsm.update_subscriptions(pool)
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     module.fail_json(msg="Failed to update subscriptions for '%s': %s" % (server_hostname, e))
                 else:
                     module.exit_json(**result)
@@ -773,8 +772,7 @@ def main():
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
                 else:
                     subscribed_pool_ids = rhsm.subscribe(pool)
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
             else:
                 module.exit_json(changed=True,
@@ -788,8 +786,7 @@ def main():
             try:
                 rhsm.unsubscribe()
                 rhsm.unregister()
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 module.fail_json(msg="Failed to unregister: %s" % e)
             else:
                 module.exit_json(changed=True, msg="System successfully unregistered from %s." % server_hostname)
