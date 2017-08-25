@@ -46,8 +46,9 @@ options:
   scope:
     description:
     - The scope of a service contract.
-    - The APIC defaults new Taboo Contracts to a scope of context (VRF).
+    - The APIC defaults new Taboo Contracts to C(context).
     choices: [ application-profile, context, global, tenant ]
+    default: context
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -90,35 +91,33 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['tenant', 'taboo_contract']],
+            ['state', 'present', ['tenant', 'taboo_contract']],
+        ],
     )
 
     taboo_contract = module.params['taboo_contract']
-    # tenant = module.params['tenant']
     description = module.params['description']
     scope = module.params['scope']
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    # TODO: This logic could be cleaner.
-    if taboo_contract is not None:
-        path = 'api/mo/uni/tn-%(tenant)s/taboo-%(taboo_contract)s.json' % module.params
-    elif state == 'query':
-        # Query all objects
-        path = 'api/node/class/vzTaboo.json'
-    else:
-        module.fail_json(msg="Parameter 'taboo_contract' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='tenant', subclass_1='taboo_contract')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzBrCP', class_config=dict(name=taboo_contract, descr=description, scope=scope))
+        aci.payload(
+            aci_class='vzTaboo',
+            class_config=dict(
+                name=taboo_contract,
+                descr=description, scope=scope,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='vzBrCP')
+        aci.get_diff(aci_class='vzTaboo')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
