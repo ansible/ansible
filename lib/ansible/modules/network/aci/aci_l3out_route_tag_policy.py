@@ -90,38 +90,30 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['rtp', 'tenant']],
+            ['state', 'present', ['rtp', 'tenant']],
+        ],
     )
 
     rtp = module.params['rtp']
-    tenant = module.params['tenant']
     description = module.params['description']
     tag = module.params['tag']
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    if rtp is not None:
-        # Work with a specific object
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/rttag-%(rtp)s.json' % module.params
-        else:
-            path = 'api/class/l3extRouteTagPol.json?query-target-filter=eq(l3extRouteTagPol.name,"%(rtp)s")' % module.params
-    elif state == 'query':
-        # Query all objects
-        if tenant is not None:
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=l3extRouteTagPol&rsp-subtree-include=no-scoped' % module.params
-        else:
-            path = 'api/node/class/l3extRouteTagPol.json'
-    else:
-        module.fail_json(msg="Parameter 'rtp' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='tenant', subclass_1='rtp')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='l3extRouteTagPol', class_config=dict(name=rtp, descr=description, tag=tag))
+        aci.payload(
+            aci_class='l3extRouteTagPol',
+            class_config=dict(
+                name=rtp,
+                descr=description, tag=tag,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='l3extRouteTagPol')
