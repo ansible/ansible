@@ -35,11 +35,11 @@ options:
      - The name of an existing tenant.
      required: yes
      aliases: [ tenant_name ]
-   app_profile:
+   ap:
      description:
      - The name of the application network profile.
      required: yes
-     aliases: [ ap, app_profile_name, name ]
+     aliases: [ app_profile, app_profile_name, name ]
    descr:
      description:
      - Description for the AP.
@@ -59,7 +59,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: production
-    app_profile: default
+    ap: default
     description: default ap
     state: present
 
@@ -69,7 +69,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: production
-    app_profile: default
+    ap: default
     state: absent
 
 - name: Query an AP
@@ -78,7 +78,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: production
-    app_profile: default
+    ap: default
     state: query
 
 - name: Query all APs
@@ -101,7 +101,7 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all APs
-        app_profile=dict(type='str', aliases=['ap', 'app_profile_name', 'name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name', 'name']),
         description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -110,37 +110,30 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['state', 'absent', ['tenant', 'app_profile']],
-                     ['state', 'present', ['tenant', 'app_profile']]]
+        required_if=[
+            ['state', 'absent', ['tenant', 'ap']],
+            ['state', 'present', ['tenant', 'ap']],
+        ],
     )
 
-    tenant = module.params['tenant']
-    app_profile = module.params['app_profile']
+    # tenant = module.params['tenant']
+    ap = module.params['ap']
     description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    if tenant is not None and app_profile is not None:
-        path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
-        filter_string = ''
-    elif tenant is None and app_profile is None:
-        path = 'api/class/fvAp.json'
-        filter_string = ''
-    elif tenant is not None:
-        path = 'api/mo/uni/tn-%(tenant)s.json' % module.params
-        filter_string = '?rsp-subtree=children&rsp-subtree-class=fvAp&rsp-subtree-include=no-scoped'
-    else:
-        path = 'api/class/fvAp.json'
-        filter_string = '?query-target-filter=eq(fvAp.name, \"%(app_profile)s\")' % module.params
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
-    aci.get_existing(filter_string=filter_string)
+    aci.construct_url(root_class='tenant', subclass_1='ap')
+    aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='fvAp', class_config=dict(name=app_profile, descr=description))
+        aci.payload(
+            aci_class='fvAp',
+            class_config=dict(
+                name=ap,
+                descr=description,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvAp')
