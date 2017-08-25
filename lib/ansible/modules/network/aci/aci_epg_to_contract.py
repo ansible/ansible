@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_epg_to_contract
-short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fvRsProv)
+short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fv:RsProv)
 description:
 - Bind EPGs to Contracts on Cisco ACI fabrics.
 - More information from the internal APIC classes
@@ -30,10 +30,10 @@ notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
 options:
-  app_profile:
+  ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
-    aliases: [ app_profile_name ]
+    aliases: [ app_profile, app_profile_name ]
   contract:
     description:
     - The name of the contract.
@@ -50,13 +50,13 @@ options:
   priority:
     description:
     - QoS class.
-    - The APIC defaults new EPG to Contract bindings to unspecified.
+    - The APIC defaults new EPG to Contract bindings to C(unspecified).
     choices: [ level1, level2, level3, unspecified ]
     default: unspecified
   provider_match:
     description:
     - The matching algorithm for Provided Contracts.
-    - The APIC defaults new EPG to Provided Contracts to at_least_one.
+    - The APIC defaults new EPG to Provided Contracts to C(at_least_one).
     choices: [ all, at_least_one, at_most_one, none ]
     default: at_least_one
   state:
@@ -80,14 +80,13 @@ from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 ACI_CLASS_MAPPING = {"consumer": "fvRsCons", "provider": "fvRsProv"}
-ACI_MO_MAPPING = {"consumer": "rscons", "provider": "rsprov"}
 PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_one": "AtmostOne", "none": "None"}
 
 
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        app_profile=dict(type='str', aliases=['app_profile_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
         epg=dict(type='str', aliases=['epg_name']),
         contract=dict(type='str', aliases=['contract_name']),
         contract_type=dict(type='str', required=True, choices=['consumer', 'provider']),
@@ -101,43 +100,40 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['state', 'absent', ['app_profile', 'contract', 'epg', 'tenant']],
-                     ['state', 'present', ['app_profile', 'contract', 'epg', 'tenant']]]
+        required_if=[
+            ['state', 'absent', ['ap', 'contract', 'epg', 'tenant']],
+            ['state', 'present', ['ap', 'contract', 'epg', 'tenant']],
+        ],
     )
 
-    app_profile = module.params['app_profile']
-    epg = module.params['epg']
     contract = module.params['contract']
     contract_type = module.params['contract_type']
     aci_class = ACI_CLASS_MAPPING[contract_type]
-    aci_mo = ACI_MO_MAPPING[contract_type]
     priority = module.params['priority']
     provider_match = module.params['provider_match']
     state = module.params['state']
-    tenant = module.params['tenant']
 
     if contract_type == "consumer" and provider_match is not None:
         module.fail_json(msg="the 'provider_match' is only configurable for Provided Contracts")
 
+    # Construct contract_class key and add to module.params for building URL
+    contract_class = 'epg_' + contract_type
+    module.params[contract_class] = contract
+
     aci = ACIModule(module)
-
-    # TODO: Add logic to handle multiple input variations when query
-    if state != 'query':
-        # Work with a specific EPG to Contract Binding
-        path = 'api/mo/uni/tn-{}/ap-{}/epg-{}/{}-{}.json'.format(tenant, app_profile, epg, aci_mo, contract)
-        filter_string = '?rsp-prop-include=config-only'
-    else:
-        # Query all EPGs
-        path = 'api/class/{}.json'.format(aci_class)
-        filter_string = ''
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
-    aci.get_existing(filter_string=filter_string)
+    aci.construct_url(root_class='tenant', subclass_1='ap', subclass_2='epg', subclass_3=contract_class)
+    aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class=aci_class, class_config=dict(matchT=provider_match, prio=priority, tnVzBrCPName=contract))
+        aci.payload(
+            aci_class=aci_class,
+            class_config=dict(
+                matchT=provider_match,
+                prio=priority,
+                tnVzBrCPName=contract,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=aci_class)
@@ -147,6 +143,9 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
+
+    # Remove contract_class that is used to build URL from module.params
+    module.params.pop(contract_class)
 
     module.exit_json(**aci.result)
 
