@@ -220,7 +220,7 @@ def parse_https(data):
     return {'https': https_port is not None, 'https_port': https_port}
 
 def parse_sandbox(data):
-    sandbox = filter(re.compile(".*sandbox.*").match, data.split('\n'))
+    sandbox = [item for item in data.split('\n') if re.search(r'.*sandbox.*', item)]
     value = False
     if sandbox and sandbox[0] == 'nxapi sandbox':
         value = True
