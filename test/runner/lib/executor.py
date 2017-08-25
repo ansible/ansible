@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function
 import json
 import os
 import collections
+import datetime
 import re
 import tempfile
 import time
@@ -554,6 +555,8 @@ def command_integration_filtered(args, targets, all_targets):
 
     start_at_task = args.start_at_task
 
+    results = {}
+
     for target in targets_iter:
         if args.start_at and not found:
             found = target.name == args.start_at
@@ -580,6 +583,9 @@ def command_integration_filtered(args, targets, all_targets):
 
                 try:
                     run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, False)
+
+                    start_time = time.time()
+
                     run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, True)
 
                     if not args.explain:
@@ -592,6 +598,22 @@ def command_integration_filtered(args, targets, all_targets):
                     else:
                         command_integration_role(args, target, start_at_task)
                         start_at_task = None
+
+                    end_time = time.time()
+
+                    results[target.name] = dict(
+                        name=target.name,
+                        type=target.type,
+                        aliases=target.aliases,
+                        modules=target.modules,
+                        run_time_seconds=int(end_time - start_time),
+                        setup_once=target.setup_once,
+                        setup_always=target.setup_always,
+                        coverage=args.coverage,
+                        coverage_label=args.coverage_label,
+                        python_version=args.python_version,
+                    )
+
                     break
                 except SubprocessError:
                     if cloud_environment:
@@ -625,6 +647,16 @@ def command_integration_filtered(args, targets, all_targets):
             raise
         finally:
             display.verbosity = args.verbosity = verbosity
+
+    if not args.explain:
+        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+
+        data = dict(
+            targets=results,
+        )
+
+        with open(results_path, 'w') as results_fd:
+            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
 
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
