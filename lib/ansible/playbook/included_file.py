@@ -113,9 +113,9 @@ class IncludedFile:
                                 include_target = templar.template(include_result['include'])
                                 if original_task._role:
                                     new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
-                                    include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
+                                    include_file = loader.path_dwim_relative_stack([new_basedir]+original_task.get_search_path(), 'tasks', include_target)
                                 else:
-                                    include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
+                                    include_file = loader.path_dwim_relative_stack([loader.get_basedir()]+original_task.get_search_path(), cumulative_path, include_target)
 
                                 if os.path.exists(include_file):
                                     break
@@ -125,7 +125,7 @@ class IncludedFile:
                     if include_file is None:
                         if original_task._role:
                             include_target = templar.template(include_result['include'])
-                            include_file = loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target)
+                            include_file = loader.path_dwim_relative_stack([original_task._role._role_path]+original_task.get_search_path(), 'tasks', include_target)
                         else:
                             include_file = loader.path_dwim(include_result['include'])
 

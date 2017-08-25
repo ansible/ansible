@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import itertools
 import operator
+import os
 
 from copy import copy as shallowcopy
 from functools import partial
@@ -185,6 +186,9 @@ class Base(with_metaclass(BaseMeta, object)):
         self._squashed = False
         self._finalized = False
 
+        # the path to the file which originally contained this object
+        self._src_path = None
+
         # every object gets a random uuid:
         self._uuid = get_unique_id()
 
@@ -224,6 +228,15 @@ class Base(with_metaclass(BaseMeta, object)):
         ''' walk the input datastructure and assign any values '''
 
         assert ds is not None, 'ds (%s) should not be None but it is.' % ds
+
+        try:
+            # When looking for relative paths, it is useful to know the original
+            # path a task or other object came from. We do this by saving the dirname
+            # of the _data_source value available on AnsibleBaseYAMLObject
+            self._src_path = os.path.dirname(ds._data_source)
+        except AttributeError as e:
+            # If that isn't found, we just ignore it.
+            pass
 
         # cache the datastructure internally
         setattr(self, '_ds', ds)
@@ -332,6 +345,7 @@ class Base(with_metaclass(BaseMeta, object)):
         new_me._variable_manager = self._variable_manager
         new_me._validated = self._validated
         new_me._finalized = self._finalized
+        new_me._src_path = self._src_path
         new_me._uuid = self._uuid
 
         # if the ds value was set on the object, copy it to the new copy too
