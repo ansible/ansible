@@ -572,6 +572,9 @@ class PyVmomiHelper(object):
                             task = vm.ShutdownGuest()
                         else:
                             task = vm.RebootGuest()
+                        # Set result['changed'] immediately because
+                        # shutdown and reboot return None.
+                        result['changed'] = True
                     else:
                         result['failed'] = True
                         result['msg'] = "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name
