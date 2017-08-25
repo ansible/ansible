@@ -584,7 +584,7 @@ def command_integration_filtered(args, targets, all_targets):
                 try:
                     run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, False)
 
-                    start_time = datetime.datetime.utcnow()
+                    start_time = time.time()
 
                     run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, True)
 
@@ -599,14 +599,14 @@ def command_integration_filtered(args, targets, all_targets):
                         command_integration_role(args, target, start_at_task)
                         start_at_task = None
 
-                    end_time = datetime.datetime.utcnow()
+                    end_time = time.time()
 
                     results[target.name] = dict(
                         name=target.name,
                         type=target.type,
                         aliases=target.aliases,
                         modules=target.modules,
-                        run_time_seconds=int((end_time - start_time).total_seconds()),
+                        run_time_seconds=int(end_time - start_time),
                         setup_once=target.setup_once,
                         setup_always=target.setup_always,
                         coverage=args.coverage,
