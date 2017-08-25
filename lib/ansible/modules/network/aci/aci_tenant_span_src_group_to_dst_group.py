@@ -52,7 +52,7 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - aci_tenant_span_src_group_to_dst_group:
     tenant:"{{ tenant }}"
     src_group:"{{ src_group }}"
@@ -63,7 +63,9 @@ EXAMPLES = '''
     password:"{{ password }}"
 '''
 
-RETURN ''' # '''
+RETURN = r'''
+#
+'''
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
