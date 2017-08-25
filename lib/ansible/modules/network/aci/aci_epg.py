@@ -33,21 +33,21 @@ options:
     description:
     - Name of an existing tenant.
     aliases: [ tenant_name ]
-  app_profile:
+  ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
     required: yes
-    aliases: [ app_profile_name ]
+    aliases: [ app_proifle, app_profile_name ]
   epg:
     description:
     - Name of the end point group.
     required: yes
     aliases: [ name, epg_name ]
-  bridge_domain:
+  bd:
     description:
     - Name of the bridge domain being associated with the EPG.
     required: yes
-    aliases: [ bd_name ]
+    aliases: [ bd_name, bridge_domain ]
   priority:
     description:
     - QoS class.
@@ -65,7 +65,7 @@ options:
   fwd_control:
     description:
     - The forwarding control used by the EPG.
-    - The APIC defaults new EPGs to none.
+    - The APIC defaults new EPGs to C(none).
     choices: [ none, proxy-arp ]
     default: none
   state:
@@ -84,22 +84,38 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: production
-    app_profile: default
-    epg: app_epg
-    description: application EPG
-    bridge_domain: vlan_bd
+    ap: intranet
+    epg: web_epg
+    description: Web Intranet EPG
+    bd: prod_bd
+
+  aci_epg:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    ap: ticketing
+    epg: "{{ item.epg }}"
+    description: Ticketing EPG
+    bd: "{{ item.bd }}"
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
+  with_items:
+    - epg: web
+      bd: web_bd
+    - epg: database
+      bd: database_bd
 
 - name: Remove an EPG
   aci_epg:
     hostname: apic
     username: admin
     password: SomeSecretPassword
+    validate_certs: false
     tenant: production
-    app_profile: default
-    epg: app_epg
+    app_profile: intranet
+    epg: web_epg
     state: absent
 
 - name: Query an EPG
@@ -108,15 +124,33 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: production
-    app_profile: default
-    epg: app_epg
+    ap: ticketing
+    epg: web_epg
     state: query
 
-- name: Query all EPgs
+- name: Query all EPGs
   aci_epg:
     hostname: apic
     username: admin
     password: SomeSecretPassword
+    state: query
+
+- name: Query all EPGs with a Specific Name
+  aci_epg:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    validate_certs: false
+    epg: web_epg
+    state: query
+
+- name: Query all EPGs of an App Profile
+  aci_epg:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    validate_certs: false
+    ap: ticketing
     state: query
 '''
 
@@ -132,8 +166,8 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         epg=dict(type='str', aliases=['name', 'epg_name']),
-        bridge_domain=dict(type='str', aliases=['bd_name']),
-        app_profile=dict(type='str', aliases=['app_profile_name']),
+        bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
         tenant=dict(type='str', aliases=['tenant_name']),
         description=dict(type='str', aliases=['descr']),
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
@@ -146,14 +180,14 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['state', 'absent', ['app_profile', 'epg', 'tenant']],
-                     ['state', 'present', ['app_profile', 'epg', 'tenant']]]
+        required_if=[
+            ['state', 'absent', ['ap', 'epg', 'tenant']],
+            ['state', 'present', ['ap', 'epg', 'tenant']],
+        ],
     )
 
     epg = module.params['epg']
-    # app_profile = module.params['app_profile']
-    # tenant = module.params['tenant']
-    bridge_domain = module.params['bridge_domain']
+    bd = module.params['bd']
     description = module.params['description']
     priority = module.params['priority']
     intra_epg_isolation = module.params['intra_epg_isolation']
@@ -161,26 +195,24 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    # TODO: Add logic to handle multiple input variations when query
-    if state != 'query':
-        # Work with a specific EPG
-        path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s/epg-%(epg)s.json' % module.params
-        filter_string = '?rsp-subtree=children&rsp-subtree-class=fvRsBd&rsp-prop-include=config-only'
-    else:
-        # Query all EPGs
-        path = 'api/class/fvAEPg.json'
-        filter_string = '?rsp-subtree=children&rsp-subtree-class=fvRsBd'
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
-    aci.get_existing(filter_string=filter_string)
+    aci.construct_url(root_class="tenant", subclass_1="ap", subclass_2="epg", child_classes=['fvRsBd'])
+    aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='fvAEPg', class_config=dict(name=epg, descr=description, prio=priority, pcEnfPref=intra_epg_isolation,
-                                                          fwdCtrl=fwd_control),
-                    child_configs=[dict(fvRsBd=dict(attributes=dict(tnFvBDName=bridge_domain)))])
+        aci.payload(
+            aci_class='fvAEPg',
+            class_config=dict(
+                name=epg,
+                descr=description,
+                prio=priority,
+                pcEnfPref=intra_epg_isolation,
+                fwdCtrl=fwd_control,
+            ),
+            child_configs=[
+                dict(fvRsBd=dict(attributes=dict(tnFvBDName=bd))),
+            ],
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvAEPg')
