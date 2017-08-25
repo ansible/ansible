@@ -52,10 +52,10 @@ logger = None
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
     if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+        logging.basicConfig(filename=path, level=logging.DEBUG, format=C.DEFAULT_LOG_FORMAT)
         mypid = str(os.getpid())
         user = getpass.getuser()
-        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        logger = logging.getLogger(C.DEFAULT_LOG_NAME.format(**locals()))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
@@ -113,7 +113,7 @@ class Display:
         if color:
             msg = stringc(msg, color)
 
-        if not log_only:
+        if not log_only and color not in [C.COLOR_DEBUG]:
             if not msg.endswith(u'\n'):
                 msg2 = msg + u'\n'
             else:
