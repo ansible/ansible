@@ -16,14 +16,15 @@
   failed_when: fail_not_found.search_log.disk.disks_found != '0'
 
 # Use result of module (disk number)
-- name: fail select and manage a specified disk because specified disk is not attached
+- name: fail select and manage a specified disk because specified disk is not attached, check results
   win_disk_management:
-    disk_size: '{{test_win_disk_management_size}}'
+    disk_size: 100
     partition_style_select: raw
     operational_status: offline
     read_only: true
   register: setup_specified_disk
-
+  failed_when: setup_specified_disk.msg != 'No disk could be found and selected with the specified parameter options'
+  
 - name: get result of disk setup
   win_command: powershell.exe (get-disk -number 0).Number
   register: get_disk_actual
@@ -32,5 +33,4 @@
   assert:
     that:
     - not setup_specified_disk|changed
-    - setup_specified_disk.rc == 1
     - get_disk_actual.rc == 0
