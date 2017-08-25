@@ -829,6 +829,9 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                     # Start VM again if it was running before
                     if instance_state == 'running' and start_vm:
                         instance = self.start_instance()
+            else:
+                self.module.warn("Changes won't be applied to running instances. " +
+                                 "Use force=true to allow the instance %s to be stopped/started." % instance['name'])
         return instance
 
 
