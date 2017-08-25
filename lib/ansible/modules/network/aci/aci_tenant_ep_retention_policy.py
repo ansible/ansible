@@ -6,7 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '2.4',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -32,24 +32,20 @@ options:
   tenant:
     description:
     - The name of an existing tenant.
-    type: str
     aliases: [ tenant_name ]
   epr_policy:
     description:
     - The name of the end point retention policy.
-    type: str
     aliases: [ epr_name, name ]
   bounce_age:
     description:
     - Bounce Entry Aging Interval (range 150secs - 65535secs)
     - 0 is used for infinite.
-    type: int
     default: 630
   bounce_trigger:
     description:
     - Determines if the bounce entries are installed by RARP Flood or COOP Protocol.
     - The APIC defaults new End Point Retention Policies to C(coop).
-    type: str
     default: coop
   hold_interval:
     description:
