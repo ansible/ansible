@@ -191,30 +191,22 @@ def main():
 
     destination = module.params['dest']
     count = module.params['count']
-    vrf = module.params['vrf']
-    source = module.params['source']
     state = module.params['state']
 
-    if count and not (1 <= int(count) <= 655350):
+    if count and not 1 <= int(count) <= 655350:
         module.fail_json(msg="'count' must be an integer between 1 and 655350.", count=count)
 
-    OPTIONS = {
-        'vrf': vrf,
-        'count': count,
-        'source': source
-        }
-
     ping_command = 'ping {0}'.format(destination)
-    for command, arg in OPTIONS.items():
+    for command in ['count', 'source', 'vrf']:
+        arg = module.params[command]
         if arg:
             ping_command += ' {0} {1}'.format(command, arg)
 
     summary, rtt, ping_pass = get_ping_results(ping_command, module)
 
-    results = {}
-    results['commands'] = [ping_command]
+    results = summary
     results['rtt'] = rtt
-    results.update(summary)
+    results['commands'] = [ping_command]
 
     if ping_pass and state == 'absent':
         module.fail_json(msg="Ping succeeded unexpectedly")
