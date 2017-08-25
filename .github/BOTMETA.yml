@@ -910,7 +910,7 @@ files:
   $module_utils/nxos.py:
     maintainers: $team_networking
     labels: networking
-  $module_utils/openstack.py
+  $module_utils/openstack.py:
     maintainers: $team_openstack
     labels:
     - cloud
