@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -20,6 +20,7 @@ version_added: "1.1"
 short_description: Manages Citrix NetScaler entities
 description:
      - Manages Citrix NetScaler server and service entities.
+deprecated: In 2.4 use M(netscaler_service) and M(netscaler_server) instead.
 options:
   nsc_host:
     description:
