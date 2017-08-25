@@ -76,6 +76,12 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    installroot:
+        description:
+          - Corresponds to the C(--root ) option for I(zypper)
+        required: false
+        default: None
+        type: "str"
     disable_recommends:
         version_added: "1.8"
         description:
@@ -287,7 +293,8 @@ def get_cmd(m, subcommand):
     is_install = subcommand in ['install', 'update', 'patch']
     is_refresh = subcommand == 'refresh'
     cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive', '--xmlout']
-
+    if subcommand == 'install' and m.params['installroot']:
+        cmd.extend(['--root', m.params['installroot']])
     # add global options before zypper command
     if (is_install or is_refresh) and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
@@ -442,6 +449,7 @@ def main():
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
             type = dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
+            installroot = dict(required=False, default=None, type='str'),
             disable_recommends = dict(required=False, default='yes', type='bool'),
             force = dict(required=False, default='no', type='bool'),
             update_cache = dict(required=False, aliases=['refresh'], default='no', type='bool'),
