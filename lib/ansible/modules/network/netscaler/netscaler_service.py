@@ -136,8 +136,8 @@ options:
 
     cip:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Before forwarding a request to the service, insert an HTTP header with the client's IPv4 or IPv6
@@ -247,13 +247,12 @@ options:
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with a service whose state transitions from UP to DOWN. Do
                 not enable this option for applications that must complete their transactions.
-        default: ENABLED
 
     tcpprofilename:
         description:
@@ -280,11 +279,10 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging of AppFlow information."
-        default: ENABLED
 
     netprofile:
         description:
@@ -303,14 +301,13 @@ options:
 
     processlocal:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 By turning on this option packets destined to a service in a cluster will not under go any steering.
                 Turn this option for single packet request response mode or when the upstream device is performing a
                 proper RSS for connection based distribution.
-        default: DISABLED
 
     dnsprofilename:
         description:
@@ -345,8 +342,8 @@ options:
                     - Weight to assign to the binding between the monitor and service.
             dup_state:
                 choices:
-                    - 'ENABLED'
-                    - 'DISABLED'
+                    - 'enabled'
+                    - 'disabled'
                 description:
                     - State of the monitor.
                     - The state setting for a monitor of a given type affects all monitors of that type.
@@ -629,8 +626,8 @@ def main():
         cip=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         cipheader=dict(type='str'),
@@ -659,10 +656,9 @@ def main():
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ],
-            default='ENABLED',
         ),
         tcpprofilename=dict(type='str'),
         httpprofilename=dict(type='str'),
@@ -671,19 +667,17 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ],
-            default='ENABLED',
         ),
         netprofile=dict(type='str'),
         processlocal=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ],
-            default='DISABLED',
         ),
         dnsprofilename=dict(type='str'),
         ipaddress=dict(type='str'),
@@ -844,6 +838,10 @@ def main():
         'rtspsessionidremap': ['bool_on_off'],
         'accessdown': ['bool_yes_no'],
         'cmp': ['bool_yes_no'],
+        'cip': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
+        'processlocal': [lambda v: v.upper()],
     }
 
     monitor_bindings_rw_attrs = [
