@@ -1,14 +1,17 @@
 ---
   - name: Setup test fixture
-    command: cp {{ role_path }}/fixtures/ansible-xml-beers.xml /tmp/ansible-xml-beers.xml
+    copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: /tmp/ansible-xml-beers.xml
+
 
   - name: Set child elements
     xml:
       path: /tmp/ansible-xml-beers.xml
       xpath: /business/beers
-      set_children:
+      set_children: &children
         - beer:
-            name: "90 Minute IPA"
+            name: 90 Minute IPA
             alcohol: "0.5"
             _:
               - Water:
@@ -21,7 +24,7 @@
               - Yeast:
                   quantity: 20g
         - beer:
-            name: "Harvest Pumpkin Ale"
+            name: Harvest Pumpkin Ale
             alcohol: "0.3"
             _:
               - Water:
@@ -31,41 +34,41 @@
                   quantity: 25g
               - Yeast:
                   quantity: 20g
+    register: set_children_elements_level
+
+  - name: Compare to expected result
+    copy:
+      src: results/test-set-children-elements-level.xml
+      dest: /tmp/ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
 
   - name: Test expected result
-    command: diff -u {{ role_path }}/results/test-set-children-elements-level.xml /tmp/ansible-xml-beers.xml
+    assert:
+      that:
+      - set_children_elements_level.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-set-children-elements-level.xml /tmp/ansible-xml-beers.xml
 
-  - name: Set child elements
+
+  - name: Set child elements (again)
     xml:
       path: /tmp/ansible-xml-beers.xml
       xpath: /business/beers
-      set_children:
-        - beer:
-            name: "90 Minute IPA"
-            alcohol: "0.5"
-            _:
-              - Water:
-                  quantity: 200g
-                  liter: "0.2"
-              - Starch:
-                  quantity: 10g
-              - Hops:
-                  quantity: 50g
-              - Yeast:
-                  quantity: 20g
-        - beer:
-            name: "Harvest Pumpkin Ale"
-            alcohol: "0.3"
-            _:
-              - Water:
-                  quantity: 200g
-                  liter: "0.2"
-              - Hops:
-                  quantity: 25g
-              - Yeast:
-                  quantity: 20g
+      set_children: *children
     register: set_children_again
 
-  - fail:
-      msg: "Setting children is not idempotent!"
-    when: set_children_again.changed
+  - name: Compare to expected result
+    copy:
+      src: results/test-set-children-elements-level.xml
+      dest: /tmp/ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - set_children_again.changed == false
+      - comparison.changed == false  # identical
