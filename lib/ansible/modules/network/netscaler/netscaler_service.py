@@ -356,6 +356,16 @@ options:
                 description:
                     - Weight to assign to the binding between the monitor and service.
 
+    disabled:
+        description:
+            - When set to C(yes) the service state will be set to DISABLED.
+            - When set to C(no) the service state will be set to ENABLED.
+            - >-
+                Note that due to limitations of the underlying NITRO API a C(disabled) state change alone
+                does not cause the module result to report a changed status.
+        type: bool
+        default: false
+
 extends_documentation_fragment: netscaler
 requirements:
     - nitro python sdk
@@ -538,6 +548,16 @@ def all_identical(client, module, service_proxy, monitor_bindings_rw_attrs):
     return service_identical(client, module, service_proxy) and monitor_bindings_identical(client, module, monitor_bindings_rw_attrs)
 
 
+def do_state_change(client, module, service_proxy):
+    if module.params['disabled']:
+        log('Disabling service')
+        result = service.disable(client, service_proxy.actual)
+    else:
+        log('Enabling service')
+        result = service.enable(client, service_proxy.actual)
+    return result
+
+
 def main():
 
     module_specific_arguments = dict(
@@ -675,6 +695,10 @@ def main():
 
     hand_inserted_arguments = dict(
         monitor_bindings=dict(type='list'),
+        disabled=dict(
+            type='bool',
+            default=False,
+        ),
     )
 
     argument_spec = dict()
@@ -882,6 +906,12 @@ def main():
                         client.save_config()
             else:
                 module_result['changed'] = False
+
+            if not module.check_mode:
+                res = do_state_change(client, module, service_proxy)
+                if res.errorcode != 0:
+                    msg = 'Error when setting disabled state. errorcode: %s message: %s' % (res.errorcode, res.message)
+                    module.fail_json(msg=msg, **module_result)
 
             # Sanity check for state
             if not module.check_mode:

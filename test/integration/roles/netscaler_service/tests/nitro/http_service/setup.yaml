@@ -19,7 +19,7 @@
     healthmonitor: no
     maxreq: 200
     cacheable: no
-    cip: ENABLED
+    cip: enabled
     cipheader: client-ip
     usip: yes
     useproxyport: yes
@@ -34,11 +34,11 @@
     maxbandwidth: 10000
     accessdown: "NO"
     monthreshold: 100
-    downstateflush: ENABLED
+    downstateflush: enabled
     hashid: 10
     comment: some comment
-    appflowlog: ENABLED
-    processlocal: ENABLED
+    appflowlog: enabled
+    processlocal: enabled
     graceful: no
 
     monitor_bindings:
