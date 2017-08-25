@@ -104,7 +104,7 @@ rtt:
   description: Show RTT stats.
   returned: always
   type: dict
-  sample: {"avg": "2", "max":"8", "min": "1"}
+  sample: {"avg": 2, "max": 8, "min": 1}
 '''
 
 from ansible.module_utils.basic import AnsibleModule
