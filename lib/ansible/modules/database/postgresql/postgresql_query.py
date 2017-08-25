@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Felix Archambault
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'supported_by': 'community',
@@ -125,7 +128,6 @@ rowcount:
     sample: 5
 '''
 
-__metaclass__ = type
 import traceback
 import os
 from ansible.module_utils.six import iteritems
