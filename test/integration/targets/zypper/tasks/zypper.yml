@@ -1,3 +1,36 @@
+# https://github.com/ansible/ansible/issues/27988
+- name: download apache package to /tmp
+  get_url: 
+    url: http://tube.opensuse.org/repositories/Apache/openSUSE_Tumbleweed/noarch/apache2-doc-2.4.27-124.4.noarch.rpm 
+    dest: /tmp
+ 
+- name: install rpm with installroot options
+  zypper: name=/tmp/apache2-doc-2.4.27-124.4.noarch.rpm state=present disable_gpg_check=yes installroot=/tmp/apache_local_install
+
+- name: check that package is installed to /tmp/apache_local_install
+  shell: ls  /tmp/apache_local_install
+  register: ls_result
+
+- name: verify that installed folder contains subdiricories  etc\nusr\nvar 
+  assert:
+    that:
+       - "ls_result.stdout=='etc\nusr\nvar'"
+- name: cleanup after test
+  shell: rm -rf /tmp/apache_local_install /tmp/apache2-doc-2.4.27-124.4.noarch.rpm
+
+- name: install rpm with installroot options directly from url
+  zypper: name=http://tube.opensuse.org/repositories/Apache/openSUSE_Tumbleweed/noarch/apache2-doc-2.4.27-124.4.noarch.rpm state=present disable_gpg_check=yes installroot=/tmp/apache
+
+- name: check that package is installed to /tmp/apache
+  shell: ls  /tmp/apache
+  register: ls_result
+
+- name: verify that installed folder contains subdiricories  etc\nusr\nvar
+  assert:
+    that:
+       - "ls_result.stdout=='etc\nusr\nvar'" 
+- name: cleanup after test
+  shell: rm -rf /tmp/apache  
 # UNINSTALL
 - name: uninstall hello
   zypper: name=hello state=removed
