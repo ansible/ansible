@@ -3,7 +3,7 @@
     partition_style_select: raw
     operational_status: offline
   register: fail_size_missing
-  failed_when: fail_size_missing.msg != 'Missing required argument: disk_size'
+  failed_when: "fail_size_missing.msg != 'Missing required argument: disk_size'"
 
 - name: fail select and manage a specified disk with invalid letter
   win_disk_management:
