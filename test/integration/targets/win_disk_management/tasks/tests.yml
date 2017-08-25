@@ -33,4 +33,3 @@
   assert:
     that:
     - not setup_specified_disk|changed
-    - get_disk_actual.rc == 0
