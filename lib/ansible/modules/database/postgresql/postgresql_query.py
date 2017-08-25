@@ -127,6 +127,7 @@ rowcount:
 
 __metaclass__ = type
 import traceback
+import os
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.postgres as pgutils
@@ -210,6 +211,7 @@ def main():
     # if query is a file, try read it
     query = module.params["query"]
     if query.endswith('.sql'):
+        query = os.path.expanduser(query)
         try:
             query = open(query, 'r').read().strip('\n')
         except Exception as e:
