@@ -32,7 +32,9 @@ options:
   arp_flag:
     description:
     - The arp flag to use when the ether_type is arp.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ arp_reply, arp_request, unspecified ]
+    default: unspecified
   description:
     description:
     - Description for the Filter Entry.
@@ -40,15 +42,21 @@ options:
   dst_port:
     description:
     - Used to set both destination start and end ports to the same value when ip_protocol is tcp or udp.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ Valid TCP/UDP Port Ranges]
+    default: unspecified
   dst_port_end:
     description:
     - Used to set the destination end port when ip_protocol is tcp or udp.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ Valid TCP/UDP Port Ranges]
+    default: unspecified
   dst_port_start:
     description:
     - Used to set the destination start port when ip_protocol is tcp or udp.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ Valid TCP/UDP Port Ranges]
+    default: unspecified
   entry:
     description:
     - Then name of the Filter Entry.
@@ -56,7 +64,9 @@ options:
   ether_type:
     description:
     - The Ethernet type.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ arp, fcoe, ip, mac_security, mpls_ucast, trill, unspecified ]
+    default: unspecified
   filter:
     description:
       The name of Filter that the entry should belong to.
@@ -64,15 +74,21 @@ options:
   icmp_msg_type:
     description:
     - ICMPv4 message type; used when ip_protocol is icmp.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ dst_unreachable, echo, echo_reply, src_quench, time_exceeded, unspecified ]
+    default: unspecified
   icmp6_msg_type:
     description:
     - ICMPv6 message type; used when ip_protocol is icmpv6.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ dst_unreachable, echo_request, echo_reply, neighbor_advertisement, neighbor_solicitation, redirect, time_exceeded, unspecified ]
+    default: unspecified
   ip_protocol:
     description:
     - The IP Protocol type when ether_type is ip.
+    - The APIC defaults new Filter Entries to C(unspecified).
     choices: [ eigrp, egp, icmp, icmpv6, igmp, igp, l2tp, ospfigp, pim, tcp, udp, unspecified ]
+    default: unspecified
   state:
     description:
     - present, absent, query
@@ -120,7 +136,7 @@ VALID_IP_PROTOCOLS = ['eigrp', 'egp', 'icmp', 'icmpv6', 'igmp', 'igp', 'l2tp', '
 ARP_FLAG_MAPPING = dict(arp_reply='reply', arp_request='req', unspecified=None)
 FILTER_PORT_MAPPING = {'443': 'https', '25': 'smtp', '80': 'http', '20': 'ftpData', '53': 'dns', '110': 'pop3', '554': 'rtsp'}
 ICMP_MAPPING = {'dst_unreachable': 'dst-unreach', 'echo': 'echo', 'echo_reply': 'echo-rep', 'src_quench': 'src-quench',
-                'time_exceeded': 'time-exceeded', 'unspecified': 'unspecified', 'echo-re': 'echo-rep', 'dst-unreach': 'dst-unreach'}
+                'time_exceeded': 'time-exceeded', 'unspecified': 'unspecified', 'echo-rep': 'echo-rep', 'dst-unreach': 'dst-unreach'}
 ICMP6_MAPPING = dict(dst_unreachable='dst-unreach', echo_request='echo-req', echo_reply='echo-rep', neighbor_advertisement='nbr-advert',
                      neighbor_solicitation='nbr-solicit', redirect='redirect', time_exceeded='time-exceeded', unspecified='unspecified')
 
@@ -141,12 +157,16 @@ def main():
         ip_protocol=dict(choices=VALID_IP_PROTOCOLS, type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         stateful=dict(type='str', choices=['no', 'yes']),
-        tenant=dict(type="str", aliases=['tenant_name'])
+        tenant=dict(type="str", aliases=['tenant_name']),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['entry', 'filter', 'tenant']],
+            ['state', 'present', ['entry', 'filter', 'tenant']],
+        ],
     )
 
     arp_flag = module.params['arp_flag']
@@ -164,7 +184,6 @@ def main():
         dst_start = FILTER_PORT_MAPPING[dst_start]
     entry = module.params['entry']
     ether_type = module.params['ether_type']
-    filter_name = module.params['filter']
     icmp_msg_type = module.params['icmp_msg_type']
     if icmp_msg_type is not None:
         icmp_msg_type = ICMP_MAPPING[icmp_msg_type]
@@ -174,9 +193,6 @@ def main():
     ip_protocol = module.params['ip_protocol']
     state = module.params['state']
     stateful = module.params['stateful']
-    tenant = module.params['tenant']
-
-    aci = ACIModule(module)
 
     # validate that dst_port is not passed with dst_start or dst_end
     if dst_port is not None and (dst_end is not None or dst_start is not None):
@@ -185,44 +201,27 @@ def main():
         dst_end = dst_port
         dst_start = dst_port
 
-    # validate that filter_name is not passed without tenant
-    if filter_name is not None and tenant is None:
-        module.fail_json(msg="Parameter 'filter_name' cannot be used without 'tenant'")
-
-    # TODO: Think through the logic here and see if there is a better way
-    if entry is not None:
-        # fail when entry is provided without tenant and filter_name
-        if tenant is not None and filter_name is not None:
-            path = 'api/mo/uni/tn-%(tenant)s/flt-%(filter)s/e-%(entry)s.json' % module.params
-        elif tenant is not None and state == 'query':
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=full&rsp-subtree-class=vzEntry&rsp-subtree-filter=eq(vzEntry.name, \
-                   \"%(entry)s\")&rsp-subtree-include=no-scoped' % module.params
-        else:
-            path = 'api/class/vzEntry.json?query-target-filter=eq(vzEntry.name, \"%(entry)s\")' % module.params
-    elif state == 'query':
-        if tenant is None:
-            path = 'api/class/vzEntry.json'
-        else:
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=full&rsp-subtree-class=vzEntry&rsp-subtree-include=no-scoped' % module.params
-    else:
-        module.fail_json(msg="Parameters 'tenant', 'filter_name', and 'entry' are required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci = ACIModule(module)
+    aci.construct_url(root_class='tenant', subclass_1='filter', subclass_2='entry')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module params with null values
-        aci.payload(aci_class='vzEntry', class_config=dict(arpOpc=arp_flag,
-                                                           descr=description,
-                                                           dFromPort=dst_start,
-                                                           dToPort=dst_end,
-                                                           etherT=ether_type,
-                                                           icmpv4T=icmp_msg_type,
-                                                           icmpv6T=icmp6_msg_type,
-                                                           name=entry,
-                                                           prot=ip_protocol,
-                                                           stateful=stateful))
+        aci.payload(
+            aci_class='vzEntry',
+            class_config=dict(
+                arpOpc=arp_flag,
+                descr=description,
+                dFromPort=dst_start,
+                dToPort=dst_end,
+                etherT=ether_type,
+                icmpv4T=icmp_msg_type,
+                icmpv6T=icmp6_msg_type,
+                name=entry,
+                prot=ip_protocol,
+                stateful=stateful,
+            ),
+        )
 
         # generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzEntry')
