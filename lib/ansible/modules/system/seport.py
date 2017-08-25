@@ -246,6 +246,7 @@ def main():
             'state': {
                 'required': True,
                 'choices': ['present', 'absent'],
+                'default': 'present',
                 },
             'reload': {
                 'required': False,
