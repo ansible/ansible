@@ -260,13 +260,6 @@ class Connection(ConnectionBase):
     def _connect(self):
         return self
 
-    def transport_test(self, connect_timeout):
-        ''' Test the transport mechanism, if available '''
-        port = int(self.port or 22)
-        display.vvv("attempting transport test to %s:%s" % (self.host, port))
-        sock = socket.create_connection((self.host, port), connect_timeout)
-        sock.close()
-
     @staticmethod
     def _create_control_path(host, port, user, connection=None):
         '''Make a hash for the controlpath based on con attributes'''
