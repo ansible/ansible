@@ -578,18 +578,27 @@ class VMWareInventory(object):
 
                 for idx, x in enumerate(parts):
 
-                    # if the val wasn't set yet, get it from the parent
-                    if not val:
-                        try:
-                            val = getattr(vm, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                    if isinstance(val, dict):
+                        if x in val:
+                            val = val.get(x)
+                        elif x.lower() in val:
+                            val = val.get(x.lower())
                     else:
-                        # in a subkey, get the subprop from the previous attrib
-                        try:
-                            val = getattr(val, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                        # if the val wasn't set yet, get it from the parent
+                        if not val:
+                            try:
+                                val = getattr(vm, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+                        else:
+                            # in a subkey, get the subprop from the previous attrib
+                            try:
+                                val = getattr(val, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+
+                        # make sure it serializes
+                        val = self._process_object_types(val)
 
                     # lowercase keys if requested
                     if self.lowerkeys:
@@ -653,7 +662,7 @@ class VMWareInventory(object):
 
         return rdata
 
-    def _process_object_types(self, vobj, thisvm=None, inkey=None, level=0):
+    def _process_object_types(self, vobj, thisvm=None, inkey='', level=0):
         ''' Serialize an object '''
         rdata = {}
 
