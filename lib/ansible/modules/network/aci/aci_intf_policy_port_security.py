@@ -38,7 +38,7 @@ options:
   max_end_points:
     description:
     - Maximum number of end points (range 0-12000).
-    - The APIC defaults new port-security policies to a max End Points of 0.
+    - The APIC defaults new port-security policies to C(0).
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -80,32 +80,33 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['port_security']],
+            ['state', 'present', ['port_security']],
+        ],
     )
 
     port_security = module.params['port_security']
     description = module.params['description']
-    # TODO: validate that max_end_points is in the acceptable range
     max_end_points = module.params['max_end_points']
+    if max_end_points is not None and max_end_points not in range(12001):
+        module.fail_json(msg='The "max_end_points" must be between 0 and 12000')
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    # TODO: This logic could be cleaner.
-    if port_security is not None:
-        path = 'api/mo/uni/infra/portsecurityP-%(port_security)s.json' % module.params
-    elif state == 'query':
-        # Query all objects
-        path = 'api/node/class/l2PortSecurityPol.json'
-    else:
-        module.fail_json(msg="Parameter 'port_security' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='port_security')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='l2PortSecurityPol', class_config=dict(name=port_security, descr=description, maximum=max_end_points))
+        aci.payload(
+            aci_class='l2PortSecurityPol',
+            class_config=dict(
+                name=port_security,
+                descr=description,
+                maximum=max_end_points,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='l2PortSecurityPol')
