@@ -90,14 +90,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def transport_test(self, connect_timeout):
-        ''' Test the transport mechanism, if available '''
-        host = self._winrm_host
-        port = int(self._winrm_port)
-        display.vvv("attempting transport test to %s:%s" % (host, port))
-        sock = socket.create_connection((host, port), connect_timeout)
-        sock.close()
-
     def set_host_overrides(self, host, hostvars=None):
         '''
         Override WinRM-specific options from host variables.

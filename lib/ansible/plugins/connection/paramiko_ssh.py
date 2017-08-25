@@ -130,14 +130,6 @@ class Connection(ConnectionBase):
 
     transport = 'paramiko'
 
-    def transport_test(self, connect_timeout):
-        ''' Test the transport mechanism, if available '''
-        host = self._play_context.remote_addr
-        port = int(self._play_context.port or 22)
-        display.vvv("attempting transport test to %s:%s" % (host, port))
-        sock = socket.create_connection((host, port), connect_timeout)
-        sock.close()
-
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
 
