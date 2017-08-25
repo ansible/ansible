@@ -8,9 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import logging
-logging.basicConfig(filename='/tmp/traffic.log', filemode='w', level=logging.DEBUG)
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'curated'}
@@ -239,7 +236,10 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                         self.results['state'] = results
                     # if the profile exists, compare and report back the differences
                     else:
-                        self.results['state'] = results
+                        self.results['state'] = self.compare_profiles(
+                            current_traffic_manager,
+                            self.properties
+                        )
                     return self.results
 
                 traffic_manager = self.create_or_update_traffic_manager_profile(self.resource_group, self.name,
@@ -267,7 +267,6 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                                                         self.name)
                     changed = True
                     #results['status'] = 'Deleted'
-
         except CloudError:
             if self.state == 'present':
                 changed = True
@@ -277,7 +276,48 @@ class AzureRMTrafficManager(AzureRMModuleBase):
 
         return self.results
 
+    def compare_profiles(self, profile, properties):
+        """Compare profiles"""
 
+        result = dict(
+            dns_config=dict(ttl=None),
+            monitor_config=dict(
+                interval_in_seconds=None,
+                path=None,
+                port=None,
+                protocol=None,
+                status=None,
+                timeout_in_seconds=None,
+                tolerated_number_of_failures=None
+            ),
+            profile_status=None,
+            traffic_routing_method=None
+        )
+
+        azure_profile = dict()
+
+        # Check to see if the profile properties have changed
+        if azure_profile.get('profile_status') != properties.get('profile_status'):
+            result['profile_status'] = properties.get('profile_status')
+
+        if azure_profile.get('dns_config', {}).get('ttl') != properties.get('dns_config', {}).get('ttl'):
+            result['dns_config']['ttl'] = properties.get('dns_config', {}).get('ttl')
+
+        monitor_config_list = [
+            'interval_in_seconds',
+            'path',
+            'port',
+            'protocol',
+            'status',
+            'timeout_in_seconds',
+            'tolerated_number_of_failures'
+        ]
+        for item in monitor_config_list:
+            if azure_profile.get('monitor_config', {}).get(item) != properties.get('monitor_config', {}).get(item):
+                if bool(properties.get('monitor_config', {}).get(item)):
+                    result['monitor_config'][item] = properties.get('monitor_config', {}).get(item)
+
+        return result
 
     def traffic_manager_to_dict(self, traffic_manager, resource_group=None,
                                 name=None, location=None, properties=None):
