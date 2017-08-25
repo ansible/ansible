@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import logging
-logging.basicConfig(filename='/tmp/traffic.log', filemode='w')
+logging.basicConfig(filename='/tmp/traffic.log', filemode='w', level=logging.DEBUG)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -227,39 +227,57 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         current_traffic_manager = self.get_traffic_manager_profile(self.resource_group, self.name)
         results = self.traffic_manager_to_dict(current_traffic_manager, self.resource_group,
                                                self.name, self.location, self.properties)
-        # if check_mode then return with the dictionary of the traffic manager object
-        if self.check_mode:
-            self.results['state'] = results
-            return self.results
 
-        if not self.check_mode:
-            try:
-                if self.state == 'present':
-                    self.log('Fetching traffic manager {0}'.format(self.name))
-                    self.create_or_update_traffic_manager_profile(self.resource_group, self.name,
-                                                                  self.location, self.properties)
-                    changed = True
-                    if current_traffic_manager is None:
-                        results['status'] = 'Created'
+        try:
+            if self.state == 'present':
+                self.log('Fetching traffic manager {0}'.format(self.name))
+                # dry-run.
+                if self.check_mode:
+                    # if we current_traffic_manager is empty it means we will
+                    # create a new profile. Return a profile object to the user
+                    if not bool(current_traffic_manager):
+                        self.results['state'] = results
+                    # if the profile exists, compare and report back the differences
                     else:
-                        results['status'] = 'Updated'
+                        self.results['state'] = results
+                    return self.results
 
-                elif self.state == 'absent':
-                    self.log('Deleting traffic manager {0}'.format(self.name))
-                    if current_traffic_manager is not None:
-                        # Deletes the traffic manager and set change variable
-                        self.remove_traffic_manager_profile(self.resource_group, self.name)
-                        changed = True
-                        results['status'] = 'Deleted'
+                traffic_manager = self.create_or_update_traffic_manager_profile(self.resource_group, self.name,
+                                                              self.location, self.properties)
+                results = self.traffic_manager_to_dict(
+                    traffic_manager,
+                    self.resource_group,
+                    self.name,
+                    self.location,
+                    self.properties
+                )
+                changed = True
 
-            except CloudError:
-                if self.state == 'present':
+            elif self.state == 'absent':
+                self.log('Deleting traffic manager {0}'.format(self.name))
+                # dry-run. report back to the user.
+                if self.check_mode:
+                    self.results['state'] = dict(
+                        resouce_group=self.resource_group,
+                        name=self.name)
+                    return self.results
+                if bool(current_traffic_manager):
+                    # Deletes the traffic manager and set change variable
+                    self.remove_traffic_manager_profile(self.resource_group,
+                                                        self.name)
                     changed = True
+                    #results['status'] = 'Deleted'
 
-            self.results['changed'] = changed
-            # self.results['state'] = results
+        except CloudError:
+            if self.state == 'present':
+                changed = True
+
+        self.results['changed'] = changed
+        self.results['state'] = results
 
         return self.results
+
+
 
     def traffic_manager_to_dict(self, traffic_manager, resource_group=None,
                                 name=None, location=None, properties=None):
@@ -269,19 +287,18 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         :param name: name of a traffic  manager
         :return: traffic manage object
         '''
-        if traffic_manager is None:  # Create a stub if there is no traffic manager
-            if properties is not None and len(properties) > 0:
-                monitor_config = self.create_monitor_config(properties)
-                dns_config = self.create_dns_config(properties, name)
+        if not bool(traffic_manager):  # Create a stub if there is no traffic manager
+            if bool(properties) and len(properties) > 0:
+                monitor_config = properties.get('monitor_config', [])
+                dns_config = properties.get('dns_config', [])
                 tags = properties.get('tags', [])
-                # propertes = properties
             else:
                 name = None
                 resource_group = None
                 dns_config = {}
                 monitor_config = {}
                 tags = []
-            properties = dict(dns_config=dns_config,
+                properties = dict(dns_config=dns_config,
                               monitor_config=monitor_config, tags=tags)
 
             return dict(
@@ -292,7 +309,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 properties=properties)
                 # provisioning_state=traffic_manager.properties.provisioning_state
 
-        else:  # Create a dictionary from the Azure traffic manager
+        elif traffic_manager:  # Create a dictionary from the Azure traffic manager
             properties = dict(tags=traffic_manager.tags)
             return dict(
                 id=traffic_manager.id,
