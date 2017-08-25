@@ -75,6 +75,7 @@ MAGIC_VARIABLE_MAPPING = dict(
 
     # networking modules
     network_os=('ansible_network_os', ),
+    connection_user=('ansible_connection_user',),
 
     # ssh TODO: remove
     ssh_executable=('ansible_ssh_executable', ),
@@ -494,9 +495,9 @@ class PlayContext(Base):
         # if the final connection type is local, reset the remote_user value to that of the currently logged in user
         # this ensures any become settings are obeyed correctly
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
-        # this needs to be done before the MAGIC_VARIABLE_MAPPING happens
         if new_info.connection == 'local':
-            new_info.connection_user = new_info.remote_user
+            if not new_info.connection_user:
+                new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
