@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_reboot
@@ -36,6 +35,12 @@ options:
     description:
     - Seconds for shutdown to wait before requesting reboot
     default: 2
+  post_reboot_delay_sec:
+    description:
+    - Seconds to wait after the reboot was successful and the connection was re-established
+    - This is useful if you want wait for something to settle despite your connection already working
+    default: 0
+    version_added: '2.4'
   shutdown_timeout_sec:
     description:
     - Maximum seconds to wait for shutdown to occur
@@ -53,7 +58,7 @@ options:
   test_command:
     description:
     - Command to expect success for to determine the machine is ready for management
-    default: whoami
+    - By default C(win_reboot) will try the M(win_ping) module for determining end-to-end connectivity
   msg:
     description:
     - Message to display to users
@@ -86,4 +91,10 @@ rebooted:
     returned: always
     type: boolean
     sample: true
+
+elapsed:
+  description: The number of seconds that elapsed waiting for the system to be rebooted.
+  returned: always
+  type: int
+  sample: 23
 '''
