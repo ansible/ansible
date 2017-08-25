@@ -467,7 +467,7 @@ def main():
     if is_rsh_needed(source, dest):
         ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
         if private_key is not None:
-            ssh_cmd.extend(['-i', private_key])
+            ssh_cmd.extend(['-i', os.path.expanduser(private_key) ])
         # If the user specified a port value
         # Note:  The action plugin takes care of setting this to a port from
         # inventory if the user didn't specify an explicit dest_port

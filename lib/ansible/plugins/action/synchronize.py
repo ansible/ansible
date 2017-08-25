@@ -317,6 +317,8 @@ class ActionModule(ActionBase):
                 if use_delegate:
                     user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
                     if not user:
+                        user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+                    if not user:
                         user = C.DEFAULT_REMOTE_USER
 
                 else:
@@ -326,7 +328,6 @@ class ActionModule(ActionBase):
             private_key = self._play_context.private_key_file
 
             if private_key is not None:
-                private_key = os.path.expanduser(private_key)
                 _tmp_args['private_key'] = private_key
 
             # use the mode to define src and dest's url
