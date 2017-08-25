@@ -81,6 +81,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['mcp']],
+            ['state', 'present', ['mcp']],
+        ],
     )
 
     mcp = module.params['mcp']
@@ -89,23 +93,19 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    # TODO: This logic could be cleaner.
-    if mcp is not None:
-        path = 'api/mo/uni/infra/mcpIfP--%(mcp)s.json' % module.params
-    elif state == 'query':
-        # Query all objects
-        path = 'api/node/class/mcpIfPol.json'
-    else:
-        module.fail_json(msg="Parameter 'mcp' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='mcp')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='mcpIfPol', class_config=dict(name=mcp, descr=description, adminSt=admin_state))
+        aci.payload(
+            aci_class='mcpIfPol',
+            class_config=dict(
+                name=mcp,
+                descr=description,
+                adminSt=admin_state,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='mcpIfPol')
