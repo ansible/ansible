@@ -51,6 +51,10 @@ options:
     default: present
     choices: [ absent, present ]
     aliases: [ ensure ]
+  attribute:
+    description:
+    - The attribute to select when using parameter C(value).
+    - This is a string, not prepended with C(@).
   value:
     description:
     - Desired state of the selected attribute.
@@ -59,23 +63,27 @@ options:
     - Attributes default to an empty string.
   add_children:
     description:
-    - Add additional child-element(s) to a selected element.
+    - Add additional child-element(s) to a selected element for a given C(xpath).
     - Child elements must be given in a list and each item may be either a string
       (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
       or a hash where the key is an element name and the value is the element value.
+    - This parameter requires C(xpath) to be set.
   set_children:
     description:
-    - Set the child-element(s) of a selected element.
+    - Set the child-element(s) of a selected element for a given C(xpath).
     - Removes any existing children.
     - Child elements must be specified as in C(add_children).
+    - This parameter requires C(xpath) to be set.
   count:
     description:
     - Search for a given C(xpath) and provide the count of any matches.
+    - This parameter requires C(xpath) to be set.
     type: bool
     default: 'no'
   print_match:
     description:
     - Search for a given C(xpath) and print out any matches.
+    - This parameter requires C(xpath) to be set.
     type: bool
     default: 'no'
   pretty_print:
@@ -86,6 +94,7 @@ options:
   content:
     description:
     - Search for a given C(xpath) and get content.
+    - This parameter requires C(xpath) to be set.
     choices: [ attribute, text ]
   input_type:
     description:
@@ -106,6 +115,7 @@ notes:
 - This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
 - Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter.
 - Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
+- More information about this module is available from the community wiki at U(https://github.com/ansible/community/wiki/Module:-xml)
 author:
 - Tim Bielawa (@tbielawa)
 - Magnus Hedemark (@magnus919)
@@ -161,6 +171,26 @@ EXAMPLES = r'''
     path: /foo/bar.xml
     xpath: /business/website/validxhtml/@validatedon
 
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: /foo/bar.xml
+    xpath: /business/website/validxhtml
+    attribute: validatedon
+    value: 1976-08-05
+
+# How to read an attrribute value and access it in Ansible
+- name: Read attribute value
+  xml:
+    path: /foo/bar.xml
+    xpath: /business/website/validxhtml
+    content: attribute
+    attribute: validatedon
+  register: xmlresp
+
+- name: Show attribute value
+  debug:
+    var: xmlresp.matches[0].validxhtml.validatedon
+
 - name: Remove all children from the website element (option 1)
   xml:
     path: /foo/bar.xml
@@ -174,7 +204,7 @@ EXAMPLES = r'''
     children: []
 
 # In case of namespaces, like in below XML, they have to be explicitely stated
-# Note: there's the prefix "x" in front of the "bar", too
+# NOTE: there's the prefix "x" in front of the "bar", too
 #<?xml version='1.0' encoding='UTF-8'?>
 #<foo xmlns="http://x.test" xmlns:attr="http://z.test">
 #  <bar>
