@@ -224,13 +224,13 @@ xmlstring:
     returned: when parameter 'xmlstring' is set
 '''
 
+import copy
 import json
 import os
 import re
 import traceback
 
 from collections import MutableMapping
-import copy
 from distutils.version import LooseVersion
 from io import BytesIO
 
@@ -675,11 +675,11 @@ def main():
         argument_spec=dict(
             path=dict(type='path', aliases=['dest', 'file']),
             xmlstring=dict(type='str'),
-            xpath=dict(type='str', default='/'),
+            xpath=dict(type='str'),
             namespaces=dict(type='dict', default={}),
             state=dict(type='str', default='present', choices=['absent', 'present'], aliases=['ensure']),
-            value=dict(),
-            attribute=dict(),
+            value=dict(type='raw'),
+            attribute=dict(type='raw'),
             add_children=dict(type='list'),
             set_children=dict(type='list'),
             count=dict(type='bool', default=False),
@@ -690,15 +690,27 @@ def main():
             backup=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        mutually_exclusive=[
-            ['value', 'set_children'],
-            ['value', 'add_children'],
-            ['set_children', 'add_children'],
+        # TODO: Implement this as soon as #28662 (required_by functionality) is merged
+        # required_by=dict(
+        #    add_children=['xpath'],
+        #    attribute=['value'],
+        #    set_children=['xpath'],
+        #    value=['xpath'],
+        # ),
+        required_if=[
+            ['content', 'attribute', ['xpath']],
+            ['content', 'text', ['xpath']],
+            ['count', True, ['xpath']],
+            ['print_match', True, ['xpath']],
+        ],
+        required_one_of=[
             ['path', 'xmlstring'],
-            ['content', 'set_children'],
-            ['content', 'add_children'],
-            ['content', 'value'],
-        ]
+            ['add_children', 'content', 'count', 'pretty_print', 'print_match', 'set_children', 'value'],
+        ],
+        mutually_exclusive=[
+            ['add_children', 'content', 'count', 'print_match', 'set_children', 'value'],
+            ['path', 'xmlstring'],
+        ],
     )
 
     xml_file = module.params['path']
@@ -734,7 +746,7 @@ def main():
         module.fail_json(msg="The target XML source '%s' does not exist." % xml_file)
 
     # Parse and evaluate xpath expression
-    if xpath:
+    if xpath is not None:
         try:
             etree.XPath(xpath)
         except etree.XPathSyntaxError as e:
@@ -755,24 +767,25 @@ def main():
 
     if print_match:
         do_print_match(module, doc, xpath, namespaces)
+        # exit
 
     if count:
         count_nodes(module, doc, xpath, namespaces)
+        # exit
 
     if content == 'attribute':
         get_element_attr(module, doc, xpath, namespaces)
+        # exit
     elif content == 'text':
         get_element_text(module, doc, xpath, namespaces)
-
-    # module.fail_json(msg="OK. Well, etree parsed the xml file...")
-
-    # module.exit_json(what_did={"foo": "bar"}, changed=True)
+        # exit
 
     # File exists:
     if state == 'absent':
         # - absent: delete xpath target
         delete_xpath_target(module, doc, xpath, namespaces)
-        # Exit
+        # exit
+
     # - present: carry on
 
     # children && value both set?: should have already aborted by now
@@ -781,23 +794,32 @@ def main():
     # set_children set?
     if set_children:
         set_target_children(module, doc, xpath, namespaces, set_children, input_type)
+        # exit
 
     # add_children set?
     if add_children:
         add_target_children(module, doc, xpath, namespaces, add_children, input_type)
+        # exit
 
     # No?: Carry on
 
     # Is the xpath target an attribute selector?
     if value is not None:
         set_target(module, doc, xpath, namespaces, attribute, value)
+        # exit
 
-    # Format the xml only?
+    # If an xpath was provided, we need to do something with the data
+    if xpath is not None:
+        ensure_xpath_exists(module, doc, xpath, namespaces)
+        # exit
+
+    # Otherwise only reformat the xml data?
     if pretty_print:
+        xpath = '/'
         pretty(module, doc)
+        # exit
 
-    ensure_xpath_exists(module, doc, xpath, namespaces)
-    # module.fail_json(msg="don't know what to do")
+    module.fail_json(msg="Don't know what to do")
 
 
 if __name__ == '__main__':
