@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
@@ -14,30 +14,14 @@ ANSIBLE_METADATA = {
 
 
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-from ansible.errors import AnsibleFilterError
+from ansible.utils import helpers
 
 
 def split_url(value, query='', alias='urlsplit'):
-    ''' Check if string is an URI and filter it '''
 
-    results = urlsplit(value)
+    results = helpers.object_to_dict(urlsplit(value))
 
-    split_url = dict(
-        fragment=results.fragment,
-        hostname=results.hostname,
-        password=results.password,
-        path=results.path,
-        port=results.port,
-        query=results.query,
-        scheme=results.scheme,
-        username=results.username
-    )
-
-    if query:
-        if query not in split_url:
-            raise AnsibleFilterError(alias + ': unknown URL component: %s' % query)
-        return split_url[query]
-    return split_url
+    return results
 
 
 # ---- Ansible filters ----
