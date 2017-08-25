@@ -669,6 +669,20 @@ DEFAULT_LOG_PATH:
   - {key: log_path, section: defaults}
   type: path
   yaml: {key: defaults.log_path}
+DEFAULT_LOG_FORMAT:
+  default: '%(asctime)s %(name)s %(message)s'
+  description: Python logger format string used to format logs.
+  env: [{name: ANSIBLE_LOG_FORMAT}]
+  ini:
+  - {key: log_format, section: defaults}
+  yaml: {key: defaults.log_format}
+DEFAULT_LOG_NAME:
+  default: 'p={mypid} u={user} |'
+  description: Logger name, as python formatted string.
+  env: [{name: ANSIBLE_LOG_NAME}]
+  ini:
+  - {key: log_name, section: defaults}
+  yaml: {key: defaults.log_name}
 DEFAULT_LOOKUP_PLUGIN_PATH:
   default: ~/.ansible/plugins/lookup:/usr/share/ansible/plugins/lookup
   description: 'TODO: write it'
