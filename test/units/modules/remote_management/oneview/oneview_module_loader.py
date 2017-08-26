@@ -31,4 +31,5 @@ from ansible.module_utils.oneview import (OneViewModuleException,
 
 from ansible.modules.remote_management.oneview.oneview_ethernet_network import EthernetNetworkModule
 from ansible.modules.remote_management.oneview.oneview_fc_network import FcNetworkModule
+from ansible.modules.remote_management.oneview.oneview_fc_network_facts import FcNetworkFactsModule
 from ansible.modules.remote_management.oneview.oneview_fcoe_network import FcoeNetworkModule
