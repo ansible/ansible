@@ -667,6 +667,7 @@ def is_executable(path):
     # execute bits are set.
     return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
 
+
 def _load_params(ansible_args=None):
     ''' read the modules parameters and store them globally.
 
