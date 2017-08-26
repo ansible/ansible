@@ -63,7 +63,7 @@ options:
         description:
             - Visible name of the host in Zabbix.
         required: false
-        version_added: '2.3'
+        version_added: '2.4'
     host_groups:
         description:
             - List of host groups the host is part of.
@@ -117,7 +117,7 @@ options:
             - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
             - Values can be combined.
         default: 1
-        version_added: "2.3"
+        version_added: "2.4"
     tls_accept:
         description:
             - Specifies what types of connections are allowed for incoming connections.
@@ -125,29 +125,29 @@ options:
             - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
             - Values can be combined.
         default: 1
-        version_added: "2.3"
+        version_added: "2.4"
     tls_psk_identity:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
             - It is a unique name by which this specific PSK is referred to by Zabbix components
             - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
         required: false
-        version_added: "2.3"
+        version_added: "2.4"
     tls_psk:
         description:
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
         required: false
-        version_added: "2.3"
+        version_added: "2.4"
     tls_issuer:
         description:
             - Required certificate issuer.
         required: false
-        version_added: "2.3"
+        version_added: "2.4"
     tls_subject:
         description:
             - Required certificate subject.
         required: false
-        version_added: "2.3"
+        version_added: "2.4"
     force:
         description:
             - Overwrite the host configuration, even if already present
