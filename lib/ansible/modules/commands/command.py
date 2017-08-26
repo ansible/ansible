@@ -147,10 +147,6 @@ def main():
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
 
-    if chdir:
-        chdir = os.path.abspath(chdir)
-        os.chdir(chdir)
-
     if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
@@ -175,6 +171,10 @@ def main():
                 rc=0
             )
 
+    if chdir:
+        chdir = os.path.abspath(chdir)
+        os.chdir(chdir)
+        
     if warn:
         check_command(module, args)
 
