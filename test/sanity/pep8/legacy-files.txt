@@ -387,7 +387,6 @@ lib/ansible/modules/packaging/os/macports.py
 lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
 lib/ansible/modules/packaging/os/pkg5.py
-lib/ansible/modules/packaging/os/pkg5_publisher.py
 lib/ansible/modules/packaging/os/pkgin.py
 lib/ansible/modules/packaging/os/pkgng.py
 lib/ansible/modules/packaging/os/pkgutil.py
