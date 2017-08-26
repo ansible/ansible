@@ -36,6 +36,7 @@ Ansible Changes By Release
 * Fix the ssh "smart" transport setting which automatically selects the best means of
   transferring files over ssh (sftp, ssh, piped).
 * Fix authentication by api_key parameter in exoscale modules.
+* vmware module_utils shared code ssl/validate_certs fixes in connection logic
 
 <a id="2.3.2"></a>
 
