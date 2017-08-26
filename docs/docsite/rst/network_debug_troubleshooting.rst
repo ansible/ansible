@@ -276,7 +276,7 @@ Environment variable method::
 
 ansible.cfg
 
-.. code-block: ini
+.. code-block:: ini
 
   [paramiko_connection]
   host_key_auto_add = True
