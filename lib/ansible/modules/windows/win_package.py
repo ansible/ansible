@@ -243,9 +243,9 @@ reboot_required:
 restart_required:
   description: See reboot_required, this will be removed in favour of
     reboot_required in Ansible 2.6
-    returned: always
-    type: bool
-    sample: True
+  returned: always
+  type: bool
+  sample: True
 stdout:
   description: The stdout stream of the package process.
   returned: failure during install or uninstall
