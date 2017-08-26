@@ -165,6 +165,39 @@
       - "shell_result0.stderr == ''"
       - "shell_result0.stdout == 'win'"
 
+- name: execute shell command with comment
+  shell: "{{output_dir_test | expanduser}}/test.sh  # here is a commment"
+  register: shell_result1
+
+- name: assert that the script executed correctly
+  assert:
+    that:
+      - "shell_result1.rc == 0"
+      - "shell_result1.stderr == ''"
+      - "shell_result1.stdout == 'win'"
+
+- name: execute shell command with comment and apostrophe
+  shell: "{{output_dir_test | expanduser}}/test.sh  # here's a commment"
+  register: shell_result2
+
+- name: assert that the script executed correctly
+  assert:
+    that:
+      - "shell_result2.rc == 0"
+      - "shell_result2.stderr == ''"
+      - "shell_result2.stdout == 'win'"
+
+- name: execute shell command with beginning with comment
+  shell: "# here is a commment"
+  register: shell_result3
+
+- name: assert that the script executed correctly
+  assert:
+    that:
+      - "shell_result3.rc == 0"
+      - "shell_result3.stderr == ''"
+      - "shell_result3.stdout == ''"
+
 # executable
 
 # FIXME doesn't pass the expected stdout

@@ -184,20 +184,27 @@ def split_args(args):
         # inside quotation characters
         tokens = item.strip().split(' ')
 
+        inside_comment = False
         line_continuation = False
         for (idx, token) in enumerate(tokens):
 
+            # if we hit an non-escaped '#' character that is not part of a
+            # jinja2 block or quotes, the rest of the line is a comment
+            if token.startswith('#') and not (print_depth or block_depth or comment_depth) and not inside_quotes:
+                inside_comment = True
+
             # if we hit a line continuation character, but
-            # we're not inside quotes, ignore it and continue
+            # we're not inside quotes or inside comment, ignore it and continue
             # on to the next token while setting a flag
-            if token == '\\' and not inside_quotes:
+            if token == '\\' and not (inside_quotes or inside_comment):
                 line_continuation = True
                 continue
 
             # store the previous quoting state for checking later
             was_inside_quotes = inside_quotes
-            quote_char = _get_quote_state(token, quote_char)
-            inside_quotes = quote_char is not None
+            if not inside_comment:
+                quote_char = _get_quote_state(token, quote_char)
+                inside_quotes = quote_char is not None
 
             # multiple conditions may append a token to the list of params,
             # so we keep track with this flag to make sure it only happens once
@@ -209,7 +216,7 @@ def split_args(args):
             # to the end of the list, since we'll tack on more to it later
             # otherwise, if we're inside any jinja2 block, inside quotes, or we were
             # inside quotes (but aren't now) concat this token to the last param
-            if inside_quotes and not was_inside_quotes and not(print_depth or block_depth or comment_depth):
+            if inside_quotes and not was_inside_quotes and not (print_depth or block_depth or comment_depth):
                 params.append(token)
                 appended = True
             elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
