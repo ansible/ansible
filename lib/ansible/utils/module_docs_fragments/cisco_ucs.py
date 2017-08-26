@@ -62,6 +62,8 @@ options:
     ucs_server:
         description:
             - UcsHandle object to interact with Cisco UCS server.
-              Note: For future support where in single connection handle can be used across the multiple module rather to make the connection each time for each module.
+              For future support where in single connection handle can be used
+              across the multiple module rather to make the connection each
+              time for each module.
         type: UcsHandle
 '''
