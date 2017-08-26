@@ -75,6 +75,7 @@ EXAMPLES = '''
     origin: 'https://pkg.example.com/site/'
 '''
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -145,11 +146,13 @@ def set_publisher(module, params):
         'msg': err,
         'changed': True,
     }
+    if rc != 0:
+        module.fail_json(**response)
     module.exit_json(**response)
 
 
 def unset_publisher(module, publisher):
-    if not publisher in get_publishers(module):
+    if publisher not in get_publishers(module):
         module.exit_json()
 
     rc, out, err = module.run_command(
@@ -162,6 +165,8 @@ def unset_publisher(module, publisher):
         'msg': err,
         'changed': True,
     }
+    if rc != 0:
+        module.fail_json(**response)
     module.exit_json(**response)
 
 
@@ -176,7 +181,7 @@ def get_publishers(module):
         values = dict(zip(keys, map(unstringify, line.split("\t"))))
         name = values['publisher']
 
-        if not name in publishers:
+        if name not in publishers:
             publishers[name] = dict(
                 (k, values[k]) for k in ['sticky', 'enabled']
             )
