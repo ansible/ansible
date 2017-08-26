@@ -228,6 +228,8 @@ try:
 except ImportError:
     HAS_ZABBIX_API = False
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 class Host(object):
     def __init__(self, module, zbx):
