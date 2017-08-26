@@ -218,6 +218,13 @@ class AzureRMTrafficManager(AzureRMModuleBase):
 
         self.results['check_mode'] = self.check_mode
 
+        # Before we proceed, verify that the resource group exists.
+        try:
+            resource_group = self.get_resource_group(self.resource_group)
+
+        except CloudError:
+            self.fail('resource group {} not found'.format(self.resource_group))
+
         # Initialize the Ansible return
         results = dict()
         changed = False
