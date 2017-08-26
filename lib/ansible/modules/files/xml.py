@@ -221,7 +221,7 @@ EXAMPLES = r'''
       y: http://y.test
       z: http://z.test
     attribute: z:my_namespaced_attribute
-    value: "false"
+    value: 'false'
 '''
 
 RETURN = r'''
@@ -307,7 +307,8 @@ def do_print_match(module, tree, xpath, namespaces):
 def count_nodes(module, tree, xpath, namespaces):
     """ Return the count of nodes matching the xpath """
     hits = tree.xpath("count(/%s)" % xpath, namespaces=namespaces)
-    finish(module, tree, xpath, namespaces, changed=False, msg=int(hits), hitcount=int(hits))
+    msg = "found %d nodes" % hits
+    finish(module, tree, xpath, namespaces, changed=False, msg=msg, hitcount=int(hits))
 
 
 def is_node(tree, xpath, namespaces):
@@ -643,7 +644,7 @@ def children_to_nodes(module=None, children=[], type='yaml'):
     return [child_to_element(module, child, type) for child in children]
 
 
-def pretty(module, tree):
+def make_pretty(module, tree):
     xml_string = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
 
     result = dict(
@@ -652,16 +653,13 @@ def pretty(module, tree):
 
     if module.params['path']:
         xml_file = module.params['path']
-        xml_content = open(xml_file)
-        try:
+        with open(xml_file, 'rb') as xml_content:
             if xml_string != xml_content.read():
                 result['changed'] = True
                 if not module.check_mode:
                     if module.params['backup']:
                         result['backup_file'] = module.backup_local(module.params['path'])
                     tree.write(xml_file, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
-        finally:
-            xml_content.close()
 
     elif module.params['xmlstring']:
         result['xmlstring'] = xml_string
@@ -672,15 +670,25 @@ def pretty(module, tree):
     module.exit_json(**result)
 
 
-def finish(module, tree, xpath, namespaces, changed=False, msg="", hitcount=0, matches=tuple()):
+def finish(module, tree, xpath, namespaces, changed=False, msg='', hitcount=0, matches=tuple()):
 
     result = dict(
-        actions=dict(xpath=xpath, namespaces=namespaces, state=module.params['state']),
+        actions=dict(
+            xpath=xpath,
+            namespaces=namespaces,
+            state=module.params['state']
+        ),
         changed=has_changed(tree),
-        count=hitcount,
-        matches=matches,
-        msg=msg,
     )
+
+    if module.params['count'] or hitcount:
+        result['count'] = hitcount
+
+    if module.params['print_match'] or matches:
+        result['matches'] = matches
+
+    if msg:
+        result['msg'] = msg
 
     if result['changed']:
         if module._diff:
@@ -797,24 +805,19 @@ def main():
 
     if print_match:
         do_print_match(module, doc, xpath, namespaces)
-        # exit
 
     if count:
         count_nodes(module, doc, xpath, namespaces)
-        # exit
 
     if content == 'attribute':
         get_element_attr(module, doc, xpath, namespaces)
-        # exit
     elif content == 'text':
         get_element_text(module, doc, xpath, namespaces)
-        # exit
 
     # File exists:
     if state == 'absent':
         # - absent: delete xpath target
         delete_xpath_target(module, doc, xpath, namespaces)
-        # exit
 
     # - present: carry on
 
@@ -824,30 +827,24 @@ def main():
     # set_children set?
     if set_children:
         set_target_children(module, doc, xpath, namespaces, set_children, input_type)
-        # exit
 
     # add_children set?
     if add_children:
         add_target_children(module, doc, xpath, namespaces, add_children, input_type)
-        # exit
 
     # No?: Carry on
 
     # Is the xpath target an attribute selector?
     if value is not None:
         set_target(module, doc, xpath, namespaces, attribute, value)
-        # exit
 
     # If an xpath was provided, we need to do something with the data
     if xpath is not None:
         ensure_xpath_exists(module, doc, xpath, namespaces)
-        # exit
 
     # Otherwise only reformat the xml data?
     if pretty_print:
-        xpath = '/'
-        pretty(module, doc)
-        # exit
+        make_pretty(module, doc)
 
     module.fail_json(msg="Don't know what to do")
 
