@@ -50,20 +50,18 @@ options:
         description:
             - Port number to be used during connection.(By default uses 443 for https and 80 for http connection)
         type: int
-        default: null
     secure:
         description:
             - True for secure connection, otherwise False.
         type: bool
-        default: null
     proxy:
         description:
             - Proxy to be used for connection.
+              e.g. 'http://proxy.xy.z:8080'
         type: str
-        default: null
     ucs_server:
         description:
             - UcsHandle object to interact with Cisco UCS server.
+              Note: For future support where in single connection handle can be used across the multiple module rather to make the connection each time for each module.
         type: UcsHandle
-        default: null
 '''

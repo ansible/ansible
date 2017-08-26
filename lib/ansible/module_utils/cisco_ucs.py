@@ -42,11 +42,6 @@ except:
 
 class UcsConnection():
 
-    @staticmethod
-    def is_login_param(param):
-        return param in ["ucs_ip", "ucs_username", "ucs_password",
-                         "ucs_port", "ucs_secure", "ucs_proxy", "ucs_server"]
-
     def __init__(self, module):
         if HAS_UCSMSDK is False:
             results = {}
