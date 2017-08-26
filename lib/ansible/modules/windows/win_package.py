@@ -29,7 +29,7 @@ DOCUMENTATION = r'''
 ---
 module: win_package
 version_added: "1.7"
-short_description: installs/uninstalls an installable package
+short_description: Installs/uninstalls an installable package
 description:
 - Installs or uninstalls a package in either an MSI or EXE format.
 - These packages can be sources from the local file system, network file share
@@ -63,7 +63,7 @@ options:
     version_added: '2.4'
   expected_return_code:
     description:
-    - One or more return codes from the pacakge installation that indicates
+    - One or more return codes from the package installation that indicates
       success.
     - Before Ansible 2.4 this was just 0 but since 2.4 this is both C(0) and
       C(3010).
@@ -75,6 +75,10 @@ options:
     - Name of the package, if name isn't specified the path will be used for
       log messages.
     - As of Ansible 2.4 this is deprecated and no longer required.
+  password:
+    description:
+    - The password for C(user_name), must be set when C(user_name) is.
+    aliases: [ user_password ]
   path:
     description:
     - Location of the package to be installed or uninstalled.
@@ -107,16 +111,15 @@ options:
     - Whether to install or uninstall the package.
     - The module uses C(product_id) and whether it exists at the registry path
       to see whether it needs to install or uninstall the package.
+    default: present
     aliases: [ ensure ]
-  user_name:
+  username:
     description:
     - Username of an account with access to the package if it is located on a
       file share.
     - This is only needed if the WinRM transport is over an auth method that
       does not support credential delegation like Basic or NTLM.
-  user_password:
-    description:
-    - The password for C(user_name), must be set when C(user_name) is.
+    aliases: [ user_name ]
   validate_certs:
     description:
     - If C(no), SSL certificates will not be validated. This should only be
@@ -128,16 +131,16 @@ options:
 notes:
 - For non Windows targets, use the M(package) module instead.
 - When C(state=absent) and the product is an exe, the path may be different
-  from what was used to installed it. If path is not set then the path used
-  will be what is set under C(UninstallString) in the registry for that
-  product_id.
+  from what was used to install the package originally. If path is not set then
+  the path used will be what is set under C(UninstallString) in the registry
+  for that product_id.
 - Not all product ids are in a GUID form, some programs incorrectly use a
   different structure but this module should support any format.
 - By default all msi installs and uninstalls will be run with the options
   C(/log, /qn, /norestart).
 - It is recommended you download the pacakge first from the URL using the
   M(win_get_url) module as it opens up more flexibility with what must be set
-  when calling win_package.
+  when calling C(win_package).
 - Packages will be temporarily downloaded or copied locally when path is a
   network location and credential delegation is not set, or path is a URL
   and the file is not an MSI.
@@ -154,7 +157,6 @@ EXAMPLES = r'''
     path: http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
     arguments: /install /passive /norestart
-    state: present
 
 - name: Install Remote Desktop Connection Manager from msi
   win_package:
@@ -217,17 +219,33 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-reboot_required:
-  description: Whether s reboot is required to finalise package. This is based
-    on the return code.
-  returned: always
-  type: bool
-  sample: True
 exit_code:
-  description: The return code of the package process.
+  description: See rc, this will be removed in favour of rc in Ansible 2.6.
   returned: change occured
   type: int
   sample: 0
+log:
+  description: The contents of the MSI log.
+  returned: change occured and package is an MSI
+  type: str
+  sample: Installation completed successfully
+rc:
+  description: The return code of the pacakge process.
+  returned: change occured
+  type: int
+  sample: 0
+reboot_required:
+  description: Whether a reboot is required to finalise package. This is set
+    to true if the executable return code is 3010.
+  returned: always
+  type: bool
+  sample: True
+restart_required:
+  description: See reboot_required, this will be removed in favour of
+    reboot_required in Ansible 2.6
+    returned: always
+    type: bool
+    sample: True
 stdout:
   description: The stdout stream of the package process.
   returned: failure during install or uninstall

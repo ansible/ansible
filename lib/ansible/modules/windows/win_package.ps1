@@ -19,8 +19,8 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str"
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
 $product_id = Get-AnsibleParam -obj $params -name "product_id" -type "str" -aliases "productid"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present" -aliases "ensure"
-$user_name = Get-AnsibleParam -obj $params -name "user_name" -type "str"
-$user_password = Get-AnsibleParam -obj $params -name "user_password" -type "str" -failifempty ($user_name -ne $null)
+$username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user_name"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($username -ne $null) -aliases "user_password"
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
@@ -29,6 +29,7 @@ $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "
 $result = @{
     changed = $false
     reboot_required = $false
+    restart_required = $false # deprecate in 2.6
 }
 
 if (-not $validate_certs) {
@@ -36,9 +37,9 @@ if (-not $validate_certs) {
 }
 
 $credential = $null
-if ($user_name -ne $null) {
-    $sec_user_password = ConvertTo-SecureString -String $user_password -AsPlainText -Force
-    $credential = New-Object -TypeName PSCredential -ArgumentList $user_name, $sec_user_password
+if ($username -ne $null) {
+    $sec_user_password = ConvertTo-SecureString -String $password -AsPlainText -Force
+    $credential = New-Object -TypeName PSCredential -ArgumentList $username, $sec_user_password
 }
 
 if ($name -ne $null) {
@@ -239,7 +240,11 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
                 # Test-Path doesn't support supplying -Credentials, need to create PSDrive before testing
                 $file_path = Split-Path -Path $path
                 $file_name = Split-Path -Path $path -Leaf
-                New-PSDrive -Name win_package -PSProvider FileSystem -Root $file_path -Credential $credential -Scope Script
+                try {
+                    New-PSDrive -Name win_package -PSProvider FileSystem -Root $file_path -Credential $credential -Scope Script
+                } catch {
+                    Fail-Json -obj $result -message "failed to connect network drive with credentials: $($_.Exception.Message)"
+                }
                 $test_path = "win_package:\$file_name"
             } else {
                 # Someone is using an auth that supports credential delegation, at least it will fail otherwise
@@ -392,7 +397,7 @@ if ($state -eq "absent") {
                     $id = "`"$local_path`""`
                 }
 
-                $uninstall_arguments = @("/x", $id, "/log", "`"$log_path`"", "/qn", "/norestart")
+                $uninstall_arguments = @("/x", $id, "/L*V", "`"$log_path`"", "/qn", "/norestart")
                 if ($arguments -ne $null) {
                     $uninstall_arguments += $arguments
                 }
@@ -412,23 +417,27 @@ if ($state -eq "absent") {
                 $process_result = Run-Process -executable $uninstall_exe -arguments $uninstall_arguments
                 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
-                    $log_content = Get-Content -Path $log_path -Raw
+                    $log_content = Get-Content -Path $log_path | Out-String
                 } else {
                     $log_content = $null
                 }
 
-                $result.exit_code = $process_result.rc
+                $result.rc = $process_result.rc
+                $result.exit_code = $process_result.rc # deprecate in 2.6
                 if ($valid_return_codes -notcontains $process_result.rc) {
                     $result.stdout = Convert-Encoding -string $process_result.stdout
                     $result.stderr = Convert-Encoding -string $process_result.stderr
                     if ($log_content -ne $null) {
-                        # TODO: find out why I can't return this
-                        #$result.log = $log_content
+                        $result.log = $log_content
                     }
                     Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see exit_code, stdout and stderr for more details"
+                } else {
+                    $result.failed = $false
                 }
+
                 if ($process_result.rc -eq 3010) {
                     $result.reboot_required = $true
+                    $result.restart_required = $true
                 }
             }            
         } finally {
@@ -474,7 +483,7 @@ if ($state -eq "absent") {
                 $log_path = Join-Path -Path $temp_path -ChildPath $log_file
                 
                 $cleanup_artifacts += $log_path
-                $install_arguments = @("/i", "`"$($local_path)`"", "/log", "`"$log_path`"", "/qn", "/norestart")
+                $install_arguments = @("/i", "`"$($local_path)`"", "/L*V", "`"$log_path`"", "/qn", "/norestart")
                 if ($arguments -ne $null) {
                     $install_arguments += $arguments
                 }
@@ -493,23 +502,27 @@ if ($state -eq "absent") {
                 $process_result = Run-Process -executable $install_exe -arguments $install_arguments
                 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
-                    $log_content = Get-Content -Path $log_path -Raw
+                    $log_content = Get-Content -Path $log_path | Out-String
                 } else {
                     $log_content = $null
                 }
 
-                $result.exit_code = $process_result.rc
+                $result.rc = $process_result.rc
+                $result.exit_code = $process_result.rc # deprecate in 2.6
                 if ($valid_return_codes -notcontains $process_result.rc) {
                     $result.stdout = Convert-Encoding -string $process_result.stdout
                     $result.stderr = Convert-Encoding -string $process_result.stderr
                     if ($log_content -ne $null) {
-                        # TODO: find out why I can't return this
-                        #$result.log = $log_content
+                        $result.log = $log_content
                     }
                     Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see exit_code, stdout and stderr for more details"
+                } else {
+                    $result.failed = $false
                 }
+
                 if ($process_result.rc -eq 3010) {
                     $result.reboot_required = $true
+                    $result.restart_required = $true
                 }
             }            
         } finally {
