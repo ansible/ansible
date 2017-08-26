@@ -27,6 +27,13 @@ DOCUMENTATION:
         - The JInja2 exprpessions are calculated and assigned to the variables
         - Only variables already available from previous inventories can be used for templating.
         - Failed expressions will be ignored (assumes vars were missing).
+    strict:
+        description:
+            - If true make invalid entries a fatal error, otherwise skip and continue
+            - Since it is possible to use facts in the expressions they might not always be available
+              and we ignore those errors by default.
+        type: boolean
+        default: False
     compose:
         description: create vars from jinja2 expressions
         type: dictionary
@@ -35,6 +42,10 @@ DOCUMENTATION:
         description: add hosts to group based on Jinja2 conditionals
         type: dictionary
         default: {}
+    keyed_groups:
+        description: add hosts to group based on the values of a variable
+        type: list
+        default: []
 EXAMPLES: | # inventory.config file in YAML format
     plugin: comstructed
     compose:
@@ -51,6 +62,15 @@ EXAMPLES: | # inventory.config file in YAML format
 
         # complex group membership
         multi_group: (group_names|intersection(['alpha', 'beta', 'omega']))|length >= 2
+
+    keyed_groups:
+        # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it
+        - prefix: distro
+          key: ansible_distribution
+
+        # this creates a group per ec2 architecture and assign hosts to the matching ones (arch_x86_64, arch_sparc, etc)
+        - prefix: arch
+          key: ec2_architecture
 '''
 
 from __future__ import (absolute_import, division, print_function)
@@ -94,9 +114,12 @@ class InventoryModule(BaseInventoryPlugin):
         except Exception as e:
             raise AnsibleParserError("Unable to parse %s: %s" % (to_native(path), to_native(e)))
 
-        if not data or data.get('plugin') != self.NAME:
-            raise AnsibleParserError("%s is empty or not a constructed groups config file" % (to_native(path)))
+        if not data:
+            raise AnsibleParserError("%s is empty" % (to_native(path)))
+        elif data.get('plugin') != self.NAME:
+            raise AnsibleParserError("%s is not a constructed groups config file, plugin entry must be 'constructed'" % (to_native(path)))
 
+        strict = data.get('strict', False)
         try:
             # Go over hosts (less var copies)
             for host in inventory.hosts:
@@ -107,10 +130,13 @@ class InventoryModule(BaseInventoryPlugin):
                     hostvars = combine_vars(hostvars, inventory.cache[host])
 
                 # create composite vars
-                self._set_composite_vars(data.get('compose'), hostvars, host)
+                self._set_composite_vars(data.get('compose'), hostvars, host, strict=strict)
 
                 # constructed groups based on conditionals
-                self._add_host_to_composed_groups(data.get('groups'), hostvars, host)
+                self._add_host_to_composed_groups(data.get('groups'), hostvars, host, strict=strict)
+
+                # constructed groups based variable values
+                self._add_host_to_keyed_groups(data.get('keyed_groups'), hostvars, host, strict=strict)
 
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))
