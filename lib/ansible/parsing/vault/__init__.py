@@ -662,7 +662,8 @@ class VaultEditor:
                           existing_data=None, force_save=False, vault_id=None):
 
         # Create a tempfile
-        fd, tmp_path = tempfile.mkstemp()
+        root, ext = os.path.splitext(os.path.realpath(filename))
+        fd, tmp_path = tempfile.mkstemp(suffix=ext)
         os.close(fd)
 
         try:
