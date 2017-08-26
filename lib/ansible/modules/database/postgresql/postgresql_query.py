@@ -32,7 +32,8 @@ options:
     query:
         description:
             - SQL query to run. Variables can be escaped with psycopg2 syntax.
-            - Can be a SQL scripts file.
+            - See U(http://initd.org/psycopg/docs/usage.html) and examples below.
+            - This argument can also be a path to a SQL script file.
         required: true
     positional_args:
         description:
