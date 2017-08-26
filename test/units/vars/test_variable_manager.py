@@ -52,7 +52,6 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
         variables = v.get_vars(use_cache=False)
 
-
         # Check var manager expected values,  never check: ['omit', 'vars']
         # FIXME:  add the following ['ansible_version', 'ansible_playbook_python', 'groups']
         for varname, value in (('playbook_dir', os.path.abspath('.')), ):
