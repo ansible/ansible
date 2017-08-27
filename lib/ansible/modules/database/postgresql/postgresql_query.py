@@ -151,7 +151,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
-            ["positional_args", "named_args"]
+            ["positional_args", "named_args"],
+            ["login_host", "login_unix_socket"]
         ],
         supports_check_mode=False,
     )
@@ -177,12 +178,6 @@ def main():
 
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
 
     try:
         pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
