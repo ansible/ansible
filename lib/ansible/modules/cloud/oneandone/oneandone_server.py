@@ -242,6 +242,13 @@ ONEANDONE_SERVER_STATES = (
 )
 
 
+def _check_mode(module, result):
+    if module.check_mode:
+        module.exit_json(
+            changed=result
+        )
+
+
 def _create_server(module, oneandone_conn, hostname, description,
                    fixed_instance_size_id, vcore, cores_per_processor, ram,
                    hdds, datacenter_id, appliance_id, ssh_key,
@@ -252,7 +259,12 @@ def _create_server(module, oneandone_conn, hostname, description,
         existing_server = get_server(oneandone_conn, hostname)
 
         if existing_server:
+            if module.check_mode:
+                return False
             return None
+
+        if module.check_mode:
+            return True
 
         server = oneandone_conn.create_server(
             oneandone.client.Server(
@@ -324,6 +336,7 @@ def create_server(module, oneandone_conn):
 
     datacenter_id = get_datacenter(oneandone_conn, datacenter)
     if datacenter_id is None:
+        _check_mode(module, False)
         module.fail_json(
             msg='datacenter %s not found.' % datacenter)
 
@@ -333,13 +346,15 @@ def create_server(module, oneandone_conn):
             oneandone_conn,
             fixed_instance_size)
         if fixed_instance_size_id is None:
+            _check_mode(module, False)
             module.fail_json(
                 msg='fixed_instance_size %s not found.' % fixed_instance_size)
 
     appliance_id = get_appliance(oneandone_conn, appliance)
     if appliance_id is None:
+        _check_mode(module, False)
         module.fail_json(
-            msg='datacenter %s not found.' % appliance)
+            msg='appliance %s not found.' % appliance)
 
     private_network_id = None
     if private_network:
@@ -347,6 +362,7 @@ def create_server(module, oneandone_conn):
             oneandone_conn,
             private_network)
         if private_network_id is None:
+            _check_mode(module, False)
             module.fail_json(
                 msg='private network %s not found.' % private_network)
 
@@ -356,6 +372,7 @@ def create_server(module, oneandone_conn):
             oneandone_conn,
             monitoring_policy)
         if monitoring_policy_id is None:
+            _check_mode(module, False)
             module.fail_json(
                 msg='monitoring policy %s not found.' % monitoring_policy)
 
@@ -365,6 +382,7 @@ def create_server(module, oneandone_conn):
             oneandone_conn,
             firewall_policy)
         if firewall_policy_id is None:
+            _check_mode(module, False)
             module.fail_json(
                 msg='firewall policy %s not found.' % firewall_policy)
 
@@ -374,6 +392,7 @@ def create_server(module, oneandone_conn):
             oneandone_conn,
             load_balancer)
         if load_balancer_id is None:
+            _check_mode(module, False)
             module.fail_json(
                 msg='load balancer %s not found.' % load_balancer)
 
@@ -419,8 +438,14 @@ def create_server(module, oneandone_conn):
     changed = False
 
     if servers:
+        for server in servers:
+            if server:
+                _check_mode(module, True)
+        _check_mode(module, False)
         servers = [_insert_network_data(_server) for _server in servers]
         changed = True
+
+    _check_mode(module, False)
 
     return (changed, servers)
 
@@ -445,6 +470,7 @@ def remove_server(module, oneandone_conn):
 
     server = get_server(oneandone_conn, server_id, True)
     if server:
+        _check_mode(module, True)
         try:
             oneandone_conn.delete_server(server_id=server['id'])
             if wait:
@@ -461,6 +487,7 @@ def remove_server(module, oneandone_conn):
             'id': server['id'],
             'hostname': server['name']
         }
+    _check_mode(module, False)
 
     return (changed, removed_server)
 
@@ -491,11 +518,13 @@ def startstop_server(module, oneandone_conn):
         # or on its way.
         try:
             if state == 'stopped' and server['status']['state'] == 'POWERED_ON':
+                _check_mode(module, True)
                 oneandone_conn.modify_server_status(
                     server_id=server['id'],
                     action='POWER_OFF',
                     method='SOFTWARE')
             elif state == 'running' and server['status']['state'] == 'POWERED_OFF':
+                _check_mode(module, True)
                 oneandone_conn.modify_server_status(
                     server_id=server['id'],
                     action='POWER_ON',
@@ -504,6 +533,8 @@ def startstop_server(module, oneandone_conn):
             module.fail_json(
                 msg="failed to set server %s to state %s: %s" % (
                     server_id, state, str(ex)))
+
+        _check_mode(module, False)
 
         # Make sure the server has reached the desired state
         if wait:
@@ -526,6 +557,8 @@ def startstop_server(module, oneandone_conn):
 
         changed = True
         server = _insert_network_data(server)
+
+    _check_mode(module, False)
 
     return (changed, server)
 
@@ -575,7 +608,7 @@ def main():
             ram=dict(type='float'),
             hdds=dict(type='list'),
             count=dict(type='int', default=1),
-            ssh_key=dict(type='raw', default=None),
+            ssh_key=dict(type='raw'),
             auto_increment=dict(type='bool', default=True),
             server=dict(type='str'),
             datacenter=dict(
@@ -587,8 +620,9 @@ def main():
             monitoring_policy=dict(type='str'),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
-            state=dict(type='str', default='present'),
+            state=dict(type='str', default='present', choices=['present', 'absent', 'running', 'stopped']),
         ),
+        supports_check_mode=True,
         mutually_exclusive=(['fixed_instance_size', 'vcore'], ['fixed_instance_size', 'cores_per_processor'],
                             ['fixed_instance_size', 'ram'], ['fixed_instance_size', 'hdds'],),
         required_together=(['vcore', 'cores_per_processor', 'ram', 'hdds'],)
