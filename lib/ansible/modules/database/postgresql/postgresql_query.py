@@ -129,10 +129,11 @@ rowcount:
     sample: 5
 '''
 
-import traceback
 import os
+import traceback
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 import ansible.module_utils.postgres as pgutils
 
 
@@ -193,18 +194,9 @@ def main():
         # Using RealDictCursor allows access to row results by real column name
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    except TypeError as e:
-        db_connection.close()
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='''Postgresql server must be at least version
-                             8.4 to support sslrootcert.
-                             Exception: {0}'''.format(e), exception=traceback.format_exc())
-
-        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
-
     except Exception as e:
         db_connection.close()
-        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     # if query is a file, try read it
     query = module.params["query"]
