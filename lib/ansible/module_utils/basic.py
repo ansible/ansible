@@ -718,6 +718,7 @@ def _load_params(ansible_args=None):
         params = json_dict_unicode_to_bytes(params)
 
     try:
+        # ansible_args MAY have an 'ANSIBLE_MODULE_ARGS' key in dict, but it's not MANDATORY
         return params if ansible_args and 'ANSIBLE_MODULE_ARGS' not in params else params['ANSIBLE_MODULE_ARGS']
     except KeyError:
         # This helper does not have access to fail_json so we have to print
