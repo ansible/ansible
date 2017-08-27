@@ -99,7 +99,8 @@ options:
     choices: ['yes', 'no']
   vm_disk:
     description:
-      - A key, value list of disks and their sizes and which datastore to keep it in.
+      - A key, value list of disks and their sizes and which datastore to keep it in. The keys should be of form diskN, where N >= 1 and contain
+        no gaps in numbers.
     required: false
     default: null
   vm_hardware:
@@ -174,6 +175,9 @@ EXAMPLES = '''
         # to the folder (e.g. production/customerA/lamp) or just the last component
         # of the path (e.g. lamp):
         folder: production/customerA/lamp
+        # For disks with id up to 15 you may and for disks with id above 15 you must specify target controller and unit
+        controller: 0
+        unit: 0
     vm_nic:
       nic1:
         type: vmxnet3
@@ -316,9 +320,15 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
+import re
+import ssl
 
-# TODO:
-# Ability to set CPU/Memory reservations
+
+# Stolen here https://stackoverflow.com/a/16090640
+def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
+    return [int(text) if text.isdigit() else text.lower()
+            for text in re.split(_nsre, s)]
+
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
     # add a scsi controller
@@ -658,73 +668,18 @@ def vmdisk_id(vm, current_datastore_name):
 def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone, vm_extra_config):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
+    rpmor = None
 
     if esxi:
-        datacenter = esxi['datacenter']
-        esxi_hostname = esxi['hostname']
 
-        # Datacenter managed object reference
-        dclist = [k for k,
-                  v in vsphere_client.get_datacenters().items() if v == datacenter]
-        if dclist:
-            dcmor = dclist[0]
-        else:
-            vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
-
-        dcprops = VIProperty(vsphere_client, dcmor)
-
-        # hostFolder managed reference
-        hfmor = dcprops.hostFolder._obj
-
-        # Grab the computerResource name and host properties
-        crmors = vsphere_client._retrieve_properties_traversal(
-            property_names=['name', 'host'],
-            from_node=hfmor,
-            obj_type='ComputeResource')
-
-        # Grab the host managed object reference of the esxi_hostname
-        try:
-            hostmor = [k for k,
-                       v in vsphere_client.get_hosts().items() if v == esxi_hostname][0]
-        except IndexError:
-            vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find esx host named: %s" % esxi_hostname)
-
-        # Grab the computeResource managed object reference of the host we are
-        # creating the VM on.
-        crmor = None
-        for cr in crmors:
-            if crmor:
-                break
-            for p in cr.PropSet:
-                if p.Name == "host":
-                    for h in p.Val.get_element_ManagedObjectReference():
-                        if h == hostmor:
-                            crmor = cr.Obj
-                            break
-                    if crmor:
-                        break
+        dcmor = _get_dcmor(vsphere_client, module, esxi)
+        hostmor = _get_hostmor(vsphere_client, module, esxi)
+        crmor = _get_crmor(vsphere_client, dcmor, hostmor)
         crprops = VIProperty(vsphere_client, crmor)
 
         rpmor = crprops.resourcePool._obj
     elif resource_pool:
-        try:
-            cluster = [k for k,
-                       v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
-        except IndexError:
-            vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find Cluster named: %s" %
-                             cluster_name)
-
-        try:
-            rpmor = [k for k, v in vsphere_client.get_resource_pools(
-                from_mor=cluster).items()
-                if v == resource_pool][0]
-        except IndexError:
-            vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find Resource Pool named: %s" %
-                             resource_pool)
+        rpmor = _get_rpmor(vsphere_client, module, cluster_name, resource_pool)
     else:
         module.fail_json(msg="You need to specify either esxi:[datacenter,hostname] or [cluster,resource_pool]")
 
@@ -775,75 +730,150 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
             msg="Could not clone selected machine: %s" % e
         )
 
-# example from https://github.com/kalazzerx/pysphere/blob/master/examples/pysphere_create_disk_and_add_to_vm.py
-# was used.
 
-
-def update_disks(vsphere_client, vm, module, vm_disk, changes):
-    request = VI.ReconfigVM_TaskRequestMsg()
+def update_disks(vsphere_client, vm, module, vm_disk, vm_hardware, changes):
     changed = False
 
-    for cnf_disk in vm_disk:
-        disk_id = re.sub("disk", "", cnf_disk)
-        disk_type = vm_disk[cnf_disk]['type']
+    controller_request = VI.ReconfigVM_TaskRequestMsg()
+    controller_devices = []
+    controller_type = 'paravirtual'
+    if vm_hardware and 'scsi' in vm_hardware:
+        controller_type = vm_hardware['scsi']
+
+    controller_spec = spec_singleton(False, controller_request, vm)
+
+    # Add necessary SCSI controllers if not there
+    for disk in vm_disk:
+        ctrl_id = 0
+        if 'controller' in vm_disk[disk]:
+            ctrl_id = vm_disk[disk]['controller']
+
+        if ctrl_id < 0 and ctrl_id > 3:
+            module.fail_json(
+                msg="Error reconfiguring updating vm disks: %s, [%s]" % (
+                    "Invalid controller",
+                    vm_disk))
+
+        found = False
+        controller_type_re = re.compile('(ParaVirtualSCSI|VirtualBusLogic|VirtualLsiLogic|VirtualLsiLogicSAS)Controller')
+        for dev_key in vm._devices:
+            if controller_type_re.match(vm._devices[dev_key]['type']):
+                scsi_ctrl_id = vm._devices[dev_key]['label'].split()[2]
+                if ctrl_id == int(scsi_ctrl_id):
+                    found = True
+                    break
+
+        # if not found - add it
+        if not found:
+            add_scsi_controller(
+                module, vsphere_client, controller_spec, controller_devices,
+                type=controller_type, disk_ctrl_key=str(1000 + ctrl_id), bus_num=ctrl_id)
+
+    # Now add missing disks
+    for disk in sorted(vm_disk, None, natural_sort_key):
+        disk_id = re.sub("disk", "", disk)
+
+        if disk_id == '0':
+            module.fail_json(
+                msg="Error reconfiguring updating vm disks: %s, [%s]" % (
+                    "Disk id should be a positive integer",
+                    vm_disk))
+
         found = False
         for dev_key in vm._devices:
             if vm._devices[dev_key]['type'] == 'VirtualDisk':
                 hdd_id = vm._devices[dev_key]['label'].split()[2]
                 if disk_id == hdd_id:
                     found = True
-                    continue
+                    break
+
         if not found:
-            VI.ReconfigVM_TaskRequestMsg()
-            _this = request.new__this(vm._mor)
-            _this.set_attribute_type(vm._mor.get_attribute_type())
-            request.set_element__this(_this)
+            controller_spec = spec_singleton(controller_spec, controller_request, vm)
 
-            spec = request.new_spec()
-
-            dc = spec.new_deviceChange()
-            dc.Operation = "add"
-            dc.FileOperation = "create"
-
-            hd = VI.ns0.VirtualDisk_Def("hd").pyclass()
-            hd.Key = -100
-            hd.UnitNumber = int(disk_id)
-            hd.CapacityInKB = int(vm_disk[cnf_disk]['size_gb']) * 1024 * 1024
-            hd.ControllerKey = 1000
-
-            # module.fail_json(msg="peos : %s" % vm_disk[cnf_disk])
-            backing = VI.ns0.VirtualDiskFlatVer2BackingInfo_Def("backing").pyclass()
-            backing.FileName = "[%s]" % vm_disk[cnf_disk]['datastore']
-            backing.DiskMode = "persistent"
-            backing.Split = False
-            backing.WriteThrough = False
-            if disk_type == 'thin':
-                backing.ThinProvisioned = True
-            else:
-                backing.ThinProvisioned = False
-            backing.EagerlyScrub = False
-            hd.Backing = backing
-
-            dc.Device = hd
-
-            spec.DeviceChange = [dc]
-            request.set_element_spec(spec)
-
-            ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
-
-            # Wait for the task to finish
-            task = VITask(ret, vsphere_client)
-            status = task.wait_for_state([task.STATE_SUCCESS,
-                                          task.STATE_ERROR])
-
-            if status == task.STATE_SUCCESS:
-                changed = True
-                changes[cnf_disk] = vm_disk[cnf_disk]
-            elif status == task.STATE_ERROR:
+            try:
+                datastore = vm_disk[disk]['datastore']
+            except KeyError:
+                vsphere_client.disconnect()
                 module.fail_json(
-                    msg="Error reconfiguring vm: %s, [%s]" % (
-                        task.get_error_message(),
-                        vm_disk[cnf_disk]))
+                    msg="Error on %s definition. datastore needs to be"
+                        " specified." % disk)
+
+            try:
+                disksize = int(vm_disk[disk]['size_gb'])
+                # Convert the disk size to kiloboytes
+                disksize = disksize * 1024 * 1024
+            except (KeyError, ValueError):
+                vsphere_client.disconnect()
+                module.fail_json(msg="Error on %s definition. size needs to be specified as an integer." % disk)
+
+            try:
+                disktype = vm_disk[disk]['type']
+            except KeyError:
+                vsphere_client.disconnect()
+                module.fail_json(
+                    msg="Error on %s definition. type needs to be"
+                        " specified." % disk)
+
+            # Derive unit for simple configurations with only one controller.
+            # Basically, if all are true:
+            #   - no controller specified or controller is 0
+            #   - no unit specified
+            #   - disk id < 16
+            # Also adjust to the facts:
+            #   - vmware numbers disks starting with 1
+            #   - lun 7 is not available
+            unit_number = -100
+            if ('controller' not in vm_disk[disk] or vm_disk[disk]['controller'] == 0):
+                if ('unit' not in vm_disk[disk]) and int(disk_id) < 16:
+                    unit_number = int(disk_id) - 1
+                    if unit_number >= 7:
+                        unit_number += 1
+                else:
+                    module.fail_json(
+                        msg="Error reconfiguring updating vm disks: %s, [%s]" % (
+                            "Cannot derive unit number, need controller and unit specified for " + disk,
+                            vm_disk))
+
+            # Unit specified in config takes precedence
+            if 'unit' in vm_disk[disk]:
+                unit_number = vm_disk[disk]['unit']
+
+            if unit_number < 0 or unit_number > 15 or unit_number == 7:
+                module.fail_json(
+                    msg="Error reconfiguring updating vm disks: %s, [%s]" % (
+                        "Invalid unit number for " + disk,
+                        vm_disk))
+
+            ctrl_id = 0
+            if 'controller' in vm_disk[disk]:
+                ctrl_id = vm_disk[disk]['controller']
+
+            disksize = int(vm_disk[disk]['size_gb']) * 1024 * 1024
+
+            add_disk(
+                module, vsphere_client, None, controller_spec,
+                controller_devices, datastore, disktype, disksize, 1000 + ctrl_id,
+                unit_number, -100)
+
+    if len(controller_devices) > 0:
+        controller_spec.DeviceChange = controller_devices
+        controller_request.set_element_spec(controller_spec)
+
+        ret = vsphere_client._proxy.ReconfigVM_Task(controller_request)._returnval
+
+        # Wait for the task to finish
+        task = VITask(ret, vsphere_client)
+        status = task.wait_for_state([task.STATE_SUCCESS,
+                                      task.STATE_ERROR])
+
+        if status == task.STATE_SUCCESS:
+            changed = True
+        elif status == task.STATE_ERROR:
+            module.fail_json(
+                msg="Error reconfiguring updating vm disks: %s, [%s]" % (
+                    task.get_error_message(),
+                    vm_disk))
+
     return changed, changes
 
 
@@ -861,7 +891,8 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     cpuHotRemoveEnabled = bool(vm.properties.config.cpuHotRemoveEnabled)
 
     changed, changes = update_disks(vsphere_client, vm,
-                                    module, vm_disk, changes)
+                                    module, vm_disk, vm_hardware, changes)
+
     vm.properties._flush_cache()
     request = VI.ReconfigVM_TaskRequestMsg()
 
@@ -997,7 +1028,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
         disk_num = 0
         dev_changes = []
         disks_changed = {}
-        for disk in sorted(vm_disk):
+        for disk in sorted(vm_disk, None, natural_sort_key):
             try:
                 disksize = int(vm_disk[disk]['size_gb'])
                 # Convert the disk size to kilobytes
@@ -1213,24 +1244,38 @@ def _get_folderid_for_path(vsphere_client, datacenter, path):
     return folder['id'] if folder else None
 
 
-def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
+def _create_config_target(vsphere_client, hostmor, crmor):
+    crprops = VIProperty(vsphere_client, crmor)
+    # get config target
+    request = VI.QueryConfigTargetRequestMsg()
+    _this = request.new__this(crprops.environmentBrowser._obj)
+    _this.set_attribute_type(
+        crprops.environmentBrowser._obj.get_attribute_type())
+    request.set_element__this(_this)
+    h = request.new_host(hostmor)
+    h.set_attribute_type(hostmor.get_attribute_type())
+    request.set_element_host(h)
+    config_target = vsphere_client._proxy.QueryConfigTarget(request)._returnval
 
+    return config_target
+
+
+def _get_dcmor(vsphere_client, module, esxi):
+    # Grab the datacenter managed object reference of the esxi datacenter
     datacenter = esxi['datacenter']
-    esxi_hostname = esxi['hostname']
+
     # Datacenter managed object reference
-    dclist = [k for k,
-              v in vsphere_client.get_datacenters().items() if v == datacenter]
+    dclist = [k for k, v in vsphere_client.get_datacenters().items()
+              if v == datacenter]
     if dclist:
-        dcmor = dclist[0]
+        return dclist[0]
     else:
         vsphere_client.disconnect()
         module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
 
+
+def _get_vmfmor(vsphere_client, module, dcmor, vm_extra_config):
     dcprops = VIProperty(vsphere_client, dcmor)
-
-    # hostFolder managed reference
-    hfmor = dcprops.hostFolder._obj
-
     # virtualmachineFolder managed object reference
     if vm_extra_config.get('folder'):
         # try to find the folder by its full path, e.g. 'production/customerA/lamp'
@@ -1249,25 +1294,31 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     else:
         vmfmor = dcprops.vmFolder._obj
 
-    # networkFolder managed object reference
-    nfmor = dcprops.networkFolder._obj
+    return vmfmor
 
+
+def _get_hostmor(vsphere_client, module, esxi):
+    # Grab the host managed object reference of the esxi hostname
+    esxi_hostname = esxi['hostname']
+    try:
+        hostmor = [k for k, v in vsphere_client.get_hosts().items()
+                   if v == esxi_hostname][0]
+        return hostmor
+    except IndexError:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find esx host named: %s" % esxi_hostname)
+
+
+def _get_crmor(vsphere_client, dcmor, hostmor):
+    dcprops = VIProperty(vsphere_client, dcmor)
+    # hostFolder managed reference
+    hfmor = dcprops.hostFolder._obj
     # Grab the computerResource name and host properties
     crmors = vsphere_client._retrieve_properties_traversal(
         property_names=['name', 'host'],
         from_node=hfmor,
         obj_type='ComputeResource')
 
-    # Grab the host managed object reference of the esxi_hostname
-    try:
-        hostmor = [k for k,
-                   v in vsphere_client.get_hosts().items() if v == esxi_hostname][0]
-    except IndexError:
-        vsphere_client.disconnect()
-        module.fail_json(msg="Cannot find esx host named: %s" % esxi_hostname)
-
-    # Grab the computerResource managed object reference of the host we are
-    # creating the VM on.
     crmor = None
     for cr in crmors:
         if crmor:
@@ -1280,44 +1331,41 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                         break
                 if crmor:
                     break
-    crprops = VIProperty(vsphere_client, crmor)
 
-    # Get resource pool managed reference
-    # Requires that a cluster name be specified.
-    if resource_pool:
-        try:
-            cluster = [k for k,
-                       v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
-        except IndexError:
-            vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find Cluster named: %s" %
+    return crmor
+
+
+def _get_nfmor(vsphere_client, dcmor):
+    # networkFolder managed object reference
+    dcprops = VIProperty(vsphere_client, dcmor)
+    # hostFolder managed reference
+    return dcprops.networkFolder._obj
+
+
+def _get_rpmor(vsphere_client, module, cluster_name, resource_pool):
+    rpmor = None
+    cluster = None
+    try:
+        cluster = [k for k, v in vsphere_client.get_clusters().items()
+                   if v == cluster_name][0] if cluster_name else None
+    except IndexError:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find Cluster named: %s" %
                              cluster_name)
 
-        try:
-            rpmor = [k for k, v in vsphere_client.get_resource_pools(
-                from_mor=cluster).items()
-                if v == resource_pool][0]
-        except IndexError:
-            vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find Resource Pool named: %s" %
+    try:
+        rpmor = [k for k, v in vsphere_client.get_resource_pools(
+            from_mor=cluster).items() if v == resource_pool][0]
+    except IndexError:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find Resource Pool named: %s" %
                              resource_pool)
 
-    else:
-        rpmor = crprops.resourcePool._obj
+    return rpmor
 
-    # CREATE VM CONFIGURATION
-    # get config target
-    request = VI.QueryConfigTargetRequestMsg()
-    _this = request.new__this(crprops.environmentBrowser._obj)
-    _this.set_attribute_type(
-        crprops.environmentBrowser._obj.get_attribute_type())
-    request.set_element__this(_this)
-    h = request.new_host(hostmor)
-    h.set_attribute_type(hostmor.get_attribute_type())
-    request.set_element_host(h)
-    config_target = vsphere_client._proxy.QueryConfigTarget(request)._returnval
 
-    # get default devices
+def _get_default_devices(vsphere_client, hostmor, crmor):
+    crprops = VIProperty(vsphere_client, crmor)
     request = VI.QueryConfigOptionRequestMsg()
     _this = request.new__this(crprops.environmentBrowser._obj)
     _this.set_attribute_type(
@@ -1328,7 +1376,41 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     request.set_element_host(h)
     config_option = vsphere_client._proxy.QueryConfigOption(request)._returnval
     default_devs = config_option.DefaultDevice
+    return default_devs
 
+
+def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
+
+    config_target = None
+
+    dcmor = _get_dcmor(vsphere_client, module, esxi)
+    vmfmor = _get_vmfmor(vsphere_client, module, dcmor, vm_extra_config)
+    nfmor = _get_nfmor(vsphere_client, dcmor)
+
+    hostmor = None
+    rpmor = None
+    if 'hostname' in esxi:
+        hostmor = _get_hostmor(vsphere_client, module, esxi)
+
+        # Grab the computerResource managed object reference of the host we are
+        # creating the VM on.
+        crmor = _get_crmor(vsphere_client, dcmor, hostmor)
+
+        # get default devices
+        default_devs = _get_default_devices(vsphere_client, hostmor, crmor)
+        crprops = VIProperty(vsphere_client, crmor)
+        rpmor = crprops.resourcePool._obj
+
+        config_target = _create_config_target(vsphere_client, hostmor, crmor)
+
+    elif resource_pool:
+        # Get resource pool managed reference
+        # Requires that a cluster name be specified.
+        rpmor = _get_rpmor(vsphere_client, module, cluster_name, resource_pool)
+    else:
+        module.fail_json(msg="You need to specify either esxi:[datacenter,hostname] or [cluster,resource_pool]")
+
+    # CREATE VM CONFIGURATION
     # add parameters to the create vm task
     create_vm_request = VI.CreateVM_TaskRequestMsg()
     config = create_vm_request.new_config()
@@ -1347,16 +1429,39 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     config.set_element_guestId(vm_hardware['osid'])
     devices = []
 
-    # Attach all the hardware we want to the VM spec.
-    # Add a scsi controller to the VM spec.
-    disk_ctrl_key = add_scsi_controller(
-        module, vsphere_client, config, devices, vm_hardware['scsi'])
     if vm_disk:
-        disk_num = 0
-        disk_key = 0
-        bus_num = 0
-        disk_ctrl = 1
-        for disk in sorted(vm_disk):
+        # Maps requested controllers to typical vmware device id which is 1000 + id
+        # This mapping later will be used to assign disks
+        # In contrast to hard drives, controller id actually goes to controller name on vsphere side
+        disk_ctrl_keys = {}
+
+        # Create requested controllers
+        for cnf_disk in vm_disk:
+            ctrl_id = 0
+            if 'controller' in vm_disk[cnf_disk]:
+                ctrl_id = vm_disk[cnf_disk]['controller']
+
+            if ctrl_id < 0 and ctrl_id > 3:
+                module.fail_json(
+                    msg="Error creating vm disks: %s, [%s]" % (
+                        "Invalid controller",
+                        vm_disk))
+
+            disk_ctrl_keys[ctrl_id] = add_scsi_controller(
+                module, vsphere_client, config, devices,
+                vm_hardware['scsi'], disk_ctrl_key=str(1000 + ctrl_id), bus_num=ctrl_id)
+
+        # if nothing requested specifically - add controller 0 implicitly
+        if len(disk_ctrl_keys) == 0:
+            disk_ctrl_keys[0] = add_scsi_controller(
+                module, vsphere_client, config, devices,
+                vm_hardware['scsi'], disk_ctrl_key=str(1000), bus_num=0)
+
+        # Dictionary sort messes up disk configs with more than 9 disks
+        # Natural sort is what humans expect, we should create disks in that order
+        for disk in sorted(vm_disk, None, natural_sort_key):
+            disk_id = re.sub("disk", "", disk)
+
             try:
                 datastore = vm_disk[disk]['datastore']
             except KeyError:
@@ -1378,23 +1483,48 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                 module.fail_json(
                     msg="Error on %s definition. type needs to be"
                     " specified." % disk)
-            if disk_num == 7:
-                disk_num = disk_num + 1
-                disk_key = disk_key + 1
-            elif disk_num > 15:
-                bus_num = bus_num + 1
-                disk_ctrl = disk_ctrl + 1
-                disk_ctrl_key = add_scsi_controller(
-                    module, vsphere_client, config, devices, type=vm_hardware['scsi'], bus_num=bus_num, disk_ctrl_key=disk_ctrl)
-                disk_num = 0
-                disk_key = 0
-            # Add the disk  to the VM spec.
+
+            # Derive unit for simple configurations with only one controller.
+            # Basically, if all are true:
+            #   - no controller specified or controller is 0
+            #   - no unit specified
+            #   - disk id < 16
+            # Also adjust to the facts:
+            #   - vmware numbers disks starting with 1
+            #   - lun 7 is not available
+            unit_number = -100
+            if ('controller' not in vm_disk[disk] or vm_disk[disk]['controller'] == 0):
+                if ('unit' not in vm_disk[disk]) and int(disk_id) < 16:
+                    unit_number = int(disk_id) - 1
+                    if unit_number >= 7:
+                        unit_number += 1
+                else:
+                    module.fail_json(
+                        msg="Error creating vm disks: %s, [%s]" % (
+                            "Cannot derive unit number, need controller and unit specified for " + disk,
+                            vm_disk))
+
+            # Unit specified in config takes precedence
+            if 'unit' in vm_disk[disk]:
+                unit_number = vm_disk[disk]['unit']
+
+            if unit_number < 0 or unit_number > 15 or unit_number == 7:
+                module.fail_json(
+                    msg="Error creating vm disks: %s, [%s]" % (
+                        "Invalid unit number for " + disk,
+                        vm_disk))
+
+            ctrl_id = 0
+            if 'controller' in vm_disk[disk]:
+                ctrl_id = vm_disk[disk]['controller']
+
+            # Add the disk to the VM spec
+            # vsphere ignores our disk numbering anyway, so passing -100 as id
             add_disk(
                 module, vsphere_client, config_target, config,
-                devices, datastore, disktype, disksize, disk_ctrl_key,
-                disk_num, disk_key)
-            disk_num = disk_num + 1
-            disk_key = disk_key + 1
+                devices, datastore, disktype, disksize, disk_ctrl_keys[ctrl_id],
+                unit_number, -100)
+
     if 'vm_cdrom' in vm_hardware:
         cdrom_type, cdrom_iso_path = get_cdrom_params(module, vsphere_client, vm_hardware['vm_cdrom'])
         # Add a CD-ROM device to the VM.
@@ -1453,12 +1583,15 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     folder_mor = create_vm_request.new__this(vmfmor)
     folder_mor.set_attribute_type(vmfmor.get_attribute_type())
     create_vm_request.set_element__this(folder_mor)
+
+    if 'hostname' in esxi:
+        host_mor = create_vm_request.new_host(hostmor)
+        host_mor.set_attribute_type(hostmor.get_attribute_type())
+        create_vm_request.set_element_host(host_mor)
+
     rp_mor = create_vm_request.new_pool(rpmor)
     rp_mor.set_attribute_type(rpmor.get_attribute_type())
     create_vm_request.set_element_pool(rp_mor)
-    host_mor = create_vm_request.new_host(hostmor)
-    host_mor.set_attribute_type(hostmor.get_attribute_type())
-    create_vm_request.set_element_host(host_mor)
 
     # CREATE THE VM
     taskmor = vsphere_client._proxy.CreateVM_Task(create_vm_request)._returnval
@@ -1750,13 +1883,10 @@ def main():
             esxi=dict(required=False, type='dict', default={}),
             validate_certs=dict(required=False, type='bool', default=True),
             power_on_after_clone=dict(required=False, type='bool', default=True)
-
-
         ),
         supports_check_mode=False,
         mutually_exclusive=[['state', 'vmware_guest_facts'], ['state', 'from_template']],
         required_together=[
-            ['state', 'force'],
             [
                 'state',
                 'vm_disk',
