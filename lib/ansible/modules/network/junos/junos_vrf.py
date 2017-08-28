@@ -49,6 +49,11 @@ options:
     description:
       - It configures VRF target community configuration. The target value takes
         the form of C(target:A:B) where C(A) and C(B) are both numeric values.
+  table_label:
+    description:
+      - Causes JUNOS to allocate a VPN label per VRF rather than per VPN FEC.
+        This allows for forwarding of traffic to directly connected subnets, COS
+        Egress filtering etc.
   aggregate:
     description:
       - The set of VRF definition objects to be configured on the remote
@@ -185,7 +190,8 @@ def main():
         interfaces=dict(type='list'),
         target=dict(type='list'),
         state=dict(default='present', choices=['present', 'absent']),
-        active=dict(default=True, type='bool')
+        active=dict(default=True, type='bool'),
+        table_label=dict(default=True, type='bool')
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -227,6 +233,7 @@ def main():
         ('rd', 'route-distinguisher/rd-type'),
         ('interfaces', 'interface/name'),
         ('target', 'vrf-target/community'),
+        ('table_label', {'xpath': 'vrf-table-label', 'tag_only': True}),
     ])
 
     params = to_param_list(module)
