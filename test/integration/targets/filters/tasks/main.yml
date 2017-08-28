@@ -138,6 +138,11 @@
       - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
       - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
 
+- debug:
+    var: "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit"
+    verbosity: 1
+  tags: debug
+
 - name: Test urlsplit filter
   assert:
     that:
@@ -151,6 +156,7 @@
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('username') == 'mary'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('password') == 'MySecret'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit == { 'fragment': 'fragment', 'hostname': 'www.acme.com', 'netloc': 'mary:MySecret@www.acme.com:9000', 'password': 'MySecret', 'path': '/dir/index.html', 'port': 9000, 'query': 'query=term', 'scheme': 'http', 'username': 'mary' }"
+
 
 - name: Test urlsplit filter bad argument
   debug:
