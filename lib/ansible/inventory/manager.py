@@ -267,9 +267,17 @@ class InventoryManager(object):
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
-                    for fail in failures:
-                        display.warning('\n* Failed to parse %s with %s plugin: %s' % (to_native(fail['src']), fail['plugin'], to_native(fail['exc'])))
-                        display.vvv(fail['exc'].tb)
+                    if C.INVENTORY_UNPARSED_IS_FAILED:
+                        msg = "Could not parse inventory source %s with availabel plugins:\n" % source
+                        for fail in failures:
+                            msg += 'Plugin %s failed: %s\n' % (fail['plugin'], to_native(fail['exc']))
+                            if display.verbosity >= 3:
+                                msg += "%s\n" % fail['exc'].tb
+                        raise AnsibleParserError(msg)
+                    else:
+                        for fail in failures:
+                            display.warning('\n* Failed to parse %s with %s plugin: %s' % (to_native(fail['src']), fail['plugin'], to_native(fail['exc'])))
+                            display.vvv(fail['exc'].tb)
 
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % to_native(source))

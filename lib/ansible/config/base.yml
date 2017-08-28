@@ -1180,31 +1180,36 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
-  yaml: {key: defaults.host_key_checking}
 INVENTORY_ENABLED:
-  default: [host_list, script, yaml, ini]
+  default: ['host_list', 'script', 'yaml', 'ini']
   description: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
-  - {key: inventory_enabled, section: defaults}
+  - {key: enable_plugins, section: inventory}
   type: list
-  yaml: {key: inventory.enabled_plugins}
 INVENTORY_IGNORE_EXTS:
   default: eval(BLACKLIST_EXTS + ( '~', '.orig', '.ini', '.cfg', '.retry'))
   description: List of extensions to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
   - {key: inventory_ignore_extensions, section: defaults}
+  - {key: ignore_extensions, section: inventory}
   type: list
-  yaml: {key: inventory.ignore_extensions}
 INVENTORY_IGNORE_PATTERNS:
   default: []
   description: List of patterns to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE_REGEX}]
   ini:
   - {key: inventory_ignore_patterns, section: defaults}
+  - {key: ignore_patterns, section: inventory}
   type: list
-  yaml: {key: inventory.ignore_patterns}
+INVENTORY_UNPARSED_IS_FAILED:
+  default: False
+  description: If 'true' unparsed inventory sources become fatal errors, they are warnings otherwise.
+  env: [{name: ANSIBLE_INVENTORY_UNPARSED_FAILED}]
+  ini:
+  - {key: unparsed_is_failed, section: inventory}
+  type: boolean
 MAX_FILE_SIZE_FOR_DIFF:
   default: 104448
   description: Maximum size of files to be considered for diff display

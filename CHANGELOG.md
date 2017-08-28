@@ -48,27 +48,25 @@ Ansible Changes By Release
   module is deprecated and slated to go away in 2.8.  The functionality has been
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 
-#### Deprecated Modules:
-* ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
-* cs_nic (removed in 2.7), replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
-* panos_address (use M(panos_object) instead)
-* panos_service (use M(panos_object) instead)
-* panos_security_policy: In 2.4 use M(panos_security_rule) instead.
-* panos_nat_policy, In 2.4 use M(panos_nat_rule) instead.
-* s3 (removed in 2.7), replaced by aws_s3
+#### Deprecated Modules (to be removed in 2.8):
+* ec2_facts: replaced by ec2_metadata_facts
+* cs_nic: replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+* panos_address: use M(panos_object) instead
+* panos_service: use M(panos_object) instead
+* panos_security_policy: use M(panos_security_rule) instead
+* panos_nat_policy: use M(panos_nat_rule) instead
+* s3: replaced by aws_s3
+* ec2_remote_facts: replaced by 
 
-#### Removed Deprecated Modules:
-* eos_template (use eos_config instead)
-* ios_template (use ios_config instead)
-* iosxr_template (use iosxr_config instead)
-* junos_template (use junos_config instead)
-* nxos_template (use nxos_config instead)
-* ops_template (use ops_config instead)
+#### Removed Modules (previouslly deprecated):
+* eos_template: use eos_config instead
+* ios_template: use ios_config instead
+* iosxr_template: use iosxr_config instead
+* junos_template: use junos_config instead
+* nxos_template: use nxos_config instead
+* ops_template: use ops_config instead
 * openswitch
 
-* Modules (scheduled for removal in 2.6)
-
-  * ec2_remote_facts
 
 ### Minor Changes
 * Removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
@@ -124,6 +122,11 @@ Ansible Changes By Release
 * datetime filter updated to use default format of datetime.datetime (ISO8601)
 * The junit plugin now has an option to report a junit test failure on changes for idempotent testing.
 * New 'diff' keyword allows setting diff mode on playbook objects, overriding command line option and config.
+* New config settings for inventory to:
+	- control inventory plugins used
+    - extensions of files to ignore when using inventory directory
+	- patterns of flies to ignore when using inventory directory
+	- option to toggle failed inventory source parsing between an error or a warning
 
 #### New Callbacks:
 - full_skip
