@@ -137,9 +137,9 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
+from ansible.module_utils.vmware import get_all_objs, connect_to_api, vmware_argument_spec, find_datacenter_by_name, \
+    find_cluster_by_name, wait_for_task, find_host_by_cluster_datacenter
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (get_all_objs, connect_to_api, vmware_argument_spec,
-                                         find_datacenter_by_name, find_cluster_by_name_datacenter, wait_for_task)
 
 
 class VMwareResourcePool(object):
@@ -168,17 +168,6 @@ class VMwareResourcePool(object):
         self.host_obj = None
         self.resource_pool_obj = None
         self.content = connect_to_api(module)
-
-    def find_host_by_cluster_datacenter(self):
-        self.dc_obj = find_datacenter_by_name(self.content, self.datacenter)
-        self.cluster_obj = find_cluster_by_name_datacenter(
-            self.dc_obj, self.cluster)
-
-        for host in self.cluster_obj.host:
-            if host.name == self.hostname:
-                return host, self.cluster
-
-        return None, self.cluster
 
     def select_resource_pool(self, host):
         pool_obj = None
@@ -275,8 +264,12 @@ class VMwareResourcePool(object):
         rp_spec.memoryAllocation = mem_alloc
 
         self.dc_obj = find_datacenter_by_name(self.content, self.datacenter)
-        self.cluster_obj = find_cluster_by_name_datacenter(
-            self.dc_obj, self.cluster)
+        if self.dc_obj is None:
+            self.module.fail_json(msg="Unable to find datacenter with name %s" % self.datacenter)
+
+        self.cluster_obj = find_cluster_by_name(self.content, self.cluster, datacenter=self.dc_obj)
+        if self.cluster_obj is None:
+            self.module.fail_json(msg="Unable to find cluster with name %s" % self.cluster)
         rootResourcePool = self.cluster_obj.resourcePool
         rootResourcePool.CreateResourcePool(self.resource_pool, rp_spec)
 
@@ -284,7 +277,8 @@ class VMwareResourcePool(object):
 
     def check_rp_state(self):
 
-        self.host_obj, self.cluster_obj = self.find_host_by_cluster_datacenter()
+        self.host_obj, self.cluster_obj = find_host_by_cluster_datacenter(self.module, self.content, self.datacenter,
+                                                                          self.cluster, self.hostname)
         self.resource_pool_obj = self.select_resource_pool(self.host_obj)
 
         if self.resource_pool_obj is None:
@@ -298,10 +292,6 @@ def main():
     argument_spec.update(dict(datacenter=dict(required=True, type='str'),
                               cluster=dict(required=True, type='str'),
                               resource_pool=dict(required=True, type='str'),
-                              hostname=dict(required=True, type='str'),
-                              username=dict(required=True, type='str'),
-                              password=dict(
-                                  required=True, type='str', no_log=True),
                               mem_shares=dict(type='str', default="normal", choices=[
                                               'high', 'custom', 'normal', 'low']),
                               mem_limit=dict(type='int', default="-1"),
