@@ -185,7 +185,8 @@ def main():
         interfaces=dict(type='list'),
         target=dict(type='list'),
         state=dict(default='present', choices=['present', 'absent']),
-        active=dict(default=True, type='bool')
+        active=dict(default=True, type='bool'),
+        table_label=dict(default=False, type='bool')
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -227,6 +228,7 @@ def main():
         ('rd', 'route-distinguisher/rd-type'),
         ('interfaces', 'interface/name'),
         ('target', 'vrf-target/community'),
+        ('table_label', {'xpath': 'vrf-table-label', 'tag_only': True}),
     ])
 
     params = to_param_list(module)
