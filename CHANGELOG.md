@@ -57,6 +57,7 @@ Ansible Changes By Release
 * panos_nat_policy: use M(panos_nat_rule) instead
 * s3: replaced by aws_s3
 * ec2_remote_facts: replaced by 
+* win_msi: use M(win_package) instead
 
 #### Removed Modules (previouslly deprecated):
 * eos_template: use eos_config instead
