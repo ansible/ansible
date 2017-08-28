@@ -32,26 +32,17 @@ options:
       - Specifies whether the group should be present or absent.
     required: true
     default: present
-    aliases: []
     choices: [ 'present' , 'absent' ]
   name:
     description:
       - Database parameter group identifier.
     required: true
-    default: null
-    aliases: []
   description:
     description:
       - Database parameter group description. Only set when a new group is added.
-    required: false
-    default: null
-    aliases: []
   engine:
     description:
       - The type of database for this group. Required for state=present.
-    required: false
-    default: null
-    aliases: []
     choices:
         - 'aurora5.6'
         - 'mariadb10.0'
@@ -84,17 +75,23 @@ options:
   immediate:
     description:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
-    required: false
-    default: null
-    aliases: []
+    aliases:
+      - apply_immediately
   params:
     description:
       - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3),
         or T for tera (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
-    required: false
-    default: null
-    aliases: []
-author: "Scott Anderson (@tastychutney)"
+  tags:
+    description:
+      - Dictionary of tags to attach to the parameter group
+    version_added: "2.4"
+  purge_tags:
+    description:
+      - Whether or not to remove tags that do not appear in the I(tags) list. Defaults to false.
+    version_added: "2.4"
+author:
+    - "Scott Anderson (@tastychutney)"
+    - "Will Thames (@willthames)"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -109,6 +106,9 @@ EXAMPLES = '''
       engine: 'mysql5.6'
       params:
           auto_increment_increment: "42K"
+      tags:
+          Environment: production
+          Application: parrot
 
 # Remove a parameter group
 - rds_param_group:
@@ -116,18 +116,47 @@ EXAMPLES = '''
       name: norwegian_blue
 '''
 
-try:
-    import boto.rds
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+RETURN = '''
+db_parameter_group_name:
+    description: Name of DB parameter group
+    type: string
+    returned: when state is present
+db_parameter_group_family:
+    description: DB parameter group family that this DB parameter group is compatible with.
+    type: string
+    returned: when state is present
+db_parameter_group_arn:
+    description: ARN of the DB parameter group
+    type: string
+    returned: when state is present
+description:
+    description: description of the DB parameter group
+    type: string
+    returned: when state is present
+errors:
+    description: list of errors from attempting to modify parameters that are not modifiable
+    type: list
+    returned: when state is present
+tags:
+    description: dictionary of tags
+    type: dict
+    returned: when state is present
+'''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, HAS_BOTO3, compare_aws_tags
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
+
+import traceback
+
+try:
+    import botocore
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
 
 
 VALID_ENGINES = [
@@ -169,181 +198,215 @@ INT_MODIFIERS = {
 }
 
 
-# returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
-
-class NotModifiableError(Exception):
-    def __init__(self, error_message, *args):
-        super(NotModifiableError, self).__init__(error_message, *args)
-        self.error_message = error_message
-
-    def __repr__(self):
-        return 'NotModifiableError: %s' % self.error_message
-
-    def __str__(self):
-        return 'NotModifiableError: %s' % self.error_message
-
-
-def set_parameter(param, value, immediate):
+def convert_parameter(param, value):
     """
     Allows setting parameters with 10M = 10* 1024 * 1024 and so on.
     """
     converted_value = value
 
-    if param.type == 'string':
-        converted_value = str(value)
-
-    elif param.type == 'integer':
+    if param['DataType'] == 'integer':
         if isinstance(value, string_types):
             try:
                 for modifier in INT_MODIFIERS.keys():
                     if value.endswith(modifier):
                         converted_value = int(value[:-1]) * INT_MODIFIERS[modifier]
-                converted_value = int(converted_value)
             except ValueError:
                 # may be based on a variable (ie. {foo*3/4}) so
                 # just pass it on through to boto
-                converted_value = str(value)
+                pass
         elif isinstance(value, bool):
             converted_value = 1 if value else 0
-        else:
-            converted_value = int(value)
 
-    elif param.type == 'boolean':
+    elif param['DataType'] == 'boolean':
         if isinstance(value, string_types):
             converted_value = to_native(value) in BOOLEANS_TRUE
+        # convert True/False to 1/0
+        converted_value = 1 if converted_value else 0
+    return str(converted_value)
+
+
+def update_parameters(module, connection):
+    groupname = module.params['name']
+    desired = module.params['params']
+    apply_method = 'immediate' if module.params['immediate'] else 'pending-reboot'
+    errors = []
+    modify_list = []
+    parameters_paginator = connection.get_paginator('describe_db_parameters')
+    existing = parameters_paginator.paginate(DBParameterGroupName=groupname).build_full_result()['Parameters']
+    lookup = dict((param['ParameterName'], param) for param in existing)
+    for param_key, param_value in desired.items():
+        if param_key not in lookup:
+            errors.append("Parameter %s is not an available parameter for the %s engine" %
+                          (param_key, module.params.get('engine')))
         else:
-            converted_value = bool(value)
+            converted_value = convert_parameter(lookup[param_key], param_value)
+            # engine-default parameters do not have a ParameterValue, so we'll always override those.
+            if converted_value != lookup[param_key].get('ParameterValue'):
+                if lookup[param_key]['IsModifiable']:
+                    modify_list.append(dict(ParameterValue=converted_value, ParameterName=param_key, ApplyMethod=apply_method))
+                else:
+                    errors.append("Parameter %s is not modifiable" % param_key)
 
-    param.value = converted_value
-    param.apply(immediate)
-
-def modify_group(group, params, immediate=False):
-    """ Set all of the params in a group to the provided new params. Raises NotModifiableError if any of the
-        params to be changed are read only.
-    """
-    changed = {}
-
-    new_params = dict(params)
-
-    for key in new_params.keys():
-        if key in group:
-            param = group[key]
-            new_value = new_params[key]
-
+    # modify_db_parameters takes at most 20 parameters
+    if modify_list:
+        try:
+            from itertools import izip_longest as zip_longest  # python 2
+        except ImportError:
+            from itertools import zip_longest  # python 3
+        for modify_slice in zip_longest(*[iter(modify_list)] * 20, fillvalue=None):
+            non_empty_slice = [item for item in modify_slice if item]
             try:
-                old_value = param.value
-            except ValueError:
-                # some versions of boto have problems with retrieving
-                # integer values from params that may have their value
-                # based on a variable (ie. {foo*3/4}), so grab it in a
-                # way that bypasses the property functions
-                old_value = param._value
+                connection.modify_db_parameter_group(DBParameterGroupName=groupname, Parameters=non_empty_slice)
+            except botocore.exceptions.ClientError as e:
+                module.fail_json(msg="Couldn't update parameters: %s" % str(e),
+                                 exception=traceback.format_exc(),
+                                 **camel_dict_to_snake_dict(e.response))
+        return True, errors
+    return False, errors
 
-            if old_value != new_value:
-                if not param.is_modifiable:
-                    raise NotModifiableError('Parameter %s is not modifiable.' % key)
 
-                changed[key] = {'old': old_value, 'new': new_value}
+def update_tags(module, connection, group, tags):
+    changed = False
+    existing_tags = connection.list_tags_for_resource(ResourceName=group['DBParameterGroupArn'])['TagList']
+    to_update, to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(existing_tags),
+                                            tags, module.params['purge_tags'])
+    if to_update:
+        try:
+            connection.add_tags_to_resource(ResourceName=group['DBParameterGroupArn'],
+                                            Tags=ansible_dict_to_boto3_tag_list(to_update))
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't add tags to parameter group: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.ParamValidationError as e:
+            # Usually a tag value has been passed as an int or bool, needs to be a string
+            # The AWS exception message is reasonably ok for this purpose
+            module.fail_json(msg="Couldn't add tags to parameter group: %s." % str(e),
+                             exception=traceback.format_exc())
+    if to_delete:
+        try:
+            connection.remove_tags_from_resource(ResourceName=group['DBParameterGroupArn'],
+                                                 TagKeys=to_delete)
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't remove tags from parameter group: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+    return changed
 
-                set_parameter(param, new_value, immediate)
 
-                del new_params[key]
+def ensure_present(module, connection):
+    groupname = module.params['name']
+    tags = module.params.get('tags')
+    changed = False
+    errors = []
+    try:
+        response = connection.describe_db_parameter_groups(DBParameterGroupName=groupname)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'DBParameterGroupNotFound':
+            response = None
+        else:
+            module.fail_json(msg="Couldn't access parameter group information: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+    if not response:
+        params = dict(DBParameterGroupName=groupname,
+                      DBParameterGroupFamily=module.params['engine'],
+                      Description=module.params['description'])
+        if tags:
+            params['Tags'] = ansible_dict_to_boto3_tag_list(tags)
+        try:
+            response = connection.create_db_parameter_group(**params)
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't create parameter group: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+    else:
+        group = response['DBParameterGroups'][0]
+        if tags:
+            changed = update_tags(module, connection, group, tags)
 
-    return changed, new_params
+    if module.params.get('params'):
+        params_changed, errors = update_parameters(module, connection)
+        changed = changed or params_changed
+
+    try:
+        response = connection.describe_db_parameter_groups(DBParameterGroupName=groupname)
+        group = camel_dict_to_snake_dict(response['DBParameterGroups'][0])
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't obtain parameter group information: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+    try:
+        tags = connection.list_tags_for_resource(ResourceName=group['db_parameter_group_arn'])['TagList']
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't obtain parameter group tags: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+    group['tags'] = boto3_tag_list_to_ansible_dict(tags)
+
+    module.exit_json(changed=changed, errors=errors, **group)
+
+
+def ensure_absent(module, connection):
+    group = module.params['name']
+    try:
+        response = connection.describe_db_parameter_groups(DBParameterGroupName=group)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'DBParameterGroupNotFound':
+            module.exit_json(changed=False)
+        else:
+            module.fail_json(msg="Couldn't access parameter group information: %s" % str(e),
+                             exception=traceback.format_exc(),
+                             **camel_dict_to_snake_dict(e.response))
+    try:
+        response = connection.delete_db_parameter_group(DBParameterGroupName=group)
+        module.exit_json(changed=True)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't delete parameter group: %s" % str(e),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        state             = dict(required=True,  choices=['present', 'absent']),
-        name              = dict(required=True),
-        engine            = dict(required=False, choices=VALID_ENGINES),
-        description       = dict(required=False),
-        params            = dict(required=False, aliases=['parameters'], type='dict'),
-        immediate         = dict(required=False, type='bool'),
+    argument_spec.update(
+        dict(
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True),
+            engine=dict(),
+            description=dict(),
+            params=dict(aliases=['parameters'], type='dict'),
+            immediate=dict(type='bool', aliases=['apply_immediately']),
+            tags=dict(type='dict', default={}),
+            purge_tags=dict(type='bool', default=False)
+        )
     )
-    )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=[['state', 'present', ['description', 'engine']]])
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
-
-    state                   = module.params.get('state')
-    group_name              = module.params.get('name').lower()
-    group_engine            = module.params.get('engine')
-    group_description       = module.params.get('description')
-    group_params            = module.params.get('params') or {}
-    immediate               = module.params.get('immediate') or False
-
-    if state == 'present':
-        for required in ['name', 'description', 'engine']:
-            if not module.params.get(required):
-                module.fail_json(msg = str("Parameter %s required for state='present'" % required))
-    else:
-        for not_allowed in ['description', 'engine', 'params']:
-            if module.params.get(not_allowed):
-                module.fail_json(msg = str("Parameter %s not allowed for state='absent'" % not_allowed))
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 and botocore are required for this module')
 
     # Retrieve any AWS settings from the environment.
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
     if not region:
-        module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
+        module.fail_json(msg="Region must be present")
 
     try:
-        conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
-    except boto.exception.BotoServerError as e:
-        module.fail_json(msg = e.error_message)
+        conn = boto3_conn(module, conn_type='client', resource='rds', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    except botocore.exceptions.NoCredentialsError as e:
+        module.fail_json(msg="Couldn't connect to AWS: %s" % str(e))
 
-    group_was_added = False
-
-    try:
-        changed = False
-
-        try:
-            all_groups = conn.get_all_dbparameter_groups(group_name, max_records=100)
-            exists = len(all_groups) > 0
-        except BotoServerError as e:
-            if e.error_code != 'DBParameterGroupNotFound':
-                module.fail_json(msg = e.error_message)
-            exists = False
-
-        if state == 'absent':
-            if exists:
-                conn.delete_parameter_group(group_name)
-                changed = True
-        else:
-            changed = {}
-            if not exists:
-                new_group = conn.create_parameter_group(group_name, engine=group_engine, description=group_description)
-                group_was_added = True
-
-            # If a "Marker" is present, this group has more attributes remaining to check. Get the next batch, but only
-            # if there are parameters left to set.
-            marker = None
-            while len(group_params):
-                next_group = conn.get_all_dbparameters(group_name, marker=marker)
-
-                changed_params, group_params = modify_group(next_group, group_params, immediate)
-                changed.update(changed_params)
-
-                if hasattr(next_group, 'Marker'):
-                    marker = next_group.Marker
-                else:
-                    break
-
-    except BotoServerError as e:
-        module.fail_json(msg = e.error_message)
-
-    except NotModifiableError as e:
-        msg = e.error_message
-        if group_was_added:
-            msg = '%s The group "%s" was added first.' % (msg, group_name)
-        module.fail_json(msg=msg)
-
-    module.exit_json(changed=changed)
+    state = module.params.get('state')
+    if state == 'present':
+        ensure_present(module, conn)
+    if state == 'absent':
+        ensure_absent(module, conn)
 
 
 if __name__ == '__main__':
     main()
-
