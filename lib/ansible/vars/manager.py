@@ -457,10 +457,6 @@ class VariableManager:
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
         variables['ansible_playbook_python'] = sys.executable
 
-        if host:
-            # host already provides some magic vars via host.get_vars()
-            if self._inventory:
-                variables['groups'] = self._inventory.get_groups_dict()
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 
@@ -471,6 +467,7 @@ class VariableManager:
                 variables['role_uuid'] = text_type(task._role._uuid)
 
         if self._inventory is not None:
+            variables['groups'] = self._inventory.get_groups_dict()
             if play:
                 templar = Templar(loader=self._loader)
                 if templar.is_template(play.hosts):
