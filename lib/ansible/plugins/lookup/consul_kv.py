@@ -61,7 +61,7 @@ RETURN = """
 
 import os
 import sys
-from urlparse import urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 

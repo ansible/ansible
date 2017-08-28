@@ -33,12 +33,10 @@ import inspect
 import os
 import re
 import shlex
-import socket
 import traceback
 import json
 import tempfile
 import subprocess
-import itertools
 
 HAVE_KERBEROS = False
 try:
@@ -54,7 +52,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
+from ansible.plugins.shell.powershell import leaf_exec
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -100,12 +98,17 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_host_overrides(self, host, hostvars=None):
+    def set_host_overrides(self, host, variables, templar):
         '''
         Override WinRM-specific options from host variables.
         '''
         if not HAS_WINRM:
             return
+
+        hostvars = {}
+        for k in variables:
+            if k.startswith('ansible_winrm'):
+                hostvars[k] = templar.template(variables[k])
 
         self._winrm_host = self._play_context.remote_addr
         self._winrm_port = int(self._play_context.port or 5986)

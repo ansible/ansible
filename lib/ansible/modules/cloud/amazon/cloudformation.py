@@ -121,7 +121,7 @@ author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
 - aws
 - ec2
-requirements: [ botocore>=1.4.57 ]
+requirements: [ boto3, botocore>=1.4.57 ]
 '''
 
 EXAMPLES = '''
@@ -302,7 +302,8 @@ def list_changesets(cfn, stack_name):
 def create_changeset(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template' or 'template_url' is required.")
-
+    if module.params['changeset_name'] is not None:
+        stack_params['ChangeSetName'] = module.params['changeset_name']
     try:
         changeset_name = build_changeset_name(stack_params)
         stack_params['ChangeSetName'] = changeset_name
@@ -502,11 +503,10 @@ def main():
     else:
         stack_params['NotificationARNs'] = []
 
-    if module.params['stack_policy'] is not None:
+    # can't check the policy when verifying.
+    if module.params['stack_policy'] is not None and not module.check_mode:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
-    if module.params['changeset_name'] is not None:
-        stack_params['ChangeSetName'] = module.params['changeset_name']
 
     template_parameters = module.params['template_parameters']
     stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]

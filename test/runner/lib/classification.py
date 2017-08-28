@@ -367,6 +367,9 @@ class PathMapper(object):
 
             return minimal
 
+        if path.startswith('test/cache/'):
+            return minimal
+
         if path.startswith('test/compile/'):
             return {
                 'compile': 'all',
@@ -455,6 +458,9 @@ class PathMapper(object):
 
                 test_path = os.path.dirname(test_path)
 
+        if path.startswith('test/runner/docker/'):
+            return minimal  # not used by tests, only used to build the default container
+
         if path.startswith('test/runner/lib/cloud/'):
             cloud_target = 'cloud/%s/' % name
 
@@ -469,6 +475,32 @@ class PathMapper(object):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
             }
+
+        if path.startswith('test/runner/requirements/'):
+            if name in (
+                    'integration',
+                    'network-integration',
+                    'windows-integration',
+            ):
+                return {
+                    name: self.integration_all_target,
+                }
+
+            if name in (
+                    'sanity',
+                    'units',
+            ):
+                return {
+                    name: 'all',
+                }
+
+            if name.startswith('integration.cloud.'):
+                cloud_target = 'cloud/%s/' % name.split('.')[2]
+
+                if cloud_target in self.integration_targets_by_alias:
+                    return {
+                        'integration': cloud_target,
+                    }
 
         if path.startswith('test/runner/'):
             return all_tests(self.args)  # test infrastructure, run all tests

@@ -89,7 +89,7 @@ import os
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 
 def main():
 
@@ -169,7 +169,7 @@ def main():
     if changed and not module.check_mode:
         try:
             f = open(path, 'wb')
-            f.write(str(crypttab))
+            f.write(to_bytes(crypttab, errors='surrogate_or_strict'))
         finally:
             f.close()
 

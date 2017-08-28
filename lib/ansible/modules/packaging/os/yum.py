@@ -727,31 +727,41 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
         downgrade_candidate = False
 
         # check if pkgspec is installed (if possible for idempotence)
-        # localpkg
-        if spec.endswith('.rpm') and '://' not in spec:
-            # get the pkg name-v-r.arch
-            if not os.path.exists(spec):
+        if spec.endswith('.rpm'):
+            if '://' not in spec and not os.path.exists(spec):
                 res['msg'] += "No RPM file matching '%s' found on system" % spec
                 res['results'].append("No RPM file matching '%s' found on system" % spec)
-                res['rc'] = 127 # Ensure the task fails in with-loop
+                res['rc'] = 127  # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
-            envra = local_envra(module, spec)
+            if '://' in spec:
+                package = fetch_rpm_from_url(spec, module=module)
+            else:
+                package = spec
 
-            # look for them in the rpmdb
-            if is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                # if they are there, skip it
-                continue
-            pkg = spec
-
-        # URL
-        elif '://' in spec:
-            # download package so that we can check if it's already installed
-            package = fetch_rpm_from_url(spec, module=module)
+            # most common case is the pkg is already installed
             envra = local_envra(module, package)
-            if is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                # if it's there, skip it
+            installed_pkgs = is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            if installed_pkgs:
+                res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], package))
                 continue
+
+            (name, ver, rel, epoch, arch) = splitFilename(envra)
+            installed_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+
+            # TODO support downgrade for rpm files
+            if len(installed_pkgs) == 1:
+                installed_pkg = installed_pkgs[0]
+                (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(installed_pkg)
+                cur_epoch = cur_epoch or '0'
+                compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
+
+                # compare > 0 (higher version is installed) or compare == 0 (exact version is installed)
+                if compare >= 0:
+                    continue
+            # else: if there are more installed packages with the same name, that would mean
+            # kernel, gpg-pubkey or like, so just let yum deal with it and try to install it
+
             pkg = package
 
         # groups
@@ -1040,8 +1050,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
                 module.fail_json(**res)
 
             nothing_to_do = True
-            for this in pkglist:
-                if spec in pkgs['install'] and is_available(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+            for pkg in pkglist:
+                if spec in pkgs['install'] and is_available(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     nothing_to_do = False
                     break
 
@@ -1049,15 +1059,15 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
                 # this contains the full NVR and spec could contain wildcards
                 # or virtual provides (like "python-*" or "smtp-daemon") while
                 # updates contains name only.
-                this_name_only = '-'.join(this.split('-')[:-2])
-                if spec in pkgs['update'] and this_name_only in updates:
+                pkgname, _, _, _, _ = splitFilename(pkg)
+                if spec in pkgs['update'] and pkgname in updates:
                     nothing_to_do = False
                     will_update.add(spec)
                     # Massage the updates list
-                    if spec != this_name_only:
+                    if spec != pkgname:
                         # For reporting what packages would be updated more
                         # succinctly
-                        will_update_from_other_package[spec] = this_name_only
+                        will_update_from_other_package[spec] = pkgname
                     break
 
             if nothing_to_do:

@@ -1,7 +1,12 @@
 versions:
+- "2.5":
+    code_name: "Kashmir"
+    releases:
+    - "0": TBD
 - "2.4":
     code_name: "Dancing Days"
     releases:
+    - "1": "10-25-2017"
     - "0": "09-19-2017"
 - "2.3":
     code_name: "Ramble On"

@@ -47,16 +47,24 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- debug: msg="{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+- debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
 
-- name: Vault that requires authentication via ldap
-  debug: msg="{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
+- name: Return all secrets from a path
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Vault that requires authentication via LDAP
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
 
 - name: Using an ssl vault
-  debug: msg="{{ lookup('hashi_vault', 'secret=secret/hola:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}"
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hola:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}"
 
 - name: using certificate auth
-  debug: msg="{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
 """
 
 RETURN = """
@@ -100,10 +108,10 @@ class HashiVault:
         if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
-            self.secret_field = 'value'
+            self.secret_field = ''
 
-        # if a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
-        # token auth.   this means if a particular auth backend is requested and a token is also given, then we
+        # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
+        # token auth. This means if a particular auth backend is requested and a token is also given, then we
         # ignore the token and attempt authentication against the specified backend.
         #
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
@@ -143,7 +151,7 @@ class HashiVault:
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
 
-        if self.secret_field == '':  # secret was specified with trailing ':'
+        if self.secret_field == '':
             return data['data']
 
         if self.secret_field not in data['data']:

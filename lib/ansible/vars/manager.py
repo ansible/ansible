@@ -72,15 +72,19 @@ def preprocess_vars(a):
     return data
 
 
-def strip_internal_keys(dirty):
+def strip_internal_keys(dirty, exceptions=None):
     '''
     All keys stating with _ansible_ are internal, so create a copy of the 'dirty' dict
     and remove them from the clean one before returning it
     '''
+
+    if exceptions is None:
+        exceptions = ()
     clean = dirty.copy()
     for k in dirty.keys():
         if isinstance(k, string_types) and k.startswith('_ansible_'):
-            del clean[k]
+            if k not in exceptions:
+                del clean[k]
         elif isinstance(dirty[k], dict):
             clean[k] = strip_internal_keys(dirty[k])
     return clean
@@ -228,22 +232,33 @@ class VariableManager:
             include_delegate_to=include_delegate_to,
         )
 
+        # default for all cases
+        basedirs = [self._loader.get_basedir()]
+
         if play:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
-        # if we have a task in this context, and that task has a role, make
-        # sure it sees its defaults above any other roles, as we previously
-        # (v1) made sure each task had a copy of its roles default vars
-        if task and task._role is not None and (play or task.action == 'include_role'):
-            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
+        if task:
+            # set basedirs
+            if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
+                basedirs = task.get_search_path()
+            elif C.PLAYBOOK_VARS_ROOT in ('bottom', 'playbook_dir'):  # only option in 2.4.0
+                basedirs = [task.get_search_path()[0]]
+            elif C.PLAYBOOK_VARS_ROOT != 'top':
+                # preserves default basedirs, only option pre 2.3
+                raise AnsibleError('Unkown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
+
+            # if we have a task in this context, and that task has a role, make
+            # sure it sees its defaults above any other roles, as we previously
+            # (v1) made sure each task had a copy of its roles default vars
+            if task._role is not None and (play or task.action == 'include_role'):
+                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
-            # INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
-            # basedir, THE 'all' group and the rest of groups for a host, used below
-            basedir = self._loader.get_basedir()
+            # THE 'all' group and the rest of groups for a host, used below
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
@@ -283,7 +298,8 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
-                    data = combine_vars(data, _get_plugin_vars(plugin, basedir, entities))
+                    for path in basedirs:
+                        data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
                 return data
 
             # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list
@@ -319,7 +335,7 @@ class VariableManager:
                     data[group] = combine_vars(data[group], _plugins_play(group))
                 return data
 
-            # Merge as per precedence config
+            # Merge groups as per precedence config
             # only allow to call the functions we want exposed
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:

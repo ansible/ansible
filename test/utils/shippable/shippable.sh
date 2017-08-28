@@ -3,9 +3,11 @@
 set -o pipefail
 
 declare -a args
-IFS='/:' read -ra args <<< "${TEST}"
+IFS='/:' read -ra args <<< "$1"
 
 script="${args[0]}"
+
+test="$1"
 
 docker images ansible/ansible
 docker ps
@@ -58,7 +60,7 @@ function cleanup
 {
     if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
         # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${TEST}" == "other" ]; then
+        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "other" ]; then
             stub="--stub"
         else
             stub=""
@@ -79,7 +81,7 @@ function cleanup
                 bash <(curl -s https://codecov.io/bash) \
                     -f "${file}" \
                     -F "${flags}" \
-                    -n "${TEST}" \
+                    -n "${test}" \
                     -t 83cd8957-dc76-488c-9ada-210dcea51633 \
                     -X coveragepy \
                     -X gcov \
@@ -98,4 +100,4 @@ function cleanup
 
 trap cleanup EXIT
 
-"test/utils/shippable/${script}.sh"
+"test/utils/shippable/${script}.sh" "${test}"

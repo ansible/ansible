@@ -35,7 +35,7 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 
 try:
-    from jinja2 import Environment
+    from jinja2 import Environment, StrictUndefined
     from jinja2.exceptions import UndefinedError
     HAS_JINJA2 = True
 except ImportError:
@@ -342,11 +342,12 @@ class Template:
             raise ImportError("jinja2 is required but does not appear to be installed.  "
                               "It can be installed using `pip install jinja2`")
 
-        self.env = Environment()
+        self.env = Environment(undefined=StrictUndefined)
         self.env.filters.update({'ternary': ternary})
 
     def __call__(self, value, variables=None, fail_on_undefined=True):
         variables = variables or {}
+
         if not self.contains_vars(value):
             return value
 
@@ -364,13 +365,6 @@ class Template:
                 return str(value)
         else:
             return None
-
-    def can_template(self, tmpl):
-        try:
-            self(tmpl)
-            return True
-        except:
-            return False
 
     def contains_vars(self, data):
         if isinstance(data, string_types):

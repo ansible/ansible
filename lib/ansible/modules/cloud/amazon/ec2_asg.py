@@ -377,6 +377,7 @@ import time
 import logging as log
 import traceback
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
 
@@ -793,7 +794,7 @@ def create_autoscaling_group(connection, module):
         for k, v in tag.items():
             if k != 'propagate_at_launch':
                 asg_tags.append(dict(Key=k,
-                                     Value=v,
+                                     Value=to_native(v),
                                      PropagateAtLaunch=bool(tag.get('propagate_at_launch', True)),
                                      ResourceType='auto-scaling-group',
                                      ResourceId=group_name))
@@ -942,13 +943,13 @@ def create_autoscaling_group(connection, module):
                 tgs_to_detach = has_tgs.difference(wanted_tgs)
                 if tgs_to_detach:
                     changed = True
-                    detach_lb_target_groups(connection, group_name, tgs_to_detach)
+                    detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
             if wanted_tgs.issuperset(has_tgs):
                 # if has contains less than wanted, then we need to add some
                 tgs_to_attach = wanted_tgs.difference(has_tgs)
                 if tgs_to_attach:
                     changed = True
-                    attach_lb_target_groups(connection, group_name, tgs_to_attach)
+                    attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
 
         # check for attributes that aren't required for updating an existing ASG
         desired_capacity = desired_capacity if desired_capacity is not None else as_group['DesiredCapacity']

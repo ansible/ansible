@@ -421,3 +421,40 @@
   assert:
     that:
     - not create_hkcr_key_again|changed
+
+# https://github.com/ansible/ansible/issues/31782
+- name: create property like a json string
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}\NewKey'
+    name: '{7f51bda7-bcea-465a-9eb6-5a2bcd9cb52f}'
+    data: test data
+    type: string
+    state: present
+  register: create_prop_with_json
+
+- name: get result of create property like a json string
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}\NewKey'
+    name: '{7f51bda7-bcea-465a-9eb6-5a2bcd9cb52f}'
+  register: create_prop_with_json_result
+
+- name: assert results of create property like a json string
+  assert:
+    that:
+    - create_prop_with_json|changed
+    - create_prop_with_json_result.exists == True
+    - create_prop_with_json_result.value == 'test data'
+
+- name: create property like a json string (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}\NewKey'
+    name: '{7f51bda7-bcea-465a-9eb6-5a2bcd9cb52f}'
+    data: test data
+    type: string
+    state: present
+  register: create_prop_with_json_again
+
+- name: assert results of create property like a json string (idempotent)
+  assert:
+    that:
+    - not create_prop_with_json_again|changed

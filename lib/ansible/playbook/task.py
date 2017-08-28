@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
@@ -420,6 +421,14 @@ class Task(Base, Conditional, Taggable, Become):
         except KeyError:
             pass
 
+        return value
+
+    def _get_attr_any_errors_fatal(self):
+        value = self._attributes['any_errors_fatal']
+        if value is None:
+            value = self._get_parent_attribute('any_errors_fatal')
+        if value is None:
+            value = C.ANY_ERRORS_FATAL
         return value
 
     def _get_attr_environment(self):

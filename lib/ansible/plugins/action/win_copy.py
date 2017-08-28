@@ -15,14 +15,14 @@ import tempfile
 import traceback
 import zipfile
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
 
 
-def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detector=None, checksum_check=False):
+def _walk_dirs(topdir, loader, base_path=None, local_follow=False, trailing_slash_detector=None, checksum_check=False):
     """
     Walk a filesystem tree returning enough information to copy the files.
     This is similar to the _walk_dirs function in ``copy.py`` but returns
@@ -30,6 +30,7 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
     a local file if wanted.
 
     :arg topdir: The directory that the filesystem tree is rooted at
+    :arg loader: The self._loader object from ActionBase
     :kwarg base_path: The initial directory structure to strip off of the
         files for the destination directory.  If this is None (the default),
         the base_path is set to ``top_dir``.
@@ -100,7 +101,7 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
 
                 if os.path.islink(filepath):
                     # Dereference the symlnk
-                    real_file = os.path.realpath(filepath)
+                    real_file = loader.get_real_file(os.path.realpath(filepath), decrypt=True)
                     if local_follow and os.path.isfile(real_file):
                         # Add the file pointed to by the symlink
                         r_files['files'].append(
@@ -115,11 +116,12 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
                         r_files['symlinks'].append({"src": os.readlink(filepath), "dest": dest_filepath})
                 else:
                     # Just a normal file
+                    real_file = loader.get_real_file(filepath, decrypt=True)
                     r_files['files'].append(
                         {
-                            "src": filepath,
+                            "src": real_file,
                             "dest": dest_filepath,
-                            "checksum": _get_local_checksum(checksum_check, filepath)
+                            "checksum": _get_local_checksum(checksum_check, real_file)
                         }
                     )
 
@@ -336,7 +338,7 @@ class ActionModule(ActionBase):
         content = self._task.args.get('content', None)
         dest = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
-        follow = boolean(self._task.args.get('follow', False), strict=False)
+        local_follow = boolean(self._task.args.get('local_follow', False), strict=False)
         force = boolean(self._task.args.get('force', True), strict=False)
 
         result['src'] = source
@@ -412,7 +414,7 @@ class ActionModule(ActionBase):
             result['operation'] = 'folder_copy'
 
             # Get a list of the files we want to replicate on the remote side
-            source_files = _walk_dirs(source, local_follow=follow,
+            source_files = _walk_dirs(source, self._loader, local_follow=local_follow,
                                       trailing_slash_detector=self._connection._shell.path_has_trailing_slash,
                                       checksum_check=force)
 
@@ -425,6 +427,14 @@ class ActionModule(ActionBase):
         # Source is a file, add details to source_files dict
         else:
             result['operation'] = 'file_copy'
+
+            # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
+            try:
+                source_full = self._loader.get_real_file(source, decrypt=True)
+            except AnsibleFileNotFound as e:
+                result['failed'] = True
+                result['msg'] = "could not find src=%s, %s" % (source_full, to_text(e))
+                return result
 
             original_basename = os.path.basename(source)
             result['original_basename'] = original_basename
@@ -440,16 +450,16 @@ class ActionModule(ActionBase):
                 filename = os.path.basename(unix_path)
                 check_dest = os.path.dirname(unix_path)
 
-            file_checksum = _get_local_checksum(force, source)
+            file_checksum = _get_local_checksum(force, source_full)
             source_files['files'].append(
                 dict(
-                    src=source,
+                    src=source_full,
                     dest=filename,
                     checksum=file_checksum
                 )
             )
             result['checksum'] = file_checksum
-            result['size'] = os.path.getsize(to_bytes(source, errors='surrogate_or_strict'))
+            result['size'] = os.path.getsize(to_bytes(source_full, errors='surrogate_or_strict'))
 
         # find out the files/directories/symlinks that we need to copy to the server
         query_args = self._task.args.copy()
@@ -463,6 +473,8 @@ class ActionModule(ActionBase):
                 symlinks=source_files['symlinks']
             )
         )
+        # src is not required for query, will fail path validation is src has unix allowed chars
+        query_args.pop('src', None)
 
         query_args.pop('content', None)
         query_return = self._execute_module(module_args=query_args, task_vars=task_vars)

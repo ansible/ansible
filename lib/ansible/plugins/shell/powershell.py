@@ -647,12 +647,21 @@ Function Run($payload) {
     # NB: CreateProcessWithLogonW commandline maxes out at 1024 chars, must bootstrap via filesystem
     $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
     $exec_wrapper.ToString() | Set-Content -Path $temp
-    # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
-    $acl = Get-Acl $temp
-    $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
-    Set-Acl $temp $acl | Out-Null
+    $rc = 0
 
     Try {
+        # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
+        $acl = Get-Acl $temp
+
+        Try {
+            $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
+        }
+        Catch [System.Security.Principal.IdentityNotMappedException] {
+            throw "become_user '$username' is not recognized on this host"
+        }
+
+        Set-Acl $temp $acl | Out-Null
+
         $exec_args = @("-noninteractive", $temp)
 
         # FUTURE: move these flags into C# enum?
@@ -801,15 +810,8 @@ Function Run($payload) {
         # FUTURE: decode CLIXML stderr output (and other streams?)
 
         $rc = [Ansible.Shell.NativeProcessUtil]::GetProcessExitCode($pi.hProcess)
-
-        If ($rc -eq 0) {
-            $str_stdout
-            $str_stderr
-        }
-        Else {
-            Throw "failed, rc was $rc, stderr was $str_stderr, stdout was $str_stdout"
-        }
-
+        [Console]::Out.WriteLine($str_stdout.Trim())
+        [Console]::Error.WriteLine($str_stderr.Trim())
     }
     Catch {
         $excep = $_
@@ -818,7 +820,7 @@ Function Run($payload) {
     Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
     }
-
+    $host.SetShouldExit($rc)
 }
 
 '''  # end become_wrapper

@@ -299,7 +299,7 @@ class Eapi:
         commands = to_list(commands)
 
         if self._enable:
-            commands.insert(0, 'enable')
+            commands.insert(0, self._enable)
 
         body = self._request_builder(commands, output)
         data = self._module.jsonify(body)

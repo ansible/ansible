@@ -4,10 +4,10 @@
 - set_fact: intname="{{ nxos_int1 }}"
 
 - set_fact: log_neighbor_changes="enable"
-  when: (titanium is defined) and not ((titanium | search('true')))
+  when: not titanium
 
 - set_fact: remove_private_as="all"
-  when: (titanium is defined) and not ((titanium | search('true')))
+  when: not titanium
 
 - name: "Enable feature BGP"
   nxos_feature:

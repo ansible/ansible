@@ -9,13 +9,13 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
+    authorize: yes
 
 - name: configure device with defaults included
   ios_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - debug: var=result
@@ -30,7 +30,7 @@
   ios_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - debug: var=result
@@ -39,5 +39,24 @@
     that:
       - "result.changed == false"
       - "result.updates is not defined"
+
+- name: Check device is in proper prompt after error
+  ios_config:
+    lines:
+        - mac-address-table notification mac-move
+    authorize: yes
+  ignore_errors: yes
+
+- name: show interfaces brief to ensure deivce goes to valid prompt
+  ios_command:
+    commands:
+      - show interfaces
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
 
 - debug: msg="END cli/defaults.yaml"

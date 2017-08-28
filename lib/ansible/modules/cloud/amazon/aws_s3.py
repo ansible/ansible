@@ -237,6 +237,7 @@ EXAMPLES = '''
 '''
 
 import os
+import mimetypes
 import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
@@ -353,7 +354,8 @@ def delete_bucket(module, s3, bucket):
         # if there are contents then we need to delete them before we can delete the bucket
         for keys in paginated_list(s3, Bucket=bucket):
             formatted_keys = [{'Key': key} for key in keys]
-            s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
+            if formatted_keys:
+                s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
         s3.delete_bucket(Bucket=bucket)
         return True
     except botocore.exceptions.ClientError as e:
@@ -374,12 +376,10 @@ def create_dirkey(module, s3, bucket, obj):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
-        bucket = s3.Bucket(bucket)
-        key = bucket.new_key(obj)
-        key.set_contents_from_string('')
+        s3.put_object(Bucket=bucket, Key=obj, Body=b'')
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
+        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed while creating object %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -391,15 +391,47 @@ def path_check(path):
         return False
 
 
+def option_in_extra_args(option):
+    temp_option = option.replace('-', '').lower()
+
+    allowed_extra_args = {'acl': 'ACL', 'cachecontrol': 'CacheControl', 'contentdisposition': 'ContentDisposition',
+                          'contentencoding': 'ContentEncoding', 'contentlanguage': 'ContentLanguage',
+                          'contenttype': 'ContentType', 'expires': 'Expires', 'grantfullcontrol': 'GrantFullControl',
+                          'grantread': 'GrantRead', 'grantreadacp': 'GrantReadACP', 'grantwriteacp': 'GrantWriteACP',
+                          'metadata': 'Metadata', 'requestpayer': 'RequestPayer', 'serversideencryption': 'ServerSideEncryption',
+                          'storageclass': 'StorageClass', 'ssecustomeralgorithm': 'SSECustomerAlgorithm', 'ssecustomerkey': 'SSECustomerKey',
+                          'ssecustomerkeymd5': 'SSECustomerKeyMD5', 'ssekmskeyid': 'SSEKMSKeyId', 'websiteredirectlocation': 'WebsiteRedirectLocation'}
+
+    if temp_option in allowed_extra_args:
+        return allowed_extra_args[temp_option]
+
+
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
+        extra = {}
+        if encrypt:
+            extra['ServerSideEncryption'] = 'AES256'
         if metadata:
-            extra = {'Metadata': dict(metadata)}
-            s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
-        else:
-            s3.upload_file(Filename=src, Bucket=bucket, Key=obj)
+            extra['Metadata'] = {}
+
+            # determine object metadata and extra arguments
+            for option in metadata:
+                extra_args_option = option_in_extra_args(option)
+                if extra_args_option is not None:
+                    extra[extra_args_option] = metadata[option]
+                else:
+                    extra['Metadata'][option] = metadata[option]
+
+        if 'ContentType' not in extra:
+            content_type = mimetypes.guess_type(src)[0]
+            if content_type is None:
+                # s3 default content type
+                content_type = 'binary/octet-stream'
+            extra['ContentType'] = content_type
+
+        s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
         url = s3.generate_presigned_url(ClientMethod='put_object',
@@ -605,8 +637,9 @@ def main():
 
     # Look at s3_url and tweak connection settings
     # if connecting to RGW, Walrus or fakes3
-    for key in ['validate_certs', 'security_token', 'profile_name']:
-        aws_connect_kwargs.pop(key, None)
+    if s3_url:
+        for key in ['validate_certs', 'security_token', 'profile_name']:
+            aws_connect_kwargs.pop(key, None)
     try:
         s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
     except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:

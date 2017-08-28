@@ -1,9 +1,127 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.4.2"></a>
+
+## 2.4.2 "Dancing Days" - TBD
+
+### Bugfixes
+
+* Fix formatting typo in panos_security_rule.py docs. (https://github.com/ansible/ansible/commit/c0fc797a06451d2fe1ac4fc077fc64f3a1666447)
+* Fix rpm spec file to build on RHEL6 without EPEL packages (https://github.com/ansible/ansible/pull/31653)
+* Keep hosts in play vars if inside of a rescue task (https://github.com/ansible/ansible/pull/31710)
+* Fix wait_for module to treat broken connections as unready so that the connection continues to be retried:
+  https://github.com/ansible/ansible/pull/28839
+* Python3 fixes:
+  * windows_azure, clc_firewall_policy, and ce_template modules fixed for
+    imports of urllib which changed between Python2 and Python3 lookup plugin
+    for consul_kv.py fixed for imports of urllib
+    (https://github.com/ansible/ansible/issues/31240)
+  * Make internal hashing of hostvars use bytes on both python2 and python3
+    (https://github.com/ansible/ansible/pull/31788)
+* Fix logging inside of KubernetesAnsibleModule() to not use
+  self.helper.logging.  the Ansible builtin log() method will strip out
+  parameters marked no_log and will not log if no_log was set in the playbook.
+  self.helper.log() circumvents that (https://github.com/ansible/ansible/pull/31789)
+* Correct task results display so that it more closely matches what was present
+  in 2.3.x and previous.
+* Warn when a group has a bad key (Should be one of vars, children, or hosts)
+  https://github.com/ansible/ansible/pull/31495
+* Use controller configured ansible_shell_executable to run commands in the module
+  (https://github.com/ansible/ansible/pull/31361)
+* Add documentation about writing unittests for Ansible
+* Fix bugs in get_url/uri's SNI and TLS version handling when used on systems
+  that have Python-2.7.9+ and urllib3 installed.
+* Have ansible-pull process inventory in its own way.  Fixes issues with
+  ansible-pull not using the correct inventory,  especially for localhost
+  (https://github.com/ansible/ansible/pull/32135)
+* Fix for implicit localhost receiving too many variables from the all group
+  (https://github.com/ansible/ansible/pull/31959)
+* Fix the service module to correctly detect which type of init system is
+  present on the host. (https://github.com/ansible/ansible/pull/32086)
+* Fix inventory patterns to convert to strings before processing:
+  (https://github.com/ansible/ansible/issues/31978)
+* Fix traceback in firewalld module instead of a nice error message:
+  (https://github.com/ansible/ansible/pull/31949)
+* Fix for entering privileged mode using eos network modules:
+  (https://github.com/ansible/ansible/issues/30802)
+* Validate that the destination for ansible-pull is a valid.directory:
+  (https://github.com/ansible/ansible/pull/31499)
+* Document how to preserve strings of digits as strings in the ini inventory:
+  (https://github.com/ansible/ansible/pull/32047)
+* Make sure we return ansible_distribution_major_version to macOS:
+  (https://github.com/ansible/ansible/pull/31708)
+* Fix to ansible-doc -l to list custom inventory plugins:
+  (https://github.com/ansible/ansible/pull/31996)
+* Fix win_chocolatey to respect case sensitivity in URLs:
+  (https://github.com/ansible/ansible/pull/31983)
+* Fix config_format json in the junos_facts module:
+  (https://github.com/ansible/ansible/pull/31818)
+* Allow the apt module's autoremove parameter to take effect in upgrades:
+  (https://github.com/ansible/ansible/pull/30747)
+* When creating a new use via eos_user, create the user before setting the
+  user's privilege level: (https://github.com/ansible/ansible/pull/32162)
+* Fixes nxos_portchannel idempotence failure on N1 images:
+  (https://github.com/ansible/ansible/pull/31057)
+* Remove provider from prepare_ios_tests integration test:
+  (https://github.com/ansible/ansible/pull/31038)
+* Fix nxos_acl change ports to non well known ports and drop time_range for N1:
+  (https://github.com/ansible/ansible/pull/31261)
+* Fix nxos_banner removal idempotence issue in N1 images:
+  (https://github.com/ansible/ansible/pull/31259)
+* Return error message back to the module
+  (https://github.com/ansible/ansible/pull/31035)
+* Fix nxos_igmp_snooping idempotence:
+  (https://github.com/ansible/ansible/pull/31688)
+* NXOS integration test nxos_file_copy, nxos_igmp, nxos_igmp_interface
+  nxos_igmp_snooping, nxos_ntp_auth, nxos_ntp_options:
+  (https://github.com/ansible/ansible/pull/29030)
+* Fix elb_target_group module traceback when ports were specified inside of the targets parameter:
+  (https://github.com/ansible/ansible/pull/32202)
+* Fix creation of empty virtual directories in aws_s3 module:
+  (https://github.com/ansible/ansible/pull/32169)
+* Enable echo for `pause` module: (https://github.com/ansible/ansible/issues/14160)
+* Fix for `hashi_vault` lookup to return all keys at a given path when no key is specified (https://github.com/ansible/ansible/pull/32182)
+* Fix for `win_package` to allow TLS 1.1 and 1.2 on web requests:
+  (https://github.com/ansible/ansible/pull/32184)
+* Remove provider from ios integration test:
+  (https://github.com/ansible/ansible/pull/31037)
+* Fix eos_user tests
+  (https://github.com/ansible/ansible/pull/32261)
+* Fix ansible-galaxy --force with installed roles:
+  (https://github.com/ansible/ansible/pull/32282)
+* ios_interface testfix:
+  (https://github.com/ansible/ansible/pull/32335)
+* Fix ios integration tests:
+  (https://github.com/ansible/ansible/pull/32342)
+* Ensure there is always a basdir so we always pickup group/host_vars
+  https://github.com/ansible/ansible/pull/32269
+* Fix vars placement in ansible-inventory
+  https://github.com/ansible/ansible/pull/32276
+* Correct options for luseradd in user module
+  https://github.com/ansible/ansible/pull/32262
+* Clarified package docs on 'latest' state
+  https://github.com/ansible/ansible/pull/32397
+* Fix issue with user module when local is true
+  (https://github.com/ansible/ansible/pull/32262 and https://github.com/ansible/ansible/pull/32411)
+* Fix for max_fail_percentage being inaccurate:
+  (https://github.com/ansible/ansible/issues/32255)
+* Fix check mode when deleting ACS instance in azure_rm_acs module:
+  (https://github.com/ansible/ansible/pull/32063)
+* Fix ios_logging smaller issues and make default size for buffered work:
+  (https://github.com/ansible/ansible/pull/32321)
+* Fix ios_logging module issue where facility is being deleted along with host:
+  (https://github.com/ansible/ansible/pull/32234)
+* Fix wrong prompt issue for network modules (https://github.com/ansible/ansible/pull/32426)
+* Fix eos_eapi to enable non-default vrfs if the default vrf is already configured (https://github.com/ansible/ansible/pull/32112)
+* Fix network parse_cli filter in case of single match is not caught when using start_block and end_block
+  (https://github.com/ansible/ansible/pull/31092)
+* Fix win_find failing on files it can't access, change behaviour to be more
+  like the find module (https://github.com/ansible/ansible/issues/31898)
+
 <a id="2.4.1"></a>
 
-## 2.4.1 "Dancing Dats" - TBD
+## 2.4.1 "Dancing Days" - 2017-10-25
 
 ### Bugfixes
 
@@ -16,6 +134,11 @@ Ansible Changes By Release
   * Fix openssl_certificate parameter assertion on Python3
   * Fix for python3 and nonascii strings in inventory plugins (https://github.com/ansible/ansible/pull/30666)
   * Fix missing urllib in iam_policy
+  * Fix crypttab module for bytes<=>text string mismatch ( https://github.com/ansible/ansible/pull/30457 )
+  * Fix lxc_container module combining bytes with text ( https://github.com/ansible/ansible/pull/30572 )
+  * Fix map doesn't return a list on python3 in ec2_snapshot_facts module (https://github.com/ansible/ansible/pull/30606)
+  * Fix uri (and other url retrieving) modules when used with a proxy. (https://github.com/ansible/ansible/issues/31109)
+  * Fix azure_rm dynamic inventory script ConfigParser usage.
 * Fix for win_file to respect check mode when deleting directories
 * Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
 * Fix for a proper logout in the module ovirt_vms
@@ -46,10 +169,103 @@ Ansible Changes By Release
 * Fix ansible_distribution fact for Arch linux (https://github.com/ansible/ansible/issues/30600)
 * remove print statements from play_context/become
 * Fix vault errors after 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30575)
+* updated api doc example to match api changes
+* corrected issues with slack callback plugin
+* it is import_playbook .. not import_plays .. docs now reflect this
+* fixed typo and missed include/import conversion in import_tasks docs
+* updated porting docs with note about inventory_dir
+* removed extension requirement for yaml inventory plugin to restore previous behaviour
+* fixed ansible-pull to now correctly deal with inventory
+* corrected dig lookup docs
+* fix type handling for sensu_silence so the module works
+* added fix for win_iis_webapppool to correctly handle array elements
+* Fix bugs caused by lack of collector ordering like service_mgr being incorrect (https://github.com/ansible/ansible/issues/30753)
+* Fix os_image when the id parameter is not set in the task. ( https://github.com/ansible/ansible/pull/29147 )
+* Fix for the winrm connection to use proper task vars
+* removed typo from dig lookup docs
+* Updated win_chocolatey example to be clearer around what should be used with become
+* Fix for copy module when permissions are changed but the file contents are not ( https://github.com/ansible/ansible/issues/30556 )
+* corrected YAML_FILENAME_EXTENSIONS ini setter as key/section were swapped
+* Better error message when a yaml inventory is invalid
+* avoid include_Xs conflating vars with options
+* Fix aws_s3 module handling `encrypt` option (https://github.com/ansible/ansible/pull/31203)
+* Fix for win_msg to document and show error when message is greater than 255 characters
+* Fix for win_dotnet_ngen to work after recent regression
+* fixed backwards compat method for config
+* removed docs for prematurely added ssh specific pipelining settings
+* fixed redis cache typo
+* Fix AttributeError during inventory group deserialization (https://github.com/ansible/ansible/issues/30903)
+* Fix 'ansible-vault encrypt --output=-' (https://github.com/ansible/ansible/issues/30550)
+* restore pre 2.4 pipeline configuration options (env and ini)
+* Fix win_copy regression: handling of vault-encrypted source files (https://github.com/ansible/ansible/pull/31084)
+* Updated return values for win_reg_stat to correctly show what is being returned (https://github.com/ansible/ansible/pull/31252)
+* reduced normal error redundancy and verbosity, display on increased and when needed
+* Give an informative error instead of a traceback if include_vars dir is file instead of directory (https://github.com/ansible/ansible/pull/31157)
+* Fix monit module's version check for color support (https://github.com/ansible/ansible/pull/31212)
+* Make `elasticsearch_plugin` module work with both 2.x and 5.x (https://github.com/ansible/ansible/issues/21989)
+* Fix for become on Windows to handle ignored errors (https://github.com/ansible/ansible/issues/30468)
+* Fix removal of newlines when writing SELinux config (https://github.com/ansible/ansible/issues/30618)
+* clarified extension requirement for constructed inv plugin
+* really turn off inventory caching, toggle will be added in 2.5
+* for inventory sources, dont follow symlinks to calculate base directory, used for group/host_vars
+* Port the uptime.py example script to the new inventory API.
+* inventory_file variable again returns full path, not just basename
+* added info about cwd group/host vars to porting guide
+* Fix name parsing out of envra in the yum module
+* give user friendly error on badly formatted yaml inventory source
+* Fix any_errors_fatal setting in playbooks.
+* Fix setting of ssh-extra-args from the cli (https://github.com/ansible/ansible/pull/31326)
+* Change SELinux fact behavior to always return a dictionary. (https://github.com/ansible/ansible/issues/18692)
+* Revert a fix for using non /bin/sh shells for modules' running commands as
+  this was causing output from commands to change, thus breaking playbooks.
+  See the original bug for details and links to the eventual fix:
+  https://github.com/ansible/ansible/issues/24169
+* Do not log data field in `docker_secrets` module (https://github.com/ansible/ansible/pull/31366)
+* Fix rpm_key taking the wrong 8 chars from the keyid (https://github.com/ansible/ansible/pull/31045)
+* chown errors now more informative
+* Fix for win_copy to copy a source file that has invalid windows characters in the filename, the dest still must be have valid windows characters (https://github.com/ansible/ansible/issues/31336#issuecomment-334649927)
+* Fix systemd module to not run daemon-reload in check mode.
+* fixed some parsing and selection issues with inventory manager, fixed minor bugs in yaml and constructed plugins
+* Fix the ping module documentation to reference win_ping instead of itself: https://github.com/ansible/ansible/pull/31444
+* Fix for ec2_win_password to allow blank key_passphrase again (https://github.com/ansible/ansible/pull/28791)
+* added toggle for vars_plugin behaviour to execute relative to playbook, set default to revert to previous way.
+* Fix for win_copy to not remove destination file on change when in check mode (https://github.com/ansible/ansible/pull/31469)
+* Fix include_role usage of role_name (https://github.com/ansible/ansible/pull/31463)
+* Fix service and package forcing a second run of the setup module to function (https://github.com/ansible/ansible/issues/31485)
+* Better error message when attempting to use include or import with /usr/bin/ansible (https://github.com/ansible/ansible/pull/31492/)
+* Fix `sysctl` module to remove etries when `state=absent` (https://github.com/ansible/ansible/issues/29920)
+* Fix for ec2_group to avoid trying to iterate over None (https://github.com/ansible/ansible/pull/31531)
+* Fix for ec2_group for a possible KeyError bug (https://github.com/ansible/ansible/pull/31540)
+* Fix for the rpm_key module when importing the first gpg key on a system (https://github.com/ansible/ansible/pull/31514)
+* Fix for aws_s3 metadata to use the correct parameters when uploading a file (https://github.com/ansible/ansible/issues/31232)
+* Fix for the yum module when installing from file/url crashes (https://github.com/ansible/ansible/pull/31529)
+* Improved error messaging for Windows become/runas when username is bogus (https://github.com/ansible/ansible/pull/31551)
+* Fix rollback feature in junos_config to now allow configuration rollback on device (https://github.com/ansible/ansible/pull/31424)
+* Remove command executed log from ansible-connection (https://github.com/ansible/ansible/pull/31581)
+* Fix relative paths to be relative to config file when there is no playbook available (https://github.com/ansible/ansible/issues/31533)
+* Fix Inventory plugins to use the configured inventory plugin path (https://github.com/ansible/ansible/issues/31605)
+* Fix include task to be dynamic (https://github.com/ansible/ansible/issues/31593)
+* A couple fixes to the test process to account for new testing resources in
+  our ci system and an upstream cryptography update that didn't work with
+  pip-8.x
+* Document backup_path in a few dellos modules and vyos_config (https://github.com/ansible/ansible/issues/31844)
+* Fix for vmware_vm_facts with dangling inaccessible VM which don't have MAC addresses (https://github.com/ansible/ansible/pull/31629)
+* Fix for win_regedit sending extra data that could confuse ansible's result parsing (https://github.com/ansible/ansible/pull/31813)
+* Fix git module to correctly cleanup temporary dirs (https://github.com/ansible/ansible/pull/31541)
+* Fix for modules which use atomic_move() to rename files raising an exception
+  if a file could not be opened.  Fix will return a nice error message instead:
+  https://github.com/ansible/ansible/issues/31786
+* Fix ansible-doc and ansible-console module-path option (https://github.com/ansible/ansible/pull/31744)
+* Fix for hostname module on RHEL 7.5 (https://github.com/ansible/ansible/issues/31811)
+* Fix provider password leak in logs for asa modules (https://github.com/ansible/ansible/issues/32343)
+
+### Known Bugs
+* Implicit localhost is getting ansible_connection from all:vars instead of
+  from the implicit localhost definition (https://github.com/ansible/ansible/issues/31420)
 
 <a id="2.4"></a>
 
-## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
+## 2.4 "Dancing Days" - 2017-09-19
 
 ### Major Changes
 
@@ -68,7 +284,7 @@ Ansible Changes By Release
   - New inventory plugins for creating inventory
   - Old inventory formats are still supported via plugins
   - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
-  - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
+  - New configuration option to list enabled plugins and precedence order `[inventory]enable_plugins` in ansible.cfg
   - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
   - Loading group_vars/host_vars is now a vars plugin and can be overridden
   - It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)

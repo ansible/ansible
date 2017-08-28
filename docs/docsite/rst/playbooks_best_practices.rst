@@ -221,8 +221,8 @@ some other playbooks::
 
     ---
     # file: site.yml
-    - import_plays: webservers.yml
-    - import_plays: dbservers.yml
+    - import_playbook: webservers.yml
+    - import_playbook: dbservers.yml
 
 In a file like webservers.yml (also at the top level), we map the configuration of the webservers group to the roles performed by the webservers group::
 
