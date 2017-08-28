@@ -1067,7 +1067,7 @@ DEFAULT_VAULT_IDENTITY_LIST:
   env: [{name: ANSIBLE_VAULT_IDENTITY_LIST}]
   ini:
   - {key: vault_identity_list, section: defaults}
-  value_type: list
+  type: list
   vars: []
   yaml: {key: defaults.vault_identity_list}
 DEFAULT_VAULT_PASSWORD_FILE:
