@@ -39,6 +39,37 @@ function Disable-Plugin($rabbitmq_plugins_cmd, $plugin_name)
     }
 }
 
+function Get-RabbitmqPathFromRegistry
+{
+    $reg64Path = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\RabbitMQ"
+    $reg32Path = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RabbitMQ"
+
+    if (Test-Path $reg64Path) {
+        $regPath = $reg64Path
+    } elseif (Test-Path $reg32Path) {
+        $regPath = $reg32Path
+    }
+
+    if ($regPath) {
+        $path = Split-Path -Parent (Get-ItemProperty $regPath "UninstallString").UninstallString
+        $version = (Get-ItemProperty $regPath "DisplayVersion").DisplayVersion
+        return "$path\rabbitmq_server-$version"
+    }
+}
+
+function Get-RabbitmqBinPath($installation_path)
+{
+    $result = Join-Path -Path $installation_path -ChildPath 'bin'
+    if (Test-Path $result) {
+        return $result
+    }
+
+    $result = Join-Path -Path $installation_path -ChildPath 'sbin'
+    if (Test-Path $result) {
+        return $result
+    }
+}
+
 $ErrorActionPreference = "Stop"
 
 $result = @{
@@ -64,13 +95,18 @@ if ($diff_support) {
 $plugins = $names.Split(",")
 
 if ($prefix) {
-    if (Test-Path (Join-Path -Path $prefix -ChildPath 'bin')) {
-        $rabbitmq_bin_path = Join-Path -Path $prefix -ChildPath 'bin'
-    } elseif (Test-Path (Join-Path -Path $prefix -ChildPath 'sbin')) {
-        $rabbitmq_bin_path = Join-Path -Path $prefix -ChildPath 'sbin'
-    } else {
+    $rabbitmq_bin_path = Get-RabbitmqBinPath -installation_path $prefix
+    if (-not $rabbitmq_bin_path) {
         Fail-Json -obj $result -message "No binary folder in prefix `"$($prefix)`""
     }
+} else {
+    $rabbitmq_reg_path = Get-RabbitmqPathFromRegistry
+    if ($rabbitmq_reg_path) {
+        $rabbitmq_bin_path = Get-RabbitmqBinPath -installation_path $rabbitmq_reg_path
+    }
+}
+
+if ($rabbitmq_bin_path) {
     $rabbitmq_plugins_cmd = "'$(Join-Path -Path $rabbitmq_bin_path -ChildPath "rabbitmq-plugins")'"
 } else {
     $rabbitmq_plugins_cmd = "rabbitmq-plugins"

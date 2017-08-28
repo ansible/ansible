@@ -748,6 +748,7 @@ files:
   $modules/windows/win_psexec.py: dagwieers
   $modules/windows/win_psmodule.ps1: $team_windows
   $modules/windows/win_psmodule.py: $team_windows
+  $modules/windows/win_rabbitmq_plugin.py: ar7z1
   $modules/windows/win_reboot.py: nitzmahone
   $modules/windows/win_reg_stat.ps1: jborean93
   $modules/windows/win_reg_stat.py: jborean93
