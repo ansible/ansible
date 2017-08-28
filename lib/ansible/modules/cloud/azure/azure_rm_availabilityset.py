@@ -225,19 +225,13 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
                     to_be_updated = True
 
                 if response['platform_update_domain_count'] != self.platform_update_domain_count:
-                    self.warn('platform_update_domain_count')
-                    self.platform_update_domain_count = response['platform_update_domain_count']
+                    self.faildeploy('platform_update_domain_count')
 
                 if response['platform_fault_domain_count'] != self.platform_fault_domain_count:
-                    self.warn('platform_fault_domain_count')
-                    self.platform_fault_domain_count = response['platform_fault_domain_count']
+                    self.faildeploy('platform_fault_domain_count')
 
                 if response['sku'] != self.sku:
-                    self.warn('sku')
-                    self.sku = response['sku']
-
-            if self.warning:
-                self.module.warn("An Availability Set is immutable, except tags")
+                    self.faildeploy('sku')
 
             if self.check_mode:
                 return self.results
@@ -252,16 +246,15 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
 
         return self.results
 
-    def warn(self, param):
+    def faildeploy(self, param):
         '''
-        Helper method to push warning message in the console.
+        Helper method to push fail message in the console.
         Usefull to notify that the users cannot change some values in a Availibility Set
 
         :param: variable's name impacted
         :return: void
         '''
-        self.module.warn("You tried to change {0} but is was unsuccessful".format(str(param)))
-        self.warning = True
+        self.fail("You tried to change {0} but is was unsuccessful. An Availability Set is immutable, except tags".format(str(param)))
 
     def create_or_update_availabilityset(self):
         '''
