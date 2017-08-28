@@ -1,9 +1,7 @@
 ---
 - name: Create traffic manager
   set_fact:
-    # resource_group: "ansibleTrafficManagerIntegration"
     resource_group: "{{ resource_group }}"
-    # resource_group: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
     traffic_manager_name: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
 
 - name: Test traffic manager creation
