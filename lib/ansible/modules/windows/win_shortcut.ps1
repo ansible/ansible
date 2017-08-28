@@ -26,7 +26,7 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$src = Get-AnsibleParam -obj $params -name "src"
+$orig_src = Get-AnsibleParam -obj $params -name "src"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "absent","present"
 $orig_args = Get-AnsibleParam -obj $params -name "args" -type "string"
@@ -39,6 +39,7 @@ $windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" 
 # Expand environment variables on non-path types
 $args = Expand-Environment($orig_args)
 $description = Expand-Environment($orig_description)
+$src = Expand-Environment($orig_src)
 
 $result = @{
     changed = $false
@@ -82,8 +83,10 @@ If ($state -eq "absent") {
         If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
             $src = (Get-Command -Name $src -Type Application).Definition
         }
-        If (-not (Split-Path -Path $src -IsAbsolute)) {
-            Fail-Json -obj $result -message "Source '$src' is not found in PATH and not an absolute path."
+        If (-not (Test-Path -Path $src -IsValid)) {
+            If (-not (Split-Path -Path $src -IsAbsolute)) {
+                Fail-Json -obj $result -message "Source '$src' is not found in PATH and not a valid or absolute path."
+            }
         }
     }
 
