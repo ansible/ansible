@@ -1,0 +1,5 @@
+feature nxapi
+nxapi http port 80
+no nxapi https
+no nxapi sandbox
+

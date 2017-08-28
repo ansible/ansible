@@ -9,7 +9,7 @@
 
 - name: Enable NXAPI
   nxos_nxapi:
-      state: started
+      state: present
       provider: "{{ cli }}"
   register: result
 
