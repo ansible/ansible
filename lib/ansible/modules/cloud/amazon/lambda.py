@@ -36,19 +36,18 @@ options:
   state:
     description:
       - Create or delete Lambda function
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   runtime:
     description:
       - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs.
         Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
-    required: true
+      - Required when C(state=present)
   role:
     description:
       - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
         resources. You may use the bare ARN if the role belongs to the same AWS account.
-    default: null
+      - Required when C(state=present)
   handler:
     description:
       - The function within your code that Lambda calls to begin execution
@@ -56,17 +55,21 @@ options:
   zip_file:
     description:
       - A .zip file containing your deployment package
+      - If C(state=present) then either zip_file or s3_bucket must be present.
     required: false
     default: null
     aliases: [ 'src' ]
   s3_bucket:
     description:
       - Amazon S3 bucket name where the .zip file containing your deployment package is stored
+      - If C(state=present) then either zip_file or s3_bucket must be present.
+      - s3_bucket and s3_key are required together
     required: false
     default: null
   s3_key:
     description:
       - The Amazon S3 object (the deployment package) key name you want to upload
+      - s3_bucket and s3_key are required together
     required: false
     default: null
   s3_object_version:
@@ -192,6 +195,7 @@ output:
 # Import from Python standard library
 import base64
 import hashlib
+import traceback
 
 try:
     import botocore
@@ -199,11 +203,9 @@ try:
 except ImportError:
     HAS_BOTOCORE = False
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 
 
 def get_current_function(connection, function_name, qualifier=None):
@@ -228,25 +230,57 @@ def sha256sum(filename):
     return hex_digest
 
 
+# There is a PR open to merge fail_json_aws this into the standard module code;
+# see https://github.com/ansible/ansible/pull/23882
+def fail_json_aws(module, exception, msg=None):
+    """call fail_json with processed exception
+    function for converting exceptions thrown by AWS SDK modules,
+    botocore, boto3 and boto, into nice error messages.
+    """
+    last_traceback = traceback.format_exc()
+
+    try:
+        except_msg = exception.message
+    except AttributeError:
+        except_msg = str(exception)
+
+    if msg is not None:
+        message = '{0}: {1}'.format(msg, except_msg)
+    else:
+        message = except_msg
+
+    try:
+        response = exception.response
+    except AttributeError:
+        response = None
+
+    if response is None:
+        module.fail_json(msg=message, exception=last_traceback)
+    else:
+        module.fail_json(msg=message, exception=last_traceback,
+                         **camel_dict_to_snake_dict(response))
+
+
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        name=dict(type='str', required=True),
-        state=dict(type='str', default='present', choices=['present', 'absent']),
-        runtime=dict(type='str', required=True),
-        role=dict(type='str', default=None),
-        handler=dict(type='str', default=None),
-        zip_file=dict(type='str', default=None, aliases=['src']),
-        s3_bucket=dict(type='str'),
-        s3_key=dict(type='str'),
-        s3_object_version=dict(type='str', default=None),
-        description=dict(type='str', default=''),
-        timeout=dict(type='int', default=3),
-        memory_size=dict(type='int', default=128),
-        vpc_subnet_ids=dict(type='list', default=None),
-        vpc_security_group_ids=dict(type='list', default=None),
-        environment_variables=dict(type='dict', default=None),
-        dead_letter_arn=dict(type='str', default=None),
+    argument_spec.update(
+        dict(
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            runtime=dict(),
+            role=dict(),
+            handler=dict(),
+            zip_file=dict(aliases=['src']),
+            s3_bucket=dict(),
+            s3_key=dict(),
+            s3_object_version=dict(),
+            description=dict(default=''),
+            timeout=dict(type='int', default=3),
+            memory_size=dict(type='int', default=128),
+            vpc_subnet_ids=dict(type='list'),
+            vpc_security_group_ids=dict(type='list'),
+            environment_variables=dict(type='dict'),
+            dead_letter_arn=dict(),
         )
     )
 
@@ -257,10 +291,13 @@ def main():
     required_together = [['s3_key', 's3_bucket'],
                          ['vpc_subnet_ids', 'vpc_security_group_ids']]
 
+    required_if = [['state', 'present', ['runtime', 'handler', 'role']]]
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            mutually_exclusive=mutually_exclusive,
-                           required_together=required_together)
+                           required_together=required_together,
+                           required_if=required_if)
 
     name = module.params.get('name')
     state = module.params.get('state').lower()
@@ -296,19 +333,20 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='lambda',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg=str(e))
+        fail_json_aws(module, e, msg="connecting to AWS")
 
-    if role.startswith('arn:aws:iam'):
-        role_arn = role
-    else:
-        # get account ID and assemble ARN
-        try:
-            iam_client = boto3_conn(module, conn_type='client', resource='iam',
-                                region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
-            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
-        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-            module.fail_json(msg=str(e))
+    if state == 'present':
+        if role.startswith('arn:aws:iam'):
+            role_arn = role
+        else:
+            # get account ID and assemble ARN
+            try:
+                iam_client = boto3_conn(module, conn_type='client', resource='iam',
+                                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+                account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+                role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
+            except Exception as e:
+                fail_json_aws(module, e, msg="getting account information")
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -335,7 +373,7 @@ def main():
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
         if (environment_variables is not None) and (current_config.get('Environment', {}).get('Variables', {}) != environment_variables):
-            func_kwargs.update({'Environment':{'Variables': environment_variables}})
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
         if dead_letter_arn is not None:
             if current_config.get('DeadLetterConfig'):
                 if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
@@ -350,11 +388,11 @@ def main():
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
-            if len(vpc_subnet_ids) < 1:
-                module.fail_json(msg='At least 1 subnet is required')
-
-            if len(vpc_security_group_ids) < 1:
-                module.fail_json(msg='At least 1 security group is required')
+            try:
+                assert len(vpc_subnet_ids) > 0
+                assert len(vpc_security_group_ids) > 0
+            except (AssertionError, TypeError):
+                module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             if 'VpcConfig' in current_config:
                 # Compare VPC config with current config
@@ -366,13 +404,13 @@ def main():
 
             if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
                 func_kwargs.update({'VpcConfig':
-                                    {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
+                                    {'SubnetIds': vpc_subnet_ids, 'SecurityGroupIds': vpc_security_group_ids}})
         else:
             # No VPC configuration is desired, assure VPC config is empty when present in current config
             if ('VpcConfig' in current_config and
                     'VpcId' in current_config['VpcConfig'] and
                     current_config['VpcConfig']['VpcId'] != ''):
-                func_kwargs.update({'VpcConfig':{'SubnetIds': [], 'SecurityGroupIds': []}})
+                func_kwargs.update({'VpcConfig': {'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
         if len(func_kwargs) > 1:
@@ -382,7 +420,7 @@ def main():
                     current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-                module.fail_json(msg=str(e))
+                fail_json_aws(module, e, msg="updating function configuration")
 
         # Update code configuration
         code_kwargs = {'FunctionName': name, 'Publish': True}
@@ -408,7 +446,7 @@ def main():
                         encoded_zip = f.read()
                     code_kwargs.update({'ZipFile': encoded_zip})
                 except IOError as e:
-                    module.fail_json(msg=str(e))
+                    module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         # Upload new code if needed (e.g. code checksum has changed)
         if len(code_kwargs) > 2:
@@ -418,7 +456,7 @@ def main():
                     current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-                module.fail_json(msg=str(e))
+                fail_json_aws(module, e, msg="updating function code")
 
         # Describe function code and configuration
         response = get_current_function(client, name, qualifier=current_version)
@@ -444,21 +482,25 @@ def main():
 
                 code = {'ZipFile': zip_content}
             except IOError as e:
-                module.fail_json(msg=str(e))
+                module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         else:
             module.fail_json(msg='Either S3 object or path to zipfile required')
 
         func_kwargs = {'FunctionName': name,
-                       'Description': description,
                        'Publish': True,
                        'Runtime': runtime,
                        'Role': role_arn,
-                       'Handler': handler,
                        'Code': code,
                        'Timeout': timeout,
                        'MemorySize': memory_size,
                        }
+
+        if description is not None:
+            func_kwargs.update({'Description': description})
+
+        if handler is not None:
+            func_kwargs.update({'Handler': handler})
 
         if environment_variables:
             func_kwargs.update({'Environment': {'Variables': environment_variables}})
@@ -468,11 +510,11 @@ def main():
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
-            if len(vpc_subnet_ids) < 1:
-                module.fail_json(msg='At least 1 subnet is required')
-
-            if len(vpc_security_group_ids) < 1:
-                module.fail_json(msg='At least 1 security group is required')
+            try:
+                assert len(vpc_subnet_ids) > 0
+                assert len(vpc_security_group_ids) > 0
+            except (AssertionError, TypeError):
+                module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             func_kwargs.update({'VpcConfig': {'SubnetIds': vpc_subnet_ids,
                                 'SecurityGroupIds': vpc_security_group_ids}})
@@ -484,7 +526,7 @@ def main():
                 current_version = response['Version']
             changed = True
         except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-            module.fail_json(msg=str(e))
+            fail_json_aws(module, e, msg="creating new function")
 
         response = get_current_function(client, name, qualifier=current_version)
         if not response:
@@ -498,7 +540,7 @@ def main():
                 client.delete_function(FunctionName=name)
             changed = True
         except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
-            module.fail_json(msg=str(e))
+            fail_json_aws(module, e, msg="deleting function")
 
         module.exit_json(changed=changed)
 
@@ -506,9 +548,6 @@ def main():
     elif state == 'absent':
         module.exit_json(changed=changed)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
