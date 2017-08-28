@@ -599,31 +599,48 @@ URL Split Filter
 
 .. versionadded:: 2.4
 
-The ``urlsplit`` filter extracts the fragment, hostname, password, path, port, query, scheme, and username from an URL. With no arguments, returns a dictionary of all the fields::
+The ``urlsplit`` filter extracts the fragment, hostname, netloc, password, path, port, query, scheme, and username from an URL. With no arguments, returns a dictionary of all the fields::
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('hostname') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('hostname') }}
     # => 'www.acme.com'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('username') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('netloc') }}
+    # => 'user:password@www.acme.com:9000'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('username') }}
     # => 'user'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('password') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('password') }}
     # => 'password'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('path') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('path') }}
     # => '/dir/index.html'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('port') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('port') }}
     # => '9000'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('scheme') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('scheme') }}
     # => 'http'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('query') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('query') }}
     # => 'query=term'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | uri('fragment') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('fragment') }}
     # => 'fragment'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit }}
+    # =>
+    #   {
+    #       "fragment": "fragment",
+    #       "hostname": "www.acme.com",
+    #       "netloc": "user:password@www.acme.com:9000",
+    #       "password": "password",
+    #       "path": "/dir/index.html",
+    #       "port": 9000,
+    #       "query": "query=term",
+    #       "scheme": "http",
+    #       "username": "user"
+    #   }
 
 
 
