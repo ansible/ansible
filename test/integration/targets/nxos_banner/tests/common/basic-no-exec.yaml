@@ -9,14 +9,11 @@
     provider: "{{ connection }}"
 
 - name: remove exec
-  nxos_banner:
+  nxos_banner: &rm-exec
     banner: exec
     state: absent
     provider: "{{ connection }}"
   register: result
-
-- debug:
-    msg: "{{ result }}"
 
 - assert:
     that:
@@ -24,17 +21,13 @@
       - "'no banner exec' in result.commands"
 
 - name: remove exec (idempotent)
-  nxos_banner:
-    banner: exec
-    state: absent
-    provider: "{{ connection }}"
+  nxos_banner: *rm-exec
   register: result
 
 - assert:
     that:
       - "result.changed == false"
       - "result.commands | length == 0"
-
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:
