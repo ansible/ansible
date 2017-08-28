@@ -1,16 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2013, Chris Hoffman <christopher.hoffman@gmail.com>
+# Copyright (c) 2017 Chris Hoffman <christopher.hoffman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -115,11 +116,19 @@ EXAMPLES = '''
     state: present
 '''
 
-import json
 import os
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
 
 
 class Npm(object):
@@ -132,13 +141,14 @@ class Npm(object):
         self.registry = kwargs['registry']
         self.production = kwargs['production']
         self.ignore_scripts = kwargs['ignore_scripts']
+        self.state = kwargs['state']
 
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
         else:
             self.executable = [module.get_bin_path('npm', True)]
 
-        if kwargs['version']:
+        if kwargs['version'] and self.state != 'absent':
             self.name_version = self.name + '@' + str(self.version)
         else:
             self.name_version = self.name
@@ -149,7 +159,7 @@ class Npm(object):
 
             if self.glbl:
                 cmd.append('--global')
-            if self.production:
+            if self.production and ('install' in cmd or 'update' in cmd):
                 cmd.append('--production')
             if self.ignore_scripts:
                 cmd.append('--ignore-scripts')
@@ -159,7 +169,7 @@ class Npm(object):
                 cmd.append('--registry')
                 cmd.append(self.registry)
 
-            #If path is specified, cd into that path and run the command.
+            # If path is specified, cd into that path and run the command.
             cwd = None
             if self.path:
                 if not os.path.exists(self.path):
@@ -188,7 +198,7 @@ class Npm(object):
                     installed.append(dep)
             if self.name and self.name not in installed:
                 missing.append(self.name)
-        #Named dependency not installed
+        # Named dependency not installed
         else:
             missing.append(self.name)
 
@@ -248,8 +258,8 @@ def main():
     if state == 'absent' and not name:
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
-    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, \
-              executable=executable, registry=registry, ignore_scripts=ignore_scripts)
+    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production,
+              executable=executable, registry=registry, ignore_scripts=ignore_scripts, state=state)
 
     changed = False
     if state == 'present':
@@ -266,7 +276,7 @@ def main():
         if len(outdated):
             changed = True
             npm.update()
-    else: #absent
+    else:  # absent
         installed, missing = npm.list()
         if name in installed:
             changed = True
