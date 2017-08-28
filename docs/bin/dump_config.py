@@ -25,6 +25,19 @@ def generate_parser():
     return p
 
 
+def fix_description(config_options):
+    '''some descriptions are strings, some are lists. workaround it...'''
+
+    for config_key in config_options:
+        description = config_options[config_key].get('description', [])
+        if isinstance(description, list):
+            desc_list = description
+        else:
+            desc_list = [description]
+        config_options[config_key]['description'] = desc_list
+    return config_options
+
+
 def main(args):
 
     parser = generate_parser()
@@ -42,6 +55,7 @@ def main(args):
         docs = {}
 
     config_options = docs
+    config_options = fix_description(config_options)
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True,)
     template = env.get_template(template_file)
