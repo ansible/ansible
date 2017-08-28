@@ -84,10 +84,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (
     TaskError,
     connect_to_api,
-    find_cluster_by_name,
-    find_datacenter_by_name,
     vmware_argument_spec,
     wait_for_task,
+    find_host_by_cluster_datacenter,
 )
 
 
@@ -127,19 +126,6 @@ class VMwareHost(object):
             self.module.fail_json(msg=method_fault.msg)
         except Exception as e:
             self.module.fail_json(msg=str(e))
-
-    def find_host_by_cluster_datacenter(self):
-        self.dc = find_datacenter_by_name(self.content, self.datacenter_name)
-        self.cluster = find_cluster_by_name(self.content, self.cluster_name, self.dc)
-
-        if self.cluster is None:
-            self.module.fail_json(msg="Unable to find cluster %(cluster_name)s" % self.module.params)
-
-        for host in self.cluster.host:
-            if host.name == self.esxi_hostname:
-                return host, self.cluster
-
-        return None, self.cluster
 
     def add_host_to_vcenter(self):
         host_connect_spec = vim.host.ConnectSpec()
@@ -200,7 +186,8 @@ class VMwareHost(object):
         self.module.exit_json(changed=changed, result=str(result))
 
     def check_host_state(self):
-        self.host, self.cluster = self.find_host_by_cluster_datacenter()
+        self.host, self.cluster = find_host_by_cluster_datacenter(self.module, self.content, self.datacenter_name,
+                                                                  self.cluster_name, self.esxi_hostname)
 
         if self.host is None:
             return 'absent'
