@@ -1182,7 +1182,7 @@ def main():
         vm = vms_module.search_entity()
 
         control_state(vm, vms_service, module)
-        if state == 'present' or state == 'running' or state == 'next_run':
+        if state in ('present', 'running', 'next_run'):
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
                 vms_module.changed = import_vm(module, connection)
 
@@ -1200,46 +1200,49 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
-            initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
-            ret = vms_module.action(
-                action='start',
-                post_action=vms_module._post_start_action,
-                action_condition=lambda vm: (
-                    vm.status not in [
-                        otypes.VmStatus.MIGRATING,
-                        otypes.VmStatus.POWERING_UP,
-                        otypes.VmStatus.REBOOT_IN_PROGRESS,
-                        otypes.VmStatus.WAIT_FOR_LAUNCH,
-                        otypes.VmStatus.UP,
-                        otypes.VmStatus.RESTORING_STATE,
-                    ]
-                ),
-                wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
-                # Start action kwargs:
-                use_cloud_init=cloud_init is not None or len(cloud_init_nics) > 0,
-                use_sysprep=sysprep is not None,
-                vm=otypes.Vm(
-                    placement_policy=otypes.VmPlacementPolicy(
-                        hosts=[otypes.Host(name=module.params['host'])]
-                    ) if module.params['host'] else None,
-                    initialization=initialization,
-                    os=otypes.OperatingSystem(
-                        cmdline=module.params.get('kernel_params'),
-                        initrd=module.params.get('initrd_path'),
-                        kernel=module.params.get('kernel_path'),
+
+            # Run the VM if it was just created, else don't run it:
+            if state == 'running' or vm is None:
+                initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
+                ret = vms_module.action(
+                    action='start',
+                    post_action=vms_module._post_start_action,
+                    action_condition=lambda vm: (
+                        vm.status not in [
+                            otypes.VmStatus.MIGRATING,
+                            otypes.VmStatus.POWERING_UP,
+                            otypes.VmStatus.REBOOT_IN_PROGRESS,
+                            otypes.VmStatus.WAIT_FOR_LAUNCH,
+                            otypes.VmStatus.UP,
+                            otypes.VmStatus.RESTORING_STATE,
+                        ]
+                    ),
+                    wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
+                    # Start action kwargs:
+                    use_cloud_init=cloud_init is not None or len(cloud_init_nics) > 0,
+                    use_sysprep=sysprep is not None,
+                    vm=otypes.Vm(
+                        placement_policy=otypes.VmPlacementPolicy(
+                            hosts=[otypes.Host(name=module.params['host'])]
+                        ) if module.params['host'] else None,
+                        initialization=initialization,
+                        os=otypes.OperatingSystem(
+                            cmdline=module.params.get('kernel_params'),
+                            initrd=module.params.get('initrd_path'),
+                            kernel=module.params.get('kernel_path'),
+                        ) if (
+                            module.params.get('kernel_params')
+                            or module.params.get('initrd_path')
+                            or module.params.get('kernel_path')
+                        ) else None,
                     ) if (
                         module.params.get('kernel_params')
                         or module.params.get('initrd_path')
                         or module.params.get('kernel_path')
+                        or module.params.get('host')
+                        or initialization
                     ) else None,
-                ) if (
-                    module.params.get('kernel_params')
-                    or module.params.get('initrd_path')
-                    or module.params.get('kernel_path')
-                    or module.params.get('host')
-                    or initialization
-                ) else None,
-            )
+                )
 
             if state == 'next_run':
                 # Apply next run configuration, if needed:
