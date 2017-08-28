@@ -756,8 +756,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         # all needs loader
         loader = DataLoader()
 
+        vault_ids = options.vault_ids
+        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
+        vault_ids = default_vault_ids + vault_ids
+
         vault_secrets = CLI.setup_vault_secrets(loader,
-                                                vault_ids=options.vault_ids,
+                                                vault_ids=vault_ids,
                                                 vault_password_files=options.vault_password_files,
                                                 ask_vault_pass=options.ask_vault_pass)
         loader.set_vault_secrets(vault_secrets)
