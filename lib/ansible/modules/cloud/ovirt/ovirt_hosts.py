@@ -109,6 +109,13 @@ options:
             - "Enable or disable power management of the host."
             - "For more comprehensive setup of PM use C(ovirt_host_pm) module."
         version_added: 2.4
+    activate:
+        description:
+            - "If C(state) is I(present) activate the host."
+            - "This parameter is good to disable, when you don't want to change
+               the state of host when using I(present) C(state)."
+        default: True
+        version_added: 2.4
     iscsi:
         description:
           - "If C(state) is I(iscsidiscover) it means that the iscsi attribute is being
@@ -295,12 +302,6 @@ class HostsModule(BaseModule):
             wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
         )
 
-    def post_update(self, entity):
-        if entity.status != hoststate.UP and self.param('state') == 'present':
-            if not self._module.check_mode:
-                self._service.host_service(entity.id).activate()
-            self.changed = True
-
     def post_reinstall(self, host):
         wait(
             service=self._service.service(host.id),
@@ -382,6 +383,7 @@ def main():
         kernel_params=dict(default=None, type='list'),
         hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
         power_management_enabled=dict(default=None, type='bool'),
+        activate=dict(default=True, type='bool'),
         iscsi=dict(default=None, type='dict'),
     )
     module = AnsibleModule(
@@ -407,17 +409,20 @@ def main():
         state = module.params['state']
         host = control_state(hosts_module)
         if state == 'present':
-            hosts_module.create(
+            ret = hosts_module.create(
                 deploy_hosted_engine=(
                     module.params.get('hosted_engine') == 'deploy'
                 ) if module.params.get('hosted_engine') is not None else None,
+                result_state=(lambda h: h.status == hoststate.UP) if host is None else None,
+                fail_condition=failed_state if host is None else lambda h: False,
             )
-            ret = hosts_module.action(
-                action='activate',
-                action_condition=lambda h: h.status == hoststate.MAINTENANCE,
-                wait_condition=lambda h: h.status == hoststate.UP,
-                fail_condition=failed_state,
-            )
+            if module.params['activate'] and host is not None:
+                ret = hosts_module.action(
+                    action='activate',
+                    action_condition=lambda h: h.status != hoststate.UP,
+                    wait_condition=lambda h: h.status == hoststate.UP,
+                    fail_condition=failed_state,
+                )
         elif state == 'absent':
             ret = hosts_module.remove()
         elif state == 'maintenance':
