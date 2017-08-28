@@ -123,6 +123,12 @@ options:
           - "If C(state) is I(iscsilogin) it means that the iscsi attribute is being
              used to login to the specified targets passed as part of the iscsi attribute"
         version_added: "2.4"
+    check_upgrade:
+        description:
+            - "If I(true) and C(state) is I(upgraded) run check for upgrade
+               action before executing upgrade action."
+        default: True
+        version_added: 2.4
 extends_documentation_fragment: ovirt
 '''
 
@@ -385,6 +391,7 @@ def main():
         power_management_enabled=dict(default=None, type='bool'),
         activate=dict(default=True, type='bool'),
         iscsi=dict(default=None, type='dict'),
+        check_upgrade=dict(default=True, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -435,6 +442,32 @@ def main():
             ret = hosts_module.create()
         elif state == 'upgraded':
             result_state = hoststate.MAINTENANCE if host.status == hoststate.MAINTENANCE else hoststate.UP
+            events_service = connection.system_service().events_service()
+            last_event = events_service.list(max=1)[0]
+
+            if module.params['check_upgrade']:
+                hosts_module.action(
+                    action='upgrade_check',
+                    action_condition=lambda host: not host.update_available,
+                    wait_condition=lambda host: host.update_available or (
+                        len([
+                            event
+                            for event in events_service.list(
+                                from_=int(last_event.id),
+                                search='type=885 and host.name=%s' % host.name,
+                            )
+                        ]) > 0
+                    ),
+                    fail_condition=lambda host: len([
+                        event
+                        for event in events_service.list(
+                            from_=int(last_event.id),
+                            search='type=839 or type=887 and host.name=%s' % host.name,
+                        )
+                    ]) > 0,
+                )
+                # Set to False, because upgrade_check isn't 'changing' action:
+                hosts_module._changed = False
             ret = hosts_module.action(
                 action='upgrade',
                 action_condition=lambda h: h.update_available,
