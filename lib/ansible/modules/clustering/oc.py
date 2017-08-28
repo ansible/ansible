@@ -7,47 +7,43 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = """
 author:
   - "Kenneth D. Evensen (@kevensen)"
 description:
-  - |-
-      This module allows management of resources in an OpenShift cluster.  The
+      "This module allows management of resources in an OpenShift cluster. The
       inventory host can be any host with network connectivity to the OpenShift
-      cluster; the default port being 8443/TCP.  This module relies on a token
-      to authenticate to OpenShift.  This can either be a user or a service
-      account.  For example:
+      cluster; the default port being 8443/TCP. This module relies on a token
+      to authenticate to OpenShift. This can either be a user or a service
+      account. For example:
 
       $ oc create serviceaccount ansible-sa
-      $ oadm policy add-cluster-role-to-user cluster-admin system:serviceaccounts:ansible-sa
+      $ oadm policy add-cluster-role-to-user cluster-admin system:serviceaccounts:ansible-sa"
 module: oc
 options:
   host:
     description:
-      - |-
-         Hostname or address of the OpenShift API endpoint.  By default, this is
-         expected to be the current inventory host.
+      - "Hostname or address of the OpenShift API endpoint. By default, this is expected to be the current inventory host."
     required: false
     default: 127.0.0.1
   port:
     description:
-      - |-
-         The port number of the API endpoint.
+      - "The port number of the API endpoint."
     required: false
     default: 8443
   inline:
     description:
-      - "The inline definition of the resource.  This is mutually exclusive
-         with name, namespace and kind."
+      - "The inline definition of the resource. This is mutually exclusive with name, namespace and kind."
     required: false
   kind:
-    description:
-      - "The kind of the resource upon which to take action."
+    description: The kind of the resource upon which to take action.
     required: true
   name:
     description:
@@ -66,14 +62,11 @@ options:
       - present
       - absent
     description:
-      - "If the state is present, and the resource doesn't exist, it shall be
-        created using the inline definition.  If the state is present and the
-        resource exists, the definition will be updated, again using an inline
-        definition.  If the state is absent, the resource will be deleted if
-        it exists."
+      - "If the state is present, and the resource doesn't exist, it shall be created using the inline definition. If the state is present and the
+        resource exists, the definition will be updated, again using an inline definition. If the state is absent, the resource will be deleted if it exists."
     required: true
-short_description: "Manage OpenShift Resources"
-version_added: "2.4"
+short_description: Manage OpenShift Resources
+version_added: 2.4
 
 """
 
@@ -88,6 +81,7 @@ EXAMPLES = """
       displayName: Ansible Test Project
       description: This project was created using Ansible
     token: << redacted >>
+
 - name: Delete a service
   oc:
     state: absent
@@ -95,6 +89,7 @@ EXAMPLES = """
     namespace: mynamespace
     kind: Service
     token: << redacted >>
+
 - name: Add project role Admin to a user
   oc:
     state: present
@@ -106,8 +101,9 @@ EXAMPLES = """
       roleRef:
         name: admin
       userNames:
-      - "myuser"
+        - "myuser"
       token: << redacted >>
+
 - name: Obtain an object definition
   oc:
    state: present
@@ -119,10 +115,9 @@ EXAMPLES = """
 
 RETURN = '''
 result:
-  description: >
-    The resource that was created, changed, or otherwise determined
-    to be present.  In the case of a deletion, this is the response from the
-    delete request.
+  description:
+    The resource that was created, changed, or otherwise determined to be present.
+    In the case of a deletion, this is the response from the delete request.
   returned: success
   type: string
 url:
@@ -339,8 +334,7 @@ class OC(object):
     def get_resource_endpoint(self, kind):
         return self.kinds[kind]
 
-    # Attempts to 'kindly' merge the dictionaries into a new object
-    # deifinition
+    # Attempts to 'kindly' merge the dictionaries into a new object definition
     def merge(self, source, destination, changed):
 
         for key, value in source.items():
@@ -465,6 +459,7 @@ def main():
                    'method': method}
 
     module.exit_json(changed=changed, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()
