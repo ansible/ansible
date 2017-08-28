@@ -39,7 +39,6 @@ options:
   state:
     description:
       - Desired boolean value.
-    required: true
     default: present
     choices: [ 'present', 'absent' ]
   reload:
@@ -244,7 +243,6 @@ def main():
                 'required': True,
                 },
             'state': {
-                'required': True,
                 'choices': ['present', 'absent'],
                 'default': 'present',
                 },
