@@ -25,70 +25,61 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_package
-version_added: "1.7"
-author: Trond Hindenes
-short_description: Installs/Uninstalls an installable package, either from local file system or url
+version_added: '1.7'
+author:
+- Trond Hindenes (@trondhindenes)
+short_description: Installs or remove Windows packages
 description:
-     - Installs or uninstalls a package.
-     - >
-       Use a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry
-       either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs
-       C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
-     - For non-Windows targets, use the M(package) module instead.
+- Installs/uninstalls a package, either from local file system or URL.
+- Use a C(product_id) to check if the package needs installing.
+- You can find product ids for installed programs in the windows registry, either in
+  C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs in
+  C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
+- For non-Windows targets, use the M(package) module instead.
 options:
   path:
     description:
-      - Location of the package to be installed (either on file system, network share or url)
+    - Location of the package to be installed (either on file system, network share or URL).
     required: true
   name:
     description:
-      - Name of the package, if name isn't specified the path will be used for log messages
-    required: false
-    default: null
-  product_id:
+    - Name of the package, if name is not specified the path will be used as name.
+  productid:
     description:
-      - Product id of the installed package (used for checking if already installed)
-      - >
-        You can find product ids for installed programs in the windows registry either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall)
-        or for 32 bit programs C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
+    - Product id of the installed package (used for checking if already installed).
+    - You can find product ids for installed programs in the windows registry either in
+      C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs in
+      C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
     required: true
-    aliases: [productid]
+    aliases: [ product_id ]
   arguments:
     description:
-      - Any arguments the installer needs
-    default: null
-    required: false
+    - Any arguments the installer needs.
   state:
     description:
-      - Install or Uninstall
-    choices:
-      - present
-      - absent
+    - Install or Uninstall.
+    choices: [ absent, present ]
     default: present
-    required: false
-    aliases: [ensure]
-  user_name:
+    aliases: [ ensure ]
+  username:
     description:
-      - Username of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
-        Also specify user_password for this to function properly.
-    default: null
-    required: false
-  user_password:
+    - Username of an account with access to the package if it's located on a file share.
+    - Only needed if the WinRM user does not have access to the package.
+      Also specify C(password) for this to function properly.
+    aliases: [ user_name ]
+  password:
     description:
-      - Password of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
-        Also specify user_name for this to function properly.
-    default: null
-    required: false
+    - Password of an account with access to the package if it's located on a file share.
+    - Only needed if the WinRM user does not have access to the package.
+      Also specify C(username) for this to function properly.
+    aliases: [ user_password ]
   expected_return_code:
     description:
-      - One or more return codes from the package installation that indicates success.
-      - If not provided, defaults to 0
-    required: no
-    default: 0
+    - One or more return codes from the package installation that indicates success.
+    default: [ 0, 3010 ]
 notes:
      - For non-Windows targets, use the M(package) module instead.
 '''
@@ -118,8 +109,8 @@ EXAMPLES = r'''
   win_package:
     path: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
     productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
-    arguments: '/q /norestart'
-    ensure: present
+    arguments: /q /norestart
+    state: present
     expected_return_code: 3010
 
 # Specify multiple non-zero return codes when successful
@@ -128,7 +119,40 @@ EXAMPLES = r'''
   win_package:
     path: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
     productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
-    arguments: '/q /norestart'
-    ensure: present
-    expected_return_code: [0,3010]
+    arguments: /q /norestart
+    state: present
+    expected_return_code: [0, 3010]
+'''
+
+RETURN = r'''
+arguments:
+    description: the used arguments
+    returned: always
+    type: string
+    sample: /q /norestart
+name:
+    description: the provided name
+    returned: always
+    type: string
+    sample: Microsoft .NET Framework 4.5.1
+path:
+    description: the provided path
+    returned: always
+    type: string
+    sample: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
+productid:
+    description: the provided product id
+    returned: always
+    type: string
+    sample: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
+rc:
+    description: the return code for the action
+    returned: always
+    type: int
+    sample: 3010
+restart_required:
+    description: whether a restart is required
+    returned: always
+    type: boolean
+    sample: True
 '''
