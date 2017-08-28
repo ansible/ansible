@@ -21,6 +21,7 @@ Param(
     [int]$max_exec_time_sec,
     [string]$module_path,
     [string]$argfile_path,
+    [string]$tmpdir,
     [switch]$preserve_tmp
 )
 
@@ -409,7 +410,10 @@ Function Start-Watchdog {
 
 $local_jid = $jid + "." + $pid
 
-$results_path = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async", $local_jid)
+# FUTURE: Use remote_tmp for $jobdir
+$jobdir = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async")
+
+$results_path = [System.IO.Path]::Combine($jobdir, $local_jid)
 
 [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)) | Out-Null
 
@@ -435,6 +439,7 @@ $result = @{
     finished=0;
     results_file=$results_path;
     ansible_job_id=$local_jid;
+    ansible_job_dir=$jobdir;
     _ansible_suppress_tmpdir_delete=$true;
     ansible_async_watchdog_pid=$watchdog_pid
 }

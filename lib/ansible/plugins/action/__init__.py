@@ -701,6 +701,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # maintain a fixed number of positional parameters for async_wrapper
                 async_cmd.append('_')
 
+            # Ensure that async jobdir matches remote_tmp if set
+            if tmp:
+                async_cmd.append(tmp)
+            else:
+                async_cmd.append('_')
+
             if not self._should_remove_tmp_path(tmp):
                 async_cmd.append("-preserve_tmp")
 

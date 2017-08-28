@@ -1482,7 +1482,7 @@ class ShellModule(object):
         ''' % dict(path=path)
         return self._encode_script(script)
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None, tmpdir="_", rm_tmp=None):
         # pipelining bypass
         if cmd == '':
             return '-'

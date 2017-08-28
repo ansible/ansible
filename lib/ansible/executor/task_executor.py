@@ -647,11 +647,16 @@ class TaskExecutor:
         if async_jid is None:
             return dict(failed=True, msg="No job id was returned by the async task")
 
+        try:
+            async_jobdir = result.get('ansible_job_dir')
+        except:
+            async_jobdir = '~/.ansible_async'
+
         # Create a new pseudo-task to run the async_status module, and run
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
-        async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
+        async_task = Task().load(dict(action='async_status jid=%s jobdir=%s' % (async_jid, async_jobdir)))
 
         # FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,

@@ -120,11 +120,11 @@ def _get_interpreter(module_path):
         module_fd.close()
 
 
-def _run_module(wrapped_cmd, jid, job_path):
+def _run_module(wrapped_cmd, jid, jobdir, job_path):
 
     tmp_job_path = job_path + ".tmp"
     jobfile = open(tmp_job_path, "w")
-    jobfile.write(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid}))
+    jobfile.write(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid, "ansible_job_dir": jobdir}))
     jobfile.close()
     os.rename(tmp_job_path, job_path)
     jobfile = open(tmp_job_path, "w")
@@ -172,6 +172,7 @@ def _run_module(wrapped_cmd, jid, job_path):
             "stderr": stderr
         }
         result['ansible_job_id'] = jid
+        result['ansible_job_dir'] = jobdir
         jobfile.write(json.dumps(result))
 
     except (ValueError, Exception):
@@ -183,6 +184,7 @@ def _run_module(wrapped_cmd, jid, job_path):
             "msg": traceback.format_exc()
         }
         result['ansible_job_id'] = jid
+        result['ansible_job_dir'] = jobdir
         jobfile.write(json.dumps(result))
 
     jobfile.close()
@@ -191,7 +193,7 @@ def _run_module(wrapped_cmd, jid, job_path):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) < 5:
+    if len(sys.argv) < 6:
         print(json.dumps({
             "failed": True,
             "msg": "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile> [-preserve_tmp]  "
@@ -203,10 +205,11 @@ if __name__ == '__main__':
     time_limit = sys.argv[2]
     wrapped_module = sys.argv[3]
     argsfile = sys.argv[4]
+    tmpdir = sys.argv[5]
     if '-tmp-' not in os.path.dirname(wrapped_module):
         preserve_tmp = True
-    elif len(sys.argv) > 5:
-        preserve_tmp = sys.argv[5] == '-preserve_tmp'
+    elif len(sys.argv) > 6:
+        preserve_tmp = sys.argv[6] == '-preserve_tmp'
     else:
         preserve_tmp = False
     # consider underscore as no argsfile so we can support passing of additional positional parameters
@@ -217,7 +220,10 @@ if __name__ == '__main__':
     step = 5
 
     # setup job output directory
-    jobdir = os.path.expanduser("~/.ansible_async")
+    if tmpdir != '_':
+        jobdir = os.path.join(os.path.expanduser(tmpdir), '.ansible_async')
+    else:
+        jobdir = os.path.expanduser("~/.ansible_async")
     job_path = os.path.join(jobdir, jid)
 
     if not os.path.exists(jobdir):
@@ -241,8 +247,8 @@ if __name__ == '__main__':
             # this probably could be done with some IPC later.  Modules should always read
             # the argsfile at the very first start of their execution anyway
             notice("Return async_wrapper task started.")
-            print(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
-                              "_ansible_suppress_tmpdir_delete": not preserve_tmp}))
+            print(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid, "ansible_job_dir": jobdir,
+                              "results_file": job_path, "_ansible_suppress_tmpdir_delete": not preserve_tmp}))
             sys.stdout.flush()
             time.sleep(1)
             sys.exit(0)
@@ -284,7 +290,7 @@ if __name__ == '__main__':
             else:
                 # the child process runs the actual module
                 notice("Start module (%s)" % os.getpid())
-                _run_module(cmd, jid, job_path)
+                _run_module(cmd, jid, jobdir, job_path)
                 notice("Module complete (%s)" % os.getpid())
                 sys.exit(0)
 

@@ -471,7 +471,7 @@ class TestTaskExecutor(unittest.TestCase):
             mock_templar = MagicMock()
             res = te._poll_async_result(result=dict(), templar=mock_templar)
             self.assertIn('failed', res)
-            res = te._poll_async_result(result=dict(ansible_job_id=1), templar=mock_templar)
+            res = te._poll_async_result(result=dict(ansible_job_id=1, ansible_job_dir='~/.ansible_async'), templar=mock_templar)
             self.assertIn('failed', res)
 
         def _get(*args, **kwargs):
@@ -482,5 +482,5 @@ class TestTaskExecutor(unittest.TestCase):
         # now testing with good values
         with patch.object(action_loader, 'get', _get):
             mock_templar = MagicMock()
-            res = te._poll_async_result(result=dict(ansible_job_id=1), templar=mock_templar)
+            res = te._poll_async_result(result=dict(ansible_job_id=1, ansible_job_dir='~/.ansible_async'), templar=mock_templar)
             self.assertEqual(res, dict(finished=1))
