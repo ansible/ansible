@@ -150,12 +150,12 @@ Windows
 - Module updates
 
   - Split "Windows" category into multiple subs
-  - Domain user/group management modules **(in progress)**
+  - Domain user/group management modules **(done)**
   - win_mapped_drive module **(done)**
   - win_hotfix **(done)**
   - win_updates rewrite to require become
-  - win_package changes required to deprecate win_msi
-  - win_copy re-write
+  - win_package changes required to deprecate win_msi **(done)**
+  - win_copy re-write **(done)**
 
 AWS
 ---
