@@ -1,11 +1,26 @@
 #!/usr/bin/env python
 
+import optparse
 import os
+import pprint
 import sys
 
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.module_utils._text import to_bytes
+
+
+def generate_parser():
+    p = optparse.OptionParser(
+        version='%prog 1.0',
+        usage='usage: %prog [options]',
+        description='Generate cli documentation from cli docstrings',
+    )
+
+    p.add_option("-t", "--template-file", action="store", dest="template_file", default="../templates/man.j2", help="path to jinja2 template")
+    p.add_option("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
+    p.add_option("-f", "--output-format", action="store", dest="output_format", default='man', help="Output format for docs (the default 'man' or 'rst')")
+    return p
 
 
 # from https://www.python.org/dev/peps/pep-0257/
@@ -74,9 +89,6 @@ def opt_doc_list(cli):
     return results
 
 
-import pprint
-
-
 # def opts_docs(cli, name):
 def opts_docs(cli_class_name, cli_module_name):
     ''' generate doc structure from options '''
@@ -85,8 +97,6 @@ def opts_docs(cli_class_name, cli_module_name):
     if cli_module_name == 'adhoc':
         cli_name = 'ansible'
 
-    print('cli_class_name: %s' % cli_class_name)
-    print('cli_name: %s' % cli_name)
     # WIth no action/subcommand
     # shared opts set
     # instantiate each cli and ask its options
@@ -98,7 +108,6 @@ def opts_docs(cli_class_name, cli_module_name):
     try:
         cli.parse()
     except:
-        # no options passed, we expect errors
         pass
 
     # base/common cli info
@@ -120,7 +129,6 @@ def opts_docs(cli_class_name, cli_module_name):
 
     common_opts = opt_doc_list(cli)
     groups_info = get_option_groups(cli.parser)
-
     shared_opt_names = []
     for opt in common_opts:
         shared_opt_names.extend(opt.get('options', []))
@@ -135,12 +143,8 @@ def opts_docs(cli_class_name, cli_module_name):
     # now for each action/subcommand
     # force populate parser with per action options
 
-    print('cli_class_name: %s type: %s' % (cli_class_name, type(cli_class_name)))
-
     # use class attrs not the attrs on a instance (not that it matters here...)
-    print(getattr(cli_klass, 'VALID_ACTIONS', ()))
     for action in getattr(cli_klass, 'VALID_ACTIONS', ()):
-
         # instantiate each cli and ask its options
         action_cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
                                               fromlist=[cli_class_name]), cli_class_name)
@@ -151,7 +155,6 @@ def opts_docs(cli_class_name, cli_module_name):
         try:
             cli.parse()
         except:
-            # no options passed, we expect errors
             pass
 
         # FIXME/TODO: needed?
@@ -173,12 +176,9 @@ def opts_docs(cli_class_name, cli_module_name):
         uncommon_options = []
         for action_doc in action_doc_list:
             # uncommon_options = []
-            # print('\naction: %s action_doc: %s' % (action, action_doc))
 
             option_aliases = action_doc.get('options', [])
             for option_alias in option_aliases:
-
-                # print('option_alias: %s' % option_alias)
 
                 if option_alias in shared_opt_names:
                     continue
@@ -197,23 +197,38 @@ def opts_docs(cli_class_name, cli_module_name):
         docs['actions'][action] = action_info
 
     docs['options'] = opt_doc_list(cli)
-    #print('\n\n')
-    pprint.pprint(docs)
-
     return docs
 
 
 if __name__ == '__main__':
 
-    template_file = 'man.j2'
+    parser = generate_parser()
 
+    options, args = parser.parse_args()
+
+    template_file = options.template_file
+    template_path = os.path.expanduser(template_file)
+    template_dir = os.path.abspath(os.path.dirname(template_path))
+    template_basename = os.path.basename(template_file)
+
+    output_dir = os.path.abspath(options.output_dir)
+    output_format = options.output_format
+
+    cli_modules = args
+
+    # various cli parsing things checks sys.argv if the 'args' that are passed in are []
+    # so just remove any args so the cli modules dont try to parse them resulting in warnings
+    sys.argv = [sys.argv[0]]
     # need to be in right dir
     os.chdir(os.path.dirname(__file__))
 
     allvars = {}
     output = {}
     cli_list = []
-    for binary in os.listdir('../../lib/ansible/cli'):
+
+    # for binary in os.listdir('../../lib/ansible/cli'):
+    for cli_module_name in cli_modules:
+        binary = os.path.basename(os.path.expanduser(cli_module_name))
 
         if not binary.endswith('.py'):
             continue
@@ -221,7 +236,6 @@ if __name__ == '__main__':
             continue
 
         cli_name = os.path.splitext(binary)[0]
-        print("Found CLI %s" % cli_name)
 
         if cli_name == 'adhoc':
             cli_class_name = 'AdHocCLI'
@@ -237,32 +251,25 @@ if __name__ == '__main__':
 
     cli_list = allvars.keys()
 
-    templates = {'man.j2': {'out_dir': '../man/man1/%s',
-                            'out_file_format': '%s.1.asciidoc.in'},
-                 'cli_rst.j2': {'out_dir': '../docsite/rst/cli/%s',
-                                'out_file_format': '%s.rst'}}
+    doc_name_formats = {'man': '%s.1.asciidoc.in',
+                        'rst': '%s.rst'}
 
     for cli_name in cli_list:
 
         # template it!
-        env = Environment(loader=FileSystemLoader('../templates'))
-        for template_file in templates:
-            # print('template_file: %s' % template_file)
-            # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-            template = env.get_template(template_file)
+        env = Environment(loader=FileSystemLoader(template_dir))
+        template = env.get_template(template_basename)
 
-            # add rest to vars
-            # pprint.pprint(allvars)
-            tvars = allvars[cli_name]
-            tvars['cli_list'] = cli_list
-            tvars['cli'] = cli_name
-            if '-i' in tvars['options']:
-                print('uses inventory')
+        # add rest to vars
+        tvars = allvars[cli_name]
+        tvars['cli_list'] = cli_list
+        tvars['cli'] = cli_name
+        if '-i' in tvars['options']:
+            print('uses inventory')
 
-            manpage = template.render(tvars)
-            filename = templates[template_file]['out_dir'] % templates[template_file]['out_file_format'] % tvars['cli_name']
-            # output[cli_name]
-            # print('filename: %s %s' % (filename, os.path.realpath(filename)))
-            with open(filename, 'wb') as f:
-                f.write(to_bytes(manpage))
-                print("Wrote doc to %s" % filename)
+        manpage = template.render(tvars)
+        filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
+
+        with open(filename, 'wb') as f:
+            f.write(to_bytes(manpage))
+            print("Wrote doc to %s" % filename)
