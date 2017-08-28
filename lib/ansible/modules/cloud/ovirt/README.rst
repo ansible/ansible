@@ -1,7 +1,7 @@
 oVirt Ansible Modules
 =====================
 
-These are a set of modules for interacting with oVirt/RHV. This document
+This is a set of modules for interacting with oVirt/RHV. This document
 serves as developer coding guidelines for creating oVIRT/RHV modules.
 
 Naming
@@ -10,7 +10,7 @@ Naming
 -  All modules should start with an ``ovirt_`` prefix.
 -  All modules should be named after the resource it manages in singular
    form.
--  All modules which handle facts gathering should have ``_facts``
+-  All modules that gather facts should have a ``_facts``
    suffix.
 
 Interface
@@ -18,9 +18,9 @@ Interface
 
 -  Every module should return the ID of the resource it manages.
 -  Every module should return the dictionary of the resource it manages.
--  Never change the name of the parameter, as we do guarantee backward
+-  Never change the name of the parameter, as we guarantee backward
    compatibility. Use aliases instead.
--  If some parameter can't achieve idempotency for any reason, please
+-  If a parameter can't achieve idempotency for any reason, please
    document it.
 
 Interoperability
@@ -33,26 +33,26 @@ Libraries
 ---------
 
 -  All modules should use ``ovirt_full_argument_spec`` or
-   ``ovirt_facts_full_argument_spec`` to pick up the standard input such
-   as auth and ``fetch_nested``.
+   ``ovirt_facts_full_argument_spec`` to pick up the standard input (such
+   as auth and ``fetch_nested``).
 -  All modules should use ``extends_documentation_fragment``: ovirt to go
    along with ``ovirt_full_argument_spec``.
 -  All facts modules should use ``extends_documentation_fragment``:
    ``ovirt_facts`` to go along with ``ovirt_facts_full_argument_spec``.
--  Common functions to all modules should be implemeneted in
+-  Functions that are common to all modules should be implemeneted in the 
    ``module_utils/ovirt.py`` file, so they can be reused.
 -  Python SDK version 4 must be used.
 
 New module development
 ----------------------
 
-Please first read this
+Please read 
 `link <http://docs.ansible.com/ansible/dev_guide/developing_modules.html#how-to-develop-a-module>`__,
-to know what common properties, functions and features every module must
+first to know what common properties, functions and features every module must
 have.
 
 In order to achieve idempotency of oVirt entity attributes, a helper class
-was created. The first thing you need to do is to extend it and override few
+was created. The first thing you need to do is to extend this class and override a few
 methods:
 
 .. code:: python
@@ -198,7 +198,7 @@ module:
                 # ...
             )
 
-As you can see the ``action`` method accepts the ``action_condition`` and
+As you can see from the preceding example, the ``action`` method accepts the ``action_condition`` and
 ``wait_condition``, which are methods which accept the virtual machine
 object as a parameter, so you can check whether the virtual
 machine is in a proper state before the action. The rest of the
