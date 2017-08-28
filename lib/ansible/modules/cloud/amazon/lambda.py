@@ -368,7 +368,7 @@ def main():
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
-            if vpc_subnet_ids is None or len(vpc_subnet_ids) == 0 or vpc_security_group_ids is None or len(vpc_security_group_ids) == 0:
+            if not vpc_subnet_ids or not vpc_security_group_ids:
                 module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             if 'VpcConfig' in current_config:
@@ -384,9 +384,8 @@ def main():
                                   'SecurityGroupIds': vpc_security_group_ids}
                 func_kwargs.update({'VpcConfig': new_vpc_config})
         else:
-            # No VPC configuration is desired, assure VPC config is empty when
-            # present in current config
-            if 'VpcConfig' in current_config and 'VpcId' in current_config['VpcConfig'] and current_config['VpcConfig']['VpcId'] != '':
+            # No VPC configuration is desired, assure VPC config is empty when present in current config
+            if 'VpcConfig' in current_config and current_config['VpcConfig'].get('VpcId'):
                 func_kwargs.update({'VpcConfig': {'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
@@ -416,8 +415,7 @@ def main():
             local_checksum = sha256sum(zip_file)
             remote_checksum = current_config['CodeSha256']
 
-            # Only upload new code when local code is different compared to the
-            # remote code
+            # Only upload new code when local code is different compared to the remote code
             if local_checksum != remote_checksum:
                 try:
                     with open(zip_file, 'rb') as f:
@@ -488,7 +486,7 @@ def main():
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
-            if vpc_subnet_ids is None or len(vpc_subnet_ids) == 0 or vpc_security_group_ids is None or len(vpc_security_group_ids) == 0:
+            if not vpc_subnet_ids or not vpc_security_group_ids:
                 module.fail_json(msg='vpc connectivity requires at least one security group and one subnet')
 
             func_kwargs.update({'VpcConfig': {'SubnetIds': vpc_subnet_ids,

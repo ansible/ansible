@@ -128,6 +128,7 @@ lambda_policy_action:
 
 import json
 import re
+from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
@@ -213,9 +214,9 @@ def get_qualifier(module):
     """
 
     if module.params.get('version') is not None:
-        return str(module.params['version'])
+        return to_native(module.params['version'])
     elif module.params['alias']:
-        return str(module.params['alias'])
+        return to_native(module.params['alias'])
 
     return None
 
