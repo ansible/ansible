@@ -92,7 +92,7 @@ RETURN = '''
 network_sets:
     description: Has all the OneView facts about the Network Sets.
     returned: Always, but can be empty.
-    type: complex
+    type: dict
 '''
 
 from ansible.module_utils.oneview import OneViewModuleBase
