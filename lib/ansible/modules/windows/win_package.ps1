@@ -850,7 +850,7 @@ function Set-TargetResource
                     if($process)
                     {
                         $exitCode = $process.ExitCode
-                        $result.exit_code = $exitCode
+                        $result["exit_code"] = $exitCode
                     }
                 }
             }
@@ -1259,23 +1259,61 @@ $result = @{
     changed = $false
 }
 
-$path = Get-Attr -obj $params -name path -failifempty $true -resultobj $result
-$name = Get-Attr -obj $params -name name -default $path
-$productid = Get-Attr -obj $params -name productid
-if ($productid -eq $null)
+$path = Get-AnsibleParam -obj $params -name "path" -failifempty $true -resultobj $result
+$name = Get-AnsibleParam -obj $params -name "name" -default $path
+$productid = Get-AnsibleParam -obj $params -name "productid" -aliases "product_id"
+$arguments = Get-AnsibleParam -obj $params -name "arguments"
+$options = Get-AnsibleParam -obj $params -name "options"
+$ensure = Get-AnsibleParam -obj $params -name "state" -default "present" -aliases "ensure"
+$username = Get-AnsibleParam -obj $params -name "user_name"
+$password = Get-AnsibleParam -obj $params -name "user_password"
+$return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "int" -default 0
+
+
+if ($arguments -ne $null)
 {
-    #Alias added for backwards compat.
-    $productid = Get-Attr -obj $params -name product_id -failifempty $true -resultobj $result
+    Add-DeprecationWarning -obj $result -message "'arguments' is being deprecated in favor of 'options'" -version "2.4.0"
 }
-$arguments = Get-Attr -obj $params -name arguments
-$ensure = Get-Attr -obj $params -name state -default "present"
-if ($ensure -eq $null)
+if (($arguments -ne $null) -and ($options -ne $null))
 {
-    $ensure = Get-Attr -obj $params -name ensure -default "present"
+    fail-json $result "specify either arguments or options, not both"
 }
-$username = Get-Attr -obj $params -name user_name
-$password = Get-Attr -obj $params -name user_password
-$return_code = Get-Attr -obj $params -name expected_return_code -default 0
+
+if ($options -ne $null)
+{
+    $arguments = $options
+    $normalizeargs = $true
+}
+
+if ($normalizeargs -eq $true -and ($arguments -ne $null))
+{
+    $ReplacedArgs = @()
+    $SplitChars = " ","="
+    Foreach ($SplitChar in $SplitChars)
+    {
+        $NewArgs = @()
+        $ArgsSplit = $arguments.split($SplitChar)
+        foreach ($ThisArg in $ArgsSplit)
+        {
+            if ($ThisArg[1] -eq ":")
+            {
+                $OrigArg = $ThisArg
+                $ThisArg = $ThisArg.Replace("\\","\")
+                if ($OrigArg -ne $ThisArg)
+                {
+                    #We replaced a thing
+                    $myobj = "" | Select "original", "normalized"
+                    $myobj.original = $OrigArg
+                    $myobj.normalized = $ThisArg
+                    $ReplacedArgs += $myobj
+                }
+            }
+            $NewArgs += $ThisArg
+        }
+        $arguments = $NewArgs -join $SplitChar
+    }
+    $result.normalized_args = $ReplacedArgs
+}
 
 #Construct the DSC param hashtable
 $dscparams = @{
@@ -1292,7 +1330,7 @@ if (($username -ne $null) -and ($password -ne $null))
     #Add network credential to the list
     $secpassword = $password | ConvertTo-SecureString -AsPlainText -Force
     $credential = New-Object pscredential -ArgumentList $username, $secpassword
-    $dscparams.add("Credential",$credential)
+    $dscparams.add("Credential" ,$credential)
 }
 
 #Always return the name

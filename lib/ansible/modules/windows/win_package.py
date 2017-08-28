@@ -59,9 +59,14 @@ options:
     aliases: [productid]
   arguments:
     description:
-      - Any arguments the installer needs
+      - Any arguments the installer needs. Will be deprecated, use options instead.
     default: null
-    required: false
+  options:
+    description:
+      - Mutually exclusive with "arguments".
+      - Similar to arguments, however using this instead of arguments will tell the module to attempt to normalize arguments.
+      - See examples below.
+    version_added: "2.4"
   state:
     description:
       - Install or Uninstall
@@ -69,20 +74,17 @@ options:
       - present
       - absent
     default: present
-    required: false
     aliases: [ensure]
   user_name:
     description:
       - Username of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
         Also specify user_password for this to function properly.
     default: null
-    required: false
   user_password:
     description:
       - Password of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
         Also specify user_name for this to function properly.
     default: null
-    required: false
   expected_return_code:
     description:
       - One or more return codes from the package installation that indicates success.
@@ -131,4 +133,11 @@ EXAMPLES = r'''
     arguments: '/q /norestart'
     ensure: present
     expected_return_code: [0,3010]
+# example of passing in complex args using json-escaped double backslashes with normalization
+- name: install ravendb using argument normalization (paths will be normalized before sent to the installer)
+  win_package:
+    path: "{{ ravendb_source_url }}"
+    options: "/quiet /log C:\\raven_log.txt /msicl TARGETDIR=F:\\apps\\RavenDB /msicl F:\\apps\\RavenDB"
+    product_id: "{D90279D8-6EB3-417E-983B-4BB5E1E9BF88}"
+  register: ravendb_install_result
 '''
