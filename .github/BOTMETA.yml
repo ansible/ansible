@@ -808,8 +808,7 @@ files:
   contrib/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
-    maintainers:
-    - intheclouddan rwaweber zbal
+    maintainers: intheclouddan rwaweber zbal
   contrib/inventory/openstack.py:
     keywords:
     - openstack dynamic inventory script
