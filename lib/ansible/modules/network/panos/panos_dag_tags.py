@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: panos_dag_tags
-short_description: Create tags for DAG's
+short_description: Create tags for DAG's on PAN-OS devices.
 description:
     - Create the ip address to tag associations. Tags will in turn be used to create DAG's
 author: "Vinay Venkataraghavan @vinayvenkat"
@@ -45,6 +45,9 @@ options:
             - password for authentication
         required: true
         default: null
+    api_key:
+        description:
+            - API key that can be used instead of I(username)/I(password) credentials.
     username:
         description:
             - username for authentication
@@ -185,7 +188,7 @@ def delete_address_from_mapping(device, ip_address, tags):
 def main():
     argument_spec = dict(
         ip_address=dict(required=True),
-        password=dict(required=True),
+        password=dict(required=True, no_log=True),
         username=dict(default='admin'),
         api_key=dict(no_log=True),
         devicegroup=dict(default=None),
@@ -196,7 +199,8 @@ def main():
         operation=dict(type='str', required=True)
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
+                           required_one_of=[['api_key', 'password']])
     if not HAS_LIB:
         module.fail_json(msg='pan-python is required for this module')
 
@@ -218,7 +222,7 @@ def main():
         if dev_group:
             device.add(dev_group)
         else:
-            module.fail_json(msg='\'%s\' device group not found in Panorama. Is the name correct?' % devicegroup)
+            module.fail_json(msg="'%s' device group not found in Panorama. Is the name correct?" % devicegroup)
 
     result = None
     if operation == 'add':
