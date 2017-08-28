@@ -5,7 +5,7 @@ testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local
 testhost3 ansible_ssh_host=127.0.0.3
 testhost4 ansible_ssh_host=127.0.0.4
 # For testing fact gathering
-facthost[0:20] ansible_host=1270.0.0.1 ansible_connection=local
+facthost[0:20] ansible_host=127.0.0.1 ansible_connection=local
 
 [binary_modules]
 testhost_binary_modules ansible_host=127.0.0.1 ansible_connection=local
