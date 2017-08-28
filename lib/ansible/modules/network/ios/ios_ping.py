@@ -153,7 +153,8 @@ def main():
 
     # Convert rtt values to int
     for k, v in rtt.items():
-        rtt[k] = int(v)
+        if rtt[k] is not None:
+            rtt[k] = int(v)
 
     results["rtt"] = rtt
 
