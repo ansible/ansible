@@ -249,7 +249,10 @@ def execute_show_command(command, module, command_type='cli_show'):
             'output': 'text',
         }]
     else:
-        cmds = [command]
+        cmds = [{
+            'command': command,
+            'output': 'json',
+        }]
 
     return run_commands(module, cmds)
 
