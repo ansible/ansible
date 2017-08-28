@@ -63,7 +63,7 @@ options:
         description:
             - Visible name of the host in Zabbix.
         required: false
-        version_added: '2.4'
+        version_added: '2.3'
     host_groups:
         description:
             - List of host groups the host is part of.
