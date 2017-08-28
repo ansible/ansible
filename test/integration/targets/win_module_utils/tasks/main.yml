@@ -39,3 +39,11 @@
 - assert:
     that:
     - camel_conversion.data == 'success'
+
+- name: call module with SID tests
+  sid_utils_test:
+  register: sid_test
+
+- assert:
+    that:
+    - sid_test.data == 'success'
