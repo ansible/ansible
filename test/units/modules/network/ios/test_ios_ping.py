@@ -24,20 +24,25 @@ from ansible.modules.network.ios import ios_ping
 from .ios_module import TestIosModule, load_fixture, set_module_args
 
 class TestIosPingModule(TestIosModule):
+    ''' Class used for Unit Tests agains ios_ping module '''
     module = ios_ping
 
     def test_ios_ping_expected_success(self):
-        set_module_args(dict(dest="8.8.8.8"))
+        ''' Test for successful pings when destination should be reachable '''
+        set_module_args(dict(count=2, dest="8.8.8.8"))
         self.execute_module()
 
     def test_ios_ping_expected_failure(self):
-        set_module_args(dict(dest="10.255.255.250", timeout=45))
+        ''' Test for unsuccessful pings when destination should not be reachable '''
+        set_module_args(dict(count=2, dest="10.255.255.250", state="absent", timeout=45))
         self.execute_module()
 
     def test_ios_ping_unexpected_success(self):
-        set_module_args(dict(dest="8.8.8.8"))
+        ''' Test for successful pings when destination should not be reachable - FAIL. '''
+        set_module_args(dict(count=2, dest="8.8.8.8", state="absent"))
         self.execute_module(failed=True)
 
     def test_ios_ping_unexpected_failure(self):
-        set_module_args(dict(dest="10.255.255.250", timeout=45))
+        ''' Test for unsuccessful pings when destination should be reachable - FAIL. '''
+        set_module_args(dict(count=2, dest="10.255.255.250", timeout=45))
         self.execute_module(failed=True)
