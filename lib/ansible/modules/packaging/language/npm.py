@@ -69,6 +69,12 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+  extra_options:
+    description:
+      - Extra options passed to npm.
+    required: false
+    default: null
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -113,6 +119,11 @@ EXAMPLES = '''
     path: /app/location
     executable: /opt/nvm/v0.10.1/bin/npm
     state: present
+
+# execute with optional arguments
+- npm:
+    path: /app/location
+    extra_options: --no-optional
 '''
 
 import json
@@ -132,6 +143,7 @@ class Npm(object):
         self.registry = kwargs['registry']
         self.production = kwargs['production']
         self.ignore_scripts = kwargs['ignore_scripts']
+        self.extra_options = kwargs['extra_options']
 
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
@@ -155,6 +167,8 @@ class Npm(object):
                 cmd.append('--ignore-scripts')
             if self.name:
                 cmd.append(self.name_version)
+            if self.extra_options:
+                cmd.append(self.extra_options)
             if self.registry:
                 cmd.append('--registry')
                 cmd.append(self.registry)
@@ -225,6 +239,7 @@ def main():
         executable=dict(default=None, type='path'),
         registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
+        extra_options=dict(),
         ignore_scripts=dict(default=False, type='bool'),
     )
     arg_spec['global'] = dict(default='no', type='bool')
@@ -242,14 +257,17 @@ def main():
     registry = module.params['registry']
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
+    extra_options = module.params['extra_options']
 
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
     if state == 'absent' and not name:
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
-    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, \
-              executable=executable, registry=registry, ignore_scripts=ignore_scripts)
+    npm = Npm(module, name=name, path=path, version=version, glbl=glbl,
+              production=production, executable=executable,
+              registry=registry, ignore_scripts=ignore_scripts,
+              extra_options=extra_options)
 
     changed = False
     if state == 'present':
