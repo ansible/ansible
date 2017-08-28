@@ -417,7 +417,7 @@ class DocCLI(CLI):
             if support_block:
                 text.extend(support_block)
         except:
-            pass #  FIXME: not suported by plugins
+            pass  # FIXME: not suported by plugins
 
         if doc.pop('action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
@@ -473,6 +473,6 @@ class DocCLI(CLI):
                 text.extend(metadata_block)
                 text.append('')
         except:
-            pass #  metadata is optional
+            pass  # metadata is optional
 
         return "\n".join(text)
