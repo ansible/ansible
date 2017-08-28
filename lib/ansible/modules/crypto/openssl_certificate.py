@@ -76,15 +76,17 @@ options:
         description:
             - Digest algorithm to be used when self-signing the certificate
 
-    selfsigned_notBefore:
+    selfsigned_not_before:
         description:
             - The timestamp at which the certificate starts being valid. The timestamp is formatted as an ASN.1 TIME.
               If this value is not specified, certificate will start being valid from now.
+        aliases: [ selfsigned_notBefore ]
 
-    selfsigned_notAfter:
+    selfsigned_not_after:
         description:
             - The timestamp at which the certificate stops being valid. The timestamp is formatted as an ASN.1 TIME.
               If this value is not specified, certificate will stop being valid 10 years from now.
+        aliases: [ selfsigned_notAfter ]
 
     acme_accountkey:
         description:
@@ -129,43 +131,51 @@ options:
         description:
             - The certificate must start to become valid at this point in time. The timestamp is formatted as an ASN.1 TIME.
 
-    notAfter:
+    not_after:
         description:
             - The certificate must expire at this point in time. The timestamp is formatted as an ASN.1 TIME.
+        aliases: [ notAfter ]
+
 
     valid_in:
         description:
             - The certificate must still be valid in I(valid_in) seconds from now.
 
-    keyUsage:
+    key_usage:
         description:
-            - The I(keyUsage) extension field must contain all these values.
+            - The I(key_usage) extension field must contain all these values.
+        aliases: [ keyUsage ]
 
-    keyUsage_strict:
+    key_usage_strict:
         default: False
         type: bool
         description:
-            - If set to True, the I(keyUsage) extension field must contain only these values.
+            - If set to True, the I(key_usage) extension field must contain only these values.
+        aliases: [ keyUsage_strict ]
 
-    extendedKeyUsage:
+    extended_key_usage:
         description:
-            - The I(extendedKeyUsage) extension field must contain all these values.
+            - The I(extended_key_usage) extension field must contain all these values.
+        aliases: [ extendedKeyUsage ]
 
-    extendedKeyUsage_strict:
+    extended_key_usage_strict:
         default: False
         type: bool
         description:
-            - If set to True, the I(extendedKeyUsage) extension field must contain only these values.
+            - If set to True, the I(extended_key_usage) extension field must contain only these values.
+        aliases: [ extendedKeyUsage_strict ]
 
-    subjectAltName:
+    subject_alt_name:
         description:
-            - The I(subjectAltName) extension field must contain these values.
+            - The I(subject_alt_name) extension field must contain these values.
+        aliases: [ subjectAltName ]
 
-    subjectAltName_strict:
+    subject_alt_name_strict:
         default: False
         type: bool
         description:
-            - If set to True, the I(subjectAltName) extension field must contain only these values.
+            - If set to True, the I(subject_alt_name) extension field must contain only these values.
+        aliases: [ subjectAltName_strict ]
 
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
@@ -243,32 +253,32 @@ EXAMPLES = '''
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
     provider: assertonly
-    keyUsage:
+    key_usage:
       - digitalSignature
       - keyEncipherment
-    keyUsage_strict: True
+    key_usage_strict: true
 
 - name: Ensure that the existing certificate can be used for client authentication
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
     provider: assertonly
-    extendedKeyUsage:
+    extended_key_usage:
       - clientAuth
 
 - name: Ensure that the existing certificate can only be used for client authentication and time stamping
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
     provider: assertonly
-    extendedKeyUsage:
+    extended_key_usage:
       - clientAuth
       - 1.3.6.1.5.5.7.3.8
-    extendedKeyUsage: strict
+    extended_key_usage_strict: true
 
 - name: Ensure that the existing certificate has a certain domain in its subjectAltName
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
     provider: assertonly
-    subjectAltName:
+    subject_alt_name:
       - www.example.com
       - test.example.com
 '''
@@ -688,10 +698,10 @@ class AcmeCertificate(Certificate):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            path=dict(required=True, type='path'),
-            provider=dict(choices=['selfsigned', 'assertonly', 'acme'], type='str'),
-            force=dict(default=False, type='bool'),
+            state=dict(type='str', choices=['present', 'absent'], default='present'),
+            path=dict(type='path', required=True),
+            provider=dict(type='str', choices=['selfsigned', 'assertonly', 'acme']),
+            force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
 
             # General properties of a certificate
@@ -700,24 +710,24 @@ def main():
             signature_algorithms=dict(type='list'),
             subject=dict(type='dict'),
             issuer=dict(type='dict'),
-            has_expired=dict(default=False, type='bool'),
+            has_expired=dict(type='bool', default=False),
             version=dict(type='int'),
-            keyUsage=dict(type='list'),
-            keyUsage_strict=dict(default=False, type='bool'),
-            extendedKeyUsage=dict(aliases=['extKeyUsage'], type='list'),
-            extendedKeyUsage_strict=dict(aliases=['extKeyUsage_strict'], default=False, type='bool'),
-            subjectAltName=dict(type='list'),
-            subjectAltName_strict=dict(default=False, type='bool'),
-            notBefore=dict(type='str'),
-            notAfter=dict(type='str'),
+            keyUsage=dict(type='list', aliases=['key_usage']),
+            keyUsage_strict=dict(type='bool', default=False, aliases=['key_usage_strict']),
+            extendedKeyUsage=dict(type='list', aliases=['extended_key_usage'], ),
+            extendedKeyUsage_strict=dict(type='bool', default=False, aliases=['extended_key_usage_strict']),
+            subjectAltName=dict(type='list', aliases=['subject_alt_name']),
+            subjectAltName_strict=dict(type='bool', default=False, aliases=['subject_alt_name_strict']),
+            notBefore=dict(type='str', aliases=['not_before']),
+            notAfter=dict(type='str', aliases=['not_after']),
             valid_at=dict(type='str'),
             invalid_at=dict(type='str'),
             valid_in=dict(type='int'),
 
             # provider: selfsigned
-            selfsigned_digest=dict(default='sha256', type='str'),
-            selfsigned_notBefore=dict(type='str'),
-            selfsigned_notAfter=dict(type='str'),
+            selfsigned_digest=dict(type='str', default='sha256'),
+            selfsigned_notBefore=dict(type='str', aliases=['selfsigned_not_before']),
+            selfsigned_notAfter=dict(type='str', aliases=['selfsigned_not_after']),
 
             # provider: acme
             acme_accountkey_path=dict(type='path'),
