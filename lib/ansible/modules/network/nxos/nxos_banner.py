@@ -104,16 +104,22 @@ def map_obj_to_commands(updates, module):
     elif state == 'present':
         if want['text'] and (want['text'] != have.get('text')):
             banner_cmd = 'banner %s' % module.params['banner']
-            banner_cmd += ' @\n'
+            banner_cmd += ' #'
             banner_cmd += want['text'].strip()
-            banner_cmd += '\n@'
+            banner_cmd += '#'
             commands.append(banner_cmd)
 
     return commands
 
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show banner %s' % module.params['banner']])[0]
+    if module.params['transport'] == 'cli':
+        output = run_commands(module, ['show banner %s' % module.params['banner']])[0]
+    else:
+        text = run_commands(module, ['show banner %s' % module.params['banner']])[0]['banner_msg']['b_msg']
+        if text:
+            output = str(text).replace('\$(hostname)', '\n')
+
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
         obj['text'] = output

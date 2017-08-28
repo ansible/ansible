@@ -44,7 +44,7 @@ class TestNxosBannerModule(TestNxosModule):
 
     def test_nxos_banner_create(self):
         set_module_args(dict(banner='exec', text='test\nbanner\nstring'))
-        commands = ['banner exec @\ntest\nbanner\nstring\n@']
+        commands = ['banner exec #test\nbanner\nstring#']
         self.execute_module(changed=True, commands=commands)
 
     def test_nxos_banner_remove(self):

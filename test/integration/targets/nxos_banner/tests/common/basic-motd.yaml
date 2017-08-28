@@ -22,7 +22,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'banner motd @\nthis is my motd banner\nthat has a multiline\nstring\n@' in result.commands"
+      - "'banner motd #this is my motd banner\nthat has a multiline\nstring#' in result.commands"
 
 - name: Set motd again (idempotent)
   nxos_banner:

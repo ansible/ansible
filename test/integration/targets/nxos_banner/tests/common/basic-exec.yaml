@@ -22,7 +22,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'banner exec @\nthis is my exec banner\nthat has a multiline\nstring\n@' in result.commands"
+      - "'banner exec #this is my exec banner\nthat has a multiline\nstring#' in result.commands"
 
 - name: Set exec again (idempotent)
   nxos_banner:
