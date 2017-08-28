@@ -143,13 +143,14 @@
     that:
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('fragment') == 'fragment'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('hostname') == 'www.acme.com'"
+      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('netloc') == 'mary:MySecret@www.acme.com:9000'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('path') == '/dir/index.html'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('port') == 9000"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('query') == 'query=term'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('scheme') == 'http'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('username') == 'mary'"
       - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('password') == 'MySecret'"
-      - "'http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit == { 'fragment': 'fragment', 'hostname': 'www.acme.com', 'password': 'password', 'path': '/dir/index.html', 'port': 9000, 'query': 'query=term', 'scheme': 'http', 'username': 'user' }"
+      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit == { 'fragment': 'fragment', 'hostname': 'www.acme.com', 'netloc': 'mary:MySecret@www.acme.com:9000', 'password': 'MySecret', 'path': '/dir/index.html', 'port': 9000, 'query': 'query=term', 'scheme': 'http', 'username': 'mary' }"
 
 - name: Test urlsplit filter bad argument
   debug:
