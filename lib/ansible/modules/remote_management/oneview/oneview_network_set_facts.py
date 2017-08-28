@@ -100,9 +100,9 @@ from ansible.module_utils.oneview import OneViewModuleBase
 
 class NetworkSetFactsModule(OneViewModuleBase):
     argument_spec = dict(
-        name=dict(required=False, type='str'),
-        options=dict(required=False, type='list'),
-        params=dict(required=False, type='dict'),
+        name=dict(type='str'),
+        options=dict(type='list'),
+        params=dict(type='dict'),
     )
 
     def __init__(self):
@@ -113,7 +113,7 @@ class NetworkSetFactsModule(OneViewModuleBase):
         name = self.module.params.get('name')
 
         if 'withoutEthernet' in self.options:
-            filter_by_name = "\"'name'='{}'\"".format(name) if name else ''
+            filter_by_name = ("\"'name'='%s'\"" % name) if name else ''
             network_sets = self.oneview_client.network_sets.get_all_without_ethernet(filter=filter_by_name)
         elif name:
             network_sets = self.oneview_client.network_sets.get_by('name', name)
