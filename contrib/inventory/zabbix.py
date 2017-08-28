@@ -37,7 +37,10 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-import ConfigParser
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 try:
     from zabbix_api import ZabbixAPI
@@ -55,7 +58,7 @@ except:
 class ZabbixInventory(object):
 
     def read_settings(self):
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.SafeConfigParser()
         conf_path = './zabbix.ini'
         if not os.path.exists(conf_path):
             conf_path = os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini'
