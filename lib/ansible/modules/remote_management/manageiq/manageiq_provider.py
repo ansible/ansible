@@ -1,42 +1,28 @@
 #!/usr/bin/python
-#
+# -*- coding: utf-8 -*-
 # (c) 2017, Daniel Korn <korndaniel1@gmail.com>
-#     2017, Yaacov Zamir <yzamir@redhat.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017, Yaacov Zamir <yzamir@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
-
 module: manageiq_provider
-
 short_description: Management of provider in ManageIQ.
 extends_documentation_fragment: manageiq
 version_added: '2.4'
 author: Daniel Korn (@dkorn)
 description:
-  - The manageiq_provider module supports adding, updating and deleting provider in ManageIQ.
+  - The manageiq_provider module supports adding, updating, and deleting provider in ManageIQ.
 
 options:
   state:
@@ -46,168 +32,142 @@ options:
     choices: ['absent', 'present']
     default: 'present'
   name:
-    description:
-      - The provider's name.
+    description: The provider's name.
     required: true
   type:
-    description:
-      - The provider's type.
+    description: The provider's type.
     required: true
     choices: ['Openshift', 'Amazon']
   zone:
-    description:
-      - The ManageIQ zone name that will manage the provider.
+    description: The ManageIQ zone name that will manage the provider.
     required: false
     default: 'default'
   provider_region:
-    description:
-      - The provider region name to connect to (e.g. AWS region for Amazon).
+    description: The provider region name to connect to (e.g. AWS region for Amazon).
     required: false
     default: null
+
   endpoints:
-    description:
-      - The provider's endpoints in manageiq.
+    description: The provider's endpoints in manageiq.
     required: false
     default: null
     suboptions:
       default:
         required: true
-        description:
-          - Default endpoint connection information.
-      default[hostname]:
-        description:
-          - The provider's api hostname.
-        required: true
-      default[port]:
-        description:
-          - The provider's api port.
-        required: false
-      default[userid]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication userid. defaults to None.
-      default[password]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication password. defaults to None.
-      default[auth_key]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication bearer token. defaults to None.
-      default[verify_ssl]:
-        required: false
-        default: true
-        description:
-          - Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      default[security_protocol]:
-        required: false
-        default: None
-        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
-        description:
-          - How SSL certificates should be used for HTTPS requests. defaults to None.
-      default[certificate_authority]:
-        required: false
-        default: null
-        description:
-          - The CA bundle string with custom certificates. defaults to None.
+        description: Default endpoint connection information.
+        suboptions:
+          hostname:
+            description: The provider's api hostname.
+            required: true
+          port:
+            description: The provider's api port.
+            required: false
+          userid:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication userid. defaults to None.
+          password:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication password. defaults to None.
+          auth_key:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication bearer token. defaults to None.
+          verify_ssl:
+            required: false
+            default: true
+            description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+          security_protocol:
+            required: false
+            default: None
+            choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+            description: How SSL certificates should be used for HTTPS requests. defaults to None.
+          certificate_authority:
+            required: false
+            default: null
+            description: The CA bundle string with custom certificates. defaults to None.
+
       metrics:
         required: false
         default: null
-        description:
-          - Metrics endpoint connection information.
-      metrics[hostname]:
-        description:
-          - The provider's api hostname.
-        required: true
-      metrics[port]:
-        description:
-          - The provider's api port.
-        required: false
-      metrics[userid]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication userid. defaults to None.
-      metrics[password]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication password. defaults to None.
-      metrics[auth_key]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication bearer token. defaults to None.
-      metrics[verify_ssl]:
-        required: false
-        default: true
-        description:
-          - Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      metrics[security_protocol]:
-        required: false
-        default: None
-        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
-        description:
-          - How SSL certificates should be used for HTTPS requests. defaults to None.
-      metrics[certificate_authority]:
-        required: false
-        default: null
-        description:
-          - The CA bundle string with custom certificates. defaults to None.
+        description: Metrics endpoint connection information.
+        suboptions:
+          hostname:
+            description: The provider's api hostname.
+            required: true
+          port:
+            description: The provider's api port.
+            required: false
+          userid:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication userid. defaults to None.
+          password:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication password. defaults to None.
+          auth_key:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication bearer token. defaults to None.
+          verify_ssl:
+            required: false
+            default: true
+            description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+          security_protocol:
+            required: false
+            default: None
+            choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+            description: How SSL certificates should be used for HTTPS requests. defaults to None.
+          certificate_authority:
+            required: false
+            default: null
+            description: The CA bundle string with custom certificates. defaults to None.
+
       alerts:
-        required: false
+        required: False
         default: null
-        description:
-          - Alerts endpoint connection information.
-      alerts[hostname]:
-        description:
-          - The provider's api hostname.
-        required: true
-      alerts[port]:
-        description:
-          - The provider's api port.
-        required: false
-      alerts[userid]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication userid. defaults to None.
-      alerts[password]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication password. defaults to None.
-      alerts[auth_key]:
-        required: false
-        default: null
-        description:
-          - Provider's api endpoint authentication bearer token. defaults to None.
-      alerts[verify_ssl]:
-        required: false
-        default: true
-        description:
-          - Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      alerts[security_protocol]:
-        required: false
-        default: None
-        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
-        description:
-          - How SSL certificates should be used for HTTPS requests. defaults to None.
-      alerts[certificate_authority]:
-        required: false
-        default: null
-        description:
-          - The CA bundle string with custom certificates. defaults to None.
+        description: Alerts endpoint connection information.
+        suboptions:
+          hostname:
+            description: The provider's api hostname.
+            required: true
+          port:
+            description: The provider's api port.
+            required: false
+          userid:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication userid. defaults to None.
+          password:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication password. defaults to None.
+          auth_key:
+            required: false
+            default: null
+            description: Provider's api endpoint authentication bearer token. defaults to None.
+          verify_ssl:
+            required: false
+            default: true
+            description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+          security_protocol:
+            required: false
+            default: None
+            choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+            description: How SSL certificates should be used for HTTPS requests. defaults to None.
+          certificate_authority:
+            required: false
+            default: null
+            description: The CA bundle string with custom certificates. defaults to None.
 '''
 
 EXAMPLES = '''
   - name: Create a new provider in ManageIQ ('Hawkular' metrics)
     manageiq_provider:
       name: 'EngLab'
-      type: 'Openshift'
+      type: 'OpenShift'
       endpoints:
         default:
           auth_key: 'topSecret'
@@ -546,7 +506,7 @@ def main():
                 changed=False,
                 msg="provider %s: does not exist in manageiq" % (name))
 
-    # provider shoult exist
+    # provider should exist
     if state == "present":
         # get data user did not explicitly give
         if zone_name:
