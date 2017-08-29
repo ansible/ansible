@@ -162,8 +162,8 @@ def connect_to_influxdb(module):
         username=username,
         password=password,
         database=database_name,
-        ssl,
-        verify_ssl
+        ssl=ssl,
+        verify_ssl=verify_ssl
     )
     return client
 
