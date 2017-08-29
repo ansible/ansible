@@ -202,6 +202,18 @@ Ansible Changes By Release
   * iam_managed_policy
   * lightsail
   * redshift_facts
+- azure
+  * azure_rm_availabilityset
+  * azure_rm_availabilityset_facts
+  * azure_rm_dnsrecordset
+  * azure_rm_dnszone
+  * azure_rm_loadbalancer
+  * azure_rm_loadbalancer_facts
+  * azure_rm_managed_disk
+  * azure_rm_managed_disk_facts
+  * azure_rm_virtualmachine_extension
+  * azure_rm_virtualmachine_scaleset
+  * azure_rm_virtualmachine_scaleset_facts
 - atomic
   * atomic_container
 - cloudstack
