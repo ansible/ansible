@@ -267,8 +267,8 @@ def get_pim_interface(module, interface):
         if hello_interval:
             hello_interval_msec = int(get_data.get('hello-interval-sec')) * 1000
         pim_interface['hello_interval'] = str(hello_interval_msec)
-        border = get_data.get('is-border')
 
+        border = get_data.get('is-border')
         if border == 'true':
             pim_interface['border'] = True
         elif border == 'false':
@@ -292,8 +292,7 @@ def get_pim_interface(module, interface):
         if isinstance(get_data.get('jp-out-policy-name'), string_types):
             pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')
         else:
-            pim_interface['jp_policy_out'] = get_data.get(
-                'jp-out-policy-name')[0]
+            pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')[0]
 
         if pim_interface['jp_policy_out'] == 'none configured':
             pim_interface['jp_policy_out'] = None
