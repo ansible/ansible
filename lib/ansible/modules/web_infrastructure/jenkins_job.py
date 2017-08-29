@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -190,9 +190,6 @@ class JenkinsJob:
             }
         }
 
-        # This kind of jobs do not have a property that makes them enabled/disabled
-        self.job_classes_exceptions = ["jenkins.branch.OrganizationFolder"]
-
         self.EXCL_STATE = "excluded state"
 
     def get_jenkins_connection(self):
@@ -208,13 +205,10 @@ class JenkinsJob:
         except Exception as e:
             self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % to_native(e), exception=traceback.format_exc())
 
-    def job_class_excluded(self, response):
-        return response['_class'] in self.job_classes_exceptions
-
     def get_job_status(self):
         try:
             response = self.server.get_job_info(self.name)
-            if self.job_class_excluded(response):
+            if "color" not in response:
                 return self.EXCL_STATE
             else:
                 return response['color'].encode('utf-8')

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -34,26 +34,30 @@ description:
     current running config.  It also supports purging usernames from the
     configuration that are not explicitly defined.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   aggregate:
     description:
       - The set of username objects to be configured on the remote
         Arista EOS device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
-        exclusive with the C(username) argument.
+        exclusive with the C(username) argument. alias C(users).
     version_added: "2.4"
-  username:
+  name:
     description:
       - The username to be configured on the remote Arista EOS
         device.  This argument accepts a stringv value and is mutually
         exclusive with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
-  password:
+    version_added: "2.4"
+  configured_password:
     description:
       - The password to be configured on the remote Arista EOS device. The
         password needs to be provided in clear and it will be encrypted
         on the device.
         Please note that this option is not same as C(provider password).
+    version_added: "2.4"
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -106,7 +110,7 @@ options:
 EXAMPLES = """
 - name: create a new user
   eos_user:
-    username: ansible
+    name: ansible
     sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
     state: present
 
@@ -117,15 +121,15 @@ EXAMPLES = """
 - name: set multiple users to privilege level 15
   eos_user:
     aggregate:
-      - username: netop
-      - username: netend
+      - name: netop
+      - name: netend
     privilege: 15
     state: present
 
 - name: Change Password for User netop
   eos_user:
     username: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 """
@@ -136,8 +140,8 @@ commands:
   returned: always
   type: list
   sample:
-    - username ansible secret password
-    - username admin secret admin
+    - name ansible secret password
+    - name admin secret admin
 session_name:
   description: The EOS config session name used to load the configuration
   returned: when changed is True
@@ -147,16 +151,20 @@ session_name:
 
 import re
 
+from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
+
 def validate_privilege(value, module):
     if not 1 <= value <= 15:
         module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -167,16 +175,10 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-        if 'name' in want:
-            add = lambda x: commands.append('username %s %s' % (want['name'], x))
-        else:
-            add = lambda x: commands.append('username %s %s' % (want['username'], x))
+        add = lambda x: commands.append('username %s %s' % (want['name'], x))
 
         if want['state'] == 'absent':
-            if 'name' in want:
-                commands.append('no username %s' % want['name'])
-            else:
-                commands.append('no username %s' % want['username'])
+            commands.append('no username %s' % want['name'])
             continue
 
         if needs_update('role'):
@@ -185,9 +187,9 @@ def map_obj_to_commands(updates, module):
         if needs_update('privilege'):
             add('privilege %s' % want['privilege'])
 
-        if needs_update('password'):
+        if needs_update('configured_password'):
             if update_password == 'always' or not have:
-                add('secret %s' % want['password'])
+                add('secret %s' % want['configured_password'])
 
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
@@ -196,27 +198,28 @@ def map_obj_to_commands(updates, module):
             if want['nopassword']:
                 add('nopassword')
             else:
-                if 'name' in want:
-                    add('no username %s nopassword' % want['name'])
-                else:
-                    add('no username %s nopassword' % want['username'])
+                add('no username %s nopassword' % want['name'])
 
     return commands
+
 
 def parse_role(data):
     match = re.search(r'role (\S+)', data, re.M)
     if match:
         return match.group(1)
 
+
 def parse_sshkey(data):
     match = re.search(r'sshkey (.+)$', data, re.M)
     if match:
         return match.group(1)
 
+
 def parse_privilege(data):
     match = re.search(r'privilege (\S+)', data, re.M)
     if match:
         return int(match.group(1))
+
 
 def map_config_to_obj(module):
     data = get_config(module, flags=['section username'])
@@ -232,10 +235,10 @@ def map_config_to_obj(module):
         cfg = re.findall(regex, data, re.M)
         cfg = '\n'.join(cfg)
         obj = {
-            'username': user,
+            'name': user,
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
-            'password': None,
+            'configured_password': None,
             'sshkey': parse_sshkey(cfg),
             'privilege': parse_privilege(cfg),
             'role': parse_role(cfg)
@@ -243,6 +246,7 @@ def map_config_to_obj(module):
         instances.append(obj)
 
     return instances
+
 
 def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
@@ -263,22 +267,23 @@ def get_param_value(key, item, module):
 
     return value
 
+
 def map_params_to_obj(module):
     aggregate = module.params['aggregate']
     if not aggregate:
-        if not module.params['username'] and module.params['purge']:
+        if not module.params['name'] and module.params['purge']:
             return list()
-        elif not module.params['username']:
-            module.fail_json(msg='username is required')
+        elif not module.params['name']:
+            module.fail_json(msg='name is required')
         else:
-            collection = [{'username': module.params['username']}]
+            collection = [{'name': module.params['name']}]
     else:
         collection = list()
         for item in aggregate:
             if not isinstance(item, dict):
-                collection.append({'username': item})
-            elif all(u not in item for u in ['username', 'name']):
-                module.fail_json(msg='username is required')
+                collection.append({'name': item})
+            elif 'name' not in item:
+                module.fail_json(msg='name is required')
             else:
                 collection.append(item)
 
@@ -286,7 +291,7 @@ def map_params_to_obj(module):
 
     for item in collection:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['role'] = get_value('role')
@@ -296,14 +301,12 @@ def map_params_to_obj(module):
 
     return objects
 
+
 def update_objects(want, have):
     updates = list()
     for entry in want:
         if 'name' in entry:
-            item = next((i for i in have if i['username'] == entry['name']), None)
-        else:
-            item = next((i for i in have if i['username'] == entry['username']), None)
-
+            item = next((i for i in have if i['name'] == entry['name']), None)
         if all((item is None, entry['state'] == 'present')):
             updates.append((entry, {}))
         elif item:
@@ -312,14 +315,14 @@ def update_objects(want, have):
                     updates.append((entry, item))
     return updates
 
+
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        aggregate=dict(type='list', aliases=['collection', 'users']),
-        username=dict(aliases=['name']),
+    element_spec = dict(
+        name=dict(),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
@@ -328,18 +331,34 @@ def main():
 
         sshkey=dict(),
 
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['collection', 'users']),
+        purge=dict(type='bool', default=False)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(eos_argument_spec)
-    mutually_exclusive = [('username', 'aggregate')]
+    mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
 
     result = {'changed': False}
@@ -352,8 +371,8 @@ def main():
     commands = map_obj_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
-        want_users = [x['username'] if 'username' in x else x['name'] for x in want]
-        have_users = [x['username'] for x in have]
+        want_users = [x['name'] for x in want]
+        have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
                 commands.append('no username %s' % item)

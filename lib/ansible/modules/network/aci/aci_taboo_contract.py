@@ -6,16 +6,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_taboo_contract
-short_description: Manage taboo contracts on Cisco ACI fabrics
+short_description: Manage taboo contracts on Cisco ACI fabrics (vz:BrCP)
 description:
 - Manage taboo contracts on Cisco ACI fabrics.
+- More information from the internal APIC class
+  I(vz:BrCP) at U(https://developer.cisco.com/media/mim-ref/MO-vzBrCP.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,16 +26,17 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 options:
   taboo_contract:
     description:
-    - Taboo Contract name.
+    - The name of the Taboo Contract.
     required: yes
     aliases: [ name ]
   description:
     description:
-    - Description for the filter.
+    - The description for the Taboo Contract.
     aliases: [ descr ]
   tenant:
     description:
@@ -43,8 +46,9 @@ options:
   scope:
     description:
     - The scope of a service contract.
-    - The APIC defaults new Taboo Contracts to a scope of context (VRF).
+    - The APIC defaults new Taboo Contracts to C(context).
     choices: [ application-profile, context, global, tenant ]
+    default: context
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -87,35 +91,33 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['tenant', 'taboo_contract']],
+            ['state', 'present', ['tenant', 'taboo_contract']],
+        ],
     )
 
     taboo_contract = module.params['taboo_contract']
-    # tenant = module.params['tenant']
     description = module.params['description']
     scope = module.params['scope']
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    # TODO: This logic could be cleaner.
-    if taboo_contract is not None:
-        path = 'api/mo/uni/tn-%(tenant)s/taboo-%(taboo_contract)s.json' % module.params
-    elif state == 'query':
-        # Query all objects
-        path = 'api/node/class/vzTaboo.json'
-    else:
-        module.fail_json(msg="Parameter 'taboo_contract' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class='tenant', subclass_1='taboo_contract')
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzBrCP', class_config=dict(name=taboo_contract, descr=description, scope=scope))
+        aci.payload(
+            aci_class='vzTaboo',
+            class_config=dict(
+                name=taboo_contract,
+                descr=description, scope=scope,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='vzBrCP')
+        aci.get_diff(aci_class='vzTaboo')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()

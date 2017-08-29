@@ -19,20 +19,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
 ---
 module: vyos_static_route
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage static IP routes on Cisco VyOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Vyatta VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   prefix:
     description:
@@ -229,7 +231,6 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
-    argument_spec.update(vyos_argument_spec)
     required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'next_hop']]
     mutually_exclusive = [['aggregate', 'prefix']]

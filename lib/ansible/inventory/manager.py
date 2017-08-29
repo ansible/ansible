@@ -28,9 +28,9 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins import PluginLoader
+from ansible.plugins.loader import PluginLoader
 from ansible.utils.path import unfrackpath
 
 try:
@@ -232,7 +232,7 @@ class InventoryManager(object):
 
                 # recursively deal with directory entries
                 fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(to_text(fullpath))
+                parsed_this_one = self.parse_source(to_native(fullpath))
                 display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
@@ -249,28 +249,38 @@ class InventoryManager(object):
             # try source with each plugin
             failures = []
             for plugin in self._inventory_plugins:
-                plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
-                display.debug(u'Attempting to use plugin %s' % plugin_name)
+                plugin_name = to_native(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
+                display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
 
                 # initialize
                 if plugin.verify_file(source):
                     try:
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
-                        display.vvv(u'Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
+                        display.vvv('Parsed %s inventory source with %s plugin' % (to_native(source), plugin_name))
                         break
                     except AnsibleParserError as e:
-                        failures.append(u'\n* Failed to parse %s with %s inventory plugin: %s\n' % (to_text(source), plugin_name, to_text(e)))
+                        display.debug('%s did not meet %s requirements' % (to_native(source), plugin_name))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                 else:
-                    display.debug(u'%s did not meet %s requirements' % (to_text(source), plugin_name))
+                    display.debug('%s did not meet %s requirements' % (to_native(source), plugin_name))
             else:
-                if failures:
+                if not parsed and failures:
                     # only if no plugin processed files should we show errors.
-                    for fail in failures:
-                        display.warning(fail)
+                    if C.INVENTORY_UNPARSED_IS_FAILED:
+                        msg = "Could not parse inventory source %s with availabel plugins:\n" % source
+                        for fail in failures:
+                            msg += 'Plugin %s failed: %s\n' % (fail['plugin'], to_native(fail['exc']))
+                            if display.verbosity >= 3:
+                                msg += "%s\n" % fail['exc'].tb
+                        raise AnsibleParserError(msg)
+                    else:
+                        for fail in failures:
+                            display.warning('\n* Failed to parse %s with %s plugin: %s' % (to_native(fail['src']), fail['plugin'], to_native(fail['exc'])))
+                            display.vvv(fail['exc'].tb)
 
         if not parsed:
-            display.warning(u"Unable to parse %s as an inventory source" % to_text(source))
+            display.warning("Unable to parse %s as an inventory source" % to_native(source))
 
         # clear up, jic
         self._inventory.current_source = None
@@ -321,10 +331,10 @@ class InventoryManager(object):
             pattern_hash = pattern
 
         if not ignore_limits and self._subset:
-            pattern_hash += u":%s" % to_text(self._subset)
+            pattern_hash += ":%s" % to_native(self._subset)
 
         if not ignore_restrictions and self._restriction:
-            pattern_hash += u":%s" % to_text(self._restriction)
+            pattern_hash += ":%s" % to_native(self._restriction)
 
         if pattern_hash not in self._hosts_patterns_cache:
 

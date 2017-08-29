@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -22,9 +22,7 @@ description:
 author: "Nick Harring (@NickatEpic)"
 version_added: 2.0
 requirements:
-    - urllib3
-    - requests
-    - time
+    - requests (either >= 2.0.0 for Python 3, or >= 1.0.0 for Python 2)
 notes:
     - Check mode isn’t supported.
 options:
@@ -142,11 +140,27 @@ annotation:
 import json
 import time
 import traceback
+from distutils.version import LooseVersion
 
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_native
+
+
+def check_requests_dep(module):
+    """Check if an adequate requests version is available"""
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests is required for this module')
+    else:
+        required_version = '2.0.0' if PY3 else '1.0.0'
+        if LooseVersion(requests.__version__) < LooseVersion(required_version):
+            module.fail_json(msg="'requests' library version should be >= %s, found: %s." % (required_version, requests.__version__))
 
 
 def post_annotation(annotation, api_key):
@@ -200,6 +214,8 @@ def main():
             api_key=dict(required=True, no_log=True)
         )
     )
+
+    check_requests_dep(module)
 
     annotation = create_annotation(module)
     try:

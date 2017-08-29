@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -30,6 +30,7 @@ description:
     - Install an operating system by setting the boot options like boot
       image and kickstart image.
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - The module will fail due to timeout issues, but the install will go on
       anyway. Ansible's block and rescue can be leveraged to handle this kind
       of failure and check actual module results. See EXAMPLE for more about

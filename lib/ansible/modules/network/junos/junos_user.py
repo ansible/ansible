@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -32,7 +32,7 @@ options:
         on the remote device.  The list of users will be compared against
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
-        the name argument.
+        the name argument. alias C(users).
     version_added: "2.4"
     required: False
     default: null
@@ -95,6 +95,7 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -218,6 +219,8 @@ def map_params_to_obj(module):
     if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
+        elif not module.params['name']:
+            module.fail_json(msg='missing required argument: name')
         else:
             collection = [{'name': module.params['name']}]
     else:
@@ -225,6 +228,8 @@ def map_params_to_obj(module):
         for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
+            elif 'name' not in item:
+                module.fail_json(msg='missing required argument: name')
             else:
                 collection.append(item)
 
@@ -277,14 +282,10 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
-    required_one_of = [['aggregate', 'name']]
     mutually_exclusive = [['aggregate', 'name']]
-
-    argument_spec.update(junos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
-                           required_one_of=required_one_of,
                            supports_check_mode=True)
 
     warnings = list()
@@ -298,6 +299,8 @@ def main():
     kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
+    else:
+        kwargs['action'] = 'merge'
 
     with locked_config(module):
         diff = load_config(module, tostring(ele), warnings, **kwargs)

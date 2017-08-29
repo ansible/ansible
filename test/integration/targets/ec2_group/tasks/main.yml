@@ -491,6 +491,144 @@
           - 'result.vpc_id == vpc_result.vpc.id'
           - 'result.group_id.startswith("sg-")'
 
+    # ============================================================
+
+    - name: test adding tags (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+          tag2: test2
+
+      register: result
+
+    - name: assert that tags were added (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.tags == {"tag1": "test1", "tag2": "test2"}'
+
+    # ============================================================
+
+    - name: test that tags are present (expected changed=False)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        purge_rules_egress: false
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+          tag2: test2
+      register: result
+
+    - name: assert that tags were not changed (expected changed=False)
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.tags == {"tag1": "test1", "tag2": "test2"}'
+
+    # ============================================================
+
+    - name: test purging tags (expected changed=True)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+      register: result
+
+    - name: assert that tag2 was removed (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.tags == {"tag1": "test1"}'
+
+    # ============================================================
+
+    - name: assert that tags are left as-is if not specified (expected changed=False)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert that the tags stayed the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.tags == {"tag1": "test1"}'
+
+    # ============================================================
+
+    - name: test purging all tags (expected changed=True)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags: {}
+      register: result
+
+    - name: assert that tag1 was removed (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'not result.tags'
+
+    # ============================================================
+
     - name: test state=absent (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'

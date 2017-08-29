@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -1348,6 +1348,7 @@ class SunOS(User):
                 try:
                     lines = []
                     for line in open(self.SHADOWFILE, 'rb').readlines():
+                        line = to_native(line, errors='surrogate_or_strict')
                         fields = line.strip().split(':')
                         if not fields[0] == self.name:
                             lines.append(line)
@@ -1442,6 +1443,7 @@ class SunOS(User):
                 try:
                     lines = []
                     for line in open(self.SHADOWFILE, 'rb').readlines():
+                        line = to_native(line, errors='surrogate_or_strict')
                         fields = line.strip().split(':')
                         if not fields[0] == self.name:
                             lines.append(line)

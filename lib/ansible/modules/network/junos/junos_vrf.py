@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -49,6 +49,11 @@ options:
     description:
       - It configures VRF target community configuration. The target value takes
         the form of C(target:A:B) where C(A) and C(B) are both numeric values.
+  table_label:
+    description:
+      - Causes JUNOS to allocate a VPN label per VRF rather than per VPN FEC.
+        This allows for forwarding of traffic to directly connected subnets, COS
+        Egress filtering etc.
   aggregate:
     description:
       - The set of VRF definition objects to be configured on the remote
@@ -74,6 +79,7 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 EXAMPLES = """
 - name: Configure vrf configuration
@@ -184,7 +190,8 @@ def main():
         interfaces=dict(type='list'),
         target=dict(type='list'),
         state=dict(default='present', choices=['present', 'absent']),
-        active=dict(default=True, type='bool')
+        active=dict(default=True, type='bool'),
+        table_label=dict(default=True, type='bool')
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -226,6 +233,7 @@ def main():
         ('rd', 'route-distinguisher/rd-type'),
         ('interfaces', 'interface/name'),
         ('target', 'vrf-target/community'),
+        ('table_label', {'xpath': 'vrf-table-label', 'tag_only': True}),
     ])
 
     params = to_param_list(module)
@@ -245,7 +253,7 @@ def main():
 
     with locked_config(module):
         for req in requests:
-            diff = load_config(module, tostring(req), warnings, action='replace')
+            diff = load_config(module, tostring(req), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

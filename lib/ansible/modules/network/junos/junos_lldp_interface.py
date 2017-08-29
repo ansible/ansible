@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -26,12 +26,6 @@ options:
   name:
     description:
       - Name of the interface LLDP should be configured on.
-  aggregate:
-    description: List of interfaces LLDP should be configured on.
-  purge:
-    description:
-      - Purge interfaces not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - Value of C(present) ensures given LLDP configured on given I(interfaces)
@@ -50,6 +44,7 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -115,8 +110,6 @@ def main():
     """
     argument_spec = dict(
         name=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
         active=dict(default=True, type='bool')
     )
@@ -153,7 +146,7 @@ def main():
     ele = map_obj_to_ele(module, want, top, param=item)
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, action='replace')
+        diff = load_config(module, tostring(ele), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

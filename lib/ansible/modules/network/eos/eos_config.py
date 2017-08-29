@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -34,6 +34,8 @@ description:
     a deterministic way.  This module works with either CLI or eAPI
     transports.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   lines:
     description:
@@ -59,7 +61,7 @@ options:
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) and
-        I(parents) arguments.
+        I(parents) arguments. It can be a Jinja2 template as well.
     required: false
     default: null
     version_added: "2.2"
@@ -174,7 +176,7 @@ options:
         True.  If the argument is set to I(modified), then the running-config
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
-        I(never), the running-config will never be copied to the the
+        I(never), the running-config will never be copied to the
         startup-config
     required: false
     default: never

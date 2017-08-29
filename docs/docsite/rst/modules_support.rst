@@ -18,22 +18,29 @@ The modules are hosted on GitHub in a subdirectory of the `ansible <https://gith
 Core
 ````
 
-These are modules that the core ansible team maintains and will always ship with ansible itself.
-They will also receive slightly higher priority for all requests. Non-core modules are still fully usable.
+These are :doc:`modules maintained by the Ansible Core Team<core_maintained>`
+and will always ship with Ansible itself.
 
-Curated
+Network
 ```````
 
-Some examples of Curated modules are submitted by other companies or maintained by the community. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
+These are :doc:`modules maintained by the Ansible Network Team<network_maintained>` in a relationship
+similar to how the Ansible Core Team maintains the Core modules.
 
-Core Committers will review all modules becoming Curated.  Core Committers will review proposed changes to existing Curated modules once the community maintainers of the module have approved the changes. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
+Certified
+`````````
+
+Some examples of :doc:`Certified Modules<partner_maintained>` are those submitted by other companies. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
+
+The Ansible Core Team will review all modules becoming certified.  Core committers will review proposed changes to existing Certified Modules once the community maintainers of the module have approved the changes. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
 Also, it is strongly recommended (but not presently required) for these types of modules to have unit tests.
 
 These modules are currently shipped with Ansible, but might be shipped separately in the future.
 
 Community
 `````````
-These modules **are not** supported by Core Committers or by companies/partners associated to the module. They are maintained by the community.
+
+These are :doc:`modules maintained by the Ansible Community<community_maintained>`.  They **are not** supported by the Ansible Core Team or by companies/partners associated to the module.
 
 They are still fully usable, but the response rate to issues is purely up to the community.  Best effort support will be provided but is not covered under any support contracts.
 

@@ -26,7 +26,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
-from ansible.plugins import connection_loader
+from ansible.plugins.loader import connection_loader
 
 
 class ActionModule(ActionBase):
@@ -317,6 +317,8 @@ class ActionModule(ActionBase):
                 if use_delegate:
                     user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
                     if not user:
+                        user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+                    if not user:
                         user = C.DEFAULT_REMOTE_USER
 
                 else:
@@ -326,7 +328,6 @@ class ActionModule(ActionBase):
             private_key = self._play_context.private_key_file
 
             if private_key is not None:
-                private_key = os.path.expanduser(private_key)
                 _tmp_args['private_key'] = private_key
 
             # use the mode to define src and dest's url

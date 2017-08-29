@@ -164,6 +164,7 @@ class Base(with_metaclass(BaseMeta, object)):
     _run_once            = FieldAttribute(isa='bool')
     _ignore_errors       = FieldAttribute(isa='bool')
     _check_mode          = FieldAttribute(isa='bool')
+    _diff                = FieldAttribute(isa='bool')
     _any_errors_fatal     = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL, always_post_validate=True)
 
     # param names which have been deprecated/removed
@@ -197,9 +198,10 @@ class Base(with_metaclass(BaseMeta, object)):
         self.vars = dict()
 
     def dump_me(self, depth=0):
+        ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
         if depth == 0:
-            print("DUMPING OBJECT ------------------------------------------------------")
-        print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
+            display.debug("DUMPING OBJECT ------------------------------------------------------")
+        display.debug("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth + 2)
             dep_chain = self._parent.get_dep_chain()
@@ -439,7 +441,6 @@ class Base(with_metaclass(BaseMeta, object)):
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
-
             except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)

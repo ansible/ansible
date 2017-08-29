@@ -6,9 +6,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 - name: Ensure one dbserver is running
   ec2:
-    count_tags:
+    count_tag:
       Name: dbserver
       Env: production
     exact_count: 1

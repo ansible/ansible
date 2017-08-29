@@ -2,7 +2,9 @@
 
 from __future__ import absolute_import, print_function
 
+import abc
 import errno
+import inspect
 import os
 import pipes
 import pkgutil
@@ -11,6 +13,8 @@ import subprocess
 import re
 import sys
 import time
+
+ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # compatible with Python 2 *and* 3
 
 
 def is_shippable():
@@ -476,7 +480,8 @@ def get_subclasses(class_type):
 
         for child in parent.__subclasses__():
             if child not in subclasses:
-                subclasses.add(child)
+                if not inspect.isabstract(child):
+                    subclasses.add(child)
                 queue.append(child)
 
     return subclasses

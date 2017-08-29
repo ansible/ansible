@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -96,10 +96,8 @@ EXAMPLES = """
 - name: Create interface using aggregate
   net_interface:
     aggregate:
-      - name: ge-0/0/1
-        description: test-interface-1
-      - name: ge-0/0/2
-        description: test-interface-2
+      - { name: ge-0/0/1, description: test-interface-1 }
+      - { name: ge-0/0/2, description: test-interface-2 }
     speed: 1g
     duplex: full
     mtu: 512
@@ -107,8 +105,8 @@ EXAMPLES = """
 - name: Delete interface using aggregate
   junos_interface:
     aggregate:
-      - name: ge-0/0/1
-      - name: ge-0/0/2
+      - { name: ge-0/0/1 }
+      - { name: ge-0/0/2 }
     state: absent
 
 - name: Check intent arguments

@@ -6,7 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -140,10 +140,9 @@ acl:
 '''
 
 import os
-
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.pycompat24 import get_exception
+
 
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
@@ -210,7 +209,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
             cmd.append('-h')
 
     if default:
-        if(mode == 'rm'):
+        if mode == 'rm':
             cmd.insert(1, '-k')
         else:  # mode == 'set' or mode == 'get'
             cmd.insert(1, '-d')

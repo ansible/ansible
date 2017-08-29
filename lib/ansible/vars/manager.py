@@ -37,7 +37,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, string_types, text_type
-from ansible.plugins import lookup_loader, vars_loader
+from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
@@ -84,6 +84,21 @@ def strip_internal_keys(dirty):
         elif isinstance(dirty[k], dict):
             clean[k] = strip_internal_keys(dirty[k])
     return clean
+
+
+def remove_internal_keys(data):
+    '''
+    More nuanced version of strip_internal_keys
+    '''
+    for key in list(data.keys()):
+        if (key.startswith('_ansible_') and key != '_ansible_parsed') or key in C.INTERNAL_RESULT_KEYS:
+            display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
+            del data[key]
+
+    # remove bad/empty internal keys
+    for key in ['warnings', 'deprecations']:
+        if key in data and not data[key]:
+            del data[key]
 
 
 class VariableManager:
@@ -442,10 +457,6 @@ class VariableManager:
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
         variables['ansible_playbook_python'] = sys.executable
 
-        if host:
-            # host already provides some magic vars via host.get_vars()
-            if self._inventory:
-                variables['groups'] = self._inventory.get_groups_dict()
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 
@@ -456,6 +467,7 @@ class VariableManager:
                 variables['role_uuid'] = text_type(task._role._uuid)
 
         if self._inventory is not None:
+            variables['groups'] = self._inventory.get_groups_dict()
             if play:
                 templar = Templar(loader=self._loader)
                 if templar.is_template(play.hosts):

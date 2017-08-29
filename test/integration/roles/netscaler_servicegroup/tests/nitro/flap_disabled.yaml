@@ -1,0 +1,9 @@
+---
+
+- include: "{{ role_path }}/tests/nitro/flap_disabled/setup.yaml"
+  vars:
+    check_mode: no
+
+- include: "{{ role_path }}/tests/nitro/flap_disabled/remove.yaml"
+  vars:
+    check_mode: no

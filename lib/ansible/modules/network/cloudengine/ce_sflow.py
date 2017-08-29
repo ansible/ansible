@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -128,7 +128,7 @@ options:
         default: null
     counter_interval:
         description:
-            - Indicates the the counter sampling interval.
+            - Indicates the counter sampling interval.
               The value is an integer that ranges from 10 to 4294967295, in seconds. The default value is 20.
         required: false
         default: null

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -196,7 +196,7 @@ def map_obj_to_commands(want, have, module):
     return commands
 
 def parse_http(data):
-    http_res = [r'HTTP Port:\s+(\d+)', r'HTTP Listen on port (\d+)']
+    http_res = [r'nxapi http port (\d+)']
     http_port = None
 
     for regex in http_res:
@@ -208,7 +208,7 @@ def parse_http(data):
     return {'http': http_port is not None, 'http_port': http_port}
 
 def parse_https(data):
-    https_res = [r'HTTPS Port:\s+(\d+)', r'HTTPS Listen on port (\d+)']
+    https_res = [r'nxapi https port (\d+)']
     https_port = None
 
     for regex in https_res:
@@ -220,15 +220,19 @@ def parse_https(data):
     return {'https': https_port is not None, 'https_port': https_port}
 
 def parse_sandbox(data):
-    match = re.search(r'Sandbox:\s+(.+)$', data, re.M)
+    sandbox = [item for item in data.split('\n') if re.search(r'.*sandbox.*', item)]
     value = False
-    if match:
-        value = match.group(1) == 'Enabled'
+    if sandbox and sandbox[0] == 'nxapi sandbox':
+        value = True
     return {'sandbox': value}
 
 def map_config_to_obj(module):
-    out = run_commands(module, ['show nxapi'], check_rc=False)[0]
-    if out == '':
+    out = run_commands(module, ['show run all | inc nxapi'], check_rc=False)[0]
+    match = re.search(r'no feature nxapi', out, re.M)
+    # There are two possible outcomes when nxapi is disabled on nxos platforms.
+    # 1. Nothing is displayed in the running config.
+    # 2. The 'no feature nxapi' command is displayed in the running config.
+    if match or out == '':
         return {'state': 'absent'}
 
     out = str(out).strip()

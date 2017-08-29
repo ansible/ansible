@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -92,28 +92,25 @@ from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(want, have, module):
     commands = list()
-    want, have = updates
     state = module.params['state']
 
-    if state == 'absent' or (state == 'absent' and
-                             'text' in have.keys() and have['text']):
+    if state == 'absent' and have.get('text'):
         commands.append('no banner %s' % module.params['banner'])
 
-    elif state == 'present':
-        if want['text'] and (want['text'] != have.get('text')):
-            banner_cmd = 'banner %s' % module.params['banner']
-            banner_cmd += ' @\n'
-            banner_cmd += want['text'].strip()
-            banner_cmd += '\n@'
-            commands.append(banner_cmd)
+    elif state == 'present' and want.get('text') != have.get('text'):
+        banner_cmd = 'banner %s @\n%s\n@' % (module.params['banner'], want['text'].strip())
+        commands.append(banner_cmd)
 
     return commands
 
 
 def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])[0]
+    if isinstance(output, dict):
+        output = list(output.values())[0]
+
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
         obj['text'] = output
@@ -159,7 +156,7 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:
@@ -168,6 +165,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

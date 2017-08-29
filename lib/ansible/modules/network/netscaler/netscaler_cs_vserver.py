@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -128,18 +128,18 @@ options:
 
     stateupdate:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Enable state updates for a specific content switching virtual server. By default, the Content
                 Switching virtual server is always UP, regardless of the state of the Load Balancing virtual servers
                 bound to it. This parameter interacts with the global setting as follows:
             - "Global Level | Vserver Level | Result"
-            - "ENABLED ENABLED ENABLED"
-            - "ENABLED DISABLED ENABLED"
-            - "DISABLED ENABLED ENABLED"
-            - "DISABLED DISABLED DISABLED"
+            - "enabled enabled enabled"
+            - "enabled disabled enabled"
+            - "disabled enabled enabled"
+            - "disabled disabled disabled"
             - >-
                 If you want to enable state updates for only some content switching virtual servers, be sure to
                 disable the state update parameter.
@@ -202,8 +202,8 @@ options:
 
     sopersistence:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Maintain source-IP based persistence on primary and backup virtual servers."
 
@@ -233,15 +233,15 @@ options:
 
     redirectportrewrite:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "State of port rewrite while performing HTTP redirect."
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with a virtual server whose state transitions from UP to
@@ -259,8 +259,8 @@ options:
 
     disableprimaryondown:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Continue forwarding the traffic to backup virtual server even after the primary server comes UP from
@@ -326,8 +326,8 @@ options:
 
     push:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Process traffic with the push virtual server that is bound to this content switching virtual server
@@ -423,8 +423,8 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging appflow flow information."
 
@@ -788,8 +788,8 @@ def main():
         stateupdate=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         cacheable=dict(type='bool'),
@@ -816,8 +816,8 @@ def main():
         sopersistence=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         sopersistencetimeout=dict(type='float'),
@@ -833,22 +833,22 @@ def main():
         redirectportrewrite=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         disableprimaryondown=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         insertvserveripport=dict(
@@ -869,8 +869,8 @@ def main():
         push=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         pushvserver=dict(type='str'),
@@ -908,8 +908,8 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         netprofile=dict(type='str'),
@@ -1087,6 +1087,13 @@ def main():
         'authentication': ['bool_on_off'],
         'l2conn': ['bool_on_off'],
         'pushmulticlients': ['bool_yes_no'],
+        'stateupdate': [lambda v: v.upper()],
+        'sopersistence': [lambda v: v.upper()],
+        'redirectportrewrite': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'disableprimaryondown': [lambda v: v.upper()],
+        'push': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
     }
 
     # Instantiate config proxy

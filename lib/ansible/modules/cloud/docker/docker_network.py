@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -308,6 +308,8 @@ class DockerNetworkManager(object):
                 self.results['changed'] = True
 
     def disconnect_missing(self):
+        if not self.existing_network:
+            return
         containers = self.existing_network['Containers']
         if not containers:
             return

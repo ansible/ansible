@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -166,6 +166,8 @@ def main():
             size_gb = dict(default=10),
             disk_type = dict(default='pd-standard'),
             image = dict(),
+            image_family = dict(),
+            external_projects = dict(type='list'),
             snapshot = dict(),
             state = dict(default='present'),
             zone = dict(default='us-central1-b'),
@@ -188,6 +190,8 @@ def main():
     size_gb = module.params.get('size_gb')
     disk_type = module.params.get('disk_type')
     image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
@@ -257,8 +261,10 @@ def main():
                         image, snapshot), changed=False)
             lc_image = None
             lc_snapshot = None
-            if image is not None:
-                lc_image = gce.ex_get_image(image)
+            if image_family is not None:
+                lc_image = gce.ex_get_image_from_family(image_family, ex_project_list=external_projects)
+            elif image is not None:
+                lc_image = gce.ex_get_image(image, ex_project_list=external_projects)
             elif snapshot is not None:
                 lc_snapshot = gce.ex_get_snapshot(snapshot)
             try:

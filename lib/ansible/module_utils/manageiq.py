@@ -41,6 +41,7 @@ def manageiq_argument_spec():
         url=dict(default=os.environ.get('MIQ_URL', None)),
         username=dict(default=os.environ.get('MIQ_USERNAME', None)),
         password=dict(default=os.environ.get('MIQ_PASSWORD', None), no_log=True),
+        token=dict(default=os.environ.get('MIQ_TOKEN', None), no_log=True),
         verify_ssl=dict(default=True, type='bool'),
         ca_bundle_path=dict(required=False, default=None),
     )
@@ -49,6 +50,21 @@ def manageiq_argument_spec():
 def check_client(module):
     if not HAS_CLIENT:
         module.fail_json(msg='manageiq_client.api is required for this module')
+
+
+def validate_connection_params(module):
+    params = module.params['manageiq_connection']
+    error_str = "missing required argument: manageiq_connection[{}]"
+    url = params['url']
+    token = params['token']
+    username = params['username']
+    password = params['password']
+
+    if (url and username and password) or (url and token):
+        return params
+    for arg in ['url', 'username', 'password']:
+        if params[arg] in (None, ''):
+            module.fail_json(msg=error_str.format(arg))
 
 
 class ManageIQ(object):
@@ -60,22 +76,19 @@ class ManageIQ(object):
         # handle import errors
         check_client(module)
 
-        params = module.params['manageiq_connection']
-
-        # check for required arguments
-        for arg in ['url', 'username', 'password']:
-            if params[arg] in (None, ''):
-                module.fail_json(msg="missing required argument: manageiq_connection[{}]".format(arg))
+        params = validate_connection_params(module)
 
         url = params['url']
         username = params['username']
         password = params['password']
+        token = params['token']
         verify_ssl = params['verify_ssl']
         ca_bundle_path = params['ca_bundle_path']
 
         self._module = module
         self._api_url = url + '/api'
-        self._client = ManageIQClient(self._api_url, (username, password), verify_ssl=verify_ssl, ca_bundle_path=ca_bundle_path)
+        self._auth = dict(user=username, password=password, token=token)
+        self._client = ManageIQClient(self._api_url, self._auth, verify_ssl=verify_ssl, ca_bundle_path=ca_bundle_path)
 
     @property
     def module(self):

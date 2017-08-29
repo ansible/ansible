@@ -92,7 +92,10 @@ import argparse
 
 from time import time
 
-import ConfigParser
+if sys.version_info >= (3, 0):
+    import configparser
+else:
+    import ConfigParser as configparser
 
 import logging
 logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
@@ -213,7 +216,7 @@ class GceInventory(object):
         # This provides empty defaults to each key, so that environment
         # variable configuration (as opposed to INI configuration) is able
         # to work.
-        config = ConfigParser.SafeConfigParser(defaults={
+        config = configparser.SafeConfigParser(defaults={
             'gce_service_account_email_address': '',
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
@@ -271,10 +274,11 @@ class GceInventory(object):
         # exists.
         secrets_path = self.config.get('gce', 'libcloud_secrets')
         secrets_found = False
+
         try:
             import secrets
-            args = list(getattr(secrets, 'GCE_PARAMS', []))
-            kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
+            args = list(secrets.GCE_PARAMS)
+            kwargs = secrets.GCE_KEYWORD_PARAMS
             secrets_found = True
         except:
             pass

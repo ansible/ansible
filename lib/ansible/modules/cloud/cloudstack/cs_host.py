@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -42,67 +42,49 @@ options:
       - Url of the host used to create a host.
       - If not provided, C(http://) and param C(name) is used as url.
       - Only considered if C(state=present) and host does not yet exist.
-    required: false
-    default: null
   username:
     description:
       - Username for the host.
       - Required if C(state=present) and host does not yet exist.
-    required: false
-    default: null
   password:
     description:
       - Password for the host.
       - Required if C(state=present) and host does not yet exist.
-    required: false
-    default: null
   pod:
     description:
       - Name of the pod.
       - Required if C(state=present) and host does not yet exist.
-    required: false
-    default: null
   cluster:
     description:
       - Name of the cluster.
-    required: false
-    default: null
   hypervisor:
     description:
       - Name of the cluster.
       - Required if C(state=present) and host does not yet exist.
     choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator' ]
-    required: false
-    default: null
   allocation_state:
     description:
       - Allocation state of the host.
     choices: [ 'enabled', 'disabled' ]
-    required: false
-    default: null
   host_tags:
     description:
       - Tags of the host.
-    required: false
-    default: null
+    aliases: [ host_tag ]
   state:
     description:
       - State of the host.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   zone:
     description:
       - Name of the zone in which the host should be deployed.
       - If not set, default zone is used.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure a host is present but disabled
-- local_action:
+- name: Ensure a host is present but disabled
+  local_action:
     module: cs_host
     name: ix-pod01-esx01.example.com
     cluster: vcenter.example.com/ch-zrh-ix/pod01-cluster01
@@ -114,22 +96,22 @@ EXAMPLES = '''
     - perf
     - gpu
 
-# Ensure an existing host is disabled
-- local_action:
+- name: Ensure an existing host is disabled
+  local_action:
     module: cs_host
     name: ix-pod01-esx01.example.com
     zone: ch-zrh-ix-01
     allocation_state: disabled
 
-# Ensure an existing host is disabled
-- local_action:
+- name: Ensure an existing host is disabled
+  local_action:
     module: cs_host
     name: ix-pod01-esx01.example.com
     zone: ch-zrh-ix-01
     allocation_state: enabled
 
-# Ensure a host is absent
-- local_action:
+- name: Ensure a host is absent
+  local_action:
     module: cs_host
     name: ix-pod01-esx01.example.com
     zone: ch-zrh-ix-01
@@ -616,7 +598,7 @@ def main():
         allocation_state=dict(choices=['enabled', 'disabled', 'maintenance']),
         pod=dict(),
         cluster=dict(),
-        host_tags=dict(type='list'),
+        host_tags=dict(type='list', aliases=['host_tag']),
         zone=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
     ))

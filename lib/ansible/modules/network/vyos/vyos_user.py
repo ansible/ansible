@@ -19,15 +19,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
 module: vyos_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage the collection of local users on VyOS device
 description:
   - This module provides declarative management of the local usernames
@@ -35,13 +35,15 @@ description:
     either individual usernames or the collection of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+notes:
+  - Tested against VYOS 1.1.7
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         VyOS device. The list entries can either be the username or
         a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument. alias C(aggregate).
+        exclusive with the C(name) argument. alias C(users).
   name:
     description:
       - The username to be configured on the VyOS device.
@@ -53,7 +55,7 @@ options:
       - The C(full_name) argument provides the full name of the user
         account to be created on the remote device. This argument accepts
         any text string value.
-  password:
+  configured_password:
     description:
       - The password to be configured on the VyOS device. The
         password needs to be provided in clear and it will be encrypted
@@ -95,14 +97,14 @@ EXAMPLES = """
 - name: create a new user
   vyos_user:
     name: ansible
-    password: password
+    configured_password: password
     state: present
 - name: remove all users except admin
   vyos_user:
     purge: yes
 - name: set multiple users to level operator
   vyos_user:
-    users:
+    aggregate:
       - name: netop
       - name: netend
     level: operator
@@ -110,7 +112,7 @@ EXAMPLES = """
 - name: Change Password for User netop
   vyos_user:
     name: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 """
@@ -166,9 +168,9 @@ def spec_to_commands(updates, module):
         if needs_update(want, have, 'full_name'):
             add(commands, want, "full-name %s" % want['full_name'])
 
-        if needs_update(want, have, 'password'):
+        if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'authentication plaintext-password %s' % want['password'])
+                add(commands, want, 'authentication plaintext-password %s' % want['configured_password'])
 
     return commands
 
@@ -203,7 +205,7 @@ def config_to_dict(module):
         obj = {
             'name': user,
             'state': 'present',
-            'password': None,
+            'configured_password': None,
             'level': parse_level(cfg),
             'full_name': parse_full_name(cfg)
         }
@@ -231,20 +233,20 @@ def map_params_to_obj(module):
         if not module.params['name'] and module.params['purge']:
             return list()
         else:
-            aggregate = [{'name': module.params['name']}]
+            users = [{'name': module.params['name']}]
     else:
-        aggregate = list()
+        users = list()
         for item in aggregate:
             if not isinstance(item, dict):
-                aggregate.append({'name': item})
+                users.append({'name': item})
             else:
-                aggregate.append(item)
+                users.append(item)
 
     objects = list()
 
-    for item in aggregate:
+    for item in users:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
         item['full_name'] = get_value('full_name')
         item['level'] = get_value('level')
         item['state'] = get_value('state')
@@ -275,10 +277,9 @@ def main():
         full_name=dict(),
         level=dict(aliases=['role']),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -289,7 +290,8 @@ def main():
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users']),
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
+        purge=dict(type='bool', default=False)
     )
 
     argument_spec.update(element_spec)
@@ -301,6 +303,12 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
 
     result = {'changed': False}

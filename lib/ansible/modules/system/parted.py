@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -654,7 +654,7 @@ def main():
             if not module.check_mode:
                 partition = [p for p in current_parts if p['num'] == number][0]
 
-            # Assign name to the the partition
+            # Assign name to the partition
             if name is not None and partition.get('name', None) != name:
                 script += "name %s %s " % (number, name)
 

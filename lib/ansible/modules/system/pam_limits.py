@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -215,9 +215,6 @@ def main():
         if not new_comment:
             new_comment = old_comment
 
-        if new_comment:
-            new_comment = "\t#"+new_comment
-
         line_fields = newline.split(' ')
 
         if len(line_fields) != 4:
@@ -262,6 +259,8 @@ def main():
             # Change line only if value has changed
             if new_value != actual_value:
                 changed = True
+                if new_comment:
+                    new_comment = "\t#" + new_comment
                 new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + new_value + new_comment + "\n"
                 message = new_limit
                 nf.write(new_limit)
@@ -273,6 +272,8 @@ def main():
 
     if not found:
         changed = True
+        if new_comment:
+            new_comment = "\t#"+new_comment
         new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + new_value + new_comment + "\n"
         message = new_limit
         nf.write(new_limit)

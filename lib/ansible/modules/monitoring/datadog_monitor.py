@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -329,7 +329,7 @@ def mute_monitor(module):
         module.fail_json(msg="Monitor %s not found!" % module.params['name'])
     elif monitor['options']['silenced']:
         module.fail_json(msg="Monitor is already muted. Datadog does not allow to modify muted alerts, consider unmuting it first.")
-    elif (module.params['silenced'] is not None and len(set(monitor['options']['silenced']) - set(module.params['silenced'])) == 0):
+    elif (module.params['silenced'] is not None and len(set(monitor['options']['silenced']) ^ set(module.params['silenced'])) == 0):
         module.exit_json(changed=False)
     try:
         if module.params['silenced'] is None or module.params['silenced'] == "":

@@ -1,4 +1,19 @@
 #!/usr/bin/env python
+#
+# This file is part of Ansible,
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # Requirements
 #   - pyvmomi >= 6.0.0.2016.4
@@ -563,18 +578,27 @@ class VMWareInventory(object):
 
                 for idx, x in enumerate(parts):
 
-                    # if the val wasn't set yet, get it from the parent
-                    if not val:
-                        try:
-                            val = getattr(vm, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                    if isinstance(val, dict):
+                        if x in val:
+                            val = val.get(x)
+                        elif x.lower() in val:
+                            val = val.get(x.lower())
                     else:
-                        # in a subkey, get the subprop from the previous attrib
-                        try:
-                            val = getattr(val, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                        # if the val wasn't set yet, get it from the parent
+                        if not val:
+                            try:
+                                val = getattr(vm, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+                        else:
+                            # in a subkey, get the subprop from the previous attrib
+                            try:
+                                val = getattr(val, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+
+                        # make sure it serializes
+                        val = self._process_object_types(val)
 
                     # lowercase keys if requested
                     if self.lowerkeys:
@@ -638,7 +662,7 @@ class VMWareInventory(object):
 
         return rdata
 
-    def _process_object_types(self, vobj, thisvm=None, inkey=None, level=0):
+    def _process_object_types(self, vobj, thisvm=None, inkey='', level=0):
         ''' Serialize an object '''
         rdata = {}
 
@@ -730,7 +754,7 @@ class VMWareInventory(object):
             return self.inventory['_meta']['hostvars'][host]
         elif self.args.host and self.inventory['_meta']['hostvars']:
             match = None
-            for k, v in self.inventory['_meta']['hostvars']:
+            for k, v in self.inventory['_meta']['hostvars'].items():
                 if self.inventory['_meta']['hostvars'][k]['name'] == self.args.host:
                     match = k
                     break

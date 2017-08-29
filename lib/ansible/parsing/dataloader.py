@@ -371,17 +371,10 @@ class DataLoader:
                 b_mydir = os.path.dirname(b_upath)
 
                 # if path is in role and 'tasks' not there already, add it into the search
-                if is_role or self._is_role(path):
-                    if b_mydir.endswith(b'tasks'):
+                if (is_role or self._is_role(path)) and b_mydir.endswith(b'tasks'):
                         search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
                         search.append(os.path.join(b_mydir, b_source))
-                    else:
-                        # don't add dirname if user already is using it in source
-                        if b_source.split(b'/')[0] != b_dirname:
-                            search.append(os.path.join(b_upath, b_dirname, b_source))
-                        search.append(os.path.join(b_upath, b_source))
-
-                elif b_dirname not in b_source.split(b'/'):
+                else:
                     # don't add dirname if user already is using it in source
                     if b_source.split(b'/')[0] != dirname:
                         search.append(os.path.join(b_upath, b_dirname, b_source))

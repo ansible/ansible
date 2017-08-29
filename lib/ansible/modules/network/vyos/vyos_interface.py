@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,8 @@ short_description: Manage Interface on VyOS network devices
 description:
   - This module provides declarative management of Interfaces
     on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   name:
     description:
@@ -137,8 +139,6 @@ from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import conditional, remove_default_spec
 from ansible.module_utils.vyos import load_config, get_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
-
-DEFAULT_DESCRIPTION = "'configured by vyos_interface'"
 
 
 def search_obj_in_list(name, lst):
@@ -302,7 +302,7 @@ def main():
     """
     element_spec = dict(
         name=dict(),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),

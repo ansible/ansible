@@ -53,10 +53,20 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['no username ansible'])
+        cmd = json.loads(
+            '{"answer": "y", ' +
+            '"prompt": "This operation will remove all username related ' +
+            'configurations with same name", "command": "no username ansible"}'
+        )
+
+        result_cmd = []
+        for i in result['commands']:
+            result_cmd.append(json.loads(i))
+
+        self.assertEqual(result_cmd, [cmd])
 
     def test_ios_user_password(self):
-        set_module_args(dict(name='ansible', password='test'))
+        set_module_args(dict(name='ansible', configured_password='test'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['username ansible secret test'])
 
@@ -72,7 +82,17 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_purge(self):
         set_module_args(dict(purge=True))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['no username ansible'])
+        cmd = json.loads(
+            '{"answer": "y", ' +
+            '"prompt": "This operation will remove all username related ' +
+            'configurations with same name", "command": "no username ansible"}'
+        )
+
+        result_cmd = []
+        for i in result['commands']:
+            result_cmd.append(json.loads(i))
+
+        self.assertEqual(result_cmd, [cmd])
 
     def test_ios_user_view(self):
         set_module_args(dict(name='ansible', view='test'))
@@ -80,15 +100,15 @@ class TestIosUserModule(TestIosModule):
         self.assertEqual(result['commands'], ['username ansible view test'])
 
     def test_ios_user_update_password_changed(self):
-        set_module_args(dict(name='test', password='test', update_password='on_create'))
+        set_module_args(dict(name='test', configured_password='test', update_password='on_create'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['username test secret test'])
 
     def test_ios_user_update_password_on_create_ok(self):
-        set_module_args(dict(name='ansible', password='test', update_password='on_create'))
+        set_module_args(dict(name='ansible', configured_password='test', update_password='on_create'))
         self.execute_module()
 
     def test_ios_user_update_password_always(self):
-        set_module_args(dict(name='ansible', password='test', update_password='always'))
+        set_module_args(dict(name='ansible', configured_password='test', update_password='always'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['username ansible secret test'])

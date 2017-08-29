@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), supported params will be reset to a default state.
       These include C(version), C(startup_query_interval),
       C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
@@ -248,7 +249,10 @@ def execute_show_command(command, module, command_type='cli_show'):
             'output': 'text',
         }]
     else:
-        cmds = [command]
+        cmds = [{
+            'command': command,
+            'output': 'json',
+        }]
 
     return run_commands(module, cmds)
 

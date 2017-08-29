@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -37,7 +37,7 @@ options:
         This argument accepts a string value and is mutually exclusive
         with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
-  password:
+  configured_password:
     description:
       - The password to be configured on the remote network device. The
         password needs to be provided in clear and it will be encrypted
@@ -106,8 +106,8 @@ EXAMPLES = """
 - name: set multiple users to privilege level 15
   net_user:
     aggregate:
-      - name: netop
-      - name: netend
+      - { name: netop }
+      - { name: netend }
     privilege: 15
     state: present
 

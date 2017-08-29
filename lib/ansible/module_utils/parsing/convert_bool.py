@@ -16,7 +16,7 @@ def boolean(value, strict=True):
 
     normalized_value = value
     if isinstance(value, (text_type, binary_type)):
-        normalized_value = to_text(value, errors='surrogate_or_strict').lower()
+        normalized_value = to_text(value, errors='surrogate_or_strict').lower().strip()
 
     if normalized_value in BOOLEANS_TRUE:
         return True

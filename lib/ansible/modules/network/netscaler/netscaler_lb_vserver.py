@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -382,8 +382,8 @@ options:
 
     sessionless:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Perform load balancing on a per-packet basis, without establishing sessions. Recommended for load
@@ -458,8 +458,8 @@ options:
 
     sopersistence:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 If spillover occurs, maintain source IP address based persistence for both primary and backup virtual
@@ -500,15 +500,15 @@ options:
 
     redirectportrewrite:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Rewrite the port and change the protocol to ensure successful HTTP redirects from services."
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with a virtual server whose state transitions from UP to
@@ -516,8 +516,8 @@ options:
 
     disableprimaryondown:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 If the primary virtual server goes down, do not allow it to return to primary status until manually
@@ -554,7 +554,7 @@ options:
         description:
             - >-
                 Fully qualified domain name (FQDN) of the authentication virtual server to which the user must be
-                redirected for authentication. Make sure that the Authentication parameter is set to ENABLED.
+                redirected for authentication. Make sure that the Authentication parameter is set to C(yes).
             - "Minimum length = 3"
             - "Maximum length = 252"
 
@@ -576,8 +576,8 @@ options:
 
     push:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Process traffic with the push virtual server that is bound to this load balancing virtual server."
 
@@ -675,8 +675,8 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Apply AppFlow logging to the virtual server."
 
@@ -802,22 +802,22 @@ options:
 
     macmoderetainvlan:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "This option is used to retain vlan information of incoming packet when macmode is enabled."
 
     dbslb:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable database specific load balancing for MySQL and MSSQL service types."
 
     dns64:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "This argument is for enabling/disabling the C(dns64) on lbvserver."
 
@@ -838,8 +838,8 @@ options:
 
     processlocal:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 By turning on this option packets destined to a vserver in a cluster will not under go any steering.
@@ -1421,8 +1421,8 @@ def main():
         sessionless=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         connfailover=dict(
@@ -1449,8 +1449,8 @@ def main():
         sopersistence=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         sopersistencetimeout=dict(type='float'),
@@ -1467,22 +1467,22 @@ def main():
         redirectportrewrite=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         disableprimaryondown=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         insertvserveripport=dict(
@@ -1501,8 +1501,8 @@ def main():
         push=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         pushvserver=dict(type='str'),
@@ -1540,8 +1540,8 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         netprofile=dict(type='str'),
@@ -1582,22 +1582,22 @@ def main():
         macmoderetainvlan=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         dbslb=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         dns64=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         bypassaaaa=dict(type='bool'),
@@ -1605,8 +1605,8 @@ def main():
         processlocal=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         dnsprofilename=dict(type='str'),
@@ -1805,6 +1805,17 @@ def main():
         'l2conn': ['bool_on_off'],
         'pushmulticlients': ['bool_yes_no'],
         'recursionavailable': ['bool_yes_no'],
+        'sessionless': [lambda v: v.upper()],
+        'sopersistence': [lambda v: v.upper()],
+        'redirectportrewrite': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'disableprimaryondown': [lambda v: v.upper()],
+        'push': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
+        'macmoderetainvlan': [lambda v: v.upper()],
+        'dbslb': [lambda v: v.upper()],
+        'dns64': [lambda v: v.upper()],
+        'processlocal': [lambda v: v.upper()],
     }
 
     lbvserver_proxy = ConfigProxy(

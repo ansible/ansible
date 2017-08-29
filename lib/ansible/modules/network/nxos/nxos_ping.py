@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -52,6 +52,11 @@ options:
             - Outgoing VRF.
         required: false
         default: null
+    state:
+        description:
+            - Determines if the expected result is success or fail.
+        choices: [ absent, present ]
+        default: present
 '''
 
 EXAMPLES = '''
@@ -73,62 +78,46 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-action:
-    description:
-        - Show what action has been performed
-    returned: always
-    type: string
-    sample: "PING 8.8.8.8 (8.8.8.8): 56 data bytes"
-updates:
+commands:
     description: Show the command sent
     returned: always
     type: list
     sample: ["ping 8.8.8.8 count 2 vrf management"]
-count:
-    description: Show amount of packets sent
-    returned: always
-    type: string
-    sample: "2"
-dest:
-    description: Show the ping destination
-    returned: always
-    type: string
-    sample: "8.8.8.8"
 rtt:
     description: Show RTT stats
     returned: always
     type: dict
-    sample: {"avg": "6.264","max":"6.564",
-            "min": "5.978"}
+    sample: {"avg": 6.264, "max": 6.564, "min": 5.978}
 packets_rx:
     description: Packets successfully received
     returned: always
-    type: string
-    sample: "2"
+    type: int
+    sample: 2
 packets_tx:
     description: Packets successfully transmitted
     returned: always
-    type: string
-    sample: "2"
+    type: int
+    sample: 2
 packet_loss:
     description: Percentage of packets lost
     returned: always
     type: string
     sample: "0.00%"
 '''
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
 
 def get_summary(results_list, reference_point):
     summary_string = results_list[reference_point+1]
     summary_list = summary_string.split(',')
-    pkts_tx = summary_list[0].split('packets')[0].strip()
-    pkts_rx = summary_list[1].split('packets')[0].strip()
-    pkt_loss = summary_list[2].split('packet')[0].strip()
-    summary = dict(packets_tx=pkts_tx,
-                   packets_rx=pkts_rx,
-                   packet_loss=pkt_loss)
+
+    summary = dict(
+        packets_tx=int(summary_list[0].split('packets')[0].strip()),
+        packets_rx=int(summary_list[1].split('packets')[0].strip()),
+        packet_loss=summary_list[2].split('packet')[0].strip(),
+    )
 
     if 'bytes from' not in results_list[reference_point-2]:
         ping_pass = False
@@ -139,16 +128,16 @@ def get_summary(results_list, reference_point):
 
 
 def get_rtt(results_list, packet_loss, location):
+    rtt = dict(min=None, avg=None, max=None)
+
     if packet_loss != '100.00%':
         rtt_string = results_list[location]
         base = rtt_string.split('=')[1]
         rtt_list = base.split('/')
-        min_rtt = rtt_list[0].lstrip()
-        avg_rtt = rtt_list[1]
-        max_rtt = rtt_list[2][:-3]
-        rtt = dict(min=min_rtt, avg=avg_rtt, max=max_rtt)
-    else:
-        rtt = dict(min=None, avg=None, max=None)
+
+        rtt['min'] = float(rtt_list[0].lstrip())
+        rtt['avg'] = float(rtt_list[1])
+        rtt['max'] = float(rtt_list[2][:-3])
 
     return rtt
 
@@ -160,7 +149,7 @@ def get_statistics_summary_line(response_as_list):
     return index
 
 
-def get_ping_results(command, module, transport):
+def get_ping_results(command, module):
     cmd = {'command': command, 'output': 'text'}
     ping = run_commands(module, [cmd])[0]
 
@@ -181,7 +170,7 @@ def get_ping_results(command, module, transport):
         summary, ping_pass = get_summary(splitted_ping, reference_point)
         rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point+2)
 
-    return (splitted_ping, summary, rtt, ping_pass)
+    return (summary, rtt, ping_pass)
 
 
 def main():
@@ -190,73 +179,42 @@ def main():
         count=dict(required=False, default=2),
         vrf=dict(required=False),
         source=dict(required=False),
-        state=dict(required=False, choices=['present', 'absent'],
-                       default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(required=False, choices=['present', 'absent'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
 
-
     destination = module.params['dest']
     count = module.params['count']
-    vrf = module.params['vrf']
-    source = module.params['source']
     state = module.params['state']
 
-    if count:
-        try:
-            if int(count) < 1 or int(count) > 655350:
-                raise ValueError
-        except ValueError:
-            module.fail_json(msg="'count' must be an integer between 1 "
-                                 "and 655350.", count=count)
-
-    OPTIONS = {
-        'vrf': vrf,
-        'count': count,
-        'source': source
-        }
+    if count and not 1 <= int(count) <= 655350:
+        module.fail_json(msg="'count' must be an integer between 1 and 655350.", count=count)
 
     ping_command = 'ping {0}'.format(destination)
-    for command, arg in OPTIONS.items():
+    for command in ['count', 'source', 'vrf']:
+        arg = module.params[command]
         if arg:
             ping_command += ' {0} {1}'.format(command, arg)
 
-    ping_results, summary, rtt, ping_pass = get_ping_results(
-        ping_command, module, module.params['transport'])
+    summary, rtt, ping_pass = get_ping_results(ping_command, module)
 
-    packet_loss = summary['packet_loss']
-    packets_rx = summary['packets_rx']
-    packets_tx = summary['packets_tx']
-
-    results = {}
-    results['updates'] = [ping_command]
-    results['action'] = ping_results[1]
-    results['dest'] = destination
-    results['count'] = count
-    results['packets_tx'] = packets_tx
-    results['packets_rx'] = packets_rx
-    results['packet_loss'] = packet_loss
+    results = summary
     results['rtt'] = rtt
-    results['state'] = module.params['state']
+    results['commands'] = [ping_command]
 
     if ping_pass and state == 'absent':
-        module.fail_json(msg="Ping succeeded unexpectedly", results=results)
+        module.fail_json(msg="Ping succeeded unexpectedly")
     elif not ping_pass and state == 'present':
-        module.fail_json(msg="Ping failed unexpectedly", results=results)
-    else:
-        module.exit_json(**results)
+        module.fail_json(msg="Ping failed unexpectedly")
+
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-

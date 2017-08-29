@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +31,7 @@ description:
     - Manages physical attributes of interfaces of NX-OS switches.
 author: Jason Edelman (@jedelman8)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - This module is also used to create logical interfaces such as
     svis and loopbacks.
   - Be cautious of platform specific idiosyncrasies. For example,
@@ -281,6 +280,8 @@ def get_interface(intf, module):
 
     if body:
         interface_table = body['TABLE_interface']['ROW_interface']
+        if interface_table['eth_mode'] == 'fex-fabric':
+            module.fail_json(msg='nxos_interface does not support interfaces with mode "fex-fabric"')
         intf_type = get_interface_type(intf)
         if intf_type in ['portchannel', 'ethernet']:
             if not interface_table.get('eth_mode'):

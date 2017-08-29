@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -151,7 +151,7 @@ EXAMPLES = '''
     count: 3
   register: ec2
 - ec2_vol:
-    instance: "{{ item.id }} "
+    instance: "{{ item.id }}"
     volume_size: 5
   with_items: "{{ ec2.instances }}"
   register: ec2_vol
