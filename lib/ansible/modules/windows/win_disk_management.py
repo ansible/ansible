@@ -191,7 +191,7 @@ general_log:
             description: Documents whether converting the variables from string to integer was successful or not
             returned: always
             type: int
-            sample: "successful"        
+            sample: "successful"
         rescan_disks:
             description: Documents whether rescaning the disks of the computer via diskpart was successful or not
             returned: always
