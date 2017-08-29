@@ -112,6 +112,14 @@ options:
         Valid values are an integer, in Mbps, or the keyword 'default'.
     required: false
     default: null
+  passive_interface:
+    description:
+      - Setting to true will suppress routing update on interface.
+        Valid values are 'true' and 'false'.
+    version_added: "2.4"
+    required: false
+    choices: ['true','false']
+    default: null
 '''
 
 EXAMPLES = '''
@@ -143,6 +151,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
+BOOL_PARAMS = [
+    'passive_interface'
+]
 PARAM_TO_COMMAND_KEYMAP = {
     'vrf': 'vrf',
     'router_id': 'router-id',
@@ -154,7 +165,8 @@ PARAM_TO_COMMAND_KEYMAP = {
     'timer_throttle_spf_max': 'timers throttle spf',
     'timer_throttle_spf_start': 'timers throttle spf',
     'timer_throttle_spf_hold': 'timers throttle spf',
-    'auto_cost': 'auto-cost reference-bandwidth'
+    'auto_cost': 'auto-cost reference-bandwidth',
+    'passive_interface': 'passive-interface default'
 }
 PARAM_TO_DEFAULT_KEYMAP = {
     'timer_throttle_lsa_start': '0',
@@ -178,6 +190,11 @@ def get_value(arg, config, module):
                 value = 'detail'
             else:
                 value = 'log'
+        elif arg == 'passive_interface':
+            if 'passive-interface default' in config:
+                value = True
+            else:
+                value = False
         else:
             value_list = command_re.search(config).group('value').split()
             if 'hold' in arg:
@@ -243,7 +260,11 @@ def state_present(module, existing, proposed, candidate):
             commands.append(key)
 
         elif value is False:
-            commands.append('no {0}'.format(key))
+            if key == 'passive-interface default':
+                if existing_commands.get(key):
+                    commands.append('no {0}'.format(key))
+            else:
+                commands.append('no {0}'.format(key))
 
         elif value == 'default':
             if existing_commands.get(key):
@@ -283,7 +304,6 @@ def state_present(module, existing, proposed, candidate):
         parents = ['router ospf {0}'.format(module.params['ospf'])]
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
-
         candidate.add(commands, parents=parents)
 
 
@@ -293,8 +313,10 @@ def state_absent(module, existing, proposed, candidate):
     if module.params['vrf'] == 'default':
         existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
         for key, value in existing_commands.items():
-            if value:
-                if key == 'timers throttle lsa':
+            if value and key != 'vrf':
+                if key == 'passive-interface default':
+                    command = 'no {0}'.format(key)
+                elif key == 'timers throttle lsa':
                     command = 'no {0} {1} {2} {3}'.format(
                         key,
                         existing['timer_throttle_lsa_start'],
@@ -314,7 +336,9 @@ def state_absent(module, existing, proposed, candidate):
                     commands.append(command)
     else:
         commands = ['no vrf {0}'.format(module.params['vrf'])]
-    candidate.add(commands, parents=parents)
+
+    if commands:
+        candidate.add(commands, parents=parents)
 
 
 def main():
@@ -331,6 +355,7 @@ def main():
         timer_throttle_spf_hold=dict(required=False, type='str'),
         timer_throttle_spf_max=dict(required=False, type='str'),
         auto_cost=dict(required=False, type='str'),
+        passive_interface=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
         include_defaults=dict(default=True),
         config=dict(),
