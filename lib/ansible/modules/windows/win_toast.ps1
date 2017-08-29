@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 $osversion = [Environment]::OSVersion
 $lowest_version = 10
 if ($osversion.Version.Major -lt $lowest_version ) {
-   Fail-Json $result "Sorry, this version of windows, $osversion, does not support Toast notifications.  Toast notifications are available from version $lowest_version" 
+   Fail-Json -obj $result -message "Sorry, this version of windows, $osversion, does not support Toast notifications.  Toast notifications are available from version $lowest_version" 
 }
 
 $stopwatch = [system.diagnostics.stopwatch]::startNew()
@@ -45,7 +45,7 @@ $result = @{
 # and no-one to read the message, so exit but do not fail
 # if there are no logged in users to notify.
  
-if ((get-process -name explorer -EA silentlyContinue).Count -gt 0){
+if ((Get-Process -Name explorer -ErrorAction SilentlyContinue).Count -gt 0){
 
   [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
   $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText01)
@@ -82,10 +82,10 @@ if ((get-process -name explorer -EA silentlyContinue).Count -gt 0){
    $result.no_toast_sent_reason = 'No logged in users to notifiy'
 }
 
-$endsend_at = Get-Date| Out-String
+$endsend_at = Get-Date | Out-String
 $stopwatch.Stop()
 
 $result.time_taken = $stopwatch.Elapsed.TotalSeconds
 $result.sent_localtime = $endsend_at.Trim()
   
-Exit-Json $result
+Exit-Json -obj $result
