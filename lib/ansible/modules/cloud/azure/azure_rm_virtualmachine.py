@@ -545,7 +545,7 @@ try:
                                           VirtualHardDisk, ManagedDiskParameters, \
                                           ImageReference, NetworkProfile, LinuxConfiguration, \
                                           SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
-                                          DiskCreateOptionTypes, CachingTypes
+                                          DiskCreateOptionTypes
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
                                           NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
@@ -931,8 +931,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 count += 1
 
                             data_disk['caching'] = data_disk.get(
-                                'caching',
-                                CachingTypes.read_only
+                                'caching', 'ReadOnly'
                             )
 
                             data_disks.append(DataDisk(
