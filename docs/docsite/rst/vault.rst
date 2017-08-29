@@ -9,7 +9,6 @@ To enable this feature, a command line tool, :ref:`ansible-vault` is used to edi
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
-
 .. _what_can_be_encrypted_with_vault:
 
 What Can Be Encrypted With Vault
@@ -122,10 +121,71 @@ Use encrypt_string to create encrypted variables to embed in yaml
 The :ref:`ansible-vault encrypt_string` command will encrypt and format a provided string into a format
 that can be included in :ref:`ansible-playbook` YAML files.
 
-See :ref:`single_encrypted_variable` for an example
+To encrypt a string provided as a cli arg:
+
+.. code-block:: bash
+
+    ansible-vault encrypt_string --vault-id a_password_file 'foobar' --name 'the_secret'
+    some_foo: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          62313365396662343061393464336163383764373764613633653634306231386433626436623361
+          6134333665353966363534333632666535333761666131620a663537646436643839616531643561
+          63396265333966386166373632626539326166353965363262633030333630313338646335303630
+          3438626666666137650a353638643435666633633964366338633066623234616432373231333331
+          6564
+
+To use a vault-id label for 'dev' vault-id:
+
+.. code-block:: bash
 
 
-.. _vault_ids
+    ansible-vault encrypt_string --vault-id dev@password 'foooodev' --name 'the_dev_secret'
+    the_dev_secret: !vault |
+              $ANSIBLE_VAULT;1.2;AES256;dev
+              30613233633461343837653833666333643061636561303338373661313838333565653635353162
+              3263363434623733343538653462613064333634333464660a663633623939393439316636633863
+              61636237636537333938306331383339353265363239643939666639386530626330633337633833
+              6664656334373166630a363736393262666465663432613932613036303963343263623137386239
+              6330
+
+To encrypt a string read from stdin and name it 'db_password':
+
+.. code-block:: bash
+
+    echo 'letmein' | ansible-vault encrypt_string --vault-id dev@password --stdin-name 'db_password'
+    Reading plaintext input from stdin. (ctrl-d to end input)
+    db_password: !vault |
+              $ANSIBLE_VAULT;1.2;AES256;dev
+              61323931353866666336306139373937316366366138656131323863373866376666353364373761
+              3539633234313836346435323766306164626134376564330a373530313635343535343133316133
+              36643666306434616266376434363239346433643238336464643566386135356334303736353136
+              6565633133366366360a326566323363363936613664616364623437336130623133343530333739
+              3039
+
+To be prompted for a string to encrypt, encrypt it, and give it the name 'new_user_password':
+
+
+.. code-block:: bash
+
+    ansible-vault encrypt_string --vault-id dev@./password --stdin-name 'new_user_password'
+    Reading plaintext input from stdin. (ctrl-d to end input)
+
+User enters 'hunter42' and hits ctrl-d.
+
+.. code-block:: bash
+
+    new_user_password: !vault |
+              $ANSIBLE_VAULT;1.2;AES256;dev
+              37636561366636643464376336303466613062633537323632306566653533383833366462366662
+              6565353063303065303831323539656138653863353230620a653638643639333133306331336365
+              62373737623337616130386137373461306535383538373162316263386165376131623631323434
+              3866363862363335620a376466656164383032633338306162326639643635663936623939666238
+              3161
+
+See also :ref:`single_encrypted_variable`
+
+
+.. _vault_ids:
 
 Vault Ids and Multiple Vault Passwords
 ``````````````````````````````````````
@@ -256,8 +316,8 @@ only one vault-id can be used.
 
 
 .. note::
-Prior to Ansible 2.4, only one vault password could be used in each Ansible run. The
-:option:`--vault-id` option is not support prior to Ansible 2.4.
+    Prior to Ansible 2.4, only one vault password could be used in each Ansible run. The
+    :option:`--vault-id` option is not support prior to Ansible 2.4.
 
 
 .. _speeding_up_vault:
