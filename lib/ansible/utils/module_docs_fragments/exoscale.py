@@ -11,20 +11,20 @@ options:
   api_key:
     description:
       - API key of the Exoscale DNS API.
-      - Since 2.4, the ENV variable c(CLOUDSTACK_KEY) is used as default, when defined.
+      - Since 2.4, the ENV variable C(CLOUDSTACK_KEY) is used as default, when defined.
   api_secret:
     description:
       - Secret key of the Exoscale DNS API.
-      - Since 2.4, the ENV variable c(CLOUDSTACK_SECRET) is used as default, when defined.
+      - Since 2.4, the ENV variable C(CLOUDSTACK_SECRET) is used as default, when defined.
   api_timeout:
     description:
       - HTTP timeout to Exoscale DNS API.
-      - Since 2.4, the ENV variable c(CLOUDSTACK_TIMEOUT) is used as default, when defined.
+      - Since 2.4, the ENV variable C(CLOUDSTACK_TIMEOUT) is used as default, when defined.
     default: 10
   api_region:
     description:
       - Name of the ini section in the C(cloustack.ini) file.
-      - Since 2.4, the ENV variable c(CLOUDSTACK_REGION) is used as default, when defined.
+      - Since 2.4, the ENV variable C(CLOUDSTACK_REGION) is used as default, when defined.
     default: cloudstack
   validate_certs:
     description:
