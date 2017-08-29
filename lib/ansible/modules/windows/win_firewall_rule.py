@@ -1,21 +1,7 @@
 #!/usr/bin/env python
-
-# (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Artem Zinenko <zinenkoartem@gmail.com>
+# Copyright (c) 2014 Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -26,80 +12,70 @@ DOCUMENTATION = r'''
 ---
 module: win_firewall_rule
 version_added: "2.0"
-author: Timothy Vandenbrande
+author:
+  - Artem Zinenko (@ar7z1)
+  - Timothy Vandenbrande (@TimothyVandenbrande)
 short_description: Windows firewall automation
 description:
-    - Allows you to create/remove/update firewall rules
+  - Allows you to create/remove/update firewall rules.
 options:
-    enabled:
-        description:
-            - Is this firewall rule enabled or disabled
-        default: 'yes'
-        choices: [ 'no', 'yes' ]
-        aliases: [ 'enable' ]
-    state:
-        description:
-            - Should this rule be added or removed
-        default: "present"
-        choices: ['present', 'absent']
-    name:
-        description:
-            - The rules name
-        required: true
-    direction:
-        description:
-            - Is this rule for inbound or outbound traffic
-        required: true
-        choices: ['in', 'out']
-    action:
-        description:
-            - What to do with the items this rule is for
-        required: true
-        choices: ['allow', 'block', 'bypass']
+  enabled:
     description:
-        description:
-            - Description for the firewall rule
-    localip:
-        description:
-            - The local ip address this rule applies to
-        default: 'any'
-    remoteip:
-        description:
-            - The remote ip address/range this rule applies to
-        default: 'any'
-    localport:
-        description:
-            - The local port this rule applies to
-    remoteport:
-        description:
-            - The remote port this rule applies to
-    program:
-        description:
-            - The program this rule applies to
-    service:
-        description:
-            - The service this rule applies to
-    protocol:
-        description:
-            - The protocol this rule applies to
-        default: 'any'
-    profiles:
-        description:
-            - The profile this rule applies to
-        default: 'domain,private,public'
-        aliases: [ 'profile' ]
-    force:
-        description:
-            - Replace any existing rule by removing it first.
-        default: 'no'
-        choices: [ 'no', 'yes' ]
-notes:
-- The implementation uses C(netsh advfirewall) underneath, a pure-Powershell
-  reimplementation would be more powerful.
-- Modifying existing firewall rules is not possible, the module does allow
-  replacing complete rules based on name, but that works by removing the
-  existing rule completely, and recreating it with provided information
-  (when using C(force)).
+      - Is this firewall rule enabled or disabled.
+    type: bool
+    default: 'yes'
+    aliases: [ 'enable' ]
+  state:
+    description:
+      - Should this rule be added or removed.
+    default: "present"
+    choices: ['present', 'absent']
+  name:
+    description:
+      - The rules name
+    required: true
+  direction:
+    description:
+      - Is this rule for inbound or outbound traffic.
+    required: true
+    choices: ['in', 'out']
+  action:
+    description:
+      - What to do with the items this rule is for.
+    required: true
+    choices: ['allow', 'block', 'bypass']
+  description:
+    description:
+      - Description for the firewall rule.
+  localip:
+    description:
+      - The local ip address this rule applies to.
+    default: 'any'
+  remoteip:
+    description:
+      - The remote ip address/range this rule applies to.
+    default: 'any'
+  localport:
+    description:
+      - The local port this rule applies to.
+  remoteport:
+    description:
+      - The remote port this rule applies to.
+  program:
+    description:
+      - The program this rule applies to.
+  service:
+    description:
+      - The service this rule applies to.
+  protocol:
+    description:
+      - The protocol this rule applies to.
+    default: 'any'
+  profiles:
+    description:
+      - The profile this rule applies to.
+    default: 'domain,private,public'
+    aliases: [ 'profile' ]
 '''
 
 EXAMPLES = r'''
