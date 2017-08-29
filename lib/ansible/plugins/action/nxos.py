@@ -55,11 +55,11 @@ class ActionModule(_ActionModule):
             pc.connection = 'network_cli'
             pc.network_os = 'nxos'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
-            pc.port = provider['port'] or self._play_context.port or 22
+            pc.port = int(provider['port'] or self._play_context.port or 22)
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
+            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
             self._task.args['provider'] = provider.update(
                 host=pc.remote_addr,
                 port=pc.port,
@@ -99,7 +99,7 @@ class ActionModule(_ActionModule):
                     provider['port'] = 80
 
             if provider.get('timeout') is None:
-                provider['timeout'] = self._play_context.timeout
+                provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
 
             if provider.get('username') is None:
                 provider['username'] = self._play_context.connection_user

@@ -53,11 +53,11 @@ class ActionModule(_ActionModule):
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
         pc.network_os = 'dellos10'
-        pc.port = provider['port'] or self._play_context.port or 22
+        pc.port = int(provider['port'] or self._play_context.port or 22)
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
+        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
         pc.become = provider['authorize'] or False
         pc.become_pass = provider['auth_pass']
 
