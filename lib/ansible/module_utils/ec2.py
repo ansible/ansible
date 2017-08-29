@@ -332,37 +332,6 @@ def ec2_connect(module):
     return ec2
 
 
-def paging(pause=0, marker_property='marker', result_key=None):
-    """ Adds paging to boto retrieval functions that support a 'marker'
-        this is configurable as not all boto functions seem to use the
-        same name.
-    """
-    def wrapper(f):
-        def page(*args, **kwargs):
-            results = []
-            marker = None
-            while True:
-                try:
-                    if marker:
-                        kwargs[marker_property] = marker
-                    new = f(*args, **kwargs)
-                    marker = new.get(marker_property)
-                    if result_key:
-                        new = new[result_key]
-                    results.extend(new)
-                    if not marker:
-                        break
-                    elif pause:
-                        sleep(pause)
-                except TypeError:
-                    # Older version of boto do not allow for marker param, just run normally
-                    results = f(*args, **kwargs)
-                    break
-            return results
-        return page
-    return wrapper
-
-
 def _camel_to_snake(name):
 
     def prepend_underscore_and_lower(m):
