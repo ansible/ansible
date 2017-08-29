@@ -89,6 +89,12 @@ options:
     - Directives are separated by commmas.
     required: false
     version_added: "2.4"
+  delete:
+    description:
+    - Remove remote files that exist in bucket but are not present in the file root.
+    required: false
+    default: no
+    version_added: "2.4"
 
 requirements:
   - boto3 >= 1.4.4
@@ -208,7 +214,7 @@ from dateutil import tz
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3, boto_exception
-
+from ansible.module_utils._text import to_text
 
 try:
     import botocore
@@ -452,6 +458,22 @@ def upload_files(s3, bucket, filelist, params):
     return ret
 
 
+def remove_files(s3, sourcelist, params):
+    bucket = params.get('bucket')
+    key_prefix = params.get('key_prefix')
+    paginator = s3.get_paginator('list_objects_v2')
+    current_keys = set(x['Key'] for x in paginator.paginate(Bucket=bucket, Prefix=key_prefix).build_full_result().get('Contents', []))
+    keep_keys = set(to_text(source_file['s3_path']) for source_file in sourcelist)
+    delete_keys = list(current_keys - keep_keys)
+
+    # can delete 1000 objects at a time
+    groups_of_keys = [delete_keys[i:i + 1000] for i in range(0, len(delete_keys), 1000)]
+    for keys in groups_of_keys:
+        s3.delete_objects(Bucket=bucket, Delete={'Objects': [{'Key': key} for key in keys]})
+
+    return delete_keys
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -467,6 +489,7 @@ def main():
         exclude=dict(required=False, default=".*"),
         include=dict(required=False, default="*"),
         cache_control=dict(required=False, default=''),
+        delete=dict(required=False, type='bool', default=False),
         # future options: encoding, metadata, storage_class, retries
     )
     )
@@ -494,8 +517,11 @@ def main():
             result['filelist_actionable'] = filter_list(s3, module.params['bucket'], result['filelist_local_etag'], module.params['file_change_strategy'])
             result['uploads'] = upload_files(s3, module.params['bucket'], result['filelist_actionable'], module.params)
 
+            if module.params['delete']:
+                result['removed'] = remove_files(s3, result['filelist_local_etag'], module.params)
+
             # mark changed if we actually upload something.
-            if result.get('uploads') and len(result.get('uploads')):
+            if result.get('uploads') or result.get('removed'):
                 result['changed'] = True
             # result.update(filelist=actionable_filelist)
         except botocore.exceptions.ClientError as err:
