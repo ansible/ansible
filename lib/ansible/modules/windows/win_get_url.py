@@ -103,12 +103,11 @@ options:
     type: bool
     default: 'yes'
     version_added: '2.4'
-# TODO: Once we have implemented DownloadFile() using $WebRequest, enable timeout again
-#  timeout:
-#    description:
-#    - Timeout in seconds for URL request.
-#    default: 10
-#    version_added : '2.5'
+  timeout:
+    description:
+    - Timeout in seconds for URL request.
+    default: 10
+    version_added : '2.4'
 notes:
  - For non-Windows targets, use the M(get_url) module instead.
 '''
