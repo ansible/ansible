@@ -255,7 +255,7 @@ def _create_or_update_bucket(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except (S3CreateError,BotoClientError) as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     # Versioning
@@ -390,7 +390,7 @@ def _create_or_update_bucket_ceph(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except (S3CreateError,BotoClientError) as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     if bucket:
