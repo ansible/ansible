@@ -204,7 +204,6 @@ def local_existing(gexisting):
         if jp_bidir and isauth:
             gexisting.pop('jp_bidir')
             gexisting.pop('isauth')
-        gexisting['sparse'] = True
 
     return gexisting, jp_bidir, isauth
 
@@ -227,9 +226,9 @@ def get_interface_type(interface):
 
 
 def get_interface_mode(interface, intf_type, module):
-    command = 'show interface {0} | json'.format(interface)
     mode = 'unknown'
-    body = run_commands(module, [command])
+    command = 'show interface {0}'.format(interface)
+    body = execute_show_command(command, module)
 
     try:
         interface_table = body[0]['TABLE_interface']['ROW_interface']
@@ -250,7 +249,6 @@ def get_interface_mode(interface, intf_type, module):
 def get_pim_interface(module, interface):
     pim_interface = {}
     command = 'show ip pim interface {0}'.format(interface)
-
     body = execute_show_command(command, module, text=True)
 
     if body:
@@ -258,19 +256,19 @@ def get_pim_interface(module, interface):
             body = execute_show_command(command, module)
 
     try:
-        get_data = body[0]['TABLE_iod']['ROW_iod']
+        get_data = body[0]['TABLE_vrf']['ROW_vrf']['TABLE_iod']['ROW_iod']
 
-        if isinstance(get_data.get('dr-priority'), string_types):
-            pim_interface['dr_prio'] = get_data.get('dr-priority')
-        else:
+        if isinstance(get_data.get('dr-priority'), list):
             pim_interface['dr_prio'] = get_data.get('dr-priority')[0]
+        else:
+            pim_interface['dr_prio'] = str(get_data.get('dr-priority'))
 
         hello_interval = get_data.get('hello-interval-sec')
         if hello_interval:
             hello_interval_msec = int(get_data.get('hello-interval-sec')) * 1000
         pim_interface['hello_interval'] = str(hello_interval_msec)
-        border = get_data.get('is-border')
 
+        border = get_data.get('is-border')
         if border == 'true':
             pim_interface['border'] = True
         elif border == 'false':
@@ -294,8 +292,7 @@ def get_pim_interface(module, interface):
         if isinstance(get_data.get('jp-out-policy-name'), string_types):
             pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')
         else:
-            pim_interface['jp_policy_out'] = get_data.get(
-                'jp-out-policy-name')[0]
+            pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')[0]
 
         if pim_interface['jp_policy_out'] == 'none configured':
             pim_interface['jp_policy_out'] = None
@@ -308,13 +305,15 @@ def get_pim_interface(module, interface):
     jp_configs = []
     neigh = None
     if body:
-        all_lines = body[0].splitlines()
+        all_lines = body.splitlines()
 
         for each in all_lines:
             if 'jp-policy' in each:
                 jp_configs.append(str(each.strip()))
             elif 'neighbor-policy' in each:
                 neigh = str(each)
+            elif 'sparse-mode' in each:
+                pim_interface['sparse'] = True
 
     pim_interface['neighbor_type'] = None
     neigh_type = None
