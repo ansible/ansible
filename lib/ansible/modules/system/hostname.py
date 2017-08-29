@@ -761,13 +761,28 @@ def main():
 
     hostname = Hostname(module)
     name = module.params['name']
+
+    current_hostname = hostname.get_current_hostname()
+    permanent_hostname = hostname.get_permanent_hostname()
+
     changed = hostname.update_current_and_permanent_hostname()
 
-    module.exit_json(changed=changed, name=name,
-                     ansible_facts=dict(ansible_hostname=name.split('.')[0],
-                                        ansible_nodename=name,
-                                        ansible_fqdn=socket.getfqdn(),
-                                        ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+    if name != current_hostname:
+        name_before = current_hostname
+    elif name != permanent_hostname:
+        name_before = permanent_hostname
+
+    kw = dict(changed=changed, name=name,
+              ansible_facts=dict(ansible_hostname=name.split('.')[0],
+                                 ansible_nodename=name,
+                                 ansible_fqdn=socket.getfqdn(),
+                                 ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+
+    if changed:
+        kw['diff'] = {'after': 'hostname = ' + name + '\n',
+                      'before': 'hostname = ' + name_before + '\n'}
+
+    module.exit_json(**kw)
 
 
 if __name__ == '__main__':
