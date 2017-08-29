@@ -11,3 +11,4 @@ nxapi:
   #password: "{{ nxos_nxapi_pass | default('admin') }}"
   transport: nxapi
   use_ssl: no
+  port: 8080
