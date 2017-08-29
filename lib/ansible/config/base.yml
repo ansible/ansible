@@ -669,6 +669,13 @@ DEFAULT_LOG_PATH:
   - {key: log_path, section: defaults}
   type: path
   yaml: {key: defaults.log_path}
+DEFAULT_LOG_LEVEL:
+  default: 'DEBUG'
+  description: Python logger level used to format logs.
+  env: [{name: ANSIBLE_LOG_LEVEL}]
+  ini:
+  - {key: log_format, section: defaults}
+  yaml: {key: defaults.log_level}
 DEFAULT_LOOKUP_PLUGIN_PATH:
   default: ~/.ansible/plugins/lookup:/usr/share/ansible/plugins/lookup
   description: 'TODO: write it'

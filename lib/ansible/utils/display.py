@@ -52,7 +52,8 @@ logger = None
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
     if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+        log_level = getattr(logging, C.DEFAULT_LOG_LEVEL, logging.DEBUG)
+        logging.basicConfig(filename=path, level=logging.DEBUG, format=C.DEFAULT_LOG_FORMAT)
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
