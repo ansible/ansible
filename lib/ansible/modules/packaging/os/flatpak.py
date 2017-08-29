@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2017 Ansible Project
-# GNU General Public License v3.0+ (see COPYING or
+# Copyright (c) 2017 Ansible Project GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
@@ -16,7 +15,7 @@ requirements:
     - flatpak
 author:
     - John Kwiatkoski (@jaykayy)
-short_description: Install and remove flatpaks.
+short_description: Install and remove flatpaks
 description:
     - The flatpak module allows users to manage installation and removal of flatpaks.
 options:
@@ -29,19 +28,17 @@ options:
         will be. Given that, it is best to use the http(s) url for I(state=present)
         and the reverse DNS I(state=absent). Alternatively reverse dns format can optimally
         be used with I(state=absent), ex. I(name=org.gnome.gedit).
-    required: false
-    default: ''
+    required: true
   remote:
     description:
       - The flatpak I(remote) repo to be used in the flatpak operation.
-    required: false
-    default: ''
+    default: 'None'
   state:
     description:
       - Set to C(present) will install the flatpak and/or I(remote).
         Set to C(absent) will remove the flatpak and/or I(remote).
-    required: false
     default: present
+    choices: [ absent, present ]
 '''
 EXAMPLES = '''
  - name: Install the spotify flatpak
@@ -90,8 +87,14 @@ import subprocess
 from ansible.module_utils.basic import AnsibleModule
 
 
-def install_flat(binary, flat):
+def install_flat(binary, flat, module):
+    if module.check_mode:
+        # Check if any changes would be made but don't actually make
+        # those changes
+        module.exit_json(changed=True)
+
     command = "{} install -y --from {}".format(binary, flat)
+
     output = flatpak_command(command)
     if 'error' in output and 'already installed' not in output:
         return 1, output
@@ -99,11 +102,16 @@ def install_flat(binary, flat):
     return 0, output
 
 
-def uninstall_flat(binary, flat):
+def uninstall_flat(binary, flat, module):
     # This is a difficult function because it seems there
     # is no naming convention for the flatpakref to what
     # the installed flatpak will be named.
     common_name = parse_flat(flat)
+    if module.check_mode:
+        # Check if any changes would be made but don't actually make
+        # those changes
+        module.exit_json(changed=True)
+
     command = "{} list --app".format(binary)
     process = subprocess.Popen(
         command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -137,10 +145,16 @@ def parse_flat(name):
     return common_name
 
 
-def add_remote(binary, remote):
+def add_remote(binary, remote, module):
     remote_name = parse_remote(remote)
+    if module.check_mode:
+        # Check if any changes would be made but don't actually make
+        # those changes
+        module.exit_json(changed=True)
+
     command = "{} remote-add --if-not-exists {} {}".format(
         binary, remote_name, remote)
+
     output = flatpak_command(command)
     if 'error' in output:
         return 1, output
@@ -148,8 +162,13 @@ def add_remote(binary, remote):
     return 0, output
 
 
-def remove_remote(binary, remote):
+def remove_remote(binary, remote, module):
     remote_name = parse_remote(remote)
+    if module.check_mode:
+        # Check if any changes would be made but don't actually make
+        # those changes
+        module.exit_json(changed=True)
+
     command = "{} remote-delete --force {} ".format(binary, remote_name)
     output = flatpak_command(command)
     if 'error' in output and 'not found' not in output:
@@ -190,17 +209,16 @@ def main():
     # This module supports check mode
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=False, default=''),
-            remote=dict(required=False, default=''),
+            name=dict(required=True, type='str'),
+            remote=dict(required=False, type='str'),
             state=dict(
-                required=False, default="present", choices=['present', 'absent'])
+                required=False, type='str', default="present", choices=['present', 'absent'])
         ),
         supports_check_mode=True
     )
-    params = module.params
-    name = params['name']
-    remote = params['remote']
-    state = params['state']
+    name = module.params['name']
+    remote = module.params['remote']
+    state = module.params['state']
     module_changed = False
     location = module.get_bin_path('flatpak')
     if location is None:
@@ -208,49 +226,30 @@ def main():
             msg="cannot find 'flatpak' binary. Aborting.")
 
     if state == 'present':
-        if remote != '' and not is_present_remote(location, remote):
-            if module.check_mode:
-                # Check if any changes would be made but don't actually make
-                # those changes
-                module.exit_json(changed=True)
-
-            code, output = add_remote(location, remote)
+        if remote is not None and not is_present_remote(location, remote):
+            code, output = add_remote(location, remote, module)
             if code == 1:
                 module.fail_json(
                     msg="error while adding remote: {}".format(remote), reason=output)
             else:
                 module_changed = True
-        if name != '' and not is_present_flat(location, name):
-            if module.check_mode:
-                # Check if any changes would be made but don't actually make
-                # those changes
-                module.exit_json(changed=True)
-
-            code, output = install_flat(location, name)
+        if name is not None and not is_present_flat(location, name):
+            code, output = install_flat(location, name, module)
             if code == 1:
                 module.fail_json(
                     msg="error while installing flatpak {}".format(name), reason=output)
             else:
                 module_changed = True
     else:
-        if remote != '' and is_present_remote(location, remote):
-            if module.check_mode:
-                # Check if any changes would be made but don't actually make
-                # those changes
-                module.exit_json(changed=True)
-            code, output = remove_remote(location, remote)
+        if remote is not None and is_present_remote(location, remote):
+            code, output = remove_remote(location, remote, module)
             if code == 1:
                 module.fail_json(
                     msg="error while adding remote: {}".format(remote), reason=output)
             else:
                 module_changed = True
-        if name != '' and is_present_flat(location, name):
-            if module.check_mode:
-                # Check if any changes would be made but don't actually make
-                # those changes
-                module.exit_json(changed=True)
-
-            code, output = uninstall_flat(location, name)
+        if name is not None and is_present_flat(location, name):
+            code, output = uninstall_flat(location, name, module)
             if code == 1:
                 module.fail_json(
                     msg="error while uninstalling flatpak:{}".format(name), reason=output)
