@@ -167,7 +167,7 @@ def main():
         remove_packages(module, packages)
 
 # this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()
