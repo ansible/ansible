@@ -11,6 +11,25 @@
 $ErrorActionPreference = 'Stop'
 
 
+$webclient_util = @"
+    using System.Net;
+    public class ExtendedWebClient : WebClient {
+        public int Timeout;
+
+        public ExtendedWebClient() {
+            Timeout = 600000; // Default timeout value
+        }
+
+        protected override WebRequest GetWebRequest(System.Uri address) {
+            WebRequest request = base.GetWebRequest(address);
+            request.Timeout = Timeout;
+            return request;
+        }
+    }
+"@
+Add-Type -TypeDefinition $webclient_util
+
+
 Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
 
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
@@ -48,7 +67,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     } Catch {
         Fail-Json -obj $result -message "Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)"
     }
-    $result.status_code = $webResponse.StatusCode
+    $result.status_code = [int] $webResponse.StatusCode
     $result.msg = $webResponse.StatusDescription
     $webResponse.Close()
 
@@ -69,41 +88,40 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     }
 
     # TODO: Replace this with WebRequest
-    $webClient = New-Object System.Net.WebClient
+    $extWebClient = New-Object ExtendedWebClient
 
     foreach ($header in $headers.GetEnumerator()) {
-        $webClient.Headers.Add($header.Name, $header.Value)
+        $extWebClient.Headers.Add($header.Name, $header.Value)
     }
 
-# FIXME: WebClient has no Timeout property ? Should be replaced with WebRequest
-#    if ($timeout) {
-#        $webClient.Timeout = $timeout * 1000
-#    }
+    if ($timeout) {
+        $extWebClient.Timeout = $timeout * 1000
+    }
 
     if (-not $use_proxy) {
         # Ignore the system proxy settings
-        $webClient.Proxy = $null
+        $extWebClient.Proxy = $null
     } elseif ($proxy) {
-        $webClient.Proxy = $proxy
+        $extWebClient.Proxy = $proxy
     }
 
     if ($credentials) {
-        $webClient.Credentials = $credentials
+        $extWebClient.Credentials = $credentials
     }
 
-    Try {
-        if (-not $whatif) {
-            $webClient.DownloadFile($url, $dest)
+    if (-not $whatif) {
+        Try {
+            $extWebClient.DownloadFile($url, $dest)
+        } Catch [System.Net.WebException] {
+            $result.status_code = [int] $_.Exception.Response.StatusCode
+            Fail-Json -obj $result -message "Error downloading '$url' to '$dest': $($_.Exception.Message)"
+        } Catch {
+            Fail-Json -obj $result -message "Unknown error downloading '$url' to '$dest': $($_.Exception.Message)"
         }
-        $result.changed = $true
-    } Catch [System.Net.WebException] {
-        $result.status_code = $_.Exception.Response.StatusCode
-        Fail-Json -obj $result -message "Error downloading '$url' to '$dest'. $($_.Exception.Message)"
-    } Catch {
-        Fail-Json -obj $result -message "Unknown error downloading '$url' to '$dest'. $($_.Exception.Message)"
     }
-    # FIXME: Reimplement DownloadFile() using WebRequest so we get the real information
+
     $result.status_code = 200
+    $result.changed = $true
     $result.msg = 'OK'
     $result.dest = $dest
 }
@@ -212,4 +230,4 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
     }
 }
 
-Exit-Json $result
+Exit-Json -obj $result
