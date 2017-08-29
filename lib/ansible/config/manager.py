@@ -13,6 +13,7 @@ import yaml
 from collections import namedtuple
 
 from ansible.config.data import ConfigData
+from ansible.config.log import LogStyle
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import configparser
@@ -77,6 +78,9 @@ def ensure_type(value, value_type):
         elif value_type == 'pathlist':
             if isinstance(value, string_types):
                 value = [resolve_path(x) for x in value.split(os.pathsep)]
+
+        elif value_type == 'color':
+            value = LogStyle(unquote(value))
 
         # defaults to string types
         elif isinstance(value, string_types):

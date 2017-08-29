@@ -272,6 +272,7 @@ CACHE_PLUGIN_TIMEOUT:
   yaml: {key: defaults.fact_caching_timeout}
 COLOR_CHANGED:
   default: yellow
+  type: color
   description: Defines the color to use on 'Changed' status
   env: [{name: ANSIBLE_COLOR_CHANGED}]
   ini:
@@ -279,6 +280,7 @@ COLOR_CHANGED:
   yaml: {key: display.colors.changed}
 COLOR_DEBUG:
   default: dark gray
+  type: color
   description: Defines the color to use when emitting debug messages
   env: [{name: ANSIBLE_COLOR_DEBUG}]
   ini:
@@ -286,6 +288,7 @@ COLOR_DEBUG:
   yaml: {key: colors.debug}
 COLOR_DEPRECATE:
   default: purple
+  type: color
   description: Defines the color to use when emitting deprecation messages
   env: [{name: ANSIBLE_COLOR_DEPRECATE}]
   ini:
@@ -293,6 +296,7 @@ COLOR_DEPRECATE:
   yaml: {key: colors.deprecate}
 COLOR_DIFF_ADD:
   default: green
+  type: color
   description: Defines the color to use when showing added lines in diffs
   env: [{name: ANSIBLE_COLOR_DIFF_ADD}]
   ini:
@@ -300,6 +304,7 @@ COLOR_DIFF_ADD:
   yaml: {key: colors.diff_add}
 COLOR_DIFF_LINES:
   default: cyan
+  type: color
   description: Defines the color to use when showing diffs
   env: [{name: ANSIBLE_COLOR_DIFF_LINES}]
   ini:
@@ -307,6 +312,7 @@ COLOR_DIFF_LINES:
   yaml: {key: colors.diff_lines}
 COLOR_DIFF_REMOVE:
   default: red
+  type: color
   description: Defines the color to use when showing removed lines in diffs
   env: [{name: ANSIBLE_COLOR_DIFF_REMOVE}]
   ini:
@@ -314,6 +320,7 @@ COLOR_DIFF_REMOVE:
   yaml: {key: colors.diff_remove}
 COLOR_ERROR:
   default: red
+  type: color
   description: Defines the color to use when emitting error messages
   env: [{name: ANSIBLE_COLOR_ERROR}]
   ini:
@@ -321,6 +328,7 @@ COLOR_ERROR:
   yaml: {key: colors.error}
 COLOR_HIGHLIGHT:
   default: white
+  type: color
   description: 'TODO: write it'
   env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
   ini:
@@ -328,6 +336,7 @@ COLOR_HIGHLIGHT:
   yaml: {key: colors.highlight}
 COLOR_OK:
   default: green
+  type: color
   description: Defines the color to use when showing 'OK' status
   env: [{name: ANSIBLE_COLOR_OK}]
   ini:
@@ -335,6 +344,7 @@ COLOR_OK:
   yaml: {key: colors.ok}
 COLOR_SKIP:
   default: cyan
+  type: color
   description: Defines the color to use when showing 'Skipped' status
   env: [{name: ANSIBLE_COLOR_SKIP}]
   ini:
@@ -342,6 +352,7 @@ COLOR_SKIP:
   yaml: {key: colors.skip}
 COLOR_UNREACHABLE:
   default: bright red
+  type: color
   description: Defines the color to use on 'Unreachable' status
   env: [{name: ANSIBLE_COLOR_UNREACHABLE}]
   ini:
@@ -349,6 +360,7 @@ COLOR_UNREACHABLE:
   yaml: {key: colors.unreachable}
 COLOR_VERBOSE:
   default: blue
+  type: color
   description: Defines the color to use when emitting verbose messages
   env: [{name: ANSIBLE_COLOR_VERBOSE}]
   ini:
@@ -356,6 +368,7 @@ COLOR_VERBOSE:
   yaml: {key: colors.verbose}
 COLOR_WARN:
   default: bright purple
+  type: color
   description: Defines the color to use when emitting warning messages
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
@@ -363,6 +376,7 @@ COLOR_WARN:
   yaml: {key: colors.warn}
 COMMAND_WARNINGS:
   default: True
+  type: color
   description: 'TODO: write it'
   env: [{name: ANSIBLE_COMMAND_WARNINGS}]
   ini:
