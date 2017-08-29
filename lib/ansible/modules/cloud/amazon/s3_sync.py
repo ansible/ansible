@@ -467,7 +467,7 @@ def remove_files(s3, sourcelist, params):
     delete_keys = list(current_keys - keep_keys)
 
     # can delete 1000 objects at a time
-    groups_of_keys = [delete_keys[i:i+1000] for i in range(0, len(delete_keys), 1000)]
+    groups_of_keys = [delete_keys[i:i + 1000] for i in range(0, len(delete_keys), 1000)]
     for keys in groups_of_keys:
         s3.delete_objects(Bucket=bucket, Delete={'Objects': [{'Key': key} for key in keys]})
 
