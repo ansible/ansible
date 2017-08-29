@@ -27,25 +27,8 @@ DOCUMENTATION:
         - The JInja2 exprpessions are calculated and assigned to the variables
         - Only variables already available from previous inventories can be used for templating.
         - Failed expressions will be ignored (assumes vars were missing).
-    strict:
-        description:
-            - If true make invalid entries a fatal error, otherwise skip and continue
-            - Since it is possible to use facts in the expressions they might not always be available
-              and we ignore those errors by default.
-        type: boolean
-        default: False
-    compose:
-        description: create vars from jinja2 expressions
-        type: dictionary
-        default: {}
-    groups:
-        description: add hosts to group based on Jinja2 conditionals
-        type: dictionary
-        default: {}
-    keyed_groups:
-        description: add hosts to group based on the values of a variable
-        type: list
-        default: []
+    extends_documentation_fragment:
+      - constructed
 EXAMPLES: | # inventory.config file in YAML format
     plugin: comstructed
     compose:
