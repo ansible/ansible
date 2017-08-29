@@ -33,6 +33,9 @@
 
 automerge: False
 files:
+  .github/BOTMETA.yml:
+    labels:
+    - botmeta
   $modules/cloud/amazon/:
     notify:
     - willthames
