@@ -41,28 +41,40 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Gather facts about all Network Sets
   oneview_network_set_facts:
-    config: /etc/oneview/oneview_config.json
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 
 - debug: var=network_sets
 
 - name: Gather paginated, filtered, and sorted facts about Network Sets
   oneview_network_set_facts:
-    config: /etc/oneview/oneview_config.json
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
     params:
       start: 0
       count: 3
       sort: 'name:descending'
       filter: name='netset001'
+  no_log: true
   delegate_to: localhost
 
 - debug: var=network_sets
 
 - name: Gather facts about all Network Sets, excluding Ethernet networks
   oneview_network_set_facts:
-    config: /etc/oneview/oneview_config.json
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
     options:
         - withoutEthernet
+  no_log: true
   delegate_to: localhost
 
 - debug: var=network_sets
@@ -70,8 +82,12 @@ EXAMPLES = '''
 
 - name: Gather facts about a Network Set by name
   oneview_network_set_facts:
-    config: /etc/oneview/oneview_config.json
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
     name: Name of the Network Set
+  no_log: true
   delegate_to: localhost
 
 - debug: var=network_sets
@@ -79,10 +95,14 @@ EXAMPLES = '''
 
 - name: Gather facts about a Network Set by name, excluding Ethernet networks
   oneview_network_set_facts:
-    config: /etc/oneview/oneview_config.json
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
     name: Name of the Network Set
     options:
         - withoutEthernet
+  no_log: true
   delegate_to: localhost
 
 - debug: var=network_sets
