@@ -44,7 +44,7 @@ requirements:
 author:
     - Marc Tschapek (@marqelme)
 options:
-  disk_size:
+  size:
       description:
         - Size of the disk in gigabyte which will be selected
         - Data type can be int or string
@@ -70,8 +70,17 @@ options:
   read_only:
       description:
         - Read-only status of the disk which will be selected (true,yes=read-only, false,no=writeable)
+      required: false
       type: bool
       default: 'yes'
+  number:
+      description:
+        - Number of the disk which will be selected
+        - If a number is defined the module will try to select the disk with this defined number
+        - If no number is defined the module will select the first disk found on the target
+        - If multiple disks were found with defined option values (because no number option value was defined)
+        - the module will select the first found disk
+      required: false
   partition_style_set:
       description:
         - Partition style which will be set on selected disk
@@ -112,46 +121,54 @@ options:
   large_frs:
       description:
         - Switch to set Large FRS option for file system on selected disk, only for NTFS file system
+      required: false
       type: bool
       default: 'no'
   short_names:
       description:
         - Switch to set Short Names option for file system on selected disk, only for NTFS file system
+      required: false
       type: bool
       default: 'no'
   integrity_streams:
       description:
         - Switch to set Integrity Streams option for file system on selected disk, only for ReFs file system
+      required: false
       type: bool
       default: 'no'
 '''
 
 EXAMPLES = r'''
-- name: Select a specified disk and manage it as specified
+- name: Select a defined disk and manage it as specified
   win_disk_management:
-    disk_size: 100
-    partition_style_select: raw
-    operational_status: offline
-    read_only: true
-    partition_style_set: mbr
-    drive_letter: e
-    file_system: ntfs
-    label: database_disk
-    allocation_unit_size: 4
-    large_frs: true
-    short_names: true
-- name: Select a specified disk and manage it as specified
+    select_disk_by:
+      size: 100
+      partition_style_select: raw
+      operational_status: offline
+      read_only: true
+      number: 1
+    set_disk_by:
+      partition_style_set: mbr
+      drive_letter: e
+      file_system: ntfs
+      label: database_disk
+      allocation_unit_size: 4
+      large_frs: true
+      short_names: true
+- name: Select a defined disk and manage it as specified
   win_disk_management:
-    disk_size: 50
-    partition_style_select: mbr
-    operational_status: online
-    read_only: false
-    partition_style_set: gpt
-    drive_letter: f
-    file_system: refs
-    label: application_disk
-    allocation_unit_size: 64
-    integrity_streams: true
+    select_disk_by:
+      size: 50
+      partition_style_select: mbr
+      operational_status: online
+      read_only: false
+    set_disk_by:
+      partition_style_set: gpt
+      drive_letter: f
+      file_system: refs
+      label: application_disk
+      allocation_unit_size: 64
+      integrity_streams: true
 '''
 
 RETURN = r'''
@@ -357,7 +374,7 @@ parameters:
     returned: always
     type: complex
     contains:
-        disk_size:
+        size:
             description: Shows the chosen disk size in gigabyte
             returned: success or failed
             type: string
