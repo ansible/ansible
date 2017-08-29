@@ -51,13 +51,14 @@ options:
     description:
     - Determines if secure information should be included in the backup.
     - The APIC defaults new Export Policies to C(yes).
-    choices: [ no, yes ]
+    choices: [ 'no', 'yes' ]
+    defautl: 'yes'
   max_count:
     description:
     - Determines how many snapshots can exist for the Export Policy before the APIC starts to rollover.
     - The APIC defaults new Export Policies to C(3).
     choices: [ range between 1 and 10 ]
-    default 3
+    default: 3
   snapshot:
     description:
     - The name of the snapshot to delete.
