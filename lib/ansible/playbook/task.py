@@ -25,7 +25,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -205,23 +205,24 @@ class Task(Base, Conditional, Taggable, Become):
 
         for (k, v) in iteritems(ds):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
-                # we don't want to re-assign these values, which were
-                # determined by the ModuleArgsParser() above
+                # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
             elif k.replace("with_", "") in lookup_loader:
+                # transform into loop property
                 self._preprocess_loop(ds, new_ds, k, v)
             else:
-                # pre-2.0 syntax allowed variables for include statements at the
-                # top level of the task, so we move those into the 'vars' dictionary
-                # here, and show a deprecation message as we will remove this at
-                # some point in the future.
+                # pre-2.0 syntax allowed variables for include statements at the top level of the task,
+                # so we move those into the 'vars' dictionary here, and show a deprecation message
+                # as we will remove this at some point in the future.
                 if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                                        " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
-                else:
+                elif k in self._valid_attrs:
                     new_ds[k] = v
+                else:
+                    display.warning("Ignoring invalid attribute: %s" % k)
 
         return super(Task, self).preprocess_data(new_ds)
 
