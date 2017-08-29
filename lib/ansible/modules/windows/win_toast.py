@@ -20,7 +20,7 @@ short_description: Sends Toast windows notification to logged in users on Window
 description:
     - Sends alerts which appear in the Action Center area of the windows desktop.
 options:
-  expire_seconds:
+  expire:
     description:
       - How long in seconds before the notification expires.
     default: 45
@@ -51,13 +51,13 @@ notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
    - The module does not fail if there are no logged in users to notify.
    - Messages are only sent to the local host where the module is run.
-   - You must run this module with async, otherwise it will hang until the expire_seconds period has passed.
+   - You must run this module with async, otherwise it will hang until the expire period has passed.
 '''
 
 EXAMPLES = r'''
 - name: Warn logged in users of impending upgrade (note use of async to stop the module from waiting until notification expires).
   win_toast:
-    expire_seconds: 60
+    expire: 60
     title: System Upgrade Notification
     msg: Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time }}
   async: 60
@@ -65,57 +65,26 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-expire_seconds:
-    description: Requested time in seconds before notification expires.
-    returned: allways
-    type: int
-    sample: 5
 expire_at_utc:
     description: Calculated utc date time when the notification expires.
     returned: allways
     type: string
     sample: 07 July 2017 04:50:54
-group:
-    description: Requested group for the notification to belong to.
-    returned: allways
-    type: string
-    sample: Powershell
-msg:
-    description: Text of the message that was sent.
-    returned: allways
-    type: string
-    sample: Automated upgrade about to start.\nPlease save your work and log off before 22 July 2017 18:00:00
 no_toast_sent_reason:
     description: Text containing the reason why a notification was not sent.
     returned: when no logged in users are detected
     type: string
     sample: No logged in users to notify
-popup:
-    description: Whether notification pop up was requested or not.
-    returned: allways
-    type: boolean
-    sample: true
-runtime_seconds:
-    description: How long the module took to run on the remote windows host.
-    returned: allways
-    type: float
-    sample: 0.3706631999999997
 sent_localtime:
     description: local date time when the notification was sent.
     returned: allways
     type: string
     sample: 07 July 2017 05:45:54
-tag:
-    description: Requested tag to associated with the notification.
-
+time_taken:
+    description: How long the module took to run on the remote windows host in seconds.
     returned: allways
-    type: string
-    sample: Ansible
-title:
-    description: The requested text for the notification title, which appears in the popup and Action Center if specified.
-    returned: success
-    type: string
-    sample: Notification 05:45
+    type: float
+    sample: 0.3706631999999997
 toast_sent:
     description: Whether the module was able to send a toast notification or not.
     returned: allways

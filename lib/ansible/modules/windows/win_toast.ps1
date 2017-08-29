@@ -23,8 +23,7 @@ $default_title = "Notification: " + $now.ToShortTimeString()
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-# $expire_at = Get-AnsibleParam -obj $params -name "msg" -type "str"
-$expire_seconds = Get-AnsibleParam -obj $params -name "expire_seconds" -type "int" -default 45
+$expire_seconds = Get-AnsibleParam -obj $params -name "expire" -type "int" -default 45
 $group = Get-AnsibleParam -obj $params -name "group" -type "str" -default "Powershell"
 $msg = Get-AnsibleParam -obj $params -name "msg" -type "str" -default "Hello world!"
 $popup = Get-AnsibleParam -obj $params -name "popup" -type "bool" -default $true
@@ -37,14 +36,8 @@ $expire_at_utc = $($expire_at.ToUniversalTime()|Out-String).Trim()
 
 $result = @{
     changed = $false
-    expire_seconds = $expire_seconds
     expire_at = $expire_at.ToString()
     expire_at_utc = $expire_at_utc
-    group = $group    
-    msg = $msg
-    popup = $popup
-    tag = $tag
-    title = $title
     toast_sent = $false
 }
 
@@ -92,7 +85,7 @@ if ((get-process -name explorer -EA silentlyContinue).Count -gt 0){
 $endsend_at = Get-Date| Out-String
 $stopwatch.Stop()
 
-$result.runtime_seconds = $stopwatch.Elapsed.TotalSeconds
+$result.time_taken = $stopwatch.Elapsed.TotalSeconds
 $result.sent_localtime = $endsend_at.Trim()
   
 Exit-Json $result
