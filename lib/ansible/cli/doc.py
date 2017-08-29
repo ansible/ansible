@@ -159,7 +159,8 @@ class DocCLI(CLI):
                             doc['action'] = False
                     doc['filename'] = filename
                     doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
-                    doc['docuri'] = doc[plugin_type].replace('_', '-')
+                    if 'docuri' in doc:
+                        doc['docuri'] = doc[plugin_type].replace('_', '-')
 
                     if self.options.show_snippet and plugin_type == 'module':
                         text += self.get_snippet_text(doc)
@@ -393,13 +394,13 @@ class DocCLI(CLI):
 
     def get_man_text(self, doc):
 
-        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date'])
+        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs'])
         opt_indent = "        "
         text = []
-
-        text.append("> %s    (%s)\n" % (doc[self.options.type].upper(), doc.pop('filename')))
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
+
+        text.append("> %s    (%s)\n" % (doc.get(self.options.type, doc.get('plugin_type')).upper(), doc.pop('filename')))
 
         if isinstance(doc['description'], list):
             desc = " ".join(doc.pop('description'))
@@ -411,9 +412,12 @@ class DocCLI(CLI):
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc.pop('deprecated'))
 
-        support_block = self.get_support_block(doc)
-        if support_block:
-            text.extend(support_block)
+        try:
+            support_block = self.get_support_block(doc)
+            if support_block:
+                text.extend(support_block)
+        except:
+            pass  # FIXME: not suported by plugins
 
         if doc.pop('action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
@@ -434,6 +438,19 @@ class DocCLI(CLI):
             req = ", ".join(doc.pop('requirements'))
             text.append("REQUIREMENTS:%s\n" % textwrap.fill(CLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
+        # Generic handler
+        for k in sorted(doc):
+            if k in IGNORE or not doc[k]:
+                continue
+            if isinstance(doc[k], string_types):
+                text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+            elif isinstance(doc[k], (list, tuple)):
+                text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
+            else:
+                text.append(self._dump_yaml({k.upper(): doc[k]}, opt_indent))
+            del doc[k]
+        text.append('')
+
         if 'plainexamples' in doc and doc['plainexamples'] is not None:
             text.append("EXAMPLES:")
             if isinstance(doc['plainexamples'], string_types):
@@ -450,28 +467,12 @@ class DocCLI(CLI):
                 text.append(yaml.dump(doc.pop('returndocs'), indent=2, default_flow_style=False))
         text.append('')
 
-        # Control rest of keys on verbosity (3 == full, 0 only adds small list)
-        rest = []
-        if self.options.verbosity >= 3:
-            rest = doc
-        elif 'author' in doc:
-            rest = ['author']
-
-        # Generic handler
-        for k in sorted(rest):
-            if k in IGNORE or not doc[k]:
-                continue
-            if isinstance(doc[k], string_types):
-                text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
-            elif isinstance(doc[k], (list, tuple)):
-                text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
-            else:
-                text.append(self._dump_yaml({k.upper(): doc[k]}, opt_indent))
-            text.append('')
-
-        metadata_block = self.get_metadata_block(doc)
-        if metadata_block:
-            text.extend(metadata_block)
-            text.append('')
+        try:
+            metadata_block = self.get_metadata_block(doc)
+            if metadata_block:
+                text.extend(metadata_block)
+                text.append('')
+        except:
+            pass  # metadata is optional
 
         return "\n".join(text)
