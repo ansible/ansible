@@ -64,6 +64,7 @@ Vagrantfile
 .vagrant
 ansible.egg-info/
 /shippable/
+/test/integration/cloud-config-azure.yml
 # Release directory
 packaging/release/ansible_release
 /.cache/
