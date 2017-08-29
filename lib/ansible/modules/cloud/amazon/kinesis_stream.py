@@ -801,7 +801,7 @@ def update(client, current_stream, stream_name, retention_period=None,
         else:
             err_msg = (
                 'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-                .format(current_stream['StreamStatus'])
+                .format(current_stream.get('StreamStatus', 'UNKNOWN'))
             )
             return success, changed, err_msg
 
@@ -876,7 +876,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             err_msg = 'Can not change the number of shards in a Kinesis Stream'
             return success, changed, err_msg, results
 
-    if stream_found and current_stream['StreamStatus'] != 'DELETING':
+    if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(
             client, current_stream, stream_name, retention_period, tags,
             wait, wait_timeout, check_mode=check_mode
