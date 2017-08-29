@@ -12,6 +12,7 @@ from lib.util import (
     ApplicationError,
     display,
     raw_command,
+    find_pip,
 )
 
 from lib.delegation import (
@@ -112,7 +113,7 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install('ansible-test'))
+        raw_command(generate_pip_install(find_pip(), 'ansible-test'))
         import argparse
 
     try:

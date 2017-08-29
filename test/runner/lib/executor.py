@@ -50,6 +50,7 @@ from lib.util import (
     make_dirs,
     is_shippable,
     is_binary_file,
+    find_pip,
     find_executable,
     raw_command,
 )
@@ -163,23 +164,25 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    commands = [generate_pip_install(args.command, packages=packages)]
+    pip = find_pip(version=args.python_version)
+
+    commands = [generate_pip_install(pip, args.command, packages=packages)]
 
     if isinstance(args, IntegrationConfig):
         for cloud_platform in get_cloud_platforms(args):
-            commands.append(generate_pip_install('%s.cloud.%s' % (args.command, cloud_platform)))
+            commands.append(generate_pip_install(pip, '%s.cloud.%s' % (args.command, cloud_platform)))
 
     # only look for changes when more than one requirements file is needed
     detect_pip_changes = len(commands) > 1
 
     # first pass to install requirements, changes expected unless environment is already set up
-    changes = run_pip_commands(args, commands, detect_pip_changes)
+    changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
     if not changes:
         return  # no changes means we can stop early
 
     # second pass to check for conflicts in requirements, changes are not expected here
-    changes = run_pip_commands(args, commands, detect_pip_changes)
+    changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
     if not changes:
         return  # no changes means no conflicts
@@ -188,16 +191,17 @@ def install_command_requirements(args):
                            '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
 
 
-def run_pip_commands(args, commands, detect_pip_changes=False):
+def run_pip_commands(args, pip, commands, detect_pip_changes=False):
     """
     :type args: EnvironmentConfig
+    :type pip: str
     :type commands: list[list[str]]
     :type detect_pip_changes: bool
     :rtype: list[list[str]]
     """
     changes = []
 
-    after_list = pip_list(args) if detect_pip_changes else None
+    after_list = pip_list(args, pip) if detect_pip_changes else None
 
     for cmd in commands:
         if not cmd:
@@ -217,10 +221,10 @@ def run_pip_commands(args, commands, detect_pip_changes=False):
             # AttributeError: 'Requirement' object has no attribute 'project_name'
             # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
             # Upgrading pip works around the issue.
-            run_command(args, ['pip', 'install', '--upgrade', 'pip'])
+            run_command(args, [pip, 'install', '--upgrade', 'pip'])
             run_command(args, cmd)
 
-        after_list = pip_list(args) if detect_pip_changes else None
+        after_list = pip_list(args, pip) if detect_pip_changes else None
 
         if before_list != after_list:
             changes.append(cmd)
@@ -228,12 +232,13 @@ def run_pip_commands(args, commands, detect_pip_changes=False):
     return changes
 
 
-def pip_list(args):
+def pip_list(args, pip):
     """
     :type args: EnvironmentConfig
+    :type pip: str
     :rtype: str
     """
-    stdout, _ = run_command(args, ['pip', 'list'], capture=True, always=True)
+    stdout, _ = run_command(args, [pip, 'list'], capture=True, always=True)
     return stdout
 
 
@@ -247,8 +252,9 @@ def generate_egg_info(args):
     run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(command, packages=None, extras=None):
+def generate_pip_install(pip, command, packages=None, extras=None):
     """
+    :type pip: str
     :type command: str
     :type packages: list[str] | None
     :type extras: list[str] | None
@@ -275,7 +281,7 @@ def generate_pip_install(command, packages=None, extras=None):
     if not options:
         return None
 
-    return ['pip', 'install', '--disable-pip-version-check', '-c', constraints] + options
+    return [pip, 'install', '--disable-pip-version-check', '-c', constraints] + options
 
 
 def command_shell(args):

@@ -35,6 +35,51 @@ def remove_file(path):
         os.remove(path)
 
 
+def find_pip(path=None, version=None):
+    """
+    :type path: str | None
+    :type version: str | None
+    :rtype: str
+    """
+    if version:
+        version_info = version.split('.')
+        python_bin = find_executable('python%s' % version, path=path)
+    else:
+        version_info = sys.version_info
+        python_bin = sys.executable
+
+    choices = (
+        'pip%s' % '.'.join(str(i) for i in version_info[:2]),
+        'pip%s' % version_info[0],
+        'pip',
+    )
+
+    pip = None
+
+    for choice in choices:
+        pip = find_executable(choice, required=False, path=path)
+
+        if pip:
+            break
+
+    if not pip:
+        raise ApplicationError('Required program not found: %s' % ', '.join(choices))
+
+    with open(pip) as pip_fd:
+        shebang = pip_fd.readline().strip()
+
+    if not shebang.startswith('#!') or ' ' in shebang:
+        raise ApplicationError('Unexpected shebang in "%s": %s' % (pip, shebang))
+
+    our_python = os.path.realpath(python_bin)
+    pip_python = os.path.realpath(shebang[2:])
+
+    if our_python != pip_python:
+        raise ApplicationError('Current interpreter "%s" does not match "%s" interpreter "%s".' % (our_python, pip, pip_python))
+
+    return pip
+
+
 def find_executable(executable, cwd=None, path=None, required=True):
     """
     :type executable: str
