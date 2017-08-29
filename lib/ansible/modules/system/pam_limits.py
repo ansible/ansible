@@ -94,6 +94,8 @@ options:
       - Comment associated with the limit.
     required: false
     default: ''
+notes:
+  - If dest file doesn't exists, it is created.
 '''
 
 EXAMPLES = '''
@@ -168,12 +170,17 @@ def main():
 
     if os.path.isfile(limits_conf):
         if not os.access(limits_conf, os.W_OK):
-            module.fail_json(msg="%s is not writable. Use sudo" % (limits_conf) )
+            module.fail_json(msg="%s is not writable. Use sudo" % limits_conf)
     else:
-        module.fail_json(msg="%s is not visible (check presence, access rights, use sudo)" % (limits_conf) )
+        limits_conf_dir = os.path.dirname(limits_conf)
+        if os.path.isdir(limits_conf_dir) and os.access(limits_conf_dir, os.W_OK):
+            open(limits_conf, 'a').close()
+            changed = True
+        else:
+            module.fail_json(msg="directory %s is not writable (check presence, access rights, use sudo)" % limits_conf_dir)
 
     if use_max and use_min:
-        module.fail_json(msg="Cannot use use_min and use_max at the same time." )
+        module.fail_json(msg="Cannot use use_min and use_max at the same time.")
 
     if not (value in ['unlimited', 'infinity', '-1'] or value.isdigit()):
         module.fail_json(msg="Argument 'value' can be one of 'unlimited', 'infinity', '-1' or positive number. Refer to manual pages for more details.")
