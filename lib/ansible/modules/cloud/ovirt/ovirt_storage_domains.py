@@ -137,6 +137,15 @@ EXAMPLES = '''
       address: 10.34.63.199
       path: /path/data
 
+# Add data NFS storage domain with id for data center
+- ovirt_storage_domains:
+    name: data_nfs
+    host: myhost
+    data_center: 11111
+    nfs:
+      address: 10.34.63.199
+      path: /path/data
+
 # Add data localfs storage domain
 - ovirt_storage_domains:
     name: data_localfs
@@ -321,9 +330,13 @@ class StorageDomainModule(BaseModule):
     def _attached_sds_service(self):
         # Get data center object of the storage domain:
         dcs_service = self._connection.system_service().data_centers_service()
+
+        # Serach the data_center name, if it does not exists, try to search by guid.
         dc = search_by_name(dcs_service, self._module.params['data_center'])
         if dc is None:
-            return
+            dc = dcs_service.service(self._module.params['data_center']).get()
+            if dc is None:
+                return
 
         dc_service = dcs_service.data_center_service(dc.id)
         return dc_service.storage_domains_service()
