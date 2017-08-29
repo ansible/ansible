@@ -177,7 +177,7 @@ Function Choco-Upgrade
         [bool]$ignoredependencies,
         [Parameter(Mandatory=$false, Position=10)]
         [int]$timeout,
-        [Parameter(Mandatory=$false, Position=12)]
+        [Parameter(Mandatory=$false, Position=11)]
         [bool]$skipscripts
     )
 
