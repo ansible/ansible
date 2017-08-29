@@ -1,0 +1,88 @@
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    address_prefixes: "10.0.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: testSubnet
+    address_prefix: "10.0.1.0/24"
+    virtual_network: testVnet
+
+- name: Create public IP address
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Dynamic
+    name: testPublicIP
+
+- name: Create VMSS
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Manual
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+
+- name: Assert that VMSS ran
+  assert:
+    that: results.changed
+
+- name: Delete VMSS
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS
+    state: absent
+    remove_on_absent: ['all']
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Manual
+    tier: Standard
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+
+- name: Delete public IP address
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Dynamic
+    state: absent
+    name: testPublicIP
+
+- name: Delete virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    state: absent
+    address_prefixes: "10.0.0.0/16"
