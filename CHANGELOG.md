@@ -568,6 +568,7 @@ Ansible Changes By Release
   * win_rabbitmq_plugin
   * win_route
   * win_security_policy
+  * win_toast
   * win_user_right
   * win_wait_for
   * win_wakeonlan
