@@ -215,14 +215,16 @@ if(($AllocUnitSize.GetType()).Name -eq 'String'){
             Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
         }        
 }
-if(($Number.GetType()).Name -eq 'String'){
-        try{
-            [int32]$Number = [convert]::ToInt32($Number, 10)
-        }
-        catch{
-            $result.general_log.convert_variable = "failed"
-            Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
-        }        
+if($Number -ne $null){
+    if(($Number.GetType()).Name -eq 'String'){
+            try{
+                [int32]$Number = [convert]::ToInt32($Number, 10)
+            }
+            catch{
+                $result.general_log.convert_variable = "failed"
+                Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
+            }        
+    }
 }
 
 $result.general_log.convert_variable = "successful"
