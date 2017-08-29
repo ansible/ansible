@@ -550,6 +550,7 @@ Ansible Changes By Release
   * win_group_membership
   * win_hotfix
   * win_mapped_drive
+  * win_power_plan
   * win_psmodule
   * win_rabbitmq_plugin
   * win_route
