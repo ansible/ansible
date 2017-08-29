@@ -717,7 +717,8 @@ def create_or_update_elb_listeners(connection, module, elb):
         try:
             listener_to_add['LoadBalancerArn'] = elb['LoadBalancerArn']
             # Rules is not a valid parameter for create_listener
-            listener_to_add.pop('Rules')
+            if 'Rules' in listener_to_add:
+                listener_to_add.pop('Rules')
             response = connection.create_listener(**listener_to_add)
             # Add the new listener
             current_listeners.append(response['Listeners'][0])
@@ -729,7 +730,8 @@ def create_or_update_elb_listeners(connection, module, elb):
     for listener_to_modify in listeners_to_modify:
         try:
             # Rules is not a valid parameter for modify_listener
-            listener_to_modify.pop('Rules')
+            if 'Rules' in listener_to_modify:
+                listener_to_modify.pop('Rules')
             connection.modify_listener(**listener_to_modify)
             listener_changed = True
         except ClientError as e:
