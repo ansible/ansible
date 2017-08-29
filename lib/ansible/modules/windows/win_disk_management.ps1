@@ -30,7 +30,7 @@ param(
 
 $DiskSize = $DiskSize *1GB
 
-if($Number){
+if($Number -ne $null){
         Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Number -eq $Number) -and ($_.Size -eq $DiskSize)}
 }
 else{
@@ -198,11 +198,34 @@ $IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -def
 
 # Convert variable for disk size
 if(($Size.GetType()).Name -eq 'String'){
-        [int32]$Size = [convert]::ToInt32($Size, 10)
+        try{
+            [int32]$Size = [convert]::ToInt32($Size, 10)
+        }
+        catch{
+            $result.general_log.convert_variable = "failed"
+            Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
+        }        
 }
 if(($AllocUnitSize.GetType()).Name -eq 'String'){
-        [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
+        try{
+            [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
+        }
+        catch{
+            $result.general_log.convert_variable = "failed"
+            Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
+        }        
 }
+if(($Number.GetType()).Name -eq 'String'){
+        try{
+            [int32]$Number = [convert]::ToInt32($Number, 10)
+        }
+        catch{
+            $result.general_log.convert_variable = "failed"
+            Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
+        }        
+}
+
+$result.general_log.convert_variable = "successful"
 
 # Rescan disks
 try{
