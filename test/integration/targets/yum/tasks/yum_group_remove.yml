@@ -85,7 +85,9 @@
     state: present
   register: yum_output
 
-- debug: var=yum_output
+- debug:
+    var: yum_output
+    verbosity: 1
 
 - name: check mode remove the group along with the package
   yum:
