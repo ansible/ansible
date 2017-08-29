@@ -2,6 +2,7 @@
 *.py[co]
 build
 AUTHORS.TXT
+SYMLINK_CACHE.json
 # Emacs backup and autosave files...
 *~
 .\#*
@@ -96,3 +97,5 @@ htmlcov/
 # ansible-test coverage results
 test/units/.coverage.*
 /test/integration/cloud-config-azure.yml
+# PyEnv
+.python-version
