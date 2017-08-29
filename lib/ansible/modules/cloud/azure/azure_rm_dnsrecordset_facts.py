@@ -65,6 +65,7 @@ EXAMPLES = '''
         resource_group: Testing
         zone_name: example.com
 '''
+
 RETURN = '''
 azure_dnsrecordset:
     description: List of record set dicts.
