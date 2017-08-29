@@ -2,21 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -33,7 +20,7 @@ short_description: Sends Toast windows notification to Windows 10 or later hosts
 description:
     - Sends alerts which appear in the Action Center area of the windows desktop.
 options:
-  expire_secs:
+  expire_seconds:
     description:
       - How long in seconds before the notification expires.
     default: 45
@@ -49,7 +36,7 @@ options:
     description:
       - If false, the notification will not pop up and will only appear in the Action Center.
     type: bool
-    default: 'Yes'
+    default: yes
   tag:
     description:
       - The tag to add to the notification.
@@ -63,13 +50,13 @@ author:
 notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
    - Messages are only sent to the local host where the module is run.
-   - You must run this module with async, otherwise it will hang until the expire_secs period has passed.
+   - You must run this module with async, otherwise it will hang until the expire_seconds period has passed.
 '''
 
 EXAMPLES = r'''
 - name: Warn logged in users of impending upgrade (note use of async to stop the module from waiting until notification expires).
   win_toast:
-    expire_secs: 60
+    expire_seconds: 60
     title: System Upgrade Notification
     msg: Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time }}
   async: 60
@@ -77,7 +64,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-expire_secs:
+expire_seconds:
     description: Requested time in seconds before notification expires.
     returned: allways
     type: int

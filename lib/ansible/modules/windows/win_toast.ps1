@@ -1,23 +1,11 @@
 #!powershell
 # This file is part of Ansible
-#
-# Copyright 2017, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright (c) 2017, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
 
 $ErrorActionPreference = "Stop"
 
@@ -36,20 +24,20 @@ $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 # $expire_at = Get-AnsibleParam -obj $params -name "msg" -type "str"
-$expire_secs = Get-AnsibleParam -obj $params -name "expire_secs" -type "int" -default 45
+$expire_seconds = Get-AnsibleParam -obj $params -name "expire_seconds" -type "int" -default 45
 $group = Get-AnsibleParam -obj $params -name "group" -type "str" -default "Powershell"
 $msg = Get-AnsibleParam -obj $params -name "msg" -type "str" -default "Hello world!"
 $popup = Get-AnsibleParam -obj $params -name "popup" -type "bool" -default $true
 $tag = Get-AnsibleParam -obj $params -name "tag" -type "str" -default "Ansible"
 $title = Get-AnsibleParam -obj $params -name "title" -type "str" -default $default_title
 
-$timespan = New-TimeSpan -Seconds $expire_secs
+$timespan = New-TimeSpan -Seconds $expire_seconds
 $expire_at = $now + $timespan
 $expire_at_utc = $($expire_at.ToUniversalTime()|Out-String).Trim()
 
 $result = @{
     changed = $false
-    expire_secs = $expire_secs
+    expire_seconds = $expire_seconds
     expire_at = $expire_at.ToString()
     expire_at_utc = $expire_at_utc
     group = $group    
@@ -82,14 +70,12 @@ try {
    $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($msg)
    if (-not $check_mode) {
       $notifier.Show($toast)
-      Start-Sleep -Seconds $expire_secs
+      Start-Sleep -Seconds $expire_seconds
    }
 } catch {
   $excep= $_
   Fail-Json $result "Failed to create toast notifier, exception was $($excep.Exception.Message) stack trace $($excep.ScriptStackStrace)".
 }
-
-
 
 
 $endsend_at = Get-Date| Out-String
