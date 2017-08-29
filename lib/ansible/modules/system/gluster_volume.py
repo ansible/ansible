@@ -18,105 +18,79 @@ module: gluster_volume
 short_description: Manage GlusterFS volumes
 description:
   - Create, remove, start, stop and tune GlusterFS volumes
-version_added: "1.9"
+version_added: '1.9'
 options:
   name:
-    required: true
     description:
       - The volume name
-  state:
     required: true
-    choices: [ 'present', 'absent', 'started', 'stopped' ]
+  state:
     description:
-      - Use present/absent ensure if a volume exists or not,
-        use started/stopped to control it's availability.
+      - Use present/absent ensure if a volume exists or not.
+        Use started/stopped to control its availability.
+    required: true
+    choices: ['present', 'absent', 'started', 'stopped']
   cluster:
-    required: false
-    default: null
     description:
       - List of hosts to use for probing and brick setup
   host:
-    required: false
-    default: null
     description:
       - Override local hostname (for peer probing purposes)
   replicas:
-    required: false
-    default: null
     description:
       - Replica count for volume
   arbiter:
-    required: false
-    default: null
     description:
       - Arbiter count for volume
-    version_added: "2.3"
+    version_added: '2.3'
   stripes:
-    required: false
-    default: null
     description:
       - Stripe count for volume
   disperses:
-    required: false
-    default: null
     description:
       - Disperse count for volume
-    version_added: "2.2"
+    version_added: '2.2'
   redundancies:
-    required: false
-    default: null
     description:
       - Redundancy count for volume
-    version_added: "2.2"
+    version_added: '2.2'
   transport:
-    required: false
-    choices: [ 'tcp', 'rdma', 'tcp,rdma' ]
-    default: 'tcp'
     description:
       - Transport type for volume
+    default: 'tcp'
+    choices: ['tcp', 'rdma', 'tcp,rdma']
   bricks:
-    required: false
-    default: null
     description:
-      - Brick paths on servers. Multiple brick paths can be separated by commas
+      - Brick paths on servers. Multiple brick paths can be separated by commas.
     aliases: ['brick']
   start_on_create:
-    choices: [ 'yes', 'no']
-    required: false
-    default: 'yes'
     description:
-      - Controls whether the volume is started after creation or not, defaults to yes
+      - Controls whether the volume is started after creation or not
+    default: 'yes'
+    type: bool
   rebalance:
-    choices: [ 'yes', 'no']
-    required: false
-    default: 'no'
     description:
       - Controls whether the cluster is rebalanced after changes
+    default: 'no'
+    type: bool
   directory:
-    required: false
-    default: null
     description:
       - Directory for limit-usage
   options:
-    required: false
-    default: null
     description:
       - A dictionary/hash with options/settings for the volume
   quota:
-    required: false
-    default: null
     description:
       - Quota value for limit-usage (be sure to use 10.0MB instead of 10MB, see quota list)
   force:
-    required: false
-    default: null
     description:
       - If brick is being created in the root partition, module will fail.
-        Set force to true to override this behaviour
+        Set force to true to override this behaviour.
+    type: bool
 notes:
-  - "Requires cli tools for GlusterFS on servers"
-  - "Will add new bricks, but not remove them"
-author: "Taneli Leppä (@rosmo)"
+  - Requires cli tools for GlusterFS on servers
+  - Will add new bricks, but not remove them
+author: Taneli Leppä (@rosmo)
 """
 
 EXAMPLES = """
@@ -186,7 +160,7 @@ glusterbin = ''
 def run_gluster(gargs, **kwargs):
     global glusterbin
     global module
-    args = [glusterbin]
+    args = [glusterbin, '--mode=script']
     args.extend(gargs)
     try:
         rc, out, err = module.run_command(args, **kwargs)
@@ -206,16 +180,6 @@ def run_gluster_nofail(gargs, **kwargs):
     rc, out, err = module.run_command(args, **kwargs)
     if rc != 0:
         return None
-    return out
-
-def run_gluster_yes(gargs):
-    global glusterbin
-    global module
-    args = [glusterbin]
-    args.extend(gargs)
-    rc, out, err = module.run_command(args, data='y\n')
-    if rc != 0:
-        module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out or err))
     return out
 
 def get_peers():
@@ -350,7 +314,7 @@ def start_volume(name):
     run_gluster([ 'volume', 'start', name ])
 
 def stop_volume(name):
-    run_gluster_yes([ 'volume', 'stop', name ])
+    run_gluster([ 'volume', 'stop', name ])
 
 def set_volume_option(name, option, parameter):
     run_gluster([ 'volume', 'set', name, option, parameter ])
@@ -384,23 +348,23 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True, default=None, aliases=['volume']),
-            state=dict(required=True, choices=[ 'present', 'absent', 'started', 'stopped', 'rebalanced' ]),
-            cluster=dict(required=False, default=None, type='list'),
-            host=dict(required=False, default=None),
-            stripes=dict(required=False, default=None, type='int'),
-            replicas=dict(required=False, default=None, type='int'),
-            arbiters=dict(required=False, default=None, type='int'),
-            disperses=dict(required=False, default=None, type='int'),
-            redundancies=dict(required=False, default=None, type='int'),
-            transport=dict(required=False, default='tcp', choices=[ 'tcp', 'rdma', 'tcp,rdma' ]),
-            bricks=dict(required=False, default=None, aliases=['brick']),
-            start_on_create=dict(required=False, default=True, type='bool'),
-            rebalance=dict(required=False, default=False, type='bool'),
-            options=dict(required=False, default={}, type='dict'),
-            quota=dict(required=False),
-            directory=dict(required=False, default=None),
-            force=dict(required=False, default=False, type='bool'),
+            name=dict(required=True, aliases=['volume']),
+            state=dict(required=True, choices=['present', 'absent', 'started', 'stopped']),
+            cluster=dict(default=None, type='list'),
+            host=dict(default=None),
+            stripes=dict(default=None, type='int'),
+            replicas=dict(default=None, type='int'),
+            arbiters=dict(default=None, type='int'),
+            disperses=dict(default=None, type='int'),
+            redundancies=dict(default=None, type='int'),
+            transport=dict(default='tcp', choices=['tcp', 'rdma', 'tcp,rdma']),
+            bricks=dict(default=None, aliases=['brick']),
+            start_on_create=dict(default=True, type='bool'),
+            rebalance=dict(default=False, type='bool'),
+            options=dict(default={}, type='dict'),
+            quota=dict(),
+            directory=dict(default=None),
+            force=dict(default=False, type='bool'),
             )
         )
 
@@ -457,7 +421,7 @@ def main():
         if volume_name in volumes:
             if volumes[volume_name]['status'].lower() != 'stopped':
                 stop_volume(volume_name)
-            run_gluster_yes([ 'volume', 'delete', volume_name ])
+            run_gluster([ 'volume', 'delete', volume_name ])
             changed = True
 
     if action == 'present':
