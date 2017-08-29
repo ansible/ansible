@@ -16,13 +16,13 @@ Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-o
 Importing Playbooks
 ```````````````````
 
-It is possible to include playbooks inside a master playbook. For example::
+It is possible to import playbooks inside a master playbook. For example::
 
     ---
-    import_playbook: webservers.yml
-    import_playbook: databases.yml
+    - import_playbook: webservers.yml
+    - import_playbook: databases.yml
 
-Each playbook listed will be run in the order they are listed.
+Each playbook listed will be imported in the order they are listed.  (import_playbook was added in 2.4)
 
 
 Including and Importing Task Files
@@ -114,4 +114,3 @@ Please refer to :doc:`playbooks_reuse_roles` for details on including and import
        Complete playbook files from the GitHub project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-
