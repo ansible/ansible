@@ -49,6 +49,7 @@ Command line arguments:
  - tenant
  - ad_user
  - password
+ - region
 
 Environment variables:
  - AZURE_PROFILE
@@ -58,6 +59,7 @@ Environment variables:
  - AZURE_TENANT
  - AZURE_AD_USER
  - AZURE_PASSWORD
+ - AZURE_REGION
 
 Run for Specific Host
 -----------------------
@@ -198,6 +200,20 @@ from os.path import expanduser
 HAS_AZURE = True
 HAS_AZURE_EXC = None
 
+# Endpoints as per http://azure-sdk-for-python.readthedocs.io/en/latest/multicloud.html
+AZURE_REGION_ENDPOINT_MAPPING = dict(
+    public='https://management.azure.com/',
+    government='https://management.usgovcloudapi.net/',
+    germany='https://management.microsoftazure.de/',
+    china='https://management.chinacloudapi.cn/'
+)
+AZURE_REGION_AUTH_ENDPOINT_MAPPING = dict(
+    public='https://login.microsoftonline.com/',
+    government='https://login.microsoftonline.com/',
+    germany='https://login.microsoftonline.de/',
+    china='https://login.chinacloudapi.cn/'
+)
+
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.compute import __version__ as azure_compute_version
@@ -218,7 +234,8 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     secret='AZURE_SECRET',
     tenant='AZURE_TENANT',
     ad_user='AZURE_AD_USER',
-    password='AZURE_PASSWORD'
+    password='AZURE_PASSWORD',
+    region='AZURE_REGION'
 )
 
 AZURE_CONFIG_SETTINGS = dict(
@@ -252,7 +269,6 @@ class AzureRM(object):
         self._compute_client = None
         self._resource_client = None
         self._network_client = None
-
         self.debug = False
         if args.debug:
             self.debug = True
@@ -266,13 +282,24 @@ class AzureRM(object):
             self.fail("Credentials did not include a subscription_id value.")
         self.log("setting subscription_id")
         self.subscription_id = self.credentials['subscription_id']
+        self._region = self.credentials.get('region', 'public')
+        self.log("using region '{0}'".format(self._region))
+        if AZURE_REGION_AUTH_ENDPOINT_MAPPING.get(self._region, None) is None or AZURE_REGION_ENDPOINT_MAPPING.get(self._region, None) is None:
+            self.fail("Don't know endpoint mappings for region '{0}'".format(self._region))
+
+        self._auth_uri  = "{0}/{1}".format(AZURE_REGION_AUTH_ENDPOINT_MAPPING[self._region], self.credentials['tenant'])
+        self._token_uri = "{0}/oauth2/token".format(self._auth_uri)
+        self.resource = AZURE_REGION_ENDPOINT_MAPPING[self._region]
 
         if self.credentials.get('client_id') is not None and \
            self.credentials.get('secret') is not None and \
            self.credentials.get('tenant') is not None:
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
-                                                                 tenant=self.credentials['tenant'])
+                                                                 tenant=self.credentials['tenant'],
+                                                                 auth_uri=self._auth_uri,
+                                                                 token_uri=self._token_uri,
+                                                                 resource=self.resource)
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
             if tenant is not None:
@@ -376,7 +403,7 @@ class AzureRM(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id)
+            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -384,14 +411,14 @@ class AzureRM(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id)
+            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id)
+            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id, base_url=self.resource)
             self._register('Microsoft.Compute')
         return self._compute_client
 
@@ -471,6 +498,8 @@ class AzureInventory(object):
                             help='Azure Tenant Id')
         parser.add_argument('--ad-user', action='store',
                             help='Active Directory User')
+        parser.add_argument('--region', action='store',
+                            help='Azure region. Defaults to public. Also supported: germany, government, china')
         parser.add_argument('--password', action='store',
                             help='password')
         parser.add_argument('--resource-groups', action='store',
