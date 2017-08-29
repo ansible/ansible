@@ -154,7 +154,7 @@ class GenericStrategy(object):
         current_name = self.get_current_hostname()
         if current_name != name:
             if not self.module.check_mode:
-                self.set_curent_hostname(name)
+                self.set_current_hostname(name)
             self.changed = True
 
     def update_permanent_hostname(self):
