@@ -66,8 +66,6 @@ EXAMPLES = '''
     state: latest
 '''
 
-import os
-import pipes
 
 def package_installed(module, name):
     cmd = ['pkginfo']

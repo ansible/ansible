@@ -187,7 +187,6 @@ EXAMPLES = '''
 import xml
 import re
 from xml.dom.minidom import parseString as parseXML
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 

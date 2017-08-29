@@ -222,7 +222,6 @@ EXAMPLES = '''
 
 
 import os
-import pipes
 import re
 
 

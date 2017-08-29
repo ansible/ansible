@@ -90,9 +90,7 @@ EXAMPLES = '''
 '''
 
 
-import shlex
 import os
-import sys
 
 URPMI_PATH = '/usr/sbin/urpmi'
 URPME_PATH = '/usr/sbin/urpme'
