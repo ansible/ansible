@@ -247,8 +247,8 @@ def search_for_host_key(module, host, key, path, sshkeygen):
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
             found_key = normalize_known_hosts_key(l)
-            if new_key['host'][:3]=='|1|' and found_key['host'][:3]=='|1|': # do not change host hash if already hashed
-               new_key['host'] = found_key['host']
+            if new_key['host'][:3] == '|1|' and found_key['host'][:3] == '|1|':  # do not change host hash if already hashed
+                new_key['host'] = found_key['host']
             if new_key == found_key:  # found a match
                 return True, False, found_line  # found exactly the same key, don't replace
             elif new_key['type'] == found_key['type']:
