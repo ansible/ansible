@@ -203,7 +203,6 @@ def local_existing(gexisting):
         if jp_bidir and isauth:
             gexisting.pop('jp_bidir')
             gexisting.pop('isauth')
-        gexisting['sparse'] = True
 
     return gexisting, jp_bidir, isauth
 
@@ -305,13 +304,15 @@ def get_pim_interface(module, interface):
     jp_configs = []
     neigh = None
     if body:
-        all_lines = body[0].splitlines()
+        all_lines = body.splitlines()
 
         for each in all_lines:
             if 'jp-policy' in each:
                 jp_configs.append(str(each.strip()))
             elif 'neighbor-policy' in each:
                 neigh = str(each)
+            elif 'sparse-mode' in each:
+                pim_interface['sparse'] = True
 
     pim_interface['neighbor_type'] = None
     neigh_type = None
