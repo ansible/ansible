@@ -112,6 +112,121 @@ that can be included in :ref:`ansible-playbook` YAML files.
 
 See :ref:`single_encrypted_variable` for an example
 
+
+.. _vault_ids
+
+Vault Ids and Multiple Vault Passwords
+``````````````````````````````````````
+
+*Available since Ansible 2.4*
+
+A vault id is an identifier for one or more vault secrets. Since Ansible 2.4,
+Ansible supports multiple vault passwords. Vault ids is a way to provide
+a label for a particular vault password.
+
+Vault encrypted content can specify which vault id it was encrypted with.
+
+Prior to Ansible 2.4, only one vault password could be used at a time. Post
+Ansible 2.4, multiple vault passwords can be used each time Ansible runs, so any
+vault files or vars that needed to be decrypted all had to use the same password.
+
+Since Ansible 2.4, vault files or vars can be that are encrypted with different
+passwords can be used at the same time.
+
+For example, a playbook can now include a vars file encrypted with a 'dev' vault
+id and a 'prod' vault id.
+
+.. _providing_vault_passwords:
+
+Providing Vault Passwords
+`````````````````````````
+
+Since Ansible 2.4, the recommended way to provide a vault password from the cli is
+to use the :option:`--vault-id` cli option.
+
+For example, to use a password store in the text file :file:/path/to/my/vault-password-file::
+
+    ansible-playbook --vault-id /path/to/my/vault-password-file site.yml
+
+To prompt for a password::
+
+    ansible-playbook --vault-id @prompt site.yml
+
+To get the password from a vault password executable script :file:'my-vault-password.py'::
+
+    ansible-playbook --vault-id my-vault-password.py
+
+The value for :option:`--vault-id` can specify the type of vault id (prompt, a file path, etc)
+and a label for the vault id ('dev', 'prod', 'cloud', etc)
+
+For example, to use a password file :file:'dev-password' for the vault-id 'dev'::
+
+    ansible-playbook --vault-id dev@dev-password site.yml
+
+To prompt for the 'dev' vault id::
+
+    ansible-playbook --vault-id dev@prompt site.yml
+
+Since Ansible 2.4 and later support using multiple vault passwords, :option:`--vault-id` can
+be provided multiple times.
+
+If multiple vault passwords are provided, by default Ansible will attempt to decrypt vault content
+by trying each vault secret in the order they were provided on the command line.
+
+For example, to use a 'dev' password read from a file and to be prompted for the 'prod' password::
+
+    ansible-playbook --vault-id dev@dev-password --vault-id prod@prompt site.yml
+
+In the above case, the 'dev' password will be tried first, then the 'prod' password for cases
+where Ansible doesn't know which vault id is used to encrypt something.
+
+If the vault content was encrypted using a :option:`--vault-id` option, then the label of the
+vault id is stored with the vault content. When Ansible knows the right vault-id, it will try
+the matching vault id's secret first before trying the rest of the vault-ids.
+
+There is a config option (:ref:`DEFAULT_VAULT_ID_MATCH` ) to force the vault content's vault id label to match with one of
+the provided vault ids. But the default is to try the matching id first, then try the other
+vault ids in order.
+
+There is also a config option (:ref:`DEFAULT_VAULT_IDENTITY_LIST`) to specify a default list of vault ids to
+use. For example, instead of requiring the cli option on every use::
+
+    ansible-playbook --vault-id dev@dev-password --vault-id prod@prompt site.yml
+
+The (:ref:`DEFAULT_VAULT_IDENTITY_LIST`) can be used.
+
+The :option:`--vault-id` can be used in lieu of the :option:`--vault-password-file` or :option:`--ask-vault-pass` options,
+or it can be used in combination with them.
+
+When using :ref:`ansible-vault` command that encrypt content (:ref:`ansible-vault encrypt`, :ref:`ansible-vault encrypt_string`, etc)
+only one vault-id can be used.
+
+*Prior to Ansible 2.4*
+
+To be prompted for a vault password, use the :option:`--ask-vault-pass` cli option::
+
+    ansible-playbook --ask-vault-pass site.yml
+
+To specify a vault password in a text file 'dev-password', use the :option:`--vault-password-file` option::
+
+    ansible-playbook --vault-password-file dev-password site.yml
+
+There is a config option (:ref:`DEFAULT_VAULT_PASSWORD_FILE`) to specify a vault password file to use
+without requiring the :option:`--vault-password-file` cli option.
+
+via config
+  :ref:`ANSIBLE_VAULT_PASSWORD_FILE`
+
+  :ref:`ANSIBLE_VAULT_IDENTITY_LIST`
+
+via env
+   TODO
+
+.. note::
+Prior to Ansible 2.4, only one vault password could be used in each Ansible run. The
+:option:`--vault-id` option is not support prior to Ansible 2.4.
+
+
 .. _speeding_up_vault:
 
 Speeding Up Vault Operations
