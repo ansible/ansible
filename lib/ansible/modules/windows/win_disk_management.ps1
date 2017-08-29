@@ -24,13 +24,18 @@ param(
     $DiskSize,
     $PartitionStyle,
     $OperationalStatus,
-    $ReadOnly
+    $ReadOnly,
+    $Number
 )
 
 $DiskSize = $DiskSize *1GB
 
-Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Size -eq $DiskSize)}
-
+if($Number){
+        Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Number -eq $Number) -and ($_.Size -eq $DiskSize)}
+}
+else{
+    Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Size -eq $DiskSize)}
+}
 }
 
 function Set-OperationalStatus{
@@ -174,10 +179,11 @@ $result = @{
 ## Extract each attributes into a variable
 # Find attributes
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$Size = Get-AnsibleParam -obj $params -name "disk_size" -type "str/int" -failifempty $true
+$Size = Get-AnsibleParam -obj $params -name "size" -type "str/int" -failifempty $true
 $FindPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_select" -type "str" -default "raw" -ValidateSet "raw","mbr","gpt"
 $OperationalStatus = Get-AnsibleParam -obj $params -name "operational_status" -type "str" -default "offline" -ValidateSet "offline","online"
 $ReadOnly = Get-AnsibleParam -obj $params -name "read_only" -default $true -type "bool"
+$Number = Get-AnsibleParam -obj $params -name "number" -type "str/int"
 
 # Set attributes partition
 $SetPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_set" -type "str" -default "gpt" -ValidateSet "gpt","mbr"
@@ -213,6 +219,7 @@ $result.general_log.rescan_disks = "successful"
                           PartitionStyle = $FindPartitionStyle
                           OperationalStatus = $OperationalStatus
                           ReadOnly = $ReadOnly
+                          Number = $Number
                           }
 
 # Search disk
@@ -453,7 +460,7 @@ else{
     $result.parameters.drive_letter_set = "$DriveLetter"
     $result.parameters.drive_letter_used = "yes"
     $result.general_log.check_parameters = "failed"
-    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter is already set on another partition on this server which is not allowed"
+    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter is already set on another partition on this client which is not allowed"
 }
 
 if($DriveLetter -ne "C" -and $DriveLetter -ne "D"){
@@ -468,11 +475,11 @@ else{
 if($FileSystem -eq "ntfs"){
                                                 $result.parameters.file_system = "$FileSystem"
                                                 if($Size -le 256000){
-                                                                                    $result.parameters.disk_size = "$($Size)gb"
+                                                                                    $result.parameters.size = "$($Size)gb"
                                                                                     $result.parameters.allocation_unit_size = "$AllocUnitSize KB"
                                                 }
                                                 else{
-                                                    $result.parameters.disk_size = "$($Size)gb"
+                                                    $result.parameters.size = "$($Size)gb"
                                                     $result.general_log.check_parameters = "failed"
                                                     if($SetOnline){
                                                                 try{
@@ -494,18 +501,18 @@ if($FileSystem -eq "ntfs"){
                                                     else{
                                                             $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
                                                     }
-                                                    Fail-Json -obj $result -message "Option disk_size with value $Size GB is not a valid size for NTFS, the disk can not be not formatted with this file system"
+                                                    Fail-Json -obj $result -message "Option size with value $Size GB is not a valid size for NTFS, the disk can not be not formatted with this file system"
                                                 }
 }
 elseif($FileSystem -eq "refs"){
                                                     $result.parameters.file_system = "$FileSystem"
                                                     if($AllocUnitSize -ne 64){
-                                                                                                $result.parameters.disk_size = "$($Size)gb"
+                                                                                                $result.parameters.size = "$($Size)gb"
                                                                                                 $AllocUnitSize = 64
                                                                                                 $result.parameters.allocation_unit_size = "$($AllocUnitSize)kb_adjusted_refs"                                                  
                                                     }
                                                     else{
-                                                        $result.parameters.disk_size = "$($Size)gb"
+                                                        $result.parameters.size = "$($Size)gb"
                                                         $result.parameters.allocation_unit_size = "$($AllocUnitSize)_kb"   
                                                     }
 }
