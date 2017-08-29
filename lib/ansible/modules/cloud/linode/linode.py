@@ -349,6 +349,7 @@ def linodeServers(module, api, state, name, name_add_id, name_id_separator,
     servers = []
     disks = []
     configs = []
+    addresses = []
     jobs = []
     disk_size = 0
 
@@ -357,24 +358,20 @@ def linodeServers(module, api, state, name, name_add_id, name_id_separator,
         # For the moment we only consider linode_id as criteria for match
         # Later we can use more (size, name, etc.) and update existing
         servers = api.linode_list(LinodeId=linode_id)
-        # Attempt to fetch details about disks and configs only if servers are
-        # found with linode_id
-        if servers:
-            disks = api.linode_disk_list(LinodeId=linode_id)
-            configs = api.linode_config_list(LinodeId=linode_id)
-
-    # Test if a node with the specified label exists - they should be unique anyway
-    # Only do this when not automatically adding an ID to the name
-    if not servers and not name_add_id:
+    else:
         servers_n = api.linode_list()
         for srv in servers_n:
             if srv['LABEL'] == name:
                 servers.append(srv)
+                linode_id = srv['LINODEID']
                 break
-        if servers:
-            linode_id = servers[0]['LINODEID']
-            disks = api.linode_disk_list(LinodeId=linode_id)
-            configs = api.linode_config_list(LinodeId=linode_id)
+
+    # Attempt to fetch details about disks and configs only if servers are
+    # found with linode_id
+    if servers:
+        disks = api.linode_disk_list(LinodeId=linode_id)
+        configs = api.linode_config_list(LinodeId=linode_id)
+        addresses = api.linode_ip_list(LinodeId=linode_id)
 
     # Act on the state
     if state in ('active', 'present', 'started'):
@@ -414,7 +411,12 @@ def linodeServers(module, api, state, name, name_add_id, name_id_separator,
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         #Add private IP to Linode
-        if private_ip:
+        if private_ip and addresses:
+            # if a private address is requested and at least one address already
+            # exists then test all addresses for ISPUBLIC=0 to determine whether
+            # a private address should be assigned
+            private_interfaces = (item for item in addresses if not item["ISPUBLIC"]).next()
+        if private_ip and not private_interfaces:
             try:
                 res = api.linode_ip_addprivate(LinodeID=linode_id)
             except Exception as e:
