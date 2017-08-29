@@ -1,0 +1,61 @@
+- name: Warn user
+  win_toast:
+    expire_seconds: 10
+    msg: Keep calm and carry on.
+  register: msg_result
+  ignore_errors: True
+
+- name: Test msg_result when can_toast is true (normal mode)
+  assert:
+    that:
+    - not msg_result|failed
+    - msg_result.runtime_seconds > 10
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+
+- name: Test msg_result when can_toast is true (check mode)
+  assert:
+    that:
+    - not msg_result|failed
+    - msg_result.runtime_seconds > 0.1
+  when: 
+    - can_toast == True
+    - in_check_mode == True
+
+- name: Test msg_result when can_toast is false
+  assert:
+    that:
+    - msg_result|failed
+  when: can_toast == False
+
+- name: Warn user again
+  win_toast:
+    expire_seconds: 10
+    msg: Keep calm and carry on.
+  register: msg_result2
+  ignore_errors: True
+
+- name: Test msg_result2 when can_toast is true (normal mode)
+  assert:
+    that:
+    - not msg_result2|failed
+    - msg_result2.runtime_seconds > 10
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+
+- name: Test msg_result2 when can_toast is true (check mode)
+  assert:
+    that:
+    - not msg_result2|failed
+    - msg_result2.runtime_seconds > 0.1
+  when: 
+    - can_toast == True
+    - in_check_mode == False
+
+- name: Test msg_result2 when can_toast is false
+  assert:
+    that:
+    - msg_result2|failed
+  when: can_toast == False
