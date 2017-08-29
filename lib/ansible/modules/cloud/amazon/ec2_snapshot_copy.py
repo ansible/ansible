@@ -1,22 +1,9 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -119,12 +106,14 @@ snapshot_id:
     sample: "snap-e9095e8c"
 '''
 
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils._text import to_native
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError, WaiterError
+    from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound, NoRegionError, WaiterError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -160,15 +149,12 @@ def copy_snapshot(module, ec2):
                 Tags=[{'Key': k, 'Value': v} for k, v in module.params.get('tags').items()]
             )
 
-        module.exit_json(changed=True, snapshot_id=snapshot_id)
     except WaiterError as we:
-        module.fail_json(msg='An error occurred waiting for the snapshot to become available. (%s)' % we.reason)
+        module.fail_json(msg='An error occurred (%s) waiting for the snapshot to become available. (%s)' % (we.message, we.reason))
     except ClientError as ce:
-        module.fail_json(msg=ce.message)
-    except NoCredentialsError:
-        module.fail_json(msg='Unable to authenticate, AWS credentials are invalid.')
-    except Exception as e:
-        module.fail_json(msg='Unhandled exception. (%s)' % str(e))
+        module.fail_json(msg=ce.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(ce.response))
+
+    module.exit_json(changed=True, snapshot_id=snapshot_id)
 
 
 def main():
@@ -186,11 +172,14 @@ def main():
 
     if not HAS_BOTO3:
         module.fail_json(msg='botocore and boto3 are required.')
+
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    if not region:
+        module.fail_json(msg="Region must be provided.")
     try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - %s" % str(e))
+    except (NoCredentialsError, ProfileNotFound) as e:
+        module.fail_json(msg="Can't authorize connection - %s" % to_native(e))
 
     copy_snapshot(module, client)
 
