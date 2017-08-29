@@ -80,8 +80,9 @@ if ((get-process -name explorer -EA silentlyContinue).Count -gt 0){
         Start-Sleep -Seconds $expire_seconds
      }
   } catch {
-    $excep= $_
-    Fail-Json $result "Failed to create toast notifier, exception was $($excep.Exception.Message) stack trace $($excep.ScriptStackStrace)".
+    $excep = $_
+    $result.exception = $excep.ScriptStackTrace
+    Fail-Json -obj $result -message "Failed to create toast notifier: $($excep.Exception.Message)"
   }
 } else {
    $result.toast_sent = $false
