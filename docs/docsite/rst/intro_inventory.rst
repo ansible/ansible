@@ -222,6 +222,37 @@ directory will override variables set in the inventory directory.
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
 
+.. _how_we_merge:
+
+How we merge
+++++++++++++
+
+By default vars are merged/flattend to the specific host before a play is run, this keeps Ansible focused on the Host and Task, so groups don't really
+surive outside of inventory and host matching. By default Ansible overwrites variables (see `hash_merge` setting to change this) including the ones
+defined for a group and/or host. The order/precedence is as follows (from lowest to highest):
+
+- all group (all being the first as it is the 'parent' of all other groups)
+- parent group
+- child group
+- host
+
+When groups of the same parent/child level are merged, it is done alphabetically, last group loaded overwrites previous. For example an a_group will be merged with b_group and b_group vars that match will overwrite the ones in a_group.
+
+.. versionadded:: 2.4
+
+Starting in 2.4 users can use a group variable ``ansible_group_priority`` to change the merge order for groups of the same level (after parent/child order is resolved). The larger the number the 'later' it will be merged, giving it higher priority, this variable defaults to ``1`` if not set.
+For example:
+
+.. code-block:: yaml
+
+    a_group:
+        testvar: a
+        ansible_group_priority: 10
+    b_group
+        testvar: b
+
+If both groups have the same priority the result would have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
+
 .. _behavioral_parameters:
 
 List of Behavioral Inventory Parameters

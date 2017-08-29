@@ -867,6 +867,8 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's vars: section, the 2nd one wins.
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+.. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
+          This last one can be superceeded by the user via `ansible_group_priority`, which defaults to 0 for all groups.
 
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
@@ -1000,7 +1002,7 @@ can set variables in there and make use of them in other roles and elsewhere in 
         - { role: something, foo: 12 }
         - { role: something_else }
 
-.. note:: There are some protections in place to avoid the need to namespace variables.  
+.. note:: There are some protections in place to avoid the need to namespace variables.
           In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if
           "something's" guaranteed to have foo set at 12, even if somewhere deep in common settings it set foo to 20.
 
