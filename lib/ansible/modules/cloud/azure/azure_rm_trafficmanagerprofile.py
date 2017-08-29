@@ -249,16 +249,33 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                         )
                     return self.results
 
-                traffic_manager = self.create_or_update_traffic_manager_profile(self.resource_group, self.name,
-                                                              self.location, self.properties)
-                results = self.traffic_manager_to_dict(
-                    traffic_manager,
-                    self.resource_group,
-                    self.name,
-                    self.location,
-                    self.properties
-                )
-                changed = True
+                # Not in check_mode. This will create the profile.
+                else:
+                    if not bool(current_traffic_manager):
+                        # profile doesn't exist. We will created it.
+                        # Traffic Manager uses DNS, we need to check if the 
+                        # Traffic Manager name is available
+                        try:
+                            self.trafficmanager_client.profiles.check_traffic_manager_relative_dns_name_availability(self.name)
+        
+                        except CloudError:
+                            self.fail(
+                                'Domain name {0} already exists. Please choose a different DNS prefix'.format(self.name))
+
+                    traffic_manager = self.create_or_update_traffic_manager_profile(
+                        self.resource_group, 
+                        self.name,
+                        self.location, 
+                        self.properties
+                        )
+                    results = self.traffic_manager_to_dict(
+                        traffic_manager,
+                        self.resource_group,
+                        self.name,
+                        self.location,
+                        self.properties
+                    )
+                    changed = True
 
             elif self.state == 'absent':
                 self.log('Deleting traffic manager {0}'.format(self.name))
