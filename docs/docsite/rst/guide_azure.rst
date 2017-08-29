@@ -119,6 +119,14 @@ Or, pass the following parameters for Active Directory username/password:
 * subscription_id
 
 
+Other Cloud Environments
+------------------------
+
+To use an Azure Cloud other than the default public cloud (eg, Azure China Cloud, Azure US Government Cloud, Azure Stack),
+pass the "cloud_environment" argument to modules, configure it in a credential profile, or set the "AZURE_CLOUD_ENVIRONMENT"
+environment variable. The value is either a cloud name as defined by the Azure Python SDK (eg, "AzureChinaCloud",
+"AzureUSGovernment"; defaults to "AzureCloud") or an Azure metadata discovery URL (for Azure Stack).
+
 Creating Virtual Machines
 -------------------------
 
