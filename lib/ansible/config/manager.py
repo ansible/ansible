@@ -134,7 +134,7 @@ class ConfigManager(object):
         self.data = ConfigData()
 
 
-        #FIXME: make dynamic? scan for more? make it's own method?
+        # FIXME: make dynamic? scan for more? make its own method?
         # Create configuration definitions from source
         bconfig_def = to_bytes('%s/base.yml' % os.path.dirname(__file__))
         if os.path.exists(bconfig_def):

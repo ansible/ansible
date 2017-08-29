@@ -196,7 +196,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 6:
         print(json.dumps({
             "failed": True,
-            "msg": "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile> [-preserve_tmp]  "
+            "msg": "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile> <tmpdir> [-preserve_tmp]  "
                    "Humans, do not call directly!"
         }))
         sys.exit(1)

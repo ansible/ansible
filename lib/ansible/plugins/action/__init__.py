@@ -536,14 +536,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
-        if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
+        if not path.startswith('~'):  # Windows can have '~' as part of filename, but PS should expand '~' to homedir
             return path
 
-        # FIXME: Can't use os.path.sep for Windows paths.
-        split_path = path.split(os.path.sep, 1)
+        # TODO: Find out if '~$' is anything to worry about --
+        # Filename can start with it, but Powershell resolves it to <HOME>\~$
+        if self._connection._shell == 'powershell' and path.startswith('~$'):  # '~$' seems to mark Windows temp file
+            return path
+
+        split_path = self._connection._shell.split_path(path)
         expand_path = split_path[0]
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
+        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user and self._connection._shell != 'powershell':
+            expand_path = '~%s' % self._play_context.become_user  # FIXME: Allow Windows to handle privilege escalation
 
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)

@@ -51,6 +51,9 @@ class ShellBase(object):
     def join_path(self, *args):
         return os.path.join(*args)
 
+    def split_path(self, path):
+        return path.split(os.path.sep, 1)
+
     # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
     def get_remote_filename(self, pathname):
         base_name = os.path.basename(pathname.strip())
@@ -99,14 +102,14 @@ class ShellBase(object):
         # When system is specified we have to create this in a directory where
         # other users can read and access the temp directory.  This is because
         # we use system to create tmp dirs for unprivileged users who are
-        # sudo'ing to a second unprivileged user.  The only dirctories where
+        # sudo'ing to a second unprivileged user.  The only directories where
         # that is standard are the tmp dirs, /tmp and /var/tmp.  So we only
         # allow one of those two locations if system=True.  However, users
         # might want to have some say over which of /tmp or /var/tmp is used
         # (because /tmp may be a tmpfs and want to conserve RAM or persist the
         # tmp files beyond a reboot.  So we check if the user set REMOTE_TMP
         # to somewhere in or below /var/tmp and if so use /var/tmp.  If
-        # anything else we use /tmp (because /tmp is specified by POSIX nad
+        # anything else we use /tmp (because /tmp is specified by POSIX and
         # /var/tmp is not).
 
         if system:
