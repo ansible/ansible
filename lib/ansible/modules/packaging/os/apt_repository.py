@@ -549,8 +549,16 @@ def main():
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import (
+    AnsibleModule,
+    get_exception,
+    json,
+    to_native,
+)
+from ansible.module_utils.urls import (
+    fetch_url,
+)
+
 
 if __name__ == '__main__':
     main()
