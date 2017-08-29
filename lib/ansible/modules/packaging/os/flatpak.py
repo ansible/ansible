@@ -1,7 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2017 Ansible Project GNU General Public License v3.0+ (see COPYING or
-# https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright (c) 2017 Ansible Project GNU General Public License v3.0+ (see
+# COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+import subprocess
+from urlparse import urlparse
+from ansible.module_utils.basic import AnsibleModule
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -63,7 +67,6 @@ EXAMPLES = '''
     name: org.gnome.gedit
     state: absent
 '''
-
 RETURN = '''
 reason:
     description: On failure, the output for the failure
@@ -82,10 +85,7 @@ remote:
     sample: https://sdk.gnome.org/gnome-apps.flatpakrepo
 '''
 
-
-from __future__ import (absolute_import, division, print_function)
-from ansible.module_utils.basic import AnsibleModule
-import subprocess
+__metaclass__ = type
 
 def install_flat(binary, flat, module):
     if module.check_mode:
@@ -106,19 +106,17 @@ def uninstall_flat(binary, flat, module):
     # This is a difficult function because it seems there
     # is no naming convention for the flatpakref to what
     # the installed flatpak will be named.
-    common_name = parse_flat(flat)
+    command = "{} list --app".format(binary)
+    process = subprocess.Popen(
+        command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process.wait()
     if module.check_mode:
         # Check if any changes would be made but don't actually make
         # those changes
         module.exit_json(changed=True)
-
-    command = "{} list --app".format(binary)
-    process = subprocess.Popen(
-        command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output = subprocess.check_output(
-        ("grep", "-i", common_name), stdin=process.stdout)
-    process.wait()
-    installed_flat_name = output.split('/')[0]
+    for row in process.communicate()[0].split('\n'):
+        if parse_flat(flat) in row:
+            installed_flat_name = row.split(' ')[0]
     command = "{} uninstall {}".format(binary, installed_flat_name)
     output = flatpak_command(command)
     if 'error' in output and 'not installed' not in output:
@@ -137,8 +135,8 @@ def parse_remote(remote):
 
 def parse_flat(name):
     if 'http://' in name or 'https://' in name:
-        app = name.split('/')[-1].split('.')[0]
-        common_name = app
+        #app = name.split('/')[-1].split('.')[0]
+        common_name = urlparse(name).path.split('/')[-1].split('.')[0]
     else:
         common_name = name
 
