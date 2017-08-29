@@ -83,44 +83,29 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-action:
-  description: Show what action has been performed.
-  returned: always
-  type: str
-  sample: "Sending 5, 100-byte ICMP Echos to 10.1.100.1, timeout is 2 seconds:"
-updates:
+commands:
   description: Show the command sent.
   returned: always
   type: list
   sample: ["ping vrf prod 10.40.40.40 count 20 source loopback0"]
-count:
-  description: Show amount of packets sent.
-  returned: always
-  type: str
-  sample: "2"
-dest:
-  description: Show the ping destination.
-  returned: always
-  type: str
-  sample: "10.40.40.40"
-rtt:
-  description: Show RTT stats.
-  returned: always
-  type: dict
-  sample: {"avg": "2", "max":"8", "min": "1"}
-packets_rx:
-  description: Packets successfully received.
-  returned: always
-  type: str
-  sample: "20"
-packets_tx:
-  description: Packets successfully transmitted.
-  returned: always
-  type: str
-  sample: "20"
 packet_loss:
   description: Percentage of packets lost.
   returned: always
   type: str
   sample: "0%"
+packets_rx:
+  description: Packets successfully received.
+  returned: always
+  type: int
+  sample: 20
+packets_tx:
+  description: Packets successfully transmitted.
+  returned: always
+  type: int
+  sample: 20
+rtt:
+  description: Show RTT stats.
+  returned: always
+  type: dict
+  sample: {"avg": 2, "max": 8, "min": 1}
 '''
