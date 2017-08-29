@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from __builtin__ import str
 
 # Copyright (c) 2017 Ulrich Fink <fink@netzlink.com>
 #
@@ -32,8 +31,6 @@ description:
 requirements:
     - "python >= 2.6"
     - "shade"
-options:
-   None
 extends_documentation_fragment: openstack
 '''
 
@@ -105,6 +102,7 @@ except ImportError:
 
 def main():
 
+
     argument_spec = openstack_full_argument_spec(
         name=dict(required=False, default=None),
         filters=dict(required=False, type='dict', default=None)
@@ -116,18 +114,19 @@ def main():
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        security_groups = cleanProtocol( cloud.list_security_groups() )
-        
+        security_groups = cleanProtocol(cloud.list_security_groups())
+
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_security_groups=security_groups))
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
+
 def cleanProtocol(security_groups):
     for group in security_groups:
         for rule in group['security_group_rules']:
-            if rule['protocol'] == None or unicode.strip((rule['protocol'])) == '':
+            if rule['protocol'] is None or unicode.strip((rule['protocol'])) == '':
                 rule['protocol'] = None
     return security_groups
 
