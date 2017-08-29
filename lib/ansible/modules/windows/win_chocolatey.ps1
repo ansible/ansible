@@ -478,8 +478,8 @@ Function Choco-ConfigureProxy
         $results = Invoke-Expression $cmd
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "choco_error_cmd" $cmd
-            Set-Attr $result "choco_error_log" "$results"
+            $result.choco_error_cmd = $cmd
+            $result.choco_error_log = $results
 
             Throw "Error setting $($h.Name) with $($h.Value)"
         }
