@@ -37,6 +37,9 @@ $allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksum
 $ignorechecksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
 $ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
 $skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
+$proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
+$proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
+$proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str"
 
 $result = @{
     changed = $false
@@ -69,8 +72,22 @@ Function Chocolatey-Install-Upgrade
     if ($ChocoAlreadyInstalled -eq $null)
     {
 
-        # We need to install chocolatey
-        $install_output = (new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1") | powershell -
+        #We need to install chocolatey
+        $wc = New-Object System.Net.WebClient;
+        if ($proxy_url)
+        {
+            #We need to configure proxy
+            $env:chocolateyProxyLocation = $proxy_url
+            $wp = New-Object System.Net.WebProxy($proxy_url, $true);
+            $wc.proxy = $wp;
+            if ($proxy_username -and $proxy_password) {
+                $env:chocolateyProxyUser = $proxy_username
+                $env:chocolateyProxyPassword = $proxy_password
+                $passwd = ConvertTo-SecureString $proxy_password -AsPlainText -Force
+                $wp.Credentials = New-Object System.Management.Automation.PSCredential($proxy_username, $passwd)
+            }
+        }
+        $install_output = $wc.DownloadString("https://chocolatey.org/install.ps1") | powershell -
         if ($LASTEXITCODE -ne 0)
         {
             $result.choco_bootstrap_output = $install_output
@@ -432,9 +449,52 @@ Function Choco-Uninstall
     $result.changed = $true
 }
 
+Function Choco-ConfigureProxy
+{
+    [CmdletBinding()]
+
+    param(
+        [Parameter(Mandatory=$false, Position=1)]
+        [string]$proxy_url,
+        [Parameter(Mandatory=$false, Position=2)]
+        [string]$proxy_username,
+        [Parameter(Mandatory=$false, Position=3)]
+        [string]$proxy_password
+    )
+    $hash = @{
+        proxy = $proxy_url
+        proxyUser = $proxy_username
+        proxyPassword = $proxy_password
+    }
+    foreach ($h in $hash.GetEnumerator()) {
+        if ($($h.Value))
+        {
+          $cmd = "$executable config set $($h.Name) $($h.Value)"
+        }
+        else
+        {
+          $cmd = "$executable config unset $($h.Name)"
+        }
+        $results = Invoke-Expression $cmd
+        if ($LastExitCode -ne 0)
+        {
+            $result.choco_error_cmd = $cmd
+            $result.choco_error_log = $results
+
+            Throw "Error setting $($h.Name) with $($h.Value)"
+        }
+        If ("$results" -notmatch "Nothing to change. Config already set.")
+        {
+            $result.changed = $true
+        }
+    }
+}
+
 Try
 {
     Chocolatey-Install-Upgrade
+
+    Choco-ConfigureProxy
 
     if ($state -eq "present" -or $state -eq "latest")
     {
