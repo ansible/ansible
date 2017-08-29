@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 ---
 module: win_toast
 version_added: "2.4"
-short_description: Sends Toast windows notification to Windows 10 or later hosts
+short_description: Sends Toast windows notification to logged in users on Windows 10 or later hosts
 description:
     - Sends alerts which appear in the Action Center area of the windows desktop.
 options:
@@ -49,6 +49,7 @@ author:
 - Jon Hawkesworth (@jhawkesworth)
 notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
+   - The module does not fail if there are no logged in users to notify.
    - Messages are only sent to the local host where the module is run.
    - You must run this module with async, otherwise it will hang until the expire_seconds period has passed.
 '''
@@ -84,6 +85,11 @@ msg:
     returned: allways
     type: string
     sample: Automated upgrade about to start.\nPlease save your work and log off before 22 July 2017 18:00:00
+no_toast_sent_reason:
+    description: Text containing the reason why a notification was not sent.
+    returned: when no logged in users are detected
+    type: string
+    sample: No logged in users to notify
 popup:
     description: Whether notification pop up was requested or not.
     returned: allways
@@ -110,4 +116,9 @@ title:
     returned: success
     type: string
     sample: Notification 05:45
+toast_sent:
+    description: Whether the module was able to send a toast notification or not.
+    returned: allways
+    type: boolean
+    sample: false
 '''

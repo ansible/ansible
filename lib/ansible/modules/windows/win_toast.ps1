@@ -45,38 +45,48 @@ $result = @{
     popup = $popup
     tag = $tag
     title = $title
+    toast_sent = $false
 }
 
+# If no logged in users, there is no notifications service,
+# and no-one to read the message, so exit but do not fail
+# if there are no logged in users to notify.
+ 
+if ((get-process -name explorer -EA silentlyContinue).Count -gt 0){
 
-[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
-$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText01)
-
-#Convert to .NET type for XML manipulation
-$toastXml = [xml] $template.GetXml()
-$toastXml.GetElementsByTagName("text").AppendChild($toastXml.CreateTextNode($title)) > $null
-# TODO add subtitle
-
-#Convert back to WinRT type
-$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-$xml.LoadXml($toastXml.OuterXml)
-
-$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
-$toast.Tag = $tag
-$toast.Group = $group
-$toast.ExpirationTime = $expire_at
-$toast.SuppressPopup = -not $popup
-
-try {
-   $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($msg)
-   if (-not $check_mode) {
-      $notifier.Show($toast)
-      Start-Sleep -Seconds $expire_seconds
-   }
-} catch {
-  $excep= $_
-  Fail-Json $result "Failed to create toast notifier, exception was $($excep.Exception.Message) stack trace $($excep.ScriptStackStrace)".
+  [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+  $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText01)
+  
+  #Convert to .NET type for XML manipulation
+  $toastXml = [xml] $template.GetXml()
+  $toastXml.GetElementsByTagName("text").AppendChild($toastXml.CreateTextNode($title)) > $null
+  # TODO add subtitle
+  
+  #Convert back to WinRT type
+  $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+  $xml.LoadXml($toastXml.OuterXml)
+  
+  $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+  $toast.Tag = $tag
+  $toast.Group = $group
+  $toast.ExpirationTime = $expire_at
+  $toast.SuppressPopup = -not $popup
+  
+  try {
+     $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($msg)
+     if (-not $check_mode) {
+        $notifier.Show($toast)
+        $result.toast_sent = $true
+        Start-Sleep -Seconds $expire_seconds
+     }
+  } catch {
+    $excep= $_
+    Fail-Json $result "Failed to create toast notifier, exception was $($excep.Exception.Message) stack trace $($excep.ScriptStackStrace)".
+  }
+} else {
+   $result.toast_sent = $false
+   $result.no_toast_sent_reason = 'No logged in users to notifiy'
 }
-
 
 $endsend_at = Get-Date| Out-String
 $stopwatch.Stop()

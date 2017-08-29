@@ -26,8 +26,8 @@
     can_toast: True
   when: os_version.stdout|int >= 10
 
-- name: Set fact if toast cannot be made because no one is logged in
-  set_fact:
-    can_toast: False
-  when: user_count.stdout|int < 1
+#- name: Set fact if toast cannot be made because no one is logged in
+#  set_fact:
+#    can_toast: False
+#  when: user_count.stdout|int < 1
 
