@@ -40,6 +40,10 @@
     vars:
       with_alternatives: False
       mode: auto
+
+  # Test that path is checked: alternatives must fail when path is nonexistent
+  - import_tasks: path_is_checked.yml
+
   always:
     - include_tasks: remove_links.yml
 
