@@ -1,7 +1,11 @@
+- name: Create random domain name
+  set_fact:
+    domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') }}"
+
 - name: Create a DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
-    name: testing12345.com
+    name: "{{ domain_name }}.com"
     state: present
     tags:
       tag1: tag1
@@ -14,7 +18,7 @@
 - name: Retrieve DNS Zone Facts
   azure_rm_dnszone_facts:
     resource_group: "{{ resource_group }}"
-    name: testing12345.com
+    name: "{{ domain_name }}.com"
   register: results
 
 - name: Assert that facts module returned result
@@ -26,5 +30,5 @@
 - name: Delete DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
-    name: testing12345.com
+    name: "{{ domain_name }}.com"
     state: absent
