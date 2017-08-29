@@ -430,10 +430,10 @@ AZURE_OBJECT_CLASS = 'VirtualMachine'
 AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
-def extract_names_from_blob_uri(blob_uri):
+def extract_names_from_blob_uri(blob_uri, storage_suffix):
     # HACK: ditch this once python SDK supports get by URI
-    m = re.match('^https://(?P<accountname>[^\.]+)\.blob\.core\.windows\.net/'
-                 '(?P<containername>[^/]+)/(?P<blobname>.+)$', blob_uri)
+    m = re.match('^https://(?P<accountname>[^\.]+)\.blob\.{0}/'
+                 '(?P<containername>[^/]+)/(?P<blobname>.+)$'.format(storage_suffix), blob_uri)
     if not m:
         raise Exception("unable to parse blob uri '%s'" % blob_uri)
     extracted_names = m.groupdict()
@@ -574,9 +574,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if self.storage_account_name:
                 self.get_storage_account(self.storage_account_name)
 
-                requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(self.storage_account_name,
-                                                                                       self.storage_container_name,
-                                                                                       self.storage_blob_name)
+                requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(self.storage_account_name,
+                                                                          self._cloud_environment.suffixes.storage_endpoint,
+                                                                          self.storage_container_name,
+                                                                          self.storage_blob_name)
 
             disable_ssh_password = not self.ssh_password_enabled
 
@@ -689,8 +690,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         storage_account = self.create_default_storage_account()
                         self.log("storage account:")
                         self.log(self.serialize_obj(storage_account, 'StorageAccount'), pretty_print=True)
-                        requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(
+                        requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(
                             storage_account.name,
+                            self._cloud_environment.suffixes.storage_endpoint,
                             self.storage_container_name,
                             self.storage_blob_name)
 
@@ -767,7 +769,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 vm_dict['properties']['storageProfile']['osDisk']['name'],
                                 vhd,
                                 vm_dict['properties']['storageProfile']['osDisk']['createOption'],
-                                os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
+                                vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching']
                             ),
                             image_reference=ImageReference(
@@ -1028,7 +1030,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         for uri in vhd_uris:
             self.log("Extracting info from blob uri '{0}'".format(uri))
             try:
-                blob_parts = extract_names_from_blob_uri(uri)
+                blob_parts = extract_names_from_blob_uri(uri, self._cloud_environment.suffixes.storage_endpoint)
             except Exception as exc:
                 self.fail("Error parsing blob URI {0}".format(str(exc)))
             storage_account_name = blob_parts['accountname']

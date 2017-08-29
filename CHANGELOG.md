@@ -172,6 +172,8 @@ Ansible Changes By Release
   template hardcoded this to true.
 - Added a new parameter to command module that lets users specify data to pipe
   into the command's stdin.
+- The azure_rm modules now accept a `cloud_environment` arg to access regional and private clouds.
+- The azure_rm modules now require at least version 2.0.0 of the Azure Python SDK.
 
 ### New Modules
 

@@ -174,8 +174,8 @@ AWS
 
 Azure
 -----
-- Expose endpoint overrides **(in progress)**
-- Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks)
+- Expose endpoint overrides **(done)**
+- Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks) **(pushed to future)**
 - Add load balancer module **(in progress)**
 - Add Azure Functions module **(in progress)**
 

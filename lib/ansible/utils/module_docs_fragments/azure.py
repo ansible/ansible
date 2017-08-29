@@ -61,17 +61,22 @@ options:
             - Azure tenant ID. Use when authenticating with a Service Principal.
         required: false
         default: null
-
+    cloud_environment:
+        description:
+            - For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, C(AzureChinaCloud),
+              C(AzureUSGovernment)), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or
+              the C(AZURE_CLOUD_ENVIRONMENT) environment variable.
+        default: AzureCloud
 requirements:
     - "python >= 2.7"
-    - "azure == 2.0.0rc5"
+    - "azure >= 2.0.0"
 
 notes:
     - For authentication with Azure you can pass parameters, set environment variables or use a profile stored
       in ~/.azure/credentials. Authentication is possible using a service principal or Active Directory user.
-      To authenticate via service principal pass subscription_id, client_id, secret and tenant or set set environment
+      To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment
       variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
-    - To Authentication via Active Directory user pass ad_user and password, or set AZURE_AD_USER and
+    - To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and
       AZURE_PASSWORD in the environment.
     - "Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing
       a [default] section and the following keys: subscription_id, client_id, secret and tenant or

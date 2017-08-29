@@ -23,12 +23,14 @@ import sys
 import copy
 import importlib
 import inspect
+import traceback
 
 from packaging.version import Version
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
+import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 AZURE_COMMON_ARGS = dict(
     cli_default_profile=dict(type='bool'),
@@ -39,6 +41,7 @@ AZURE_COMMON_ARGS = dict(
     tenant=dict(type='str', no_log=True),
     ad_user=dict(type='str', no_log=True),
     password=dict(type='str', no_log=True),
+    cloud_environment=dict(type='str'),
     # debug=dict(type='bool', default=False),
 )
 
@@ -50,7 +53,8 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     secret='AZURE_SECRET',
     tenant='AZURE_TENANT',
     ad_user='AZURE_AD_USER',
-    password='AZURE_PASSWORD'
+    password='AZURE_PASSWORD',
+    cloud_environment='AZURE_CLOUD_ENVIRONMENT',
 )
 
 AZURE_TAG_ARGS = dict(
@@ -87,6 +91,7 @@ except ImportError as exc:
 try:
     from enum import Enum
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure import azure_cloud
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
@@ -173,6 +178,7 @@ class AzureRMModuleBase(object):
             self.fail("Do you have azure>={1} installed? Try `pip install 'azure>={1}' --upgrade`"
                       "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
 
+        self._cloud_environment = None
         self._network_client = None
         self._storage_client = None
         self._resource_client = None
@@ -188,6 +194,26 @@ class AzureRMModuleBase(object):
             self.fail("Failed to get credentials. Either pass as parameters, set environment variables, "
                       "or define a profile in ~/.azure/credentials or be logged using AzureCLI.")
 
+        # if cloud_environment specified, look up/build Cloud object
+        raw_cloud_env = self.credentials.get('cloud_environment')
+        if not raw_cloud_env:
+            self._cloud_environment = azure_cloud.AZURE_PUBLIC_CLOUD  # SDK default
+        else:
+            # try to look up "well-known" values via the name attribute on azure_cloud members
+            all_clouds = [x[1] for x in inspect.getmembers(azure_cloud) if isinstance(x[1], azure_cloud.Cloud)]
+            matched_clouds = [x for x in all_clouds if x.name == raw_cloud_env]
+            if len(matched_clouds) == 1:
+                self._cloud_environment = matched_clouds[0]
+            elif len(matched_clouds) > 1:
+                self.fail("Azure SDK failure: more than one cloud matched for cloud_environment name '{0}'".format(raw_cloud_env))
+            else:
+                if not urlparse.urlparse(raw_cloud_env).scheme:
+                    self.fail("cloud_environment must be an endpoint discovery URL or one of {0}".format([x.name for x in all_clouds]))
+                try:
+                    self._cloud_environment = azure_cloud.get_cloud_from_metadata_endpoint(raw_cloud_env)
+                except Exception as e:
+                    self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message), exception=traceback.format_exc(e))
+
         if self.credentials.get('subscription_id', None) is None:
             self.fail("Credentials did not include a subscription_id value.")
         self.log("setting subscription_id")
@@ -198,23 +224,22 @@ class AzureRMModuleBase(object):
            self.credentials.get('tenant') is not None:
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
-                                                                 tenant=self.credentials['tenant'])
+                                                                 tenant=self.credentials['tenant'],
+                                                                 cloud_environment=self._cloud_environment)
+
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
-            if tenant is not None:
-                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)
-            else:
-                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            if not tenant:
+                tenant = 'common'  # SDK default
+
+            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'],
+                                                         self.credentials['password'],
+                                                         tenant=tenant,
+                                                         cloud_environment=self._cloud_environment)
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password or "
                       "be logged using AzureCLI.")
-
-        # base_url for sovereign cloud support. For now only if AzureCLI
-        if self.credentials.get('base_url') is not None:
-            self.base_url = self.credentials.get('base_url')
-        else:
-            self.base_url = None
 
         # common parameter validation
         if self.module.params.get('tags'):
@@ -340,11 +365,10 @@ class AzureRMModuleBase(object):
             self.fail("Do you have azure-cli-core installed? Try `pip install 'azure-cli-core' --upgrade`")
         try:
             credentials, subscription_id = get_azure_cli_credentials()
-            base_url = get_cli_active_cloud().endpoints.resource_manager
+            self._cloud_environment = get_cli_active_cloud()
             return {
                 'credentials': credentials,
-                'subscription_id': subscription_id,
-                'base_url': base_url
+                'subscription_id': subscription_id
             }
         except CLIError as err:
             self.fail("AzureCLI profile cannot be loaded - {0}".format(err))
@@ -641,7 +665,7 @@ class AzureRMModuleBase(object):
             self._storage_client = StorageManagementClient(
                 self.azure_credentials,
                 self.subscription_id,
-                base_url=self.base_url,
+                base_url=self._cloud_environment.endpoints.resource_manager,
                 api_version='2017-06-01'
             )
             self._register('Microsoft.Storage')
@@ -655,7 +679,7 @@ class AzureRMModuleBase(object):
             self._network_client = NetworkManagementClient(
                 self.azure_credentials,
                 self.subscription_id,
-                base_url=self.base_url,
+                base_url=self._cloud_environment.endpoints.resource_manager,
                 api_version='2017-06-01'
             )
             self._register('Microsoft.Network')
@@ -669,7 +693,7 @@ class AzureRMModuleBase(object):
             self._resource_client = ResourceManagementClient(
                 self.azure_credentials,
                 self.subscription_id,
-                base_url=self.base_url,
+                base_url=self._cloud_environment.endpoints.resource_manager,
                 api_version='2017-05-10'
             )
         return self._resource_client
@@ -682,7 +706,7 @@ class AzureRMModuleBase(object):
             self._compute_client = ComputeManagementClient(
                 self.azure_credentials,
                 self.subscription_id,
-                base_url=self.base_url,
+                base_url=self._cloud_environment.endpoints.resource_manager,
                 api_version='2017-03-30'
             )
             self._register('Microsoft.Compute')
@@ -696,7 +720,7 @@ class AzureRMModuleBase(object):
             self._dns_client = DnsManagementClient(
                 self.azure_credentials,
                 self.subscription_id,
-                base_url=self.base_url
+                base_url=self._cloud_environment.endpoints.resource_manager,
             )
             self._register('Microsoft.Dns')
         return self._dns_client
