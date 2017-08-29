@@ -20,7 +20,7 @@ from ansible.utils import helpers
 
 def split_url(value, query='', alias='urlsplit'):
 
-    results = helpers.object_to_dict(urlsplit(value), exclude=['count', 'index', 'geturl'])
+    results = helpers.object_to_dict(urlsplit(value), exclude=['count', 'index', 'geturl', 'encode'])
 
     # If a query is supplied, make sure it's valid then return the results.
     # If no option is supplied, return the entire dictionary.
