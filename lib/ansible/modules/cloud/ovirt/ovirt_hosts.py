@@ -420,7 +420,7 @@ def main():
                 deploy_hosted_engine=(
                     module.params.get('hosted_engine') == 'deploy'
                 ) if module.params.get('hosted_engine') is not None else None,
-                result_state=(lambda h: h.status == hoststate.UP) if host is None else None,
+                result_state=hoststate.UP if host is None else None,
                 fail_condition=failed_state if host is None else lambda h: False,
             )
             if module.params['activate'] and host is not None:
