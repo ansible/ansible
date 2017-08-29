@@ -197,6 +197,15 @@ options:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
               Currently supported on Linux and FreeBSD.
+    local:
+        version_added: "2.4"
+        required: false
+        default: "False"
+        description:
+            - Forces the use of "local" command alternatives on platforms that implement it.
+              This is useful in environments that use centralized authentification when you want to manipulate the local users.
+              I.E. it uses `luseradd` instead of `useradd`.
+            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
 '''
 
 EXAMPLES = '''
@@ -252,7 +261,6 @@ try:
 except:
     HAVE_SPWD=False
 
-
 class User(object):
     """
     This is a generic User manipulation class that is subclassed
@@ -305,6 +313,7 @@ class User(object):
         self.home    = module.params['home']
         self.expires = None
         self.groups = None
+        self.local = module.params['local']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -332,7 +341,12 @@ class User(object):
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def remove_user_userdel(self):
-        cmd = [self.module.get_bin_path('userdel', True)]
+        if self.local:
+            command_name = 'luserdel'
+        else:
+            command_name = 'userdel'
+
+        cmd = [self.module.get_bin_path(command_name, True)]
         if self.force:
             cmd.append('-f')
         if self.remove:
@@ -341,7 +355,13 @@ class User(object):
 
         return self.execute_command(cmd)
 
-    def create_user_useradd(self, command_name='useradd'):
+    def create_user_useradd(self):
+
+        if self.local:
+            command_name = 'luseradd'
+        else:
+            command_name = 'useradd'
+
         cmd = [self.module.get_bin_path(command_name, True)]
 
         if self.uid is not None:
@@ -417,7 +437,13 @@ class User(object):
 
     def _check_usermod_append(self):
         # check if this version of usermod can append groups
-        usermod_path = self.module.get_bin_path('usermod', True)
+
+        if self.local:
+            command_name = 'lusermod'
+        else:
+            command_name = 'usermod'
+
+        usermod_path = self.module.get_bin_path(command_name, True)
 
         # for some reason, usermod --help cannot be used by non root
         # on RH/Fedora, due to lack of execute bit for others
@@ -439,7 +465,13 @@ class User(object):
 
 
     def modify_user_usermod(self):
-        cmd = [self.module.get_bin_path('usermod', True)]
+
+        if self.local:
+            command_name = 'lusermod'
+        else:
+            command_name = 'usermod'
+
+        cmd = [self.module.get_bin_path(command_name, True)]
         info = self.user_info()
         has_append = self._check_usermod_append()
 
@@ -2143,6 +2175,7 @@ def main():
             ssh_key_passphrase=dict(default=None, type='str', no_log=True),
             update_password=dict(default='always',choices=['always','on_create'],type='str'),
             expires=dict(default=None, type='float'),
+            local=dict(type='bool'),
         ),
         supports_check_mode=True
     )
