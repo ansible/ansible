@@ -204,7 +204,7 @@ options:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
               This is useful in environments that use centralized authentification when you want to manipulate the local users.
-              I.E. it uses `luseradd` instead of `useradd`. 
+              I.E. it uses `luseradd` instead of `useradd`.
             - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
 '''
 
