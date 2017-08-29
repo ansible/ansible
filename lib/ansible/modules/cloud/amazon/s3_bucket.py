@@ -129,7 +129,7 @@ try:
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location, S3Connection
     from boto.s3.tagging import Tags, TagSet
-    from boto.exception import BotoServerError, S3CreateError, S3ResponseError
+    from boto.exception import BotoServerError, S3CreateError, S3ResponseError, BotoClientError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -255,7 +255,7 @@ def _create_or_update_bucket(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     # Versioning
@@ -390,7 +390,7 @@ def _create_or_update_bucket_ceph(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     if bucket:
