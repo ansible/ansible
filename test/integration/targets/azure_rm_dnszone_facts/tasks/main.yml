@@ -1,0 +1,30 @@
+- name: Create a DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: testing12345.com
+    state: present
+    tags:
+      tag1: tag1
+  register: results
+
+- name: Assert DNS Zone was created
+  assert:
+    that: results.changed
+
+- name: Retrieve DNS Zone Facts
+  azure_rm_dnszone_facts:
+    resource_group: "{{ resource_group }}"
+    name: testing12345.com
+  register: results
+
+- name: Assert that facts module returned result
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_dnszones[0].tags.tag1 == 'tag1'
+
+- name: Delete DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: testing12345.com
+    state: absent
