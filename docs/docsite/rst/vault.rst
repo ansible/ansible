@@ -5,7 +5,7 @@ Vault
 
 New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
 
-To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
+To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
@@ -47,7 +47,7 @@ The default cipher is AES (which is shared-secret based).
 Editing Encrypted Files
 ```````````````````````
 
-To edit an encrypted file in place, use the `ansible-vault edit` command.
+To edit an encrypted file in place, use the :ref:`ansible-vault edit` command.
 This command will decrypt the file to a temporary file and allow you to edit
 the file, saving it back when done and removing the temporary file::
 
@@ -72,7 +72,8 @@ password and also the new password.
 Encrypting Unencrypted Files
 ````````````````````````````
 
-If you have existing files that you wish to encrypt, use the `ansible-vault encrypt` command.  This command can operate on multiple files at once::
+If you have existing files that you wish to encrypt, use
+the :ref:`ansible-vault encrypt` command.  This command can operate on multiple files at once::
 
    ansible-vault encrypt foo.yml bar.yml baz.yml
 
@@ -82,7 +83,9 @@ If you have existing files that you wish to encrypt, use the `ansible-vault encr
 Decrypting Encrypted Files
 ``````````````````````````
 
-If you have existing files that you no longer want to keep encrypted, you can permanently decrypt them by running the `ansible-vault decrypt` command.  This command will save them unencrypted to the disk, so be sure you do not want `ansible-vault edit` instead::
+If you have existing files that you no longer want to keep encrypted, you can permanently decrypt
+them by running the :ref:`ansible-vault decrypt` command.  This command will save them unencrypted
+to the disk, so be sure you do not want :ref:`ansible-vault edit` instead::
 
     ansible-vault decrypt foo.yml bar.yml baz.yml
 
@@ -94,7 +97,7 @@ Viewing Encrypted Files
 
 *Available since Ansible 1.8*
 
-If you want to view the contents of an encrypted file without editing it, you can use the `ansible-vault view` command::
+If you want to view the contents of an encrypted file without editing it, you can use the :ref:`ansible-vault view` command::
 
     ansible-vault view foo.yml bar.yml baz.yml
 
@@ -105,7 +108,7 @@ Use encrypt_string to create encrypted variables to embed in yaml
 `````````````````````````````````````````````````````````````````
 
 The :ref:`ansible-vault encrypt_string` command will encrypt and format a provided string into a format
-that can be included in `ansible-playbook` YAML files.
+that can be included in :ref:`ansible-playbook` YAML files.
 
 See :ref:`single_encrypted_variable` for an example
 
