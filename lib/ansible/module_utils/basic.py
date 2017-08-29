@@ -948,8 +948,8 @@ class AnsibleModule(object):
     # selinux.lsetfilecon(), it may or may not mean that you
     # will get the selevel as part of the context returned
     # by selinux.lgetfilecon().
-
-    def selinux_mls_enabled(self):
+    @staticmethod
+    def selinux_mls_enabled():
         if not HAVE_SELINUX:
             return False
         if selinux.is_selinux_mls_enabled() == 1:
@@ -971,9 +971,10 @@ class AnsibleModule(object):
             return False
 
     # Determine whether we need a placeholder for selevel/mls
-    def selinux_initial_context(self):
+    @classmethod
+    def selinux_initial_context(cls):
         context = [None, None, None]
-        if self.selinux_mls_enabled():
+        if cls.selinux_mls_enabled():
             context.append(None)
         return context
 
@@ -1011,7 +1012,8 @@ class AnsibleModule(object):
         context = ret[1].split(':', 3)
         return context
 
-    def user_and_group(self, path, expand=True):
+    @staticmethod
+    def user_and_group(path, expand=True):
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
@@ -1020,7 +1022,8 @@ class AnsibleModule(object):
         gid = st.st_gid
         return (uid, gid)
 
-    def find_mount_point(self, path):
+    @staticmethod
+    def find_mount_point(path):
         path_is_bytes = False
         if isinstance(path, binary_type):
             path_is_bytes = True
@@ -1454,10 +1457,9 @@ class AnsibleModule(object):
         )
         return changed
 
-    def set_directory_attributes_if_different(self, file_args, changed, diff=None, expand=True):
-        return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
+    set_file_attributes_if_different = set_fs_attributes_if_different
 
-    def set_file_attributes_if_different(self, file_args, changed, diff=None, expand=True):
+    def set_directory_attributes_if_different(self, file_args, changed, diff=None, expand=True):
         return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
     def add_path_info(self, kwargs):
@@ -1763,7 +1765,8 @@ class AnsibleModule(object):
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
 
-    def safe_eval(self, value, locals=None, include_exceptions=False):
+    @staticmethod
+    def safe_eval(value, locals=None, include_exceptions=False):
 
         # do not allow method calls to modules
         if not isinstance(value, string_types):
@@ -1791,14 +1794,16 @@ class AnsibleModule(object):
                 return (value, e)
             return value
 
-    def _check_type_str(self, value):
+    @staticmethod
+    def _check_type_str(value):
         if isinstance(value, string_types):
             return value
         # Note: This could throw a unicode error if value's __str__() method
         # returns non-ascii.  Have to port utils.to_bytes() if that happens
         return str(value)
 
-    def _check_type_list(self, value):
+    @staticmethod
+    def _check_type_list(value):
         if isinstance(value, list):
             return value
 
@@ -1809,7 +1814,8 @@ class AnsibleModule(object):
 
         raise TypeError('%s cannot be converted to a list' % type(value))
 
-    def _check_type_dict(self, value):
+    @classmethod
+    def _check_type_dict(cls, value):
         if isinstance(value, dict):
             return value
 
@@ -1818,7 +1824,7 @@ class AnsibleModule(object):
                 try:
                     return json.loads(value)
                 except:
-                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
+                    (result, exc) = cls.safe_eval(value, dict(), include_exceptions=True)
                     if exc is not None:
                         raise TypeError('unable to evaluate string as dictionary')
                     return result
@@ -2817,19 +2823,22 @@ class AnsibleModule(object):
                     to_native(stderr, encoding=encoding, errors=errors))
         return (rc, stdout, stderr)
 
-    def append_to_file(self, filename, str):
+    @staticmethod
+    def append_to_file(filename, str):
         filename = os.path.expandvars(os.path.expanduser(filename))
         fh = open(filename, 'a')
         fh.write(str)
         fh.close()
 
-    def bytes_to_human(self, size):
+    @staticmethod
+    def bytes_to_human(size):
         return bytes_to_human(size)
 
     # for backwards compatibility
     pretty_bytes = bytes_to_human
 
-    def human_to_bytes(self, number, isbits=False):
+    @staticmethod
+    def human_to_bytes(number, isbits=False):
         return human_to_bytes(number, isbits)
 
     #
