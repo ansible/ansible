@@ -127,7 +127,7 @@ def main():
 def cleanProtocol(security_groups):
     for group in security_groups:
         for rule in group['security_group_rules']:
-            if rule['protocol'] is None or unicode.strip((rule['protocol'])) == '':
+            if rule['protocol'] is None or rule['protocol'].strip() == '':
                 rule['protocol'] = None
     return security_groups
 
