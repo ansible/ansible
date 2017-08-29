@@ -332,7 +332,7 @@ output, use the ``parse_cli`` filter::
 
 The ``parse_cli`` filter will load the spec file and pass the command output
 through, it returning JSON output.  The spec file is a YAML yaml that defines
-how to parse the CLI output.  
+how to parse the CLI output.
 
 The spec file should be valid formatted YAML.  It defines how to parse the CLI
 output and return JSON data.  Below is an example of a valid spec file that
@@ -357,8 +357,8 @@ will parse the output from the ``show vlan`` command.::
 The spec file above will return a JSON data structure that is a list of hashes
 with the parsed VLAN information.
 
-The same command could be parsed into a hash by using the key and values 
-directives.  Here is an example of how to parse the output into a hash 
+The same command could be parsed into a hash by using the key and values
+directives.  Here is an example of how to parse the output into a hash
 value using the same ``show vlan`` command.::
 
     ---
@@ -379,7 +379,7 @@ value using the same ``show vlan`` command.::
       state_static:
         value: present
 
-Another common use case for parsing CLI commands is to break a large command 
+Another common use case for parsing CLI commands is to break a large command
 into blocks that can parsed.  This can be done using the ``start_block`` and
 ``end_block`` directives to break the command into blocks that can be parsed.::
 
@@ -594,6 +594,56 @@ which will produce this output:
 
 .. _other_useful_filters:
 
+URL Split Filter
+`````````````````
+
+.. versionadded:: 2.4
+
+The ``urlsplit`` filter extracts the fragment, hostname, netloc, password, path, port, query, scheme, and username from an URL. With no arguments, returns a dictionary of all the fields::
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('hostname') }}
+    # => 'www.acme.com'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('netloc') }}
+    # => 'user:password@www.acme.com:9000'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('username') }}
+    # => 'user'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('password') }}
+    # => 'password'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('path') }}
+    # => '/dir/index.html'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('port') }}
+    # => '9000'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('scheme') }}
+    # => 'http'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('query') }}
+    # => 'query=term'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('fragment') }}
+    # => 'fragment'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit }}
+    # =>
+    #   {
+    #       "fragment": "fragment",
+    #       "hostname": "www.acme.com",
+    #       "netloc": "user:password@www.acme.com:9000",
+    #       "password": "password",
+    #       "path": "/dir/index.html",
+    #       "port": 9000,
+    #       "query": "query=term",
+    #       "scheme": "http",
+    #       "username": "user"
+    #   }
+
+
+
 Other Useful Filters
 ````````````````````
 
@@ -681,7 +731,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost, 80" using named groups
     {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
-    
+
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
 
@@ -717,26 +767,26 @@ To get permutations of a list::
     - name: give me largest permutations (order matters)
       debug: msg="{{ [1,2,3,4,5]|permutations|list }}"
 
-    - name: give me permutations of sets of 3
+    - name: give me permutations of sets of three
       debug: msg="{{ [1,2,3,4,5]|permutations(3)|list }}"
 
 Combinations always require a set size::
 
-    - name: give me combinations for sets of 2
+    - name: give me combinations for sets of two
       debug: msg="{{ [1,2,3,4,5]|combinations(2)|list }}"
 
 
 To get a list combining the elements of other lists use ``zip``::
 
-    - name: give me list combo of 2 lists 
+    - name: give me list combo of two lists
       debug: msg="{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
 
-    - name: give me shortest combo of 2 lists
+    - name: give me shortest combo of two lists
       debug: msg="{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
 
 To always exhaust all list use ``zip_longest``::
 
-    - name: give me longest combo of 3 lists , fill with X
+    - name: give me longest combo of three lists , fill with X
       debug: msg="{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
 
 
