@@ -77,9 +77,12 @@ Function Chocolatey-Install-Upgrade
         if ($proxy_url)
         {
             #We need to configure proxy
+            $env:chocolateyProxyLocation = $proxy_url
             $wp = New-Object System.Net.WebProxy($proxy_url, $true);
             $wc.proxy = $wp;
             if ($proxy_username -and $proxy_password) {
+                $env:chocolateyProxyUser = $proxy_username
+                $env:chocolateyProxyPassword = $proxy_password
                 $passwd = ConvertTo-SecureString $proxy_password -AsPlainText -Force
                 $wp.Credentials = New-Object System.Management.Automation.PSCredential($proxy_username, $passwd)
             }
