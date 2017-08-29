@@ -700,8 +700,6 @@ def main():
                     cmds.extend(cmds2)
                 end_state, is_default = smart_existing(module, intf_type,
                                                        normalized_interface)
-            else:
-                get_interfaces_dict(module)[interface_type]
             cmds = [cmd for cmd in cmds if cmd != 'configure']
 
     results['commands'] = cmds
