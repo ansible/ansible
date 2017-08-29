@@ -219,7 +219,7 @@ def main():
         remove_packages(module, packages, root)
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

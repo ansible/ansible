@@ -205,7 +205,7 @@ def unstringify(val):
         return val
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

@@ -225,7 +225,7 @@ def main():
         deactivate_packages(module, port_path, pkgs)
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

@@ -263,7 +263,8 @@ def main():
 
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 if __name__ == '__main__':
     main()
