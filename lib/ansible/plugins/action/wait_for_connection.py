@@ -22,7 +22,6 @@ __metaclass__ = type
 import time
 from datetime import datetime, timedelta
 
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 
 try:
@@ -47,19 +46,19 @@ class ActionModule(ActionBase):
     def do_until_success_or_timeout(self, what, timeout, connect_timeout, what_desc, sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
+        e = None
         while datetime.utcnow() < max_end_time:
             try:
                 what(connect_timeout)
                 if what_desc:
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
-            except Exception:
-                e = get_exception()
+            except Exception as e:
                 if what_desc:
                     display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (what_desc, sleep))
                 time.sleep(sleep)
 
-        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, str(e)))
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -108,8 +107,7 @@ class ActionModule(ActionBase):
             # Use the ping module test to determine end-to-end connectivity
             self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test success", sleep=sleep)
 
-        except TimedOutException:
-            e = get_exception()
+        except TimedOutException as e:
             result['failed'] = True
             result['msg'] = str(e)
 
