@@ -20,8 +20,8 @@ Common Options
 {{config_option}}
 {{ '-' * config_len }}
 
-{% if config['description'] %}
-{% if config['description'] != 'TODO: write it' %}
+{% if config['description'] and config['description'] != [''] %}
+{% if config['description'] != ['TODO: write it'] %}
 :Description: {{' '.join(config['description'])}}
 {% endif %}
 {% endif %}
@@ -54,9 +54,9 @@ Environment Variables
 {% for env_var_map in config_options[config_option]['env'] %}
 .. envvar:: {{env_var_map['name']}}
 
-{% if config_options[config_option]['description'] %}
-{% if config_options[config_option]['description'] != 'TODO: write it' %}
-    {{''.join(config_options[config_option]['description'])}}
+{% if config_options[config_option]['description']  and config_options[config_option]['description'] != [''] %}
+{% if config_options[config_option]['description'] != ['TODO: write it'] %}
+    {{ ''.join(config_options[config_option]['description']) }}
 {% endif %}
 {% endif %}
 
