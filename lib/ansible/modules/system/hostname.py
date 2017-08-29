@@ -665,6 +665,13 @@ class OracleLinuxHostname(Hostname):
     distribution = 'Oracle linux server'
     strategy_class = RedHatStrategy
 
+
+class VirtuozzoLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Virtuozzo linux'
+    strategy_class = RedHatStrategy
+
+
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Amazon'
