@@ -549,6 +549,7 @@ def main():
 
             # mklabel <label-type> command
             'label': {
+                'default': 'msdos',
                 'choices': [
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
                     'pc98', 'sun'
@@ -578,6 +579,10 @@ def main():
                 'type': 'str'
             }
         },
+        required_if=[
+            ['state', 'present', ['number']],
+            ['state', 'absent', ['number']],
+        ],
         supports_check_mode=True,
     )
     module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C', 'LC_CTYPE': 'C'}
@@ -599,8 +604,8 @@ def main():
     parted_exec = module.get_bin_path('parted', True)
 
     # Conditioning
-    if number and number < 0:
-        module.fail_json(msg="The partition number must be non negative.")
+    if number is not None and number < 1:
+        module.fail_json(msg="The partition number must be greater then 0.")
     if not check_size_format(part_start):
         module.fail_json(
             msg="The argument 'part_start' doesn't respect required format."
@@ -619,9 +624,6 @@ def main():
     current_parts = current_device['partitions']
 
     if state == 'present':
-        # Default value for the label
-        if not label:
-            label = 'msdos'
 
         # Assign label if required
         if current_device['generic'].get('table', None) != label:
