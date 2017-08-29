@@ -37,6 +37,7 @@ Ansible Changes By Release
   transferring files over ssh (sftp, ssh, piped).
 * Fix authentication by api_key parameter in exoscale modules.
 * vmware module_utils shared code ssl/validate_certs fixes in connection logic
+* allow 'bridge' facts to work for certain containers that create conflicting ones with connection plugins
 
 <a id="2.3.2"></a>
 
