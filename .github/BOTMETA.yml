@@ -33,6 +33,9 @@
 
 automerge: False
 files:
+  .github/BOTMETA.yml:
+    labels:
+    - botmeta
   $modules/cloud/amazon/:
     notify:
     - willthames
@@ -806,10 +809,15 @@ files:
     - dynamic inventory script
     - dynamic inventory
     - inventory script
+    labels:
+    - "c:inventory/contrib_script"
+    support: community
   contrib/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
     maintainers: intheclouddan rwaweber zbal
+    labels:
+    - cloud
   contrib/inventory/openstack.py:
     keywords:
     - openstack dynamic inventory script
@@ -822,7 +830,18 @@ files:
     - azure inventory
     - azure rm inventory
     - azure azure_rm dynamic inventory script
+    labels:
+    - cloud
+    - azure
     maintainers: $team_azure
+  contrib/inventory/vmware:
+    keywords:
+    - vmware inventory
+    - vmware dynamic inventory script
+    labels:
+    - cloud
+    - vmware
+    maintainers: $team_vmware
   lib/ansible/inventory:
     keywords:
     - core inventory
