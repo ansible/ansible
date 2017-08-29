@@ -187,6 +187,11 @@ general_log:
     returned: always
     type: complex
     contains:
+        convert_variable:
+            description: Documents whether converting the variables from string to integer was successful or not
+            returned: always
+            type: int
+            sample: "successful"        
         rescan_disks:
             description: Documents whether rescaning the disks of the computer via diskpart was successful or not
             returned: always
