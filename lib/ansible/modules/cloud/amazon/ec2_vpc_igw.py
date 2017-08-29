@@ -241,9 +241,10 @@ def main():
     state = module.params.get('state', 'present')
     tags = module.params.get('tags')
 
-    nonstring_tags = [k for k, v in tags.items() if not isinstance(v, string_types)]
+    nonstring_tags = [k for k, v in tags.items() if not isinstance(v, (string_types, bool))]
+
     if nonstring_tags:
-        module.fail_json(msg='One or more tags contain non-string values: {0}'.format(nonstring_tags))
+        module.fail_json(msg='One or more tags contain non-string or non-boolean values: {0}'.format(nonstring_tags))
 
     try:
         if state == 'present':
