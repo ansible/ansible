@@ -244,7 +244,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         """Update app settings"""
 
         target_app_settings = self.aggregated_app_settings()
-        target_app_settings_dict = {i.name: i.value for i in target_app_settings}
+        target_app_settings_dict = dict([(i.name, i.value) for i in target_app_settings])
         return target_app_settings_dict != source_app_settings, target_app_settings
 
     def necessary_functionapp_settings(self):
