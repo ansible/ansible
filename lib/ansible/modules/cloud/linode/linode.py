@@ -33,6 +33,18 @@ options:
      - Name to give the instance (alphanumeric, dashes, underscore)
      - To keep sanity on the Linode Web Console, name is prepended with LinodeID_
     default: null
+  name_add_id:
+    description:
+    - prepend the linode ID to the name
+    default: True
+    type: bool
+    version_added: "2.4"
+  name_id_separator:
+    description:
+    - The separator to use when automatically adding an ID.
+    default: '_'
+    type: string
+    version_added: "2.4"
   displaygroup:
     description:
      - Add the instance to a Display Group in Linode Manager
@@ -327,7 +339,7 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
-def linodeServers(module, api, state, name,
+def linodeServers(module, api, state, name, name_add_id, name_id_separator,
                   displaygroup, plan, additional_disks, distribution,
                   datacenter, kernel_id, linode_id, payment_term, password,
                   private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog, **kwargs):
@@ -348,6 +360,19 @@ def linodeServers(module, api, state, name,
         # Attempt to fetch details about disks and configs only if servers are
         # found with linode_id
         if servers:
+            disks = api.linode_disk_list(LinodeId=linode_id)
+            configs = api.linode_config_list(LinodeId=linode_id)
+
+    # Test if a node with the specified label exists - they should be unique anyway
+    # Only do this when not automatically adding an ID to the name
+    if not servers and not name_add_id:
+        servers_n = api.linode_list()
+        for srv in servers_n:
+            if srv['LABEL'] == name:
+                servers.append(srv)
+                break
+        if servers:
+            linode_id = servers[0]['LINODEID']
             disks = api.linode_disk_list(LinodeId=linode_id)
             configs = api.linode_config_list(LinodeId=linode_id)
 
@@ -376,7 +401,10 @@ def linodeServers(module, api, state, name,
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
-                api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
+                if name_add_id:
+                    api.linode_update(LinodeId=linode_id, Label='%s%s%s' % (linode_id, name_id_separator, name))
+                else:
+                    api.linode_update(LinodeId=linode_id, Label=name)
                 # Update Linode with Ansible configuration options
                 api.linode_update(LinodeId=linode_id,
                         LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
@@ -587,6 +615,8 @@ def main():
                                                      'restarted']),
             api_key = dict(no_log=True),
             name = dict(type='str'),
+            name_add_id = dict(type='bool', default=True),
+            name_id_separator = dict(type='str', default='_'),
             alert_bwin_enabled = dict(type='bool', default=None),
             alert_bwin_threshold = dict(type='int', default=None),
             alert_bwout_enabled = dict(type='bool', default=None),
@@ -626,6 +656,8 @@ def main():
     state = module.params.get('state')
     api_key = module.params.get('api_key')
     name = module.params.get('name')
+    name_add_id = module.params.get('name_add_id')
+    name_id_separator = module.params.get('name_id_separator')
     alert_bwin_enabled = module.params.get('alert_bwin_enabled')
     alert_bwin_threshold = module.params.get('alert_bwin_threshold')
     alert_bwout_enabled = module.params.get('alert_bwout_enabled')
@@ -681,7 +713,7 @@ def main():
     except Exception as e:
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
-    linodeServers(module, api, state, name,
+    linodeServers(module, api, state, name, name_add_id, name_id_separator,
             displaygroup, plan,
             additional_disks, distribution, datacenter, kernel_id, linode_id,
             payment_term, password, private_ip, ssh_pub_key, swap, wait,
