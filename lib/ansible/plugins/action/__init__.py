@@ -109,7 +109,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return True
         return False
 
-    def _configure_module(self, module_name, module_args, task_vars=None):
+    def _configure_module(self, module_name, module_args, tmp=None, task_vars=None):
         '''
         Handles the loading and templating of the module code through the
         modify_module() function.
@@ -159,7 +159,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
                                                                     task_vars=task_vars, module_compression=self._play_context.module_compression,
-                                                                    async_timeout=self._task.async, become=self._play_context.become,
+                                                                    async_timeout=self._task.async, tmp=tmp, become=self._play_context.become,
                                                                     become_method=self._play_context.become_method, become_user=self._play_context.become_user,
                                                                     become_password=self._play_context.become_pass,
                                                                     environment=final_environment)
@@ -482,7 +482,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             get_checksum=checksum,
             checksum_algo='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None),
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, delete_remote_tmp=(tmp is None),
                                       wrap_async=False)
 
         if mystat.get('failed'):
@@ -631,7 +631,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._update_module_args(module_name, module_args, task_vars)
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
-        (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, tmp=tmp,
+                                                                                   task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
@@ -681,7 +682,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if wrap_async:
             # configure, upload, and chmod the async_wrapper module
             (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
-                                                                                                         task_vars=task_vars)
+                                                                                                         tmp=tmp, task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmp, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
@@ -705,7 +706,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # maintain a fixed number of positional parameters for async_wrapper
                 async_cmd.append('_')
 
-            # Ensure that async jobdir matches remote_tmp if set
+            # Ensure that async job_dir matches remote_tmp if set
             if tmp:
                 async_cmd.append(tmp)
             else:

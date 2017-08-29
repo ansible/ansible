@@ -15,7 +15,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.started == 1
     - asyncresult.finished == 0
-    #- asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')
+    - asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')
      # ensure that async is actually async- this test will fail if # hosts > forks or if the target host is VERY slow
     - (lookup('pipe', 'date +%s') | int) - (start_timestamp | int) < 8
 

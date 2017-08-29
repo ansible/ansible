@@ -26,7 +26,7 @@ options:
     description:
       - Job or task identifier
     required: true
-  jobdir:
+  job_dir:
     description:
       - Directory in which job data is stored
   mode:
@@ -54,20 +54,20 @@ def main():
 
     module = AnsibleModule(argument_spec=dict(
         jid=dict(required=True),
-        jobdir=dict(default='~/.ansible_async'),
+        job_dir=dict(default='~/.ansible_async'),
         mode=dict(default='status', choices=['status', 'cleanup']),
     ))
 
     jid = module.params['jid']
-    jobdir = module.params['jobdir']
+    job_dir = module.params['job_dir']
     mode = module.params['mode']
 
     # setup logging directory
-    logdir = os.path.expanduser(jobdir)
+    logdir = os.path.expanduser(job_dir)
     log_path = os.path.join(logdir, jid)
 
     if not os.path.exists(log_path):
-        module.fail_json(msg="could not find job", ansible_job_id=jid, ansible_job_dir=jobdir, ansible_log_dir=logdir, started=1, finished=1)
+        module.fail_json(msg="could not find job", ansible_job_id=jid, ansible_job_dir=job_dir, ansible_log_dir=logdir, started=1, finished=1)
 
     if mode == 'cleanup':
         os.unlink(log_path)
@@ -92,7 +92,7 @@ def main():
     if 'started' not in data:
         data['finished'] = 1
         data['ansible_job_id'] = jid
-        data['ansible_job_dir'] = jobdir
+        data['ansible_job_dir'] = job_dir
     elif 'finished' not in data:
         data['finished'] = 0
 

@@ -1108,7 +1108,17 @@ Function Run($payload) {
     $jid = $payload.async_jid
     $local_jid = $jid + "." + $pid
 
-    $results_path = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async", $local_jid)
+    # Is this the correct name for the variable at this particular time?
+    $tmpdir = $payload.async_tmpdir
+
+    If($tmpdir -and $tmpdir -ne '_') {
+        $job_dir = [System.IO.Path]::Combine($tmpdir, ".ansible_async")
+    }
+    Else {
+        $job_dir = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async")
+    }
+
+    $results_path = [System.IO.Path]::Combine($job_dir, $local_jid)
 
     $payload.async_results_path = $results_path
 
@@ -1215,6 +1225,7 @@ Function Run($payload) {
         finished=0;
         results_file=$results_path;
         ansible_job_id=$local_jid;
+        ansible_job_dir=$job_dir;
         _ansible_suppress_tmpdir_delete=$true;
         ansible_async_watchdog_pid=$watchdog_pid
     }
@@ -1502,7 +1513,7 @@ class ShellModule(object):
         ''' % dict(path=path)
         return self._encode_script(script)
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, tmpdir="_", rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # pipelining bypass
         if cmd == '':
             return '-'

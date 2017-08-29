@@ -77,7 +77,7 @@
     - "'ansible_job_id' in fnf_task"
 
 - name: 'check on task started as a "fire-and-forget"'
-  async_status: jid={{ fnf_task.ansible_job_id }} jobdir={{ fnf_task.ansible_job_dir }}
+  async_status: jid={{ fnf_task.ansible_job_id }} job_dir={{ fnf_task.ansible_job_dir }}
   register: fnf_result
   until: fnf_result.finished
   retries: 10

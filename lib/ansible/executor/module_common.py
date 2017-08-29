@@ -598,7 +598,7 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression, async_timeout, become,
+def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression, async_timeout, tmp, become,
                        become_method, become_user, become_password, environment):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
@@ -775,6 +775,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest["actions"].insert(0, 'async_wrapper')
             exec_manifest["async_wrapper"] = to_text(base64.b64encode(to_bytes(async_wrapper)))
             exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
+            exec_manifest["async_tmpdir"] = tmp
             exec_manifest["async_timeout_sec"] = async_timeout
 
         if become and become_method == 'runas':
@@ -836,7 +837,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED', async_timeout=0, become=False,
+def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED', async_timeout=0, tmp=None, become=False,
                   become_method=None, become_user=None, become_password=None, environment=dict()):
     """
     Used to insert chunks of code into modules before transfer rather than
@@ -864,7 +865,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
         b_module_data = f.read()
 
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression,
-                                                                async_timeout=async_timeout, become=become, become_method=become_method,
+                                                                async_timeout=async_timeout, tmp=tmp, become=become, become_method=become_method,
                                                                 become_user=become_user, become_password=become_password,
                                                                 environment=environment)
 
