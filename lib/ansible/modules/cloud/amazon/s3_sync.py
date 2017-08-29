@@ -91,7 +91,7 @@ options:
     version_added: "2.4"
   delete:
     description:
-    - Remove files that exist in bucket but are not present in the file root.
+    - Remove remote files that exist in bucket but are not present in the file root.
     required: false
     default: no
     version_added: "2.4"
@@ -461,22 +461,17 @@ def upload_files(s3, bucket, filelist, params):
 def remove_files(s3, sourcelist, params):
     bucket = params.get('bucket')
     key_prefix = params.get('key_prefix')
-    paginator = s3.get_paginator('list_objects')
-    response_iterator = paginator.paginate(Bucket=bucket, Prefix=key_prefix)
+    paginator = s3.get_paginator('list_objects_v2')
+    current_keys = set(x['Key'] for x in paginator.paginate(Bucket=bucket, Prefix=key_prefix).build_full_result().get('Contents', []))
+    keep_keys = set(to_text(source_file['s3_path']) for source_file in sourcelist)
+    delete_keys = list(current_keys - keep_keys)
 
-    current_keys = []
-    for page in response_iterator:
-        current_keys += [to_text(item['Key']) for item in page['Contents']]
+    # can delete 1000 objects at a time
+    groups_of_keys = [delete_keys[i:i+1000] for i in range(0, len(delete_keys), 1000)]
+    for keys in groups_of_keys:
+        s3.delete_objects(Bucket=bucket, Delete={'Objects': [{'Key': key} for key in keys]})
 
-    keep_keys = [to_text(source_file['s3_path']) for source_file in sourcelist]
-
-    ret = []
-    for key in current_keys:
-        if key not in keep_keys:
-            s3.delete_object(Bucket=bucket, Key=key)
-            ret.append(key)
-
-    return ret
+    return delete_keys
 
 
 def main():
