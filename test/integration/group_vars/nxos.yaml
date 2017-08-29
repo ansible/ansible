@@ -7,8 +7,7 @@ cli:
 
 nxapi:
   host: "{{ ansible_ssh_host }}"
-  username: "{{ nxos_nxapi_user | default('admin') }}"
-  password: "{{ nxos_nxapi_pass | default('admin') }}"
+  #username: "{{ nxos_nxapi_user | default('admin') }}"
+  #password: "{{ nxos_nxapi_pass | default('admin') }}"
   transport: nxapi
   use_ssl: no
-  port: 80
