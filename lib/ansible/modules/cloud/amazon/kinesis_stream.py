@@ -863,7 +863,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
     stream_found, stream_msg, current_stream = (
         find_stream(client, stream_name, check_mode=check_mode)
     )
-    if stream_found and current_stream['StreamStatus'] == 'DELETING' and wait:
+    if stream_found and current_stream.get('StreamStatus') == 'DELETING' and wait:
         wait_success, wait_msg, current_stream = (
             wait_for_status(
                 client, stream_name, 'ACTIVE', wait_timeout,
@@ -928,7 +928,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             stream_found, stream_msg, current_stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
             )
-            if retention_period and current_stream['StreamStatus'] == 'ACTIVE':
+            if retention_period and current_stream.get('StreamStatus') == 'ACTIVE':
                 changed, err_msg = (
                     retention_action(
                         client, stream_name, retention_period, action='increase',
