@@ -7,6 +7,8 @@ Ansible by Red Hat, Core 2.4
 
 **Community Module Freeze: 29 August 2017**
 
+**Release Candidate 1 will be 06 September, 2017**
+
 **Target: Mid-September 2017**
 
 .. contents:: Topics
