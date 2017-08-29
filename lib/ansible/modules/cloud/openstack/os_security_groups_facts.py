@@ -21,7 +21,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
----
 module: os_security_group_facts
 short_description: Retrieve facts about all OpenStack security groups.
 version_added: "2.4"
@@ -94,15 +93,17 @@ openstack_security_groups:
           tenant_id:
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec
+
 try:
     import shade
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
 
+
 def main():
-
-
     argument_spec = openstack_full_argument_spec(
         name=dict(required=False, default=None),
         filters=dict(required=False, type='dict', default=None)
@@ -130,8 +131,6 @@ def cleanProtocol(security_groups):
                 rule['protocol'] = None
     return security_groups
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()
