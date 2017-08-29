@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -101,7 +101,11 @@ value:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import get_aos_session, check_aos_version, find_collection_item
+from ansible.module_utils.aos import HAS_AOS_PYEZ, get_aos_session, check_aos_version, find_collection_item
+
+if HAS_AOS_PYEZ:
+    from apstra.aosom.exc import SessionError, SessionRqstError
+
 
 def aos_device_normal(module, aos, dev):
 

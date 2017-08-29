@@ -2,9 +2,10 @@
 *.py[co]
 build
 AUTHORS.TXT
-# Emacs backup files...
+# Emacs backup and autosave files...
 *~
 .\#*
+\#*
 # RPM stuff...
 MANIFEST
 dist
@@ -73,12 +74,11 @@ packaging/release/ansible_release
 /test/results/bot/*.json
 /test/results/junit/*.xml
 /test/results/logs/*.log
+/test/results/data/*.json
 /test/integration/inventory.remote
 /test/integration/inventory.networking
 /test/integration/inventory.winrm
-# old submodule dirs
-lib/ansible/modules/core
-lib/ansible/modules/extras
+/test/integration/cloud-config-aws.yml
 # python 'rope' stuff
 .ropeproject
 # local 'ack' config files

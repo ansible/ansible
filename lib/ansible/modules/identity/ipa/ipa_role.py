@@ -1,21 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -58,6 +49,15 @@ options:
     - If option is omitted host groups will not be checked or changed.
     - If option is passed all assigned hostgroups that are not passed will be unassigned from the role.
     required: false
+  privilege:
+    description:
+    - List of privileges granted to the role.
+    - If an empty list is passed all assigned privileges will be removed.
+    - If option is omitted privileges will not be checked or changed.
+    - If option is passed all assigned privileges that are not passed will be removed.
+    required: false
+    default: None
+    version_added: "2.4"
   service:
     description:
     - List of service names to assign.
@@ -129,6 +129,9 @@ EXAMPLES = '''
     - host01.example.com
     hostgroup:
     - hostgroup01
+    privilege:
+    - Group Administrators
+    - User Administrators
     service:
     - service01
 
@@ -148,9 +151,11 @@ role:
   type: dict
 '''
 
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils._text import to_native
 
 
 class RoleIPAClient(IPAClient):
@@ -205,6 +210,12 @@ class RoleIPAClient(IPAClient):
     def role_remove_user(self, name, item):
         return self.role_remove_member(name=name, item={'user': item})
 
+    def role_add_privilege(self, name, item):
+        return self._post_json(method='role_add_privilege', name=name, item={'privilege': item})
+
+    def role_remove_privilege(self, name, item):
+        return self._post_json(method='role_remove_privilege', name=name, item={'privilege': item})
+
 
 def get_role_dict(description=None):
     data = {}
@@ -223,6 +234,7 @@ def ensure(module, client):
     group = module.params['group']
     host = module.params['host']
     hostgroup = module.params['hostgroup']
+    privilege = module.params['privilege']
     service = module.params['service']
     user = module.params['user']
 
@@ -249,7 +261,6 @@ def ensure(module, client):
             changed = client.modify_if_diff(name, ipa_role.get('member_group', []), group,
                                             client.role_add_group,
                                             client.role_remove_group) or changed
-
         if host is not None:
             changed = client.modify_if_diff(name, ipa_role.get('member_host', []), host,
                                             client.role_add_host,
@@ -260,6 +271,10 @@ def ensure(module, client):
                                             client.role_add_hostgroup,
                                             client.role_remove_hostgroup) or changed
 
+        if privilege is not None:
+            changed = client.modify_if_diff(name, ipa_role.get('memberof_privilege', []), privilege,
+                                            client.role_add_privilege,
+                                            client.role_remove_privilege) or changed
         if service is not None:
             changed = client.modify_if_diff(name, ipa_role.get('member_service', []), service,
                                             client.role_add_service,
@@ -268,6 +283,7 @@ def ensure(module, client):
             changed = client.modify_if_diff(name, ipa_role.get('member_user', []), user,
                                             client.role_add_user,
                                             client.role_remove_user) or changed
+
     else:
         if ipa_role:
             changed = True
@@ -285,6 +301,7 @@ def main():
             group=dict(type='list', required=False),
             host=dict(type='list', required=False),
             hostgroup=dict(type='list', required=False),
+            privilege=dict(type='list', required=False),
             service=dict(type='list', required=False),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             user=dict(type='list', required=False),
@@ -308,9 +325,8 @@ def main():
                      password=module.params['ipa_pass'])
         changed, role = ensure(module, client)
         module.exit_json(changed=changed, role=role)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

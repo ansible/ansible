@@ -6,7 +6,7 @@ ITERVALUES_USERS=$(grep -rI '\.itervalues' . \
     --exclude-dir docsite \
     | grep -v \
     -e 'six\.itervalues' \
-    -e lib/ansible/module_utils/six/_six.py \
+    -e lib/ansible/module_utils/six/__init__.py \
     -e test/sanity/code-smell/no-dict-itervalues.sh \
     )
 

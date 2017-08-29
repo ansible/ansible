@@ -51,6 +51,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
+
 class LookupModule(LookupBase):
     """
     Create the cartesian product of lists
@@ -79,4 +80,3 @@ class LookupModule(LookupBase):
             raise AnsibleError("with_cartesian requires at least one element in each list")
 
         return [self._flatten(x) for x in product(*my_list)]
-

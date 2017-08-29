@@ -38,17 +38,22 @@ class TestIosVrfModule(TestIosModule):
         self.mock_load_config = patch('ansible.modules.network.ios.ios_vrf.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_exec_command = patch('ansible.modules.network.ios.ios_vrf.exec_command')
+        self.exec_command = self.mock_exec_command.start()
+
     def tearDown(self):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_exec_command.stop()
 
     def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('ios_vrf_config.cfg')
+        self.exec_command.return_value = (0, load_fixture('ios_vrf_config.cfg').strip(), None)
         self.load_config.return_value = None
 
     def test_ios_vrf_name(self):
         set_module_args(dict(name='test_4'))
-        commands = ['vrf definition test_4']
+        commands = ['vrf definition test_4', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrf_name_unchanged(self):
@@ -57,12 +62,12 @@ class TestIosVrfModule(TestIosModule):
 
     def test_ios_vrf_description(self):
         set_module_args(dict(name='test_1', description='test string'))
-        commands = ['vrf definition test_1', 'description test string']
+        commands = ['vrf definition test_1', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'description test string']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrf_rd(self):
         set_module_args(dict(name='test_1', rd='2:100'))
-        commands = ['vrf definition test_1', 'rd 2:100']
+        commands = ['vrf definition test_1', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 2:100']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrf_interfaces(self):
@@ -91,36 +96,39 @@ class TestIosVrfModule(TestIosModule):
     def test_ios_vrfs_no_purge(self):
         vrfs = [{'name': 'test_1'}, {'name': 'test_4'}]
         set_module_args(dict(vrfs=vrfs))
-        commands = ['vrf definition test_4']
+        commands = ['vrf definition test_4',
+                    'address-family ipv4', 'exit',
+                    'address-family ipv6', 'exit']
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_vrfs_purge(self):
         vrfs = [{'name': 'test_1'}, {'name': 'test_4'}]
         set_module_args(dict(vrfs=vrfs, purge=True))
-        commands = ['no vrf definition test_2', 'no vrf definition test_3',
-                    'vrf definition test_4']
+        commands = ['vrf definition test_4',
+                    'address-family ipv4', 'exit',
+                    'address-family ipv6', 'exit',
+                    'no vrf definition test_2',
+                    'no vrf definition test_3']
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_vrfs_global_arg(self):
         vrfs = [{'name': 'test_1'}, {'name': 'test_2'}]
         set_module_args(dict(vrfs=vrfs, description='test string'))
-        commands = ['vrf definition test_1', 'description test string',
-                    'vrf definition test_2', 'description test string']
+        commands = ['vrf definition test_1', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'description test string',
+                    'vrf definition test_2', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'description test string']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrfs_local_override_description(self):
         vrfs = [{'name': 'test_1', 'description': 'test vrf 1'},
                 {'name': 'test_2'}]
         set_module_args(dict(vrfs=vrfs, description='test string'))
-        commands = ['vrf definition test_2', 'description test string']
+        commands = ['vrf definition test_2', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'description test string']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrfs_local_override_state(self):
         vrfs = [{'name': 'test_1', 'state': 'absent'},
                 {'name': 'test_2'}]
         set_module_args(dict(vrfs=vrfs, description='test string'))
-        commands = ['no vrf definition test_1', 'vrf definition test_2',
+        commands = ['no vrf definition test_1', 'vrf definition test_2', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit',
                     'description test string']
         self.execute_module(changed=True, commands=commands, sort=False)
-
-

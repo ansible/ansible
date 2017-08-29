@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, John Dewey <john@dewey.ws>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -93,7 +82,13 @@ EXAMPLES = '''
     tags:
       ha-mode: all
 '''
+
+import json
+from ansible.module_utils.basic import AnsibleModule
+
+
 class RabbitMqPolicy(object):
+
     def __init__(self, module, name):
         self._module = module
         self._name = name
@@ -124,14 +119,13 @@ class RabbitMqPolicy(object):
         return False
 
     def set(self):
-        import json
         args = ['set_policy']
         args.append(self._name)
         args.append(self._pattern)
         args.append(json.dumps(self._tags))
         args.append('--priority')
         args.append(self._priority)
-        if (self._apply_to != 'all'):
+        if self._apply_to != 'all':
             args.append('--apply-to')
             args.append(self._apply_to)
         return self._exec(args)
@@ -161,21 +155,18 @@ def main():
     state = module.params['state']
     rabbitmq_policy = RabbitMqPolicy(module, name)
 
-    changed = False
+    result = dict(changed=False, name=name, state=state)
     if rabbitmq_policy.list():
         if state == 'absent':
             rabbitmq_policy.clear()
-            changed = True
+            result['changed'] = True
         else:
-            changed = False
+            result['changed'] = False
     elif state == 'present':
         rabbitmq_policy.set()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, name=name, state=state)
-
-# import module snippets
-from ansible.module_utils.basic import *
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

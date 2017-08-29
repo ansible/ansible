@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -32,11 +32,13 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Interface must already be a L3 port when using this module.
     - Logical interfaces (po, loop, svi) must be created first.
     - C(mask) must be inserted in decimal format (i.e. 24) for
       both IPv6 and IPv4.
     - A single interface can have multiple IPv6 configured.
+    - C(tag) is not idempotent for IPv6 addresses and I2 system image.
 options:
     interface:
         description:
@@ -136,7 +138,7 @@ end_state:
                            {"addr": "20.20.20.20", "mask": 24, "tag": 100, "secondary": true}],
             "interface": "ethernet1/32", "prefixes": ["11.11.0.0/17", "20.20.20.0/24"],
             "type": "ethernet", "vrf": "default"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
@@ -168,9 +170,10 @@ def find_same_addr(existing, addr, mask, full=False, **kwargs):
             if full:
                 if kwargs['version'] == 'v4' and int(address['tag']) == kwargs['tag']:
                     return address
-                elif kwargs['version'] == 'v6':
+                elif kwargs['version'] == 'v6' and kwargs['tag'] == 0:
                     # Currently we don't get info about IPv6 address tag
-                    return False
+                    # But let's not break idempotence for the default case
+                    return address
             else:
                 return address
     return False
@@ -274,7 +277,7 @@ def parse_unstructured_data(body, interface_name, version, module):
                 address = each_line.strip().split(' ')[0]
                 if address not in address_list:
                     address_list.append(address)
-                    interface['prefixes'].append(str(ipaddress.ip_interface(address.decode('utf-8')).network))
+                    interface['prefixes'].append(str(ipaddress.ip_interface(u"%s" % address).network))
 
             if address_list:
                 for ipv6 in address_list:
@@ -289,7 +292,7 @@ def parse_unstructured_data(body, interface_name, version, module):
             if "IP address" in splitted_body[index]:
                 regex = '.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:' + \
                         '\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?' + \
-                        '.+?tag:\s(?P<tag>\d+).*'
+                        '(.+?tag:\s(?P<tag>\d+).*)?'
                 match = re.match(regex, splitted_body[index])
                 if match:
                     match_dict = match.groupdict()
@@ -297,9 +300,12 @@ def parse_unstructured_data(body, interface_name, version, module):
                         match_dict['secondary'] = False
                     else:
                         match_dict['secondary'] = True
-                    match_dict['tag'] = int(match_dict['tag'])
+                    if match_dict['tag'] is None:
+                        match_dict['tag'] = 0
+                    else:
+                        match_dict['tag'] = int(match_dict['tag'])
                     interface['addresses'].append(match_dict)
-                    prefix = str(ipaddress.ip_interface("{addr}/{mask}".format(**match_dict).decode('utf-8')).network)
+                    prefix = str(ipaddress.ip_interface(u"%(addr)s/%(mask)s" % match_dict).network)
                     interface['prefixes'].append(prefix)
 
     try:
@@ -319,7 +325,6 @@ def parse_unstructured_data(body, interface_name, version, module):
 def get_ip_interface(interface_name, version, module):
     body = send_show_command(interface_name, version, module)
     interface = parse_unstructured_data(body, interface_name, version, module)
-
     return interface
 
 
@@ -350,7 +355,9 @@ def get_remove_ip_config_commands(interface, addr, mask, existing, version):
                     commands.append('no ip address {0}/{1}'.format(addr, mask))
                 break
     else:
-        commands.append('no ipv6 address {0}/{1}'.format(addr, mask))
+        for address in existing['addresses']:
+            if address['addr'] == addr:
+                commands.append('no ipv6 address {0}/{1}'.format(addr, mask))
 
     return commands
 
@@ -435,7 +442,7 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
                              mask=mask)
     if addr is not None and mask is not None:
         try:
-            ipaddress.ip_interface('{}/{}'.format(addr, mask).decode('utf-8'))
+            ipaddress.ip_interface(u'%s/%s' % (addr, mask))
         except ValueError:
             module.fail_json(msg="Warning! Invalid ip address or mask set.", addr=addr, mask=mask)
 
@@ -532,7 +539,7 @@ def main():
     results['proposed'] = proposed
     results['existing'] = existing
     results['end_state'] = end_state
-    results['updates'] = cmds
+    results['commands'] = cmds
     results['changed'] = changed
     results['warnings'] = warnings
 

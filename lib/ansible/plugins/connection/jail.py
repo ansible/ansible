@@ -56,7 +56,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.jail = self._play_context.remote_addr
-        if self.modified_jailname_key in kwargs :
+        if self.modified_jailname_key in kwargs:
             self.jail = kwargs[self.modified_jailname_key]
 
         if os.geteuid() != 0:
@@ -122,7 +122,7 @@ class Connection(ConnectionBase):
         display.vvv("EXEC %s" % (local_cmd,), host=self.jail)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 

@@ -1,0 +1,2 @@
+- include: virtualmachine.yml
+#- include: virtualmachine_with_defaults.yml

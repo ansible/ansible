@@ -16,10 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
-
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -28,34 +27,35 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Copy a file to a remote NXOS device over SCP.
 description:
-    - Copy a file to the flash (or bootflash) remote network device
-      on NXOS devices.
+  - Copy a file to the flash (or bootflash) remote network device
+    on NXOS devices.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 notes:
-    - The feature must be enabled with feature scp-server.
-    - If the file is already present (md5 sums match), no transfer will
-      take place.
-    - Check mode will tell you if the file would be copied.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - The feature must be enabled with feature scp-server.
+  - If the file is already present (md5 sums match), no transfer will
+    take place.
+  - Check mode will tell you if the file would be copied.
 options:
-    local_file:
-        description:
-            - Path to local file. Local directory must exist.
-        required: true
-    remote_file:
-        description:
-            - Remote file path of the copy. Remote directories must exist.
-              If omitted, the name of the local file will be used.
-        required: false
-        default: null
-    file_system:
-        description:
-            - The remote file system of the device. If omitted,
-              devices that support a file_system parameter will use
-              their default values.
-        required: false
-        default: null
+  local_file:
+    description:
+      - Path to local file. Local directory must exist.
+    required: true
+  remote_file:
+    description:
+      - Remote file path of the copy. Remote directories must exist.
+        If omitted, the name of the local file will be used.
+    required: false
+    default: null
+  file_system:
+    description:
+      - The remote file system of the device. If omitted,
+        devices that support a file_system parameter will use
+        their default values.
+    required: false
+    default: null
 '''
 
 EXAMPLES = '''
@@ -83,12 +83,11 @@ remote_file:
     type: string
     sample: '/path/to/remote/file'
 '''
+
 import os
 import re
 import time
-
 import paramiko
-
 from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -100,31 +99,20 @@ except ImportError:
     HAS_SCP = False
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
 def remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
-    if 'No such file' in body[0]:
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
+    if 'No such file' in body:
         return False
     return True
 
 
 def verify_remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
-    if 'No such file' in body[0]:
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
+    if 'No such file' in body:
         return 0
-    return body[0].split()[0].strip()
+    return body.split()[0].strip()
 
 
 def local_file_exists(module):
@@ -133,9 +121,9 @@ def local_file_exists(module):
 
 def get_flash_size(module):
     command = 'dir {}'.format(module.params['file_system'])
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
 
-    match = re.search(r'(\d+) bytes free', body[0])
+    match = re.search(r'(\d+) bytes free', body)
     bytes_free = match.group(1)
 
     return int(bytes_free)
@@ -192,15 +180,11 @@ def main():
         local_file=dict(required=True),
         remote_file=dict(required=False),
         file_system=dict(required=False, default='bootflash:'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_SCP:
         module.fail_json(
@@ -210,7 +194,6 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-
     results = dict(changed=False, warnings=warnings)
 
     local_file = module.params['local_file']

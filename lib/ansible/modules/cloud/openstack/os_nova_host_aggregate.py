@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -88,10 +88,12 @@ from distutils.version import StrictVersion
 
 def _needs_update(module, aggregate):
     new_metadata = (module.params['metadata'] or {})
-    new_metadata['availability_zone'] = module.params['availability_zone']
+
+    if module.params['availability_zone'] is not None:
+        new_metadata['availability_zone'] = module.params['availability_zone']
 
     if ((module.params['name'] != aggregate.name) or
-            (module.params['hosts'] is not None and module.params['hosts'] != aggregate.hosts) or
+            (module.params['hosts'] is not None and set(module.params['hosts']) != set(aggregate.hosts)) or
             (module.params['availability_zone'] is not None and module.params['availability_zone'] != aggregate.availability_zone) or
             (module.params['metadata'] is not None and new_metadata != aggregate.metadata)):
         return True

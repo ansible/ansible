@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -353,8 +353,8 @@ class Ntp(object):
         if not addr_list:
             self.module.fail_json(msg='Error: Match ip-address fail.')
 
-        value = ((long(addr_list[0][0])) * 0x1000000) + (long(addr_list[0][1]) * 0x10000) + \
-            (long(addr_list[0][2]) * 0x100) + (long(addr_list[0][3]))
+        value = ((int(addr_list[0][0])) * 0x1000000) + (int(addr_list[0][1]) * 0x10000) + \
+            (int(addr_list[0][2]) * 0x100) + (int(addr_list[0][3]))
         if (value & (0xff000000) == 0x7f000000) or (value & (0xF0000000) == 0xF0000000) \
                 or (value & (0xF0000000) == 0xE0000000) or (value == 0):
             return False
@@ -478,7 +478,7 @@ class Ntp(object):
                                    peer_type=ntp_dict['type'], prefer=is_preferred, key_id=key_id)
                 exp_ntp_cfg = dict(vpn_name=self.vpn_name, source_int=self.interface.lower(), address=self.address,
                                    peer_type=self.peer_type, prefer=self.is_preferred, key_id=self.key_id)
-                if cmp(cur_ntp_cfg, exp_ntp_cfg) == 0:
+                if cur_ntp_cfg == exp_ntp_cfg:
                     self.conf_exsit = True
 
             vpn_name = ntp_dict['vpnName']

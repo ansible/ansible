@@ -7,15 +7,13 @@
 # func-nagios - Schedule downtime and enables/disable notifications
 # Copyright 2011, Red Hat, Inc.
 # Tim Bielawa <tbielawa@redhat.com>
-#
-# This software may be freely redistributed under the terms of the GNU
-# general public license version 2 or any later version.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 

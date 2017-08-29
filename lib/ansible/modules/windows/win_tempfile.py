@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,6 +31,7 @@ author: Dag Wieers (@dagwieers)
 short_description: Creates temporary files and directories.
 description:
   - Creates temporary files and directories.
+  - For non-Windows targets, please use the M(tempfile) module instead.
 options:
   state:
     description:
@@ -50,6 +51,8 @@ options:
     description:
       - Suffix of file/directory name created by module.
     default: ''
+notes:
+  - For non-Windows targets, please use the M(tempfile) module instead.
 '''
 
 EXAMPLES = r"""

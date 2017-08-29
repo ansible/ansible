@@ -47,17 +47,27 @@ If you would like to experiment with the Windows Subsystem for Linux (WSL), firs
 `these instructions <https://www.jeffgeerling.com/blog/2017/using-ansible-through-windows-10s-subsystem-linux>`_.
 This requires a reboot.
 
-Once WSL is enabled, you can open the Bash terminal. The first time you so this, a few questions need to be answered.
-At the prompt you can quickly start using the Ansible devel branch by running the following commands::
+Once WSL is enabled, you can open the Bash terminal. At the prompt, you can quickly start using the latest Ansible release by running the following commands::
 
-    sudo apt-get install python-pip
-    pip install pywinrm
+    sudo apt-get update
+    sudo apt-get install python-pip git libffi-dev libssl-dev -y
+    pip install ansible pywinrm
+
+    # this step is only necessary for Windows builds earlier than 16188, and must be repeated each time bash is launched,
+    # unless bash is launched as ``bash --login``
+    # see https://github.com/Microsoft/BashOnWindows/issues/2148 and
+    # https://github.com/Microsoft/BashOnWindows/issues/816#issuecomment-301216901 for details
+    source ~/.profile
+
+After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targeting systems using the plethora of available Windows modules.
+
+If you want to run Ansible from source for development purposes, simply uninstall the pip-installed version (which will leave all the necessary dependencies behind), then clone the Ansible source, and run the hacking script to configure it to run from source::
+
+    pip uninstall ansible -y
     git clone https://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
-After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targetting systems using the plethora of available Windows modules.
-
-.. Note:: Ansible is also reported to work on Cygwin, but this is more cumbersome and doesn't scale as well as WSL.
+.. Note:: Ansible is also reported to "work" on Cygwin, but installation is more cumbersome, and will incur sporadic failures due to Cygwin's implementation of ``fork()``.
 
 
 Authentication Options
@@ -290,8 +300,10 @@ Since 2.0, the following custom inventory variables are also supported for addit
 * ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
 * ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
 * ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  By default, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
-* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``
+* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``.
 * ``ansible_winrm_kerberos_delegation``: Set to ``true`` to enable delegation of commands on the remote host when using kerberos.
+* ``ansible_winrm_operation_timeout_sec``: Increase the default timeout for WinRM operations (default: ``20``).
+* ``ansible_winrm_read_timeout_sec``: Increase the WinRM read timeout if you experience read timeout errors (default: ``30``), e.g. intermittent network issues.
 * ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.
 
 .. _windows_system_prep:
@@ -355,20 +367,24 @@ In addition, the following core modules/action-plugins work with Windows:
 
 * add_host
 * assert
-* async
+* async_status
 * debug
 * fail
 * fetch
 * group_by
+* include
+* include_role
 * include_vars
 * meta
 * pause
 * raw
 * script
 * set_fact
+* set_stats
 * setup
 * slurp
 * template (also: win_template)
+* wait_for_connection
 
 Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
 attempting to achieve.  For example, ``assemble`` can be used to create a file on your ansible controller that is then 
@@ -463,7 +479,7 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
          - name: Move file on remote Windows Server from one location to another
            win_command: Powershell.exe "Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
-Bear in mind that using ``win_command`` or ``win_shell`` will always report ``changed``, and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using ``win_command`` or ``win_shell`` will always report ``changed``, and it is your responsibility to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
 Here's an example of how to use the ``win_stat`` module to test for file existence. Note that the data returned by the ``win_stat`` module is slightly different than what is provided by the Linux equivalent::
 

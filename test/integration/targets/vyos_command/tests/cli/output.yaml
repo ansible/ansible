@@ -35,8 +35,6 @@
       - show hardware cpu detail
       - show hardware mem
       - show license
-      - show log
-      - show system boot-messages
     provider: "{{ cli }}"
   register: result
 

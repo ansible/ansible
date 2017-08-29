@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['deprecated'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -32,6 +32,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Either C(sysmtu) param is required or (C(interface) AND C(mtu)) parameters are required.
     - C(state=absent) unconfigures a given MTU if that value is currently present.
 options:

@@ -1,0 +1,32 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: fixtures/ansible-xml-namespaced-beers.xml
+      dest: /tmp/ansible-xml-namespaced-beers.xml
+
+
+  - name: Add namespaced child element
+    xml:
+      path: /tmp/ansible-xml-namespaced-beers.xml
+      xpath: /bus:business/ber:beers
+      namespaces:
+        bus: http://test.business
+        ber: http://test.beers
+      add_children:
+      - beer: Old Rasputin
+    register: add_namespaced_children_elements
+
+  - name: Compare to expected result
+    copy:
+      src: results/test-add-namespaced-children-elements.xml
+      dest: /tmp/ansible-xml-namespaced-beers.xml
+    check_mode: yes
+    diff: yes 
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - add_namespaced_children_elements.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-add-namespaced-children-elements.xml /tmp/ansible-xml-namespaced-beers.xml

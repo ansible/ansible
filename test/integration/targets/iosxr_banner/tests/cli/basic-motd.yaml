@@ -1,0 +1,47 @@
+---
+- name: setup - remove motd
+  iosxr_banner:
+    banner: motd
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Set motd
+  iosxr_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my motd banner' in result.commands[0]"
+      - "'that has a multiline' in result.commands[0]"
+
+- name: Set motd again (idempotent)
+  iosxr_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

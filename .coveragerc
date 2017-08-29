@@ -21,4 +21,5 @@ omit =
     */python*/dist-packages/*
     */python*/site-packages/*
     */python*/distutils/*
+    */pyshared/*
     */pytest

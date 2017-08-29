@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -35,21 +35,29 @@ description:
     current running config.  It also supports purging usernames from the
     configuration that are not explicitly defined.
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         Cisco Nexus device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
-        exclusive with the C(name) argument.
+        exclusive with the C(name) argument. alias C(users).
+    version_added: "2.4"
     required: false
     default: null
   name:
     description:
       - The username to be configured on the remote Cisco Nexus
         device.  This argument accepts a stringv value and is mutually
-        exclusive with the C(users) argument.
+        exclusive with the C(aggregate) argument.
     required: false
     default: null
+  configured_password:
+    description:
+      - The password to be configured on the network device. The
+        password needs to be provided in cleartext and it will be encrypted
+        on the device.
+        Please note that this option is not same as C(provider password).
+    version_added: "2.4"
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -106,7 +114,7 @@ EXAMPLES = """
     purge: yes
 
 - name: set multiple users role
-  users:
+  aggregate:
     - name: netop
     - name: netend
   role: network-operator
@@ -177,9 +185,9 @@ def map_obj_to_commands(updates, module):
         if want['state'] == 'present' and not have:
             commands.append('username %s' % want['name'])
 
-        if needs_update('password'):
+        if needs_update('configured_password'):
             if update_password == 'always' or not have:
-                add('password %s' % want['password'])
+                add('password %s' % want['configured_password'])
 
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
@@ -220,7 +228,7 @@ def map_config_to_obj(module):
     for item in to_list(data['TABLE_template']['ROW_template']):
         objects.append({
             'name': item['usr_name'],
-            'password': parse_password(item),
+            'configured_password': parse_password(item),
             'sshkey': item.get('sshkey_info'),
             'roles': parse_roles(item),
             'state': 'present'
@@ -242,8 +250,8 @@ def get_param_value(key, item, module):
     return value
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
         elif not module.params['name']:
@@ -252,7 +260,7 @@ def map_params_to_obj(module):
             collection = [{'name': module.params['name']}]
     else:
         collection = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'name': item})
             elif 'name' not in item:
@@ -265,7 +273,7 @@ def map_params_to_obj(module):
     for item in collection:
         get_value = partial(get_param_value, item=item, module=module)
         item.update({
-            'password': get_value('password'),
+            'configured_password': get_value('configured_password'),
             'sshkey': get_value('sshkey'),
             'roles': get_value('roles'),
             'state': get_value('state')
@@ -298,13 +306,13 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', no_log=True),
+        aggregate=dict(type='list', no_log=True, aliases=['collection', 'users']),
         name=dict(),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
-        roles=dict(type='list'),
+        roles=dict(type='list', aliases=['role']),
 
         sshkey=dict(),
 
@@ -314,7 +322,7 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    mutually_exclusive = [('name', 'users')]
+    mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -324,6 +332,12 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
     result['warnings'] = warnings
 

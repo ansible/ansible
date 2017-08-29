@@ -60,7 +60,6 @@
     - assert:
         that:
           - 'info.changed'
-          - '"failed" not in info'
           - 'info.elb.status == "created"'
           - '"us-east-1c" in info.elb.zones'
           - '"us-east-1d" in info.elb.zones'
@@ -124,7 +123,6 @@
 
     - assert:
         that:
-          - '"failed" not in info'
           - 'info.elb.status == "ok"'
           - 'info.changed'
           - 'info.elb.zones[0] == "us-east-1b"'
@@ -154,7 +152,6 @@
 
     - assert:
         that:
-          - '"failed" not in info'
           - 'info.changed'
           - 'info.elb.status == "ok"'
           - '"us-east-1b" in info.elb.zones'
@@ -187,7 +184,6 @@
 
     - assert:
         that:
-          - '"failed" not in info'
           - 'info.elb.status == "ok"'
           - 'info.changed'
           - '[80, 81, "HTTP", "HTTP"] in info.elb.listeners'
@@ -220,7 +216,6 @@
 
     - assert:
         that:
-          - '"failed" not in info'
           - 'info.elb.status == "ok"'
           - 'info.changed'
           - '[80, 81, "HTTP", "HTTP"] in info.elb.listeners'

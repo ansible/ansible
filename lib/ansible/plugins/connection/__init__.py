@@ -23,14 +23,15 @@ import fcntl
 import gettext
 import os
 import shlex
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import abstractmethod, abstractproperty
 from functools import wraps
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types, with_metaclass
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins import shell_loader
+from ansible.plugins import AnsiblePlugin
+from ansible.plugins.loader import shell_loader
 
 try:
     from __main__ import display
@@ -53,14 +54,14 @@ def ensure_connect(func):
     return wrapped
 
 
-class ConnectionBase(with_metaclass(ABCMeta, object)):
+class ConnectionBase(AnsiblePlugin):
     '''
     A base class for connections to contain common code.
     '''
 
     has_pipelining = False
-    has_native_async = False # eg, winrm
-    always_pipeline_modules = False # eg, winrm
+    has_native_async = False  # eg, winrm
+    always_pipeline_modules = False  # eg, winrm
     become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the

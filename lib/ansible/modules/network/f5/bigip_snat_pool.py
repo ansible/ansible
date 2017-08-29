@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -137,6 +137,10 @@ try:
     HAS_NETADDR = True
 except ImportError:
     HAS_NETADDR = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.f5_utils import F5ModuleError, f5_argument_spec
 
 
 class BigIpSnatPoolManager(object):
@@ -363,7 +367,6 @@ class BigIpSnatPoolModuleConfig(object):
             append=dict(
                 default=False,
                 type='bool',
-                choices=BOOLEANS
             ),
             name=dict(required=True),
             members=dict(
@@ -410,9 +413,6 @@ def main():
     except F5ModuleError as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

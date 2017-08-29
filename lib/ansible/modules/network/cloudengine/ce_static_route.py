@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -157,12 +157,12 @@ existing:
     description: k/v pairs of existing switchport
     returned: always
     type: dict
-    sample:  {}
+    sample: {}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
     type: dict
-    sample:  {"next_hop": "3.3.3.3", "pref": "100",
+    sample: {"next_hop": "3.3.3.3", "pref": "100",
             "prefix": "192.168.20.0", "mask": "24", "description": "testing",
             "tag" : "null"}
 updates:

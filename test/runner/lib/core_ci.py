@@ -19,9 +19,12 @@ from lib.util import (
     ApplicationError,
     run_command,
     make_dirs,
-    EnvironmentConfig,
     display,
     is_shippable,
+)
+
+from lib.config import (
+    EnvironmentConfig,
 )
 
 AWS_ENDPOINTS = {
@@ -53,8 +56,10 @@ class AnsibleCoreCI(object):
 
         aws_platforms = (
             'aws',
+            'azure',
             'windows',
             'freebsd',
+            'rhel',
             'vyos',
             'junos',
             'ios',
@@ -177,7 +182,7 @@ class AnsibleCoreCI(object):
 
         raise self._create_http_error(response)
 
-    def get(self, tries=2, sleep=10, always_raise_on=None):
+    def get(self, tries=3, sleep=15, always_raise_on=None):
         """
         Get instance connection information.
         :type tries: int
@@ -265,8 +270,8 @@ class AnsibleCoreCI(object):
         display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
 
         if self.platform == 'windows':
-            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'r') as winrm_config_fd:
-                winrm_config = winrm_config_fd.read()
+            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'rb') as winrm_config_fd:
+                winrm_config = winrm_config_fd.read().decode('utf-8')
         else:
             winrm_config = None
 
@@ -286,8 +291,8 @@ class AnsibleCoreCI(object):
             'Content-Type': 'application/json',
         }
 
-        tries = 2
-        sleep = 10
+        tries = 3
+        sleep = 15
 
         while True:
             tries -= 1

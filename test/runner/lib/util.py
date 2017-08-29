@@ -2,7 +2,9 @@
 
 from __future__ import absolute_import, print_function
 
+import abc
 import errno
+import inspect
 import os
 import pipes
 import pkgutil
@@ -11,6 +13,8 @@ import subprocess
 import re
 import sys
 import time
+
+ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # compatible with Python 2 *and* 3
 
 
 def is_shippable():
@@ -81,7 +85,7 @@ def find_executable(executable, cwd=None, path=None, required=True):
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
-                cmd_verbosity=1):
+                cmd_verbosity=1, str_errors='strict'):
     """
     :type args: CommonConfig
     :type cmd: collections.Iterable[str]
@@ -93,15 +97,16 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
+    :type str_errors: str
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
-                       cmd_verbosity=cmd_verbosity)
+                       cmd_verbosity=cmd_verbosity, str_errors=str_errors)
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
-                cmd_verbosity=1):
+                cmd_verbosity=1, str_errors='strict'):
     """
     :type cmd: collections.Iterable[str]
     :type capture: bool
@@ -112,6 +117,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type stdin: file | None
     :type stdout: file | None
     :type cmd_verbosity: int
+    :type str_errors: str
     :rtype: str | None, str | None
     """
     if not cwd:
@@ -170,8 +176,8 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         encoding = 'utf-8'
         data_bytes = data.encode(encoding) if data else None
         stdout_bytes, stderr_bytes = process.communicate(data_bytes)
-        stdout_text = stdout_bytes.decode(encoding) if stdout_bytes else u''
-        stderr_text = stderr_bytes.decode(encoding) if stderr_bytes else u''
+        stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
+        stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
     else:
         process.wait()
         stdout_text, stderr_text = None, None
@@ -200,7 +206,8 @@ def common_environment():
 
     optional = (
         'HTTPTESTER',
-        'SSH_AUTH_SOCK'
+        'LD_LIBRARY_PATH',
+        'SSH_AUTH_SOCK',
     )
 
     env.update(pass_vars(required=required, optional=optional))
@@ -208,7 +215,7 @@ def common_environment():
     return env
 
 
-def pass_vars(required=None, optional=None):
+def pass_vars(required, optional):
     """
     :type required: collections.Iterable[str]
     :type optional: collections.Iterable[str]
@@ -435,53 +442,6 @@ class CommonConfig(object):
         self.debug = args.debug  # type: bool
 
 
-class EnvironmentConfig(CommonConfig):
-    """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        """
-        super(EnvironmentConfig, self).__init__(args)
-
-        self.command = command
-
-        self.local = args.local is True
-
-        if args.tox is True or args.tox is False or args.tox is None:
-            self.tox = args.tox is True
-            self.tox_args = 0
-            self.python = args.python if 'python' in args else None  # type: str
-        else:
-            self.tox = True
-            self.tox_args = 1
-            self.python = args.tox  # type: str
-
-        self.docker = docker_qualify_image(args.docker)  # type: str
-        self.remote = args.remote  # type: str
-
-        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
-        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
-
-        self.tox_sitepackages = args.tox_sitepackages  # type: bool
-
-        self.remote_stage = args.remote_stage  # type: str
-        self.remote_aws_region = args.remote_aws_region  # type: str
-        self.remote_terminate = args.remote_terminate  # type: str
-
-        self.requirements = args.requirements  # type: bool
-
-        if self.python == 'default':
-            self.python = '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.delegate = self.tox or self.docker or self.remote
-
-        if self.delegate:
-            self.requirements = True
-
-
 def docker_qualify_image(name):
     """
     :type name: str
@@ -520,7 +480,8 @@ def get_subclasses(class_type):
 
         for child in parent.__subclasses__():
             if child not in subclasses:
-                subclasses.add(child)
+                if not inspect.isabstract(child):
+                    subclasses.add(child)
                 queue.append(child)
 
     return subclasses

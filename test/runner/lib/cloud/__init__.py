@@ -15,14 +15,15 @@ from lib.util import (
     is_shippable,
     import_plugins,
     load_plugins,
-)
-
-from lib.test import (
-    TestConfig,
+    ABC,
 )
 
 from lib.target import (
     TestTarget,
+)
+
+from lib.config import (
+    IntegrationConfig,
 )
 
 PROVIDERS = {}
@@ -39,10 +40,13 @@ def initialize_cloud_plugins():
 
 def get_cloud_platforms(args, targets=None):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget] | None
     :rtype: list[str]
     """
+    if args.list_targets:
+        return []
+
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])
     else:
@@ -76,7 +80,7 @@ def get_cloud_platform(target):
 
 def get_cloud_providers(args, targets=None):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget] | None
     :rtype: list[CloudProvider]
     """
@@ -85,7 +89,7 @@ def get_cloud_providers(args, targets=None):
 
 def get_cloud_environment(args, target):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type target: IntegrationTarget
     :rtype: CloudEnvironment
     """
@@ -99,7 +103,7 @@ def get_cloud_environment(args, target):
 
 def cloud_filter(args, targets):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     :return: list[str]
     """
@@ -116,7 +120,7 @@ def cloud_filter(args, targets):
 
 def cloud_init(args, targets):
     """
-    :type args: TestConfig
+    :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     """
     if args.metadata.cloud_config is not None:
@@ -129,7 +133,7 @@ def cloud_init(args, targets):
         provider.setup()
 
 
-class CloudBase(object):
+class CloudBase(ABC):
     """Base class for cloud plugins."""
     __metaclass__ = abc.ABCMeta
 
@@ -139,7 +143,7 @@ class CloudBase(object):
 
     def __init__(self, args):
         """
-        :type args: TestConfig
+        :type args: IntegrationConfig
         """
         self.args = args
         self.platform = self.__module__.split('.')[2]
@@ -203,13 +207,11 @@ class CloudBase(object):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
-    __metaclass__ = abc.ABCMeta
-
     TEST_DIR = 'test/integration'
 
     def __init__(self, args, config_extension='.yml'):
         """
-        :type args: TestConfig
+        :type args: IntegrationConfig
         :type config_extension: str
         """
         super(CloudProvider, self).__init__(args)
@@ -331,8 +333,6 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractmethod
     def configure_environment(self, env, cmd):
         """
@@ -343,7 +343,7 @@ class CloudEnvironment(CloudBase):
 
     def on_failure(self, target, tries):
         """
-        :type target: TestTarget
+        :type target: IntegrationTarget
         :type tries: int
         """
         pass

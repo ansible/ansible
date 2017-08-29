@@ -1,19 +1,12 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -100,18 +93,17 @@ changed:
     type: bool
     sample: "false"
 '''
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+import traceback
 
 try:
     import botocore
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
-import traceback
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
+                                      camel_dict_to_snake_dict, ansible_dict_to_boto3_filter_list, HAS_BOTO3)
+
 
 def get_virtual_gateway_info(virtual_gateway):
     virtual_gateway_info = {'VpnGatewayId': virtual_gateway['VpnGatewayId'],

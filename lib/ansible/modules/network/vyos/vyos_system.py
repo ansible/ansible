@@ -17,9 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,8 @@ description:
     This module can also be introspected to validate key parameters before
     returning successfully.
 extends_documentation_fragment: vyos
+notes:
+  - Tested against VYOS 1.1.7
 options:
   hostname:
     description:
@@ -175,7 +177,7 @@ def main():
         host_name=dict(type='str'),
         domain_name=dict(type='str'),
         domain_search=dict(type='list'),
-        name_server=dict(type='list'),
+        name_server=dict(type='list', aliases=['name_servers']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 

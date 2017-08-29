@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -561,36 +561,49 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             res.append({'networkid': ids[i], 'ip': data['ip']})
         return res
 
+    def get_ssh_keypair(self, key=None, name=None, fail_on_missing=True):
+        ssh_key_name = name or self.module.params.get('ssh_key')
+        if ssh_key_name is None:
+            return
+
+        args = {
+            'domainid': self.get_domain('id'),
+            'account': self.get_account('name'),
+            'projectid': self.get_project('id'),
+            'name': ssh_key_name,
+        }
+        ssh_key_pairs = self.cs.listSSHKeyPairs(**args)
+        if 'errortext' in ssh_key_pairs:
+            self.module.fail_json(msg="Failed: '%s'" % ssh_key_pairs['errortext'])
+
+        elif 'sshkeypair' in ssh_key_pairs:
+            return self._get_by_key(key=key, my_dict=ssh_key_pairs['sshkeypair'][0])
+
+        elif fail_on_missing:
+            self.module.fail_json(msg="SSH key not found: %s" % ssh_key_name)
 
     def ssh_key_has_changed(self):
         ssh_key_name = self.module.params.get('ssh_key')
         if ssh_key_name is None:
             return False
 
+        # Fails if keypair for param is inexistent
+        param_ssh_key_fp = self.get_ssh_keypair(key='fingerprint')
+
+        # CloudStack 4.5 does return keypair on instance for a non existent key.
         instance_ssh_key_name = self.instance.get('keypair')
         if instance_ssh_key_name is None:
             return True
 
-        if ssh_key_name == instance_ssh_key_name:
-            return False
+        # Get fingerprint for keypair of instance but do not fail if inexistent.
+        instance_ssh_key_fp = self.get_ssh_keypair(key='fingerprint', name=instance_ssh_key_name, fail_on_missing=False)
+        if not instance_ssh_key_fp:
+            return True
 
-        args = {
-            'domainid': self.get_domain('id'),
-            'account': self.get_account('name'),
-            'projectid': self.get_project('id')
-        }
-
-        args['name'] = instance_ssh_key_name
-        res = self.cs.listSSHKeyPairs(**args)
-        instance_ssh_key = res['sshkeypair'][0]
-
-        args['name'] = ssh_key_name
-        res = self.cs.listSSHKeyPairs(**args)
-        param_ssh_key = res['sshkeypair'][0]
-        if param_ssh_key['fingerprint'] != instance_ssh_key['fingerprint']:
+        # Compare fingerprints to ensure the keypair changed
+        if instance_ssh_key_fp != param_ssh_key_fp:
             return True
         return False
-
 
     def security_groups_has_changed(self):
         security_groups = self.module.params.get('security_groups')
@@ -710,7 +723,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['name']                = self.module.params.get('name')
         args['displayname']         = self.get_or_fallback('display_name', 'name')
         args['group']               = self.module.params.get('group')
-        args['keypair']             = self.module.params.get('ssh_key')
+        args['keypair']             = self.get_ssh_keypair(key='name')
         args['size']                = self.module.params.get('disk_size')
         args['startvm']             = start_vm
         args['rootdisksize']        = self.module.params.get('root_disk_size')
@@ -816,6 +829,9 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                     # Start VM again if it was running before
                     if instance_state == 'running' and start_vm:
                         instance = self.start_instance()
+            else:
+                self.module.warn("Changes won't be applied to running instances. " +
+                                 "Use force=true to allow the instance %s to be stopped/started." % instance['name'])
         return instance
 
 
@@ -872,7 +888,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def stop_instance(self):
         instance = self.get_instance()
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             if instance['state'].lower() in ['stopping', 'stopped']:
                 return instance
@@ -893,7 +909,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def start_instance(self):
         instance = self.get_instance()
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             if instance['state'].lower() in ['starting', 'running']:
                 return instance
@@ -914,7 +930,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def restart_instance(self):
         instance = self.get_instance()
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             if instance['state'].lower() in [ 'running', 'starting' ]:
                 self.result['changed'] = True
@@ -936,7 +952,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def restore_instance(self):
         instance = self.get_instance()
         self.result['changed'] = True
-        # in check mode intance may not be instanciated
+        # in check mode instance may not be instanciated
         if instance:
             args = {}
             args['templateid'] = self.get_template_or_iso(key='id')

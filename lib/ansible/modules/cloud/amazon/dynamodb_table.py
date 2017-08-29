@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -86,13 +78,13 @@ options:
     default: []
     version_added: "2.1"
   tags:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: false
     default: null
   wait_for_active_timeout:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - how long before wait gives up, in seconds. only used when tags is set
     required: false
@@ -444,7 +436,7 @@ def main():
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'absent']),
         name=dict(required=True, type='str'),
-        hash_key_name=dict(required=True, type='str'),
+        hash_key_name=dict(type='str'),
         hash_key_type=dict(default='STRING', type='str', choices=['STRING', 'NUMBER', 'BINARY']),
         range_key_name=dict(type='str'),
         range_key_type=dict(default='STRING', type='str', choices=['STRING', 'NUMBER', 'BINARY']),

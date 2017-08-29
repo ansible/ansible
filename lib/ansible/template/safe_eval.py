@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -23,7 +24,7 @@ import sys
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins
-from ansible.plugins import filter_loader, test_loader
+from ansible.plugins.loader import filter_loader, test_loader
 
 
 def safe_eval(expr, locals={}, include_exceptions=False):
@@ -54,7 +55,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         (
             ast.Add,
             ast.BinOp,
-            #ast.Call,
+            # ast.Call,
             ast.Compare,
             ast.Dict,
             ast.Div,

@@ -30,7 +30,6 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
-import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
@@ -42,12 +41,13 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = os.path.join('meta', 'main.yml')
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
-    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
+    ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
     def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
 
@@ -58,7 +58,7 @@ class GalaxyRole(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.options = galaxy.options
-        self.galaxy  = galaxy
+        self.galaxy = galaxy
 
         self.name = name
         self.version = version
@@ -113,7 +113,6 @@ class GalaxyRole(object):
                     f.close()
 
         return self._metadata
-
 
     @property
     def install_info(self):
@@ -221,14 +220,9 @@ class GalaxyRole(object):
                 if not role_data:
                     raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
 
-                if role_data.get('role_type') == 'CON' and not os.environ.get('ANSIBLE_CONTAINER'):
-                    # Container Enabled, running outside of a container
-                    display.warning("%s is a Container Enabled role and should only be installed using "
-                                    "Ansible Container" % self.name)
-
                 if role_data.get('role_type') == 'APP':
                     # Container Role
-                    display.warning("%s is a Container App role and should only be installed using Ansible "
+                    display.warning("%s is a Container App role, and should only be installed using Ansible "
                                     "Container" % self.name)
 
                 role_versions = api.fetch_role_related('versions', role_data['id'])
@@ -238,7 +232,7 @@ class GalaxyRole(object):
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
+                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
                         loose_versions.sort()
                         self.version = str(loose_versions[-1])
                     elif role_data.get('github_branch', None):
@@ -255,7 +249,6 @@ class GalaxyRole(object):
 
         else:
             raise AnsibleError("No valid role data found")
-
 
         if tmp_file:
 
@@ -346,7 +339,7 @@ class GalaxyRole(object):
                 if not local_file:
                     try:
                         os.unlink(tmp_file)
-                    except (OSError,IOError) as e:
+                    except (OSError, IOError) as e:
                         display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
                 return True
 

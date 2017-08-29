@@ -12,7 +12,7 @@ If you abuse the trust and break components and builds, etc., the trust level fa
 Features, High Level Design, and Roadmap
 ========================================
 
-As a core team member, you are an integral part of the team that develops the roadmap. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, etc. for various releases. Red Hat, the company, and the Ansible team must get these committed features (etc.) completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself many not get into a release if it impacts a lot of other parts within Ansible.
+As a core team member, you are an integral part of the team that develops the roadmap. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, etc. for various releases. Red Hat, the company, and the Ansible team must get these committed features (etc.) completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself may not get into a release if it impacts a lot of other parts within Ansible.
 
 Any other new features and changes to high level design should go through the proposal process (TBD), to ensure the community and core team have had a chance to review the idea and approve it. The core team has sole responsibility for merging new features based on proposals.
 
@@ -39,7 +39,7 @@ Roles on Core
 
 General Rules
 =============
-Individuals with direct commit access to ansible/ansible (+core, + extras) are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement. 
+Individuals with direct commit access to ansible/ansible are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement. 
 
 * Don’t
 
@@ -114,11 +114,13 @@ Individuals who've been asked to become a part of this group have generally been
 +---------------------+----------------------+--------------------+----------------------+
 | Trond Hindenes      | trondhindenes        |                    |                      |
 +---------------------+----------------------+--------------------+----------------------+
-| Jon Hawkesworth     | jhawkseworth         | jhawkseworth       |                      |
+| Jon Hawkesworth     | jhawkesworth         | jhawkesworth       |                      |
 +---------------------+----------------------+--------------------+----------------------+
-| Will Thames         | wilthames            | willthames         |                      |
+| Will Thames         | willthames           | willthames         |                      |
 +---------------------+----------------------+--------------------+----------------------+
 | Ryan Brown          | ryansb               | ryansb             |                      |
 +---------------------+----------------------+--------------------+----------------------+
 | Adrian Likins       | alikins              | alikins            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Dag Wieers          | dagwieers            | dagwieers          | dag@wieers.com       |
 +---------------------+----------------------+--------------------+----------------------+

@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -151,7 +151,7 @@ EXAMPLES = '''
     count: 3
   register: ec2
 - ec2_vol:
-    instance: "{{ item.id }} "
+    instance: "{{ item.id }}"
     volume_size: 5
   with_items: "{{ ec2.instances }}"
   register: ec2_vol
@@ -609,8 +609,8 @@ def main():
     if not volume_size and not (id or name or snapshot):
         module.fail_json(msg="You must specify volume_size or identify an existing volume by id, name, or snapshot")
 
-    if volume_size and (id or snapshot):
-        module.fail_json(msg="Cannot specify volume_size together with id or snapshot")
+    if volume_size and id:
+        module.fail_json(msg="Cannot specify volume_size together with id")
 
     if state == 'present':
         volume, changed = create_volume(module, ec2, zone)

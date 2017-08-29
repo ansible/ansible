@@ -8,7 +8,7 @@ This page details how to run the integration tests that haven't been ported to t
 
 The following areas are still tested using the legacy ``make tests`` command:
 
-* amazon
+* amazon (some)
 * azure
 * cloudflare
 * cloudscale
@@ -37,7 +37,6 @@ In order to run cloud tests, you must provide access credentials in a file
 named ``credentials.yml``. A sample credentials file named
 ``credentials.template`` is available for syntax help.
 
-
 Provide cloud credentials::
 
     cp credentials.template credentials.yml
@@ -47,9 +46,35 @@ Provide cloud credentials::
 Other configuration
 ===================
 
-In order to run some tests, you must provide access credentials in a file
-named ``credentials.yml``. A sample credentials file named
-``credentials.template`` is available for syntax help.
+In order to run some tests, you must provide access credentials in a file named
+``credentials.yml``. A sample credentials file named ``credentials.template`` is available
+for syntax help.
+
+IAM policies for AWS
+====================
+
+In order to run the tests in an AWS account ansible needs fairly wide ranging powers which
+can be provided to a dedicated user or temporary credentials using a specific policy
+configured in the AWS account.
+
+testing-iam-policy.json.j2
+--------------------------
+
+The testing-iam-policy.json.j2 file contains a policy which can be given to the user
+running the tests to give close to minimum rights required to run the tests.  Please note
+that this does not fully restrict the user; The user has wide privileges for viewing
+account definitions and is also able to manage some resources that are not related to
+testing (e.g. AWS lambdas with different names) primarily due to the limitations of the
+Amazon ARN notation.  At the very least the policy limits the user to one region, however
+tests should not be run in a primary production account in any case.
+
+Other Definitions required
+--------------------------
+
+Apart from installing the policy and giving it to the user identity running
+the tests, a lambda role `ansible_integration_tests` has to be created which
+has lambda basic execution privileges.
+
 
 Running Tests
 =============

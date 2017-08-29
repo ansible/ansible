@@ -19,15 +19,16 @@ Before you start coding
 Although it's tempting to get straight into coding, there are a few things to be aware of first. This list of prerequisites is designed to help ensure that you develop high-quality modules that flow easily through the review process and get into Ansible more quickly.
 
 * Read though all the pages linked off :doc:`developing_modules`; paying particular focus to the :doc:`developing_modules_checklist`.
-* For new modules going into Ansible 2.4 we are raising the bar so they must pass ``pep8 --ignore=E402 --max-line-length=160`` cleanly.
+* For new modules going into Ansible 2.4 we are raising the bar so they must be PEP 8 compliant. See :doc:`testing_pep8` for more information.
 * Starting with Ansible version 2.4, all new modules must support Python 2.6 and Python 3.5+. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
 * All modules shipped with Ansible must be done so under the GPLv3 license. Files under the ``lib/ansible/module_utils/`` directory should be done so under the BSD license.
 * Have a look at the existing modules and how they've been named in the :doc:`../list_of_all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
 * With great power comes great responsibility: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
-* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
   * Starting with Ansible 2.4 all :doc:`../list_of_network_modules` MUST have unit tests.
+
 
 Naming Convention
 `````````````````
@@ -64,7 +65,7 @@ On :doc:`../community` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" (for codefreeze info) and "Ansible Announce list"
 * ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNodes IRC network works best for module developers so we can have an interactive dialogue.
-* IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_
+* IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
 
 Your First Pull Request
@@ -120,11 +121,11 @@ Finally
 
 Now that your modules are integrated there are a few bits of housekeeping to be done
 
-**Maintainers**
+**Bot Meta**
 Update `Ansibullbot` so it knows who to notify if/when bugs or PRs are raised against your modules
-`MAINTAINERS.txt <https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS.txt>`_.
+`BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_.
 
-If there are multiple people that can be notified, please list them. That avoids waiting on a single person who may be unavailable for any reason. Note that in `MAINTAINERS.txt` you can take ownership of an entire directory.
+If there are multiple people that can be notified, please list them. That avoids waiting on a single person who may be unavailable for any reason. Note that in `BOTMETA.yml` you can take ownership of an entire directory.
 
 
 **Review Module web docs**
@@ -142,7 +143,7 @@ We realise this may be your first use of Git or GitHub. The following guides may
 * `How to sync (update) your fork <https://help.github.com/articles/syncing-a-fork/>`_
 * `How to create a Pull Request (PR) <https://help.github.com/articles/about-pull-requests/>`_
 
-Please note that in the Ansible Git Repo the main branch is called ``devel`` rather than ``master``, which is used in the offical GitHub documentation
+Please note that in the Ansible Git Repo the main branch is called ``devel`` rather than ``master``, which is used in the official GitHub documentation
 
 After your first PR has been merged ensure you "sync your fork" with ``ansible/ansible`` to ensure you've pulled in the directory structure and and shared code or documentation previously created.
 

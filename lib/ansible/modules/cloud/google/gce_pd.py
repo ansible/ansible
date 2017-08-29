@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -161,6 +151,9 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect, unexpected_error_msg
+
 
 def main():
     module = AnsibleModule(
@@ -173,6 +166,8 @@ def main():
             size_gb = dict(default=10),
             disk_type = dict(default='pd-standard'),
             image = dict(),
+            image_family = dict(),
+            external_projects = dict(type='list'),
             snapshot = dict(),
             state = dict(default='present'),
             zone = dict(default='us-central1-b'),
@@ -195,6 +190,8 @@ def main():
     size_gb = module.params.get('size_gb')
     disk_type = module.params.get('disk_type')
     image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
@@ -264,8 +261,10 @@ def main():
                         image, snapshot), changed=False)
             lc_image = None
             lc_snapshot = None
-            if image is not None:
-                lc_image = gce.ex_get_image(image)
+            if image_family is not None:
+                lc_image = gce.ex_get_image_from_family(image_family, ex_project_list=external_projects)
+            elif image is not None:
+                lc_image = gce.ex_get_image(image, ex_project_list=external_projects)
             elif snapshot is not None:
                 lc_snapshot = gce.ex_get_snapshot(snapshot)
             try:
@@ -318,9 +317,6 @@ def main():
     json_output['changed'] = changed
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 if __name__ == '__main__':
     main()

@@ -17,7 +17,7 @@ and do not wish to install them from your operating system package manager, you
 can install them from pip
 
     $ easy_install pip               # if pip is not already available
-    $ pip install pyyaml jinja2 nose pytest passlib pycrypto
+    $ pip install -r requirements.txt
 
 From there, follow ansible instructions on docs.ansible.com as normal.
 
@@ -29,7 +29,7 @@ a module outside of the ansible program, locally, on the current machine.
 
 Example:
 
-    $ ./hacking/test-module -m lib/ansible/modules/commands/shell -a "echo hi"
+    $ ./hacking/test-module -m lib/ansible/modules/commands/command.py -a "echo hi"
 
 This is a good way to insert a breakpoint into a module, for instance.
 
@@ -47,7 +47,7 @@ parent:
 Use:
 
     $ ./hacking/test-module -m module \
-        -a "{"parent": {"child": [{"item": "first", "val": "foo"}, {"item": "second", "val": "bar"}]}}"
+        -a '{"parent": {"child": [{"item": "first", "val": "foo"}, {"item": "second", "val": "bar"}]}}'
 
 Module-formatter
 ----------------
@@ -60,5 +60,3 @@ Authors
 -------
 'authors' is a simple script that generates a list of everyone who has
 contributed code to the ansible repository.
-
-

@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -211,7 +211,7 @@ def ip_pool_absent(module, aos, my_pool):
         try:
             my_pool.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the IP Pool")
+            module.fail_json(msg="An error occurred, while trying to delete the IP Pool")
 
     module.exit_json( changed=True,
                       name=my_pool.name,
@@ -246,7 +246,7 @@ def ip_pool_present(module, aos, my_pool):
                 my_new_pool = create_new_ip_pool(my_pool, margs['name'], margs['subnets'])
                 my_pool = my_new_pool
             except:
-                module.fail_json(msg="An error occured while trying to create a new IP Pool ")
+                module.fail_json(msg="An error occurred while trying to create a new IP Pool ")
 
         module.exit_json( changed=True,
                           name=my_pool.name,

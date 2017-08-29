@@ -1,22 +1,13 @@
 #!/usr/bin/python
 
 # This file is part of Networklore's snmp library for Ansible
-#
-# The module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# The module is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -79,7 +70,7 @@ EXAMPLES = '''
 # Gather facts with SNMP version 2
 - snmp_facts:
     host: '{{ inventory_hostname }}'
-    version: 2c
+    version: v2c
     community: public
   delegate_to: local
 
@@ -97,10 +88,6 @@ EXAMPLES = '''
 '''
 
 import binascii
-
-from ansible.module_utils.basic import *
-from ansible.module_utils._text import to_text
-
 from collections import defaultdict
 
 try:
@@ -108,6 +95,10 @@ try:
     has_pysnmp = True
 except:
     has_pysnmp = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
+
 
 class DefineOid(object):
 

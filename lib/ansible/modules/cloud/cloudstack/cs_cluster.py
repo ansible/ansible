@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -231,8 +231,13 @@ pod:
   sample: pod01
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together,
+    CS_HYPERVISORS
+)
 
 
 class AnsibleCloudStackCluster(AnsibleCloudStack):
@@ -240,14 +245,14 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackCluster, self).__init__(module)
         self.returns = {
-            'allocationstate':       'allocation_state',
-            'hypervisortype':        'hypervisor',
-            'clustertype':           'cluster_type',
-            'podname':               'pod',
-            'managedstate':          'managed_state',
+            'allocationstate': 'allocation_state',
+            'hypervisortype': 'hypervisor',
+            'clustertype': 'cluster_type',
+            'podname': 'pod',
+            'managedstate': 'managed_state',
             'memoryovercommitratio': 'memory_overcommit_ratio',
-            'cpuovercommitratio':    'cpu_overcommit_ratio',
-            'ovm3vip':               'ovm3_vip',
+            'cpuovercommitratio': 'cpu_overcommit_ratio',
+            'ovm3vip': 'ovm3_vip',
         }
         self.cluster = None
 
@@ -267,10 +272,10 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             'name': self.module.params.get('pod'),
             'zoneid': self.get_zone(key='id'),
         }
-        pods = self.cs.listPods(**args)
+        pods = self.query_api('listPods', **args)
         if pods:
             return self._get_by_key(key, pods['pod'][0])
-        self.module.fail_json(msg="Pod %s not found in zone %s." % (self.module.params.get('pod'), self.get_zone(key='name')))
+        self.module.fail_json(msg="Pod %s not found in zone %s" % (self.module.params.get('pod'), self.get_zone(key='name')))
 
     def get_cluster(self):
         if not self.cluster:
@@ -279,13 +284,13 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             uuid = self.module.params.get('id')
             if uuid:
                 args['id'] = uuid
-                clusters = self.cs.listClusters(**args)
+                clusters = self.query_api('listClusters', **args)
                 if clusters:
                     self.cluster = clusters['cluster'][0]
                     return self.cluster
 
             args['name'] = self.module.params.get('name')
-            clusters = self.cs.listClusters(**args)
+            clusters = self.query_api('listClusters', **args)
             if clusters:
                 self.cluster = clusters['cluster'][0]
                 # fix different return from API then request argument given
@@ -329,9 +334,8 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
         cluster = None
         if not self.module.check_mode:
-            res = self.cs.addCluster(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('addCluster', **args)
+
             # API returns a list as result CLOUDSTACK-9205
             if isinstance(res['cluster'], list):
                 cluster = res['cluster'][0]
@@ -349,10 +353,9 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.updateCluster(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateCluster', **args)
                 cluster = res['cluster']
+
         return cluster
 
     def absent_cluster(self):
@@ -363,10 +366,10 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             args = {
                 'id': cluster['id'],
             }
+
             if not self.module.check_mode:
-                res = self.cs.deleteCluster(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deleteCluster', **args)
+
         return cluster
 
 
@@ -374,24 +377,24 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        zone=dict(default=None),
-        pod=dict(default=None),
-        cluster_type=dict(choices=['CloudManaged', 'ExternalManaged'], default=None),
-        hypervisor=dict(choices=CS_HYPERVISORS, default=None),
+        zone=dict(),
+        pod=dict(),
+        cluster_type=dict(choices=['CloudManaged', 'ExternalManaged']),
+        hypervisor=dict(choices=CS_HYPERVISORS),
         state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
-        url=dict(default=None),
-        username=dict(default=None),
-        password=dict(default=None, no_log=True),
-        guest_vswitch_name=dict(default=None),
-        guest_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
-        public_vswitch_name=dict(default=None),
-        public_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
-        vms_ip_address=dict(default=None),
-        vms_username=dict(default=None),
-        vms_password=dict(default=None, no_log=True),
-        ovm3_cluster=dict(default=None),
-        ovm3_pool=dict(default=None),
-        ovm3_vip=dict(default=None),
+        url=dict(),
+        username=dict(),
+        password=dict(no_log=True),
+        guest_vswitch_name=dict(),
+        guest_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs']),
+        public_vswitch_name=dict(),
+        public_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs']),
+        vms_ip_address=dict(),
+        vms_username=dict(),
+        vms_password=dict(no_log=True),
+        ovm3_cluster=dict(),
+        ovm3_pool=dict(),
+        ovm3_vip=dict(),
     ))
 
     module = AnsibleModule(
@@ -400,23 +403,18 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_cluster = AnsibleCloudStackCluster(module)
+    acs_cluster = AnsibleCloudStackCluster(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            cluster = acs_cluster.absent_cluster()
-        else:
-            cluster = acs_cluster.present_cluster()
+    state = module.params.get('state')
+    if state in ['absent']:
+        cluster = acs_cluster.absent_cluster()
+    else:
+        cluster = acs_cluster.present_cluster()
 
-        result = acs_cluster.get_result(cluster)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_cluster.get_result(cluster)
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

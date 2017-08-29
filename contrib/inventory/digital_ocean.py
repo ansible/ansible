@@ -22,7 +22,7 @@ found.  You can force this script to use the cache with --force-cache.
 
 ----
 Configuration is read from `digital_ocean.ini`, then from environment variables,
-then and command-line arguments.
+and then from command-line arguments.
 
 Most notably, the DigitalOcean API Token must be specified. It can be specified
 in the INI file or with the following environment variables:
@@ -138,8 +138,12 @@ import sys
 import re
 import argparse
 from time import time
-import ConfigParser
 import ast
+
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 try:
     import json
@@ -149,7 +153,7 @@ except ImportError:
 try:
     from dopy.manager import DoManager
 except ImportError as e:
-    sys.exit("failed=True msg='`dopy` library required for this script'")
+    sys.exit("failed=True msg={}".format(e.message))
 
 
 class DigitalOceanInventory(object):

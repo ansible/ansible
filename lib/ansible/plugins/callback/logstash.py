@@ -22,6 +22,7 @@ import os
 import json
 import socket
 import uuid
+from datetime import datetime
 
 import logging
 
@@ -32,6 +33,7 @@ except ImportError:
     HAS_LOGSTASH = False
 
 from ansible.plugins.callback import CallbackBase
+
 
 class CallbackModule(CallbackBase):
     """
@@ -69,9 +71,9 @@ class CallbackModule(CallbackBase):
         if not HAS_LOGSTASH:
             self.disabled = True
             self._display.warning("The required python-logstash is not installed. "
-                "pip install python-logstash")
+                                  "pip install python-logstash")
         else:
-            self.logger =  logging.getLogger('python-logstash-logger')
+            self.logger = logging.getLogger('python-logstash-logger')
             self.logger.setLevel(logging.DEBUG)
 
             self.handler = logstash.TCPLogstashHandler(
@@ -85,6 +87,7 @@ class CallbackModule(CallbackBase):
             self.hostname = socket.gethostname()
             self.session = str(uuid.uuid1())
             self.errors = 0
+        self.start_time = datetime.utcnow()
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
@@ -95,9 +98,11 @@ class CallbackModule(CallbackBase):
             'ansible_type': "start",
             'ansible_playbook': self.playbook,
         }
-        self.logger.info("ansible start", extra = data)
+        self.logger.info("ansible start", extra=data)
 
     def v2_playbook_on_stats(self, stats):
+        end_time = datetime.utcnow()
+        runtime = end_time - self.start_time
         summarize_stat = {}
         for host in stats.processed.keys():
             summarize_stat[host] = stats.summarize(host)
@@ -113,9 +118,10 @@ class CallbackModule(CallbackBase):
             'session': self.session,
             'ansible_type': "finish",
             'ansible_playbook': self.playbook,
+            'ansible_playbook_duration': runtime.total_seconds(),
             'ansible_result': json.dumps(summarize_stat),
         }
-        self.logger.info("ansible stats", extra = data)
+        self.logger.info("ansible stats", extra=data)
 
     def v2_runner_on_ok(self, result, **kwargs):
         data = {
@@ -128,7 +134,7 @@ class CallbackModule(CallbackBase):
             'ansible_task': result._task,
             'ansible_result': self._dump_results(result._result)
         }
-        self.logger.info("ansible ok", extra = data)
+        self.logger.info("ansible ok", extra=data)
 
     def v2_runner_on_skipped(self, result, **kwargs):
         data = {
@@ -140,7 +146,7 @@ class CallbackModule(CallbackBase):
             'ansible_task': result._task,
             'ansible_host': result._host.name
         }
-        self.logger.info("ansible skipped", extra = data)
+        self.logger.info("ansible skipped", extra=data)
 
     def v2_playbook_on_import_for_host(self, result, imported_file):
         data = {
@@ -152,7 +158,7 @@ class CallbackModule(CallbackBase):
             'ansible_host': result._host.name,
             'imported_file': imported_file
         }
-        self.logger.info("ansible import", extra = data)
+        self.logger.info("ansible import", extra=data)
 
     def v2_playbook_on_not_import_for_host(self, result, missing_file):
         data = {
@@ -164,7 +170,7 @@ class CallbackModule(CallbackBase):
             'ansible_host': result._host.name,
             'missing_file': missing_file
         }
-        self.logger.info("ansible import", extra = data)
+        self.logger.info("ansible import", extra=data)
 
     def v2_runner_on_failed(self, result, **kwargs):
         data = {
@@ -178,7 +184,7 @@ class CallbackModule(CallbackBase):
             'ansible_result': self._dump_results(result._result)
         }
         self.errors += 1
-        self.logger.error("ansible failed", extra = data)
+        self.logger.error("ansible failed", extra=data)
 
     def v2_runner_on_unreachable(self, result, **kwargs):
         data = {
@@ -191,7 +197,7 @@ class CallbackModule(CallbackBase):
             'ansible_task': result._task,
             'ansible_result': self._dump_results(result._result)
         }
-        self.logger.error("ansbile unreachable", extra = data)
+        self.logger.error("ansible unreachable", extra=data)
 
     def v2_runner_on_async_failed(self, result, **kwargs):
         data = {
@@ -205,4 +211,4 @@ class CallbackModule(CallbackBase):
             'ansible_result': self._dump_results(result._result)
         }
         self.errors += 1
-        self.logger.error("ansible async", extra = data)
+        self.logger.error("ansible async", extra=data)

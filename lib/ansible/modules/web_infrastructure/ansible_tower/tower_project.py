@@ -2,21 +2,13 @@
 # coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -208,21 +200,27 @@ def main():
         project = tower_cli.get_resource('project')
         try:
             if state == 'present':
-                org_res = tower_cli.get_resource('organization')
-                org = org_res.get(name=organization)
+                try:
+                    org_res = tower_cli.get_resource('organization')
+                    org = org_res.get(name=organization)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
+                try:
+                    cred_res = tower_cli.get_resource('credential')
+                    cred = cred_res.get(name=scm_credential)
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, scm_credential=scm_credential,
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=cred['id'],
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = project.delete(name=name)
-        except (exc.NotFound) as excinfo:
-            module.fail_json(msg='Failed to update project, organization not found: {0}'.format(excinfo), changed=False)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update project: {0}'.format(excinfo), changed=False)
 

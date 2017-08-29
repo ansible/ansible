@@ -1,5 +1,4 @@
 ios/csr1000v
 junos/vmx
 junos/vsrx
-vyos/1.0.5
 vyos/1.1.0

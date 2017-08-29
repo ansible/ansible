@@ -27,7 +27,7 @@ of hosts, groups the hosts are in, and even variables to assign to each host.
 
 To use this:
  - copy this file over /etc/ansible/hosts and chmod +x the file.
- - Copy both files (.py and .ini) in your prefered directory
+ - Copy both files (.py and .ini) in your preferred directory
 
 More information about Ansible Dynamic Inventory here
 http://unix.stackexchange.com/questions/205479/in-ansible-dynamic-inventory-json-can-i-render-hostvars-based-on-the-hostname
@@ -49,14 +49,16 @@ This script has been inspired by the cobbler.py inventory. thanks
 Author: Damien Garros (@dgarros)
 Version: 0.2.0
 """
+import json
 import os
-import argparse
 import re
+import sys
 
 try:
-    import json
+    import argparse
+    HAS_ARGPARSE = True
 except ImportError:
-    import simplejson as json
+    HAS_ARGPARSE = False
 
 try:
     from apstra.aosom.session import Session
@@ -292,6 +294,8 @@ class AosInventory(object):
 
         if not HAS_AOS_PYEZ:
             raise Exception('aos-pyez is not installed.  Please see details here: https://github.com/Apstra/aos-pyez')
+        if not HAS_ARGPARSE:
+            raise Exception('argparse is not installed.  Please install the argparse library or upgrade to python-2.7')
 
         # Initialize inventory
         self.inventory = dict()  # A list of groups and the hosts in that group

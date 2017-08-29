@@ -1,0 +1,31 @@
+{# According to http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/load-balancer-authentication-access-control.html #}
+{# Resource level access control is not possible for the new ELB API (providing Application Load Balancer functionality #}
+{# While it remains possible for the old API, there is no distinction of the Actions between old API and new API #}
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowLoadBalancerOperations",
+            "Effect": "Allow",
+            "Action": [
+                "elasticloadbalancing:ConfigureHealthCheck",
+                "elasticloadbalancing:CreateLoadBalancer",
+                "elasticloadbalancing:CreateLoadBalancerListeners",
+                "elasticloadbalancing:DeleteLoadBalancer",
+                "elasticloadbalancing:DeleteLoadBalancerListeners",
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:DescribeInstanceHealth",
+                "elasticloadbalancing:DescribeLoadBalancerAttributes",
+                "elasticloadbalancing:DescribeLoadBalancerPolicies",
+                "elasticloadbalancing:DescribeLoadBalancerPolicyTypes",
+                "elasticloadbalancing:DescribeLoadBalancerTags",
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:ModifyLoadBalancerAttributes",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

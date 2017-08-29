@@ -2,20 +2,13 @@
 
 # James Laska (jlaska@redhat.com)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -64,6 +57,30 @@ options:
             - Specify CDN baseurl
         required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+    server_proxy_hostname:
+        description:
+            - Specify a HTTP proxy hostname
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.4"
+    server_proxy_port:
+        description:
+            - Specify a HTTP proxy port
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.4"
+    server_proxy_user:
+        description:
+            - Specify a user for HTTP proxy with basic authentication
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.4"
+    server_proxy_password:
+        description:
+            - Specify a password for HTTP proxy with basic authentication
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.4"
     autosubscribe:
         description:
             - Upon successful registration, auto-consume available subscriptions
@@ -196,8 +213,20 @@ EXAMPLES = '''
     autosubscribe: yes
 '''
 
+RETURN = '''
+subscribed_pool_ids:
+    description: List of pool IDs to which system is now subscribed
+    returned: success
+    type: complex
+    contains: {
+        "8a85f9815ab905d3015ab928c7005de4": "1"
+    }
+'''
+
 import os
 import re
+import shutil
+import tempfile
 import types
 
 from ansible.module_utils.basic import AnsibleModule
@@ -234,16 +263,22 @@ class RegistrationBase(object):
 
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
+
         if os.path.isfile(plugin_conf):
+            tmpfd, tmpfile = tempfile.mkstemp()
+            shutil.copy2(plugin_conf, tmpfile)
             cfg = configparser.ConfigParser()
-            cfg.read([plugin_conf])
+            cfg.read([tmpfile])
+
             if enabled:
                 cfg.set('main', 'enabled', 1)
             else:
                 cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
+
+            fd = open(tmpfile, 'w+')
             cfg.write(fd)
             fd.close()
+            self.module.atomic_move(tmpfile, plugin_conf)
 
     def subscribe(self, **kwargs):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -302,7 +337,7 @@ class Rhsm(RegistrationBase):
         # 'server_hostname' becomes '--server.hostname'.
         for k, v in kwargs.items():
             if re.search(r'^(server|rhsm)_', k):
-                args.append('--%s=%s' % (k.replace('_', '.'), v))
+                args.append('--%s=%s' % (k.replace('_', '.', 1), v))
 
         self.module.run_command(args, check_rc=True)
 
@@ -324,7 +359,8 @@ class Rhsm(RegistrationBase):
 
     def register(self, username, password, autosubscribe, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register, environment,
-                 rhsm_baseurl, server_insecure):
+                 rhsm_baseurl, server_insecure, server_hostname, server_proxy_hostname,
+                 server_proxy_port, server_proxy_user, server_proxy_password):
         '''
             Register the current system to the provided RHSM or Sat6 server
             Raises:
@@ -341,6 +377,9 @@ class Rhsm(RegistrationBase):
 
         if server_insecure:
             args.extend(['--insecure'])
+
+        if server_hostname:
+            args.extend(['--serverurl', server_hostname])
 
         if activationkey:
             args.extend(['--activationkey', activationkey])
@@ -360,6 +399,12 @@ class Rhsm(RegistrationBase):
                 args.extend(['--consumerid', consumer_id])
             if environment:
                 args.extend(['--environment', environment])
+            if server_proxy_hostname and server_proxy_port:
+                args.extend(['--proxy', server_proxy_hostname + ':' + server_proxy_port])
+            if server_proxy_user:
+                args.extend(['--proxyuser', server_proxy_user])
+            if server_proxy_password:
+                args.extend(['--proxypassword', server_proxy_password])
 
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
@@ -392,6 +437,8 @@ class Rhsm(RegistrationBase):
         '''
         args = [SUBMAN_CMD, 'unregister']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        self.update_plugin_conf('rhnplugin', False)
+        self.update_plugin_conf('subscription-manager', False)
 
     def subscribe(self, regexp):
         '''
@@ -404,7 +451,7 @@ class Rhsm(RegistrationBase):
             to those pools.
 
             Since a pool id is a more specific match, we only fallback to matching
-            against names if we didnt match pool ids.
+            against names if we didn't match pool ids.
 
             Raises:
               * Exception - if error occurs while running command
@@ -538,6 +585,7 @@ class RhsmPools(object):
     """
         This class is used for manipulating pools subscriptions with RHSM
     """
+
     def __init__(self, module, consumed=False):
         self.module = module
         self.products = self._load_product_list(consumed)
@@ -643,8 +691,18 @@ def main():
                              required=False),
             force_register=dict(default=False,
                                 type='bool'),
+            server_proxy_hostname=dict(default=rhsm.config.get_option('server.proxy_hostname'),
+                                       required=False),
+            server_proxy_port=dict(default=rhsm.config.get_option('server.proxy_port'),
+                                   required=False),
+            server_proxy_user=dict(default=rhsm.config.get_option('server.proxy_user'),
+                                   required=False),
+            server_proxy_password=dict(default=rhsm.config.get_option('server.proxy_password'),
+                                       required=False,
+                                       no_log=True),
         ),
-        required_together=[['username', 'password'], ['activationkey', 'org_id']],
+        required_together=[['username', 'password'], ['activationkey', 'org_id'],
+                           ['server_proxy_hostname', 'server_proxy_port'], ['server_proxy_user', 'server_proxy_password']],
         mutually_exclusive=[['username', 'activationkey'], ['pool', 'pool_ids']],
         required_if=[['state', 'present', ['username', 'activationkey'], True]],
     )
@@ -674,6 +732,10 @@ def main():
     consumer_name = module.params["consumer_name"]
     consumer_id = module.params["consumer_id"]
     force_register = module.params["force_register"]
+    server_proxy_hostname = module.params['server_proxy_hostname']
+    server_proxy_port = module.params['server_proxy_port']
+    server_proxy_user = module.params['server_proxy_user']
+    server_proxy_password = module.params['server_proxy_password']
 
     global SUBMAN_CMD
     SUBMAN_CMD = module.get_bin_path('subscription-manager', True)
@@ -702,7 +764,8 @@ def main():
                 rhsm.configure(**module.params)
                 rhsm.register(username, password, autosubscribe, activationkey, org_id,
                               consumer_type, consumer_name, consumer_id, force_register,
-                              environment, rhsm_baseurl, server_insecure)
+                              environment, rhsm_baseurl, server_insecure, server_hostname,
+                              server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password)
                 if pool_ids:
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
                 else:

@@ -29,8 +29,8 @@ We recommend using Google search to see if a topic has been answered recently, b
 
 Before you post, be sure you are running the latest stable version of Ansible.  You can check this by comparing the output of ``ansible --version`` with the version indicated on `PyPi <https://pypi.python.org/pypi/ansible>`_.
 
-Alternatively, you can also join our IRC channel - #ansible on irc.freenode.net.  It's a very high traffic channel as well, if you don't get an answer you like, please stop by our mailing list, which is more likely
-to get attention of core developers since it's asynchronous.
+Alternatively, you can also join our IRC channel - ``#ansible`` on irc.freenode.net.  It's a very high traffic channel as well, so if you don't get an answer you like, please stop by our mailing list, which is more likely
+to get the attention of core developers since it's asynchronous.
 
 I'd Like To Keep Up With Release Announcements
 ----------------------------------------------
@@ -102,7 +102,9 @@ documenting a new feature, submit a GitHub pull request to  the code that
 lives in the ``docsite/rst`` subdirectory of the project for most pages, and there is an "Edit on GitHub"
 link up on those.
 
-Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in `/lib/ansible/modules/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/>`_.
+Module documentation is generated from a ``DOCUMENTATION`` structure embedded in the source code of each module, which is in `/lib/ansible/modules/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/>`_.
+
+For more information on module documentation see `How to document modules <http://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html>`_.
 
 Aside from modules, the main docs are in restructured text
 format.  
@@ -110,7 +112,7 @@ format.
 If you aren’t comfortable with restructured text, you can also open a ticket on 
 GitHub about any errors you spot or sections you would like to see added. For more information
 on creating pull requests, please refer to the
-`github help guide <https://help.github.com/articles/using-pull-requests>`_.
+`GitHub help guide <https://help.github.com/articles/using-pull-requests>`_.
 
 For Current and Prospective Developers
 =======================================
@@ -141,14 +143,9 @@ Note that we do keep Ansible to a particular aesthetic, so if you are unclear ab
 is a good fit or not, having the discussion on the development list is often a lot easier than having
 to modify a pull request later.
 
-New module developers should read through `developing modules <http://docs.ansible.com/ansible/dev_guide/developing_modules.html>`_ for helpful pointers
-and information about running adhoc tests `testing modules <http://docs.ansible.com/ansible/dev_guide/developing_modules.html#testing-modules>`_.
+New module developers should read through `developing modules <http://docs.ansible.com/ansible/dev_guide/developing_modules.html>`_.
 
-When submitting patches, be sure to run the unit tests first ``make tests`` and always use, these are the same basic
-tests that will automatically run on Shippable when creating the PR. There are more in depth tests in the ``tests/integration``
-directory, classified as destructive and non_destructive, run these if they pertain to your modification. They are set up
-with tags so you can run subsets, some of the tests require cloud credentials and will only run if they are provided.
-When adding new features or fixing bugs it would be nice to add new tests to avoid regressions. For more information about testing see `test/README.md <https://github.com/ansible/ansible/blob/devel/test/README.md>`_.
+For more information about testing see `testing <http://docs.ansible.com/ansible/dev_guide/testing.html>`_.
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that
 contain merge commits.  Use ``git pull --rebase`` (rather than ``git pull``) and ``git rebase`` (rather than ``git merge``). Also be sure to use topic
@@ -182,7 +179,7 @@ please observe the following guidelines:
 - Use a 4-space indent, not  tabs.
 - We do not enforce 80 column lines; up to 160 columns are acceptable.
 - We do not accept 'style only' pull requests unless the code is nearly unreadable.
-- We are "PEP8ish", but not strictly compliant.
+- We are "PEP8ish", but not strictly compliant, see :doc:`testing_pep8` for more information.
 
 You can also contribute by testing and revising other requests, especially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
@@ -232,7 +229,7 @@ IRC Meetings
 ------------
 
 The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
-participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 Release Numbering
 -----------------
@@ -260,42 +257,39 @@ IRC Channel
 
 Ansible has several IRC channels on Freenode (irc.freenode.net):
 
-- #ansible - For general use questions and support.
-- #ansible-devel - For discussions on developer topics and code related to features/bugs.
-- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_
-- #ansible-notices - Mostly bot output from things like Github, etc.
+- ``#ansible`` - For general use questions and support.
+- ``#ansible-devel`` - For discussions on developer topics and code related to features/bugs.
+- ``#ansible-aws`` - For discussions on Amazon Web Services.
+- ``#ansible-container`` - For discussions on Ansible Container.
+- ``#ansible-vmware`` - For discussions on Ansible & VMware.
+- ``#ansible-windows`` - For discussions on Ansible & Windows.
+- ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
+- ``#ansible-notices`` - Mostly bot output from things like Github, etc.
 
 Notes on Priority Flags
 -----------------------
 
 Ansible was one of the top 5 projects with the most OSS contributors on GitHub in 2013, and has over 1400 contributors
 to the project to date, not to mention a very large user community that has downloaded the application well over a million
-times.
-
-As a result, we have a LOT of incoming activity to process.
+times. As a result, we have a LOT of incoming activity to process.
 
 In the interest of transparency, we're telling you how we sort incoming requests.
 
-In our bug tracker you'll notice some labels - P1, P2, P3, P4, and P5.  These are our internal
+In our bug tracker you'll notice some labels - P1 and P2.  These are the internal
 priority orders that we use to sort tickets.
 
 With some exceptions for easy merges (like documentation typos for instance),
 we're going to spend most of our time working on P1 and P2 items first, including pull requests.
-These usually relate to important bugs or features affecting large segments of the userbase.  So if you see something categorized
-"P3 or P4", and it's not appearing to get a lot of immediate attention, this is why.
+These usually relate to important bugs or features affecting large segments of the userbase.  If you see something categorized without P1 or P2, and it's not appearing to get a lot of immediate attention, this is why.
 
-These labels don't really have definition - they are a simple ordering.  However something
+These labels don't really have a definition - they are a simple ordering.  However something
 affecting a major module (yum, apt, etc) is likely to be prioritized higher than a module
 affecting a smaller number of users.
 
-Since we place a strong emphasis on testing and code review, it may take a few months for a minor feature to get merged.
+Since we place a strong emphasis on testing and code review, it may take a few months for a minor feature to get merged. This doesn't mean that we'll be exhausting all of the higher-priority queues before getting to your ticket; we will also take periodic sweeps through the lower priority queues and give them some attention as well, particularly in the area of new module changes. 
 
-Don't worry though -- we'll also take periodic sweeps through the lower priority queues and give
-them some attention as well, particularly in the area of new module changes.  So it doesn't necessarily
-mean that we'll be exhausting all of the higher-priority queues before getting to your ticket.
 
-Every bit of effort helps - if you're wishing to expedite the inclusion of a P3 feature pull request for instance, the best thing you can do
-is help close P2 bug reports.
+Every bit of effort helps - if you're wishing to expedite the inclusion of a P3 feature pull request for instance, the best thing you can do is help close P2 bug reports.
 
 Community Code of Conduct
 =========================
@@ -423,7 +417,7 @@ of our community members and want everyone to feel welcome at our events, both o
 offline.
 
 We expect all participants, organizers, speakers, and attendees to follow these policies at
-our all of our event venues and event-related social events.
+all of our event venues and event-related social events.
 
 The Ansible Community Code of Conduct is licensed under the Creative Commons
 Attribution-Share Alike 3.0 license. Our Code of Conduct was adapted from Codes of Conduct

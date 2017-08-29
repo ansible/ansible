@@ -1,81 +1,52 @@
-# test code for the win_package module
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+---
+- name: ensure testing folder exists
+  win_file:
+    path: '{{test_win_package_path}}'
+    state: directory
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-- name: use win_get_url module to download msi
+- name: download msi files from S3 bucket
   win_get_url:
-    url: "{{msi_url}}"
-    dest: "{{msi_download_path}}"
-  register: win_get_url_result
+    url: '{{item.url}}'
+    dest: '{{test_win_package_path}}\{{item.name}}'
+  with_items:
+  - { url: '{{test_win_package_good_url}}', name: 'good.msi' }
+  - { url: '{{test_win_package_reboot_url}}', name: 'reboot.msi' }
+  - { url: '{{test_win_package_bad_url}}', name: 'bad.msi' }
+  # - { url: '{{test_win_package_exe_url}}', name: '7z.exe' }
 
-- name: make sure msi is uninstalled
+- name: make sure all test msi's are uninstalled before test
   win_package:
-    path: "{{msi_download_path}}"
-    product_id: "{{msi_product_code}}"
+    product_id: '{{item.id}}'
+    arguments: '{{item.args|default(omit)}}'
     state: absent
+  with_items:
+  - { id: '{{test_win_package_good_id}}' }
+  - { id: '{{test_win_package_reboot_id}}' }
+  # - { id: '{{test_win_package_exe_id}}', args: '/S' }
 
-- name: install msi
-  win_package:
-    path: "{{msi_download_path}}"
-    product_id: "{{msi_product_code}}"
-    state: present
-  register: win_package_install_result
+- block:
+  - name: run tests for expected failures
+    include_tasks: failure_tests.yml
 
-- name: check win_package install result
-  assert:
-    that:
-      - "not win_package_install_result|failed"
-      - "win_package_install_result|changed"
+  - name: run tests for local and URL msi files
+    include_tasks: msi_tests.yml
 
-- name: install msi again (check for no change)
-  win_package:
-    path: "{{msi_download_path}}"
-    product_id: "{{msi_product_code}}"
-    state: present
-  register: win_package_install_again_result
+  # doesn't work 100% on AWS hosts, disabling for now until we get a better exe example
+  # - name: run tests for local and URL exe files
+  #   include_tasks: exe_tests.yml
 
-- name: check win_package install again result
-  assert: 
-    that:
-      - "not win_package_install_again_result|failed"
-      - "not win_package_install_again_result|changed"
+  # these tests can be run manually by defining test_win_package_network_path
+  - name: run tests for network msi files (manual)
+    include_tasks: network_tests.yml
+    when: test_win_package_network_path is defined
 
-- name: uninstall msi
-  win_package:
-    path: "{{msi_download_path}}"
-    product_id: "{{msi_product_code}}"
-    state: absent
-  register: win_package_uninstall_result
-
-- name: check win_package uninstall result
-  assert: 
-    that:
-      - "not win_package_uninstall_result|failed"
-      - "win_package_uninstall_result|changed"
-
-- name: uninstall msi again (check for no change)
-  win_package:
-    path: "{{msi_download_path}}"
-    product_id: "{{msi_product_code}}"
-    state: absent
-  register: win_package_uninstall_again_result
-
-- name: check win_package uninstall result
-  assert: 
-    that:
-      - "not win_package_uninstall_result|failed"
-      - "not win_package_uninstall_again_result|changed"
+  always:
+  - name: make sure all test msi's are uninstalled after test
+    win_package:
+      product_id: '{{item.id}}'
+      arguments: '{{item.args|default(omit)}}'
+      state: absent
+    with_items:
+    - { id: '{{test_win_package_good_id}}' }
+    - { id: '{{test_win_package_reboot_id}}' }
+    # - { id: '{{test_win_package_exe_id}}', args: '/S' }

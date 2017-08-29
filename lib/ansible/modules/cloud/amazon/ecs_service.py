@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -318,7 +318,7 @@ class EcsServiceManager:
             c = self.find_in_array(response['services'], service_name)
             if c:
                 return c
-        raise StandardError("Unknown problem describing service %s." % service_name)
+        raise Exception("Unknown problem describing service %s." % service_name)
 
     def is_matching_service(self, expected, existing):
         if expected['task_definition'] != existing['taskDefinition']:

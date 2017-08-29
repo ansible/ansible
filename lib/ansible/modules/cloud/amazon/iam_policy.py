@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -119,6 +119,7 @@ tasks:
 '''
 import json
 import urllib
+
 try:
     import boto
     import boto.iam
@@ -127,16 +128,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info, boto_exception
+from ansible.module_utils.six import string_types
 
 
 def user_action(module, iam, name, policy_name, skip, pdoc, state):
@@ -317,7 +311,7 @@ def main():
     elif module.params.get('policy_json') is not None:
         pdoc = module.params.get('policy_json')
         # if its a string, assume it is already JSON
-        if not isinstance(pdoc, basestring):
+        if not isinstance(pdoc, string_types):
             try:
                 pdoc = json.dumps(pdoc)
             except Exception as e:
@@ -353,8 +347,6 @@ def main():
                                                            state)
         module.exit_json(changed=changed, group_name=name, policies=current_policies, msg=msg)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

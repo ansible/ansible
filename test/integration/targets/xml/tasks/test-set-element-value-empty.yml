@@ -1,0 +1,28 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: /tmp/ansible-xml-beers.xml
+
+
+  - name: Set '/business/website/address' to empty string.
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business/website/address
+      value: ''
+    register: set_element_value_empty
+
+  - name: Compare to expected result
+    copy:
+      src: results/test-set-element-value-empty.xml
+      dest: /tmp/ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - set_element_value_empty.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-set-element-value-empty.xml /tmp/ansible-xml-beers.xml

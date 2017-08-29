@@ -26,73 +26,122 @@ DOCUMENTATION:
     author: ansible (@core)
     version_added: historical
     options:
-        _host:
+        host:
             description: Hostname/ip to connect to.
             default: inventory_hostname
-            host_vars:
-                 - ansible_host
-                 - ansible_ssh_host
-        _host_key_checking:
-            type: bool
+            vars:
+                 - name: ansible_host
+                 - name: ansible_ssh_host
+        host_key_checking:
+            constants:
+                - name: HOST_KEY_CHECKING
             description: Determines if ssh should check host keys
-            config:
+            type: boolean
+            ini:
                 - section: defaults
                   key: 'host_key_checking'
-            env_vars:
-                - ANSIBLE_HOST_KEY_CHECKING
-        _password:
+            env:
+                - name: ANSIBLE_HOST_KEY_CHECKING
+        password:
             description: Authentication password for the C(remote_user). Can be supplied as CLI option.
-            host_vars:
-                - ansible_password
-                - ansible_ssh_pass
-        _ssh_args:
+            vars:
+                - name: ansible_password
+                - name: ansible_ssh_pass
+        ssh_args:
             description: Arguments to pass to all ssh cli tools
             default: '-C -o ControlMaster=auto -o ControlPersist=60s'
-            config:
+            ini:
                 - section: 'ssh_connection'
                   key: 'ssh_args'
-            env_vars:
-                - ANSIBLE_SSH_ARGS
-        _ssh_common_args:
-            description: Common extra args for ssh CLI tools
-            host_vars:
-                - ansible_ssh_common_args
-        _scp_extra_args:
+            env:
+                - name: ANSIBLE_SSH_ARGS
+        ssh_common_args:
+            description: Common extra args for all ssh CLI tools
+            vars:
+                - name: ansible_ssh_common_args
+        ssh_executable:
+            default: ssh
+            description:
+              - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
+              - This option is usually not required, it might be useful when access to system ssh is restricted,
+                or when using ssh wrappers to connect to remote hosts.
+            env: [{name: ANSIBLE_SSH_EXECUTABLE}]
+            ini:
+            - {key: ssh_executable, section: ssh_connection}
+            yaml: {key: ssh_connection.ssh_executable}
+            const:
+                - name: ANSIBLE_SSH_EXECUTABLE
+            version_added: "2.2"
+        scp_extra_args:
             description: Extra exclusive to the 'scp' CLI
-            host_vars:
-                - ansible_scp_extra_args
-        _sftp_extra_args:
+            vars:
+                - name: ansible_scp_extra_args
+        sftp_extra_args:
             description: Extra exclusive to the 'sftp' CLI
-            host_vars:
-                - ansible_sftp_extra_args
-        _ssh_extra_args:
+            vars:
+                - name: ansible_sftp_extra_args
+        ssh_extra_args:
             description: Extra exclusive to the 'ssh' CLI
-            host_vars:
-                - ansible_ssh_extra_args
+            vars:
+                - name: ansible_ssh_extra_args
+        ssh_retries:
+            # constant: ANSIBLE_SSH_RETRIES
+            description: Number of attempts to connect.
+            default: 3
+            env:
+              - name: ANSIBLE_SSH_RETRIES
+            ini:
+              - section: connection
+                key: retries
+              - section: ssh_connection
+                key: retries
         port:
             description: Remote port to connect to.
             type: int
-            config:
-               - section: defaults
-                 key: remote_port
-                 default: 22
-            env_vars:
-               - ANSIBLE_REMOTE_PORT
-            host_vars:
-               - ansible_port
-               - ansible_ssh_port
+            default: 22
+            ini:
+              - section: defaults
+                key: remote_port
+            env:
+              - name: ANSIBLE_REMOTE_PORT
+            vars:
+              - name: ansible_port
+              - name: ansible_ssh_port
         remote_user:
             description:
                 - User name with which to login to the remote server, normally set by the remote_user keyword.
                 - If no user is supplied, Ansible will let the ssh client binary choose the user as it normally
-            config:
-               - section: defaults
-                 key: remote_user
-            env_vars:
-               - ANSIBLE_REMOTE_USER
-            host_vars:
-               - ansible_user
-               - ansible_ssh_user
+            ini:
+              - section: defaults
+                key: remote_user
+            env:
+              - name: ANSIBLE_REMOTE_USER
+            vars:
+              - name: ansible_user
+              - name: ansible_ssh_user
+        pipelining:
+            default: ANSIBLE_PIPELINING
+            description:
+              - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
+                by executing many Ansible modules without actual file transfer.
+              - This can result in a very significant performance improvement when enabled.
+              - However this conflicts with privilege escalation (become).
+                For example, when using sudo operations you must first disable 'requiretty' in the sudoers file for the target hosts,
+                which is why this feature is disabled by default.
+            env: [{name: ANSIBLE_SSH_PIPELINING}]
+            ini:
+            - {key: pipelining, section: ssh_connection}
+            type: boolean
+            vars: [{name: ansible_ssh_pipelining}]
+
+# TODO:
+# ANSIBLE_SSH_RETRIES
+
+# self._play_context.private_key_file
+# ANSIBLE_SSH_CONTROL_PATH
+# ANSIBLE_SSH_CONTROL_PATH_DIR
+# DEFAULT_SFTP_BATCH_MODE
+# DEFAULT_SCP_IF_SSH
 '''
 
 from __future__ import (absolute_import, division, print_function)
@@ -111,15 +160,13 @@ from functools import wraps
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils.basic import BOOLEANS
 from ansible.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.path import unfrackpath, makedirs_safe
-
-boolean = C.mk_boolean
 
 try:
     from __main__ import display
@@ -134,6 +181,7 @@ SSHPASS_AVAILABLE = None
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
     ''' ControlPersist broken pipe '''
     pass
+
 
 def _ssh_retry(func):
     """
@@ -212,17 +260,12 @@ class Connection(ConnectionBase):
     def _connect(self):
         return self
 
-    def transport_test(self, connect_timeout):
-        ''' Test the transport mechanism, if available '''
-        port = int(self.port or 22)
-        display.vvv("attempting transport test to %s:%s" % (self.host, port))
-        sock = socket.create_connection((self.host, port), connect_timeout)
-        sock.close()
-
     @staticmethod
-    def _create_control_path(host, port, user):
+    def _create_control_path(host, port, user, connection=None):
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
+        if connection:
+            pstring += '-%s' % connection
         m = hashlib.sha1()
         m.update(to_bytes(pstring))
         digest = m.hexdigest()
@@ -365,12 +408,14 @@ class Connection(ConnectionBase):
 
         user = self._play_context.remote_user
         if user:
-            self._add_args(b_command,
-                    (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
+            self._add_args(
+                b_command,
+                (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
-        self._add_args(b_command,
+        self._add_args(
+            b_command,
             (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
             u"ANSIBLE_TIMEOUT/timeout set"
         )
@@ -459,7 +504,7 @@ class Connection(ConnectionBase):
             display_line = to_text(b_line).rstrip('\r\n')
             suppress_output = False
 
-            #display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
+            # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
             if self._play_context.prompt and self.check_password_prompt(b_line):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
@@ -490,8 +535,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    @_ssh_retry
-    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
+    def _bare_run(self, cmd, in_data, sudoable=True, checkrc=True):
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -594,7 +638,7 @@ class Connection(ConnectionBase):
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-        ### TODO: bcoca would like to use SelectSelector() when open
+        # TODO: bcoca would like to use SelectSelector() when open
         # filehandles is low, then switch to more efficient ones when higher.
         # select is faster when filehandles is low.
         selector = selectors.DefaultSelector()
@@ -609,6 +653,7 @@ class Connection(ConnectionBase):
 
         try:
             while True:
+                poll = p.poll()
                 events = selector.select(timeout)
 
                 # We pay attention to timeouts only while negotiating a prompt.
@@ -618,7 +663,7 @@ class Connection(ConnectionBase):
                     if state <= states.index('awaiting_escalation'):
                         # If the process has already exited, then it's not really a
                         # timeout; we'll let the normal error handling deal with it.
-                        if p.poll() is not None:
+                        if poll is not None:
                             break
                         self._terminate_process(p)
                         raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
@@ -720,7 +765,7 @@ class Connection(ConnectionBase):
                 # Now we're awaiting_exit: has the child process exited? If it has,
                 # and we've read all available output from it, we're done.
 
-                if p.poll() is not None:
+                if poll is not None:
                     if not selector.get_map() or not events:
                         break
                     # We should not see further writes to the stdout/stderr file
@@ -765,6 +810,13 @@ class Connection(ConnectionBase):
 
         return (p.returncode, b_stdout, b_stderr)
 
+    @_ssh_retry
+    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
+        """Wrapper around _bare_run that retries the connection
+        """
+        return self._bare_run(cmd, in_data, sudoable, checkrc)
+
+    @_ssh_retry
     def _file_transport_command(self, in_path, out_path, sftp_action):
         # scp and sftp require square brackets for IPv6 addresses, but
         # accept them for hostnames and IPv4 addresses too.
@@ -788,7 +840,7 @@ class Connection(ConnectionBase):
             if not isinstance(scp_if_ssh, bool):
                 scp_if_ssh = scp_if_ssh.lower()
                 if scp_if_ssh in BOOLEANS:
-                    scp_if_ssh = boolean(scp_if_ssh)
+                    scp_if_ssh = boolean(scp_if_ssh, strict=False)
                 elif scp_if_ssh != 'smart':
                     raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
             if scp_if_ssh == 'smart':
@@ -805,14 +857,14 @@ class Connection(ConnectionBase):
                 cmd = self._build_command('sftp', to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
-                (returncode, stdout, stderr) = self._run(cmd, in_data, checkrc=False)
+                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
                 if sftp_action == 'get':
                     cmd = self._build_command('scp', u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
                 else:
                     cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
-                (returncode, stdout, stderr) = self._run(cmd, in_data, checkrc=False)
+                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
                 if sftp_action == 'get':
                     # we pass sudoable=False to disable pty allocation, which
@@ -839,8 +891,8 @@ class Connection(ConnectionBase):
         if returncode == 255:
             raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
         else:
-            raise AnsibleError("failed to transfer file to {0} {1}:\n{2}\n{3}"\
-                    .format(to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
+            raise AnsibleError("failed to transfer file to %s %s:\n%s\n%s" %
+                               (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
     #
     # Main public methods
@@ -851,7 +903,6 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
-
 
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the
@@ -891,12 +942,15 @@ class Connection(ConnectionBase):
 
     def reset(self):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = map(to_bytes, self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host))
+        cmd = self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host)
         controlpersist, controlpath = self._persistence_controls(cmd)
         if controlpersist:
+            display.vvv(u'sending stop: %s' % cmd)
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
-            display.vvv(u'sending stop: %s' % cmd)
+            status_code = p.wait()
+            if status_code != 0:
+                raise AnsibleError("Cannot reset connection:\n%s" % stderr)
 
         self.close()
 

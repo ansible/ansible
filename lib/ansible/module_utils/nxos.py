@@ -27,9 +27,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import re
+
 import collections
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
@@ -56,15 +57,23 @@ nxos_argument_spec = {
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {
-    'timeout': 10
+    'transport': 'cli'
 }
+
+
+def get_argspec():
+    return nxos_argument_spec
+
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in nxos_argument_spec:
-        if key not in ['provider', 'transport'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+        if module._name == 'nxos_user':
+            if key not in ['password', 'provider', 'transport'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key not in ['provider', 'transport'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
     # set argument's default value if not provided in input
     # This is done to avoid unwanted argument deprecation warning
@@ -78,12 +87,14 @@ def check_args(module, warnings):
             if provider.get(param):
                 module.no_log_values.update(return_values(provider[param]))
 
+
 def load_params(module):
     provider = module.params.get('provider') or dict()
     for key, value in iteritems(provider):
         if key in nxos_argument_spec:
             if module.params.get(key) is None and value is not None:
                 module.params[key] = value
+
 
 def get_connection(module):
     global _DEVICE_CONNECTION
@@ -95,6 +106,7 @@ def get_connection(module):
             conn = Cli(module)
         _DEVICE_CONNECTION = conn
     return _DEVICE_CONNECTION
+
 
 class Cli:
 
@@ -119,8 +131,8 @@ class Cli:
         except KeyError:
             rc, out, err = self.exec_command(cmd)
             if rc != 0:
-                self._module.fail_json(msg=err)
-            cfg = str(out).strip()
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
 
@@ -138,9 +150,9 @@ class Cli:
                 cmd = item['command']
 
             rc, out, err = self.exec_command(cmd)
-
+            out = to_text(out, errors='surrogate_then_replace')
             if check_rc and rc != 0:
-                self._module.fail_json(msg=err)
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
             try:
                 out = self._module.from_json(out)
@@ -153,16 +165,22 @@ class Cli:
     def load_config(self, config):
         """Sends configuration commands to the remote device
         """
+
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=err)
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
 
+        msgs = []
         for cmd in config:
             rc, out, err = self.exec_command(cmd)
             if rc != 0:
-                self._module.fail_json(msg=err)
+                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            elif out:
+                msgs.append(out)
 
         self.exec_command('end')
+        return msgs
+
 
 class Nxapi:
 
@@ -270,19 +288,19 @@ class Nxapi:
             except ValueError:
                 self._module.fail_json(msg='unable to parse response')
 
-            output = response['ins_api']['outputs']['output']
-            for item in to_list(output):
-                if check_status and item['code'] != '200':
-                    self._error(output=output, **item)
-                elif 'body' in item:
-                    result.append(item['body'])
-                #else:
-                    # error in command but since check_status is disabled
-                    # silently drop it.
-                    #result.append(item['msg'])
+            if response['ins_api'].get('outputs'):
+                output = response['ins_api']['outputs']['output']
+                for item in to_list(output):
+                    if check_status and item['code'] != '200':
+                        self._error(output=output, **item)
+                    elif 'body' in item:
+                        result.append(item['body'])
+                    # else:
+                        # error in command but since check_status is disabled
+                        # silently drop it.
+                        # result.append(item['msg'])
 
-        return result
-
+            return result
 
     def get_config(self, flags=[]):
         """Retrieves the current config from the device or cache
@@ -299,7 +317,6 @@ class Nxapi:
             self._device_configs[cmd] = cfg
             return cfg
 
-
     def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
@@ -307,14 +324,15 @@ class Nxapi:
         queue = list()
         responses = list()
 
-        _send = lambda commands, output: self.send_request(commands, output, check_status=check_rc)
+        def _send(commands, output):
+            return self.send_request(commands, output, check_status=check_rc)
 
         for item in to_list(commands):
             if is_json(item['command']):
                 item['command'] = str(item['command']).split('|')[0]
                 item['output'] = 'json'
 
-            if all((output == 'json', item['output'] == 'text')) or all((output =='text', item['output'] == 'json')):
+            if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
                 responses.extend(_send(queue, output))
                 queue = list()
 
@@ -331,15 +349,22 @@ class Nxapi:
         """
         commands = to_list(commands)
         self.send_request(commands, output='config')
+        return []
 
 
-is_json = lambda x: str(x).endswith('| json')
-is_text = lambda x: not is_json
+def is_json(cmd):
+    return str(cmd).endswith('| json')
+
+
+def is_text(cmd):
+    return not is_json(cmd)
+
 
 def is_nxapi(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
     return 'nxapi' in (transport, provider_transport)
+
 
 def to_command(module, commands):
     if is_nxapi(module):
@@ -356,23 +381,23 @@ def to_command(module, commands):
 
     commands = transform(to_list(commands))
 
-    for index, item in enumerate(commands):
+    for item in commands:
         if is_json(item['command']):
             item['output'] = 'json'
-        elif is_text(item['command']):
-            item['output'] = 'text'
 
     return commands
+
 
 def get_config(module, flags=[]):
     conn = get_connection(module)
     return conn.get_config(flags)
 
+
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands), check_rc)
 
+
 def load_config(module, config):
     conn = get_connection(module)
     return conn.load_config(config)
-

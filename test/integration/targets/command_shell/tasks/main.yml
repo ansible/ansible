@@ -121,6 +121,35 @@
     that:
       - "command_result4.changed != True"
 
+- name: pass stdin to cat via command
+  command: "cat"
+  args:
+    stdin: 'foobar'
+  register: command_result5
+
+- name: assert that stdin is passed
+  assert:
+    that:
+      - "command_result5.stdout == 'foobar'"
+
+- name: send to stdin literal multiline block
+  command: "{{ sha1sum.stdout }}"
+  args:
+    stdin: |-
+      this is the first line
+      this is the second line
+
+      this line is after an empty line
+      this line is the last line
+  register: command_result6
+
+- debug: var=command_result6
+
+- name: assert the multiline input was passed correctly
+  assert:
+    that:
+      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903  -'"
+
 ##
 ## shell
 ##

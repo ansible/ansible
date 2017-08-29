@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -165,15 +157,18 @@ tags:
 '''
 
 
-from time import sleep
 from collections import defaultdict
+from time import sleep
 
 try:
     from botocore.exceptions import ClientError
-    import boto3
-    HAS_BOTO3 = True
-except ImportError as e:
-    HAS_BOTO3 = False
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec,
+                                      camel_dict_to_snake_dict, HAS_BOTO3)
+
 
 class EFSConnection(object):
     STATE_CREATING = 'creating'
@@ -297,6 +292,7 @@ def prefix_to_attr(attr_id):
         return attr_by_prefix[prefix]
     return 'IpAddress'
 
+
 def first_or_default(items, default=None):
     """
      Helper method to fetch first element of list (if exists)
@@ -304,6 +300,7 @@ def first_or_default(items, default=None):
     for item in items:
         return item
     return default
+
 
 def has_tags(available, required):
     """
@@ -314,6 +311,7 @@ def has_tags(available, required):
             return False
     return True
 
+
 def has_targets(available, required):
     """
     Helper method to determine if mount tager requested already exists
@@ -323,6 +321,7 @@ def has_targets(available, required):
         if field not in grouped or value not in grouped[field]:
             return False
     return True
+
 
 def group_list_of_dict(array):
     """
@@ -341,13 +340,14 @@ def main():
     """
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        id=dict(required=False, type='str', default=None),
-        name=dict(required=False, type='str', default=None),
-        tags=dict(required=False, type="dict", default={}),
-        targets=dict(required=False, type="list", default=[])
+        id=dict(),
+        name=dict(),
+        tags=dict(type="dict", default={}),
+        targets=dict(type="list", default=[])
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
@@ -373,8 +373,6 @@ def main():
     file_systems_info = [camel_dict_to_snake_dict(x) for x in file_systems_info]
     module.exit_json(changed=False, ansible_facts={'efs': file_systems_info})
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

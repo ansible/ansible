@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -161,7 +161,7 @@ def template_absent(module, aos, my_template):
             time.sleep(1)
             my_template.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the Template")
+            module.fail_json(msg="An error occurred, while trying to delete the Template")
 
     module.exit_json( changed=True,
                       name=my_template.name,

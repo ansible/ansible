@@ -1,18 +1,9 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 # upcoming features:
 # - Ted's multifile YAML concatenation
@@ -21,9 +12,9 @@
 # - move create/update code out of main
 # - unit tests
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -93,6 +84,23 @@ options:
         present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     version_added: "2.0"
+  create_changeset:
+    description:
+      - "If stack already exists create a changeset instead of directly applying changes.
+        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
+        WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
+        changeset."
+    required: false
+    default: false
+    version_added: "2.4"
+  changeset_name:
+    description:
+      - Name given to the changeset when creating a changeset, only used when create_changeset is true. By default a name prefixed with Ansible-STACKNAME
+        is generated based on input parameters.
+        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+    required: false
+    default: null
+    version_added: "2.4"
   template_format:
     description:
     - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
@@ -225,9 +233,8 @@ stack_outputs:
 
 import json
 import time
-import sys
 import traceback
-
+from hashlib import sha1
 
 try:
     import boto3
@@ -236,21 +243,11 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-# import a class, otherwise we'll use a fully qualified path
-from ansible.module_utils.ec2 import AWSRetry
-from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.ec2
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
+# import a class, otherwise we'll use a fully qualified path
+from ansible.module_utils.ec2 import AWSRetry, boto_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def get_stack_events(cfn, stack_name):
@@ -291,7 +288,43 @@ def create_stack(module, stack_params, cfn):
         result = stack_operation(cfn, stack_params['StackName'], 'CREATE')
     except Exception as err:
         error_msg = boto_exception(err)
-        module.fail_json(msg=error_msg)
+        module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
+    if not result:
+        module.fail_json(msg="empty result")
+    return result
+
+
+def list_changesets(cfn, stack_name):
+    res = cfn.list_change_sets(StackName=stack_name)
+    return [cs['ChangeSetName'] for cs in res['Summaries']]
+
+
+def create_changeset(module, stack_params, cfn):
+    if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
+        module.fail_json(msg="Either 'template' or 'template_url' is required.")
+
+    try:
+        changeset_name = build_changeset_name(stack_params)
+        stack_params['ChangeSetName'] = changeset_name
+
+        # Determine if this changeset already exists
+        pending_changesets = list_changesets(cfn, stack_params['StackName'])
+        if changeset_name in pending_changesets:
+            warning = 'WARNING: %d pending changeset(s) exist(s) for this stack!' % len(pending_changesets)
+            result = dict(changed=False, output='ChangeSet %s already exists.' % changeset_name, warnings=[warning])
+        else:
+            cs = cfn.create_change_set(**stack_params)
+            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+            result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
+                'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
+                'NOTE that dependencies on this stack might fail due to pending changes!']
+    except Exception as err:
+        error_msg = boto_exception(err)
+        if 'No updates are to be performed.' in error_msg:
+            result = dict(changed=False, output='Stack is already up-to-date.')
+        else:
+            module.fail_json(msg="Failed to create change set: {0}".format(error_msg), exception=traceback.format_exc())
+
     if not result:
         module.fail_json(msg="empty result")
     return result
@@ -312,7 +345,7 @@ def update_stack(module, stack_params, cfn):
         if 'No updates are to be performed.' in error_msg:
             result = dict(changed=False, output='Stack is already up-to-date.')
         else:
-            module.fail_json(msg=error_msg)
+            module.fail_json(msg="Failed to update stack {0}: {1}".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
     if not result:
         module.fail_json(msg="empty result")
     return result
@@ -364,15 +397,50 @@ def stack_operation(cfn, stack_name, operation):
             time.sleep(5)
     return {'failed': True, 'output':'Failed for unknown reasons.'}
 
-@AWSRetry.backoff(tries=3, delay=5)
-def describe_stacks(cfn, stack_name):
-    return cfn.describe_stacks(StackName=stack_name)
+
+def build_changeset_name(stack_params):
+    if 'ChangeSetName' in stack_params:
+        return stack_params['ChangeSetName']
+
+    json_params = json.dumps(stack_params, sort_keys=True)
+
+    return 'Ansible-{0}-{1}'.format(
+        stack_params['StackName'],
+        sha1(to_bytes(json_params, errors='surrogate_or_strict')).hexdigest()
+    )
+
+
+def check_mode_changeset(module, stack_params, cfn):
+    """Create a change set, describe it and delete it before returning check mode outputs."""
+    stack_params['ChangeSetName'] = build_changeset_name(stack_params)
+    try:
+        change_set = cfn.create_change_set(**stack_params)
+        for i in range(60): # total time 5 min
+            description = cfn.describe_change_set(ChangeSetName=change_set['Id'])
+            if description['Status'] in ('CREATE_COMPLETE', 'FAILED'):
+                break
+            time.sleep(5)
+        else:
+            # if the changeset doesn't finish in 5 mins, this `else` will trigger and fail
+            module.fail_json(msg="Failed to create change set %s" % stack_params['ChangeSetName'])
+
+        cfn.delete_change_set(ChangeSetName=change_set['Id'])
+
+        reason = description.get('StatusReason')
+
+        if description['Status'] == 'FAILED' and "didn't contain changes" in description['StatusReason']:
+            return {'changed': False, 'msg': reason, 'meta': description['StatusReason']}
+        return {'changed': True, 'msg': reason, 'meta': description['Changes']}
+
+    except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
+        error_msg = boto_exception(err)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+
 
 def get_stack_facts(cfn, stack_name):
     try:
-        stack_response = describe_stacks(cfn, stack_name)
+        stack_response = cfn.describe_stacks(StackName=stack_name)
         stack_info = stack_response['Stacks'][0]
-    #except AmazonCloudFormationException as e:
     except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
@@ -402,6 +470,8 @@ def main():
         disable_rollback=dict(default=False, type='bool'),
         template_url=dict(default=None, required=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+        create_changeset=dict(default=False, type='bool'),
+        changeset_name=dict(default=None, required=False),
         role_arn=dict(default=None, required=False),
         tags=dict(default=None, type='dict')
     )
@@ -410,6 +480,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['template_url', 'template']],
+        supports_check_mode=True
     )
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required for this module')
@@ -434,6 +505,9 @@ def main():
     if module.params['stack_policy'] is not None:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
+    if module.params['changeset_name'] is not None:
+        stack_params['ChangeSetName'] = module.params['changeset_name']
+
     template_parameters = module.params['template_parameters']
     stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
 
@@ -451,11 +525,35 @@ def main():
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=boto_exception(e))
 
+    # Wrap the cloudformation client methods that this module uses with
+    # automatic backoff / retry for throttling error codes
+    backoff_wrapper = AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30)
+    cfn.describe_stack_events = backoff_wrapper(cfn.describe_stack_events)
+    cfn.create_stack = backoff_wrapper(cfn.create_stack)
+    cfn.list_change_sets = backoff_wrapper(cfn.list_change_sets)
+    cfn.create_change_set = backoff_wrapper(cfn.create_change_set)
+    cfn.update_stack = backoff_wrapper(cfn.update_stack)
+    cfn.describe_stacks = backoff_wrapper(cfn.describe_stacks)
+    cfn.list_stack_resources = backoff_wrapper(cfn.list_stack_resources)
+    cfn.delete_stack = backoff_wrapper(cfn.delete_stack)
+
     stack_info = get_stack_facts(cfn, stack_params['StackName'])
+
+    if module.check_mode:
+        if state == 'absent' and stack_info:
+            module.exit_json(changed=True, msg='Stack would be deleted', meta=[])
+        elif state == 'absent' and not stack_info:
+            module.exit_json(changed=False, msg='Stack doesn\'t exist', meta=[])
+        elif state == 'present' and not stack_info:
+            module.exit_json(changed=True, msg='New stack would be created', meta=[])
+        else:
+            module.exit_json(**check_mode_changeset(module, stack_params, cfn))
 
     if state == 'present':
         if not stack_info:
             result = create_stack(module, stack_params, cfn)
+        elif module.params.get('create_changeset'):
+            result = create_changeset(module, stack_params, cfn)
         else:
             result = update_stack(module, stack_params, cfn)
 

@@ -1,21 +1,13 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -120,18 +112,12 @@ EXAMPLES = '''
     tags: update,nginx
 '''
 
+import json
 import os
 import pipes
 import stat
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _get_facter_dir():
@@ -227,7 +213,7 @@ def main():
     else:
         base_cmd = PUPPET_CMD
 
-    if not p['manifest']:
+    if not p['manifest'] and not p['execute']:
         cmd = ("%(base_cmd)s agent --onetime"
                " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
                " --detailed-exitcodes --verbose --color 0") % dict(
@@ -257,15 +243,16 @@ def main():
             cmd += "--environment '%s' " % p['environment']
         if p['certname']:
             cmd += " --certname='%s'" % p['certname']
-        if p['execute']:
-            cmd += " --execute '%s'" % p['execute']
         if p['tags']:
             cmd += " --tags '%s'" % ','.join(p['tags'])
         if module.check_mode:
             cmd += "--noop "
         else:
             cmd += "--no-noop "
-        cmd += pipes.quote(p['manifest'])
+        if p['execute']:
+            cmd += " --execute '%s'" % p['execute']
+        else:
+            cmd += pipes.quote(p['manifest'])
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:
@@ -295,8 +282,6 @@ def main():
             rc=rc, msg="%s failed with return code: %d" % (cmd, rc),
             stdout=stdout, stderr=stderr)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

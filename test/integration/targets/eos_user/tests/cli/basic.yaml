@@ -1,0 +1,47 @@
+---
+- name: Set Up
+  eos_config:
+    lines:
+      - no username ansibletest1
+      - no username ansibletest2
+      - no username ansibletest3
+    provider: "{{ cli }}"
+
+- name: Create user
+  eos_user:
+    name: ansibletest1
+    privilege: 15
+    role: network-operator
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username ansibletest1 role network-operator", "username ansibletest1 privilege 15"]'
+
+- name: Collection of users
+  eos_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    authorize: yes
+    state: present
+    role: network-operator
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username ansibletest2 role network-operator", "username ansibletest3 role network-operator"]'
+
+- name: tearDown
+  eos_config:
+    lines:
+      - no username ansibletest1
+      - no username ansibletest2
+      - no username ansibletest3
+    provider: "{{ cli }}"

@@ -1,0 +1,82 @@
+---
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/setup.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/setup.yaml"
+  vars:
+    check_mode: no
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/lb_monitor_http_inline/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed

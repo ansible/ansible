@@ -1,22 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2012-2013, Timothy Appnel <tim@appnel.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# (c) 2012-2013, Timothy Appnel <tim@appnel.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -476,14 +467,14 @@ def main():
     if is_rsh_needed(source, dest):
         ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
         if private_key is not None:
-            ssh_cmd.extend(['-i', private_key])
+            ssh_cmd.extend(['-i', os.path.expanduser(private_key) ])
         # If the user specified a port value
         # Note:  The action plugin takes care of setting this to a port from
         # inventory if the user didn't specify an explicit dest_port
         if dest_port is not None:
             ssh_cmd.extend(['-o', 'Port=%s' % dest_port])
         if not verify_host:
-            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no'])
+            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null'])
         ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
         if ssh_args:
             ssh_cmd_str += ' %s' % ssh_args

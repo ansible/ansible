@@ -6,6 +6,8 @@ versions:
 - "2.3":
     code_name: "Ramble On"
     releases:
+    - "2": "08-04-2017"
+    - "1": "06-01-2017"
     - "0": "04-12-2017"
 - "2.2":
     code_name: "The Battle of Evermore"
@@ -17,6 +19,7 @@ versions:
 - "2.1":
     code_name: "The Song Remains the Same"
     releases:
+    - "6": "06-01-2017"
     - "5": "03-27-2017"
     - "4": "01-16-2017"
     - "3": "11-04-2016"

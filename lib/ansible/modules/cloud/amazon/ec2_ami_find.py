@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -263,12 +263,12 @@ platform:
     type: string
     sample: null
 root_device_name:
-    description: rood device name of image
+    description: root device name of image
     returned: when AMI found
     type: string
     sample: "/dev/xvda"
 root_device_type:
-    description: rood device type of image
+    description: root device type of image
     returned: when AMI found
     type: string
     sample: "ebs"

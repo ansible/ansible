@@ -1,26 +1,15 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -42,7 +31,8 @@ options:
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
-        device config parser.
+        device config parser.  The I(lines) argument only supports current
+        context lines.  See EXAMPLES
     required: false
     default: null
     aliases: ['commands']
@@ -198,6 +188,23 @@ vars:
       src: "{{ inventory_hostname }}.cfg"
       provider: "{{ cli }}"
       save: yes
+
+- name: invalid use of lines
+  sros_config:
+    lines:
+      - service
+      -     vpls 1000 customer foo 1 create
+      -         description "invalid lines example"
+    provider: "{{ cli }}"
+
+- name: valid use of lines
+  sros_config:
+    lines:
+      - description "invalid lines example"
+    parents:
+      - service
+      - vpls 1000 customer foo 1 create
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -222,15 +229,6 @@ from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.sros import sros_argument_spec, check_args
 from ansible.module_utils.sros import load_config, run_commands, get_config
 
-def sanitize_config(lines):
-    commands = list()
-    for line in lines:
-        for index, entry in enumerate(commands):
-            if line.startswith(entry):
-                del commands[index]
-                break
-        commands.append(line)
-    return commands
 
 def get_active_config(module):
     contents = module.params['config']
@@ -241,6 +239,7 @@ def get_active_config(module):
         return get_config(module, flags)
     return contents
 
+
 def get_candidate(module):
     candidate = NetworkConfig(indent=4)
     if module.params['src']:
@@ -249,6 +248,7 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
 
 def run(module, result):
     match = module.params['match']
@@ -264,7 +264,7 @@ def run(module, result):
 
     if configobjs:
         commands = dumps(configobjs, 'commands')
-        commands = sanitize_config(commands.split('\n'))
+        commands = commands.split('\n')
 
         result['commands'] = commands
         result['updates'] = commands

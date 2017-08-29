@@ -94,7 +94,7 @@
     - result|changed
     - result.enabled
 
-- name: test disable an exising job without config
+- name: test disable an existing job without config
   local_action:
      module: jenkins_job
      name: test.job
@@ -103,14 +103,14 @@
      password: "{{ jenkins_password }}"
      enabled: false
   register: result
-- name: verify test disable an exising job without config
+- name: verify test disable an existing job without config
   assert:
     that:
     - result|success
     - result|changed
     - not result.enabled
 
-- name: test disable an exising job without config idempotence
+- name: test disable an existing job without config idempotence
   local_action:
      module: jenkins_job
      name: test.job
@@ -119,7 +119,7 @@
      password: "{{ jenkins_password }}"
      enabled: false
   register: result
-- name: verify test disable an exising job without config idempotence
+- name: verify test disable an existing job without config idempotence
   assert:
     that:
     - result|success

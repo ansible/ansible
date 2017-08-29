@@ -20,17 +20,17 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
-        self.start_time = datetime.now()
+        self.start_time = datetime.utcnow()
 
     def days_hours_minutes_seconds(self, runtime):
         minutes = (runtime.seconds // 60) % 60
-        r_seconds = runtime.seconds - (minutes * 60)
+        r_seconds = runtime.seconds % 60
         return runtime.days, runtime.seconds // 3600, minutes, r_seconds
 
     def playbook_on_stats(self, stats):
         self.v2_playbook_on_stats(stats)
 
     def v2_playbook_on_stats(self, stats):
-        end_time = datetime.now()
+        end_time = datetime.utcnow()
         runtime = end_time - self.start_time
         self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds" % (self.days_hours_minutes_seconds(runtime)))

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -96,15 +96,18 @@ lambda_facts.function.TheName:
     type: dict
 '''
 
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn
+import json
 import datetime
 import sys
+import re
+
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # protected by AnsibleAWSModule
 
 
 def fix_return(node):
@@ -155,7 +158,7 @@ def alias_details(client, module):
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 lambda_facts.update(aliases=[])
             else:
-                module.fail_json(msg='Unable to get {0} aliases, error: {1}'.format(function_name, e))
+                module.fail_json_aws(e, msg="Trying to get aliases")
     else:
         module.fail_json(msg='Parameter function_name required for query=aliases.')
 
@@ -209,7 +212,7 @@ def config_details(client, module):
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 lambda_facts.update(function={})
             else:
-                module.fail_json(msg='Unable to get {0} configuration, error: {1}'.format(function_name, e))
+                module.fail_json_aws(e, msg="Trying to get {0} configuration".format(function_name))
     else:
         params = dict()
         if module.params.get('max_items'):
@@ -224,7 +227,7 @@ def config_details(client, module):
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 lambda_facts.update(function_list=[])
             else:
-                module.fail_json(msg='Unable to get function list, error: {0}'.format(e))
+                module.fail_json_aws(e, msg="Trying to get function list")
 
         functions = dict()
         for func in lambda_facts.pop('function_list', []):
@@ -265,7 +268,7 @@ def mapping_details(client, module):
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
             lambda_facts.update(mappings=[])
         else:
-            module.fail_json(msg='Unable to get source event mappings, error: {0}'.format(e))
+            module.fail_json_aws(e, msg="Trying to get source event mappings")
 
     if function_name:
         return {function_name: camel_dict_to_snake_dict(lambda_facts)}
@@ -296,7 +299,7 @@ def policy_details(client, module):
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 lambda_facts.update(policy={})
             else:
-                module.fail_json(msg='Unable to get {0} policy, error: {1}'.format(function_name, e))
+                module.fail_json_aws(e, msg="Trying to get {0} policy".format(function_name))
     else:
         module.fail_json(msg='Parameter function_name required for query=policy.')
 
@@ -329,7 +332,7 @@ def version_details(client, module):
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 lambda_facts.update(versions=[])
             else:
-                module.fail_json(msg='Unable to get {0} versions, error: {1}'.format(function_name, e))
+                module.fail_json_aws(e, msg="Trying to get {0} versions".format(function_name))
     else:
         module.fail_json(msg='Parameter function_name required for query=versions.')
 
@@ -342,25 +345,18 @@ def main():
 
     :return dict: ansible facts
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            function_name=dict(required=False, default=None, aliases=['function', 'name']),
-            query=dict(required=False, choices=['aliases', 'all', 'config', 'mappings', 'policy',  'versions'], default='all'),
-            event_source_arn=dict(required=False, default=None)
-        )
+    argument_spec = dict(
+        function_name=dict(required=False, default=None, aliases=['function', 'name']),
+        query=dict(required=False, choices=['aliases', 'all', 'config', 'mappings', 'policy', 'versions'], default='all'),
+        event_source_arn=dict(required=False, default=None)
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[],
         required_together=[]
     )
-
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
 
     # validate function_name if present
     function_name = module.params['function_name']
@@ -381,7 +377,7 @@ def main():
                                        ))
         client = boto3_conn(module, **aws_connect_kwargs)
     except ClientError as e:
-        module.fail_json(msg="Can't authorize connection - {0}".format(e))
+        module.fail_json_aws(e, "trying to set up boto connection")
 
     this_module = sys.modules[__name__]
 
@@ -404,10 +400,6 @@ def main():
 
     module.exit_json(**results)
 
-
-# ansible import module(s) kept at ~eof as recommended
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -41,7 +41,6 @@ class ShellModule(ShellBase):
     _SHELL_GROUP_LEFT = '('
     _SHELL_GROUP_RIGHT = ')'
 
-
     def checksum(self, path, python_interp):
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
@@ -81,4 +80,3 @@ class ShellModule(ShellBase):
         cmd = (" %s " % self._SHELL_OR).join(csums)
         cmd = "%s; %s %s (echo \'0  \'%s)" % (test, cmd, self._SHELL_OR, shell_escaped_path)
         return cmd
-

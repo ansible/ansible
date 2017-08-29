@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -133,6 +133,8 @@ EXAMPLES = '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
 
+import traceback
+
 try:
     import boto
     import boto.ec2
@@ -180,7 +182,7 @@ def copy_image(module, ec2):
 
         module.exit_json(changed=True, image_id=image_id)
     except WaiterError as we:
-        module.fail_json(msg='An error occured waiting for the image to become available. (%s)' %  we.reason)
+        module.fail_json(msg='An error occurred waiting for the image to become available. (%s)' % str(we), exception=traceback.format_exc())
     except ClientError as ce:
         module.fail_json(msg=ce.message)
     except NoCredentialsError:

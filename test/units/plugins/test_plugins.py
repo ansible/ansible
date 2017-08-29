@@ -21,12 +21,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-from ansible.compat.tests import unittest
-from ansible.compat.tests import BUILTINS
 
+from ansible.compat.tests import BUILTINS, unittest
 from ansible.compat.tests.mock import mock_open, patch, MagicMock
+from ansible.plugins.loader import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
-from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
 class TestErrors(unittest.TestCase):
 
@@ -69,15 +68,15 @@ class TestErrors(unittest.TestCase):
         self.assertEqual(pl._get_paths(), ['/path/one', '/path/two'])
 
         # NOT YET WORKING
-        #def fake_glob(path):
-        #    if path == 'test/*':
-        #        return ['test/foo', 'test/bar', 'test/bam']
-        #    elif path == 'test/*/*'
-        #m._paths = None
-        #mock_glob = MagicMock()
-        #mock_glob.return_value = []
-        #with patch('glob.glob', mock_glob):
-        #    pass
+        # def fake_glob(path):
+        #     if path == 'test/*':
+        #         return ['test/foo', 'test/bar', 'test/bam']
+        #     elif path == 'test/*/*'
+        # m._paths = None
+        # mock_glob = MagicMock()
+        # mock_glob.return_value = []
+        # with patch('glob.glob', mock_glob):
+        #     pass
 
     def assertPluginLoaderConfigBecomes(self, arg, expected):
         pl = PluginLoader('test', '', arg, 'test_plugin')

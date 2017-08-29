@@ -1,21 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -110,17 +102,11 @@ EXAMPLES = '''
 # Stackdriver module specific support methods.
 #
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+import json
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
 
 
@@ -216,18 +202,18 @@ def main():
             module.fail_json(msg="revision_id required for deploy events")
         try:
             send_deploy_event(module, key, revision_id, deployed_by, deployed_to, repository)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="unable to sent deploy event: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="unable to sent deploy event: %s" % to_native(e),
+                             exception=traceback.format_exc())
 
     if event == 'annotation':
         if not msg:
             module.fail_json(msg="msg required for annotation events")
         try:
             send_annotation_event(module, key, msg, annotated_by, level, instance_id, event_epoch)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="unable to sent annotation event: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="unable to sent annotation event: %s" % to_native(e),
+                             exception=traceback.format_exc())
 
     changed = True
     module.exit_json(changed=changed, deployed_by=deployed_by)

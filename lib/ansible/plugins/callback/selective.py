@@ -106,7 +106,7 @@ class CallbackModule(CallbackBase):
         lines = text.splitlines()
         result_lines = []
         for l in lines:
-            result_lines.append("{}{}".format(' '*indent_level, l))
+            result_lines.append("{}{}".format(' ' * indent_level, l))
         return '\n'.join(result_lines)
 
     def _print_diff(self, diff, indent_level):
@@ -121,7 +121,7 @@ class CallbackModule(CallbackBase):
                 diff = dict_diff(diff['before'], diff['after'])
         if diff:
             diff = colorize(str(diff), 'changed')
-            print(self._indent_text(diff, indent_level+4))
+            print(self._indent_text(diff, indent_level + 4))
 
     def _print_host_or_item(self, host_or_item, changed, msg, diff, is_host, error, stdout, stderr):
         if is_host:
@@ -144,7 +144,7 @@ class CallbackModule(CallbackBase):
         msg = colorize(msg, color)
 
         line_length = 120
-        spaces = ' ' * (40-len(name)-indent_level)
+        spaces = ' ' * (40 - len(name) - indent_level)
         line = "{}  * {}{}- {}".format(' ' * indent_level, name, spaces, change_string)
 
         if len(msg) < 50:
@@ -152,16 +152,16 @@ class CallbackModule(CallbackBase):
             print("{} {}---------".format(line, '-' * (line_length - len(line))))
         else:
             print("{} {}".format(line, '-' * (line_length - len(line))))
-            print(self._indent_text(msg, indent_level+4))
+            print(self._indent_text(msg, indent_level + 4))
 
-        if diff is not None:
+        if diff:
             self._print_diff(diff, indent_level)
-        if stdout is not None:
+        if stdout:
             stdout = colorize(stdout, 'failed')
-            print(self._indent_text(stdout, indent_level+4))
-        if stderr is not None:
+            print(self._indent_text(stdout, indent_level + 4))
+        if stderr:
             stderr = colorize(stderr, 'failed')
-            print(self._indent_text(stderr, indent_level+4))
+            print(self._indent_text(stderr, indent_level + 4))
 
     def v2_playbook_on_play_start(self, play):
         """Run on start of the play."""
@@ -174,15 +174,20 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result, **kwargs):
         """Run when a task finishes correctly."""
-        failed = 'failed' in result._result
-        unreachable = 'unreachable' in result._result
+        failed = result._result.get("failed")
+        unreachable = result._result.get("unreachable")
 
         if 'print_action' in result._task.tags or failed or unreachable or \
-           self._display.verbosity > 1:
+                self._display.verbosity > 1:
             self._print_task()
             self.last_skipped = False
             msg = to_text(result._result.get('msg', '')) or\
                 to_text(result._result.get('reason', ''))
+
+            stderr = [result._result.get('exception', None),
+                      result._result.get('module_stderr', None)]
+            stderr = "\n".join([e for e in stderr if e]).strip()
+
             self._print_host_or_item(result._host,
                                      result._result.get('changed', False),
                                      msg,
@@ -190,11 +195,15 @@ class CallbackModule(CallbackBase):
                                      is_host=True,
                                      error=failed or unreachable,
                                      stdout=result._result.get('module_stdout', None),
-                                     stderr=result._result.get('exception', None),
+                                     stderr=stderr.strip(),
                                      )
             if 'results' in result._result:
                 for r in result._result['results']:
                     failed = 'failed' in r
+
+                    stderr = [r.get('exception', None), r.get('module_stderr', None)]
+                    stderr = "\n".join([e for e in stderr if e]).strip()
+
                     self._print_host_or_item(r['item'],
                                              r.get('changed', False),
                                              to_text(r.get('msg', '')),
@@ -202,7 +211,7 @@ class CallbackModule(CallbackBase):
                                              is_host=False,
                                              error=failed,
                                              stdout=r.get('module_stdout', None),
-                                             stderr=r.get('exception', None),
+                                             stderr=stderr.strip(),
                                              )
         else:
             self.last_skipped = True
@@ -236,7 +245,7 @@ class CallbackModule(CallbackBase):
             self.last_skipped = False
 
             line_length = 120
-            spaces = ' ' * (31-len(result._host.name)-4)
+            spaces = ' ' * (31 - len(result._host.name) - 4)
 
             line = "  * {}{}- {}".format(colorize(result._host.name, 'not_so_bold'),
                                          spaces,
@@ -255,4 +264,3 @@ class CallbackModule(CallbackBase):
     v2_playbook_on_handler_task_start = v2_playbook_on_task_start
     v2_runner_on_failed = v2_runner_on_ok
     v2_runner_on_unreachable = v2_runner_on_ok
-

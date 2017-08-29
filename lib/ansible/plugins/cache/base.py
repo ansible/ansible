@@ -19,4 +19,3 @@ __metaclass__ = type
 
 # moved actual classes to __init__ kept here for backward compat with 3rd parties
 from ansible.plugins.cache import BaseCacheModule, BaseFileCacheModule
-

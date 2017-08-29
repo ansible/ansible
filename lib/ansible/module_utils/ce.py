@@ -29,12 +29,15 @@
 #
 
 import re
+import socket
+import sys
+import traceback
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 
 try:
@@ -64,7 +67,6 @@ ce_argument_spec = {
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in ce_argument_spec:
         if key not in ['provider', 'transport'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
@@ -321,9 +323,9 @@ class Netconf(object):
                                       timeout=30)
         except AuthenticationError:
             self._module.fail_json(msg='Error: Authentication failed while connecting to device.')
-        except Exception:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except Exception as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""),
+                                   exception=traceback.format_exc())
             raise
 
     def __del__(self):
@@ -337,9 +339,8 @@ class Netconf(object):
 
         try:
             con_obj = self.mc.edit_config(target='running', config=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
         return con_obj.xml
 
@@ -349,9 +350,8 @@ class Netconf(object):
         con_obj = None
         try:
             con_obj = self.mc.get(filter=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
         set_id = get_nc_set_id(con_obj.xml)
         if not set_id:
@@ -366,9 +366,8 @@ class Netconf(object):
             # get next data
             try:
                 con_obj_next = self.mc.dispatch(xsd_fetch)
-            except RPCError:
-                err = get_exception()
-                self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+            except RPCError as err:
+                self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
             if "<data/>" in con_obj_next.xml:
                 break
@@ -386,9 +385,8 @@ class Netconf(object):
 
         try:
             con_obj = self.mc.action(action=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
         except TimeoutExpiredError:
             raise
 
@@ -401,9 +399,8 @@ class Netconf(object):
 
         try:
             con_obj = self.mc.cli(command=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
         return con_obj.xml
 
@@ -443,3 +440,21 @@ def execute_nc_cli(module, xml_str):
 
     conn = get_nc_connection(module)
     return conn.execute_cli(xml_str)
+
+
+def check_ip_addr(ipaddr):
+    """ check ip address, Supports IPv4 and IPv6 """
+
+    if not ipaddr or '\x00' in ipaddr:
+        return False
+
+    try:
+        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
+                                 socket.SOCK_STREAM,
+                                 0, socket.AI_NUMERICHOST)
+        return bool(res)
+    except socket.gaierror:
+        err = sys.exc_info()[1]
+        if err.args[0] == socket.EAI_NONAME:
+            return False
+        raise

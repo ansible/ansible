@@ -4,24 +4,13 @@
 # (c) 2014, Joshua Conner <joshua.conner@gmail.com>
 # (c) 2014, Pavel Antonov <antonov@adwz.ru>
 #
-# This file is part of Ansible,
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-######################################################################
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
 
@@ -35,7 +24,7 @@ deprecated: In 2.2 use M(docker_container) and M(docker_image) instead.
 description:
   - This is the original Ansible module for managing the Docker container life cycle.
   - "NOTE: Additional and newer modules are available. For the latest on orchestrating containers with Ansible
-    visit our Getting Started with Docker Guide at https://github.com/ansible/ansible/blob/devel/docsite/rst/guide_docker.rst."
+    visit our Getting Started with Docker Guide at U(https://github.com/ansible/ansible/blob/devel/docs/docsite/rst/guide_docker.rst)."
 options:
   count:
     description:
@@ -524,11 +513,6 @@ EXAMPLES = '''
       syslog-tag: myservice
 '''
 
-HAS_DOCKER_PY = True
-DEFAULT_DOCKER_API_VERSION = None
-DEFAULT_TIMEOUT_SECONDS = 60
-
-import sys
 import json
 import os
 import shlex
@@ -543,9 +527,12 @@ try:
     import docker.utils
     import docker.errors
     from requests.exceptions import RequestException
+    HAS_DOCKER_PY = True
 except ImportError:
     HAS_DOCKER_PY = False
 
+DEFAULT_DOCKER_API_VERSION = None
+DEFAULT_TIMEOUT_SECONDS = 60
 if HAS_DOCKER_PY:
     try:
         from docker.errors import APIError as DockerAPIError
@@ -560,6 +547,8 @@ if HAS_DOCKER_PY:
         # docker-py less than 1.2
         DEFAULT_DOCKER_API_VERSION = docker.client.DEFAULT_DOCKER_API_VERSION
         DEFAULT_TIMEOUT_SECONDS = docker.client.DEFAULT_TIMEOUT_SECONDS
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _human_to_bytes(number):
@@ -1441,7 +1430,10 @@ class DockerManager(object):
             for link, alias in (self.links or {}).items():
                 expected_links.add("/{0}:{1}/{2}".format(link, container["Name"], alias))
 
-            actual_links = set(container['HostConfig']['Links'] or [])
+            actual_links = set()
+            for link in (container['HostConfig']['Links'] or []):
+                actual_links.add(link)
+
             if actual_links != expected_links:
                 self.reload_reasons.append('links ({0} => {1})'.format(actual_links, expected_links))
                 differing.append(container)
@@ -1755,7 +1747,8 @@ def present(manager, containers, count, name):
     if delta < 0:
         # If both running and stopped containers exist, remove
         # stopped containers first.
-        containers.deployed.sort(lambda cx, cy: cmp(is_running(cx), is_running(cy)))
+        # Use key param for python 2/3 compatibility.
+        containers.deployed.sort(key=is_running)
 
         to_stop = []
         to_remove = []
@@ -1975,8 +1968,6 @@ def main():
     except RequestException as e:
         module.fail_json(changed=manager.has_changed(), msg=repr(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

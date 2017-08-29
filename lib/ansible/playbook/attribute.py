@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from copy import deepcopy
 
+
 class Attribute:
 
     def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, class_type=None, always_post_validate=False,

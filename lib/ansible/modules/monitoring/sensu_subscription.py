@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Anders Ingemann <aim@secoya.dk>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -75,6 +64,10 @@ EXAMPLES = '''
 - name: unsubscribe from common checks
   sensu_subscription: name=common state=absent
 '''
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def sensu_subscription(module, path, name, state='present', backup=False):
@@ -88,15 +81,14 @@ def sensu_subscription(module, path, name, state='present', backup=False):
 
     try:
         config = json.load(open(path))
-    except IOError:
-        e = get_exception()
+    except IOError as e:
         if e.errno is 2:  # File not found, non-fatal
             if state == 'absent':
                 reasons.append('file did not exist and state is `absent\'')
                 return changed, reasons
             config = {}
         else:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except ValueError:
         msg = '{path} contains invalid JSON'.format(path=path)
         module.fail_json(msg=msg)
@@ -112,7 +104,7 @@ def sensu_subscription(module, path, name, state='present', backup=False):
     if 'subscriptions' not in config['client']:
         if state == 'absent':
             reasons.append('`client.subscriptions\' did not exist and state is `absent\'')
-            return changed
+            return changed, reasons
         config['client']['subscriptions'] = []
         changed = True
         reasons.append('`client.subscriptions\' did not exist')
@@ -120,7 +112,7 @@ def sensu_subscription(module, path, name, state='present', backup=False):
     if name not in config['client']['subscriptions']:
         if state == 'absent':
             reasons.append('channel subscription was absent')
-            return changed
+            return changed, reasons
         config['client']['subscriptions'].append(name)
         changed = True
         reasons.append('channel subscription was absent and state is `present\'')
@@ -135,9 +127,9 @@ def sensu_subscription(module, path, name, state='present', backup=False):
             module.backup_local(path)
         try:
             open(path, 'w').write(json.dumps(config, indent=2) + '\n')
-        except IOError:
-            e = get_exception()
-            module.fail_json(msg='Failed to write to file %s: %s' % (path, str(e)))
+        except IOError as e:
+            module.fail_json(msg='Failed to write to file %s: %s' % (path, to_native(e)),
+                             exception=traceback.format_exc())
 
     return changed, reasons
 
@@ -146,7 +138,7 @@ def main():
     arg_spec = {'name':   {'type': 'str', 'required': True},
                 'path':   {'type': 'str', 'default': '/etc/sensu/conf.d/subscriptions.json'},
                 'state':  {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
-                'backup': {'type': 'str', 'default': 'no', 'type': 'bool'},
+                'backup': {'type': 'bool', 'default': 'no'},
                 }
 
     module = AnsibleModule(argument_spec=arg_spec,
@@ -161,6 +153,6 @@ def main():
 
     module.exit_json(path=path, name=name, changed=changed, msg='OK', reasons=reasons)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

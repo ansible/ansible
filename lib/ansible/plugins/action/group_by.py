@@ -18,12 +18,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
+from ansible.module_utils.six import string_types
 
 
 class ActionModule(ActionBase):
     ''' Create inventory groups based on variables '''
 
-    ### We need to be able to modify the inventory
+    # We need to be able to modify the inventory
     TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=None):
@@ -38,8 +39,11 @@ class ActionModule(ActionBase):
             return result
 
         group_name = self._task.args.get('key')
-        group_name = group_name.replace(' ','-')
+        parent_groups = self._task.args.get('parents', ['all'])
+        if isinstance(parent_groups, string_types):
+            parent_groups = [parent_groups]
 
         result['changed'] = False
-        result['add_group'] = group_name
+        result['add_group'] = group_name.replace(' ', '-')
+        result['parent_groups'] = [name.replace(' ', '-') for name in parent_groups]
         return result

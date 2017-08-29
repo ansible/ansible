@@ -44,6 +44,22 @@ class RetryTestCase(unittest.TestCase):
         r = no_failures()
         self.assertEqual(self.counter, 1)
 
+    def test_extend_boto3_failures(self):
+        self.counter = 0
+        err_msg = {'Error': {'Code': 'MalformedPolicyDocument'}}
+
+        @AWSRetry.backoff(tries=2, delay=0.1, catch_extra_error_codes=['MalformedPolicyDocument'])
+        def extend_failures():
+            self.counter += 1
+            if self.counter < 2:
+                raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
+            else:
+                return 'success'
+
+        r = extend_failures()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 2)
+
     def test_retry_once(self):
         self.counter = 0
         err_msg = {'Error': {'Code': 'InstanceId.NotFound'}}
@@ -69,7 +85,7 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'toooo fast!!')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
+        # with self.assertRaises(botocore.exceptions.ClientError):
         try:
             fail()
         except Exception as e:
@@ -85,7 +101,7 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'unexpected error')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
+        # with self.assertRaises(botocore.exceptions.ClientError):
         try:
             raise_unexpected_error()
         except Exception as e:

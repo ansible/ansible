@@ -22,8 +22,7 @@ __metaclass__ = type
 import yaml
 
 from ansible.module_utils.six import PY3
-from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 from ansible.vars.hostvars import HostVars
 
@@ -35,8 +34,10 @@ class AnsibleDumper(yaml.SafeDumper):
     '''
     pass
 
+
 def represent_hostvars(self, data):
     return self.represent_dict(dict(data))
+
 
 # Note: only want to represent the encrypted data
 def represent_vault_encrypted_unicode(self, data):

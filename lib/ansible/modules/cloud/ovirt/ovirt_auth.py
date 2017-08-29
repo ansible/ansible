@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -84,6 +84,13 @@ options:
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
+
+    headers:
+        required: False
+        description:
+            - "A dictionary of HTTP headers to be added to each API call."
+        version_added: "2.4"
+
 requirements:
   - python >= 2.7
   - ovirt-engine-sdk-python >= 4.0.0
@@ -168,6 +175,10 @@ ovirt_auth:
             returned: success
             type: bool
             sample: False
+        headers:
+            description: Dictionary of HTTP headers to be added to each API call.
+            returned: success
+            type: dict
 '''
 
 import traceback
@@ -192,6 +203,7 @@ def main():
             timeout=dict(required=False, type='int', default=0),
             compress=dict(required=False, type='bool', default=True),
             kerberos=dict(required=False, type='bool', default=False),
+            headers=dict(required=False, type='dict'),
             state=dict(default='present', choices=['present', 'absent']),
             ovirt_auth=dict(required=None, type='dict'),
         ),
@@ -218,6 +230,7 @@ def main():
         timeout=params.get('timeout'),
         compress=params.get('compress'),
         kerberos=params.get('kerberos'),
+        headers=params.get('headers'),
         token=params.get('token'),
     )
     try:
@@ -233,6 +246,7 @@ def main():
                     timeout=params.get('timeout'),
                     compress=params.get('compress'),
                     kerberos=params.get('kerberos'),
+                    headers=params.get('headers'),
                 ) if state == 'present' else dict()
             )
         )

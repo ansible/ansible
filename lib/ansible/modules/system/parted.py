@@ -2,25 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Fabrizio Colonna <colofabrix@tin.it>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -71,7 +61,7 @@ options:
     description: Creates a new disk label.
     choices: [
        'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos', 'pc98',
-       'sun', ''
+       'sun'
     ]
     default: msdos
   part_type:
@@ -81,6 +71,7 @@ options:
        'gpt' partition table. Neither part-type nor name may be used with a
        'sun' partition table.
     choices: ['primary', 'extended', 'logical']
+    default: primary
   part_start:
     description:
      - Where the partition will start as offset from the beginning of the disk,
@@ -135,14 +126,16 @@ partition_info:
           "begin": 0.0,
           "end": 1.0,
           "flags": ["boot", "lvm"],
-          "fstype": null,
+          "fstype": "",
+          "name": "",
           "num": 1,
           "size": 1.0
         }, {
           "begin": 1.0,
           "end": 5.0,
           "flags": [],
-          "fstype": null,
+          "fstype": "",
+          "name": "",
           "num": 2,
           "size": 4.0
         }]
@@ -298,11 +291,13 @@ def parse_partition_info(parted_output, unit):
         if unit != 'chs':
             size = parse_unit(part_params[3])[0]
             fstype = part_params[4]
+            name = part_params[5]
             flags = part_params[6]
 
         else:
             size = ""
             fstype = part_params[3]
+            name = part_params[4]
             flags = part_params[5]
 
         parts.append({
@@ -311,6 +306,7 @@ def parse_partition_info(parted_output, unit):
             'end': parse_unit(part_params[2])[0],
             'size': size,
             'fstype': fstype,
+            'name': name,
             'flags': [f.strip() for f in flags.split(', ') if f != ''],
             'unit': unit.lower(),
         })
@@ -349,7 +345,7 @@ def format_disk_size(size_bytes, unit):
     elif unit in units_iec:
         multiplier = 1024.0 ** units_iec.index(unit)
 
-    output = size_bytes / multiplier * (1 + 1E-16)
+    output = size_bytes // multiplier * (1 + 1E-16)
 
     # Corrections to round up as per IEEE754 standard
     if output < 10:
@@ -555,7 +551,7 @@ def main():
             'label': {
                 'choices': [
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
-                    'pc98', 'sun', ''
+                    'pc98', 'sun'
                 ],
                 'type': 'str'
             },
@@ -584,6 +580,7 @@ def main():
         },
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C', 'LC_CTYPE': 'C'}
 
     # Data extraction
     device = module.params['device']
@@ -623,13 +620,11 @@ def main():
 
     if state == 'present':
         # Default value for the label
-        if not current_device['generic']['table'] or \
-           current_device['generic']['table'] == 'unknown' and \
-           not label:
+        if not label:
             label = 'msdos'
 
         # Assign label if required
-        if label:
+        if current_device['generic'].get('table', None) != label:
             script += "mklabel %s " % label
 
         # Create partition if required
@@ -659,8 +654,8 @@ def main():
             if not module.check_mode:
                 partition = [p for p in current_parts if p['num'] == number][0]
 
-            # Assign name to the the partition
-            if name:
+            # Assign name to the partition
+            if name is not None and partition.get('name', None) != name:
                 script += "name %s %s " % (number, name)
 
             # Manage flags
