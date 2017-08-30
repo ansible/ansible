@@ -70,26 +70,26 @@
       check_mode: yes
       register: cm_change_str
 
-    - name: Add string (normal mode)
+    - name: Change string (normal mode)
       debconf:
         <<: *debconf_add
         value: foobar
       register: nm_change_str
 
-    - name: Add string again (normal mode)
+    - name: Change string again (normal mode)
       debconf:
         <<: *debconf_add
         value: foobar
       register: nm_change_str_again
 
-    - name: Add string again (check_mode)
+    - name: Change string again (check_mode)
       debconf:
         <<: *debconf_add
         value: foobar
       check_mode: yes
       register: cm_change_str_again
 
-    - name: Verify add str
+    - name: Verify change str
       assert:
         that:
           - cm_change_str.changed == nm_change_str.changed == true
@@ -112,7 +112,7 @@
               - '"tzdata/Zones/Etc" in debconf_test0.current'
               - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
 
-    # 
+    #
     # delete temp
   when: ansible_distribution in ('Ubuntu', 'Debian')
 
