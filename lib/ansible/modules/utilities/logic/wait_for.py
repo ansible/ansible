@@ -168,6 +168,7 @@ EXAMPLES = r'''
 
 import binascii
 import datetime
+import errno
 import math
 import os
 import re
@@ -563,7 +564,7 @@ def main():
                         except socket.error as e:
                             if e.errno != errno.ENOTCONN:
                                 raise
-                            #else, the server broke the connection on its end, assume it's not ready
+                        # else, the server broke the connection on its end, assume it's not ready
                         else:
                             s.close()
                         if matched:
@@ -576,7 +577,7 @@ def main():
                         except socket.error as e:
                             if e.errno != errno.ENOTCONN:
                                 raise
-                            #else, the server broke the connection on its end, assume it's not ready
+                        # else, the server broke the connection on its end, assume it's not ready
                         else:
                             s.close()
                         break
