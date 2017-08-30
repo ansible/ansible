@@ -26,7 +26,6 @@ options:
     name:
       description:
         - FCoE Network name.
-
 extends_documentation_fragment:
     - oneview
     - oneview.factsparams
@@ -74,8 +73,8 @@ from ansible.module_utils.oneview import OneViewModuleBase
 class FcoeNetworkFactsModule(OneViewModuleBase):
     def __init__(self):
         argument_spec = dict(
-            name=dict(required=False, type='str'),
-            params=dict(required=False, type='dict')
+            name=dict(type='str'),
+            params=dict(type='dict'),
         )
 
         super(FcoeNetworkFactsModule, self).__init__(additional_arg_spec=argument_spec)
