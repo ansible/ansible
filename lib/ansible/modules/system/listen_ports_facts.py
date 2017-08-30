@@ -7,7 +7,7 @@ DOCUMENTATION = '''
 module: listen_ports_facts
 author:
     - Nathan Davison (@ndavison)
-version_added: "2.5"
+version_added: "2.4"
 description:
     - Gather facts on processes listening on TCP and UDP ports. Optionally provide whitelists to gather facts on violations of the whitelist.
 short_description: Gather facts on processes listening on TCP and UDP ports.
