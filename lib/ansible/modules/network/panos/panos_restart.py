@@ -65,7 +65,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-import sys
 import traceback
 
 try:

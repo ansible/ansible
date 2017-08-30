@@ -79,7 +79,6 @@ from ansible.module_utils.fortios import backup
 #check for pyFG lib
 try:
     from pyFG import FortiOS, FortiConfig
-    from pyFG.fortios import logger
     from pyFG.exceptions import CommandExecutionException, FailedCommit, ForcedCommit
     HAS_PYFG=True
 except:

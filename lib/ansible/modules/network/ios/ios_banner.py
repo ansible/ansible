@@ -92,8 +92,11 @@ commands:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.ios import load_config, run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.ios import (
+    check_args,
+    ios_argument_spec,
+    load_config,
+)
 import re
 
 def map_obj_to_commands(updates, module):

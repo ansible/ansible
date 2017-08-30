@@ -73,7 +73,6 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import commit_configuration, discard_changes
 from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import iteritems
 

@@ -217,10 +217,13 @@ backup_path:
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import get_config, load_config, run_commands
+from ansible.module_utils.asa import (
+    asa_argument_spec,
+    check_args,
+    get_config,
+    load_config,
+)
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils._text import to_native
 
 
 
@@ -312,8 +315,6 @@ def main():
     result = {'changed': False}
 
     check_args(module)
-
-    config = None
 
 
     if module.params['backup']:
