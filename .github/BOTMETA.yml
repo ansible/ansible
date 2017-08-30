@@ -836,6 +836,8 @@ files:
     maintainers: $team_azure
   contrib/inventory/ec2:
     keywords:
+    - aws dynamic inventory
+    - aws inventory
     - ec2 inventory
     - ec2 dynamic inventory
     - ec2.py dynamic inventory script
