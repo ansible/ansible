@@ -558,6 +558,7 @@ def main():
             result = update_stack(module, stack_params, cfn)
 
         # format the stack output
+
         stack = get_stack_facts(cfn, stack_params['StackName'])
         if result.get('stack_outputs') is None:
             # always define stack_outputs, but it may be empty
