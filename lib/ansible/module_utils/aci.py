@@ -78,6 +78,7 @@ URL_MAPPING = dict(
     fc_policy=dict(aci_class='fcIfPol', mo='infra/fcIfPol-', key='name'),
     filter=dict(aci_class='vzFilter', mo='flt-', key='name'),
     gateway_addr=dict(aci_class='fvSubnet', mo='subnet-', key='ip'),
+    import_policy=dict(aci_class='configImportP', mo='fabric/configimp-', key='name'),
     l2_policy=dict(aci_class='l2IfPol', mo='infra/l2IfP-', key='name'),
     lldp_policy=dict(aci_class='lldpIfPol', mo='infra/lldpIfP-', key='name'),
     mcp=dict(aci_class='mcpIfPol', mo='infra/mcpIfP-', key='name'),
