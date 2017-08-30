@@ -163,7 +163,7 @@ def get_hostgroup_diff(client, ipa_hostgroup, module_hostgroup):
 
 
 def ensure(module, client):
-    name = module.params['name']
+    name = module.params['cn']
     state = module.params['state']
     host = module.params['host']
     hostgroup = module.params['hostgroup']

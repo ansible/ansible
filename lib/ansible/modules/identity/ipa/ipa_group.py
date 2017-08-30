@@ -203,7 +203,7 @@ def get_group_diff(client, ipa_group, module_group):
 
 def ensure(module, client):
     state = module.params['state']
-    name = module.params['name']
+    name = module.params['cn']
     group = module.params['group']
     user = module.params['user']
 

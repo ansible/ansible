@@ -251,7 +251,7 @@ def category_changed(module, client, category_name, ipa_sudorule):
 
 def ensure(module, client):
     state = module.params['state']
-    name = module.params['name']
+    name = module.params['cn']
     cmd = module.params['cmd']
     cmdcategory = module.params['cmdcategory']
     host = module.params['host']
