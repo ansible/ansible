@@ -208,7 +208,8 @@ def state_present(module, existing, proposed, candidate):
                 commands.append('{0} {1}'.format(key, peer))
 
         elif key == 'mcast-group' and value != existing_commands.get(key):
-            commands.append('no {0}'.format(key))
+            if existing_commands.get(key):
+                commands.append('no {0}'.format(key))
             commands.append('{0} {1}'.format(key, value))
 
         elif value is True:
@@ -241,12 +242,14 @@ def state_present(module, existing, proposed, candidate):
 
     if commands:
         ingress_replication_command = 'ingress-replication protocol static'
-
         if ingress_replication_command in commands:
+            commands.remove(ingress_replication_command)
+            parents.append(ingress_replication_command)
+
             static_level_cmds = [cmd for cmd in commands if 'peer' in cmd]
-            parents = [interface_command, vni_command, ingress_replication_command]
-            candidate.add(static_level_cmds, parents=parents)
             commands = [cmd for cmd in commands if 'peer' not in cmd]
+
+            candidate.add(static_level_cmds, parents=parents)
 
         candidate.add(commands, parents=parents)
 
