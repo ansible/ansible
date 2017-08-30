@@ -20,7 +20,7 @@ See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
-in the `library section of the Ansible configuration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
+in the :ref:`library section of the Ansible configuration file <library>`.
 
 .. _module_dev_should_you:
 
@@ -31,28 +31,28 @@ develop a module. Ask the following questions:
 
 1. Does a similar module already exist?
 
-There are a lot of existing modules available. You should check out the list of existing modules at :doc:`../modules`
+   There are a lot of existing modules available. You should check out the list of existing modules at :doc:`../modules`
 
 2. Has someone already worked on a similar pull request?
 
-It's possible that someone has already started developing a similar PR. There are a few ways to find open module pull requests:
+   It's possible that someone has already started developing a similar PR. There are a few ways to find open module pull requests:
 
-* `GitHub new module PRs <https://github.com/ansible/ansible/labels/new_module>`_
-* `All updates to modules <https://github.com/ansible/ansible/labels/module>`_
-* `New module PRs listed by directory <https://ansible.sivel.net/pr/byfile.html>`_ search for `lib/ansible/modules/`
+   * `GitHub new module PRs <https://github.com/ansible/ansible/labels/new_module>`_
+   * `All updates to modules <https://github.com/ansible/ansible/labels/module>`_
+   * `New module PRs listed by directory <https://ansible.sivel.net/pr/byfile.html>`_ search for `lib/ansible/modules/`
 
-If you find an existing PR that looks like it addresses the issue you are trying to solve, please provide feedback on the PR -  this will speed up getting the PR merged.
+   If you find an existing PR that looks like it addresses the issue you are trying to solve, please provide feedback on the PR -  this will speed up getting the PR merged.
 
 3. Should you use or develop an action plugin instead?
 
-Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary.
+   Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary.
 
-For more information about action plugins, `read the action plugins documentation here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_.
+   For more information about action plugins, :doc:`read the action
+   plugins documentation here <developing_plugins>`.
 
 4. Should you use a role instead?
 
-Check out the roles documentation `available here <http://docs.ansible.com/ansible/playbooks_reuse_roles.html#roles>`_.
-
+   Check out the :ref:`roles` documentation for details.
 
 .. _developing_modules_all:
 
