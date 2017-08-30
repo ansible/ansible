@@ -67,11 +67,12 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: Gather VM facts
+- name: Gather facts from standalone ESXi server having datacenter as 'ha-datacenter'
   vmware_guest_facts:
     hostname: 192.168.1.209
     username: administrator@vsphere.local
     password: vmware
+    datacenter: ha-datacenter
     validate_certs: no
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
   delegate_to: localhost
