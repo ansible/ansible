@@ -9,7 +9,6 @@
 
 $ErrorActionPreference = 'Stop'
 
-
 # As of chocolatey 0.9.10, non-zero success exit codes can be returned
 # See https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
 $successexitcodes = (0, 1605, 1614, 1641, 3010)
@@ -34,7 +33,7 @@ $ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" 
 $skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
-$proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str"
+$proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($proxy_username -ne $null)
 
 $result = @{
     changed = $false
@@ -52,7 +51,6 @@ if ($upgrade)
         $state = "latest"
     }
 }
-
 
 Function Chocolatey-Install-Upgrade
 {
@@ -124,9 +122,8 @@ Function Chocolatey-Install-Upgrade
         {
             Add-Warning -obj $result -message "Chocolatey was older than v0.10.5, so it was upgraded during this task run."
             $script:options = @( "-dv" )
-            Choco-Upgrade -package chocolatey
+            Choco-Upgrade -package chocolatey  -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
         }
-
     }
 
     # set the default verbosity options
@@ -183,7 +180,6 @@ Function Choco-IsInstalled
     return $false
 }
 
-
 Function Choco-Upgrade
 {
     [CmdletBinding()]
@@ -201,7 +197,10 @@ Function Choco-Upgrade
         [bool] $allowemptychecksums,
         [bool] $ignorechecksums,
         [bool] $ignoredependencies,
-        [bool] $allowdowngrade
+        [bool] $allowdowngrade,
+        [string] $proxy_url,
+        [string] $proxy_username,
+        [string] $proxy_password
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -266,6 +265,21 @@ Function Choco-Upgrade
         $options += "--allow-downgrade"
     }
 
+    if ($proxy_url)
+    {
+        $options += "--proxy=`"'$proxy_url'`""
+    }
+
+    if ($proxy_username)
+    {
+        $options += "--proxy-user=`"'$proxy_username'`""
+    }
+
+    if ($proxy_password)
+    {
+        $options += "--proxy-password=`"'$proxy_password'`""
+    }
+
     # NOTE: Chocolatey does not use stderr except for help output
     Try {
         $output = & $script:executable upgrade $script:options $options
@@ -298,7 +312,6 @@ Function Choco-Upgrade
     $result.failed = $false
 }
 
-
 Function Choco-Install
 {
     [CmdletBinding()]
@@ -316,7 +329,10 @@ Function Choco-Install
         [bool] $allowemptychecksums,
         [bool] $ignorechecksums,
         [bool] $ignoredependencies,
-        [bool] $allowdowngrade
+        [bool] $allowdowngrade,
+        [string] $proxy_url,
+        [string] $proxy_username,
+        [string] $proxy_password
     )
 
     if (Choco-IsInstalled $package)
@@ -327,7 +343,8 @@ Function Choco-Install
                 -skipscripts $skipscripts -source $source -installargs $installargs `
                 -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
                 -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
-                -allowdowngrade $allowdowngrade
+                -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
+                -proxy_username $proxy_username -proxy_password $proxy_password
             return
         }
         elseif (-not $force)
@@ -386,6 +403,21 @@ Function Choco-Install
     if ($skipscripts)
     {
         $options += "--skip-scripts"
+    }
+
+    if ($proxy_url)
+    {
+        $options += "--proxy=`"'$proxy_url'`""
+    }
+
+    if ($proxy_username)
+    {
+        $options += "--proxy-user=`"'$proxy_username'`""
+    }
+
+    if ($proxy_password)
+    {
+        $options += "--proxy-password=`"'$proxy_password'`""
     }
 
     # NOTE: Chocolatey does not use stderr except for help output
@@ -485,49 +517,7 @@ Function Choco-Uninstall
     $result.failed = $false
 }
 
-
-Function Choco-ConfigureProxy
-{
-    [CmdletBinding()]
-
-    param(
-        [string] $proxy_url,
-        [string] $proxy_username,
-        [string] $proxy_password
-    )
-    $hash = @{
-        proxy = $proxy_url
-        proxyUser = $proxy_username
-        proxyPassword = $proxy_password
-    }
-    foreach ($h in $hash.GetEnumerator()) {
-        if ($($h.Value))
-        {
-            $cmd = "$executable config set $($h.Name) $($h.Value)"
-        }
-        else
-        {
-            $cmd = "$executable config unset $($h.Name)"
-        }
-        $results = Invoke-Expression $cmd
-        if ($LastExitCode -ne 0)
-        {
-            $result.choco_error_cmd = $cmd
-            $result.choco_error_log = $results
-
-            Throw "Error setting $($h.Name) with $($h.Value)"
-        }
-        If ("$results" -notmatch "Nothing to change. Config already set.")
-        {
-            $result.changed = $true
-        }
-    }
-}
-
-
 Chocolatey-Install-Upgrade
-
-Choco-ConfigureProxy
 
 if ($state -in ("absent", "reinstalled")) {
 
@@ -542,8 +532,8 @@ if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
         -skipscripts $skipscripts -source $source -installargs $installargs `
         -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
-        -allowdowngrade ($state -eq "downgrade")
-
+        -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
+        -proxy_username $proxy_username -proxy_password $proxy_password
 }
 
 Exit-Json -obj $result
