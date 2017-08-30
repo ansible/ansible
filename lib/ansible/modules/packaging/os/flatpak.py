@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2017 Ansible Project GNU General Public License v3.0+ (see
-# COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright (c) 2017 Ansible Project GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 import subprocess
 from urlparse import urlparse
 from ansible.module_utils.basic import AnsibleModule
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -85,7 +86,6 @@ remote:
     sample: https://sdk.gnome.org/gnome-apps.flatpakrepo
 '''
 
-__metaclass__ = type
 
 def install_flat(binary, flat, module):
     if module.check_mode:
