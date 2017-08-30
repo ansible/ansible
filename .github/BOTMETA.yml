@@ -840,6 +840,7 @@ files:
     - ec2 dynamic inventory
     - ec2.py dynamic inventory script
     - ec2.py inventory script
+    - ec2.py inventory
     labels:
     - cloud
     - aws
