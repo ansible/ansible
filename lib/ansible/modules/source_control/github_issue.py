@@ -103,7 +103,7 @@ def main():
     result = dict()
 
     gh_obj = github3.issue(organization, repo, issue)
-    if isinstance(gh_obj, github3.null.NullObject):
+    if gh_obj is None:
         module.fail_json(msg="Failed to get details about issue specified. "
                              "Please check organization, repo and issue "
                              "details and try again.")
