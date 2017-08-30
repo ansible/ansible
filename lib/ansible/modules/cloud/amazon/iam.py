@@ -163,8 +163,6 @@ task:
 
 import traceback
 import json
-import itertools
-import sys
 try:
     import boto
     import boto.iam

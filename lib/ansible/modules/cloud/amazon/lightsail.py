@@ -436,7 +436,7 @@ def _find_instance_info(client, instance_name):
     inst = None
     try:
         inst = client.get_instance(instanceName=instance_name)
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError:
         raise
     return inst['instance']
 

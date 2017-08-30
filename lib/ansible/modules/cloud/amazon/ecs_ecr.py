@@ -126,8 +126,6 @@ repository:
 '''
 
 import json
-import time
-import inspect
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule

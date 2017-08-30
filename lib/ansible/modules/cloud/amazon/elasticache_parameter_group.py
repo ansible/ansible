@@ -277,7 +277,7 @@ def get_info(conn, name):
     try:
         data = conn.describe_cache_parameters(CacheParameterGroupName=name)
         return data
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError:
         return False
 
 

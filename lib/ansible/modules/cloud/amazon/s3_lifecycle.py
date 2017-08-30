@@ -143,7 +143,6 @@ EXAMPLES = '''
 
 '''
 
-import xml.etree.ElementTree as ET
 import copy
 import datetime
 

@@ -152,7 +152,7 @@ def copy(module, connection, name, target, bucket):
                                             TargetSnapshotName=target,
                                             TargetBucket=bucket)
         changed = True
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError:
         module.fail_json(msg="Unable to copy the snapshot.", exception=traceback.format_exc())
     return response, changed
 

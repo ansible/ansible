@@ -135,7 +135,6 @@ import uuid
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection, exception
     from boto.route53.healthcheck import HealthCheck
     HAS_BOTO = True

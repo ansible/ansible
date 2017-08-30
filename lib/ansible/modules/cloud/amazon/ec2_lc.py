@@ -175,8 +175,15 @@ EXAMPLES = '''
 '''
 
 import traceback
-from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec, ec2_connect, camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names,
-                                      boto3_conn, snake_dict_to_camel_dict, HAS_BOTO3)
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    camel_dict_to_snake_dict,
+    ec2_argument_spec,
+    get_aws_connection_info,
+    get_ec2_security_group_ids_from_names,
+    snake_dict_to_camel_dict,
+)
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 
@@ -187,7 +194,6 @@ except ImportError:
 
 
 def create_block_device_meta(module, volume):
-    MAX_IOPS_TO_SIZE_RATIO = 30
     if 'snapshot' not in volume and 'ephemeral' not in volume:
         if 'volume_size' not in volume:
             module.fail_json(msg='Size must be specified when creating a new volume or modifying the root volume')

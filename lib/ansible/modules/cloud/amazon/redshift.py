@@ -233,7 +233,6 @@ import time
 
 try:
     import boto
-    from boto import redshift
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False

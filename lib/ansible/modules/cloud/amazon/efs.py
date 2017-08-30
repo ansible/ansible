@@ -199,10 +199,8 @@ tags:
 
 '''
 
-import sys
 from time import sleep
 from time import time as timestamp
-from collections import defaultdict
 
 try:
     from botocore.exceptions import ClientError

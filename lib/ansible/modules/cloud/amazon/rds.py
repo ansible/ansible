@@ -517,7 +517,6 @@ db_subnet_groups:
                     sample: "active"
 '''
 
-import sys
 import time
 
 from ansible.module_utils.ec2 import AWSRetry
@@ -567,13 +566,13 @@ class RDSConnection:
     def get_db_instance(self, instancename):
         try:
             return RDSDBInstance(self.connection.get_all_dbinstances(instancename)[0])
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError:
             return None
 
     def get_db_snapshot(self, snapshotid):
         try:
             return RDSSnapshot(self.connection.get_all_dbsnapshots(snapshot_id=snapshotid)[0])
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
@@ -670,7 +669,7 @@ class RDS2Connection:
             )['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
             result = RDS2Snapshot(snapshots[0])
             return result
-        except boto.rds2.exceptions.DBSnapshotNotFound as e:
+        except boto.rds2.exceptions.DBSnapshotNotFound:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
@@ -785,7 +784,7 @@ class RDSDBInstance:
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
-        except Exception as e:
+        except Exception:
             d["replication_source"] = None
         return d
 

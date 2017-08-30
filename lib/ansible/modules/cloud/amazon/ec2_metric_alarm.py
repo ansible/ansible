@@ -149,7 +149,7 @@ EXAMPLES = '''
 
 try:
     import boto.ec2.cloudwatch
-    from boto.ec2.cloudwatch import CloudWatchConnection, MetricAlarm
+    from boto.ec2.cloudwatch import MetricAlarm
     from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
