@@ -389,7 +389,7 @@ files:
   $modules/monitoring/statusio_maintenance.py: bhcopeland
   $modules/monitoring/uptimerobot.py: nate-kingsley
   $modules/monitoring/zabbix_group.py: cove eikef harrisongu
-  $modules/monitoring/zabbix_host.py: cove eikef harrisongu
+  $modules/monitoring/zabbix_host.py: cove eikef harrisongu D3DeFi
   $modules/monitoring/zabbix_hostmacro.py: cave eikef
   $modules/monitoring/zabbix_maintenance.py: abulimov eikef
   $modules/monitoring/zabbix_screen.py: cove eikef harrisongu
