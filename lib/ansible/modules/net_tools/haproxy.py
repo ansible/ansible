@@ -49,7 +49,7 @@ options:
     default: false
   socket:
     description:
-      - Path to the HAProxy socket file. If you want to connect via TCP, use the format 'tcp://host:port'.
+      - Path to the HAProxy socket file. If you want to connect via TCP, use the format 'tcp://host:port' or 'tcp:host:port'.
     required: false
     default: /var/run/haproxy.sock
   state:
