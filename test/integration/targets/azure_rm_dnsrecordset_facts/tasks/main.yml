@@ -1,6 +1,6 @@
 - name: Create random domain name
   set_fact:
-    domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') }}"
+    domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
 
 - name: Create a DNS zone
   azure_rm_dnszone:
