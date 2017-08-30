@@ -107,14 +107,7 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pure import get_system, purefa_argument_spec
-
-
-try:
-    from purestorage import purestorage
-    HAS_PURESTORAGE = True
-except ImportError:
-    HAS_PURESTORAGE = False
+from ansible.module_utils.pure import HAS_PURESTORAGE, get_system, purefa_argument_spec
 
 
 def get_pgroup(module, array):
