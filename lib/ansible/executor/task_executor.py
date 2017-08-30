@@ -509,6 +509,7 @@ class TaskExecutor:
                 retries += 1
         else:
             retries = 1
+            display.warning("The parameter 'retries' hasn't been defined, the value for 'retries' is forced to 1.")
 
         delay = self._task.delay
         if delay < 0:
