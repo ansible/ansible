@@ -103,7 +103,7 @@ def install_flat(module, binary, flat):
             module.exit_json(changed=True)
 
         command = "{} install -y --from {}".format(binary, flat)
-    
+
         output = flatpak_command(module, command)
         return 0, output
 
@@ -160,7 +160,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
+            state=dict(type='str', default='present',
+                       choices=['absent', 'present']),
             executable=dict(type='path'),  # No default on purpose
         ),
         supports_check_mode=True,
@@ -181,9 +182,9 @@ def main():
         module.warn("Executable '%s' is not found on the system." % executable)
 
     if state == 'present':
-        result=install_flat(module, binary, name)
+        result = install_flat(module, binary, name)
     elif state == 'absent':
-        result=uninstall_flat(module, binary, name)
+        result = uninstall_flat(module, binary, name)
     module.exit_json(changed=True, msg=result[1])
 
 
