@@ -1,6 +1,6 @@
 - name: Warn user
   win_toast:
-    expire_seconds: 10
+    expire: 10
     msg: Keep calm and carry on.
   register: msg_result
   ignore_errors: True
@@ -54,7 +54,7 @@
 
 - name: Warn user again
   win_toast:
-    expire_seconds: 10
+    expire: 10
     msg: Keep calm and carry on.
   register: msg_result2
   ignore_errors: True
