@@ -111,3 +111,7 @@ class NetworkSetFactsSpec(unittest.TestCase,
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
             ansible_facts=dict(network_sets=network_sets))
+
+
+if __name__ == '__main__':
+    unittest.main()
