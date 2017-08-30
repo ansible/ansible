@@ -178,10 +178,11 @@ def trafficmanagerprofile_group_to_dict(tm):
         name=tm.name,
         resource_group=tm.resource_group,
         location=tm.location,
-        tags=tm.tags,
-    )
+        tags=tm.tags
+        )
 
 class AzureRMTrafficManager(AzureRMModuleBase):
+    # Main Traffic Manager class
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -205,7 +206,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             changed=False,
             contains_endpoints=False,
             state=dict(),
-        )
+            )
 
         super(AzureRMTrafficManager, self).__init__(self.module_arg_spec,
                                                     supports_check_mode=True)
@@ -220,7 +221,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
 
         # Before we proceed, verify that the resource group exists.
         try:
-            resource_group = self.get_resource_group(self.resource_group)
+            self.get_resource_group(self.resource_group)
 
         except CloudError:
             self.fail('resource group {} not found'.format(self.resource_group))
@@ -228,9 +229,17 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         # Initialize the Ansible return
         results = dict()
         changed = False
-        current_traffic_manager = self.get_traffic_manager_profile(self.resource_group, self.name)
-        results = self.traffic_manager_to_dict(current_traffic_manager, self.resource_group,
-                                               self.name, self.location, self.properties)
+        current_traffic_manager = self.get_traffic_manager_profile(
+            self.resource_group,
+            self.name
+            )
+
+        results = self.traffic_manager_to_dict(
+            current_traffic_manager,
+            self.resource_group,
+            self.name, self.location,
+            self.properties
+            )
 
         try:
             if self.state == 'present':
@@ -246,28 +255,35 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                         self.results['state'] = self.compare_profiles(
                             current_traffic_manager,
                             self.properties
-                        )
+                            )
                     return self.results
 
                 # Not in check_mode. This will create the profile.
                 else:
                     if not bool(current_traffic_manager):
                         # profile doesn't exist. We will created it.
-                        # Traffic Manager uses DNS, we need to check if the 
+                        # Traffic Manager uses DNS, we need to check if the
                         # name used in the DNS prefix is available
                         try:
-                            self.trafficmanager_client.profiles.check_traffic_manager_relative_dns_name_availability(self.name)
-        
-                        except CloudError:
-                            self.fail(
-                                'Domain name {0} already exists. Please choose a different DNS prefix'.format(self.name))
+                            dns_available = dict()
+                            dns_available = self.trafficmanager_client.profiles \
+                                                .check_traffic_manager_relative_dns_name_availability(
+                                                    self.name,
+                                                    'Microsoft.Network/trafficManagerProfiles'
+                                                    )
+                            if bool(dns_available.name_available):
+                                pass
 
-                    traffic_manager = self.create_or_update_traffic_manager_profile(
-                        self.resource_group, 
-                        self.name,
-                        self.location, 
-                        self.properties
-                        )
+                        except CloudError as cloud_error:
+                            self.fail('Error checking the traffic manager DNS: {0}. {1}'\
+                                .format(self.name, str(cloud_error)))
+
+                        traffic_manager = self.create_or_update_traffic_manager_profile(
+                            self.resource_group,
+                            self.name,
+                            self.location,
+                            self.properties
+                            )
                     results = self.traffic_manager_to_dict(
                         traffic_manager,
                         self.resource_group,
@@ -283,14 +299,16 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 if self.check_mode:
                     self.results['state'] = dict(
                         resouce_group=self.resource_group,
-                        name=self.name)
+                        name=self.name
+                        )
                     return self.results
                 if bool(current_traffic_manager):
                     # Deletes the traffic manager and set change variable
-                    self.remove_traffic_manager_profile(self.resource_group,
-                                                        self.name)
+                    self.remove_traffic_manager_profile(
+                        self.resource_group,
+                        self.name
+                        )
                     changed = True
-                    #results['status'] = 'Deleted'
         except CloudError:
             if self.state == 'present':
                 changed = True
@@ -324,7 +342,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         if azure_profile.get('profile_status') != properties.get('profile_status'):
             result['profile_status'] = properties.get('profile_status')
 
-        if azure_profile.get('dns_config', {}).get('ttl') != properties.get('dns_config', {}).get('ttl'):
+        if azure_profile.get('dns_config', {}).get('ttl') != \
+            properties.get('dns_config', {}).get('ttl'):
             result['dns_config']['ttl'] = properties.get('dns_config', {}).get('ttl')
 
         monitor_config_list = [
@@ -335,16 +354,16 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             'status',
             'timeout_in_seconds',
             'tolerated_number_of_failures'
-        ]
+            ]
         for item in monitor_config_list:
-            if azure_profile.get('monitor_config', {}).get(item) != properties.get('monitor_config', {}).get(item):
+            if azure_profile.get('monitor_config', {}).get(item) != \
+                properties.get('monitor_config', {}).get(item):
                 if bool(properties.get('monitor_config', {}).get(item)):
                     result['monitor_config'][item] = properties.get('monitor_config', {}).get(item)
 
         return result
 
-    def traffic_manager_to_dict(self, traffic_manager, resource_group=None,
-                                name=None, location=None, properties=None):
+    def traffic_manager_to_dict(self, traffic_manager, resource_group, name, location, properties):
         '''
         Converts a traffic manager profile to a dictionary
 
@@ -362,15 +381,19 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 dns_config = {}
                 monitor_config = {}
                 tags = []
-                properties = dict(dns_config=dns_config,
-                              monitor_config=monitor_config, tags=tags)
+                properties = dict(
+                    dns_config=dns_config,
+                    monitor_config=monitor_config,
+                    tags=tags
+                    )
 
             return dict(
                 # id=traffic_manager.profile.id,
                 name=name,
                 resource_group=resource_group,
                 location=location,
-                properties=properties)
+                properties=properties
+                )
                 # provisioning_state=traffic_manager.properties.provisioning_state
 
         elif traffic_manager:  # Create a dictionary from the Azure traffic manager
@@ -399,9 +422,10 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 if profile.name == name:
                     return self.trafficmanager_client.profiles.get(resource_group, name)
             return None  # if there is no profile returns None
-        except CloudError as ce:
+        except CloudError as cloud_error:
             self.fail(
-                "Error getting traffic manager profile with nanme: {0}. {1}".format(name, ce))
+                "Error getting traffic manager profile with nanme: {0}. {1}" \
+                    .format(name, cloud_error))
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
 
@@ -420,13 +444,13 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 if profile.name == name:
                     return True
             return False
-        except CloudError as ce:
+        except CloudError as cloud_error:
             self.fail(
-                "Error getting traffic manager profile with nanme: {0}.  {1}".format(name, ce))
+                "Error getting traffic manager profile with nanme: {0}. {1}" \
+                 .format(name, cloud_error))
         except Exception as exc:
             self.fail(
                 "Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
-
 
     def remove_traffic_manager_profile(self, resource_group, name):
         '''
@@ -438,14 +462,13 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         '''
         try:
             self.trafficmanager_client.profiles.delete(resource_group, name)
-        except CloudError as ce:
+        except CloudError as cloud_error:
             self.fail(
-                "Error getting traffic manager profile with nanme: {0}. {1}".format(name, ce))
+                "Error getting traffic manager profile with nanme: {0}. {1}" \
+                .format(name, cloud_error))
         except Exception as exc:
             self.fail(
                 "Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
-
-
 
     def create_or_update_traffic_manager_profile(self, resource_group, name, location, properties):
         '''
@@ -469,14 +492,22 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         # Create Endpoints
         endpoints_config = self.create_endpoints(endpoints)
 
-        profile = Profile(tags, location, profile_status, traffic_routing_method,
-                          dns_config, monitor_config, endpoints_config)
+        profile = Profile(
+            tags,
+            location,
+            profile_status,
+            traffic_routing_method,
+            dns_config,
+            monitor_config,
+            endpoints_config
+            )
 
         try:
-            return self.trafficmanager_client.profiles.create_or_update(resource_group, name, profile)
-        except CloudError as cloudError:
-            self.fail("Error creating or updating traffic manager profile with name {0}.  {1}"
-                      .format(name, cloudError))
+            return self.trafficmanager_client \
+                        .profiles.create_or_update(resource_group, name, profile)
+        except CloudError as cloud_error:
+            self.fail("Error creating or updating traffic manager profile with name {0}. {1}"
+                      .format(name, cloud_error))
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
 
