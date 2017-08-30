@@ -314,7 +314,7 @@ def create_changeset(module, stack_params, cfn):
             result = dict(changed=False, output='ChangeSet %s already exists.' % changeset_name, warnings=[warning])
         else:
             cs = cfn.create_change_set(**stack_params)
-            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+            result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET')
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
                 'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
                 'NOTE that dependencies on this stack might fail due to pending changes!']
@@ -378,7 +378,7 @@ def stack_operation(cfn, stack_name, operation):
                 return ret
         # it covers ROLLBACK_COMPLETE and UPDATE_ROLLBACK_COMPLETE
         # Possible states: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w1ab2c15c17c21c13
-        elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE'):
+        elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE') and operation != 'CREATE_CHANGESET':
             ret.update({'changed': True, 'failed': True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
@@ -558,7 +558,6 @@ def main():
             result = update_stack(module, stack_params, cfn)
 
         # format the stack output
-
         stack = get_stack_facts(cfn, stack_params['StackName'])
         if result.get('stack_outputs') is None:
             # always define stack_outputs, but it may be empty
