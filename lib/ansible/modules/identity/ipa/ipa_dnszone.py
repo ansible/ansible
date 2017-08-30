@@ -84,8 +84,8 @@ zone:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils._text import to_native
 
 
 class DNSZoneIPAClient(IPAClient):
@@ -177,9 +177,8 @@ def main():
         )
         changed, zone = ensure(module, client)
         module.exit_json(changed=changed, zone=zone)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == '__main__':
