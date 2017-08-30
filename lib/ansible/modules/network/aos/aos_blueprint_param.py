@@ -159,8 +159,6 @@ params_list:
   sample: {'...'}
 '''
 
-import json
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aos import get_aos_session, find_collection_item, check_aos_version
 from ansible.module_utils.pycompat24 import get_exception
