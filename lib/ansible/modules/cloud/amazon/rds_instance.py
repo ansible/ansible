@@ -359,13 +359,14 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
             resource.get('DBInstanceIdentifier'), resource['DBInstanceStatus'], status))
     return resource
 
+
 aurora_create_required_vars = ['db_instance_identifier', 'db_instance_class', 'engine']
 aurora_create_valid_vars = ['apply_immediately', 'character_set_name', 'cluster', 'db_name',
                             'engine_version', 'db_instance_class', 'license_model', 'maint_window',
                             'option_group', 'parameter_group', 'port', 'publicly_accessible',
                             'subnet', 'upgrade', 'tags', 'zone']
-db_create_required_vars =  ['db_instance_identifier', 'engine', 'allocated_storage', 'db_instance_class',
-                            'username', 'password']
+db_create_required_vars = ['db_instance_identifier', 'engine', 'allocated_storage', 'db_instance_class',
+                           'username', 'password']
 db_create_valid_vars = ['backup_retention', 'backup_window',
                         'character_set_name', 'cluster', 'db_name', 'engine_version',
                         'license_model', 'maint_window', 'multi_zone',
