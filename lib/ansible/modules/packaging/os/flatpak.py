@@ -89,7 +89,7 @@ remote:
 
 from ansible.module_utils.basic import AnsibleModule
 import subprocess
-#from urlparse import urlparse
+# from urlparse import urlparse
 
 
 def install_flat(module, binary, flat):
