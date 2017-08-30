@@ -37,4 +37,3 @@
     state: absent
     name: "{{ traffic_manager_name }}"
     resource_group: "{{ resource_group }}"
-    
