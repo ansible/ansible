@@ -21,7 +21,7 @@
 - assert:
     that: results.changed
 
-- name: Modify availabilty set immutable options - no changes, issue warning
+- name: Modify availabilty set immutable options - no changes, fail for immutable options
   azure_rm_availabilityset:
     name: myavailabilityset2
     resource_group: "{{ resource_group }}"
@@ -29,13 +29,14 @@
     platform_fault_domain_count: 2
     sku: Aligned
   register: results
+  ignore_errors: yes
 
 - assert:
     that: 
     - not results.changed
-    - results.warnings[0] == 'You tried to change platform_update_domain_count but is was unsuccessful'
+    - results.msg == 'You tried to change platform_update_domain_count but is was unsuccessful. An Availability Set is immutable, except tags'
 
-- name: Modify availabilty set immutable options and set tags - change tags and issue warning for immutable options
+- name: Modify availabilty set immutable options and set tags - change tags and fail for immutable options
   azure_rm_availabilityset:
     name: myavailabilityset2
     resource_group: "{{ resource_group }}"
@@ -45,12 +46,12 @@
     tags:
       test1: modified
   register: results
+  ignore_errors: yes
 
 - assert:
     that: 
-    - results.changed
-    - results.state.tags.test1 == 'modified'
-    - results.warnings[0] == 'You tried to change platform_update_domain_count but is was unsuccessful'
+    - not results.changed
+    - results.msg == 'You tried to change platform_update_domain_count but is was unsuccessful. An Availability Set is immutable, except tags'
 
 - name: Modify availabilty set options to update tags
   azure_rm_availabilityset:
