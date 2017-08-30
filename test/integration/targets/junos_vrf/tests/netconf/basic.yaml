@@ -67,12 +67,8 @@
       - "'[edit routing-instances test-1]' in result.diff.prepared"
       - result.diff.prepared | search("\+ *interface ge-0/0/2.0")
       - result.diff.prepared | search("\+ *interface ge-0/0/3.0")
-      - result.diff.prepared | search("\- *interface ge-0/0/5.0")
-      - result.diff.prepared | search("\- *interface ge-0/0/6.0")
       - "'[edit routing-instances test-1]' in result.diff.prepared"
-      - result.diff.prepared | search("\- *route-distinguisher 3.3.3.3:10")
       - result.diff.prepared | search("\+ *route-distinguisher 1.1.1.1:10")
-      - result.diff.prepared | search("\- *vrf-target target:65513:111")
       - result.diff.prepared | search("\+ *vrf-target target:65514:113")
 
 - name: Deactivate vrf

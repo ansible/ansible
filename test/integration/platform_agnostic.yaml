@@ -8,7 +8,7 @@
     debug: false
 
 
-# Run the tests within blocks allows the the next module to be tested if the previous one fails.
+# Run the tests within blocks allows the next module to be tested if the previous one fails.
 # This is done to allow https://github.com/ansible/dci-partner-ansible/ to run the full set of tests.
 
 
@@ -26,13 +26,6 @@
       - include_role:
           name: net_banner
         when: "limit_to in ['*', 'net_banner']"
-      rescue:
-        - set_fact: test_failed=true
-
-    - block:
-      - include_role:
-          name: net_command
-        when: "limit_to in ['*', 'net_command']"
       rescue:
         - set_fact: test_failed=true
 

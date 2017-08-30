@@ -15,6 +15,16 @@
         - "rpm_result.rc == 1"
 
 # UNINSTALL AGAIN
+- name: uninstall sos again in check mode
+  yum: name=sos state=removed
+  check_mode: true
+  register: yum_result
+
+- name: verify no change on re-uninstall in check mdoe
+  assert:
+    that:
+        - "not yum_result.changed"
+
 - name: uninstall sos again
   yum: name=sos state=removed
   register: yum_result
@@ -25,6 +35,16 @@
         - "not yum_result.changed"
 
 # INSTALL
+- name: install sos in check mode
+  yum: name=sos state=present
+  check_mode: true
+  register: yum_result
+
+- name: verify installation of sos in check mode
+  assert:
+    that:
+        - "yum_result.changed"
+
 - name: install sos
   yum: name=sos state=present
   register: yum_result
@@ -50,11 +70,71 @@
         - "'results' in yum_result"
 
 # INSTALL AGAIN
+- name: install sos again in check mode
+  yum: name=sos state=present
+  check_mode: true
+  register: yum_result
+- name: verify no change on second install in check mode
+  assert:
+    that:
+        - "not yum_result.changed"
+
 - name: install sos again
   yum: name=sos state=present
   register: yum_result
-
 - name: verify no change on second install
+  assert:
+    that:
+        - "not yum_result.changed"
+
+# INSTALL AGAIN WITH LATEST
+- name: install sos again with state latest in check mode
+  yum: name=sos state=latest
+  check_mode: true
+  register: yum_result
+- name: verify install sos again with state latest in check mode
+  assert:
+    that:
+        - "not yum_result.changed"
+
+- name: install sos again with state latest idempotence
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos again with state latest idempotence
+  assert:
+    that:
+        - "not yum_result.changed"
+
+# INSTALL WITH LATEST
+- name: uninstall sos
+  yum: name=sos state=removed
+  register: yum_result
+- name: verify uninstall sos
+  assert:
+    that:
+        - "yum_result|success"
+
+- name: install sos with state latest in check mode
+  yum: name=sos state=latest
+  check_mode: true
+  register: yum_result
+- name: verify install sos with state latest in check mode
+  assert:
+    that:
+        - "yum_result.changed"
+
+- name: install sos with state latest
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos with state latest
+  assert:
+    that:
+        - "yum_result.changed"
+
+- name: install sos with state latest idempotence
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos with state latest idempotence
   assert:
     that:
         - "not yum_result.changed"
@@ -163,7 +243,7 @@
 - name: uninstall sos and bc
   yum: name=sos,bc state=removed
 
-- name: install non-existent rpm 
+- name: install non-existent rpm
   yum: name="{{ item }}"
   with_items:
   - does-not-exist
@@ -255,7 +335,7 @@
     state: present
   register: yum_result
 
-- name: verify nothing changed
+- name: verify sos is installed
   assert:
     that:
         - "yum_result.rc == 0"
@@ -267,6 +347,25 @@
         - "'changed' in yum_result"
         - "'msg' in yum_result"
         - "'rc' in yum_result"
+        - "'results' in yum_result"
+
+- name: try to install the group again, with --check to check 'changed'
+  yum:
+    name: "@Development Tools"
+    state: present
+  check_mode: yes
+  register: yum_result
+
+- name: verify nothing changed
+  assert:
+    that:
+        - "not yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
         - "'results' in yum_result"
 
 - name: try to install non existing group

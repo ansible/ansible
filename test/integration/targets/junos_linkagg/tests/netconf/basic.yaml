@@ -37,7 +37,6 @@
       - "'<device-count>4</device-count>' in config.xml"
       - "'<bundle>ae0</bundle>' in config.xml"
       - "'<active/>' in config.xml"
-      - "'<description>configured by junos_linkagg</description>' in config.xml"
 
 - name: configure linkagg (idempotent)
   junos_linkagg:

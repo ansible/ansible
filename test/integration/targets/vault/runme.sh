@@ -14,6 +14,8 @@ echo "This is a test file for format 1.2" > "${TEST_FILE_1_2}"
 
 TEST_FILE_OUTPUT="${MYTMPDIR}/test_file_output"
 
+
+
 # old format
 ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
 
@@ -38,6 +40,7 @@ echo "rc was $WRONG_RC (1 is expected)"
 
 set -eux
 
+
 # new format, view
 ansible-vault view "$@" --vault-password-file vault-password format_1_1_AES256.yml
 
@@ -61,6 +64,9 @@ ansible-vault view "$@" --vault-password-file password-script.py format_1_2_AES2
 
 # new 1.2 format, view, using password script with vault-id
 ansible-vault view "$@" --vault-id password-script.py format_1_2_AES256.yml
+
+# newish 1.1 format, view, using a vault-id list from config env var
+ANSIBLE_VAULT_IDENTITY_LIST='wrong-password@vault-password-wrong,default@vault-password' ansible-vault view "$@" --vault-id password-script.py format_1_1_AES256.yml
 
 # new 1.2 format, view, ENFORCE_IDENTITY_MATCH=true, should fail, no 'test_vault_id' vault_id
 ANSIBLE_VAULT_ID_MATCH=1 ansible-vault view "$@" --vault-password-file vault-password format_1_2_AES256.yml && :
@@ -92,6 +98,15 @@ ANSIBLE_VAULT_PASSWORD_FILE=vault-password ansible-vault view "$@" format_1_1_AE
 
 # test with a default vault password set via config/env, wrong password
 ANSIBLE_VAULT_PASSWORD_FILE=vault-password-wrong ansible-vault view "$@" format_1_1_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+# test with a default vault-id list set via config/env, right password
+ANSIBLE_VAULT_PASSWORD_FILE=wrong@vault-password-wrong,correct@vault-password ansible-vault view "$@" format_1_1_AES.yml && :
+
+# test with a default vault-id list set via config/env,wrong passwords
+ANSIBLE_VAULT_PASSWORD_FILE=wrong@vault-password-wrong,alsowrong@vault-password-wrong ansible-vault view "$@" format_1_1_AES.yml && :
 WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
@@ -184,6 +199,24 @@ ansible-vault encrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --outpu
 ansible-vault view "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" - < "${TEST_FILE_OUTPUT}"
 ansible-vault decrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --output=- < "${TEST_FILE_OUTPUT}"
 
+# test using an empty vault password file
+ansible-vault view "$@" --vault-password-file empty-password format_1_1_AES256.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+ansible-vault view "$@" --vault-id=empty@empty-password --vault-password-file empty-password format_1_1_AES256.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+echo 'foo' > some_file.txt
+ansible-vault encrypt "$@" --vault-password-file empty-password some_file.txt && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "a test string"
 
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "blippy" "a test string names blippy"
@@ -225,6 +258,9 @@ ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-pass
 
 # test with a default vault password file set in config
 ANSIBLE_VAULT_PASSWORD_FILE=vault-password ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password-wrong
+
+# test using vault_identity_list config
+ANSIBLE_VAULT_IDENTITY_LIST='wrong-password@vault-password-wrong,default@vault-password' ansible-playbook test_vault.yml -i ../../inventory -v "$@"
 
 # test that we can have a vault encrypted yaml file that includes embedded vault vars
 # that were encrypted with a different vault secret
@@ -276,6 +312,12 @@ echo "rc was $WRONG_RC (1 is expected)"
 
 # with multiple wrong passwords with --vault-id
 ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-id wrong1@vault-password-wrong --vault-id wrong2@vault-password-wrong && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+# with empty password file
+ansible-playbook test_vault.yml           -i ../../inventory -v "$@" --vault-id empty@empty-password && :
 WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]

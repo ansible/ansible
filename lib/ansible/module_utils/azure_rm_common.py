@@ -94,10 +94,13 @@ try:
     from azure.mgmt.storage.version import VERSION as storage_client_version
     from azure.mgmt.compute.version import VERSION as compute_client_version
     from azure.mgmt.resource.version import VERSION as resource_client_version
+    from azure.mgmt.dns.version import VERSION as dns_client_version
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
+    from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
+    from azure.mgmt.dns import DnsManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -126,7 +129,8 @@ AZURE_EXPECTED_VERSIONS = dict(
     storage_client_version="1.0.0",
     compute_client_version="1.0.0",
     network_client_version="1.0.0",
-    resource_client_version="1.1.0"
+    resource_client_version="1.1.0",
+    dns_client_version="1.0.1"
 )
 
 AZURE_MIN_RELEASE = '2.0.0'
@@ -174,6 +178,8 @@ class AzureRMModuleBase(object):
         self._storage_client = None
         self._resource_client = None
         self._compute_client = None
+        self._trafficmanager_client = None
+        self._dns_client = None
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
         # self.debug = self.module.params.get('debug')
@@ -671,6 +677,18 @@ class AzureRMModuleBase(object):
         return self._resource_client
 
     @property
+    def trafficmanager_client(self):
+        self.log('Getting traffic manager client')
+        if not self._trafficmanager_client:
+            # self.check_client_version('resource', resource_client_version, AZURE_EXPECTED_VERSIONS['resource_client_version'])
+            self._trafficmanager_client = TrafficManagerManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self.base_url
+            )
+        return self._trafficmanager_client
+
+    @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
@@ -683,3 +701,16 @@ class AzureRMModuleBase(object):
             )
             self._register('Microsoft.Compute')
         return self._compute_client
+
+    @property
+    def dns_client(self):
+        self.log('Getting dns client')
+        if not self._dns_client:
+            self.check_client_version('dns', dns_client_version, AZURE_EXPECTED_VERSIONS['dns_client_version'])
+            self._dns_client = DnsManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self.base_url
+            )
+            self._register('Microsoft.Dns')
+        return self._dns_client

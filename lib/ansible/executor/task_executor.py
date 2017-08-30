@@ -148,7 +148,7 @@ class TaskExecutor:
                             else:
                                 raise
                 elif isinstance(res, list):
-                    for (idx, item) in enumerate(res):
+                    for idx, item in enumerate(res):
                         res[idx] = _clean_res(item, errors=errors)
                 return res
 
@@ -731,6 +731,7 @@ class TaskExecutor:
             conn_type = self._play_context.connection
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        self._play_context.set_options_from_plugin(connection)
 
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)

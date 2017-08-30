@@ -9,7 +9,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -281,7 +281,7 @@ def main():
                 try:
                     # Slightly more difficult (and less efficient!) compression using zipfile module
                     if format == 'zip':
-                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
+                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
 
                     # Easier compression using tarfile module
                     elif format == 'gz' or format == 'bz2':
@@ -390,7 +390,7 @@ def main():
 
                 try:
                     if format == 'zip':
-                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
+                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
                         arcfile.write(path, path[len(arcroot):])
                         arcfile.close()
                         state = 'archive' # because all zip files are archives

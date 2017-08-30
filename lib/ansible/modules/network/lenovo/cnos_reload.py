@@ -22,7 +22,7 @@
 # Lenovo Networking
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -136,8 +136,7 @@ def main():
     file.close()
 
     errorMsg = cnos.checkOutputForError(output)
-    errorMsg = None
-    if(errorMsg is None):
+    if(errorMsg in "Device Response Timed out"):
         module.exit_json(changed=True, msg="Device is Reloading. Please wait...")
     else:
         module.fail_json(msg=errorMsg)

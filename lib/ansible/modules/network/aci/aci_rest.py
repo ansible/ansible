@@ -6,11 +6,12 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
+---
 module: aci_rest
 short_description: Direct access to the Cisco APIC REST API
 description:
@@ -167,6 +168,7 @@ import os
 # Optional, only used for XML payload
 try:
     import lxml.etree
+    assert lxml.etree  # silence pyflakes
     HAS_LXML_ETREE = True
 except ImportError:
     HAS_LXML_ETREE = False
@@ -174,6 +176,7 @@ except ImportError:
 # Optional, only used for XML payload
 try:
     from xmljson import cobra
+    assert cobra  # silence pyflakes
     HAS_XMLJSON_COBRA = True
 except ImportError:
     HAS_XMLJSON_COBRA = False

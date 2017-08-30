@@ -1,4 +1,15 @@
 ---
+- name: tear down old users if they exist (Setup)
+  ios_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
 - name: Create user (SetUp)
   ios_user:
     name: ansibletest1
@@ -75,4 +86,6 @@
 - assert:
     that:
       - 'result.changed == true'
-      - 'result.commands == ["no username ansibletest1", "no username ansibletest2", "no username ansibletest3"]'
+      - '"no username ansibletest1" in result.commands[0]'
+      - '"no username ansibletest2" in result.commands[1]'
+      - '"no username ansibletest3" in result.commands[2]'

@@ -1,0 +1,4 @@
+cloud/azure
+posix/ci/cloud/azure
+posix/ci/cloud/smoketest
+destructive

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -829,6 +829,9 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                     # Start VM again if it was running before
                     if instance_state == 'running' and start_vm:
                         instance = self.start_instance()
+            else:
+                self.module.warn("Changes won't be applied to running instances. " +
+                                 "Use force=true to allow the instance %s to be stopped/started." % instance['name'])
         return instance
 
 

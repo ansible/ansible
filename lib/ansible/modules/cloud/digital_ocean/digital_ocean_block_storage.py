@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -107,82 +107,21 @@ id:
     sample: "69b25d9a-494c-12e6-a5af-001f53126b44"
 '''
 
-import json
-import os
 import time
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.digital_ocean import DigitalOceanHelper
 
 
 class DOBlockStorageException(Exception):
     pass
 
 
-class Response(object):
-
-    def __init__(self, resp, info):
-        self.body = None
-        if resp:
-            self.body = resp.read()
-        self.info = info
-
-    @property
-    def json(self):
-        if self.body:
-            return json.loads(self.body)
-        elif "body" in self.info:
-            return json.loads(self.info["body"])
-        else:
-            return None
-
-    @property
-    def status_code(self):
-        return self.info["status"]
-
-
-class Rest(object):
-
-    def __init__(self, module, headers):
-        self.module = module
-        self.headers = headers
-        self.baseurl = 'https://api.digitalocean.com/v2'
-
-    def _url_builder(self, path):
-        if path[0] == '/':
-            path = path[1:]
-        return '%s/%s' % (self.baseurl, path)
-
-    def send(self, method, path, data=None, headers=None):
-        url = self._url_builder(path)
-        data = self.module.jsonify(data)
-
-        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method)
-
-        return Response(resp, info)
-
-    def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
-
-    def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
-
-    def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
-
-    def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
-
-
 class DOBlockStorage(object):
-
     def __init__(self, module):
-        api_token = module.params['api_token'] or \
-            os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
         self.module = module
-        self.rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
-                                  'Content-type': 'application/json'})
+        self.rest = DigitalOceanHelper(module)
 
     def get_key_or_fail(self, k):
         v = self.module.params[k]
@@ -334,7 +273,6 @@ def main():
         module.fail_json(msg=e.message, exception=traceback.format_exc())
     except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message, exception=traceback.format_exc())
-
 
 if __name__ == '__main__':
     main()

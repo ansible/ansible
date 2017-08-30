@@ -9,7 +9,7 @@ __metaclass__ = type
 
 # see examples/playbooks/get_url.yml
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 

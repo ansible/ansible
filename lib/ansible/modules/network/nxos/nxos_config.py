@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -174,7 +174,7 @@ options:
         True.  If the argument is set to I(modified), then the running-config
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
-        I(never), the running-config will never be copied to the the
+        I(never), the running-config will never be copied to the
         startup-config
     required: false
     default: never

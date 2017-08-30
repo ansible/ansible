@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -262,7 +262,7 @@ def main():
 
     if invoke_params['InvocationType'] == 'RequestResponse':
         try:
-            results['output'] = json.loads(response['Payload'].read())
+            results['output'] = json.loads(response['Payload'].read().decode('utf8'))
         except Exception as e:
             module.fail_json(msg="Failed while decoding function return value", exception=traceback.format_exc())
 

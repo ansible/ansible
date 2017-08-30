@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,16 +33,14 @@ short_description: Manage LLDP interfaces configuration on VyOS network devices
 description:
   - This module provides declarative management of LLDP interfaces
     configuration on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   name:
     description:
       - Name of the interface LLDP should be configured on.
   aggregate:
     description: List of interfaces LLDP should be configured on.
-  purge:
-    description:
-      - Purge interfaces not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the LLDP configuration.
@@ -64,7 +62,21 @@ EXAMPLES = """
 
 - name: Disable LLDP globally
   net_lldp_interface:
-    state: lldp
+    state: disabled
+
+- name: Create aggregate of LLDP interface configurations
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: present
+
+- name: Delete aggregate of LLDP interface configurations
+  vyos_lldp_interface:
+    aggregate:
+    - name: eth1
+    - name: eth2
+    state: absent
 """
 
 RETURN = """
@@ -76,7 +88,10 @@ commands:
     - set service lldp eth1
     - set service lldp eth2 disable
 """
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
@@ -142,14 +157,14 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     obj = []
 
-    if module.params['aggregate']:
-        for i in module.params['aggregate']:
-            d = i.copy()
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            if 'state' not in d:
-                d['state'] = module.params['state']
-
-            obj.append(d)
+            obj.append(item.copy())
     else:
         obj.append({'name': module.params['name'], 'state': module.params['state']})
 
@@ -159,16 +174,26 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent',
                             'enabled', 'disabled'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
+
     required_one_of = [['name', 'aggregate']]
     mutually_exclusive = [['name', 'aggregate']]
 

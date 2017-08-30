@@ -9,115 +9,118 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: openbsd_pkg
-author: "Patrik Lundin (@eest)"
+author:
+- Patrik Lundin (@eest)
 version_added: "1.1"
-short_description: Manage packages on OpenBSD.
+short_description: Manage packages on OpenBSD
 description:
     - Manage packages on OpenBSD using the pkg tools.
-requirements: [ "python >= 2.5" ]
+requirements:
+- python >= 2.5
 options:
     name:
-        required: true
         description:
         - Name of the package.
+        required: yes
     state:
-        required: true
-        choices: [ present, latest, absent ]
         description:
           - C(present) will make sure the package is installed.
             C(latest) will make sure the latest version of the package is installed.
             C(absent) will make sure the specified package is not installed.
+        choices: [ absent, latest, present ]
+        default: present
     build:
-        required: false
-        choices: [ yes, no ]
-        default: no
         description:
           - Build the package from source instead of downloading and installing
             a binary. Requires that the port source tree is already installed.
             Automatically builds and installs the 'sqlports' package, if it is
             not already installed.
+        type: bool
+        default: 'no'
         version_added: "2.1"
     ports_dir:
-        required: false
-        default: /usr/ports
         description:
-          - When used in combination with the 'build' option, allows overriding
+          - When used in combination with the C(build) option, allows overriding
             the default ports source directory.
+        default: /usr/ports
         version_added: "2.1"
     clean:
-        required: false
-        choices: [ yes, no ]
-        default: no
         description:
           - When updating or removing packages, delete the extra configuration
             file(s) in the old packages which are annotated with @extra in
             the packaging-list.
+        type: bool
+        default: 'no'
         version_added: "2.3"
     quick:
-        required: false
-        choices: [ yes, no ]
-        default: no
         description:
           - Replace or delete packages quickly; do not bother with checksums
             before removing normal files.
+        type: bool
+        default: 'no'
         version_added: "2.3"
 '''
 
 EXAMPLES = '''
-# Make sure nmap is installed
-- openbsd_pkg:
+- name: Make sure nmap is installed
+  openbsd_pkg:
     name: nmap
     state: present
 
-# Make sure nmap is the latest version
-- openbsd_pkg:
+- name: Make sure nmap is the latest version
+  openbsd_pkg:
     name: nmap
     state: latest
 
-# Make sure nmap is not installed
-- openbsd_pkg:
+- name: Make sure nmap is not installed
+  openbsd_pkg:
     name: nmap
     state: absent
 
-# Make sure nmap is installed, build it from source if it is not
-- openbsd_pkg:
+- name: Make sure nmap is installed, build it from source if it is not
+  openbsd_pkg:
     name: nmap
     state: present
     build: yes
 
-# Specify a pkg flavour with '--'
-- openbsd_pkg:
+- name: Specify a pkg flavour with '--'
+  openbsd_pkg:
     name: vim--no_x11
     state: present
 
-# Specify the default flavour to avoid ambiguity errors
-- openbsd_pkg:
+- name: Specify the default flavour to avoid ambiguity errors
+  openbsd_pkg:
     name: vim--
     state: present
 
-# Specify a package branch (requires at least OpenBSD 6.0)
-- openbsd_pkg:
+- name: Specify a package branch (requires at least OpenBSD 6.0)
+  openbsd_pkg:
     name: python%3.5
     state: present
 
-# Update all packages on the system
-- openbsd_pkg:
+- name: Update all packages on the system
+  openbsd_pkg:
     name: '*'
     state: latest
 
-# Purge a package and it's configuration files
-- openbsd_pkg: name=mpd clean=yes state=absent
+- name: Purge a package and it's configuration files
+  openbsd_pkg:
+    name: mpd
+    clean: yes
+    state: absent
 
-# Quickly remove a package without checking checksums
-- openbsd_pkg: name=qt5 quick=yes state=absent
+- name: Quickly remove a package without checking checksums
+  openbsd_pkg:
+    name: qt5
+    quick: yes
+    state: absent
 '''
 
 import os
@@ -128,6 +131,8 @@ import sqlite3
 
 from distutils.version import StrictVersion
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 # Function used for executing commands.
 def execute_command(cmd, module):
@@ -136,6 +141,7 @@ def execute_command(cmd, module):
     # expansion of special characters like '*'.
     cmd_args = shlex.split(cmd)
     return module.run_command(cmd_args)
+
 
 # Function used to find out if a package is currently installed.
 def get_package_state(names, pkg_spec, module):
@@ -157,6 +163,7 @@ def get_package_state(names, pkg_spec, module):
             pkg_spec[name]['installed_state'] = True
         else:
             pkg_spec[name]['installed_state'] = False
+
 
 # Function used to make sure a package is present.
 def package_present(names, pkg_spec, module):
@@ -247,6 +254,7 @@ def package_present(names, pkg_spec, module):
             pkg_spec[name]['stderr'] = ''
             pkg_spec[name]['changed'] = False
 
+
 # Function used to make sure a package is the latest available version.
 def package_latest(names, pkg_spec, module):
     if module.params['build'] is True:
@@ -306,6 +314,7 @@ def package_latest(names, pkg_spec, module):
         module.debug("package_latest(): calling package_present() to handle leftovers")
         package_present(names, pkg_spec, module)
 
+
 # Function used to make sure a package is not installed.
 def package_absent(names, pkg_spec, module):
     remove_cmd = 'pkg_delete -I'
@@ -334,6 +343,7 @@ def package_absent(names, pkg_spec, module):
             pkg_spec[name]['stdout'] = ''
             pkg_spec[name]['stderr'] = ''
             pkg_spec[name]['changed'] = False
+
 
 # Function used to parse the package name based on packages-specs(7).
 # The general name structure is "stem-version[-flavors]".
@@ -364,23 +374,15 @@ def parse_package_name(names, pkg_spec, module):
         if version_match:
             match = re.search("^(?P<stem>[^%]+)-(?P<version>[0-9][^-]*)(?P<flavor_separator>-)?(?P<flavor>[a-z].*)?(%(?P<branch>.+))?$", name)
             if match:
-                pkg_spec[name]['stem']              = match.group('stem')
+                pkg_spec[name]['stem'] = match.group('stem')
                 pkg_spec[name]['version_separator'] = '-'
-                pkg_spec[name]['version']           = match.group('version')
-                pkg_spec[name]['flavor_separator']  = match.group('flavor_separator')
-                pkg_spec[name]['flavor']            = match.group('flavor')
-                pkg_spec[name]['branch']            = match.group('branch')
-                pkg_spec[name]['style']             = 'version'
-                module.debug("version_match: stem: %s, version: %s, flavor_separator: %s, flavor: %s, branch: %s, style: %s" %
-                    (
-                        pkg_spec[name]['stem'],
-                        pkg_spec[name]['version'],
-                        pkg_spec[name]['flavor_separator'],
-                        pkg_spec[name]['flavor'],
-                        pkg_spec[name]['branch'],
-                        pkg_spec[name]['style']
-                    )
-                )
+                pkg_spec[name]['version'] = match.group('version')
+                pkg_spec[name]['flavor_separator'] = match.group('flavor_separator')
+                pkg_spec[name]['flavor'] = match.group('flavor')
+                pkg_spec[name]['branch'] = match.group('branch')
+                pkg_spec[name]['style'] = 'version'
+                module.debug("version_match: stem: %(stem)s, version: %(version)s, flavor_separator: %(flavor_separator)s, "
+                             "flavor: %(flavor)s, branch: %(branch)s, style: %(style)s" % pkg_spec[name])
             else:
                 module.fail_json(msg="unable to parse package name at version_match: " + name)
 
@@ -388,21 +390,14 @@ def parse_package_name(names, pkg_spec, module):
         elif versionless_match:
             match = re.search("^(?P<stem>[^%]+)--(?P<flavor>[a-z].*)?(%(?P<branch>.+))?$", name)
             if match:
-                pkg_spec[name]['stem']              = match.group('stem')
+                pkg_spec[name]['stem'] = match.group('stem')
                 pkg_spec[name]['version_separator'] = '-'
-                pkg_spec[name]['version']           = None
-                pkg_spec[name]['flavor_separator']  = '-'
-                pkg_spec[name]['flavor']            = match.group('flavor')
-                pkg_spec[name]['branch']            = match.group('branch')
-                pkg_spec[name]['style']             = 'versionless'
-                module.debug("versionless_match: stem: %s, flavor: %s, branch: %s, style: %s" %
-                    (
-                        pkg_spec[name]['stem'],
-                        pkg_spec[name]['flavor'],
-                        pkg_spec[name]['branch'],
-                        pkg_spec[name]['style']
-                    )
-                )
+                pkg_spec[name]['version'] = None
+                pkg_spec[name]['flavor_separator'] = '-'
+                pkg_spec[name]['flavor'] = match.group('flavor')
+                pkg_spec[name]['branch'] = match.group('branch')
+                pkg_spec[name]['style'] = 'versionless'
+                module.debug("versionless_match: stem: %(stem)s, flavor: %(flavor)s, branch: %(branch)s, style: %(style)s" % pkg_spec[name])
             else:
                 module.fail_json(msg="unable to parse package name at versionless_match: " + name)
 
@@ -412,20 +407,14 @@ def parse_package_name(names, pkg_spec, module):
         else:
             match = re.search("^(?P<stem>[^%]+)(%(?P<branch>.+))?$", name)
             if match:
-                pkg_spec[name]['stem']              = match.group('stem')
+                pkg_spec[name]['stem'] = match.group('stem')
                 pkg_spec[name]['version_separator'] = None
-                pkg_spec[name]['version']           = None
-                pkg_spec[name]['flavor_separator']  = None
-                pkg_spec[name]['flavor']            = None
-                pkg_spec[name]['branch']            = match.group('branch')
-                pkg_spec[name]['style']             = 'stem'
-                module.debug("stem_match: stem: %s, branch: %s, style: %s" %
-                    (
-                        pkg_spec[name]['stem'],
-                        pkg_spec[name]['branch'],
-                        pkg_spec[name]['style']
-                    )
-                )
+                pkg_spec[name]['version'] = None
+                pkg_spec[name]['flavor_separator'] = None
+                pkg_spec[name]['flavor'] = None
+                pkg_spec[name]['branch'] = match.group('branch')
+                pkg_spec[name]['style'] = 'stem'
+                module.debug("stem_match: stem: %(stem)s, branch: %(branch)s, style: %(style)s" % pkg_spec[name])
             else:
                 module.fail_json(msg="unable to parse package name at else: " + name)
 
@@ -442,6 +431,7 @@ def parse_package_name(names, pkg_spec, module):
             match = re.search("-$", pkg_spec[name]['flavor'])
             if match:
                 module.fail_json(msg="trailing dash in flavor: " + pkg_spec[name]['flavor'])
+
 
 # Function used for figuring out the port path.
 def get_package_source_path(name, pkg_spec, module):
@@ -483,7 +473,7 @@ def get_package_source_path(name, pkg_spec, module):
         if len(results) < 1:
             module.fail_json(msg="could not find a port by the name '%s'" % name)
         if len(results) > 1:
-            matches = map(lambda x:x[1], results)
+            matches = map(lambda x: x[1], results)
             module.fail_json(msg="too many matches, unsure which to build: %s" % ' OR '.join(matches))
 
         # there's exactly 1 match, so figure out the subpackage, if any, then return
@@ -492,6 +482,7 @@ def get_package_source_path(name, pkg_spec, module):
         if len(parts) > 1 and parts[1][0] == '-':
             pkg_spec[name]['subpackage'] = parts[1]
         return parts[0]
+
 
 # Function used for upgrading all installed packages.
 def upgrade_packages(pkg_spec, module):
@@ -522,25 +513,25 @@ def upgrade_packages(pkg_spec, module):
     else:
         pkg_spec['*']['rc'] = 0
 
+
 # ===========================================
 # Main control flow.
-
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, type='list'),
-            state = dict(required=True, choices=['absent', 'installed', 'latest', 'present', 'removed']),
-            build = dict(default='no', type='bool'),
-            ports_dir = dict(default='/usr/ports'),
-            quick = dict(default='no', type='bool'),
-            clean = dict(default='no', type='bool')
+        argument_spec=dict(
+            name=dict(type='list', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
+            build=dict(type='bool', default=False),
+            ports_dir=dict(type='path', default='/usr/ports'),
+            quick=dict(type='bool', default=False),
+            clean=dict(type='bool', default=False),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
-    name      = module.params['name']
-    state     = module.params['state']
-    build     = module.params['build']
+    name = module.params['name']
+    state = module.params['state']
+    build = module.params['build']
     ports_dir = module.params['ports_dir']
 
     rc = 0
@@ -604,6 +595,10 @@ def main():
     # is changed this is set to True.
     combined_changed = False
 
+    # The combined failed status for all requested packages. If anything
+    # failed this is set to True.
+    combined_failed = False
+
     # We combine all error messages in this comma separated string, for example:
     # "msg": "Can't find nmapp\n, Can't find nmappp\n"
     combined_error_message = ''
@@ -612,6 +607,7 @@ def main():
     # changed.
     for n in name:
         if pkg_spec[n]['rc'] != 0:
+            combined_failed = True
             if pkg_spec[n]['stderr']:
                 if combined_error_message:
                     combined_error_message += ", %s" % pkg_spec[n]['stderr']
@@ -628,15 +624,12 @@ def main():
 
     # If combined_error_message contains anything at least some part of the
     # list of requested package names failed.
-    if combined_error_message:
-        module.fail_json(msg=combined_error_message)
+    if combined_failed:
+        module.fail_json(msg=combined_error_message, **result)
 
     result['changed'] = combined_changed
 
     module.exit_json(**result)
-
-# Import module snippets.
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

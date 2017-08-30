@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -46,7 +46,7 @@ def main():
 
     facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
 
-    cmd = [facter_path, "--puppet", "--json"]
+    cmd = [facter_path, "--json"]
 
     rc, out, err = module.run_command(cmd, check_rc=True)
     module.exit_json(**json.loads(out))

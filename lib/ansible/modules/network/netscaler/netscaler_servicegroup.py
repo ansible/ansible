@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -105,8 +105,8 @@ options:
 
     cip:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Insert the Client IP header in requests forwarded to the service."
 
@@ -149,11 +149,6 @@ options:
             - >-
                 C(no) - Do not send probes to check the health of the service. With the NO option, the appliance shows
                 the service as UP at all times.
-        type: bool
-
-    sc:
-        description:
-            - "State of the SureConnect feature for the service group."
         type: bool
 
     sp:
@@ -209,8 +204,8 @@ options:
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with all the services in the service group whose state
@@ -235,8 +230,8 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging of AppFlow information for the specified service group."
 
@@ -318,6 +313,16 @@ options:
             weight:
                 description:
                     - Weight to assign to the binding between the monitor and servicegroup.
+
+    disabled:
+        description:
+            - When set to C(yes) the service group state will be set to DISABLED.
+            - When set to C(no) the service group state will be set to ENABLED.
+            - >-
+                Note that due to limitations of the underlying NITRO API a C(disabled) state change alone
+                does not cause the module result to report a changed status.
+        type: bool
+        default: false
 
 
 extends_documentation_fragment: netscaler
@@ -623,6 +628,16 @@ def diff(client, module, servicegroup_proxy):
     return diff_object
 
 
+def do_state_change(client, module, servicegroup_proxy):
+    if module.params['disabled']:
+        log('Disabling service')
+        result = servicegroup.disable(client, servicegroup_proxy.actual)
+    else:
+        log('Enabling service')
+        result = servicegroup.enable(client, servicegroup_proxy.actual)
+    return result
+
+
 def main():
 
     module_specific_arguments = dict(
@@ -683,8 +698,8 @@ def main():
         cip=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         cipheader=dict(type='str'),
@@ -693,7 +708,6 @@ def main():
         pathmonitorindv=dict(type='bool'),
         useproxyport=dict(type='bool'),
         healthmonitor=dict(type='bool'),
-        sc=dict(type='bool'),
         sp=dict(type='bool'),
         rtspsessionidremap=dict(type='bool'),
         clttimeout=dict(type='float'),
@@ -706,8 +720,8 @@ def main():
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         tcpprofilename=dict(type='str'),
@@ -716,8 +730,8 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         netprofile=dict(type='str'),
@@ -736,6 +750,10 @@ def main():
     hand_inserted_arguments = dict(
         servicemembers=dict(type='list'),
         monitorbindings=dict(type='list'),
+        disabled=dict(
+            type='bool',
+            default=False,
+        ),
     )
 
     argument_spec = dict()
@@ -789,7 +807,6 @@ def main():
         'pathmonitorindv',
         'useproxyport',
         'healthmonitor',
-        'sc',
         'sp',
         'rtspsessionidremap',
         'clttimeout',
@@ -862,9 +879,11 @@ def main():
         'healthmonitor': ['bool_yes_no'],
         'useproxyport': ['bool_yes_no'],
         'rtspsessionidremap': ['bool_on_off'],
-        'sc': ['bool_on_off'],
         'graceful': ['bool_yes_no'],
         'cmp': ['bool_yes_no'],
+        'cip': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
     }
 
     # Instantiate config proxy
@@ -920,13 +939,23 @@ def main():
                         client.save_config()
                 module_result['changed'] = True
 
+            if not module.check_mode:
+                res = do_state_change(client, module, servicegroup_proxy)
+                if res.errorcode != 0:
+                    msg = 'Error when setting disabled state. errorcode: %s message: %s' % (res.errorcode, res.message)
+                    module.fail_json(msg=msg, **module_result)
+
             # Sanity check for state
             if not module.check_mode:
                 log('Sanity checks for state present')
                 if not servicegroup_exists(client, module):
                     module.fail_json(msg='Service group is not present', **module_result)
                 if not servicegroup_identical(client, module, servicegroup_proxy):
-                    module.fail_json(msg='Service group is not identical to configuration', **module_result)
+                    module.fail_json(
+                        msg='Service group is not identical to configuration',
+                        diff=diff(client, module, servicegroup_proxy),
+                        **module_result
+                    )
                 if not servicemembers_identical(client, module):
                     module.fail_json(msg='Service group members differ from configuration', **module_result)
                 if not monitor_bindings_identical(client, module):

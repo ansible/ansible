@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -60,6 +60,12 @@ options:
     required: false
     default: True
     version_added: "1.8"
+  stdin:
+    version_added: "2.4"
+    description:
+      - Set the stdin of the command directly to the specified value.
+    required: false
+    default: null
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing

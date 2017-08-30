@@ -19,4 +19,4 @@
     sipuri: sip:sip.test
     sipreguri: sip:sip.register
 
-    lrtm: DISABLED
+    lrtm: disabled

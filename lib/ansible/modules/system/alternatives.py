@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +37,8 @@ options:
   link:
     description:
       - The path to the symbolic link that should point to the real executable.
-      - This option is required on RHEL-based distributions
+      - This option is always required on RHEL-based distributions. On Debian-based distributions this option is
+        required when the alternative I(name) is unknown to the system.
     required: false
   priority:
     description:
@@ -67,6 +68,7 @@ EXAMPLES = '''
     priority: -10
 '''
 
+import os
 import re
 import subprocess
 
@@ -76,12 +78,12 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            path = dict(required=True, type='path'),
-            link = dict(required=False, type='path'),
-            priority = dict(required=False, type='int',
-                            default=50),
+        argument_spec=dict(
+            name=dict(required=True),
+            path=dict(required=True, type='path'),
+            link=dict(required=False, type='path'),
+            priority=dict(required=False, type='int',
+                          default=50),
         ),
         supports_check_mode=True,
     )
@@ -92,7 +94,7 @@ def main():
     link = params['link']
     priority = params['priority']
 
-    UPDATE_ALTERNATIVES = module.get_bin_path('update-alternatives',True)
+    UPDATE_ALTERNATIVES = module.get_bin_path('update-alternatives', True)
 
     current_path = None
     all_alternatives = []
@@ -110,7 +112,9 @@ def main():
                                         re.MULTILINE)
         alternative_regex = re.compile(r'^(\/.*)\s-\spriority', re.MULTILINE)
 
-        current_path = current_path_regex.search(display_output).group(1)
+        match = current_path_regex.search(display_output)
+        if match:
+            current_path = match.group(1)
         all_alternatives = alternative_regex.findall(display_output)
 
         if not link:
@@ -134,6 +138,8 @@ def main():
         try:
             # install the requested path if necessary
             if path not in all_alternatives:
+                if not os.path.exists(path):
+                    module.fail_json(msg="Specified path %s does not exist" % path)
                 if not link:
                     module.fail_json(msg="Needed to install the alternative, but unable to do so as we are missing the link")
 

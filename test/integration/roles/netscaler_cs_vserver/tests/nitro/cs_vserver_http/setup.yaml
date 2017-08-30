@@ -18,20 +18,20 @@
     port: 80
     dnsrecordtype: A
     range: 2
-    stateupdate: DISABLED
+    stateupdate: disabled
     cacheable: no
     redirecturl: http://newurl.com
     clttimeout: 200
     precedence: RULE
     casesensitive: on
     somethod: CONNECTION
-    sopersistence: ENABLED
+    sopersistence: enabled
     sopersistencetimeout: 50
     sothreshold: 200
     sobackupaction: DROP
-    redirectportrewrite: DISABLED
-    downstateflush: DISABLED
-    disableprimaryondown: DISABLED
+    redirectportrewrite: disabled
+    downstateflush: disabled
+    disableprimaryondown: disabled
     insertvserveripport: VIPADDR
     vipheader: someheader
     rtspnat: off
@@ -40,12 +40,12 @@
     listenpolicy: "NONE"
     authn401: off
     authnvsname: someserver
-    push: DISABLED
+    push: disabled
     pushvserver: push_lb_vserver
     pushlabel: none
     pushmulticlients: no
     comment: some comment
     l2conn: off
-    appflowlog: ENABLED
+    appflowlog: enabled
     icmpvsrresponse: PASSIVE
     rhistate: PASSIVE

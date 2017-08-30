@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -54,6 +54,19 @@ EXAMPLES = """
 - name: Remove eth0 IPv4 address
   net_l3_interface:
     name: eth0
+    state: absent
+
+- name: Set IP addresses on aggregate
+  net_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+
+- name: Remove IP addresses on aggregate
+  net_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
     state: absent
 """
 

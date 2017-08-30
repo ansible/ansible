@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -572,6 +572,9 @@ class PyVmomiHelper(object):
                             task = vm.ShutdownGuest()
                         else:
                             task = vm.RebootGuest()
+                        # Set result['changed'] immediately because
+                        # shutdown and reboot return None.
+                        result['changed'] = True
                     else:
                         result['failed'] = True
                         result['msg'] = "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name

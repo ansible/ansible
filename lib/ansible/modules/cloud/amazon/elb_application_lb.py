@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -628,6 +628,7 @@ def compare_listeners(connection, module, current_listeners, new_listeners, purg
     for current_listener in current_listeners:
         current_listener_passed_to_module = False
         for new_listener in new_listeners[:]:
+            new_listener['Port'] = int(new_listener['Port'])
             if current_listener['Port'] == new_listener['Port']:
                 current_listener_passed_to_module = True
                 # Remove what we match so that what is left can be marked as 'to be added'
@@ -684,8 +685,8 @@ def compare_rules(connection, module, current_listeners, listener):
                 if modified_rule:
                     modified_rule['Priority'] = int(current_rule['Priority'])
                     modified_rule['RuleArn'] = current_rule['RuleArn']
-                    modified_rule['Actions'] = current_rule['Actions']
-                    modified_rule['Conditions'] = current_rule['Conditions']
+                    modified_rule['Actions'] = new_rule['Actions']
+                    modified_rule['Conditions'] = new_rule['Conditions']
                     rules_to_modify.append(modified_rule)
                 break
 
@@ -715,7 +716,11 @@ def create_or_update_elb_listeners(connection, module, elb):
     for listener_to_add in listeners_to_add:
         try:
             listener_to_add['LoadBalancerArn'] = elb['LoadBalancerArn']
-            connection.create_listener(**listener_to_add)
+            # Rules is not a valid parameter for create_listener
+            listener_to_add.pop('Rules')
+            response = connection.create_listener(**listener_to_add)
+            # Add the new listener
+            current_listeners.append(response['Listeners'][0])
             listener_changed = True
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -723,6 +728,8 @@ def create_or_update_elb_listeners(connection, module, elb):
     # Modify listeners
     for listener_to_modify in listeners_to_modify:
         try:
+            # Rules is not a valid parameter for modify_listener
+            listener_to_modify.pop('Rules')
             connection.modify_listener(**listener_to_modify)
             listener_changed = True
         except ClientError as e:
@@ -737,7 +744,7 @@ def create_or_update_elb_listeners(connection, module, elb):
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # For each listener, check rules
-    for listener in listeners:
+    for listener in deepcopy(listeners):
         if 'Rules' in listener:
             # Ensure rules are using Target Group ARN not name
             listener['Rules'] = ensure_rules_action_has_arn(connection, module, listener['Rules'])

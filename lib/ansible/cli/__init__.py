@@ -34,7 +34,7 @@ from abc import ABCMeta, abstractmethod
 
 import ansible
 from ansible import constants as C
-from ansible.errors import AnsibleOptionsError
+from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
@@ -180,7 +180,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         return ret
 
     @staticmethod
-    def build_vault_ids(vault_ids, vault_password_files=None, ask_vault_pass=None):
+    def build_vault_ids(vault_ids, vault_password_files=None,
+                        ask_vault_pass=None, create_new_password=None):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -193,7 +194,9 @@ class CLI(with_metaclass(ABCMeta, object)):
             # used by --vault-id and --vault-password-file
             vault_ids.append(id_slug)
 
-        if ask_vault_pass:
+        # if an action needs an encrypt password (create_new_password=True) and we dont
+        # have other secrets setup, then automatically add a password prompt as well.
+        if ask_vault_pass or (create_new_password and not vault_ids):
             id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
             vault_ids.append(id_slug)
 
@@ -210,6 +213,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         # we need to show different prompts. This is for compat with older Towers that expect a
         # certain vault password prompt format, so 'promp_ask_vault_pass' vault_id gets the old format.
         prompt_formats = {}
+
+        # If there are configured default vault identities, they are considered 'first'
+        # so we prepend them to vault_ids (from cli) here
 
         vault_password_files = vault_password_files or []
         if C.DEFAULT_VAULT_PASSWORD_FILE:
@@ -228,26 +234,37 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
-                                        ask_vault_pass)
+                                        ask_vault_pass,
+                                        create_new_password)
 
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
 
+                # prompts cant/shouldnt work without a tty, so dont add prompt secrets
+                if not sys.stdin.isatty():
+                    continue
+
                 # --vault-id some_name@prompt_ask_vault_pass --vault-id other_name@prompt_ask_vault_pass will be a little
                 # confusing since it will use the old format without the vault id in the prompt
-                if vault_id_name:
-                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
-                                                              vault_id=vault_id_name)
+                built_vault_id = vault_id_name or C.DEFAULT_VAULT_IDENTITY
+
+                # choose the prompt based on --vault-id=prompt or --ask-vault-pass. --ask-vault-pass
+                # always gets the old format for Tower compatibility.
+                # ie, we used --ask-vault-pass, so we need to use the old vault password prompt
+                # format since Tower needs to match on that format.
+                prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
+                                                          vault_id=built_vault_id)
+
+                # a empty or invalid password from the prompt will warn and continue to the next
+                # without erroring globablly
+                try:
                     prompted_vault_secret.load()
-                    vault_secrets.append((vault_id_name, prompted_vault_secret))
-                else:
-                    # ie, we used --ask-vault-pass, so we need to use the old vault password prompt
-                    # format since Tower needs to match on that format.
-                    prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
-                                                              vault_id=C.DEFAULT_VAULT_IDENTITY)
-                    prompted_vault_secret.load()
-                    vault_secrets.append((C.DEFAULT_VAULT_IDENTITY, prompted_vault_secret))
+                except AnsibleError as exc:
+                    display.warning('Error in vault password prompt (%s): %s' % (vault_id_name, exc))
+                    raise
+
+                vault_secrets.append((built_vault_id, prompted_vault_secret))
 
                 # update loader with new secrets incrementally, so we can load a vault password
                 # that is encrypted with a vault secret provided earlier
@@ -260,7 +277,14 @@ class CLI(with_metaclass(ABCMeta, object)):
             file_vault_secret = get_file_vault_secret(filename=vault_id_value,
                                                       vault_id_name=vault_id_name,
                                                       loader=loader)
-            file_vault_secret.load()
+
+            # an invalid password file will error globally
+            try:
+                file_vault_secret.load()
+            except AnsibleError as exc:
+                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, exc))
+                raise
+
             if vault_id_name:
                 vault_secrets.append((vault_id_name, file_vault_secret))
             else:
@@ -732,8 +756,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         # all needs loader
         loader = DataLoader()
 
+        vault_ids = options.vault_ids
+        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
+        vault_ids = default_vault_ids + vault_ids
+
         vault_secrets = CLI.setup_vault_secrets(loader,
-                                                vault_ids=options.vault_ids,
+                                                vault_ids=vault_ids,
                                                 vault_password_files=options.vault_password_files,
                                                 ask_vault_pass=options.ask_vault_pass)
         loader.set_vault_secrets(vault_secrets)

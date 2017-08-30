@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -57,6 +57,20 @@ EXAMPLES = """
 - name: Delete LLDP on specific interfaces
   net_lldp_interface:
     name: eth1
+    state: absent
+
+- name: Create aggregate of LLDP interface configurations
+  net_lldp_interface:
+    aggregate:
+    - { name: eth1 }
+    - { name: eth2 }
+    state: present
+
+- name: Delete aggregate of LLDP interface configurations
+  net_lldp_interface:
+    aggregate:
+    - { name: eth1 }
+    - { name: eth2 }
     state: absent
 """
 

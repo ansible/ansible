@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -780,7 +780,8 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-
+        if self.instance.DBName:
+            d['DBName'] = self.instance.DBName
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
@@ -873,7 +874,8 @@ class RDS2DBInstance:
         else:
             d['endpoint'] = None
             d['port'] = None
-
+        if self.instance["DBName"]:
+            d['DBName'] = self.instance['DBName']
         return d
 
 

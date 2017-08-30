@@ -359,7 +359,7 @@ def interfaceLevel2Config(
                             retVal = "Error-234"
                             return retVal
                 else:
-                    command = command  # None is taken care here
+                    command = command.strip()  # None is taken care here
 
             elif(interfaceL2Arg2 == "neighbor"):
                 command = command + interfaceL2Arg2 + " src-ip "
@@ -414,7 +414,7 @@ def interfaceLevel2Config(
         # debugOutput("bridge-port")
         command = interfaceL2Arg1 + " "
         if(interfaceL2Arg2 is None):
-            command = command
+            command = command.strip()
         elif(interfaceL2Arg2 == "access"):
             command = command + interfaceL2Arg2 + " vlan "
             value = checkSanityofVariable(
@@ -542,8 +542,6 @@ def interfaceLevel2Config(
                             command = command + interfaceL2Arg4 + " "
                             if(interfaceL2Arg5 == "secondary"):
                                 command = command + interfaceL2Arg5
-                            elif(interfaceL2Arg5 is None):
-                                command = command + interfaceL2Arg5
                             else:
                                 retVal = "Error-278"
                                 return retVal
@@ -559,7 +557,7 @@ def interfaceLevel2Config(
                             if(interfaceL2Arg4 == "secondary"):
                                 command = command + interfaceL2Arg4
                             elif(interfaceL2Arg4 is None):
-                                command = command + interfaceL2Arg4
+                                command = command.strip()
                             else:
                                 retVal = "Error-278"
                                 return retVal
@@ -696,8 +694,7 @@ def interfaceLevel2Config(
                     if(value == "ok"):
                         command = command + interfaceL2Arg3 + " "
                         if(interfaceL2Arg4 == "anycast" or
-                                interfaceL2Arg4 == "secondary" or
-                                interfaceL2Arg4 is None):
+                                interfaceL2Arg4 == "secondary"):
                             command = command + interfaceL2Arg4
                         else:
                             retVal = "Error-276"
@@ -814,7 +811,7 @@ def interfaceLevel2Config(
             if(interfaceL2Arg2 == "receive" or
                     interfaceL2Arg2 == "trap-notification" or
                     interfaceL2Arg2 == "transmit"):
-                command = command
+                command = command.strip()
             elif(interfaceL2Arg2 == "tlv-select"):
                 value = checkSanityofVariable(
                     deviceType, "lldp_tlv_options", interfaceL2Arg3)
@@ -1300,7 +1297,7 @@ def bgpNeighborAFConfig(
             if(bgpNeighborAFArg3 is not None):
                 command = command + bgpNeighborAFArg3
             else:
-                command = command
+                command = command.strip()
         else:
             retVal = "Error-326"
             return retVal
@@ -1461,11 +1458,11 @@ def bgpNeighborConfig(
                             bgpNeighborArg5 == "dual-as"):
                         command = command + bgpNeighborArg5
                     else:
-                        command = command
+                        command = command.strip()
                 else:
-                    command = command
+                    command = command.strip()
             else:
-                command = command
+                command = command.strip()
         else:
             retVal = "Error-312"
             return retVal
@@ -1598,17 +1595,12 @@ def bgpAFConfig(
         value = checkSanityofVariable(
             deviceType, "bgp_aggregate_prefix", bgpAFArg2)
         if(value == "ok"):
-            command = command + bgpAFArg2 + " "
             if(bgpAFArg2 is None):
-                command = command
+                command = command.strip()
             elif(bgpAFArg2 == "as-set" or bgpAFArg2 == "summary-only"):
                 command = command + bgpAFArg2 + " "
-                if(bgpAFArg3 is None):
-                    command = command
-                elif(bgpAFArg2 == "as-set"):
+                if((bgpAFArg3 is not None) and (bgpAFArg2 == "as-set")):
                     command = command + "summary-only"
-                else:
-                    command = command + "as-set"
             else:
                 retVal = "Error-297"
                 return retVal
@@ -1655,7 +1647,7 @@ def bgpAFConfig(
                         retVal = "Error-295"
                         return retVal
                 else:
-                    command = command
+                    command = command.strip()
             else:
                 retVal = "Error-294"
                 return retVal
@@ -1725,7 +1717,7 @@ def bgpAFConfig(
                         retVal = "Error-196"
                         return retVal
                 else:
-                    command = command
+                    command = command.strip()
             else:
                 value = checkSanityofVariable(
                     deviceType, "network_ip_prefix_value", bgpAFArg2)
@@ -1758,7 +1750,7 @@ def bgpAFConfig(
                             retVal = "Error-299"
                             return retVal
                     else:
-                        command = command
+                        command = command.strip()
                 else:
                     retVal = "Error-300"
                     return retVal
@@ -1784,9 +1776,8 @@ def bgpAFConfig(
         value = checkSanityofVariable(
             deviceType, "addrfamily_redistribute_option", bgpAFArg2)
         if(value == "ok"):
-            command = command + bgpAFArg2 + " "
             if(bgpAFArg2 is not None):
-                command = command + "route-map "
+                command = command + bgpAFArg2 + " " + "route-map "
                 value = checkSanityofVariable(
                     deviceType, "addrfamily_routemap_name", bgpAFArg3)
                 if(value == "ok"):
@@ -2129,8 +2120,6 @@ def vlanConfig(
                 return retVal
             retVal = "Error-133"
             return retVal
-        retVal = "Error-134"
-        return retVal
 
     # debugOutput(command)
     command = command + "\n"
@@ -2243,7 +2232,7 @@ def createVlan(
         # debugOutput("vlanArg3")
         if(vlanArg3 is None or vlanArg3 == ""):
             # debugOutput("None or empty")
-            command = command
+            command = command.strip()
         elif(vlanArg3 == "fast-leave"):
             # debugOutput("fast-leave")
             command = command + vlanArg3
@@ -2583,23 +2572,22 @@ def doStartupConfigBackUp(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) & (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
     # config backup command happens here
     if(protocol == "ftp"):
         command = "cp startup-config " + protocol + " " + protocol + "://" + \
-            username + "@" + server + "/" + path + " vrf management\n"
+            username + "@" + server + "/" + confPath + " vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(password, "#", timeout, obj)
     elif(protocol == "tftp"):
         command = "cp startup-config " + protocol + " " + protocol + \
-            "://" + server + "/" + path + " vrf management\n"
+            "://" + server + "/" + confPath + " vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "#", 3, obj)
     else:
@@ -2625,15 +2613,14 @@ def doSecureStartupConfigBackUp(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) and (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
     # config backup command happens here
     command = "cp startup-config " + protocol + " " + protocol + "://" + \
-        username + "@" + server + "/" + path + " vrf management\n"
+        username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
     if(response.lower().find("error-101")):
@@ -2680,16 +2667,15 @@ def doStartUpConfigRollback(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) & (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
     # config backup command happens here
     if(protocol == "ftp"):
         command = "cp " + protocol + " " + protocol + "://" + username + \
-            "@" + server + "/" + path + " startup-config vrf management\n"
+            "@" + server + "/" + confPath + " startup-config vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
         # debugOutput(command)
@@ -2698,7 +2684,7 @@ def doStartUpConfigRollback(
         retVal = retVal + waitForDeviceResponse(password, "#", timeout, obj)
     elif(protocol == "tftp"):
         command = "cp " + protocol + " " + protocol + "://" + \
-            server + "/" + path + " startup-config vrf management\n"
+            server + "/" + confPath + " startup-config vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "[n]", timeout, obj)
         command = "y\n"
@@ -2726,9 +2712,8 @@ def doSecureStartUpConfigRollback(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) and (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
@@ -2737,7 +2722,7 @@ def doSecureStartUpConfigRollback(
     # cp sftp sftp://root@10.241.106.118/cnos_config/running_config.conf
     # startup-config vrf management
     command = "cp " + protocol + " " + protocol + "://" + username + \
-        "@" + server + "/" + path + " startup-config vrf management \n"
+        "@" + server + "/" + confPath + " startup-config vrf management \n"
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
@@ -2789,23 +2774,22 @@ def doRunningConfigBackUp(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) & (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
     # config backup command happens here
     if(protocol == "ftp"):
         command = "cp running-config " + protocol + " " + protocol + "://" + \
-            username + "@" + server + "/" + path + " vrf management\n"
+            username + "@" + server + "/" + confPath + " vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(password, "#", timeout, obj)
     elif(protocol == "tftp"):
         command = "cp running-config " + protocol + " " + protocol + \
-            "://" + server + "/" + path + " vrf management\n"
+            "://" + server + "/" + confPath + " vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "#", 3, obj)
     else:
@@ -2830,15 +2814,14 @@ def doSecureRunningConfigBackUp(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) and (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
     # config backup command happens here
     command = "cp running-config " + protocol + " " + protocol + "://" + \
-        username + "@" + server + "/" + path + " vrf management\n"
+        username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
     if(response.lower().find("error-101")):
@@ -2885,23 +2868,22 @@ def doRunningConfigRollback(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) & (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
     # config backup command happens here
     if(protocol == "ftp"):
         command = "cp " + protocol + " " + protocol + "://" + username + \
-            "@" + server + "/" + path + " running-config vrf management\n"
+            "@" + server + "/" + confPath + " running-config vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(password, "#", timeout, obj)
     elif(protocol == "tftp"):
         command = "cp " + protocol + " " + protocol + "://" + \
-            server + "/" + path + " running-config vrf management\n"
+            server + "/" + confPath + " running-config vrf management\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
     else:
@@ -2927,9 +2909,8 @@ def doSecureRunningConfigRollback(
     # password = "Lab4man1"
     password = confServerPwd
 
-    path = "cnos_config"
-    if((confPath is not None) and (confPath != "")):
-        path = confPath
+    if((confPath is None) or (confPath is "")):
+        confPath = "cnos_config"
 
     retVal = ""
 
@@ -2938,7 +2919,7 @@ def doSecureRunningConfigRollback(
     # cp sftp sftp://root@10.241.106.118/cnos_config/running_config.conf
     # running-config vrf management
     command = "cp " + protocol + " " + protocol + "://" + username + \
-        "@" + server + "/" + path + " running-config vrf management \n"
+        "@" + server + "/" + confPath + " running-config vrf management \n"
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
@@ -2989,29 +2970,30 @@ def doImageTransfer(
     if(imgType is not None):
         type = imgType.lower()
 
-    path = "cnos_images"
-    if((imgPath is not None) and (imgPath != "")):
-        path = imgPath
+    if((imgPath is None) or (imgPath is "")):
+        imgPath = "cnos_images"
 
     retVal = ""
 
     # Image transfer command happens here
     if(protocol == "ftp"):
         command = "cp " + protocol + " " + protocol + "://" + username + \
-            "@" + server + "/" + path + " system-image " + type + \
+            "@" + server + "/" + imgPath + " system-image " + type + \
             " vrf management\n"
     elif(protocol == "tftp"):
         command = "cp " + protocol + " " + protocol + "://" + server + \
-            "/" + path + " system-image " + type + " vrf management\n"
+            "/" + imgPath + " system-image " + type + " vrf management\n"
     else:
         return "Error-110"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "[n]", 3, obj)
+    response = waitForDeviceResponse(command, "[n]", 3, obj)
+    if(response.lower().find("error-101")):
+        retVal = retVal
+    else:
+        retVal = retVal + response
+
     # Confirmation command happens here
     command = "y\n"
-    # debugOutput(command)
-    # retVal = retVal+ waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-    # command = "Yes \n"
     # debugOutput(command)
     if(protocol == "ftp"):
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
@@ -3045,22 +3027,29 @@ def doSecureImageTransfer(
     if(imgType is not None):
         type = imgType.lower()
 
-    path = "cnos_images"
-    if((imgPath is not None) and(imgPath != "")):
-        path = imgPath
+    if((imgPath is None) or (imgPath is "")):
+        imgPath = "cnos_images"
 
     retVal = ""
 
     # Image transfer command happens here
     command = "cp " + protocol + " " + protocol + "://" + username + "@" + \
-        server + "/" + path + " system-image " + type + " vrf management \n"
+        server + "/" + imgPath + " system-image " + type + " vrf management \n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "[n]", 3, obj)
+    response = waitForDeviceResponse(command, "[n]", 3, obj)
+    if(response.lower().find("error-101")):
+        retVal = retVal
+    else:
+        retVal = retVal + response
     # Confirmation command happens here
     if(protocol == "scp"):
         command = "y\n"
         # debugOutput(command)
-        retVal = retVal + waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        if(response.lower().find("error-101")):
+            retVal = retVal
+        else:
+            retVal = retVal + response
         command = "Yes\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "timeout:", 3, obj)
@@ -3070,7 +3059,12 @@ def doSecureImageTransfer(
     elif(protocol == "sftp"):
         command = "y\n"
         # debugOutput(command)
-        retVal = retVal + waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        if(response.lower().find("error-101")):
+            retVal = retVal
+        else:
+            retVal = retVal + response
+
         command = "Yes\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
@@ -3088,7 +3082,7 @@ def doSecureImageTransfer(
     return retVal
 # EOM
 
-# Method for enter enable mnode
+# Method Method for enter enable mode
 #
 
 
@@ -3144,7 +3138,7 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
     return retVal
 # EOM
 
-# Method for device response wait for a time delay
+# Method for device response than time delay
 #
 
 
@@ -3181,13 +3175,16 @@ def checkOutputForError(output):
         index = output.lower().find("invalid")
         startIndex = index + 8
         if(index == -1):
-            index = output.lower().find("incorrect")
-            startIndex = index + 9
+            index = output.lower().find("Cannot be enabled in L2 Interface")
+            startIndex = index + 34
             if(index == -1):
-                index = output.lower().find("failure")
-                startIndex = index + 8
+                index = output.lower().find("incorrect")
+                startIndex = index + 10
                 if(index == -1):
-                    return None
+                    index = output.lower().find("failure")
+                    startIndex = index + 8
+                    if(index == -1):
+                        return None
 
     endIndex = startIndex + 3
     errorCode = output[startIndex:endIndex]
@@ -3226,14 +3223,15 @@ def checkSanityofVariable(deviceType, variableId, variableValue):
 def getRuleStringForVariable(deviceType, ruleFile, variableId):
     retVal = ""
     try:
-        with open(ruleFile, 'r') as f:
-            for line in f:
-                # debugOutput(line)
-                if(':' in line):
-                    data = line.split(':')
-                    # debugOutput(data[0])
-                    if(data[0].strip() == variableId):
-                        retVal = line
+        # with open(ruleFile, 'r') as f:
+        f = open(ruleFile, 'r')
+        for line in f:
+            # debugOutput(line)
+            if(':' in line):
+                data = line.split(':')
+                # debugOutput(data[0])
+                if(data[0].strip() == variableId):
+                    retVal = line
     except Exception:
         ruleString = cnos_devicerules.getRuleString(deviceType, variableId)
         retVal = ruleString.strip()
@@ -3310,7 +3308,7 @@ def validateValueAgainstRule(ruleString, variableValue):
             return "Error-115"
 
     elif(variableType == "LONG"):
-        result = checkInteger(variableValue)
+        result = checkLong(variableValue)
         if(result is True):
             return "ok"
         else:
@@ -3319,7 +3317,7 @@ def validateValueAgainstRule(ruleString, variableValue):
     elif(variableType == "LONG_VALUE"):
         long_range = varRange.split('-')
         r = range(int(long_range[0].strip()), int(long_range[1].strip()))
-        if(checkInteger(variableValue) is not True):
+        if(checkLong(variableValue) is not True):
             # debugOutput(variableValue)
             return "Error-116"
         result = int(variableValue) in r
@@ -3332,8 +3330,8 @@ def validateValueAgainstRule(ruleString, variableValue):
         long_range = varRange.split('-')
         r = range(int(long_range[0].strip()), int(long_range[1].strip()))
         val_range = variableValue.split('-')
-        if((checkInteger(val_range[0]) is not True) or
-                (checkInteger(val_range[1]) is not True)):
+        if((checkLong(val_range[0]) is not True) or
+                (checkLong(val_range[1]) is not True)):
             return "Error-117"
         result = (val_range[0] in r) and (
             val_range[1] in r) and (val_range[0] < val_range[1])
@@ -3343,7 +3341,7 @@ def validateValueAgainstRule(ruleString, variableValue):
             return "Error-113"
     elif(variableType == "LONG_OPTIONS"):
         long_options = varRange.split(',')
-        if(checkInteger(variableValue) is not True):
+        if(checkLong(variableValue) is not True):
             return "Error-116"
         for opt in long_options:
             if(opt.strip() == variableValue):
@@ -3497,6 +3495,14 @@ def checkFloat(s):
     except ValueError:
         return False
 # EOM
+
+
+def checkLong(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 
 def debugOutput(command):

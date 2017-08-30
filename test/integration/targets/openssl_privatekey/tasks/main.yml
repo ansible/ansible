@@ -12,4 +12,32 @@
     path: '{{ output_dir }}/privatekey3.pem'
     type: DSA
 
+- name: Generate privatekey4 - standard
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey4.pem'
+
+- name: Delete privatekey4 - standard
+  openssl_privatekey:
+    state: absent
+    path: '{{ output_dir }}/privatekey4.pem'
+
+- name: Generate privatekey5 - standard - with passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey5.pem'
+    passphrase: ansible
+    cipher: aes256
+
+- name: Generate privatekey5 - standard - idempotence
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey5.pem'
+    passphrase: ansible
+    cipher: aes256
+  register: privatekey5_idempotence
+
+- name: Generate privatekey6 - standard - with non-ASCII passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey6.pem'
+    passphrase: ànsïblé
+    cipher: aes256
+
 - import_tasks: ../tests/validate.yml

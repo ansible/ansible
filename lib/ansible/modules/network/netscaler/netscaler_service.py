@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -136,8 +136,8 @@ options:
 
     cip:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Before forwarding a request to the service, insert an HTTP header with the client's IPv4 or IPv6
@@ -179,11 +179,6 @@ options:
                 Use the proxy port as the source port when initiating connections with the server. With the NO
                 setting, the client-side connection port is used as the source port for the server-side connection.
             - "Note: This parameter is available only when the Use Source IP (USIP) parameter is set to YES."
-
-    sc:
-        description:
-            - "State of SureConnect for the service."
-        default: off
 
     sp:
         description:
@@ -252,13 +247,12 @@ options:
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with a service whose state transitions from UP to DOWN. Do
                 not enable this option for applications that must complete their transactions.
-        default: ENABLED
 
     tcpprofilename:
         description:
@@ -285,11 +279,10 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging of AppFlow information."
-        default: ENABLED
 
     netprofile:
         description:
@@ -308,14 +301,13 @@ options:
 
     processlocal:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 By turning on this option packets destined to a service in a cluster will not under go any steering.
                 Turn this option for single packet request response mode or when the upstream device is performing a
                 proper RSS for connection based distribution.
-        default: DISABLED
 
     dnsprofilename:
         description:
@@ -350,8 +342,8 @@ options:
                     - Weight to assign to the binding between the monitor and service.
             dup_state:
                 choices:
-                    - 'ENABLED'
-                    - 'DISABLED'
+                    - 'enabled'
+                    - 'disabled'
                 description:
                     - State of the monitor.
                     - The state setting for a monitor of a given type affects all monitors of that type.
@@ -360,6 +352,16 @@ options:
             dup_weight:
                 description:
                     - Weight to assign to the binding between the monitor and service.
+
+    disabled:
+        description:
+            - When set to C(yes) the service state will be set to DISABLED.
+            - When set to C(no) the service state will be set to ENABLED.
+            - >-
+                Note that due to limitations of the underlying NITRO API a C(disabled) state change alone
+                does not cause the module result to report a changed status.
+        type: bool
+        default: false
 
 extends_documentation_fragment: netscaler
 requirements:
@@ -543,6 +545,16 @@ def all_identical(client, module, service_proxy, monitor_bindings_rw_attrs):
     return service_identical(client, module, service_proxy) and monitor_bindings_identical(client, module, monitor_bindings_rw_attrs)
 
 
+def do_state_change(client, module, service_proxy):
+    if module.params['disabled']:
+        log('Disabling service')
+        result = service.disable(client, service_proxy.actual)
+    else:
+        log('Enabling service')
+        result = service.enable(client, service_proxy.actual)
+    return result
+
+
 def main():
 
     module_specific_arguments = dict(
@@ -614,17 +626,13 @@ def main():
         cip=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         cipheader=dict(type='str'),
         usip=dict(type='bool'),
         useproxyport=dict(type='bool'),
-        sc=dict(
-            type='bool',
-            default=False,
-        ),
         sp=dict(type='bool'),
         rtspsessionidremap=dict(
             type='bool',
@@ -648,10 +656,9 @@ def main():
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ],
-            default='ENABLED',
         ),
         tcpprofilename=dict(type='str'),
         httpprofilename=dict(type='str'),
@@ -660,19 +667,17 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ],
-            default='ENABLED',
         ),
         netprofile=dict(type='str'),
         processlocal=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ],
-            default='DISABLED',
         ),
         dnsprofilename=dict(type='str'),
         ipaddress=dict(type='str'),
@@ -684,6 +689,10 @@ def main():
 
     hand_inserted_arguments = dict(
         monitor_bindings=dict(type='list'),
+        disabled=dict(
+            type='bool',
+            default=False,
+        ),
     )
 
     argument_spec = dict()
@@ -742,7 +751,6 @@ def main():
         'cipheader',
         'usip',
         'useproxyport',
-        'sc',
         'sp',
         'rtspsessionidremap',
         'clttimeout',
@@ -828,9 +836,12 @@ def main():
         'healthmonitor': ['bool_yes_no'],
         'useproxyport': ['bool_yes_no'],
         'rtspsessionidremap': ['bool_on_off'],
-        'sc': ['bool_on_off'],
         'accessdown': ['bool_yes_no'],
         'cmp': ['bool_yes_no'],
+        'cip': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
+        'processlocal': [lambda v: v.upper()],
     }
 
     monitor_bindings_rw_attrs = [
@@ -893,6 +904,12 @@ def main():
                         client.save_config()
             else:
                 module_result['changed'] = False
+
+            if not module.check_mode:
+                res = do_state_change(client, module, service_proxy)
+                if res.errorcode != 0:
+                    msg = 'Error when setting disabled state. errorcode: %s message: %s' % (res.errorcode, res.message)
+                    module.fail_json(msg=msg, **module_result)
 
             # Sanity check for state
             if not module.check_mode:

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -181,14 +181,17 @@ def parse_commands(module, warnings):
 
     commands = transform(module.params['commands'])
 
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
-                'Only show commands are supported when using check_mode, not '
-                'executing %s' % item['command']
-            )
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check_mode, not '
+                    'executing %s' % item['command']
+                )
+                commands.remove(item)
 
     return commands
+
 
 def to_cli(obj):
     cmd = obj['command']

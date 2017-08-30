@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -89,6 +89,10 @@ options:
     - Directives are separated by commmas.
     required: false
     version_added: "2.4"
+
+requirements:
+  - boto3 >= 1.4.4
+  - botocore
 
 author: tedder
 extends_documentation_fragment:
@@ -202,28 +206,16 @@ import traceback
 from dateutil import tz
 
 # import module snippets
-import ansible.module_utils.ec2
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3, boto_exception
 
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    # Handled by imported HAS_BOTO3
+    pass
 
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 # the following function, calculate_multipart_etag, is from tlastowka
 # on github and is used under its (compatible) GPL license. So this
@@ -274,12 +266,12 @@ def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
             md5s.append(hashlib.md5(data))
 
     if len(md5s) == 1:
-        new_etag = '"{}"'.format(md5s[0].hexdigest())
+        new_etag = '"{0}"'.format(md5s[0].hexdigest())
     else:  # > 1
         digests = b"".join(m.digest() for m in md5s)
 
         new_md5 = hashlib.md5(digests)
-        new_etag = '"{}-{}"'.format(new_md5.hexdigest(), len(md5s))
+        new_etag = '"{0}-{1}"'.format(new_md5.hexdigest(), len(md5s))
 
     return new_etag
 
@@ -429,8 +421,8 @@ def filter_list(s3, bucket, s3filelist, strategy):
 
                 remote_size = entry['s3_head']['ContentLength']
 
-                entry['whytime'] = '{} / {}'.format(local_modified_epoch, remote_modified_epoch)
-                entry['whysize'] = '{} / {}'.format(local_size, remote_size)
+                entry['whytime'] = '{0} / {1}'.format(local_modified_epoch, remote_modified_epoch)
+                entry['whysize'] = '{0} / {1}'.format(local_size, remote_size)
 
                 if local_modified_epoch <= remote_modified_epoch or local_size == remote_size:
                     entry['skip_flag'] = True
@@ -488,10 +480,10 @@ def main():
     result = {}
     mode = module.params['mode']
 
-    region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     if not region:
         module.fail_json(msg="Region must be specified")
-    s3 = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    s3 = boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     if mode == 'push':
         try:

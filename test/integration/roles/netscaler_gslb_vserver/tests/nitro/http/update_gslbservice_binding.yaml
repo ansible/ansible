@@ -22,17 +22,17 @@
     persistmask: 255.255.255.0
     v6persistmasklen: 128
     timeout: 500
-    mir: DISABLED
-    disableprimaryondown: DISABLED
+    mir: disabled
+    disableprimaryondown: disabled
     dynamicweight: DISABLED
     considereffectivestate: NONE
     comment: some comment
     somethod: CONNECTION
-    sopersistence: DISABLED
+    sopersistence: disabled
     sopersistencetimeout: 100
     sothreshold: 5000
     sobackupaction: DROP
-    appflowlog: DISABLED
+    appflowlog: disabled
 
     domain_bindings:
       - domainname: example.com

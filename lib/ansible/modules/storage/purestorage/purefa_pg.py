@@ -2,86 +2,78 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Simon Dodsley (simon@purestorage.com)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: purefa_pg
-version_added: "2.4"
-short_description: Create, Delete and Modify Protection Groups on Pure Storage FlashArray
+version_added: '2.4'
+short_description: Manage protection groups on Pure Storage FlashArrays
 description:
-    - This module creates, deletes or modifies protection groups on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+- Create, delete or modify protection groups on Pure Storage FlashArrays.
+author:
+- Simon Dodsley (@sdodsley)
 options:
   pgroup:
     description:
-      - Host Name
+    - The name of the protection group.
     required: true
   state:
     description:
-      - Creates or modifies protection group.
-    required: false
+    - Define whether the protection group should exist or not.
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ absent, present ]
   volume:
     description:
-      - List of existing volumes to add to protection group.
-    required: false
+    - List of existing volumes to add to protection group.
   host:
     description:
-      - List of existing hosts to add to protection group.
-    required: false
+    - List of existing hosts to add to protection group.
   hostgroup:
     description:
-      - List of existing hostgroups to add to protection group.
-    required: false
+    - List of existing hostgroups to add to protection group.
   eradicate:
     description:
-      - Define whether to eradicate the protection group on delete and leave in trash.
-    required: false
+    - Define whether to eradicate the protection group on delete and leave in trash.
     type : bool
-    default: false
+    default: 'no'
+  enabled:
+    description:
+    - Define whether to enabled snapshots for the protection group.
+    type : bool
+    default: 'yes'
 extends_documentation_fragment:
-    - purestorage
+- purestorage
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create new protection group
   purefa_pg:
     pgroup: foo
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
+- name: Create new protection group with snapshots disabled
+  purefa_pg:
+    pgroup: foo
+    enabled: false
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
 - name: Delete protection group
   purefa_pg:
     pgroup: foo
-    state: absent
     eradicate: true
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: absent
 
 - name: Create protection group for hostgroups
   purefa_pg:
@@ -111,16 +103,16 @@ EXAMPLES = '''
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 '''
 
-RETURN = '''
+RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
-HAS_PURESTORAGE = True
 try:
     from purestorage import purestorage
+    HAS_PURESTORAGE = True
 except ImportError:
     HAS_PURESTORAGE = False
 
@@ -143,6 +135,7 @@ def make_pgroup(module, array):
 
     if not module.check_mode:
         host = array.create_pgroup(module.params['pgroup'])
+        array.set_pgroup(module.params['pgroup'], snap_enabled=module.params['enabled'])
         if module.params['volume']:
             array.set_pgroup(module.params['pgroup'], vollist=module.params['volume'])
         if module.params['host']:
@@ -162,23 +155,22 @@ def delete_pgroup(module, array):
     changed = True
     if not module.check_mode:
         array.destroy_pgroup(module.params['pgroup'])
-        if module.params['eradicate'] == 'true':
+        if module.params['eradicate']:
             array.eradicate_pgroup(module.params['pgroup'])
     module.exit_json(changed=changed)
 
 
 def main():
     argument_spec = purefa_argument_spec()
-    argument_spec.update(
-        dict(
-            pgroup=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            volume=dict(type='list'),
-            host=dict(type='list'),
-            hostgroup=dict(type='list'),
-            eradicate=dict(default='false', type='bool'),
-        )
-    )
+    argument_spec.update(dict(
+        pgroup=dict(type='str', required=True),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        volume=dict(type='list'),
+        host=dict(type='list'),
+        hostgroup=dict(type='list'),
+        eradicate=dict(type='bool', default=False),
+        enabled=dict(type='bool', default=True),
+    ))
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 

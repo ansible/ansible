@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -284,8 +284,8 @@ options:
 
     lrtm:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Calculate the least response times for bound services. If this parameter is not enabled, the
@@ -419,12 +419,12 @@ options:
 
     state:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
-                State of the monitor. The C(DISABLED) setting disables not only the monitor being configured, but all
-                monitors of the same type, until the parameter is set to C(ENABLED). If the monitor is bound to a
+                State of the monitor. The C(disabled) setting disables not only the monitor being configured, but all
+                monitors of the same type, until the parameter is set to C(enabled). If the monitor is bound to a
                 service, the state of the monitor is not taken into account when the state of the service is
                 determined.
 
@@ -757,8 +757,8 @@ options:
 
     storedb:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Store the database list populated with the responses to monitor probes. Used in database specific
@@ -997,8 +997,8 @@ def main():
         lrtm=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         deviation=dict(type='float'),
@@ -1114,8 +1114,8 @@ def main():
         storedb=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         storefrontcheckbackendservices=dict(type='bool'),
@@ -1292,6 +1292,8 @@ def main():
         'iptunnel': ['bool_yes_no'],
         'transparent': ['bool_yes_no'],
         'reverse': ['bool_yes_no'],
+        'lrtm': [lambda v: v.upper()],
+        'storedb': [lambda v: v.upper()],
     }
 
     lbmonitor_proxy = ConfigProxy(

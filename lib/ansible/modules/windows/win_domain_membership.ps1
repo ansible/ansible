@@ -235,6 +235,9 @@ Try {
                     }
 
                     $join_result = Join-Domain @join_args
+
+                    # this change requires a reboot
+                    $result.reboot_required = $true
                 }
                 ElseIf(-not $hostname_match) { # domain matches but hostname doesn't, just do a rename
                     Write-DebugLog ("domain matches, setting hostname to {0}" -f $hostname)
@@ -247,10 +250,13 @@ Try {
                     }
 
                     $rename_result = Rename-Computer @rename_args
+
+                    # this change requires a reboot
+                    $result.reboot_required = $true
+                } Else {
+                    # no change is needed
                 }
 
-                # all these changes require a reboot
-                $result.reboot_required = $true
             }
             Else {
                 Write-DebugLog "check mode, exiting early..."
@@ -267,11 +273,15 @@ Try {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
                     $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+
+                    # this change requires a reboot
                     $result.reboot_required = $true
                 }
                 If(-not $hostname_match) {
                     Write-DebugLog ("setting hostname to {0}" -f $hostname)
                     $rename_result = Rename-Computer -NewName $hostname
+
+                    # this change requires a reboot
                     $result.reboot_required = $true
                 }
             }

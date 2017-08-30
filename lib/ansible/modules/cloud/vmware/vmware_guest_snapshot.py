@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -110,6 +110,8 @@ EXAMPLES = '''
       hostname: 192.168.1.209
       username: administrator@vsphere.local
       password: vmware
+      datacenter: datacenter_name
+      folder: /myfolder
       name: dummy_vm
       state: present
       snapshot_name: snap1
@@ -122,6 +124,8 @@ EXAMPLES = '''
       username: administrator@vsphere.local
       password: vmware
       name: dummy_vm
+      datacenter: datacenter_name
+      folder: /myfolder
       state: remove
       snapshot_name: snap1
     delegate_to: localhost
@@ -131,6 +135,8 @@ EXAMPLES = '''
       hostname: 192.168.1.209
       username: administrator@vsphere.local
       password: vmware
+      datacenter: datacenter_name
+      folder: /myfolder
       name: dummy_vm
       state: revert
       snapshot_name: snap1
@@ -141,6 +147,8 @@ EXAMPLES = '''
       hostname: 192.168.1.209
       username: administrator@vsphere.local
       password: vmware
+      datacenter: datacenter_name
+      folder: /myfolder
       name: dummy_vm
       state: remove_all
     delegate_to: localhost

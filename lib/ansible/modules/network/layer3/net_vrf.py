@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -50,6 +50,23 @@ EXAMPLES = """
 - name: remove VRF named MANAGEMENT
   net_vrf:
     name: MANAGEMENT
+    state: absent
+
+- name: Create aggregate of VRFs with purge
+  net_vrf:
+    aggregate:
+      - { name: test4, rd: "1:204" }
+      - { name: test5, rd: "1:205" }
+    state: present
+    purge: yes
+
+- name: Delete aggregate of VRFs
+  net_vrf:
+    aggregate:
+      - name: test2
+      - name: test3
+      - name: test4
+      - name: test5
     state: absent
 """
 

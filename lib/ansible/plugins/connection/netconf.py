@@ -25,7 +25,8 @@ import json
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.plugins import netconf_loader
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import ConnectionBase, ensure_connect
 from ansible.utils.jsonrpc import Rpc
 
@@ -85,6 +86,12 @@ class Connection(Rpc, ConnectionBase):
         if not network_os:
             raise AnsibleConnectionFailure('Unable to automatically determine host network os. Please ansible_network_os value')
 
+        ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
+        if ssh_config in BOOLEANS_TRUE:
+            ssh_config = True
+        else:
+            ssh_config = None
+
         try:
             self._manager = manager.connect(
                 host=self._play_context.remote_addr,
@@ -96,7 +103,8 @@ class Connection(Rpc, ConnectionBase):
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
                 allow_agent=self.allow_agent,
                 timeout=self._play_context.timeout,
-                device_params={'name': network_os}
+                device_params={'name': network_os},
+                ssh_config=ssh_config
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(str(exc))

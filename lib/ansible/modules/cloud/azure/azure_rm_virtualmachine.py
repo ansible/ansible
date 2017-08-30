@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -170,7 +170,7 @@ options:
               The new network interface will be assigned to the first subnet found in the virtual network.
               Use this parameter to provide a specific subnet instead.
         aliases:
-            - virtual_network
+            - subnet
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources

@@ -26,73 +26,122 @@ DOCUMENTATION:
     author: ansible (@core)
     version_added: historical
     options:
-        _host:
+        host:
             description: Hostname/ip to connect to.
             default: inventory_hostname
-            host_vars:
-                 - ansible_host
-                 - ansible_ssh_host
-        _host_key_checking:
-            type: bool
+            vars:
+                 - name: ansible_host
+                 - name: ansible_ssh_host
+        host_key_checking:
+            constants:
+                - name: HOST_KEY_CHECKING
             description: Determines if ssh should check host keys
-            config:
+            type: boolean
+            ini:
                 - section: defaults
                   key: 'host_key_checking'
-            env_vars:
-                - ANSIBLE_HOST_KEY_CHECKING
-        _password:
+            env:
+                - name: ANSIBLE_HOST_KEY_CHECKING
+        password:
             description: Authentication password for the C(remote_user). Can be supplied as CLI option.
-            host_vars:
-                - ansible_password
-                - ansible_ssh_pass
-        _ssh_args:
+            vars:
+                - name: ansible_password
+                - name: ansible_ssh_pass
+        ssh_args:
             description: Arguments to pass to all ssh cli tools
             default: '-C -o ControlMaster=auto -o ControlPersist=60s'
-            config:
+            ini:
                 - section: 'ssh_connection'
                   key: 'ssh_args'
-            env_vars:
-                - ANSIBLE_SSH_ARGS
-        _ssh_common_args:
-            description: Common extra args for ssh CLI tools
-            host_vars:
-                - ansible_ssh_common_args
-        _scp_extra_args:
+            env:
+                - name: ANSIBLE_SSH_ARGS
+        ssh_common_args:
+            description: Common extra args for all ssh CLI tools
+            vars:
+                - name: ansible_ssh_common_args
+        ssh_executable:
+            default: ssh
+            description:
+              - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
+              - This option is usually not required, it might be useful when access to system ssh is restricted,
+                or when using ssh wrappers to connect to remote hosts.
+            env: [{name: ANSIBLE_SSH_EXECUTABLE}]
+            ini:
+            - {key: ssh_executable, section: ssh_connection}
+            yaml: {key: ssh_connection.ssh_executable}
+            const:
+                - name: ANSIBLE_SSH_EXECUTABLE
+            version_added: "2.2"
+        scp_extra_args:
             description: Extra exclusive to the 'scp' CLI
-            host_vars:
-                - ansible_scp_extra_args
-        _sftp_extra_args:
+            vars:
+                - name: ansible_scp_extra_args
+        sftp_extra_args:
             description: Extra exclusive to the 'sftp' CLI
-            host_vars:
-                - ansible_sftp_extra_args
-        _ssh_extra_args:
+            vars:
+                - name: ansible_sftp_extra_args
+        ssh_extra_args:
             description: Extra exclusive to the 'ssh' CLI
-            host_vars:
-                - ansible_ssh_extra_args
+            vars:
+                - name: ansible_ssh_extra_args
+        ssh_retries:
+            # constant: ANSIBLE_SSH_RETRIES
+            description: Number of attempts to connect.
+            default: 3
+            env:
+              - name: ANSIBLE_SSH_RETRIES
+            ini:
+              - section: connection
+                key: retries
+              - section: ssh_connection
+                key: retries
         port:
             description: Remote port to connect to.
             type: int
-            config:
-               - section: defaults
-                 key: remote_port
-                 default: 22
-            env_vars:
-               - ANSIBLE_REMOTE_PORT
-            host_vars:
-               - ansible_port
-               - ansible_ssh_port
+            default: 22
+            ini:
+              - section: defaults
+                key: remote_port
+            env:
+              - name: ANSIBLE_REMOTE_PORT
+            vars:
+              - name: ansible_port
+              - name: ansible_ssh_port
         remote_user:
             description:
                 - User name with which to login to the remote server, normally set by the remote_user keyword.
                 - If no user is supplied, Ansible will let the ssh client binary choose the user as it normally
-            config:
-               - section: defaults
-                 key: remote_user
-            env_vars:
-               - ANSIBLE_REMOTE_USER
-            host_vars:
-               - ansible_user
-               - ansible_ssh_user
+            ini:
+              - section: defaults
+                key: remote_user
+            env:
+              - name: ANSIBLE_REMOTE_USER
+            vars:
+              - name: ansible_user
+              - name: ansible_ssh_user
+        pipelining:
+            default: ANSIBLE_PIPELINING
+            description:
+              - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
+                by executing many Ansible modules without actual file transfer.
+              - This can result in a very significant performance improvement when enabled.
+              - However this conflicts with privilege escalation (become).
+                For example, when using sudo operations you must first disable 'requiretty' in the sudoers file for the target hosts,
+                which is why this feature is disabled by default.
+            env: [{name: ANSIBLE_SSH_PIPELINING}]
+            ini:
+            - {key: pipelining, section: ssh_connection}
+            type: boolean
+            vars: [{name: ansible_ssh_pipelining}]
+
+# TODO:
+# ANSIBLE_SSH_RETRIES
+
+# self._play_context.private_key_file
+# ANSIBLE_SSH_CONTROL_PATH
+# ANSIBLE_SSH_CONTROL_PATH_DIR
+# DEFAULT_SFTP_BATCH_MODE
+# DEFAULT_SCP_IF_SSH
 '''
 
 from __future__ import (absolute_import, division, print_function)
@@ -211,17 +260,12 @@ class Connection(ConnectionBase):
     def _connect(self):
         return self
 
-    def transport_test(self, connect_timeout):
-        ''' Test the transport mechanism, if available '''
-        port = int(self.port or 22)
-        display.vvv("attempting transport test to %s:%s" % (self.host, port))
-        sock = socket.create_connection((self.host, port), connect_timeout)
-        sock.close()
-
     @staticmethod
-    def _create_control_path(host, port, user):
+    def _create_control_path(host, port, user, connection=None):
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
+        if connection:
+            pstring += '-%s' % connection
         m = hashlib.sha1()
         m.update(to_bytes(pstring))
         digest = m.hexdigest()

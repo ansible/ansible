@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,8 @@ short_description: Manage Interface on VyOS network devices
 description:
   - This module provides declarative management of Interfaces
     on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   name:
     description:
@@ -93,6 +95,26 @@ EXAMPLES = """
     speed: 100
     mtu: 256
     duplex: full
+
+- name: Set interface using aggregate
+  vyos_interface:
+    aggregate:
+      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512}
+      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256}
+
+- name: Disable interface on aggregate
+  net_interface:
+    aggregate:
+      - name: eth1
+      - name: eth2
+    enabled: False
+
+- name: Delete interface using aggregate
+  net_interface:
+    aggregate:
+      - name: eth1
+      - name: eth2
+    state: absent
 """
 
 RETURN = """
@@ -108,16 +130,15 @@ commands:
 """
 import re
 
+from copy import deepcopy
 from time import sleep
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network_common import conditional
+from ansible.module_utils.network_common import conditional, remove_default_spec
 from ansible.module_utils.vyos import load_config, get_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
-
-DEFAULT_DESCRIPTION = "'configured by vyos_interface'"
 
 
 def search_obj_in_list(name, lst):
@@ -213,39 +234,18 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
-
-    params = ['speed', 'description', 'duplex', 'mtu']
     aggregate = module.params.get('aggregate')
-
     if aggregate:
-        for c in aggregate:
-            d = c.copy()
-            if 'name' not in d:
-                module.fail_json(msg="missing required arguments: %s" % 'name')
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            for item in params:
-                if item not in d:
-                    d[item] = None
-
-            if d.get('description') is None:
-                d['description'] = DEFAULT_DESCRIPTION
-
-            if not d.get('state'):
-                d['state'] = module.params['state']
-
-            if d.get('enabled') is None:
-                d['enabled'] = module.params['enabled']
-
+            d = item.copy()
             if d['enabled']:
                 d['disable'] = False
             else:
                 d['disable'] = True
-
-            if d.get('delay') is None:
-                d['delay'] = module.params['delay']
-
-            if d.get('speed'):
-                d['speed'] = str(d['speed'])
 
             obj.append(d)
     else:
@@ -300,19 +300,29 @@ def check_declarative_intent_params(module, want, result):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         speed=dict(),
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
         enabled=dict(default=True, type='bool'),
         delay=dict(default=10, type='int'),
-        aggregate=dict(type='list'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
     required_one_of = [['name', 'aggregate']]

@@ -1,19 +1,5 @@
-# (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -24,7 +10,9 @@ import sys
 import tempfile
 import yaml
 
-from ansible.config.data import ConfigData, Setting
+from collections import namedtuple
+
+from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import configparser
@@ -34,131 +22,169 @@ from ansible.parsing.quoting import unquote
 from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
 
+Plugin = namedtuple('Plugin','name type')
+Setting = namedtuple('Setting','name value origin')
 
+# FIXME: see if we can unify in module_utils with similar function used by argspec
+def ensure_type(value, value_type):
+    ''' return a configuration variable with casting
+    :arg value: The value to ensure correct typing of
+    :kwarg value_type: The type of the value.  This can be any of the following strings:
+        :boolean: sets the value to a True or False value
+        :integer: Sets the value to an integer or raises a ValueType error
+        :float: Sets the value to a float or raises a ValueType error
+        :list: Treats the value as a comma separated list.  Split the value
+            and return it as a python list.
+        :none: Sets the value to None
+        :path: Expands any environment variables and tilde's in the value.
+        :tmp_path: Create a unique temporary directory inside of the directory
+            specified by value and return its path.
+        :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
+            means colon separated strings.)  Split the value and then expand
+            each part for environment variables and tildes.
+    '''
+    if value_type:
+        value_type = value_type.lower()
+
+    if value_type in ('boolean', 'bool'):
+        value = boolean(value, strict=False)
+
+    elif value:
+        if value_type in ('integer', 'int'):
+            value = int(value)
+
+        elif value_type == 'float':
+            value = float(value)
+
+        elif value_type == 'list':
+            if isinstance(value, string_types):
+                value = [x.strip() for x in value.split(',')]
+
+        elif value_type == 'none':
+            if value == "None":
+                value = None
+
+        elif value_type == 'path':
+            value = resolve_path(value)
+
+        elif value_type in ('tmp', 'temppath', 'tmppath'):
+            value = resolve_path(value)
+            if not os.path.exists(value):
+                makedirs_safe(value, 0o700)
+            prefix = 'ansible-local-%s' % os.getpid()
+            value = tempfile.mkdtemp(prefix=prefix, dir=value)
+
+        elif value_type == 'pathlist':
+            if isinstance(value, string_types):
+                value = [resolve_path(x) for x in value.split(os.pathsep)]
+
+        # defaults to string types
+        elif isinstance(value, string_types):
+            value = unquote(value)
+
+    return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
+
+# FIXME: see if this can live in utils/path
 def resolve_path(path):
-
+    ''' resolve relative or 'varaible' paths '''
     if '{{CWD}}' in path: # allow users to force CWD using 'magic' {{CWD}}
         path = path.replace('{{CWD}}', os.getcwd())
 
     return unfrackpath(path, follow=False)
 
+# FIXME: generic file type?
+def get_config_type(cfile):
 
-def get_ini_config(p, entries):
+    ftype = None
+    if cfile is not None:
+        ext = os.path.splitext(cfile)[-1]
+        if ext in ('.ini', '.cfg'):
+            ftype = 'ini'
+        elif ext in ('.yaml', '.yml'):
+            ftype = 'yaml'
+        else:
+            raise AnsibleOptionsError("Unsupported configuration file extension for %s: %s" % (cfile, to_native(ext)))
+
+    return ftype
+
+# FIXME: can move to module_utils for use for ini plugins also?
+def get_ini_config_value(p, entry):
     ''' returns the value of last ini entry found '''
     value = None
     if p is not None:
-        for entry in entries:
-            try:
-                value = p.get(entry.get('section','defaults'), entry.get('key',''), raw=True)
-            except:
-                pass
-
+        try:
+            value = p.get(entry.get('section','defaults'), entry.get('key',''), raw=True)
+        except: # FIXME: actually report issues here
+            pass
     return value
 
 
 class ConfigManager(object):
 
+    UNABLE = []
+    DEPRECATED = []
+
     def __init__(self, conf_file=None):
 
+        self._base_defs = {}
+        self._plugins = {}
+        self._parser = None
+
+        self._config_file = conf_file
         self.data = ConfigData()
 
-        #FIXME: make dynamic?
-        bconfig_def = to_bytes('%s/data/config.yml' % os.path.dirname(__file__))
+
+        #FIXME: make dynamic? scan for more? make it's own method?
+        # Create configuration definitions from source
+        bconfig_def = to_bytes('%s/base.yml' % os.path.dirname(__file__))
         if os.path.exists(bconfig_def):
             with open(bconfig_def, 'rb') as config_def:
-                self.initial_defs = yaml.safe_load(config_def)
+                self._base_defs = yaml.safe_load(config_def)
         else:
             raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(bconfig_def))
 
-        ftype = None
-        if conf_file is None:
+        if self._config_file is None:
             # set config using ini
-            conf_file = self.find_ini_config_file()
-            ftype = 'ini'
-        else:
-            ext = os.path.splitext(conf_file)[-1]
-            if ext in ('.ini', '.cfg'):
-                ftype = 'ini'
-            elif ext in ('.yaml', '.yml'):
-                ftype = 'yaml'
-            else:
-                raise AnsibleOptionsError("Unsupported configuration file extension: \n{0}".format(ext))
+            self._config_file = self._find_ini_config_file()
 
-        self.parse_config(conf_file, ftype)
+        if self._config_file:
+            if os.path.exists(self._config_file):
+                # initialize parser and read config
+                self._parse_config_file()
 
-    def parse_config(self, cfile, ftype):
+        # update constants
+        self.update_config_data()
+
+    def _parse_config_file(self, cfile=None):
+        ''' return flat configuration settings from file(s) '''
         # TODO: take list of files with merge/nomerge
 
-        parser = None
-        if cfile:
+        if cfile is None:
+            cfile = self._config_file
+
+        ftype = get_config_type(cfile)
+        if cfile is not None:
             if ftype == 'ini':
-                parser = configparser.ConfigParser()
+                self._parser = configparser.ConfigParser()
                 try:
-                    parser.read(cfile)
+                    self._parser.read(cfile)
                 except configparser.Error as e:
-                    raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
-            elif ftype == 'yaml':
-                with open(cfile, 'rb') as config_stream:
-                    parser = yaml.safe_load(config_stream)
+                    raise AnsibleOptionsError("Error reading config file (%s): %s" % (cfile, to_native(e)))
+            # FIXME: this should eventually handle yaml config files
+            #elif ftype == 'yaml':
+            #    with open(cfile, 'rb') as config_stream:
+            #        self._parser = yaml.safe_load(config_stream)
             else:
-                raise AnsibleOptionsError("Unsupported configuration file type: \n{0}".format(ftype))
-
-        self.update_config(cfile, self.initial_defs, parser, ftype)
-
-    def update_config(self, configfile, defs, parser, ftype):
-
-        # update the constant for config file
-        self.data.update_setting(Setting('CONFIG_FILE', configfile, ''))
-
-        origin = None
-        # env and config defs can have several entries, ordered in list from lowest to highest precedence
-        for config in self.initial_defs:
-
-            value = None
-            # env vars are highest precedence
-            if defs[config].get('env'):
-                try:
-                    for env_var in defs[config]['env']:
-                        env_value = os.environ.get(env_var.get('name'), None)
-                        if env_value is not None: # only set if env var is defined
-                            value = env_value
-                            origin = 'env: %s' % env_var.get('name')
-                except:
-                    sys.stderr.write("Error while loading environment configs for %s\n" % config)
-
-            # try config file entries next
-            if value is None and defs[config].get(ftype):
-                if ftype == 'ini':
-                    # load from ini config
-                    try:
-                        value = get_ini_config(parser, defs[config]['ini'])
-                        origin = configfile
-                    except Exception as e:
-                        sys.stderr.write("Error while loading ini config %s: %s" % (configfile, str(e)))
-                elif ftype == 'yaml':
-                    # FIXME: break down key from defs (. notation???)
-                    key = 'name'
-                    value = parser.get(key)
-                    origin = configfile
-
-            # set default if we got here w/o a value
-            if value is None:
-                value = defs[config].get('default')
-                origin = 'default'
-
-            # ensure correct type
-            try:
-                value = self.ensure_type(value, defs[config].get('value_type'))
-            except:
-                sys.stderr.write("Unable to set correct type for %s, skipping" %  config)
-                continue
-
-            # set the constant
-            self.data.update_setting(Setting(config, value, origin))
+                raise AnsibleOptionsError("Unsupported configuration file type: %s" % to_native(ftype))
 
 
-    def find_ini_config_file(self):
-        ''' Load Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
+    def _find_yaml_config_files(self):
+        ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
+        pass
+
+    def _find_ini_config_file(self):
+        ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
+        # FIXME: eventually deprecate ini configs
 
         path0 = os.getenv("ANSIBLE_CONFIG", None)
         if path0 is not None:
@@ -180,57 +206,164 @@ class ConfigManager(object):
 
         return path
 
-    def ensure_type(self, value, value_type):
-        ''' return a configuration variable with casting
-        :arg value: The value to ensure correct typing of
-        :kwarg value_type: The type of the value.  This can be any of the following strings:
-            :boolean: sets the value to a True or False value
-            :integer: Sets the value to an integer or raises a ValueType error
-            :float: Sets the value to a float or raises a ValueType error
-            :list: Treats the value as a comma separated list.  Split the value
-                and return it as a python list.
-            :none: Sets the value to None
-            :path: Expands any environment variables and tilde's in the value.
-            :tmp_path: Create a unique temporary directory inside of the directory
-                specified by value and return its path.
-            :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
-                means colon separated strings.)  Split the value and then expand
-                each part for environment variables and tildes.
+    def get_configuration_definitions(self, plugin_type=None, name=None):
+        ''' just list the possible settings, either base or for specific plugins or plugin '''
+
+        ret = {}
+        if plugin_type is None:
+            ret = self._base_defs
+        elif name is None:
+            ret = self._plugins.get(plugin_type, {})
+        else:
+            ret = {name: self._plugins.get(plugin_type, {}).get(name, {})}
+
+        return ret
+
+    def _loop_entries(self, container, entry_list):
+        ''' repeat code for value entry assignment '''
+
+        value = None
+        origin = None
+        for entry in entry_list:
+            name = entry.get('name')
+            temp_value = container.get(name, None)
+            if temp_value is not None: # only set if env var is defined
+                value = temp_value
+                origin = name
+
+                # deal with deprecation of setting source, if used
+                #FIXME: if entry.get('deprecated'):
+
+        return value, origin
+
+    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, variables=None):
+        ''' wrapper '''
+        value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name, variables=variables)
+        return value
+
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, variables=None):
+        ''' Given a config key figure out the actual value and report on the origin of the settings '''
+
+        if cfile is None:
+            cfile = self._config_file
+
+        # Note: sources that are lists listed in low to high precedence (last one wins)
+        value = None
+        defs = {}
+        if plugin_type is None:
+            defs = self._base_defs
+        elif plugin_name is None:
+            defs = self._plugins[plugin_type]
+        else:
+            defs = self._plugins[plugin_type][plugin_name]
+
+        # Use 'variable overrides' if present, highest precedence, but only present when querying running play
+        if variables:
+            value, origin = self._loop_entries(variables, defs[config]['vars'])
+            origin = 'var: %s' % origin
+
+        # env vars are next precedence
+        if value is None and defs[config].get('env'):
+            value, origin = self._loop_entries(os.environ, defs[config]['env'])
+            origin = 'env: %s' % origin
+
+        # try config file entries next, if we have one
+        if value is None and cfile is not None:
+            ftype = get_config_type(cfile)
+            if ftype and defs[config].get(ftype):
+                if ftype == 'ini':
+                    # load from ini config
+                    try: # FIXME: generaelize _loop_entries to allow for files also
+                        for ini_entry in defs[config]['ini']:
+                            value = get_ini_config_value(self._parser, ini_entry)
+                            origin = cfile
+                            #FIXME: if ini_entry.get('deprecated'):
+                    except Exception as e:
+                        sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
+                elif ftype == 'yaml':
+                    pass # FIXME: implement, also , break down key from defs (. notation???)
+                    origin = cfile
+
         '''
-        if value_type == 'boolean':
-            value = boolean(value, strict=False)
+        # for plugins, try using existing constants, this is for backwards compatiblity
+        if plugin_name and defs[config].get('constants'):
+            value, origin = self._loop_entries(self.data, defs[config]['constants'])
+            origin = 'constant: %s' % origin
+        '''
 
-        elif value:
-            if value_type == 'integer':
-                value = int(value)
+        # set default if we got here w/o a value
+        if value is None:
+            value = defs[config].get('default')
+            origin = 'default'
+            # FIXME: moved eval to constants as this does not have access to previous vars
+            if plugin_type is None and isinstance(value, string_types) and (value.startswith('eval(') and value.endswith(')')):
+                return value, origin
+            #default_value = defs[config].get('default')
+            #if plugin_type is None and isinstance(default_value, string_types) and (default_value.startswith('eval(') and default_value.endswith(')')):
+            #    try:
+            #        eval_string = default_value.replace('eval(', '', 1)[:-1]
+            #        value = eval(eval_string) # FIXME: safe eval?
+            #    except:
+            #        value = default_value
+            #else:
+            #    value = default_value
 
-            elif value_type == 'float':
-                value = float(value)
+        # ensure correct type
+        try:
+            value = ensure_type(value, defs[config].get('type'))
+        except Exception as e:
+            self.UNABLE.append(config)
 
-            elif value_type == 'list':
-                if isinstance(value, string_types):
-                    value = [x.strip() for x in value.split(',')]
+        # deal with deprecation of the setting
+        if defs[config].get('deprecated') and origin != 'default':
+            self.DEPRECATED.append((config, defs[config].get('deprecated')))
 
-            elif value_type == 'none':
-                if value == "None":
-                    value = None
+        return value, origin
 
-            elif value_type == 'path':
-                value = resolve_path(value)
+    def update_plugin_config(self, plugin_type, name, defs):
+        ''' really: update constants '''
+        # no sense?
+        self.initialize_plugin_configuration_definitions(plugin_type, name, defs)
+        self.update_config_data(defs)
 
-            elif value_type == 'tmppath':
-                value = resolve_path(value)
-                if not os.path.exists(value):
-                    makedirs_safe(value, 0o700)
-                prefix = 'ansible-local-%s' % os.getpid()
-                value = tempfile.mkdtemp(prefix=prefix, dir=value)
+    def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
 
-            elif value_type == 'pathlist':
-                if isinstance(value, string_types):
-                    value = [resolve_path(x) for x in value.split(os.pathsep)]
+        if plugin_type not in self._plugins:
+            self._plugins[plugin_type] = {}
 
-            elif isinstance(value, string_types):
-                value = unquote(value)
+        self._plugins[plugin_type][name] = defs
 
-        return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
+    def update_config_data(self, defs=None, configfile=None):
+        ''' really: update constants '''
 
+        if defs is None:
+            defs = self._base_defs
+
+        if configfile is None:
+            configfile = self._config_file
+
+        if not isinstance(defs, dict):
+            raise AnsibleOptionsError("Invalid configuration definition type: %s for %s" % (type(defs), defs))
+
+        # update the constant for config file
+        self.data.update_setting(Setting('CONFIG_FILE', configfile, ''))
+
+        origin = None
+        # env and config defs can have several entries, ordered in list from lowest to highest precedence
+        for config in defs:
+            if not isinstance(defs[config], dict):
+                raise AnsibleOptionsError("Invalid configuration definition '%s': type is %s" % (to_native(config), type(defs[config])))
+
+            # get value and origin
+            value, origin = self.get_config_value_and_origin(config, configfile)
+
+            # set the constant
+            self.data.update_setting(Setting(config, value, origin))
+
+        # FIXME: find better way to do this by passing back to where display is available
+        if self.UNABLE:
+            sys.stderr.write("Unable to set correct type for:\n\t%s\n" % '\n\t'.join(self.UNABLE))
+        if self.DEPRECATED:
+            for k, reason in self.DEPRECATED:
+                sys.stderr.write("[DEPRECATED] %(k)s: %(why)s. It will be removed in %(version)s. As alternative use one of [%(alternatives)s]\n"
+                                 % dict(k=k, **reason))

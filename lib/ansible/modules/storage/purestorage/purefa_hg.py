@@ -2,74 +2,58 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Simon Dodsley (simon@purestorage.com)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: purefa_hg
-version_added: "2.4"
-short_description: Create, Delete and Modify hostgroups on Pure Storage FlashArray
+version_added: '2.4'
+short_description: Manage hostgroups on Pure Storage FlashArrays
 description:
-    - This module creates, deletes or modifies hostgroups on Pure Storage FlashArray.
-author: Simon Dodsley (@simondodsley)
+- Create, delete or modifiy hostgroups on Pure Storage FlashArrays.
+author:
+- Simon Dodsley (@sdodsley)
 options:
   hostgroup:
     description:
-      - Host Name.
+    - The name of the hostgroup.
     required: true
   state:
     description:
-      - Creates or modifies hostgroup.
-    required: false
+    - Define whether the hostgroup should exist or not.
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ absent, present ]
   host:
     description:
-      - List of existing hosts to add to hostgroup.
-    required: false
+    - List of existing hosts to add to hostgroup.
   volume:
     description:
-      - List of existing volumes to add to hostgroup.
-    required: false
+    - List of existing volumes to add to hostgroup.
 extends_documentation_fragment:
-    - purestorage
+- purestorage
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create new hostgroup
   purefa_hg:
     hostgroup: foo
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Delete hostgroup - this will disconnect all hosts and volume in the hostgroup
+# This will disconnect all hosts and volumes in the hostgroup
+- name: Delete hostgroup
   purefa_hg:
     hostgroup: foo
-    state: absent
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: absent
 
 - name: Create host group with hosts and volumes
   purefa_hg:
@@ -84,16 +68,16 @@ EXAMPLES = '''
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 '''
 
-RETURN = '''
+RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
-HAS_PURESTORAGE = True
 try:
     from purestorage import purestorage
+    HAS_PURESTORAGE = True
 except ImportError:
     HAS_PURESTORAGE = False
 
@@ -143,14 +127,12 @@ def delete_hostgroup(module, array):
 
 def main():
     argument_spec = purefa_argument_spec()
-    argument_spec.update(
-        dict(
-            hostgroup=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            host=dict(type='list'),
-            volume=dict(type='list'),
-        )
-    )
+    argument_spec.update(dict(
+        hostgroup=dict(type='str', required=True),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        host=dict(type='list'),
+        volume=dict(type='list'),
+    ))
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 

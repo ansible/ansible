@@ -29,7 +29,7 @@ from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins
-from ansible.plugins import PluginLoader
+from ansible.plugins.loader import PluginLoader
 from ansible.plugins.lookup import password
 from ansible.utils import encrypt
 

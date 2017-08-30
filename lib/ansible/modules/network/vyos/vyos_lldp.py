@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,8 @@ short_description: Manage LLDP configuration on VyOS network devices
 description:
   - This module provides declarative management of LLDP service
     on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   state:
     description:
@@ -78,7 +80,6 @@ def main():
     """
     argument_spec = dict(
         interfaces=dict(type='list'),
-        purge=dict(default=False, type='bool'),
         state=dict(default='present',
                    choices=['present', 'absent',
                             'enabled', 'disabled'])

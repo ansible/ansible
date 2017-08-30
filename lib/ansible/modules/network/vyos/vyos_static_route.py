@@ -19,20 +19,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
 ---
 module: vyos_static_route
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage static IP routes on Cisco VyOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Vyatta VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   prefix:
     description:
@@ -50,10 +52,6 @@ options:
       - Admin distance of the static route.
   aggregate:
     description: List of static route definitions
-  purge:
-    description:
-      - Purge static routes not defined in the aggregates parameter.
-    default: no
   state:
     description:
       - State of the static route configuration.
@@ -67,22 +65,32 @@ EXAMPLES = """
     prefix: 192.168.2.0
     mask: 24
     next_hop: 10.0.0.1
+
 - name: configure static route prefix/mask
   vyos_static_route:
     prefix: 192.168.2.0/16
     next_hop: 10.0.0.1
+
 - name: remove configuration
   vyos_static_route:
     prefix: 192.168.2.0
     mask: 16
     next_hop: 10.0.0.1
     state: absent
+
 - name: configure aggregates of static routes
   vyos_static_route:
     aggregate:
       - { prefix: 192.168.2.0, mask: 24, next_hop: 10.0.0.1 }
       - { prefix: 192.168.3.0, mask: 16, next_hop: 10.0.2.1 }
       - { prefix: 192.168.3.0/16, next_hop: 10.0.2.1 }
+
+- name: Remove static route collections
+  vyos_static_route:
+    aggregate:
+      - { prefix: 172.24.1.0/24, next_hop: 192.168.42.64 }
+      - { prefix: 172.24.3.0/24, next_hop: 192.168.42.64 }
+    state: absent
 """
 
 RETURN = """
@@ -93,10 +101,12 @@ commands:
   sample:
     - set protocols static route 192.168.2.0/16 next-hop 10.0.0.1
 """
-
 import re
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
@@ -156,20 +166,23 @@ def config_to_dict(module):
     return obj
 
 
-def map_params_to_obj(module):
+def map_params_to_obj(module, required_together=None):
     obj = []
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
+            module._check_required_together(required_together, item)
+            d = item.copy()
             if '/' in d['prefix']:
                 d['mask'] = d['prefix'].split('/')[1]
                 d['prefix'] = d['prefix'].split('/')[0]
 
-            if 'state' not in d:
-                d['state'] = module.params['state']
-            if 'admin_distance' not in d:
-                d['admin_distance'] = str(module.params['admin_distance'])
+            if 'admin_distance' in d:
+                d['admin_distance'] = str(d['admin_distance'])
 
             obj.append(d)
     else:
@@ -197,17 +210,27 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         prefix=dict(type='str'),
         mask=dict(type='str'),
         next_hop=dict(type='str'),
         admin_distance=dict(type='int'),
-        aggregate=dict(type='list'),
-        purge=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['prefix'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
+
     required_one_of = [['aggregate', 'prefix']]
     required_together = [['prefix', 'next_hop']]
     mutually_exclusive = [['aggregate', 'prefix']]
@@ -215,6 +238,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            required_together=required_together,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -223,7 +247,7 @@ def main():
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings
-    want = map_params_to_obj(module)
+    want = map_params_to_obj(module, required_together=required_together)
     have = config_to_dict(module)
 
     commands = spec_to_commands((want, have), module)

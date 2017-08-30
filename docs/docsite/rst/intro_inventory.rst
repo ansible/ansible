@@ -362,6 +362,9 @@ Here is an example of how to instantly deploy to created containers::
       path: "/var/jenkins_home/.ssh/jupiter"
       state: directory
 
+.. note:: If you're reading the docs from the beginning, this may be the first example you've seen of an Ansible playbook. This is not an inventory file.
+          Playbooks will be covered in great detail later in the docs.
+
 .. seealso::
 
    :doc:`intro_dynamic_inventory`

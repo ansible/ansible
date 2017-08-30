@@ -41,7 +41,7 @@ from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
 from module_args import get_argument_spec
 
-from schema import doc_schema, metadata_schema, return_schema
+from schema import doc_schema, metadata_1_1_schema, return_schema
 
 from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
@@ -892,7 +892,7 @@ class ModuleValidator(Validator):
                     )
 
             if metadata:
-                self._validate_docs_schema(metadata, metadata_schema(deprecated),
+                self._validate_docs_schema(metadata, metadata_1_1_schema(deprecated),
                                            'ANSIBLE_METADATA', 316)
 
         return doc_info

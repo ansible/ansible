@@ -25,7 +25,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_NET") != "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") != "UNDEF_MOUNT" or ansible_distribution == "MacOSX"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
 
@@ -79,7 +79,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_NET") != "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") != "UNDEF_MOUNT" or ansible_distribution == "MacOSX"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
 - hosts: facthost12
@@ -96,7 +96,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_NET") != "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") != "UNDEF_MOUNT" or ansible_distribution == "MacOSX"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
 - hosts: facthost1
@@ -113,7 +113,7 @@
           - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
           # non min facts that are not collected
           - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
 
 - hosts: facthost2
@@ -127,7 +127,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
 
 - hosts: facthost3
@@ -141,7 +141,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") != "UNDEF_HW" or ansible_distribution == "MacOSX"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") != "UNDEF_MOUNT" or ansible_distribution == "MacOSX"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
 
 - hosts: facthost4
@@ -155,7 +155,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
 - hosts: facthost5
@@ -169,7 +169,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
 - hosts: facthost6
@@ -185,7 +185,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
 
@@ -203,7 +203,7 @@
           # not collecting virt, should be undef
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
           # mounts/devices are collected by hardware, so should be not collected and undef
-          - 'ansible_mounts|default("UNDEF_MOUNTS") == "UNDEF_MOUNTS"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_devices|default("UNDEF_DEVICES") == "UNDEF_DEVICES"'
           # from the min set, which should still collect
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
@@ -220,7 +220,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
 
 - hosts: facthost14
@@ -236,7 +236,7 @@
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
           - 'ansible_default_ipv4|default("UNDEF_DEFAULT_IPV4") != "UNDEF_DEFAULT_IPV4"'
           - 'ansible_all_ipv4_addresses|default("UNDEF_ALL_IPV4") != "UNDEF_ALL_IPV4"'
-          - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
           - 'ansible_env|default("UNDEF_ENV") == "UNDEF_ENV"'
 
@@ -254,13 +254,13 @@
           # not collecting virt, should be undef
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
           # mounts/devices are collected by hardware, so should be not collected and undef
-          - 'ansible_mounts|default("UNDEF_MOUNTS") == "UNDEF_MOUNTS"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_devices|default("UNDEF_DEVICES") == "UNDEF_DEVICES"'
           # from the min set, which should not collect
           - 'ansible_user_id|default("UNDEF_MIN") == "UNDEF_MIN"'
           - 'ansible_env|default("UNDEF_ENV") == "UNDEF_ENV"'
           # the pkg_mgr fact we requested explicitly
-          - 'ansible_pkg_mgr|default("UNDEF_PKG_MGR") != "UNDEF_PKGMGR"'
+          - 'ansible_pkg_mgr|default("UNDEF_PKG_MGR") != "UNDEF_PKG_MGR"'
 
 
 - hosts: facthost9

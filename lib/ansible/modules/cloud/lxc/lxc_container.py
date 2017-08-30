@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -477,7 +477,15 @@ LXC_COMMAND_MAP = {
         }
     },
     'clone': {
-        'variables': {
+        'variables-lxc-copy': {
+            'backing_store': '--backingstorage',
+            'lxc_path': '--lxcpath',
+            'fs_size': '--fssize',
+            'name': '--name',
+            'clone_name': '--newname'
+        },
+        # lxc-clone is deprecated in favor of lxc-copy
+        'variables-lxc-clone': {
             'backing_store': '--backingstore',
             'lxc_path': '--lxcpath',
             'fs_size': '--fssize',
@@ -788,13 +796,20 @@ class LxcContainerManagement(object):
             self.state_change = True
             self.container.stop()
 
+        # lxc-clone is deprecated in favor of lxc-copy
+        clone_vars = 'variables-lxc-copy'
+        clone_cmd = self.module.get_bin_path('lxc-copy')
+        if not clone_cmd:
+            clone_vars = 'variables-lxc-clone'
+            clone_cmd = self.module.get_bin_path('lxc-clone', True)
+
         build_command = [
-            self.module.get_bin_path('lxc-clone', True),
+            clone_cmd,
         ]
 
         build_command = self._add_variables(
             variables_dict=self._get_vars(
-                variables=LXC_COMMAND_MAP['clone']['variables']
+                variables=LXC_COMMAND_MAP['clone'][clone_vars]
             ),
             build_command=build_command
         )
@@ -810,7 +825,7 @@ class LxcContainerManagement(object):
 
         rc, return_data, err = self._run_command(build_command)
         if rc != 0:
-            message = "Failed executing lxc-clone."
+            message = "Failed executing %s." % os.path.basename(clone_cmd)
             self.failure(
                 err=err, rc=rc, msg=message, command=' '.join(
                     build_command

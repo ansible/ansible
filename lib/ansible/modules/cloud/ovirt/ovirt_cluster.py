@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -208,6 +208,12 @@ options:
         description:
             - "The compatibility version of the cluster. All hosts in this
                cluster must support at least this compatibility version."
+    mac_pool:
+        description:
+            - "MAC pool to be used by this cluster."
+            - "C(Note:)"
+            - "This is supported since oVirt version 4.1."
+        version_added: 2.4
 extends_documentation_fragment: ovirt
 '''
 
@@ -278,6 +284,7 @@ from ansible.module_utils.ovirt import (
     equal,
     ovirt_full_argument_spec,
     search_by_name,
+    get_id_by_name,
 )
 
 
@@ -334,6 +341,16 @@ class ClustersModule(BaseModule):
                 raise Exception("Scheduling policy '%s' was not found" % self.param('scheduling_policy'))
 
         return sched_policy
+
+    def _get_mac_pool(self):
+        mac_pool = None
+        if self._module.params.get('mac_pool'):
+            mac_pool = search_by_name(
+                self._connection.system_service().mac_pools_service(),
+                self._module.params.get('mac_pool'),
+            )
+
+        return mac_pool
 
     def build_entity(self):
         sched_policy = self._get_sched_policy()
@@ -449,6 +466,9 @@ class ClustersModule(BaseModule):
             switch_type=otypes.SwitchType(
                 self.param('switch_type')
             ) if self.param('switch_type') else None,
+            mac_pool=otypes.MacPool(
+                id=get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'))
+            ) if self.param('mac_pool') else None,
         )
 
     def update_check(self, entity):
@@ -495,6 +515,10 @@ class ClustersModule(BaseModule):
                 sorted([
                     str(source) for source in entity.required_rng_sources
                 ])
+            ) and
+            equal(
+                get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool')),
+                entity.mac_pool.id
             )
         )
 
@@ -543,6 +567,7 @@ def main():
         cpu_type=dict(default=None),
         switch_type=dict(default=None, choices=['legacy', 'ovs']),
         compatibility_version=dict(default=None),
+        mac_pool=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -103,12 +103,20 @@ options:
         description:
             - SAN extension to attach to the certificate signing request
             - This can either be a 'comma separated string' or a YAML list.
+    subjectAltName_critical:
+        required: false
+        description:
+            - Should the subjectAltName extension be considered as critical
     keyUsage:
         required: false
         description:
             - This defines the purpose (e.g. encipherment, signature, certificate signing)
               of the key contained in the certificate.
             - This can either be a 'comma separated string' or a YAML list.
+    keyUsage_critical:
+        required: false
+        description:
+            - Should the keyUsage extension be considered as critical
     extendedKeyUsage:
         required: false
         aliases: [ 'extKeyUsage' ]
@@ -116,6 +124,11 @@ options:
             - Additional restrictions (e.g. client authentication, server authentication)
               on the allowed purposes for which the public key may be used.
             - This can either be a 'comma separated string' or a YAML list.
+    extendedKeyUsage_critical:
+        required: false
+        aliases: [ 'extKeyUsage_critical' ]
+        description:
+            - Should the extkeyUsage extension be considered as critical
 
 notes:
     - "If the certificate signing request already exists it will be checked whether subjectAltName,
@@ -239,8 +252,11 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.version = module.params['version']
         self.subjectAltName = module.params['subjectAltName']
+        self.subjectAltName_critical = module.params['subjectAltName_critical']
         self.keyUsage = module.params['keyUsage']
+        self.keyUsage_critical = module.params['keyUsage_critical']
         self.extendedKeyUsage = module.params['extendedKeyUsage']
+        self.extendedKeyUsage_critical = module.params['extendedKeyUsage_critical']
         self.request = None
         self.privatekey = None
 
@@ -271,15 +287,15 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
                     setattr(subject, key, value)
 
             altnames = ', '.join(self.subjectAltName)
-            extensions = [crypto.X509Extension(b"subjectAltName", False, altnames.encode('ascii'))]
+            extensions = [crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii'))]
 
             if self.keyUsage:
                 usages = ', '.join(self.keyUsage)
-                extensions.append(crypto.X509Extension(b"keyUsage", False, usages.encode('ascii')))
+                extensions.append(crypto.X509Extension(b"keyUsage", self.keyUsage_critical, usages.encode('ascii')))
 
             if self.extendedKeyUsage:
                 usages = ', '.join(self.extendedKeyUsage)
-                extensions.append(crypto.X509Extension(b"extendedKeyUsage", False, usages.encode('ascii')))
+                extensions.append(crypto.X509Extension(b"extendedKeyUsage", self.extendedKeyUsage_critical, usages.encode('ascii')))
 
             req.add_extensions(extensions)
 
@@ -315,13 +331,13 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             return True
 
         def _check_subjectAltName(extensions):
-            altnames_ext = next((ext.__str__() for ext in extensions if ext.get_short_name() == b'subjectAltName'), '')
-            altnames = [altname.strip() for altname in altnames_ext.split(',')]
+            altnames_ext = next((ext for ext in extensions if ext.get_short_name() == b'subjectAltName'), '')
+            altnames = [altname.strip() for altname in str(altnames_ext).split(',')]
             # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
             # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
             altnames = [name if not name.startswith('IP Address:') else "IP:" + name.split(':', 1)[1] for name in altnames]
             if self.subjectAltName:
-                if set(altnames) != set(self.subjectAltName):
+                if set(altnames) != set(self.subjectAltName) or altnames_ext.get_critical() != self.subjectAltName_critical:
                     return False
             else:
                 if altnames:
@@ -329,22 +345,22 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
             return True
 
-        def _check_keyUsage_(extensions, extName, expected, long):
-            usages_ext = [str(ext) for ext in extensions if ext.get_short_name() == extName]
+        def _check_keyUsage_(extensions, extName, expected, critical, long):
+            usages_ext = [ext for ext in extensions if ext.get_short_name() == extName]
             if (not usages_ext and expected) or (usages_ext and not expected):
                 return False
             elif not usages_ext and not expected:
                 return True
             else:
-                current = [usage.strip() for usage in usages_ext[0].split(',')]
+                current = [usage.strip() for usage in str(usages_ext[0]).split(',')]
                 expected = [long[usage] if usage in long else usage for usage in expected]
-                return current == expected
+                return set(current) == set(expected) and usages_ext[0].get_critical() == critical
 
         def _check_keyUsage(extensions):
-            return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, crypto_utils.keyUsageLong)
+            return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, self.keyUsage_critical, crypto_utils.keyUsageLong)
 
         def _check_extenededKeyUsage(extensions):
-            return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, crypto_utils.extendedKeyUsageLong)
+            return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, self.extendedKeyUsage_critical, crypto_utils.extendedKeyUsageLong)
 
         def _check_extensions(csr):
             extensions = csr.get_extensions()
@@ -397,8 +413,11 @@ def main():
             commonName=dict(aliases=['CN'], type='str'),
             emailAddress=dict(aliases=['E'], type='str'),
             subjectAltName=dict(type='list'),
+            subjectAltName_critical=dict(default=False, type='bool'),
             keyUsage=dict(type='list'),
+            keyUsage_critical=dict(default=False, type='bool'),
             extendedKeyUsage=dict(aliases=['extKeyUsage'], type='list'),
+            extendedKeyUsage_critical=dict(default=False, aliases=['extKeyUsage_critical'], type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,

@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -33,12 +33,17 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage storage domains in oVirt/RHV"
 options:
+    id:
+        description:
+            - "Id of the storage domain to be imported."
+        version_added: "2.4"
     name:
         description:
-            - "Name of the storage domain to manage."
+            - "Name of the storage domain to manage. (Not required when state is I(imported))"
     state:
         description:
-            - "Should the storage domain be present/absent/maintenance/unattached"
+            - "Should the storage domain be present/absent/maintenance/unattached/imported"
+            - "I(imported) is supported since version 2.4."
         choices: ['present', 'absent', 'maintenance', 'unattached']
         default: present
     description:
@@ -161,8 +166,19 @@ EXAMPLES = '''
       address: 10.10.10.10
       path: /path/data
 
+# Create export NFS storage domain:
+- ovirt_storage_domains:
+    name: myexportdomain
+    domain_function: export
+    host: myhost
+    data_center: mydatacenter
+    nfs:
+      address: 10.34.63.199
+      path: /path/export
+
 # Import export NFS storage domain:
 - ovirt_storage_domains:
+    state: imported
     domain_function: export
     host: myhost
     data_center: mydatacenter
@@ -256,6 +272,14 @@ class StorageDomainModule(BaseModule):
             name=self._module.params['name'],
             description=self._module.params['description'],
             comment=self._module.params['comment'],
+            import_=(
+                True
+                if self._module.params['state'] == 'imported' else None
+            ),
+            id=(
+                self._module.params['id']
+                if self._module.params['state'] == 'imported' else None
+            ),
             type=otypes.StorageDomainType(
                 self._module.params['domain_function']
             ),
@@ -280,7 +304,10 @@ class StorageDomainModule(BaseModule):
                 ] if storage_type in ['iscsi', 'fcp'] else None,
                 override_luns=storage.get('override_luns'),
                 mount_options=storage.get('mount_options'),
-                vfs_type='glusterfs' if storage_type in ['glusterfs'] else storage.get('vfs_type'),
+                vfs_type=(
+                    'glusterfs'
+                    if storage_type in ['glusterfs'] else storage.get('vfs_type')
+                ),
                 address=storage.get('address'),
                 path=storage.get('path'),
                 nfs_retrans=storage.get('retrans'),
@@ -423,10 +450,11 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached'],
+            choices=['present', 'absent', 'maintenance', 'unattached', 'imported'],
             default='present',
         ),
-        name=dict(required=True),
+        id=dict(default=None),
+        name=dict(default=None),
         description=dict(default=None),
         comment=dict(default=None),
         data_center=dict(required=True),
@@ -465,7 +493,7 @@ def main():
                 format=module.params['format'],
                 host=module.params['host'],
             )
-        elif state == 'present':
+        elif state == 'present' or state == 'imported':
             sd_id = storage_domains_module.create()['id']
             storage_domains_module.post_create_check(sd_id)
             ret = storage_domains_module.action(
@@ -473,6 +501,7 @@ def main():
                 action_condition=lambda s: s.status == sdstate.MAINTENANCE,
                 wait_condition=lambda s: s.status == sdstate.ACTIVE,
                 fail_condition=failed_state,
+                search_params={'id': sd_id} if state == 'imported' else None
             )
         elif state == 'maintenance':
             sd_id = storage_domains_module.create()['id']

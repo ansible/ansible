@@ -45,7 +45,7 @@ from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.connection import send_data, recv_data
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import connection_loader
+from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.errors import AnsibleConnectionFailure
 from ansible.utils.display import Display
@@ -62,7 +62,7 @@ def do_fork():
             return pid
         # This is done as a 'good practice' for daemons, but we need to keep the cwd
         # leaving it here as a note that we KNOW its good practice but are not doing it on purpose.
-        #os.chdir("/")
+        # os.chdir("/")
         os.setsid()
         os.umask(0)
 
@@ -261,6 +261,7 @@ def communicate(sock, data):
     stderr = recv_data(sock)
     return (rc, stdout, stderr)
 
+
 def main():
     # Need stdin as a byte stream
     if PY3:
@@ -294,7 +295,7 @@ def main():
         sys.exit("FAIL: %s" % e)
 
     ssh = connection_loader.get('ssh', class_only=True)
-    cp = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user)
+    cp = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user, pc.connection)
 
     # create the persistent connection dir if need be and create the paths
     # which we will be using later
@@ -304,7 +305,7 @@ def main():
     socket_path = unfrackpath(cp % dict(directory=tmp_path))
 
     # if the socket file doesn't exist, spin up the daemon process
-    lock_fd = os.open(lock_path, os.O_RDWR|os.O_CREAT, 0o600)
+    lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
     fcntl.lockf(lock_fd, fcntl.LOCK_EX)
 
     if not os.path.exists(socket_path):

@@ -15,6 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+'''
+DOCUMENTATION:
+    callback: json
+    short_description: Ansbile screen output asjson
+    version_added: "2.2"
+    description:
+        - This callback converts all events into JSON output
+    type: stdout
+    plugin_api_version: "2.0"
+'''
+
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type

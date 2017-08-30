@@ -29,7 +29,7 @@ a module outside of the ansible program, locally, on the current machine.
 
 Example:
 
-    $ ./hacking/test-module -m lib/ansible/modules/commands/shell -a "echo hi"
+    $ ./hacking/test-module -m lib/ansible/modules/commands/command.py -a "echo hi"
 
 This is a good way to insert a breakpoint into a module, for instance.
 
@@ -60,5 +60,3 @@ Authors
 -------
 'authors' is a simple script that generates a list of everyone who has
 contributed code to the ansible repository.
-
-

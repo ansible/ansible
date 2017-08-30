@@ -15,7 +15,7 @@ Examples of unfixed code:
         do_something(variable)
 
     from ansible.module_utils.basic import *
-    module = AnsibleModule([...])
+    module = AnsibleModule()
 
 Examples of fixed code:
 
@@ -26,4 +26,4 @@ Examples of fixed code:
         do_something(variable)
 
     from ansible.module_utils.basic import AnsibleModule
-    module = AnsibleModule([...])
+    module = AnsibleModule()

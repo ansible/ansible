@@ -19,4 +19,4 @@
     mysqlcharacterset: 8
     mysqlservercapabilities: 244
 
-    dbslb: DISABLED
+    dbslb: disabled

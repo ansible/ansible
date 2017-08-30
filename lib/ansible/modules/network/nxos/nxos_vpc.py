@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -35,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The feature vpc must be enabled before this module can be used
   - If not using management vrf, vrf must be globally on the device
     before using in the pkl config
@@ -104,14 +103,6 @@ EXAMPLES = '''
     pkl_src: 10.1.100.20
     peer_gw: true
     auto_recovery: true
-
-# peer-gateway might ask for confirmation to apply changes
-# Device should be configured with terminal dont-ask that makes
-# the device take default answer on confirmation prompt
-
-- name: Make device take default answer
-  nxos_command:
-    commands: terminal dont-ask
 
 - name: configure
   nxos_vpc:
@@ -196,7 +187,7 @@ def get_vpc(module):
             for each in vpc_list:
                 if 'delay restore' in each:
                     line = each.split()
-                    if len(line) == 5:
+                    if len(line) == 3:
                         delay_restore = line[-1]
                 if 'peer-keepalive destination' in each:
                     line = each.split()
@@ -283,6 +274,8 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         command = CONFIG_ARGS.get(param)
         if command is not None:
             command = command.format(**vpc).strip()
+            if 'peer-gateway' in command:
+                commands.append('terminal dont-ask')
             commands.append(command)
 
     if commands or domain_only:
@@ -370,6 +363,7 @@ def main():
                 module.fail_json(msg="You are trying to remove a domain that "
                                      "does not exist on the device")
             else:
+                commands.append('terminal dont-ask')
                 commands.append('no vpc domain {0}'.format(domain))
 
     cmds = flatten_list(commands)

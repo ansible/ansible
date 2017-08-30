@@ -19,19 +19,21 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
 module: vyos_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on Vyatta Vyos devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   dest:
     description:
@@ -50,10 +52,6 @@ options:
       - Set logging severity levels.
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
@@ -67,16 +65,33 @@ EXAMPLES = """
     dest: console
     facility: all
     level: crit
+
 - name: remove console logging configuration
   vyos_logging:
     dest: console
     state: absent
+
 - name: configure file logging
   vyos_logging:
     dest: file
     name: test
     facility: local3
     level: err
+
+- name: Add logging aggregate
+  vyos_logging:
+    aggregate:
+      - { dest: file, name: test1, facility: all, level: info }
+      - { dest: file, name: test2, facility: news, level: debug }
+    state: present
+
+- name: Remove logging aggregate
+  vyos_logging:
+    aggregate:
+      - { dest: console, facility: all, level: info }
+      - { dest: console, facility: daemon, level: warning }
+      - { dest: file, name: test2, facility: news, level: debug }
+    state: absent
 """
 
 RETURN = """
@@ -90,7 +105,10 @@ commands:
 
 import re
 
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
@@ -160,21 +178,18 @@ def config_to_dict(module):
     return obj
 
 
-def map_params_to_obj(module):
+def map_params_to_obj(module, required_if=None):
     obj = []
 
-    if 'aggregate' in module.params and module.params['aggregate']:
-        for c in module.params['aggregate']:
-            d = c.copy()
-            if d['dest'] not in ('host', 'file', 'user'):
-                d['name'] = None
-            else:
-                pass
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            if 'state' not in d:
-                d['state'] = module.params['state']
-
-            obj.append(d)
+            module._check_required_if(required_if, item)
+            obj.append(item.copy())
 
     else:
         if module.params['dest'] not in ('host', 'file', 'user'):
@@ -194,15 +209,24 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         dest=dict(type='str', choices=['console', 'file', 'global', 'host', 'user']),
         name=dict(type='str'),
         facility=dict(type='str'),
         level=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
     )
+
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
 
     argument_spec.update(vyos_argument_spec)
     required_if = [('dest', 'host', ['name', 'facility', 'level']),
@@ -221,7 +245,7 @@ def main():
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings
-    want = map_params_to_obj(module)
+    want = map_params_to_obj(module, required_if=required_if)
     have = config_to_dict(module)
 
     commands = spec_to_commands((want, have), module)

@@ -28,16 +28,13 @@ from collections import defaultdict
 from distutils.version import StrictVersion
 from pprint import pformat, pprint
 
-from ansible.parsing.metadata import ParseError, extract_metadata
-from ansible.plugins import module_loader
+from ansible.parsing.metadata import DEFAULT_METADATA, ParseError, extract_metadata
+from ansible.plugins.loader import module_loader
 
 
 # There's a few files that are not new-style modules.  Have to blacklist them
 NONMODULE_PY_FILES = frozenset(('async_wrapper.py',))
 NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_FILES)
-
-# Default metadata
-DEFAULT_METADATA = {'metadata_version': '1.0', 'status': ['preview'], 'supported_by': 'community'}
 
 
 class MissingModuleError(Exception):
@@ -123,7 +120,7 @@ def insert_metadata(module_data, new_metadata, insertion_line, targets=('ANSIBLE
             new_lines.append('{}{}'.format(' ' * (len(assignments) - 1 + len(' = {')), line))
 
     old_lines = module_data.split('\n')
-    lines = old_lines[:insertion_line] + new_lines + [''] + old_lines[insertion_line:]
+    lines = old_lines[:insertion_line] + new_lines + old_lines[insertion_line:]
     return '\n'.join(lines)
 
 
@@ -174,13 +171,13 @@ def parse_assigned_metadata(csvfile):
     Fields:
         :0: Module name
         :1: supported_by  string.  One of the valid support fields
-            core, community, curated
+            core, community, certified, network
         :2: stableinterface
         :3: preview
         :4: deprecated
         :5: removed
 
-        https://github.com/ansible/proposals/issues/30
+        http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#ansible-metadata-block
     """
     with open(csvfile, 'rb') as f:
         for record in csv.reader(f):
@@ -197,7 +194,7 @@ def parse_assigned_metadata(csvfile):
             if not status or record[3]:
                 status.append('preview')
 
-            yield (module, {'metadata_version': '1.0', 'supported_by': supported_by, 'status': status})
+            yield (module, {'metadata_version': '1.1', 'supported_by': supported_by, 'status': status})
 
 
 def write_metadata(filename, new_metadata, version=None, overwrite=False):
@@ -330,6 +327,31 @@ def convert_metadata_pre_1_0_to_1_0(metadata):
 
     return new_metadata
 
+
+def convert_metadata_1_0_to_1_1(metadata):
+    """
+    Convert 1.0 to 1.1 metadata format
+
+    :arg metadata: The old metadata
+    :returns: The new metadata
+
+    Changes from 1.0 to 1.1:
+
+    * ``supported_by`` field value ``curated`` has been removed
+    * ``supported_by`` field value ``certified`` has been added
+    * ``supported_by`` field value ``network`` has been added
+    """
+    new_metadata = {'metadata_version': '1.1',
+                    'supported_by': metadata['supported_by'],
+                    'status': metadata['status']
+                    }
+    if new_metadata['supported_by'] == 'unmaintained':
+        new_metadata['supported_by'] = 'community'
+    elif new_metadata['supported_by'] == 'curated':
+        new_metadata['supported_by'] = 'certified'
+
+    return new_metadata
+
 # Subcommands
 
 
@@ -338,7 +360,7 @@ def add_from_csv(csv_file, version=None, overwrite=False):
     """
     # Add metadata for everything from the CSV file
     diagnostic_messages = []
-    for module_name, new_metadata in parse_assigned_metadata_initial(csv_file):
+    for module_name, new_metadata in parse_assigned_metadata(csv_file):
         filename = module_loader.find_plugin(module_name, mod_type='.py')
         if filename is None:
             diagnostic_messages.append('Unable to find the module file for {}'.format(module_name))
@@ -424,7 +446,10 @@ def upgrade_metadata(version=None):
                 metadata = convert_metadata_pre_1_0_to_1_0(metadata)
 
             if metadata['metadata_version'] == '1.0' and StrictVersion('1.0') < requested_version:
-                # 1.0 version => XXX.  We don't yet have anything beyond 1.0
+                metadata = convert_metadata_1_0_to_1_1(metadata)
+
+            if metadata['metadata_version'] == '1.1' and StrictVersion('1.1') < requested_version:
+                # 1.1 version => XXX.  We don't yet have anything beyond 1.1
                 # so there's nothing here
                 pass
 
@@ -469,8 +494,10 @@ def report(version=None):
 
     print('== Supported by core ==')
     pprint(sorted(support['core']))
-    print('== Supported by value curated ==')
-    pprint(sorted(support['curated']))
+    print('== Supported by value certified ==')
+    pprint(sorted(support['certified']))
+    print('== Supported by value network ==')
+    pprint(sorted(support['network']))
     print('== Supported by community ==')
     pprint(sorted(support['community']))
     print('')
@@ -487,8 +514,8 @@ def report(version=None):
 
     print('== Summary ==')
     print('No Metadata: {0}             Has Metadata: {1}'.format(len(no_metadata), len(has_metadata)))
-    print('Supported by core: {0}      Supported by community: {1}    Supported by value curated: {2}'.format(len(support['core']),
-          len(support['community']), len(support['curated'])))
+    print('Support level: core: {0}   community: {1}   certified: {2}   network: {3}'.format(len(support['core']),
+          len(support['community']), len(support['certified']), len(support['network'])))
     print('Status StableInterface: {0} Status Preview: {1}            Status Deprecated: {2}      Status Removed: {3}'.format(len(status['stableinterface']),
           len(status['preview']), len(status['deprecated']), len(status['removed'])))
 

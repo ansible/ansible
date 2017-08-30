@@ -19,15 +19,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
 module: ios_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage the aggregate of local users on Cisco IOS device
 description:
   - This module provides declarative management of the local usernames
@@ -35,20 +35,22 @@ description:
     either individual usernames or the aggregate of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+notes:
+  - Tested against IOS 15.6
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         Cisco IOS device. The list entries can either be the username
         or a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument.
+        exclusive with the C(name) argument. alias C(users).
   name:
     description:
       - The username to be configured on the Cisco IOS device.
         This argument accepts a string value and is mutually exclusive
         with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
-  password:
+  configured_password:
     description:
       - The password to be configured on the Cisco IOS device. The
         password needs to be provided in clear and it will be encrypted
@@ -105,27 +107,46 @@ EXAMPLES = """
     name: ansible
     nopassword: True
     state: present
+
 - name: remove all users except admin
   ios_user:
     purge: yes
+
 - name: set multiple users to privilege level 15
   ios_user:
-    users:
+    aggregate:
       - name: netop
       - name: netend
     privilege: 15
     state: present
+
 - name: set user view/role
   ios_user:
     name: netop
     view: network-operator
     state: present
+
 - name: Change Password for User netop
   ios_user:
     name: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
+
+- name: Aggregate of users
+  ios_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    view: network-admin
+
+- name: Delete users with aggregate
+  ios_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+    state: absent
 """
 
 RETURN = """
@@ -137,20 +158,31 @@ commands:
     - username ansible secret password
     - username admin secret admin
 """
+from copy import deepcopy
 
 import re
+import json
 
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.ios import get_config, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.ios import ios_argument_spec, check_args
 
 
 def validate_privilege(value, module):
-    if not 1 <= value <= 15:
+    if value and not 1 <= value <= 15:
         module.fail_json(msg='privilege must be between 1 and 15, got %s' % value)
+
+
+def user_del_cmd(username):
+    return json.dumps({
+        'command': 'no username %s' % username,
+        'prompt': 'This operation will remove all username related configurations with same name',
+        'answer': 'y'
+    })
 
 
 def map_obj_to_commands(updates, module):
@@ -168,7 +200,7 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         if want['state'] == 'absent':
-            commands.append('no username %s' % want['name'])
+            commands.append(user_del_cmd(want['name']))
             continue
 
         if needs_update(want, have, 'view'):
@@ -177,15 +209,15 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'privilege'):
             add(commands, want, 'privilege %s' % want['privilege'])
 
-        if needs_update(want, have, 'password'):
+        if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'secret %s' % want['password'])
+                add(commands, want, 'secret %s' % want['configured_password'])
 
         if needs_update(want, have, 'nopassword'):
             if want['nopassword']:
                 add(commands, want, 'nopassword')
             else:
-                add(commands, want, 'no username %s nopassword' % want['name'])
+                add(commands, want, user_del_cmd(want['name']))
 
     return commands
 
@@ -219,7 +251,7 @@ def map_config_to_obj(module):
             'name': user,
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
-            'password': None,
+            'configured_password': None,
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
         }
@@ -249,7 +281,7 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
+    users = module.params['aggregate']
     if not users:
         if not module.params['name'] and module.params['purge']:
             return list()
@@ -271,7 +303,7 @@ def map_params_to_obj(module):
 
     for item in aggregate:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['view'] = get_value('view')
@@ -297,29 +329,45 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        users=dict(type='list', aliases=['aggregate']),
+    element_spec = dict(
         name=dict(),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
 
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
 
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
+        purge=dict(type='bool', default=False)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
-    mutually_exclusive = [('name', 'users')]
+
+    mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
+
     check_args(module, warnings)
 
     result = {'changed': False}
@@ -336,14 +384,15 @@ def main():
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
-                commands.append('no username %s' % item)
+                commands.append(user_del_cmd(item))
 
     result['commands'] = commands
 
     # the ios cli prevents this by rule so capture it and display
     # a nice failure message
-    if 'no username admin' in commands:
-        module.fail_json(msg='cannot delete the `admin` account')
+    for cmd in commands:
+        if 'no username admin' in cmd:
+            module.fail_json(msg='cannot delete the `admin` account')
 
     if commands:
         if not module.check_mode:

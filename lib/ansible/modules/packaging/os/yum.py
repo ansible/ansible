@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -688,11 +688,8 @@ def exec_install(module, items, action, pkgs, res, yum_basecmd):
     res['msg'] += err
     res['changed'] = True
 
-    # special case for groups
-    for spec in items:
-        if spec.startswith('@'):
-            if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
-                res['changed'] = False
+    if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
+        res['changed'] = False
 
     if rc != 0:
         res['changed'] = False
@@ -747,9 +744,20 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 continue
             pkg = package
 
-        #groups :(
+        # groups
         elif spec.startswith('@'):
-            # complete wild ass guess b/c it's a group
+            found = False
+            my = yum_base()
+            groups_list = my.doGroupLists()
+            for group in groups_list[0]:  # list of the installed groups on the first index
+                spec_lower = spec.lower()
+                if spec_lower.endswith(group.name.lower()) or spec_lower.endswith(group.groupid.lower()):
+                    found = True
+                    break
+
+            if found:
+                continue
+
             pkg = spec
 
         # range requires or file-requires or pkgname :(
@@ -1089,29 +1097,17 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     if cmd:     # update all
         rc, out, err = module.run_command(cmd)
         res['changed'] = True
+    elif len(pkgs['install']) or len(will_update):
+        cmd = yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
+        rc, out, err = module.run_command(cmd)
+        out_lower = out.strip().lower()
+        if not out_lower.endswith("no packages marked for update") and \
+                not out_lower.endswith("nothing to do"):
+            res['changed'] = True
     else:
-        if len(pkgs['install']) > 0:    # install missing
-            cmd = yum_basecmd + ['install'] + pkgs['install']
-            rc, out, err = module.run_command(cmd)
-            if not out.strip().lower().endswith("no packages marked for update"):
-                res['changed'] = True
-        else:
-            rc, out, err = [0, '', '']
+        rc, out, err = [0, '', '']
 
-        if len(will_update) > 0:     # update present
-            cmd = yum_basecmd + ['update'] + pkgs['update']
-            rc2, out2, err2 = module.run_command(cmd)
-            if not out2.strip().lower().endswith("no packages marked for update"):
-                res['changed'] = True
-        else:
-            rc2, out2, err2 = [0, '', '']
-
-    if not update_all:
-        rc += rc2
-        out += out2
-        err += err2
-
-    res['rc'] += rc
+    res['rc'] = rc
     res['msg'] += err
     res['results'].append(out)
 

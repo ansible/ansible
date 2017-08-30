@@ -9,16 +9,16 @@ Creating Reusable Playbooks
 
 While it is possible to write a playbook in one very large file (and you might start out learning playbooks this way), eventually you'll want to reuse files and start to organize things. In Ansible, there are three ways to do this: includes, imports, and roles.
 
-Includes and imports allow users to break up large playbooks into into smaller files, which can be used across multiple parent Playbooks or even multiple times within the same Playbook.
+Includes and imports allow users to break up large playbooks into smaller files, which can be used across multiple parent playbooks or even multiple times within the same Playbook.
 
-Roles allow more than just tasks to be packaged together, and can include variables, handlers, or even modules and other plugins. Roles can also be uploaded and shared via Ansible Galaxy, unlike includes and imports.
+Roles allow more than just tasks to be packaged together and can include variables, handlers, or even modules and other plugins. Unlike includes and imports, roles can also be uploaded and shared via Ansible Galaxy.
 
 Dynamic vs. Static
 ``````````````````
 
 Ansible has two modes of operation for reusable content: dynamic and static.
 
-In Ansible 2.0, the concept of *dynamic* includes was introduced. Due to some limitations with making all includes dynamic in this way, the ability to force includes to be *static* was intrdouced in Ansible 2.1. Because the *include* task became overloaded to encompass both static and dynamic syntaxes, and because the default behavior of an include could change based on other options set on the Task, Ansible 2.4 introduces the concept of ``include`` vs. ``import``.
+In Ansible 2.0, the concept of *dynamic* includes was introduced. Due to some limitations with making all includes dynamic in this way, the ability to force includes to be *static* was introduced in Ansible 2.1. Because the *include* task became overloaded to encompass both static and dynamic syntaxes, and because the default behavior of an include could change based on other options set on the Task, Ansible 2.4 introduces the concept of ``include`` vs. ``import``.
 
 If you use any ``import*`` Task (``import_playbook``, ``import_tasks``, etc.), it will be *static*.
 If you use any ``include*`` Task (``include_tasks``, ``include_role``, etc.), it will be *dynamic*.
@@ -33,18 +33,18 @@ The two modes of operation are pretty simple:
 * Ansible pre-processes all static imports during Playbook parsing time.
 * Dynamic includes are processed during runtime at the point in which that task is encountered.
 
-When it comes to Ansible task options like ``tags`` and conditonal statements (``when:``):
+When it comes to Ansible task options like ``tags`` and conditional statements (``when:``):
 
 * For static imports, the parent task options will be copied to all child tasks contained within the import.
 * For dynamic includes, the task options will *only* apply to the dynamic task as it is evaluated, and will not be copied to child tasks.
 
 .. note::
-    Roles are a somewhat special case. Prior to Ansible 2.3, Roles were always statically included via the special ``roles:`` option for a given Play, and were always executed first before any other Play tasks (unless ``pre_tasks`` were used). Roles can still be used this way, however Ansible 2.3 introduced the ``include_role`` option to allow Roles to be executed in-line with other tasks.
+    Roles are a somewhat special case. Prior to Ansible 2.3, roles were always statically included via the special ``roles:`` option for a given play and were always executed first before any other play tasks (unless ``pre_tasks`` were used). Roles can still be used this way, however, Ansible 2.3 introduced the ``include_role`` option to allow roles to be executed inline with other tasks.
 
 Tradeoffs and Pitfalls Between Includes and Imports
 ```````````````````````````````````````````````````
 
-Using ``include*`` vs. ``import*`` has some advantages, as well as some tradeoffs, which users should consider when choosing to use each:
+Using ``include*`` vs. ``import*`` has some advantages as well as some tradeoffs which users should consider when choosing to use each:
 
 The primary advantage of using ``include*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
 
@@ -81,4 +81,3 @@ Using ``import*`` can also have some limitations when compared to dynamic includ
        Complete playbook files from the GitHub project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-

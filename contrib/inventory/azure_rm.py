@@ -274,7 +274,11 @@ class AzureRM(object):
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'])
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
-            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            tenant = self.credentials.get('tenant')
+            if tenant is not None:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)
+            else:
+                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
@@ -486,8 +490,7 @@ class AzureInventory(object):
                 try:
                     virtual_machines = self._compute_client.virtual_machines.list(resource_group)
                 except Exception as exc:
-                    sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group,
-                                                                                                    str(exc)))
+                    sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group, str(exc)))
                 if self._args.host or self.tags:
                     selected_machines = self._selected_machines(virtual_machines)
                     self._load_machines(selected_machines)
@@ -538,7 +541,7 @@ class AzureInventory(object):
                 mac_address=None,
                 plan=(machine.plan.name if machine.plan else None),
                 virtual_machine_size=machine.hardware_profile.vm_size,
-                computer_name=machine.os_profile.computer_name,
+                computer_name=(machine.os_profile.computer_name if machine.os_profile else None),
                 provisioning_state=machine.provisioning_state,
             )
 
@@ -559,7 +562,7 @@ class AzureInventory(object):
                 )
 
             # Add windows details
-            if machine.os_profile.windows_configuration is not None:
+            if machine.os_profile is not None and machine.os_profile.windows_configuration is not None:
                 host_vars['windows_auto_updates_enabled'] = \
                     machine.os_profile.windows_configuration.enable_automatic_updates
                 host_vars['windows_timezone'] = machine.os_profile.windows_configuration.time_zone
@@ -797,6 +800,7 @@ def main():
                  "Do you have Azure >= 2.0.0rc5 installed? (try `pip install 'azure>=2.0.0rc5' --upgrade`)".format(AZURE_MIN_VERSION, azure_compute_version))
 
     AzureInventory()
+
 
 if __name__ == '__main__':
     main()

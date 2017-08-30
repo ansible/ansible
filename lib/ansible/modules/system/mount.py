@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -317,7 +317,10 @@ def unset_mount(module, args):
 def _set_fstab_args(fstab_file):
     result = []
 
-    if fstab_file and fstab_file != '/etc/fstab':
+    if (
+            fstab_file and
+            fstab_file != '/etc/fstab' and
+            get_platform().lower() != 'sunos'):
         if get_platform().lower().endswith('bsd'):
             result.append('-F')
         else:

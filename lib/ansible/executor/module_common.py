@@ -36,7 +36,7 @@ from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins import module_utils_loader, ps_module_utils_loader
+from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
 from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -579,7 +579,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
 
         zf.writestr(os.path.join("ansible/module_utils",
                     py_module_file_name), py_module_cache[py_module_name][0])
-        display.vvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
+        display.vvvvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
 
     # Add the names of the files we're scheduling to examine in the loop to
     # py_module_names so that we don't re-examine them in the next pass

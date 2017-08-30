@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -246,7 +246,6 @@ def main():
     sender_phrase, sender_addr = parseaddr(sender)
     secure_state = False
     code = 0
-    auth_flag = ""
 
     if not body:
         body = subject
@@ -269,7 +268,6 @@ def main():
                 module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' %
                                  (host, port, to_native(e)), exception=traceback.format_exc())
 
-
     if (secure == 'always'):
         try:
             smtp = smtplib.SMTP_SSL(timeout=timeout)
@@ -286,8 +284,6 @@ def main():
             module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' %
                              (host, port, to_native(e)), exception=traceback.format_exc())
 
-        auth_flag = smtp.has_extn('AUTH')
-
         if secure in ('try', 'starttls'):
             if smtp.has_extn('STARTTLS'):
                 try:
@@ -303,7 +299,7 @@ def main():
                     module.fail_json(rc=1, msg='StartTLS is not offered on server %s:%s' % (host, port))
 
     if username and password:
-        if auth_flag:
+        if smtp.has_extn('AUTH'):
             try:
                 smtp.login(username, password)
             except smtplib.SMTPAuthenticationError:

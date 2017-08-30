@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -22,6 +22,8 @@ short_description: Manage Interface on Cisco IOS network devices
 description:
   - This module provides declarative management of Interfaces
     on Cisco IOS network devices.
+notes:
+  - Tested against IOS 15.6
 options:
   name:
     description:
@@ -46,17 +48,17 @@ options:
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate
+      - Transmit rate in bits per second (bps).
   rx_rate:
     description:
-      - Receiver rate
+      - Receiver rate in bits per second (bps).
   aggregate:
     description: List of Interfaces definitions.
-  purge:
+  delay:
     description:
-      - Purge Interfaces not defined in the aggregate parameter.
-        This applies only for logical interface.
-    default: no
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
   state:
     description:
       - State of the Interface configuration, C(up) means present and
@@ -82,12 +84,41 @@ EXAMPLES = """
 - name: make interface up
   ios_interface:
     name: GigabitEthernet0/2
-    state: up
+    enabled: True
 
 - name: make interface down
   ios_interface:
     name: GigabitEthernet0/2
+    enabled: False
+
+- name: Check intent arguments
+  ios_interface:
+    name: GigabitEthernet0/2
+    state: up
+    tx_rate: ge(0)
+    rx_rate: le(0)
+
+- name: Config + intent
+  ios_interface:
+    name: GigabitEthernet0/2
+    enabled: False
     state: down
+
+- name: Add interface using aggregate
+  ios_interface:
+    aggregate:
+    - { name: GigabitEthernet0/1, mtu: 256, description: test-interface-1 }
+    - { name: GigabitEthernet0/2, mtu: 516, description: test-interface-2 }
+    duplex: full
+    speed: 100
+    state: present
+
+- name: Delete interface using aggregate
+  ios_interface:
+    aggregate:
+    - name: Loopback9
+    - name: Loopback10
+    state: absent
 """
 
 RETURN = """
@@ -103,12 +134,16 @@ commands:
 """
 import re
 
+from copy import deepcopy
+from time import sleep
+
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.ios import get_config, load_config
 from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.netcfg import NetworkConfig
-
-DEFAULT_DESCRIPTION = "configured by ios_interface"
+from ansible.module_utils.network_common import conditional, remove_default_spec
 
 
 def validate_mtu(value, module):
@@ -184,31 +219,17 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     obj = []
-    args = ['name', 'description', 'speed', 'duplex', 'mtu']
-
     aggregate = module.params.get('aggregate')
     if aggregate:
-        for param in aggregate:
-            validate_param_values(module, args, param)
-            d = param.copy()
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
 
-            if 'name' not in d:
-                module.fail_json(msg="missing required arguments: %s" % 'name')
+            validate_param_values(module, item, item)
+            d = item.copy()
 
-            # set default value
-            for item in args:
-                if item not in d:
-                    if item == 'description':
-                        d['description'] = DEFAULT_DESCRIPTION
-                    else:
-                        d[item] = None
-                else:
-                    d[item] = str(d[item])
-
-            if not d.get('state'):
-                d['state'] = module.params['state']
-
-            if d['state'] in ('present', 'up'):
+            if d['enabled']:
                 d['disable'] = False
             else:
                 d['disable'] = True
@@ -216,19 +237,20 @@ def map_params_to_obj(module):
             obj.append(d)
 
     else:
-        validate_param_values(module, args)
-
         params = {
             'name': module.params['name'],
             'description': module.params['description'],
             'speed': module.params['speed'],
             'mtu': module.params['mtu'],
             'duplex': module.params['duplex'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'delay': module.params['delay'],
+            'tx_rate': module.params['tx_rate'],
+            'rx_rate': module.params['rx_rate']
         }
 
-        state = module.params['state']
-        if state == 'present' or state == 'up':
+        validate_param_values(module, params)
+        if module.params['enabled']:
             params.update({'disable': False})
         else:
             params.update({'disable': True})
@@ -262,13 +284,6 @@ def map_obj_to_commands(updates):
                         if candidate:
                             cmd = item + ' ' + str(candidate)
                             add_command_to_interface(interface, cmd, commands)
-                        elif running:
-                            # if value present in device is default value for
-                            # interface, don't delete
-                            if running == 'auto' and item in ('speed', 'duplex'):
-                                continue
-                            cmd = 'no ' + item + ' ' + str(running)
-                            add_command_to_interface(interface, cmd, commands)
 
                 if disable and not obj_in_have.get('disable', False):
                     add_command_to_interface(interface, 'shutdown', commands)
@@ -286,24 +301,81 @@ def map_obj_to_commands(updates):
     return commands
 
 
+def check_declarative_intent_params(module, want, result):
+    failed_conditions = []
+
+    for w in want:
+        want_state = w.get('state')
+        want_tx_rate = w.get('tx_rate')
+        want_rx_rate = w.get('rx_rate')
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+            continue
+
+        if result['changed']:
+            sleep(w['delay'])
+
+        command = 'show interfaces %s' % w['name']
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+        if want_state in ('up', 'down'):
+            match = re.search(r'%s (\w+)' % 'line protocol is', out, re.M)
+            have_state = None
+            if match:
+                have_state = match.group(1)
+            if have_state is None or not conditional(want_state, have_state.strip()):
+                failed_conditions.append('state ' + 'eq(%s)' % want_state)
+
+        if want_tx_rate:
+            match = re.search(r'%s (\d+)' % 'output rate', out, re.M)
+            have_tx_rate = None
+            if match:
+                have_tx_rate = match.group(1)
+
+            if have_tx_rate is None or not conditional(want_tx_rate, have_tx_rate.strip(), cast=int):
+                failed_conditions.append('tx_rate ' + want_tx_rate)
+
+        if want_rx_rate:
+            match = re.search(r'%s (\d+)' % 'input rate', out, re.M)
+            have_rx_rate = None
+            if match:
+                have_rx_rate = match.group(1)
+
+            if have_rx_rate is None or not conditional(want_rx_rate, have_rx_rate.strip(), cast=int):
+                failed_conditions.append('rx_rate ' + want_rx_rate)
+
+    return failed_conditions
+
+
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
+    element_spec = dict(
         name=dict(),
-        description=dict(default=DEFAULT_DESCRIPTION),
+        description=dict(),
         speed=dict(),
         mtu=dict(),
         duplex=dict(choices=['full', 'half', 'auto']),
-        enabled=dict(),
+        enabled=dict(default=True, type='bool'),
         tx_rate=dict(),
         rx_rate=dict(),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool'),
+        delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
     required_one_of = [['name', 'aggregate']]
@@ -330,6 +402,12 @@ def main():
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
+
+    failed_conditions = check_declarative_intent_params(module, want, result)
+
+    if failed_conditions:
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
 

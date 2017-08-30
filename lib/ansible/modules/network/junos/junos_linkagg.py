@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -68,6 +68,7 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -170,7 +171,6 @@ except ImportError:
     from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
-DEFAULT_COMMENT = 'configured by junos_linkagg'
 
 
 def validate_device_count(value, module):
@@ -263,7 +263,7 @@ def main():
         members=dict(type='list'),
         min_links=dict(type='int'),
         device_count=dict(type='int'),
-        description=dict(default=DEFAULT_COMMENT),
+        description=dict(),
         state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
     )
@@ -327,7 +327,7 @@ def main():
     diff = None
     with locked_config(module):
         for req in requests:
-            diff = load_config(module, tostring(req), warnings, action='replace')
+            diff = load_config(module, tostring(req), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:
