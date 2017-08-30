@@ -77,6 +77,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
+---
 - name: Create a Snapshot
   aci_config_snapshot:
     hostname: apic
@@ -85,7 +86,7 @@ EXAMPLES = r'''
     state: present
     export_policy: config_backup
 
--name: Query Existing Snapshots
+- name: Query Existing Snapshots
   aci_config_snapshot:
     hostname: apic
     username: admin
@@ -105,7 +106,7 @@ EXAMPLES = r'''
     compare_snapshot: 'run-2017-08-27T23-43-56'
 
 - name: Rollback Configuration
-  aci_config_rollback
+  aci_config_rollback:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -113,9 +114,9 @@ EXAMPLES = r'''
     import_policy: rollback_config
     export_policy: config_backup
     snapshot: 'run-2017-08-28T06-24-01'
-
+    
 - name: Rollback Configuration
-  aci_config_rollback
+  aci_config_rollback:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -123,10 +124,10 @@ EXAMPLES = r'''
     import_policy: rollback_config
     export_policy: config_backup
     snapshot: 'run-2017-08-28T06-24-01'
-    description: 'Rollback 8-27 changes"
+    description: 'Rollback 8-27 changes'
     import_mode: atomic
     import_type: replace
-    fail_on_decrypt: 'yes'
+    fail_on_decrypt: yes
 '''
 
 RETURN = r'''
