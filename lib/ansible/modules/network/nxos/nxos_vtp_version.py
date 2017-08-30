@@ -88,7 +88,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 import re
-import re
 
 
 def execute_show_command(command, module, command_type='cli_show'):
