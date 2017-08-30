@@ -190,7 +190,7 @@ cloudstack_instance.volumes:
 import base64
 
 # import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec
 
 class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
 
@@ -296,6 +296,6 @@ def main():
     cs_facts_result = dict(changed=False, ansible_facts=cs_instance_facts)
     module.exit_json(**cs_facts_result)
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
