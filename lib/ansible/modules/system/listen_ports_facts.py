@@ -126,6 +126,7 @@ import platform
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
+
 def netStatParse(raw):
     results = list()
     for line in iter(raw.splitlines()):
