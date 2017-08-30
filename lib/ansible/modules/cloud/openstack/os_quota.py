@@ -506,5 +506,6 @@ def main():
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec
+
 if __name__ == '__main__':
     main()

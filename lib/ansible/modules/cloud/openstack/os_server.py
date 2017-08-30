@@ -767,7 +767,12 @@ def main():
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 # this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import (
+    openstack_find_nova_addresses,
+    openstack_full_argument_spec,
+    openstack_module_kwargs,
+)
+
 if __name__ == '__main__':
     main()

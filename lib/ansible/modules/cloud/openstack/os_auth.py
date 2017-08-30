@@ -49,6 +49,8 @@ EXAMPLES = '''
     var: service_catalog
 '''
 
+import traceback
+
 try:
     import shade
     from shade import meta
@@ -77,7 +79,8 @@ def main():
         module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 # this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 if __name__ == '__main__':
     main()
