@@ -253,7 +253,7 @@ class HAProxy(object):
         a TCP socket, depending on the format of the configuration option.
         """
         if self.socket.startswith('tcp:'):
-            match = re.search('^tcp://(.+):(\d+)$', self.socket)
+            match = re.search('^tcp:(?://)?(.+):(\d+)$', self.socket)
             if not match:
                 self.module.fail_json(msg="Invalid TCP address: '%s'" % self.socket)
             address = (match.group(1), int(match.group(2)))
