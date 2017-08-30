@@ -139,12 +139,9 @@ from ansible.module_utils.ec2 import (
 )
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 
 def build_kwargs(registry_id):

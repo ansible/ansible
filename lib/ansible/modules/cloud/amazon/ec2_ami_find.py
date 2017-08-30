@@ -293,12 +293,6 @@ virtualization_type:
     sample: "hvm"
 '''
 
-try:
-    import boto.ec2
-    from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
-    HAS_BOTO=True
-except ImportError:
-    HAS_BOTO=False
 
 import json
 

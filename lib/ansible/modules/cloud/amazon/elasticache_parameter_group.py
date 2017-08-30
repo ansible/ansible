@@ -114,18 +114,21 @@ changed:
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    get_aws_connection_info,
+    ec2_argument_spec,
+    camel_dict_to_snake_dict,
+)
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 import traceback
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
+    pass
 
 def create(module, conn, name, group_family, description):
     """ Create ElastiCache parameter group. """

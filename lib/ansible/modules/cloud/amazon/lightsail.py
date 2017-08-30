@@ -164,12 +164,6 @@ try:
 except ImportError:
     HAS_BOTOCORE = False
 
-try:
-    import boto3
-except ImportError:
-    # will be caught by imported HAS_BOTO3
-    pass
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
                                       HAS_BOTO3, camel_dict_to_snake_dict)

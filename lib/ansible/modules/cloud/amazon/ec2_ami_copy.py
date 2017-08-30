@@ -131,23 +131,20 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import (
+    HAS_BOTO,
+    HAS_BOTO3,
+    boto3_conn,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 
 import traceback
 
 try:
-    import boto
-    import boto.ec2
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-try:
-    import boto3
     from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError, WaiterError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 
 

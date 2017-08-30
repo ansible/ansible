@@ -250,7 +250,6 @@ from ansible.module_utils import ec2 as ec2_utils
 import traceback
 
 try:
-    import boto3
     import botocore
 except ImportError:
     # will be caught in main

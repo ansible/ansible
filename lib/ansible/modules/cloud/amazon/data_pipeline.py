@@ -161,14 +161,18 @@ import time
 import traceback
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    camel_dict_to_snake_dict,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 from ansible.module_utils._text import to_text
 
 

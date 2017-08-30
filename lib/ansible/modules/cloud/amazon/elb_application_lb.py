@@ -350,10 +350,9 @@ from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_
     ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
 
 try:
-    import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 
 def convert_tg_name_to_arn(connection, module, tg_name):

@@ -204,10 +204,8 @@ from time import time as timestamp
 
 try:
     from botocore.exceptions import ClientError
-    import boto3
-    HAS_BOTO3 = True
-except ImportError as e:
-    HAS_BOTO3 = False
+except ImportError:
+    pass
 
 
 class EFSConnection(object):
