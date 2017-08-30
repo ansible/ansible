@@ -29,11 +29,13 @@ DOCUMENTATION = r'''
 ---
 module: win_chocolatey
 version_added: "1.9"
-short_description: Installs packages using chocolatey
+short_description: Manage packages using chocolatey
 description:
-    - Installs packages using Chocolatey (U(http://chocolatey.org/)).
+    - Manage packages using Chocolatey (U(http://chocolatey.org/)).
     - If Chocolatey is missing from the system, the module will install it.
     - List of packages can be found at U(http://chocolatey.org/packages).
+requirements:
+- chocolatey >= 0.10.5 (will be upgraded if older)
 options:
   name:
     description:
@@ -45,6 +47,7 @@ options:
       - State of the package on the system.
     choices:
       - absent
+      - downgrade
       - latest
       - present
       - reinstalled
@@ -106,15 +109,32 @@ options:
     type: bool
     default: 'no'
     version_added: '2.4'
+  proxy_url:
+    description:
+      - Proxy url used to install chocolatey and the package
+    version_added: '2.4'
+  proxy_username:
+    description:
+      - Proxy username used to install chocolatey and the package
+    version_added: '2.4'
+  proxy_password:
+    description:
+      - Proxy password used to install chocolatey and the package
+    version_added: '2.4'
 notes:
 - Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
   is considered to be a floating-point number and depending on the locale could
   become C(6,1), which will cause a failure.
+- When using verbosity 2 or less (C(-vv)) the C(stdout) output will be restricted.
+- When using verbosity 4 (C(-vvvv)) the C(stdout) output will be more verbose.
+- When using verbosity 5 (C(-vvvvv)) the C(stdout) output will include debug output.
+- This module will install or upgrade Chocolatey when needed.
 author:
 - Trond Hindenes (@trondhindenes)
 - Peter Mounce (@petemounce)
 - Pepe Barbe (@elventear)
 - Adam Keech (@smadam813)
+- Pierre Templier (@ptemplier)
 '''
 
 # TODO:
@@ -151,17 +171,24 @@ EXAMPLES = r'''
 
 - name: install multiple packages
   win_chocolatey:
-    name: "{{ item }}"
+    name: '{{ item }}'
     state: absent
   with_items:
-    - pscx
-    - windirstat
+  - pscx
+  - windirstat
 
 - name: uninstall multiple packages
   win_chocolatey:
-    name: "{{ item }}"
+    name: '{{ item }}'
     state: absent
   with_items:
-    - pscx
-    - windirstat
+  - pscx
+  - windirstat
+
+- name: Install curl using proxy
+  win_chocolatey:
+    name: curl
+    proxy_url: http://proxy-server:8080/
+    proxy_username: joe
+    proxy_password: p@ssw0rd
 '''

@@ -47,28 +47,29 @@ Ansible Changes By Release
 * Those using ansible as a library should note that the `ansible.vars.unsafe_proxy`
   module is deprecated and slated to go away in 2.8.  The functionality has been
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
+* The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
+  its content is now also available directly in the resulting output, like other modules.
 
-#### Deprecated Modules:
-* ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
-* cs_nic (removed in 2.7), replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
-* panos_address (use M(panos_object) instead)
-* panos_service (use M(panos_object) instead)
-* panos_security_policy: In 2.4 use M(panos_security_rule) instead.
-* panos_nat_policy, In 2.4 use M(panos_nat_rule) instead.
-* s3 (removed in 2.7), replaced by aws_s3
+#### Deprecated Modules (to be removed in 2.8):
+* ec2_facts: replaced by ec2_metadata_facts
+* cs_nic: replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+* panos_address: use M(panos_object) instead
+* panos_service: use M(panos_object) instead
+* panos_security_policy: use M(panos_security_rule) instead
+* panos_nat_policy: use M(panos_nat_rule) instead
+* s3: replaced by aws_s3
+* ec2_remote_facts: replaced by 
+* win_msi: use M(win_package) instead
 
-#### Removed Deprecated Modules:
-* eos_template (use eos_config instead)
-* ios_template (use ios_config instead)
-* iosxr_template (use iosxr_config instead)
-* junos_template (use junos_config instead)
-* nxos_template (use nxos_config instead)
-* ops_template (use ops_config instead)
+#### Removed Modules (previouslly deprecated):
+* eos_template: use eos_config instead
+* ios_template: use ios_config instead
+* iosxr_template: use iosxr_config instead
+* junos_template: use junos_config instead
+* nxos_template: use nxos_config instead
+* ops_template: use ops_config instead
 * openswitch
 
-* Modules (scheduled for removal in 2.6)
-
-  * ec2_remote_facts
 
 ### Minor Changes
 * Removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
@@ -123,6 +124,12 @@ Ansible Changes By Release
   of handling IP addresses. (PR# 26566)
 * datetime filter updated to use default format of datetime.datetime (ISO8601)
 * The junit plugin now has an option to report a junit test failure on changes for idempotent testing.
+* New 'diff' keyword allows setting diff mode on playbook objects, overriding command line option and config.
+* New config settings for inventory to:
+	- control inventory plugins used
+    - extensions of files to ignore when using inventory directory
+	- patterns of flies to ignore when using inventory directory
+	- option to toggle failed inventory source parsing between an error or a warning
 
 #### New Callbacks:
 - full_skip
@@ -165,14 +172,19 @@ Ansible Changes By Release
   template hardcoded this to true.
 - Added a new parameter to command module that lets users specify data to pipe
   into the command's stdin.
+- The azure_rm modules now accept a `cloud_environment` arg to access regional and private clouds.
+- The azure_rm modules now require at least version 2.0.0 of the Azure Python SDK.
 
 ### New Modules
 
 #### Cloud
 - amazon
   * aws_api_gateway
+  * aws_direct_connect_connection
+  * aws_direct_connect_link_aggregation_group
   * aws_s3
   * aws_s3_bucket_facts
+  * aws_waf_facts
   * data_pipeline
   * dynamodb_ttl
   * ec2_instance_facts
@@ -190,6 +202,21 @@ Ansible Changes By Release
   * iam_managed_policy
   * lightsail
   * redshift_facts
+- azure
+  * azure_rm_acs
+  * azure_rm_availabilityset
+  * azure_rm_availabilityset_facts
+  * azure_rm_dnsrecordset
+  * azure_rm_dnsrecordset_facts
+  * azure_rm_dnszone
+  * azure_rm_dnszone_facts
+  * azure_rm_loadbalancer
+  * azure_rm_loadbalancer_facts
+  * azure_rm_managed_disk
+  * azure_rm_managed_disk_facts
+  * azure_rm_virtualmachine_extension
+  * azure_rm_virtualmachine_scaleset
+  * azure_rm_virtualmachine_scaleset_facts
 - atomic
   * atomic_container
 - cloudstack
@@ -506,6 +533,9 @@ Ansible Changes By Release
   * github_issue
 
 #### Storage
+  * nuage_vpsk
+- panos
+  * panos_sag
 - purestorage
   * purefa_hg
   * purefa_host
@@ -535,10 +565,13 @@ Ansible Changes By Release
   * win_group_membership
   * win_hotfix
   * win_mapped_drive
+  * win_pagefile
+  * win_power_plan
   * win_psmodule
   * win_rabbitmq_plugin
   * win_route
   * win_security_policy
+  * win_toast
   * win_user_right
   * win_wait_for
   * win_wakeonlan

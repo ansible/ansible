@@ -105,8 +105,8 @@ options:
 
     cip:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Insert the Client IP header in requests forwarded to the service."
 
@@ -204,8 +204,8 @@ options:
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with all the services in the service group whose state
@@ -230,8 +230,8 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging of AppFlow information for the specified service group."
 
@@ -313,6 +313,16 @@ options:
             weight:
                 description:
                     - Weight to assign to the binding between the monitor and servicegroup.
+
+    disabled:
+        description:
+            - When set to C(yes) the service group state will be set to DISABLED.
+            - When set to C(no) the service group state will be set to ENABLED.
+            - >-
+                Note that due to limitations of the underlying NITRO API a C(disabled) state change alone
+                does not cause the module result to report a changed status.
+        type: bool
+        default: false
 
 
 extends_documentation_fragment: netscaler
@@ -618,6 +628,16 @@ def diff(client, module, servicegroup_proxy):
     return diff_object
 
 
+def do_state_change(client, module, servicegroup_proxy):
+    if module.params['disabled']:
+        log('Disabling service')
+        result = servicegroup.disable(client, servicegroup_proxy.actual)
+    else:
+        log('Enabling service')
+        result = servicegroup.enable(client, servicegroup_proxy.actual)
+    return result
+
+
 def main():
 
     module_specific_arguments = dict(
@@ -678,8 +698,8 @@ def main():
         cip=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         cipheader=dict(type='str'),
@@ -700,8 +720,8 @@ def main():
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         tcpprofilename=dict(type='str'),
@@ -710,8 +730,8 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         netprofile=dict(type='str'),
@@ -730,6 +750,10 @@ def main():
     hand_inserted_arguments = dict(
         servicemembers=dict(type='list'),
         monitorbindings=dict(type='list'),
+        disabled=dict(
+            type='bool',
+            default=False,
+        ),
     )
 
     argument_spec = dict()
@@ -857,6 +881,9 @@ def main():
         'rtspsessionidremap': ['bool_on_off'],
         'graceful': ['bool_yes_no'],
         'cmp': ['bool_yes_no'],
+        'cip': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
     }
 
     # Instantiate config proxy
@@ -911,6 +938,12 @@ def main():
                     if module.params['save_config']:
                         client.save_config()
                 module_result['changed'] = True
+
+            if not module.check_mode:
+                res = do_state_change(client, module, servicegroup_proxy)
+                if res.errorcode != 0:
+                    msg = 'Error when setting disabled state. errorcode: %s message: %s' % (res.errorcode, res.message)
+                    module.fail_json(msg=msg, **module_result)
 
             # Sanity check for state
             if not module.check_mode:

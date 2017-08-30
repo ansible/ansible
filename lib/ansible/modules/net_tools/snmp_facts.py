@@ -70,7 +70,7 @@ EXAMPLES = '''
 # Gather facts with SNMP version 2
 - snmp_facts:
     host: '{{ inventory_hostname }}'
-    version: 2c
+    version: v2c
     community: public
   delegate_to: local
 

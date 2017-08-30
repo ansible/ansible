@@ -75,6 +75,7 @@ MAGIC_VARIABLE_MAPPING = dict(
 
     # networking modules
     network_os=('ansible_network_os', ),
+    connection_user=('ansible_connection_user',),
 
     # ssh TODO: remove
     ssh_executable=('ansible_ssh_executable', ),
@@ -242,11 +243,9 @@ class PlayContext(Base):
     _verbosity = FieldAttribute(isa='int', default=0)
     _only_tags = FieldAttribute(isa='set', default=set())
     _skip_tags = FieldAttribute(isa='set', default=set())
-    _check_mode = FieldAttribute(isa='bool', default=False)
     _force_handlers = FieldAttribute(isa='bool', default=False)
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
-    _diff = FieldAttribute(isa='bool')
 
     # Fact gathering settings
     _gather_subset = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
@@ -336,6 +335,7 @@ class PlayContext(Base):
         self.become_user = options.become_user
 
         self.check_mode = boolean(options.check, strict=False)
+        self.diff = boolean(options.diff, strict=False)
 
         #  general flags (should we move out?)
         # for flag in ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff'):
@@ -496,7 +496,8 @@ class PlayContext(Base):
         # this ensures any become settings are obeyed correctly
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
         if new_info.connection == 'local':
-            new_info.connection_user = new_info.remote_user
+            if not new_info.connection_user:
+                new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
@@ -510,6 +511,9 @@ class PlayContext(Base):
         # check_mode replaces always_run, overwrite always_run if both are given
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
+
+        if task.diff is not None:
+            new_info.diff = task.diff
 
         return new_info
 

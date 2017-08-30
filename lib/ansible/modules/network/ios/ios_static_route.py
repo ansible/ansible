@@ -33,6 +33,8 @@ short_description: Manage static IP routes on Cisco IOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Cisco IOS network devices.
+notes:
+  - Tested against IOS 15.6
 options:
   prefix:
     description:

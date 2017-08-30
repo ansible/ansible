@@ -17,14 +17,13 @@
     maxclient: 100
     maxreq: 100
     cacheable: no
-    cip: ENABLED
+    cip: enabled
     cipheader: cip-header
     usip: no
     pathmonitor: no
     pathmonitorindv: no
     useproxyport: no
     healthmonitor: no
-    sc: off
     sp: off
     rtspsessionidremap: off
     clttimeout: 2000
@@ -34,9 +33,9 @@
     cmp: no
     maxbandwidth: 5000
     monthreshold: 100
-    downstateflush: DISABLED
+    downstateflush: disabled
     comment: some comment
-    appflowlog: ENABLED
+    appflowlog: enabled
     autoscale: POLICY
     memberport: 80
     graceful: no

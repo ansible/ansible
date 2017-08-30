@@ -33,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the ACE if it exists.
   - C(state=delete_acl) deletes the ACL if it exists.
   - For idempotency, use port numbers for the src/dest port

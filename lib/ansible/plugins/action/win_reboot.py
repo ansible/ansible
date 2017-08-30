@@ -1,21 +1,6 @@
 # (c) 2016, Matt Davis <mdavis@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# CI-required python3 boilerplate
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -44,52 +29,60 @@ class ActionModule(ActionBase):
     DEFAULT_REBOOT_TIMEOUT_SEC = 600
     DEFAULT_CONNECT_TIMEOUT_SEC = 5
     DEFAULT_PRE_REBOOT_DELAY_SEC = 2
+    DEFAULT_POST_REBOOT_DELAY_SEC = 0
     DEFAULT_TEST_COMMAND = 'whoami'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible.'
 
     def do_until_success_or_timeout(self, what, timeout_sec, what_desc, fail_sleep_sec=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout_sec)
 
+        e = None
         while datetime.utcnow() < max_end_time:
             try:
                 what()
                 if what_desc:
                     display.debug("win_reboot: %s success" % what_desc)
                 return
-            except:
+            except Exception as e:
                 if what_desc:
-                    display.debug("win_reboot: %s fail (expected), sleeping before retry..." % what_desc)
+                    display.debug("win_reboot: %s fail (expected), retrying in %d seconds..." % (what_desc, fail_sleep_sec))
                 time.sleep(fail_sleep_sec)
 
-        raise TimedOutException("timed out waiting for %s" % what_desc)
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
 
     def run(self, tmp=None, task_vars=None):
+
+        self._supports_check_mode = True
+        self._supports_async = True
+
+        if self._play_context.check_mode:
+            return dict(changed=True, elapsed=0, rebooted=True)
+
         if task_vars is None:
             task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        if result.get('skipped', False) or result.get('failed', False):
+            return result
+
+        winrm_host = self._connection._winrm_host
+        winrm_port = self._connection._winrm_port
 
         shutdown_timeout_sec = int(self._task.args.get('shutdown_timeout_sec', self.DEFAULT_SHUTDOWN_TIMEOUT_SEC))
         reboot_timeout_sec = int(self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT_SEC))
         connect_timeout_sec = int(self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT_SEC))
         pre_reboot_delay_sec = int(self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY_SEC))
+        post_reboot_delay_sec = int(self._task.args.get('post_reboot_delay_sec', self.DEFAULT_POST_REBOOT_DELAY_SEC))
         test_command = str(self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND))
         msg = str(self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE))
-
-        if self._play_context.check_mode:
-            display.vvv("win_reboot: skipping for check_mode")
-            return dict(skipped=True)
-
-        winrm_host = self._connection._winrm_host
-        winrm_port = self._connection._winrm_port
-
-        result = super(ActionModule, self).run(tmp, task_vars)
-        result['warnings'] = []
 
         # Initiate reboot
         (rc, stdout, stderr) = self._connection.exec_command('shutdown /r /t %d /c "%s"' % (pre_reboot_delay_sec, msg))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
         if rc == 1190:
-            result['warnings'].append('A scheduled reboot was pre-empted by Ansible.')
+            display.warning('A scheduled reboot was pre-empted by Ansible.')
 
             # Try to abort (this may fail if it was already aborted)
             (rc, stdout1, stderr1) = self._connection.exec_command('shutdown /a')
@@ -113,6 +106,8 @@ class ActionModule(ActionBase):
                 return False
 
             raise Exception("port is open")
+
+        start = datetime.now()
 
         try:
             self.do_until_success_or_timeout(raise_if_port_open, shutdown_timeout_sec, what_desc="winrm port down")
@@ -148,5 +143,12 @@ class ActionModule(ActionBase):
             result['failed'] = True
             result['rebooted'] = True
             result['msg'] = toex.message
+
+        if post_reboot_delay_sec != 0:
+            display.vvv("win_reboot: waiting an additional %d seconds" % post_reboot_delay_sec)
+            time.sleep(post_reboot_delay_sec)
+
+        elapsed = datetime.now() - start
+        result['elapsed'] = elapsed.seconds
 
         return result

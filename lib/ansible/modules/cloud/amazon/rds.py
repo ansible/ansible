@@ -126,7 +126,7 @@ options:
     description:
       - Port number that the DB instance uses for connections. Used only when command=create or command=replicate.
       - Prior to 2.0 it always defaults to null and the API would use 3306, it had to be set to other DB default values when not using MySql.
-        Starting at 2.0 it automatically defaults to what is expected for each c(db_engine).
+        Starting at 2.0 it automatically defaults to what is expected for each C(db_engine).
     required: false
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
@@ -780,7 +780,8 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-
+        if self.instance.DBName:
+            d['DBName'] = self.instance.DBName
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
@@ -873,7 +874,8 @@ class RDS2DBInstance:
         else:
             d['endpoint'] = None
             d['port'] = None
-
+        if self.instance["DBName"]:
+            d['DBName'] = self.instance['DBName']
         return d
 
 

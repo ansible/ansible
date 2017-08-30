@@ -49,6 +49,7 @@ Command line arguments:
  - tenant
  - ad_user
  - password
+ - cloud_environment
 
 Environment variables:
  - AZURE_PROFILE
@@ -58,6 +59,7 @@ Environment variables:
  - AZURE_TENANT
  - AZURE_AD_USER
  - AZURE_PASSWORD
+ - AZURE_CLOUD_ENVIRONMENT
 
 Run for Specific Host
 -----------------------
@@ -190,22 +192,27 @@ import json
 import os
 import re
 import sys
+import inspect
+import traceback
+
 
 from packaging.version import Version
 
 from os.path import expanduser
+import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 HAS_AZURE = True
 HAS_AZURE_EXC = None
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure import azure_cloud
     from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
-    from azure.mgmt.network.network_management_client import NetworkManagementClient
-    from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient
-    from azure.mgmt.compute.compute_management_client import ComputeManagementClient
+    from azure.mgmt.network import NetworkManagementClient
+    from azure.mgmt.resource.resources import ResourceManagementClient
+    from azure.mgmt.compute import ComputeManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -218,7 +225,8 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     secret='AZURE_SECRET',
     tenant='AZURE_TENANT',
     ad_user='AZURE_AD_USER',
-    password='AZURE_PASSWORD'
+    password='AZURE_PASSWORD',
+    cloud_environment='AZURE_CLOUD_ENVIRONMENT',
 )
 
 AZURE_CONFIG_SETTINGS = dict(
@@ -232,7 +240,7 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_tag='AZURE_GROUP_BY_TAG'
 )
 
-AZURE_MIN_VERSION = "0.30.0rc5"
+AZURE_MIN_VERSION = "2.0.0"
 
 
 def azure_id_to_dict(id):
@@ -249,6 +257,7 @@ class AzureRM(object):
 
     def __init__(self, args):
         self._args = args
+        self._cloud_environment = None
         self._compute_client = None
         self._resource_client = None
         self._network_client = None
@@ -262,6 +271,26 @@ class AzureRM(object):
             self.fail("Failed to get credentials. Either pass as parameters, set environment variables, "
                       "or define a profile in ~/.azure/credentials.")
 
+        # if cloud_environment specified, look up/build Cloud object
+        raw_cloud_env = self.credentials.get('cloud_environment')
+        if not raw_cloud_env:
+            self._cloud_environment = azure_cloud.AZURE_PUBLIC_CLOUD  # SDK default
+        else:
+            # try to look up "well-known" values via the name attribute on azure_cloud members
+            all_clouds = [x[1] for x in inspect.getmembers(azure_cloud) if isinstance(x[1], azure_cloud.Cloud)]
+            matched_clouds = [x for x in all_clouds if x.name == raw_cloud_env]
+            if len(matched_clouds) == 1:
+                self._cloud_environment = matched_clouds[0]
+            elif len(matched_clouds) > 1:
+                self.fail("Azure SDK failure: more than one cloud matched for cloud_environment name '{0}'".format(raw_cloud_env))
+            else:
+                if not urlparse.urlparse(raw_cloud_env).scheme:
+                    self.fail("cloud_environment must be an endpoint discovery URL or one of {0}".format([x.name for x in all_clouds]))
+                try:
+                    self._cloud_environment = azure_cloud.get_cloud_from_metadata_endpoint(raw_cloud_env)
+                except Exception as e:
+                    self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message))
+
         if self.credentials.get('subscription_id', None) is None:
             self.fail("Credentials did not include a subscription_id value.")
         self.log("setting subscription_id")
@@ -272,13 +301,16 @@ class AzureRM(object):
            self.credentials.get('tenant') is not None:
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
-                                                                 tenant=self.credentials['tenant'])
+                                                                 tenant=self.credentials['tenant'],
+                                                                 cloud_environment=self._cloud_environment)
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
-            if tenant is not None:
-                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'], tenant=tenant)
-            else:
-                self.azure_credentials = UserPassCredentials(self.credentials['ad_user'], self.credentials['password'])
+            if not tenant:
+                tenant = 'common'
+            self.azure_credentials = UserPassCredentials(self.credentials['ad_user'],
+                                                         self.credentials['password'],
+                                                         tenant=tenant,
+                                                         cloud_environment=self._cloud_environment)
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
@@ -345,6 +377,10 @@ class AzureRM(object):
             self.log('Received credentials from parameters.')
             return arg_credentials
 
+        if arg_credentials['ad_user'] is not None:
+            self.log('Received credentials from parameters.')
+            return arg_credentials
+
         # try environment
         env_credentials = self._get_env_credentials()
         if env_credentials:
@@ -376,7 +412,7 @@ class AzureRM(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id)
+            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id, base_url=self._cloud_environment.endpoints.management)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -384,14 +420,16 @@ class AzureRM(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id)
+            self._resource_client = ResourceManagementClient(self.azure_credentials,
+                                                             self.subscription_id,
+                                                             base_url=self._cloud_environment.endpoints.management)
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id)
+            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id, base_url=self._cloud_environment.endpoints.management)
             self._register('Microsoft.Compute')
         return self._compute_client
 
@@ -469,10 +507,12 @@ class AzureInventory(object):
                             help='Azure Client Secret')
         parser.add_argument('--tenant', action='store',
                             help='Azure Tenant Id')
-        parser.add_argument('--ad-user', action='store',
+        parser.add_argument('--ad_user', action='store',
                             help='Active Directory User')
         parser.add_argument('--password', action='store',
                             help='password')
+        parser.add_argument('--cloud_environment', action='store',
+                            help='Azure Cloud Environment name or metadata discovery URL')
         parser.add_argument('--resource-groups', action='store',
                             help='Return inventory for comma separated list of resource group names')
         parser.add_argument('--tags', action='store',
@@ -793,11 +833,7 @@ class AzureInventory(object):
 
 def main():
     if not HAS_AZURE:
-        sys.exit("The Azure python sdk is not installed (try `pip install 'azure>=2.0.0rc5' --upgrade`) - {0}".format(HAS_AZURE_EXC))
-
-    if Version(azure_compute_version) < Version(AZURE_MIN_VERSION):
-        sys.exit("Expecting azure.mgmt.compute.__version__ to be {0}. Found version {1} "
-                 "Do you have Azure >= 2.0.0rc5 installed? (try `pip install 'azure>=2.0.0rc5' --upgrade`)".format(AZURE_MIN_VERSION, azure_compute_version))
+        sys.exit("The Azure python sdk is not installed (try `pip install 'azure>={0}' --upgrade`) - {1}".format(AZURE_MIN_VERSION, HAS_AZURE_EXC))
 
     AzureInventory()
 

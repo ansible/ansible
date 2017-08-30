@@ -35,6 +35,8 @@ description:
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   commands:
     description:

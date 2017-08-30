@@ -34,6 +34,8 @@ description:
     current running config.  It also supports purging usernames from the
     configuration that are not explicitly defined.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   aggregate:
     description:

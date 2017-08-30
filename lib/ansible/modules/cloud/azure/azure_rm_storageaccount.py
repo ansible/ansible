@@ -77,7 +77,7 @@ options:
         default: 'Storage'
         choices:
             - Storage
-            - StorageBlob
+            - BlobStorage
         version_added: "2.2"
 
 extends_documentation_fragment:

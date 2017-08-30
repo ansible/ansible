@@ -104,6 +104,7 @@ statement_label = {
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto_exception
 
 # import a class, we'll use a fully qualified path
 import ansible.module_utils.ec2
@@ -117,16 +118,6 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 def get_arn_from_kms_alias(kms, aliasname):
     ret = kms.list_aliases()

@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - At least one of C(master) or C(logging) params must be supplied.
     - When C(state=absent), boolean parameters are flipped,
       e.g. C(master=true) will disable the authoritative server.

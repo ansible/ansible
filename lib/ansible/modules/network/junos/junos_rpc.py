@@ -22,7 +22,7 @@ short_description: Runs an arbitrary RPC over NetConf on an Juniper JUNOS device
 description:
   - Sends a request to the remote device running JUNOS to execute the
     specified RPC using the NetConf transport.  The reply is then
-    returned to the playbook in the c(xml) key.  If an alternate output
+    returned to the playbook in the C(xml) key.  If an alternate output
     format is requested, the reply is transformed to the requested output.
 extends_documentation_fragment: junos
 options:
@@ -51,7 +51,8 @@ requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """

@@ -44,6 +44,11 @@ options:
     - Define whether to eradicate the protection group on delete and leave in trash.
     type : bool
     default: 'no'
+  enabled:
+    description:
+    - Define whether to enabled snapshots for the protection group.
+    type : bool
+    default: 'yes'
 extends_documentation_fragment:
 - purestorage
 '''
@@ -52,6 +57,13 @@ EXAMPLES = r'''
 - name: Create new protection group
   purefa_pg:
     pgroup: foo
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+- name: Create new protection group with snapshots disabled
+  purefa_pg:
+    pgroup: foo
+    enabled: false
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
@@ -123,6 +135,7 @@ def make_pgroup(module, array):
 
     if not module.check_mode:
         host = array.create_pgroup(module.params['pgroup'])
+        array.set_pgroup(module.params['pgroup'], snap_enabled=module.params['enabled'])
         if module.params['volume']:
             array.set_pgroup(module.params['pgroup'], vollist=module.params['volume'])
         if module.params['host']:
@@ -156,6 +169,7 @@ def main():
         host=dict(type='list'),
         hostgroup=dict(type='list'),
         eradicate=dict(type='bool', default=False),
+        enabled=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)

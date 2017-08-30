@@ -33,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - HSRP feature needs to be enabled first on the system.
   - SVIs must exist before using this module.
   - Interface must be a L3 port before using this module.

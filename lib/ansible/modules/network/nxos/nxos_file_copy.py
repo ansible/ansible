@@ -33,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The feature must be enabled with feature scp-server.
   - If the file is already present (md5 sums match), no transfer will
     take place.

@@ -153,14 +153,16 @@ class GenericStrategy(object):
         name = self.module.params['name']
         current_name = self.get_current_hostname()
         if current_name != name:
-            self.set_current_hostname(name)
+            if not self.module.check_mode:
+                self.set_current_hostname(name)
             self.changed = True
 
     def update_permanent_hostname(self):
         name = self.module.params['name']
         permanent_name = self.get_permanent_hostname()
         if permanent_name != name:
-            self.set_permanent_hostname(name)
+            if not self.module.check_mode:
+                self.set_permanent_hostname(name)
             self.changed = True
 
     def get_current_hostname(self):
@@ -663,6 +665,13 @@ class OracleLinuxHostname(Hostname):
     distribution = 'Oracle linux server'
     strategy_class = RedHatStrategy
 
+
+class VirtuozzoLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Virtuozzo linux'
+    strategy_class = RedHatStrategy
+
+
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Amazon'
@@ -734,24 +743,46 @@ class NetBSDHostname(Hostname):
     strategy_class = FreeBSDStrategy
 
 
+class NeonHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Neon'
+    strategy_class = DebianStrategy
+
+
 # ===========================================
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(required=True)
-        )
+        ),
+        supports_check_mode=True
     )
 
     hostname = Hostname(module)
     name = module.params['name']
+
+    current_hostname = hostname.get_current_hostname()
+    permanent_hostname = hostname.get_permanent_hostname()
+
     changed = hostname.update_current_and_permanent_hostname()
 
-    module.exit_json(changed=changed, name=name,
-                     ansible_facts=dict(ansible_hostname=name.split('.')[0],
-                                        ansible_nodename=name,
-                                        ansible_fqdn=socket.getfqdn(),
-                                        ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+    if name != current_hostname:
+        name_before = current_hostname
+    elif name != permanent_hostname:
+        name_before = permanent_hostname
+
+    kw = dict(changed=changed, name=name,
+              ansible_facts=dict(ansible_hostname=name.split('.')[0],
+                                 ansible_nodename=name,
+                                 ansible_fqdn=socket.getfqdn(),
+                                 ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+
+    if changed:
+        kw['diff'] = {'after': 'hostname = ' + name + '\n',
+                      'before': 'hostname = ' + name_before + '\n'}
+
+    module.exit_json(**kw)
 
 
 if __name__ == '__main__':

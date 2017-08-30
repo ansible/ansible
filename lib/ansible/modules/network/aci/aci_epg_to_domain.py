@@ -26,34 +26,34 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The C(tenant), C(app_profile), C(epg), and C(domain) used must exist before using this module in your playbook.
+- The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
   The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
 options:
   allow_useg:
     description:
     - Allows micro-segmentation.
-    - The APIC defaults new EPG to Domain bindings to use encap
+    - The APIC defaults new EPG to Domain bindings to use C(encap).
     choices: [ encap, useg ]
     default: encap
-  app_profile:
+  ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
-    aliases: [ app_profile_name ]
+    aliases: [ app_profile, app_profile_name ]
   deploy_immediacy:
     description:
     - Determines when the policy is pushed to hardware Policy CAM.
-    - The APIC defaults new EPG to Domain bindings to lazy.
+    - The APIC defaults new EPG to Domain bindings to C(lazy).
     choices: [ immediate, lazy ]
     default: lazy
-  domain_profile:
+  domain:
     description:
     - Name of the physical or virtual domain being associated with the EPG.
-    aliases: [ domain_name ]
+    aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
     - Determines if the Domain is physical (phys) or virtual (vmm).
     choices: [ phys, vmm ]
-    aliases: [ domain ]
+    aliases: [ type ]
   encap:
     description:
     - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
@@ -62,7 +62,7 @@ options:
   encap_mode:
     description:
     - The ecapsulataion method to be used.
-    - The APIC defaults new EPG to Domain bindings to be auto.
+    - The APIC defaults new EPG to Domain bindings to C(auto).
     choices: [ auto, vlan, vxlan ]
     default: auto
   epg:
@@ -72,7 +72,7 @@ options:
   netflow:
     description:
     - Determines if netflow should be enabled.
-    - The APIC defaults new EPG to Domain binings to be disabled.
+    - The APIC defaults new EPG to Domain binings to C(disabled).
     choices: [ disabled, enabled ]
     default: disabled
   primary_encap:
@@ -82,7 +82,7 @@ options:
   resolution_immediacy:
     description:
     - Determines when the policies should be resolved and available.
-    - The APIC defaults new EPG to Domain bindings to lazy.
+    - The APIC defaults new EPG to Domain bindings to C(lazy).
     choices: [ immediate, lazy, pre-provision ]
     default: lazy
   state:
@@ -105,40 +105,44 @@ RETURN = r''' # '''
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+VM_PROVIDER_MAPPING = dict(vmware="uni/vmmp-VMware/dom-")
+
 
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
-        app_profile=dict(type='str', aliases=['app_profile_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'on-demand']),
-        domain_profile=dict(type='str', aliases=['domain_name']),
-        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['domain']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
+        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
         epg=dict(type='str', aliases=['name', 'epg_name']),
         netflow=dict(type='str', choices=['disabled', 'enabled']),
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immdediate', 'lazy', 'pre-provision']),
-        tenant=dict(type='str', aliases=['tenant_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        tenant=dict(type='str', aliases=['tenant_name']),
+        vm_provider=dict(type='str', choices=['vmware']),  # TODO: Find out OVS and Hyper-V options
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['state', 'absent', ['app_profile', 'domain_profile', 'domain_type', 'epg', 'tenant']],
-                     ['state', 'present', ['app_profile', 'domain_profile', 'domain_type', 'epg', 'tenant']]]
+        required_if=[
+            ['domain_type', 'vmm', ['vm_provider']],
+            ['state', 'absent', ['ap', 'domain', 'domain_type', 'epg', 'tenant']],
+            ['state', 'present', ['ap', 'domain', 'domain_type', 'epg', 'tenant']],
+        ],
     )
 
     allow_useg = module.params['allow_useg']
-    # app_profile = module.params['app_profile']
     deploy_immediacy = module.params['deploy_immediacy']
-    # domain_profile = module.params['domain_profile']
+    domain = module.params['domain']
     domain_type = module.params['domain_type']
-    if domain_type == 'vmm':
-        module.params["domain_type"] = 'vmmp-VMware/dom'
+    vm_provider = module.params['vm_provider']
     encap = module.params['encap']
     if encap is not None:
         if encap in range(1, 4097):
@@ -146,8 +150,6 @@ def main():
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
     encap_mode = module.params['encap_mode']
-    # epg = module.params['epg']
-    # tenant = module.params['tenant']
     netflow = module.params['netflow']
     primary_encap = module.params['primary_encap']
     if primary_encap is not None:
@@ -158,26 +160,33 @@ def main():
     resolution_immediacy = module.params['resolution_immediacy']
     state = module.params['state']
 
+    if domain_type == 'phys' and vm_provider is not None:
+        module.fail_json(msg="Domain type 'phys' cannot have a 'vm_provider'")
+
+    # Compile the full domain and add it to module.params for URL building
+    if domain_type == 'vmm':
+        module.params["epg_domain"] = VM_PROVIDER_MAPPING[vm_provider] + domain
+    elif domain_type is not None:
+        module.params["epg_domain"] = 'uni/phys-' + domain
+
     aci = ACIModule(module)
-
-    # TODO: Add logic to handle multiple input variations when query
-    if state != 'query':
-        # Work with a specific EPG
-        path = ('api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s/epg-%(epg)s/'
-                'rsdomAtt-[uni/%(domain_type)s-%(domain_profile)s].json') % module.params
-    else:
-        # Query all EPGs
-        path = 'api/class/fvRsDomAtt.json'
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
-
+    aci.construct_url(root_class="tenant", subclass_1="ap", subclass_2="epg", subclass_3="epg_domain")
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='fvRsDomAtt',
-                    class_config=dict(classPref=allow_useg, encap=encap, encapMode=encap_mode, instrImedcy=deploy_immediacy,
-                                      netflowPref=netflow, primaryEncap=primary_encap, resImedcy=resolution_immediacy))
+        aci.payload(
+            aci_class='fvRsDomAtt',
+            class_config=dict(
+                classPref=allow_useg,
+                encap=encap,
+                encapMode=encap_mode,
+                instrImedcy=deploy_immediacy,
+                netflowPref=netflow,
+                primaryEncap=primary_encap,
+                resImedcy=resolution_immediacy,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsDomAtt')
@@ -187,6 +196,9 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
+
+    # Pop the epg_domain key that was added for URL building
+    module.params.pop("epg_domain")
 
     module.exit_json(**aci.result)
 

@@ -1,0 +1,62 @@
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: ansiblepip3
+    resource_group: '{{ resource_group }}'
+
+- name: create load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lbtestfromansible
+    public_ip: ansiblepip3
+  register: output
+
+- name: assert load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lbtestfromansible
+    state: absent
+  register: output
+
+- name: assert load balancer deleted
+  assert:
+    that: output.changed
+
+- name: create another load balancer with more options
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lbtestfromansible
+    public_ip_address: ansiblepip3
+    probe_protocol: Tcp
+    probe_port: 80
+    probe_interval: 10
+    probe_fail_count: 3
+    protocol: Tcp
+    load_distribution: Default
+    frontend_port: 80
+    backend_port: 8080
+    idle_timeout: 4
+    natpool_frontend_port_start: 30
+    natpool_frontend_port_end: 40
+    natpool_backend_port: 80
+    natpool_protocol: Tcp
+  register: output
+
+- name: assert complex load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lbtestfromansible
+    state: absent
+
+- name: cleanup public ip
+  azure_rm_publicipaddress:
+    name: ansiblepip3
+    resource_group: '{{ resource_group }}'
+    state: absent
