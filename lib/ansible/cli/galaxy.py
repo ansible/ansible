@@ -397,28 +397,31 @@ class GalaxyCLI(CLI):
 
             # install dependencies, if we want them
             if not no_deps and installed:
-                role_dependencies = role.metadata.get('dependencies') or []
-                for dep in role_dependencies:
-                    display.debug('Installing dep %s' % dep)
-                    dep_req = RoleRequirement()
-                    dep_info = dep_req.role_yaml_parse(dep)
-                    dep_role = GalaxyRole(self.galaxy, **dep_info)
-                    if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
-                        # we know we can skip this, as it's not going to
-                        # be found on galaxy.ansible.com
-                        continue
-                    if dep_role.install_info is None:
-                        if dep_role not in roles_left:
-                            display.display('- adding dependency: %s' % str(dep_role))
-                            roles_left.append(dep_role)
+                if not role.metadata:
+                    display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
+                else:
+                    role_dependencies = role.metadata.get('dependencies') or []
+                    for dep in role_dependencies:
+                        display.debug('Installing dep %s' % dep)
+                        dep_req = RoleRequirement()
+                        dep_info = dep_req.role_yaml_parse(dep)
+                        dep_role = GalaxyRole(self.galaxy, **dep_info)
+                        if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+                            # we know we can skip this, as it's not going to
+                            # be found on galaxy.ansible.com
+                            continue
+                        if dep_role.install_info is None:
+                            if dep_role not in roles_left:
+                                display.display('- adding dependency: %s' % str(dep_role))
+                                roles_left.append(dep_role)
+                            else:
+                                display.display('- dependency %s already pending installation.' % dep_role.name)
                         else:
-                            display.display('- dependency %s already pending installation.' % dep_role.name)
-                    else:
-                        if dep_role.install_info['version'] != dep_role.version:
-                            display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
-                                            (str(dep_role), role.name, dep_role.install_info['version']))
-                        else:
-                            display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                            if dep_role.install_info['version'] != dep_role.version:
+                                display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
+                                                (str(dep_role), role.name, dep_role.install_info['version']))
+                            else:
+                                display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
                 display.warning("- %s was NOT installed successfully." % role.name)
