@@ -148,7 +148,7 @@ from ansible.module_utils.f5_utils import defaultdict
 try:
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
-    HAS_F5SDK = False
+    pass
 
 
 class Parameters(AnsibleF5Parameters):

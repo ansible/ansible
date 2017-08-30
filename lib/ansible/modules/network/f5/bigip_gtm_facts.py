@@ -186,7 +186,6 @@ virtual_server:
 
 try:
     from distutils.version import LooseVersion
-    from f5.bigip.contexts import TransactionContextManager
     from f5.bigip import ManagementRoot
     from icontrol.session import iControlUnexpectedHTTPError
 
