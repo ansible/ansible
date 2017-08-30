@@ -114,7 +114,7 @@ EXAMPLES = r'''
     import_policy: rollback_config
     export_policy: config_backup
     snapshot: 'run-2017-08-28T06-24-01'
-    
+
 - name: Rollback Configuration
   aci_config_rollback:
     hostname: apic
@@ -194,7 +194,7 @@ def main():
         if not snapshot.endswith('.tar.gz'):
             snapshot += '.tar.gz'
 
-        filename = 'ce2_{}-{}'.format(export_policy, snapshot)
+        filename = 'ce2_{0}-{1}'.format(export_policy, snapshot)
 
         aci.construct_url(root_class="import_policy")
         aci.get_existing()
