@@ -142,9 +142,8 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.storage.cloudstorageaccount import CloudStorageAccount
     from azure.common import AzureMissingResourceHttpError
-    from azure.mgmt.storage.models import ProvisioningState, SkuName, SkuTier, Kind
+    from azure.mgmt.storage.models import ProvisioningState, SkuName, SkuTier
     from azure.mgmt.storage.models import StorageAccountUpdateParameters, CustomDomain, \
                                           StorageAccountCreateParameters, Sku
 except ImportError:
