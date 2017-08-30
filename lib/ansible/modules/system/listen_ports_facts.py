@@ -7,7 +7,7 @@ DOCUMENTATION = '''
 module: listen_ports_facts
 author:
     - Nathan Davison (@ndavison)
-version_added: "2.4"
+version_added: "2.5"
 description:
     - Gather facts on processes listening on TCP and UDP ports. Optionally provide whitelists to gather facts on violations of the whitelist.
 short_description: Gather facts on processes listening on TCP and UDP ports.
@@ -38,7 +38,7 @@ EXAMPLES = '''
 RETURN = '''
 tcp_listen:
   description: A list of processes that are listening on a TCP port.
-  returned: success
+  returned: when at least one process is listening on a TCP port.
   type: list
   sample:
     - address: '0.0.0.0'
@@ -58,7 +58,7 @@ tcp_listen:
 
 udp_listen:
   description: A list of processes that are listening on a UDP port.
-  returned: success
+  returned: when at least one process is listening on a UDP port.
   type: list
   sample:
     - address: '0.0.0.0'
@@ -78,7 +78,7 @@ udp_listen:
 
 tcp_listen_violations:
   description: A list of processes that are listening on a TCP port that violated the whitelist_tcp argument.
-  returned: success
+  returned: when at least one process that is listening on a TCP port isn't included in the supplied TCP whitelist.
   type: list
   sample:
     - address: '0.0.0.0'
@@ -98,7 +98,7 @@ tcp_listen_violations:
 
 udp_listen_violations:
   description: A list of processes that are listening on a UDP port that violated the whitelist_udp argument.
-  returned: success
+  returned: when at least one process that is listening on a UDP port isn't included in the supplied UDP whitelist.
   type: list
   sample:
     - address: '0.0.0.0'
@@ -117,7 +117,7 @@ udp_listen_violations:
       user: 'root'
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
