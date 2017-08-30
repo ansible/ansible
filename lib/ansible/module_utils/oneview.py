@@ -202,15 +202,15 @@ class OneViewModuleBase(object):
     HPE_ONEVIEW_SDK_REQUIRED = 'HPE OneView Python SDK is required for this module.'
 
     ONEVIEW_COMMON_ARGS = dict(
-        config=dict(required=False, type='str')
+        config=dict(type='path'),
+        hostname=dict(type='str'),
+        username=dict(type='str'),
+        password=dict(type='str'),
+        api_version=dict(type='int'),
+        image_streamer_hostname=dict(type='str')
     )
 
-    ONEVIEW_VALIDATE_ETAG_ARGS = dict(
-        validate_etag=dict(
-            required=False,
-            type='bool',
-            default=True)
-    )
+    ONEVIEW_VALIDATE_ETAG_ARGS = dict(validate_etag=dict(type='bool', default=True))
 
     resource_client = None
 
@@ -257,7 +257,13 @@ class OneViewModuleBase(object):
             self.module.fail_json(msg=self.HPE_ONEVIEW_SDK_REQUIRED)
 
     def _create_oneview_client(self):
-        if not self.module.params['config']:
+        if self.module.params.get('hostname'):
+            config = dict(ip=self.module.params['hostname'],
+                          credentials=dict(userName=self.module.params['username'], password=self.module.params['password']),
+                          api_version=self.module.params['api_version'],
+                          image_streamer_ip=self.module.params['image_streamer_hostname'])
+            self.oneview_client = OneViewClient(config)
+        elif not self.module.params['config']:
             self.oneview_client = OneViewClient.from_environment_variables()
         else:
             self.oneview_client = OneViewClient.from_json_file(self.module.params['config'])
