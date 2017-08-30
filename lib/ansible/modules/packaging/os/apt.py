@@ -491,7 +491,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         name, version = package_split(package)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
-        if not installed or (upgrade and upgradable):
+        if (not installed and not only_upgrade) or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
         if installed and upgradable and version:
             # This happens when the package is installed, a newer version is
