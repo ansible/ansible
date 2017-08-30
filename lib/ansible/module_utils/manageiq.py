@@ -88,7 +88,10 @@ class ManageIQ(object):
         self._module = module
         self._api_url = url + '/api'
         self._auth = dict(user=username, password=password, token=token)
-        self._client = ManageIQClient(self._api_url, self._auth, verify_ssl=verify_ssl, ca_bundle_path=ca_bundle_path)
+        try:
+            self._client = ManageIQClient(self._api_url, self._auth, verify_ssl=verify_ssl, ca_bundle_path=ca_bundle_path)
+        except Exception as e:
+            self.module.fail_json(msg="failed to open connection (%s): %s" % (url, str(e)))
 
     @property
     def module(self):
