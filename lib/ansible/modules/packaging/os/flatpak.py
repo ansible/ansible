@@ -106,8 +106,7 @@ def uninstall_flat(binary, flat, module):
     # is no naming convention for the flatpakref to what
     # the installed flatpak will be named.
     command = "{} list --app".format(binary)
-    process = subprocess.Popen(
-        command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     process.wait()
     if module.check_mode:
         # Check if any changes would be made but don't actually make
