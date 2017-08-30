@@ -221,7 +221,7 @@ def main():
     except F5ModuleError as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
