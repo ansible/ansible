@@ -20,5 +20,6 @@ from ansible.modules.remote_management.oneview.oneview_ethernet_network_facts im
 from ansible.modules.remote_management.oneview.oneview_fc_network import FcNetworkModule
 from ansible.modules.remote_management.oneview.oneview_fc_network_facts import FcNetworkFactsModule
 from ansible.modules.remote_management.oneview.oneview_fcoe_network import FcoeNetworkModule
+from ansible.modules.remote_management.oneview.oneview_fcoe_network_facts import FcoeNetworkFactsModule
 from ansible.modules.remote_management.oneview.oneview_network_set import NetworkSetModule
 from ansible.modules.remote_management.oneview.oneview_network_set_facts import NetworkSetFactsModule
