@@ -108,9 +108,10 @@ comply with such requests immediately.
 Policy violations
 -----------------
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by
-contacting greg@ansible.com, to any channel operator in the community IRC
-channels, or to the local organizers of an event. Meetup organizers are encouraged to
-prominently display points of contact for reporting unacceptable behavior at local events.
+contacting `codeofconduct@ansible.com <mailto:codeofconduct@ansible.com>`_, to any channel
+operator in the community IRC channels, or to the local organizers of an event. Meetup
+organizers are encouraged to prominently display points of contact for reporting unacceptable
+behavior at local events.
 
 If a participant engages in harassing behavior, the meetup organizers may take any action
 they deem appropriate. These actions may include but are not limited to warning the

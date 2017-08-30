@@ -51,16 +51,16 @@ class ActionModule(ActionBase):
 
         if play_context.network_os == 'junos':
             play_context.connection = 'netconf'
-            play_context.port = self.provider['port'] or self._play_context.port or 830
+            play_context.port = int(self.provider['port'] or self._play_context.port or 830)
         else:
             play_context.connection = 'network_cli'
-            play_context.port = self.provider['port'] or self._play_context.port or 22
+            play_context.port = int(self.provider['port'] or self._play_context.port or 22)
 
         play_context.remote_addr = self.provider['host'] or self._play_context.remote_addr
         play_context.remote_user = self.provider['username'] or self._play_context.connection_user
         play_context.password = self.provider['password'] or self._play_context.password
         play_context.private_key_file = self.provider['ssh_keyfile'] or self._play_context.private_key_file
-        play_context.timeout = self.provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
+        play_context.timeout = int(self.provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
         if 'authorize' in self.provider.keys():
             play_context.become = self.provider['authorize'] or False
             play_context.become_pass = self.provider['auth_pass']

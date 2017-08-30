@@ -52,7 +52,7 @@ EXAMPLES = '''
         name: Testing
 
     - name: Get facts for all resource groups
-      azure_rm_securitygroup_facts:
+      azure_rm_resourcegroup_facts:
 
     - name: Get facts by tags
       azure_rm_resourcegroup_facts:

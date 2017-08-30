@@ -28,7 +28,7 @@ import yaml
 from ansible.cli import CLI
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.path import unfrackpath
@@ -90,7 +90,7 @@ class ConfigCLI(CLI):
             self.config = ConfigManager(self.config_file)
         else:
             self.config = ConfigManager()
-            self.config_file = self.config.data.get_setting('ANSIBLE_CONFIG')
+            self.config_file = to_bytes(self.config.data.get_setting('ANSIBLE_CONFIG'))
             try:
                 if not os.path.exists(self.config_file):
                     raise AnsibleOptionsError("%s does not exist or is not accessible" % (self.config_file))

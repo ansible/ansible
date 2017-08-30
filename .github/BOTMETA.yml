@@ -33,6 +33,9 @@
 
 automerge: False
 files:
+  .github/BOTMETA.yml:
+    labels:
+    - botmeta
   $modules/cloud/amazon/:
     notify:
     - willthames
@@ -806,10 +809,15 @@ files:
     - dynamic inventory script
     - dynamic inventory
     - inventory script
+    labels:
+    - "c:inventory/contrib_script"
+    support: community
   contrib/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
     maintainers: intheclouddan rwaweber zbal
+    labels:
+    - cloud
   contrib/inventory/openstack.py:
     keywords:
     - openstack dynamic inventory script
@@ -822,7 +830,31 @@ files:
     - azure inventory
     - azure rm inventory
     - azure azure_rm dynamic inventory script
+    labels:
+    - cloud
+    - azure
     maintainers: $team_azure
+  contrib/inventory/ec2:
+    keywords:
+    - aws dynamic inventory
+    - aws inventory
+    - ec2 inventory
+    - ec2 dynamic inventory
+    - ec2.py dynamic inventory script
+    - ec2.py inventory script
+    - ec2.py inventory
+    labels:
+    - cloud
+    - aws
+    notify: ryansb s-hertel willthames
+  contrib/inventory/vmware:
+    keywords:
+    - vmware inventory
+    - vmware dynamic inventory script
+    labels:
+    - cloud
+    - vmware
+    maintainers: $team_vmware
   lib/ansible/inventory:
     keywords:
     - core inventory
@@ -921,6 +953,10 @@ files:
   $module_utils/sros.py:
     maintainers: $team_networking
     labels: networking
+  $module_utils/vmware:
+    maintainers: $team_vmware
+    labels: vmware
+    support: community
   $module_utils/vyos:
     maintainers: $team_networking
     labels: networking
@@ -988,6 +1024,14 @@ files:
   lib/ansible/plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/inventory/openstack.py:
+    maintainers: $team_openstack
+    keywords:
+    - openstack
+    - inventory
+    labels:
+    - cloud
+    - openstack
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
@@ -1046,7 +1090,7 @@ macros:
   team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip
-  team_rabbitmq: chrishoffman manuel-sousa romanek-adam
+  team_rabbitmq: chrishoffman manuel-sousa romanek-adam hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
   team_vmware: dagwieers dav1x jctanner nerzhul akasurde

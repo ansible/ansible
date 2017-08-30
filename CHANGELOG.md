@@ -47,6 +47,8 @@ Ansible Changes By Release
 * Those using ansible as a library should note that the `ansible.vars.unsafe_proxy`
   module is deprecated and slated to go away in 2.8.  The functionality has been
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
+* The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
+  its content is now also available directly in the resulting output, like other modules.
 
 #### Deprecated Modules (to be removed in 2.8):
 * ec2_facts: replaced by ec2_metadata_facts
@@ -57,6 +59,7 @@ Ansible Changes By Release
 * panos_nat_policy: use M(panos_nat_rule) instead
 * s3: replaced by aws_s3
 * ec2_remote_facts: replaced by 
+* win_msi: use M(win_package) instead
 
 #### Removed Modules (previouslly deprecated):
 * eos_template: use eos_config instead
@@ -169,6 +172,8 @@ Ansible Changes By Release
   template hardcoded this to true.
 - Added a new parameter to command module that lets users specify data to pipe
   into the command's stdin.
+- The azure_rm modules now accept a `cloud_environment` arg to access regional and private clouds.
+- The azure_rm modules now require at least version 2.0.0 of the Azure Python SDK.
 
 ### New Modules
 
@@ -197,6 +202,21 @@ Ansible Changes By Release
   * iam_managed_policy
   * lightsail
   * redshift_facts
+- azure
+  * azure_rm_acs
+  * azure_rm_availabilityset
+  * azure_rm_availabilityset_facts
+  * azure_rm_dnsrecordset
+  * azure_rm_dnsrecordset_facts
+  * azure_rm_dnszone
+  * azure_rm_dnszone_facts
+  * azure_rm_loadbalancer
+  * azure_rm_loadbalancer_facts
+  * azure_rm_managed_disk
+  * azure_rm_managed_disk_facts
+  * azure_rm_virtualmachine_extension
+  * azure_rm_virtualmachine_scaleset
+  * azure_rm_virtualmachine_scaleset_facts
 - atomic
   * atomic_container
 - cloudstack
@@ -545,10 +565,13 @@ Ansible Changes By Release
   * win_group_membership
   * win_hotfix
   * win_mapped_drive
+  * win_pagefile
+  * win_power_plan
   * win_psmodule
   * win_rabbitmq_plugin
   * win_route
   * win_security_policy
+  * win_toast
   * win_user_right
   * win_wait_for
   * win_wakeonlan

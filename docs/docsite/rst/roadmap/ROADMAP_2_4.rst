@@ -7,6 +7,8 @@ Ansible by Red Hat, Core 2.4
 
 **Community Module Freeze: 29 August 2017**
 
+**Release Candidate 1 will be 06 September, 2017**
+
 **Target: Mid-September 2017**
 
 .. contents:: Topics
@@ -172,8 +174,8 @@ AWS
 
 Azure
 -----
-- Expose endpoint overrides **(in progress)**
-- Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks)
+- Expose endpoint overrides **(done)**
+- Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks) **(pushed to future)**
 - Add load balancer module **(in progress)**
 - Add Azure Functions module **(in progress)**
 

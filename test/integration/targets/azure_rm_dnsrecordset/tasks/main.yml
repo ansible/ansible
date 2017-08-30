@@ -1,0 +1,128 @@
+- name: Create random domain name
+  set_fact:
+    domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+
+- name: Create a DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+    state: present
+  register: results
+
+- name: Assert that DNS zone was created
+  assert:
+    that: results.changed
+
+- name: create new "A" record set with multiple records
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    record_set_state: present
+    record_state: present
+    records:
+      - 192.168.100.101
+      - 192.168.100.102
+      - 192.168.100.103
+  register: results
+
+- name: Assert that A record set was created
+  assert:
+    that: results.changed
+
+- name: Update "A" record set with additional record
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    record_set_state: present
+    record_state: present
+    records:
+      - 192.168.100.104
+  register: results
+
+- name: Assert that new record was appended
+  assert:
+    that: 
+      - results.changed
+      - results.record_set_state.full_list[3] == '192.168.100.104'
+
+- name: Check_mode test
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    record_set_state: present
+    record_state: present
+    records:
+      - 192.168.100.105
+  check_mode: yes
+  register: results
+
+- name: Assert that check_mode returns new state
+  assert:
+    that: 
+      - results.changed
+      - results.check_mode
+
+- name: Remove 1 record from record set
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    record_set_state: present
+    record_state: absent
+    records:
+      - 192.168.100.104
+  register: results
+
+- name: Assert that record was deleted
+  assert:
+    that: 
+      - results.changed
+
+- name: delete a record set
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    record_set_state: absent
+  register: results
+
+- name: Assert that record set deleted
+  assert:
+    that: results.changed
+
+- name: create SRV records in a new record set
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: "_sip._tcp.{{ domain_name }}.com"
+    zone_name: "{{ domain_name }}.com"
+    record_type: SRV
+    record_set_state: present
+    records: "sip.{{ domain_name }}.com"
+    preference: 10
+    record_state: present
+    time_to_live: 7200
+    priority: 20
+    weight: 10
+    port: 5060
+  register: results
+
+- name: Assert that SRV record set was created
+  assert:
+    that: 
+      - results.changed
+      - results.record_set_state.full_list[0] == 'sip.{{ domain_name }}.com'
+      - results.record_set_state.name == '_sip._tcp.{{ domain_name }}.com'
+
+- name: Delete DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+    state: absent

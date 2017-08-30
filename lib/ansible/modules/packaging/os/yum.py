@@ -274,7 +274,7 @@ from ansible.module_utils.urls import fetch_url
 # 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
 BUFSIZE = 65536
 
-def_qf = "%{name}-%{version}-%{release}.%{arch}"
+def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
 
 
@@ -335,12 +335,23 @@ def fetch_rpm_from_url(spec, module=None):
             module.fail_json(msg="Failure downloading %s, %s" % (spec, e))
     return package_file.name
 
-def po_to_nevra(po):
-
-    if hasattr(po, 'ui_nevra'):
-        return po.ui_nevra
+def po_to_envra(po):
+    if hasattr(po, 'ui_envra'):
+        return po.ui_envra
     else:
-        return '%s-%s-%s.%s' % (po.name, po.version, po.release, po.arch)
+        return '%s:%s-%s-%s.%s' % (po.epoch, po.name, po.version, po.release, po.arch)
+
+
+def is_group_installed(name):
+    my = yum_base()
+    groups_list = my.doGroupLists()
+    for group in groups_list[0]:  # list of the installed groups on the first index
+        name_lower = name.lower()
+        if name_lower.endswith(group.name.lower()) or name_lower.endswith(group.groupid.lower()):
+            return True
+
+    return False
+
 
 def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
     if en_repos is None:
@@ -365,7 +376,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
-        return [po_to_nevra(p) for p in pkgs]
+        return [po_to_envra(p) for p in pkgs]
 
     else:
         global rpmbin
@@ -426,7 +437,7 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
-        return [po_to_nevra(p) for p in pkgs]
+        return [po_to_envra(p) for p in pkgs]
 
     else:
         myrepoq = list(repoq)
@@ -478,7 +489,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
             if pkg in updates:
                 retpkgs.append(pkg)
 
-        return set([po_to_nevra(p) for p in retpkgs])
+        return set([po_to_envra(p) for p in retpkgs])
 
     else:
         myrepoq = list(repoq)
@@ -526,7 +537,7 @@ def what_provides(module, repoq, req_spec, conf_file, qf=def_qf, en_repos=None, 
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
-        return set([po_to_nevra(p) for p in pkgs])
+        return set([po_to_envra(p) for p in pkgs])
 
     else:
         myrepoq = list(repoq)
@@ -590,8 +601,8 @@ def transaction_exists(pkglist):
                     break
     return conflicts
 
-def local_nvra(module, path):
-    """return nvra of a local rpm passed in"""
+def local_envra(module, path):
+    """return envra of a local rpm passed in"""
 
     ts = rpm.TransactionSet()
     ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES)
@@ -601,10 +612,11 @@ def local_nvra(module, path):
     finally:
         os.close(fd)
 
-    return '%s-%s-%s.%s' % (header[rpm.RPMTAG_NAME],
-                            header[rpm.RPMTAG_VERSION],
-                            header[rpm.RPMTAG_RELEASE],
-                            header[rpm.RPMTAG_ARCH])
+    return '%s:%s-%s-%s.%s' % (header[rpm.RPMTAG_EPOCH],
+                               header[rpm.RPMTAG_NAME],
+                               header[rpm.RPMTAG_VERSION],
+                               header[rpm.RPMTAG_RELEASE],
+                               header[rpm.RPMTAG_ARCH])
 
 def pkg_to_dict(pkgstr):
 
@@ -620,7 +632,7 @@ def pkg_to_dict(pkgstr):
         'release':r,
         'version':v,
         'repo':repo,
-        'nevra': '%s:%s-%s-%s.%s' % (e, n, v, r, a)
+        'envra': '%s:%s-%s-%s.%s' % (e, n, v, r, a)
     }
 
     if repo == 'installed':
@@ -726,10 +738,10 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 res['rc'] = 127 # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
-            nvra = local_nvra(module, spec)
+            envra = local_envra(module, spec)
 
             # look for them in the rpmdb
-            if is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+            if is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                 # if they are there, skip it
                 continue
             pkg = spec
@@ -738,24 +750,15 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
         elif '://' in spec:
             # download package so that we can check if it's already installed
             package = fetch_rpm_from_url(spec, module=module)
-            nvra = local_nvra(module, package)
-            if is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+            envra = local_envra(module, package)
+            if is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                 # if it's there, skip it
                 continue
             pkg = package
 
         # groups
         elif spec.startswith('@'):
-            found = False
-            my = yum_base()
-            groups_list = my.doGroupLists()
-            for group in groups_list[0]:  # list of the installed groups on the first index
-                spec_lower = spec.lower()
-                if spec_lower.endswith(group.name.lower()) or spec_lower.endswith(group.groupid.lower()):
-                    found = True
-                    break
-
-            if found:
+            if is_group_installed(spec):
                 continue
 
             pkg = spec
@@ -860,23 +863,22 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     res['rc'] = 0
 
     for pkg in items:
-        is_group = False
-        # group remove - this is doom on a stick
         if pkg.startswith('@'):
-            is_group = True # nopep8 this will be fixed in next MR this module needs major rewrite anyway.
+            installed = is_group_installed(pkg)
         else:
-            if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                res['results'].append('%s is not installed' % pkg)
-                continue
+            installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
-        pkgs.append(pkg)
+        if installed:
+            pkgs.append(pkg)
+        else:
+            res['results'].append('%s is not installed' % pkg)
 
     if pkgs:
-        # run an actual yum transaction
-        cmd = yum_basecmd + ["remove"] + pkgs
-
         if module.check_mode:
             module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
+
+        # run an actual yum transaction
+        cmd = yum_basecmd + ["remove"] + pkgs
 
         rc, out, err = module.run_command(cmd)
 
@@ -884,23 +886,25 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         res['results'].append(out)
         res['msg'] = err
 
+        if rc != 0:
+            module.fail_json(**res)
+
         # compile the results into one batch. If anything is changed
         # then mark changed
         # at the end - if we've end up failed then fail out of the rest
         # of the process
 
-        # at this point we should check to see if the pkg is no longer present
-
+        # at this point we check to see if the pkg is no longer present
         for pkg in pkgs:
-            if not pkg.startswith('@'): # we can't sensibly check for a group being uninstalled reliably
-                # look to see if the pkg shows up from is_installed. If it doesn't
-                if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                    res['changed'] = True
-                else:
-                    module.fail_json(**res)
+            if pkg.startswith('@'):
+                installed = is_group_installed(pkg)
+            else:
+                installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
-        if rc != 0:
-            module.fail_json(**res)
+            if installed:
+                module.fail_json(**res)
+
+        res['changed'] = True
 
     return res
 
@@ -1004,11 +1008,11 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
                     res['rc'] = 127 # Ensure the task fails in with-loop
                     module.fail_json(**res)
 
-                # get the pkg name-v-r.arch
-                nvra = local_nvra(module, spec)
+                # get the pkg e:name-v-r.arch
+                envra = local_envra(module, spec)
 
                 # local rpm files can't be updated
-                if not is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     pkgs['install'].append(spec)
                 continue
 
@@ -1016,10 +1020,10 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
             elif '://' in spec:
                 # download package so that we can check if it's already installed
                 package = fetch_rpm_from_url(spec, module=module)
-                nvra = local_nvra(module, package)
+                envra = local_envra(module, package)
 
                 # local rpm files can't be updated
-                if not is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     pkgs['install'].append(package)
                 continue
 

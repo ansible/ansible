@@ -29,6 +29,9 @@ class TestNxosIPInterfaceModule(TestNxosModule):
     module = nxos_pim_interface
 
     def setUp(self):
+        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_pim_interface.get_config')
+        self.get_config = self.mock_get_config.start()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_pim_interface.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -36,6 +39,7 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
 
@@ -53,15 +57,17 @@ class TestNxosIPInterfaceModule(TestNxosModule):
                 output.append(load_fixture(module_name, filename))
             return output
 
+        self.get_config.return_value = load_fixture(module_name, 'config.cfg')
         self.load_config.return_value = None
         self.run_commands.side_effect = load_from_file
 
     def test_nxos_pim_interface_present(self):
-        set_module_args(dict(interface='eth2/1', dr_prio=10, hello_interval=40))
+        set_module_args(dict(interface='eth2/1', dr_prio=10, hello_interval=40, sparse=True, border=True))
         self.execute_module(
             changed=True,
-            commands=['interface eth2/1', 'ip pim dr-priority 10',
-                      'ip pim hello-interval 40000', 'ip pim sparse-mode']
+            commands=[
+                'interface eth2/1', 'ip pim dr-priority 10', 'ip pim hello-interval 40000',
+                'ip pim sparse-mode', 'ip pim border']
         )
 
     def test_nxos_pim_interface_jp(self):
@@ -79,8 +85,7 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         set_module_args(dict(interface='eth2/1', state='default'))
         self.execute_module(
             changed=True,
-            commands=['interface eth2/1', 'ip pim dr-priority 1',
-                      'no ip pim border', 'ip pim hello-interval 30000']
+            commands=['interface eth2/1', 'ip pim dr-priority 1', 'ip pim hello-interval 30000', 'no ip pim border']
         )
 
     def test_nxos_pim_interface_ip_absent(self):
