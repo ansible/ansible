@@ -4,11 +4,11 @@
 
 from __future__ import (absolute_import, division, print_function)
 import subprocess
-from urlparse import urlparse
+#from urlparse import urlparse
 from ansible.module_utils.basic import AnsibleModule
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +37,6 @@ options:
   remote:
     description:
       - The flatpak I(remote) repo to be used in the flatpak operation.
-    default: 'None'
   state:
     description:
       - Set to C(present) will install the flatpak and/or I(remote).
@@ -135,8 +134,8 @@ def parse_remote(remote):
 
 def parse_flat(name):
     if 'http://' in name or 'https://' in name:
-        #app = name.split('/')[-1].split('.')[0]
-        common_name = urlparse(name).path.split('/')[-1].split('.')[0]
+        common_name = name.split('/')[-1].split('.')[0]
+        # common_name = urlparse(name).path.split('/')[-1].split('.')[0]
     else:
         common_name = name
 
@@ -196,8 +195,7 @@ def is_present_flat(binary, name):
 
 
 def flatpak_command(command):
-    process = subprocess.Popen(
-        command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = process.communicate()[0]
 
     return output
@@ -207,12 +205,11 @@ def main():
     # This module supports check mode
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True, type='str'),
-            remote=dict(required=False, type='str'),
-            state=dict(
-                required=False, type='str', default="present", choices=['present', 'absent'])
+            name=dict(type='str', required=True),
+            remote=dict(type='str'),
+            state=dict(type='str', default="present", choices=['absent', 'present'])
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
     name = module.params['name']
     remote = module.params['remote']
@@ -220,37 +217,32 @@ def main():
     module_changed = False
     location = module.get_bin_path('flatpak')
     if location is None:
-        module.fail_json(
-            msg="cannot find 'flatpak' binary. Aborting.")
+        module.fail_json(msg="cannot find 'flatpak' binary. Aborting.")
 
     if state == 'present':
         if remote is not None and not is_present_remote(location, remote):
             code, output = add_remote(location, remote, module)
             if code == 1:
-                module.fail_json(
-                    msg="error while adding remote: {}".format(remote), reason=output)
+                module.fail_json(msg="error while adding remote: {}".format(remote), reason=output)
             else:
                 module_changed = True
         if name is not None and not is_present_flat(location, name):
             code, output = install_flat(location, name, module)
             if code == 1:
-                module.fail_json(
-                    msg="error while installing flatpak {}".format(name), reason=output)
+                module.fail_json(msg="error while installing flatpak {}".format(name), reason=output)
             else:
                 module_changed = True
     else:
         if remote is not None and is_present_remote(location, remote):
             code, output = remove_remote(location, remote, module)
             if code == 1:
-                module.fail_json(
-                    msg="error while adding remote: {}".format(remote), reason=output)
+                module.fail_json(msg="error while adding remote: {}".format(remote), reason=output)
             else:
                 module_changed = True
         if name is not None and is_present_flat(location, name):
             code, output = uninstall_flat(location, name, module)
             if code == 1:
-                module.fail_json(
-                    msg="error while uninstalling flatpak:{}".format(name), reason=output)
+                module.fail_json(msg="error while uninstalling flatpak:{}".format(name), reason=output)
             else:
                 module_changed = True
 
