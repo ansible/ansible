@@ -27,9 +27,6 @@
   failed_when: False
   register: rpm_result
 
-- debug: var=dnf_result
-- debug: var=rpm_result
-
 - name: verify uninstallation of sos
   assert:
     that:
@@ -59,9 +56,6 @@
   shell: rpm -q sos
   failed_when: False
   register: rpm_result
-
-- debug: var=dnf_result
-- debug: var=rpm_result
 
 - name: verify installation of sos
   assert:
@@ -221,9 +215,6 @@
   failed_when: False
   register: rpm_result
 
-- debug: var=dnf_result
-- debug: var=rpm_result
-
 - name: verify installation of sos in /
   assert:
     that:
@@ -249,8 +240,6 @@
     name: "@Books and Guides"
     state: present
   register: dnf_result
-
-- debug: var=dnf_result
 
 - name: verify installation of the group
   assert:
@@ -329,8 +318,6 @@
     name: "@Books and Guides"
     state: latest
   register: dnf_result
-
-- debug: var=dnf_result
 
 - name: verify installation of the group
   assert:
