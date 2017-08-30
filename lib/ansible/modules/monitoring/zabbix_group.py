@@ -102,7 +102,7 @@ EXAMPLES = '''
 '''
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     from zabbix_api import Already_Exists
 
     HAS_ZABBIX_API = True

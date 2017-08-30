@@ -92,7 +92,7 @@ EXAMPLES = '''
 '''
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
 
     # Extend the ZabbixAPI
     # Since the zabbix-api python module too old (version 1.0, no higher version so far).
