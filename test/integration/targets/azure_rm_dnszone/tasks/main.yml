@@ -1,7 +1,11 @@
+- name: Create random domain name
+  set_fact:
+    domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+
 - name: Create a DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
-    name: testing.com
+    name: "{{ domain_name }}.com"
     state: present
   register: results
 
@@ -11,7 +15,7 @@
 - name: Update DNS zone with tags
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
-    name: testing.com
+    name: "{{ domain_name }}.com"
     state: present
     tags:
       test: modified
@@ -25,7 +29,7 @@
 - name: Test check_mode
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
-    name: testing.com
+    name: "{{ domain_name }}.com"
     state: present
     tags:
       test: new_modified
@@ -41,5 +45,5 @@
 - name: Delete DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
-    name: testing.com
+    name: "{{ domain_name }}.com"
     state: absent
