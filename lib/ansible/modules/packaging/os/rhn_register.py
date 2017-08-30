@@ -81,7 +81,7 @@ options:
             - If true, extended update support will be requested.
         required: false
         default: false
-	    nopackages:
+    nopackages:
         description:
             - If true, the registered node will not upload its installed packages information to Satellite server
         requires: false
