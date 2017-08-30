@@ -170,7 +170,9 @@ $result = @{
                                 existing_volumes=@{}
                                 existing_partitions=@{}
                                 }
-    change_log = @{}
+    change_log = @{
+                                convert_options=@{}
+                                }
     general_log = @{}
     parameters = @{}
     switches = @{}
@@ -196,38 +198,55 @@ $LargeFRS = Get-AnsibleParam -obj $params -name "large_frs" -default $false -typ
 $ShortNames = Get-AnsibleParam -obj $params -name "short_names" -default $false -type "bool"
 $IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -default $false -type "bool"
 
-# Convert variable for disk size
+# Convert option variable
 if(($Size.GetType()).Name -eq 'String'){
         try{
             [int32]$Size = [convert]::ToInt32($Size, 10)
         }
         catch{
-            $result.general_log.convert_variable = "failed"
-            Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
-        }        
+            $result.general_log.convert_validate_options = "failed"
+            Fail-Json -obj $result -message "Failed to convert option variable from string to int: $($_.Exception.Message)"
+        }
+        $result.change_log.convert_options.size = "Converted option variable from string to int"     
 }
+else{
+    $result.change_log.convert_options.size = "No convertion of option variable needed"
+}
+
 if(($AllocUnitSize.GetType()).Name -eq 'String'){
         try{
             [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
         }
         catch{
-            $result.general_log.convert_variable = "failed"
-            Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
-        }        
+            $result.general_log.convert_validate_options = "failed"
+            Fail-Json -obj $result -message "Failed to convert option variable from string to int: $($_.Exception.Message)"
+        }
+        $result.change_log.convert_options.allocation_unit_size = "Converted option variable from string to int"   
 }
+else{
+    $result.change_log.convert_options.allocation_unit_size = "No convertion of option variable needed"
+}
+
 if($Number -ne $null){
     if(($Number.GetType()).Name -eq 'String'){
             try{
                 [int32]$Number = [convert]::ToInt32($Number, 10)
             }
             catch{
-                $result.general_log.convert_variable = "failed"
-                Fail-Json -obj $result -message "Failed to convert variable: $($_.Exception.Message)"
-            }        
+                $result.general_log.convert_validate_options = "failed"
+                Fail-Json -obj $result -message "Failed to convert option variable from string to int: $($_.Exception.Message)"
+            }
+            $result.change_log.convert_options.number = "Converted option variable from string to int"     
+    }
+    else{
+        $result.change_log.convert_options.number = "No convertion of option variable needed"
     }
 }
+else{
+    $result.change_log.convert_options.number = "No number option used, no convertion needed"
+}
 
-$result.general_log.convert_variable = "successful"
+$result.general_log.convert_validate_options = "successful"
 
 # Rescan disks
 try{
