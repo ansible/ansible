@@ -36,6 +36,7 @@ $packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
 $allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
 $ignorechecksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
 $ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
+$allowmultipleversions = Get-AnsibleParam -obj $params -name "allow_multiple_version" -type "bool" -default $false
 $skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
@@ -301,6 +302,8 @@ Function Choco-Install
         [Parameter(Mandatory=$false, Position=11)]
         [int]$timeout,
         [Parameter(Mandatory=$false, Position=12)]
+        [bool]$allowmultipleversions,
+        [Parameter(Mandatory=$false, Position=13)]
         [bool]$skipscripts
     )
 
@@ -368,6 +371,11 @@ Function Choco-Install
         $cmd += " -ignoredependencies"
     }
 
+    if ($allowmultipleversions)
+    {
+        $cmd += " -m"
+    }
+
     if ($skipscripts)
     {
         $cmd += " --skip-scripts"
@@ -400,6 +408,8 @@ Function Choco-Uninstall
         [Parameter(Mandatory=$false, Position=4)]
         [int]$timeout,
         [Parameter(Mandatory=$false, Position=5)]
+        [bool]$allowmultipleversions,
+        [Parameter(Mandatory=$false, Position=6)]
         [bool]$skipscripts
 
     )
@@ -429,6 +439,11 @@ Function Choco-Uninstall
     if ($packageparams)
     {
         $cmd += " -params '$packageparams'"
+    }
+
+    if ($allowmultipleversions)
+    {
+        $cmd += " -m"
     }
 
     if ($skipscripts)
@@ -501,12 +516,13 @@ Try
         Choco-Install -package $package -version $version -source $source -force $force `
             -installargs $installargs -packageparams $packageparams `
             -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-            -ignoredependencies $ignoredependencies -timeout $timeout -skipscripts $skipscripts
+            -ignoredependencies $ignoredependencies -timeout $timeout `
+            -allowmultipleversions $allowmultipleversions -skipscripts $skipscripts
     }
     elseif ($state -eq "absent")
     {
         Choco-Uninstall -package $package -version $version -force $force -timeout $timeout `
-            -skipscripts $skipscripts
+            -allowmultipleversions $allowmultipleversions -skipscripts $skipscripts
     }
     elseif ($state -eq "reinstalled")
     {
