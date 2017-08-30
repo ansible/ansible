@@ -142,11 +142,8 @@ EXAMPLES = '''
 '''
 
 try:
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
+    from libcloud.common.google import QuotaExceededError, \
             ResourceExistsError, ResourceNotFoundError, ResourceInUseError
-    _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False

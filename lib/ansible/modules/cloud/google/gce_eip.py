@@ -88,13 +88,9 @@ except ImportError:
     HAS_PYTHON26 = False
 
 try:
-    import libcloud
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-        ResourceExistsError, ResourceInUseError, ResourceNotFoundError
-    from libcloud.compute.drivers.gce import GCEAddress
-    _ = Provider.GCE
+    from libcloud.common.google import ResourceNotFoundError
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
