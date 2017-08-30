@@ -1725,7 +1725,10 @@ def main():
 
 # include magic from lib/ansible/module_common.py
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.f5_utils import *
+from ansible.module_utils.f5_utils import (
+    bigip_api,
+    f5_argument_spec,
+)
 
 if __name__ == '__main__':
     main()

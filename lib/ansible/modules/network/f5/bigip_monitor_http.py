@@ -442,7 +442,12 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.f5_utils import *
+from ansible.module_utils.f5_utils import (
+    bigip_api,
+    bigsuds,
+    f5_argument_spec,
+    fq_name,
+)
 
 if __name__ == '__main__':
     main()
