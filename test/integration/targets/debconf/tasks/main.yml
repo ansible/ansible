@@ -21,16 +21,101 @@
 ##
 
 - block:
+    - set_fact:
+        key_name: ansible-debconf-test
+        key_value: test_value
+
+    # CLEAN ENVIRONMENT
+    - name: clean_env
+      debconf:
+        name: "{{ key_name }}"
+        question: test_key
+        value: "{{ key_value }}foo"
+        vtype: string
+
+    # ADD STRING
+    - name: Add string (check_mode)
+      debconf: &debconf_add
+        name: "{{ key_name }}"
+        question: test_key
+        value: "{{ key_value }}"
+        vtype: string
+      check_mode: yes
+      register: cm_add_str
+
+    - name: Add string (normal mode)
+      debconf: *debconf_add
+      register: nm_add_str
+
+    - name: Add string again (normal mode)
+      debconf: *debconf_add
+      register: nm_add_str_again
+
+    - name: Add string again (check_mode)
+      debconf: *debconf_add
+      check_mode: yes
+      register: cm_add_str_again
+
+    - name: Verify add str
+      assert:
+        that:
+          - cm_add_str.changed == nm_add_str.changed == true
+          - cm_add_str_again.changed == nm_add_str_again.changed == false
+
+    # CHANGE STRING
+    - name: Change string (check_mode)
+      debconf:
+        <<: *debconf_add
+        value: foobar
+      check_mode: yes
+      register: cm_change_str
+
+    - name: Add string (normal mode)
+      debconf:
+        <<: *debconf_add
+        value: foobar
+      register: nm_change_str
+
+    - name: Add string again (normal mode)
+      debconf:
+        <<: *debconf_add
+        value: foobar
+      register: nm_change_str_again
+
+    - name: Add string again (check_mode)
+      debconf:
+        <<: *debconf_add
+        value: foobar
+      check_mode: yes
+      register: cm_change_str_again
+
+    - name: Verify add str
+      assert:
+        that:
+          - cm_change_str.changed == nm_change_str.changed == true
+          - cm_change_str_again.changed == nm_change_str_again.changed == false
+
+
+
+
+
     - name: query the tzdata package
       debconf:
           name: tzdata
       register: debconf_test0
 
-    - name: validate results for test 0
+    - name: validate results query
       assert:
           that:
-              - 'debconf_test0.changed is defined'
+              - 'debconf_test0.changed == false'
               - 'debconf_test0.current is defined'
               - '"tzdata/Zones/Etc" in debconf_test0.current'
               - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
+
+    # 
+    # delete temp
   when: ansible_distribution in ('Ubuntu', 'Debian')
+
+
+# Presentation notes
+# Code Coverage
