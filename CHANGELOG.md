@@ -203,10 +203,13 @@ Ansible Changes By Release
   * lightsail
   * redshift_facts
 - azure
+  * azure_rm_acs
   * azure_rm_availabilityset
   * azure_rm_availabilityset_facts
   * azure_rm_dnsrecordset
+  * azure_rm_dnsrecordset_facts
   * azure_rm_dnszone
+  * azure_rm_dnszone_facts
   * azure_rm_loadbalancer
   * azure_rm_loadbalancer_facts
   * azure_rm_managed_disk
