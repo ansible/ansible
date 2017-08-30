@@ -187,7 +187,6 @@ cloudstack_instance.volumes:
   sample: '[ { name: "ROOT-1369", type: "ROOT", size: 10737418240 }, { name: "data01, type: "DATADISK", size: 10737418240 } ]'
 '''
 
-import base64
 
 # import cloudstack common
 from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec
