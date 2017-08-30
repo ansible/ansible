@@ -237,7 +237,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 self.log('Fetching traffic manager {0}'.format(self.name))
                 # dry-run.
                 if self.check_mode:
-                    # if we current_traffic_manager is empty it means we will
+                    # if the current_traffic_manager is empty it means we will
                     # create a new profile. Return a profile object to the user
                     if not bool(current_traffic_manager):
                         self.results['state'] = results
@@ -254,7 +254,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                     if not bool(current_traffic_manager):
                         # profile doesn't exist. We will created it.
                         # Traffic Manager uses DNS, we need to check if the 
-                        # Traffic Manager name is available
+                        # name used in the DNS prefix is available
                         try:
                             self.trafficmanager_client.profiles.check_traffic_manager_relative_dns_name_availability(self.name)
         
