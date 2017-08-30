@@ -44,19 +44,19 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get facts for one zone
-      azure_rm_dnszone_facts:
-        resource_group: Testing
-        name: foobar22
+- name: Get facts for one zone
+  azure_rm_dnszone_facts:
+    resource_group: Testing
+    name: foobar22
 
-    - name: Get facts for all zones in a resource group
-      azure_rm_dnszone_facts:
-        resource_group: Testing
+- name: Get facts for all zones in a resource group
+  azure_rm_dnszone_facts:
+    resource_group: Testing
 
-    - name: Get facts by tags
-      azure_rm_dnszone_facts:
-        tags:
-          - testing
+- name: Get facts by tags
+  azure_rm_dnszone_facts:
+    tags:
+      - testing
 '''
 
 RETURN = '''
