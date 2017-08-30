@@ -5,6 +5,10 @@
 # Copyright: (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -83,49 +87,47 @@ remote:
   sample: https://sdk.gnome.org/gnome-apps.flatpakrepo
 '''
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
+from ansible.module_utils.basic import AnsibleModule
 import subprocess
 #from urlparse import urlparse
 
-from ansible.module_utils.basic import AnsibleModule
+
+def install_flat(module, binary, flat):
+    installed = is_present_flat(module, binary, flat)
+    # Check if any changes would be made but don't actually make
+    # those changes
+    if installed:
+        module.exit_json(changed=False)
+    else:
+        if module.check_mode:
+            module.exit_json(changed=True)
+
+        command = "{} install -y --from {}".format(binary, flat)
+    
+        output = flatpak_command(module, command)
+        return 0, output
 
 
-def install_flat(binary, flat, module):
-    if module.check_mode:
-        # Check if any changes would be made but don't actually make
-        # those changes
-        module.exit_json(changed=True)
-
-    command = "{} install -y --from {}".format(binary, flat)
-
-    output = flatpak_command(command)
-    if 'error' in output and 'already installed' not in output:
-        return 1, output
-
-    return 0, output
-
-
-def uninstall_flat(binary, flat, module):
+def uninstall_flat(module, binary, flat):
     # This is a difficult function because it seems there
     # is no naming convention for the flatpakref to what
     # the installed flatpak will be named.
+    installed = is_present_flat(module, binary, flat)
+    # Check if any changes would be made but don't actually make
+    # those changes
+    if not installed:
+        module.exit_json(changed=False)
+    else:
+        if module.check_mode:
+            module.exit_json(changed=True)
+
     command = "{} list --app".format(binary)
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    process.wait()
-    if module.check_mode:
-        # Check if any changes would be made but don't actually make
-        # those changes
-        module.exit_json(changed=True)
-    for row in process.communicate()[0].split('\n'):
+    result = module.run_command(command.split())
+    for row in result[1].split('\n'):
         if parse_flat(flat) in row:
             installed_flat_name = row.split(' ')[0]
     command = "{} uninstall {}".format(binary, installed_flat_name)
-    output = flatpak_command(command)
-    if 'error' in output and 'not installed' not in output:
-        return 1, output
-
+    output = flatpak_command(module, command)
     return 0, output
 
 
@@ -139,20 +141,18 @@ def parse_flat(name):
     return common_name
 
 
-def is_present_flat(binary, name):
+def is_present_flat(module, binary, name):
     command = "{} list --app".format(binary)
     flat = parse_flat(name).lower()
-    output = flatpak_command(command)
+    output = flatpak_command(module, command)
     if flat in output.lower():
         return True
     return False
 
 
-# FIXME: This needs to use module.run_command()
-def flatpak_command(command):
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output = process.communicate()[0]
-    return output
+def flatpak_command(module, command):
+    result = module.run_command(command.split())
+    return result[1]
 
 
 def main():
@@ -181,9 +181,10 @@ def main():
         module.warn("Executable '%s' is not found on the system." % executable)
 
     if state == 'present':
-        install_flatpak(module, binary, name)
+        result=install_flat(module, binary, name)
     elif state == 'absent':
-        uninstall_flat(module, binary, name)
+        result=uninstall_flat(module, binary, name)
+    module.exit_json(changed=True, msg=result[1])
 
 
 if __name__ == '__main__':
