@@ -67,7 +67,6 @@ import fnmatch
 
 try:
     import shade
-    from shade import meta
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False

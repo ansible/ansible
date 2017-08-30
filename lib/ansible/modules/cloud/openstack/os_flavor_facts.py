@@ -179,8 +179,6 @@ openstack_flavors:
             sample: true
 '''
 
-import re
-
 try:
     import shade
     HAS_SHADE = True

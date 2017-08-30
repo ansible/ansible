@@ -159,7 +159,6 @@ stack:
                         'updated_time': null}"
 '''
 
-from time import sleep
 from distutils.version import StrictVersion
 try:
     import shade

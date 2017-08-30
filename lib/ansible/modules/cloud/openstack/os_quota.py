@@ -286,8 +286,6 @@ openstack_quotas:
 
 '''
 
-import sys
-
 try:
     import shade
     from keystoneauth1 import exceptions
