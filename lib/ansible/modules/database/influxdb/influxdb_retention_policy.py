@@ -67,11 +67,13 @@ options:
         description:
             - Use https instead of http to connect to InfluxDB, defaults to False
         required: false
+        default: false
         version_added: 2.4
     validate_certs:
         description:
             - verify SSL certificates for HTTPS requests, defaults to True
         required: false
+        default: true
         version_added: 2.4
 '''
 
@@ -165,7 +167,7 @@ def connect_to_influxdb(module):
         password=password,
         database=database_name,
         ssl=ssl,
-        validate_certs=validate_certs
+        verify_ssl=validate_certs
     )
     return client
 
