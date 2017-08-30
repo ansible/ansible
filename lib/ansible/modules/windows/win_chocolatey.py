@@ -111,15 +111,19 @@ options:
     version_added: '2.4'
   proxy_url:
     description:
-      - Proxy url used to install chocolatey and the package
+      - Proxy url used to install chocolatey and the package.
     version_added: '2.4'
   proxy_username:
     description:
-      - Proxy username used to install chocolatey and the package
+      - Proxy username used to install chocolatey and the package.
+      - When dealing with a username with double quote characters C("), they
+        need to be escaped with C(\) beforehand. See examples for more details.
     version_added: '2.4'
   proxy_password:
     description:
-      - Proxy password used to install chocolatey and the package
+      - Proxy password used to install chocolatey and the package.
+      - See notes in C(proxy_username) when dealing with double quotes in a
+        password.
     version_added: '2.4'
 notes:
 - Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
@@ -191,4 +195,46 @@ EXAMPLES = r'''
     proxy_url: http://proxy-server:8080/
     proxy_username: joe
     proxy_password: p@ssw0rd
+
+- name: Install curl with proxy credentials that contain quotes
+  win_chocolatey:
+    name: curl
+    proxy_url: http://proxy-server:8080/
+    proxy_username: user with \"escaped\" double quotes
+    proxy_password: pass with \"escaped\" double quotes
+'''
+
+RETURN = r'''
+choco_bootstrap_output:
+  description: DEPRECATED, will be removed in 2.6, use stdout instead.
+  returned: changed, choco task returned a failure
+  type: str
+  sample: Chocolatey upgraded 1/1 packages.
+choco_error_cmd:
+  description: DEPRECATED, will be removed in 2.6, use command instead.
+  returned: changed, choco task returned a failure
+  type: str
+  sample: choco.exe install -r --no-progress -y sysinternals --timeout 2700 --failonunfound
+choco_error_log:
+  description: DEPRECATED, will be removed in 2.6, use stdout instead.
+  returned: changed, choco task returned a failure
+  type: str
+  sample: sysinternals not installed. The package was not found with the source(s) listed
+command:
+  description: The full command used in the chocolatey task.
+  returned: changed
+  type: str
+  sample: choco.exe install -r --no-progress -y sysinternals --timeout 2700 --failonunfound
+rc:
+  description: The return code from the chocolatey task.
+  returned: changed
+  type: int
+  sample: 0
+stdout:
+  description: The stdout from the chocolatey task. The verbosity level of the
+    messages are affected by Ansible verbosity setting, see notes for more
+    details.
+  returned: changed
+  type: str
+  sample: Chocolatey upgraded 1/1 packages.
 '''
