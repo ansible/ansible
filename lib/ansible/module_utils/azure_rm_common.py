@@ -105,6 +105,7 @@ try:
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
+    from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -184,6 +185,7 @@ class AzureRMModuleBase(object):
         self._resource_client = None
         self._compute_client = None
         self._dns_client = None
+        self._containerservice_client = None
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
         # self.debug = self.module.params.get('debug')
@@ -724,3 +726,14 @@ class AzureRMModuleBase(object):
             )
             self._register('Microsoft.Dns')
         return self._dns_client
+
+    @property
+    def containerservice_client(self):
+        self.log('Getting container service client')
+        if not self._containerservice_client:
+            self._containerservice_client = ContainerServiceClient(
+                self.azure_credentials,
+                self.subscription_id
+            )
+            self._register('Microsoft.ContainerService')
+        return self._containerservice_client
