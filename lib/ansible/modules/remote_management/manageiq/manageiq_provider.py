@@ -55,112 +55,109 @@ options:
       default:
         required: true
         description: Default endpoint connection information.
-        suboptions:
-          hostname:
-            description: The provider's api hostname.
-            required: true
-          port:
-            description: The provider's api port.
-            required: false
-          userid:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication userid. defaults to None.
-          password:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication password. defaults to None.
-          auth_key:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication bearer token. defaults to None.
-          verify_ssl:
-            required: false
-            default: true
-            description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-          security_protocol:
-            required: false
-            default: None
-            choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
-            description: How SSL certificates should be used for HTTPS requests. defaults to None.
-          certificate_authority:
-            required: false
-            default: null
-            description: The CA bundle string with custom certificates. defaults to None.
+      default['hostname']:
+        description: The provider's api hostname.
+        required: true
+      default['port']:
+        description: The provider's api port.
+        required: false
+      default['userid']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication userid. defaults to None.
+      default['password']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication password. defaults to None.
+      default['auth_key']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication bearer token. defaults to None.
+      default['verify_ssl']:
+        required: false
+        default: true
+        description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+      default['security_protocol']:
+        required: false
+        default: None
+        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+        description: How SSL certificates should be used for HTTPS requests. defaults to None.
+      default['certificate_authority']:
+        required: false
+        default: null
+        description: The CA bundle string with custom certificates. defaults to None.
 
       metrics:
         required: false
         default: null
         description: Metrics endpoint connection information.
-        suboptions:
-          hostname:
-            description: The provider's api hostname.
-            required: true
-          port:
-            description: The provider's api port.
-            required: false
-          userid:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication userid. defaults to None.
-          password:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication password. defaults to None.
-          auth_key:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication bearer token. defaults to None.
-          verify_ssl:
-            required: false
-            default: true
-            description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-          security_protocol:
-            required: false
-            default: None
-            choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
-            description: How SSL certificates should be used for HTTPS requests. defaults to None.
-          certificate_authority:
-            required: false
-            default: null
-            description: The CA bundle string with custom certificates. defaults to None.
+      metrics['hostname']:
+        description: The provider's api hostname.
+        required: true
+      metrics['port']:
+        description: The provider's api port.
+        required: false
+      metrics['userid']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication userid. defaults to None.
+      metrics['password']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication password. defaults to None.
+      metrics['auth_key']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication bearer token. defaults to None.
+      metrics['verify_ssl']:
+        required: false
+        default: true
+        description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+      metrics['security_protocol']:
+        required: false
+        default: None
+        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+        description: How SSL certificates should be used for HTTPS requests. defaults to None.
+      metrics['certificate_authority']:
+        required: false
+        default: null
+        description: The CA bundle string with custom certificates. defaults to None.
 
       alerts:
         required: False
         default: null
         description: Alerts endpoint connection information.
-        suboptions:
-          hostname:
-            description: The provider's api hostname.
-            required: true
-          port:
-            description: The provider's api port.
-            required: false
-          userid:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication userid. defaults to None.
-          password:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication password. defaults to None.
-          auth_key:
-            required: false
-            default: null
-            description: Provider's api endpoint authentication bearer token. defaults to None.
-          verify_ssl:
-            required: false
-            default: true
-            description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-          security_protocol:
-            required: false
-            default: None
-            choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
-            description: How SSL certificates should be used for HTTPS requests. defaults to None.
-          certificate_authority:
-            required: false
-            default: null
-            description: The CA bundle string with custom certificates. defaults to None.
+      alerts['hostname']:
+        description: The provider's api hostname.
+        required: true
+      alerts['port']:
+        description: The provider's api port.
+        required: false
+      alerts['userid']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication userid. defaults to None.
+      alerts['password']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication password. defaults to None.
+      alerts['auth_key']:
+        required: false
+        default: null
+        description: Provider's api endpoint authentication bearer token. defaults to None.
+      alerts['verify_ssl']:
+        required: false
+        default: true
+        description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+      alerts['security_protocol']:
+        required: false
+        default: None
+        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+        description: How SSL certificates should be used for HTTPS requests. defaults to None.
+      alerts['certificate_authority']:
+        required: false
+        default: null
+        description: The CA bundle string with custom certificates. defaults to None.
 '''
 
 EXAMPLES = '''
