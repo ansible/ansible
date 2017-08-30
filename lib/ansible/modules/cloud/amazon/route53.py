@@ -300,7 +300,6 @@ import distutils.version
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
     from boto.route53.status import Status

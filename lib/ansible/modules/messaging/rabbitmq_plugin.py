@@ -69,9 +69,6 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 
-from ansible.module_utils.basic import AnsibleModule
-
-
 class RabbitMqPlugins(object):
 
     def __init__(self, module):

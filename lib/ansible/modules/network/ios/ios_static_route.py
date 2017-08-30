@@ -100,8 +100,11 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ios import load_config, run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.ios import (
+    check_args,
+    ios_argument_spec,
+    load_config,
+)
 from ipaddress import ip_network
 import re
 

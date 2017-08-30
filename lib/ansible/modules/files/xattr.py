@@ -78,7 +78,6 @@ EXAMPLES = '''
     state: absent
 '''
 
-import operator
 import re
 import os
 

@@ -304,7 +304,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         try:
             response = self.compute_client.availability_sets.get(self.resource_group, self.name)
             found = True
-        except CloudError as e:
+        except CloudError:
             self.log('Did not find the Availability set.')
         if found is True:
             return availability_set_to_dict(response)

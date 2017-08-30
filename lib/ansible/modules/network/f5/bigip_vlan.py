@@ -444,9 +444,12 @@ def main():
     except F5ModuleError as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
+from ansible.module_utils.f5_utils import (
+    F5ModuleError,
+    f5_argument_spec,
+)
 
 if __name__ == '__main__':
     main()

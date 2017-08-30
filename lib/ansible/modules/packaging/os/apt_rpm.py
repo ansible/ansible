@@ -69,14 +69,7 @@ EXAMPLES = '''
 '''
 
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-import shlex
 import os
-import sys
 
 APT_PATH="/usr/bin/apt-get"
 RPM_PATH="/usr/bin/rpm"
@@ -174,7 +167,7 @@ def main():
         remove_packages(module, packages)
 
 # this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

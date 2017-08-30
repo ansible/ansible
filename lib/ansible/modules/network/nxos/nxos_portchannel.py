@@ -95,7 +95,6 @@ commands:
              "interface Ethernet2/5", "channel-group 12 mode on"]
 '''
 
-import collections
 import re
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands

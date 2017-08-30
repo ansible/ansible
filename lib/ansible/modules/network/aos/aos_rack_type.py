@@ -125,7 +125,6 @@ value:
   sample: {'...'}
 '''
 
-import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict

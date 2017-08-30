@@ -342,20 +342,17 @@ vpc_id:
     sample: vpc-0011223344
 '''
 import time
-import collections
 from copy import deepcopy
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, get_ec2_security_group_ids_from_names, \
     ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
 
 try:
-    import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 
 def convert_tg_name_to_arn(connection, module, tg_name):

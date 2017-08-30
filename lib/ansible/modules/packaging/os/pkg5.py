@@ -63,6 +63,9 @@ EXAMPLES = '''
 '''
 
 
+import re
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -174,7 +177,7 @@ def is_latest(module, package):
     return bool(int(rc))
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

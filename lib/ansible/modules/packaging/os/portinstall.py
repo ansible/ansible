@@ -60,9 +60,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-import os
 import re
-import sys
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import shlex_quote
@@ -75,7 +73,6 @@ def query_package(module, name):
     # Assume that if we have pkg_info, we haven't upgraded to pkgng
     if pkg_info_path:
         pkgng = False
-        pkg_glob_path = module.get_bin_path('pkg_glob', True)
         rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, shlex_quote(name)), use_unsafe_shell=True)
     else:
         pkgng = True

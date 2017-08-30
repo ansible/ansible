@@ -832,8 +832,16 @@ def main():
 
     module.exit_json(**result)
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5_utils import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.f5_utils import (
+    F5ModuleError,
+    bigip_api,
+    bigsuds,
+    bigsuds_found,
+    f5_argument_spec,
+    fq_list_names,
+    fq_name,
+)
 
 if __name__ == '__main__':
     main()

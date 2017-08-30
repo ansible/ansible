@@ -109,7 +109,6 @@ import traceback
 try:
     from pymongo.errors import ConnectionFailure
     from pymongo.errors import OperationFailure
-    from pymongo import version as PyMongoVersion
     from pymongo import MongoClient
 except ImportError:
     try:  # for older PyMongo 2.2

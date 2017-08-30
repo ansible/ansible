@@ -199,17 +199,13 @@ tags:
 
 '''
 
-import sys
 from time import sleep
 from time import time as timestamp
-from collections import defaultdict
 
 try:
     from botocore.exceptions import ClientError
-    import boto3
-    HAS_BOTO3 = True
-except ImportError as e:
-    HAS_BOTO3 = False
+except ImportError:
+    pass
 
 
 class EFSConnection(object):
@@ -626,8 +622,14 @@ def main():
         result = camel_dict_to_snake_dict(result)
     module.exit_json(changed=changed, efs=result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    camel_dict_to_snake_dict,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 
 if __name__ == '__main__':
     main()

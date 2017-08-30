@@ -389,7 +389,13 @@ project:
 '''
 
 # import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    CS_HYPERVISORS,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackTemplate(AnsibleCloudStack):
@@ -680,6 +686,7 @@ def main():
     module.exit_json(**result)
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == '__main__':
     main()

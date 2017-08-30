@@ -259,7 +259,7 @@ def main():
         region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
         kms = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         iam = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError as e:
+    except botocore.exceptions.NoCredentialsError:
         module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
 
 

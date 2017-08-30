@@ -167,7 +167,7 @@ project:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import AnsibleCloudStack, CloudStackException, cs_argument_spec, cs_required_together
 
 
 class AnsibleCloudStackNic(AnsibleCloudStack):

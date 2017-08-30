@@ -230,8 +230,8 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 if __name__ == '__main__':
     main()

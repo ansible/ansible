@@ -134,13 +134,9 @@ changed:
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-
-
-import re
-import re
 
 
 def execute_show_command(command, module, command_type='cli_show'):

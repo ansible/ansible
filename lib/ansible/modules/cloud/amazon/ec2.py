@@ -623,7 +623,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
 from distutils.version import LooseVersion
-from ansible.module_utils.six import string_types
 
 try:
     import boto.ec2

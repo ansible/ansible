@@ -149,7 +149,7 @@ EXAMPLES = '''
 
 try:
     import boto.ec2.cloudwatch
-    from boto.ec2.cloudwatch import CloudWatchConnection, MetricAlarm
+    from boto.ec2.cloudwatch import MetricAlarm
     from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
@@ -320,8 +320,14 @@ def main():
         delete_metric_alarm(connection, module)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    AnsibleAWSError,
+    connect_to_aws,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
+
 
 if __name__ == '__main__':
     main()

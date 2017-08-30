@@ -107,13 +107,6 @@ import pipes
 import subprocess
 import traceback
 
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import mysql_quote_identifier
 from ansible.module_utils.mysql import mysql_connect, mysqldb_found

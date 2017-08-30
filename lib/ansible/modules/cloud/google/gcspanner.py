@@ -122,7 +122,6 @@ except ImportError:
 
 try:
     from google.cloud import spanner
-    from google.gax.errors import GaxError
     HAS_GOOGLE_CLOUD_SPANNER = True
 except ImportError as e:
     HAS_GOOGLE_CLOUD_SPANNER = False

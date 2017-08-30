@@ -237,15 +237,17 @@ import traceback
 from hashlib import sha1
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 import ansible.module_utils.ec2
 # import a class, otherwise we'll use a fully qualified path
-from ansible.module_utils.ec2 import AWSRetry, boto_exception
+from ansible.module_utils.ec2 import (
+    AWSRetry,
+    HAS_BOTO3,
+    boto_exception,
+)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 

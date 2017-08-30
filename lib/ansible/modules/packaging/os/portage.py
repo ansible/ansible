@@ -222,7 +222,6 @@ EXAMPLES = '''
 
 
 import os
-import pipes
 import re
 
 
@@ -509,7 +508,7 @@ def main():
         unmerge_packages(module, packages)
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

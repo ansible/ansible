@@ -294,8 +294,15 @@ def main():
         module.exit_json(changed=changed, vpc=get_vpc_values(vpc_obj))
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    AnsibleAWSError,
+    boto_exception,
+    connect_to_aws,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
+
 
 if __name__ == '__main__':
     main()

@@ -106,11 +106,12 @@ change_string:
   type: string
 """
 
-from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
-from ansible.module_utils.fortios import backup, AnsibleFortios
-
+from ansible.module_utils.fortios import (
+    AnsibleFortios,
+    fortios_argument_spec,
+    fortios_required_if,
+)
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 
 # check for netaddr lib

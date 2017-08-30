@@ -90,9 +90,7 @@ EXAMPLES = '''
 '''
 
 
-import shlex
 import os
-import sys
 
 URPMI_PATH = '/usr/sbin/urpmi'
 URPME_PATH = '/usr/sbin/urpme'
@@ -219,7 +217,7 @@ def main():
         remove_packages(module, packages, root)
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

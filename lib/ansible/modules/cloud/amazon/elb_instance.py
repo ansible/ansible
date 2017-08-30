@@ -100,7 +100,6 @@ try:
     import boto.ec2
     import boto.ec2.autoscale
     import boto.ec2.elb
-    from boto.regioninfo import RegionInfo
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False

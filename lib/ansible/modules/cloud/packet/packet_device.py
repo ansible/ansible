@@ -268,8 +268,6 @@ try:
 except ImportError:
     HAS_PACKET_SDK = False
 
-from ansible.module_utils.basic import AnsibleModule
-
 
 NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]', '[a-zA-Z0-9\-]')
 HOSTNAME_RE = '({0}\.)*{0}$'.format(NAME_RE)

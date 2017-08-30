@@ -435,8 +435,8 @@ def main():
     module.exit_json(**result)
 
 # import module snippets
-from ansible.module_utils.basic import *  # noqa
-from ansible.module_utils.ec2 import *  # noqa
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, ec2_connect
 
 if __name__ == '__main__':
     main()

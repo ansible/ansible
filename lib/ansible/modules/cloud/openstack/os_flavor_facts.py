@@ -179,8 +179,6 @@ openstack_flavors:
             sample: true
 '''
 
-import re
-
 try:
     import shade
     HAS_SHADE = True
@@ -246,8 +244,8 @@ def main():
         module.fail_json(msg=str(e))
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 if __name__ == '__main__':
     main()

@@ -134,13 +134,16 @@ task:
 
 try:
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 
 
 # Common fields for the default rule that is contained within every VPC NACL.

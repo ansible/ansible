@@ -66,8 +66,6 @@ EXAMPLES = '''
     state: latest
 '''
 
-import os
-import pipes
 
 def package_installed(module, name):
     cmd = ['pkginfo']
@@ -219,7 +217,7 @@ def main():
     module.exit_json(**result)
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

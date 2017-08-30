@@ -127,9 +127,8 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
 
 import re
 
@@ -424,6 +423,6 @@ def main():
     module.exit_json(**results)
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

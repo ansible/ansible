@@ -170,7 +170,6 @@ template:
     type: dict
 '''
 
-import time
 import traceback
 
 try:

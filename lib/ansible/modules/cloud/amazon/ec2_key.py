@@ -111,15 +111,10 @@ EXAMPLES = '''
     state: absent
 '''
 
-try:
-    import boto.ec2
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
 from ansible.module_utils._text import to_bytes
 import random
 import string
+import time
 
 
 def main():
@@ -261,8 +256,13 @@ def main():
         module.exit_json(changed=changed, key=None)
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    HAS_BOTO,
+    ec2_argument_spec,
+    ec2_connect,
+)
+
 
 if __name__ == '__main__':
     main()

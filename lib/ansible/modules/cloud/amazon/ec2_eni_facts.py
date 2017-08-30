@@ -60,17 +60,22 @@ except ImportError:
     HAS_BOTO = False
 
 try:
-    import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError,
-        ansible_dict_to_boto3_filter_list, boto3_conn,
-        boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-        connect_to_aws, ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import (
+    AnsibleAWSError,
+    HAS_BOTO3,
+    ansible_dict_to_boto3_filter_list,
+    boto3_conn,
+    boto3_tag_list_to_ansible_dict,
+    camel_dict_to_snake_dict,
+    connect_to_aws,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 
 
 def list_ec2_eni_boto3(connection, module):

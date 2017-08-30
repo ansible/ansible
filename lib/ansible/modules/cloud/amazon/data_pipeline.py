@@ -161,14 +161,18 @@ import time
 import traceback
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    camel_dict_to_snake_dict,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 from ansible.module_utils._text import to_text
 
 
@@ -214,7 +218,7 @@ def pipeline_description(client, dp_id):
     """
     try:
         return client.describe_pipelines(pipelineIds=[dp_id])
-    except ClientError as e:
+    except ClientError:
         raise DataPipelineNotFound
 
 
@@ -504,7 +508,7 @@ def define_pipeline(client, module, objects, dp_id):
                                            parameterValues=values)
             msg = 'Data Pipeline {0} has been updated.'.format(dp_name)
             changed = True
-        except ClientError as e:
+        except ClientError:
             module.fail_json(msg="Failed to put the definition for pipeline {0}. Check that string/reference fields"
                              "are not empty and that the number of objects in the pipeline does not exceed maximum allowed"
                              "objects".format(dp_name), exception=traceback.format_exc())
@@ -543,7 +547,7 @@ def create_pipeline(client, module):
                                         tags=tags)
             dp_id = dp['pipelineId']
             pipeline_exists_timeout(client, dp_id, timeout)
-        except ClientError as e:
+        except ClientError:
             module.fail_json(msg="Failed to create the data pipeline {0}.".format(dp_name), exception=traceback.format_exc())
         except TimeOutException:
             module.fail_json(msg=('Data Pipeline {0} failed to create'

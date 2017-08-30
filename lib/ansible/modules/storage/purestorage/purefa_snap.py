@@ -92,15 +92,9 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pure import get_system, purefa_argument_spec
+from ansible.module_utils.pure import HAS_PURESTORAGE, get_system, purefa_argument_spec
 
 from datetime import datetime
-
-try:
-    from purestorage import purestorage
-    HAS_PURESTORAGE = True
-except ImportError:
-    HAS_PURESTORAGE = False
 
 
 def get_volume(module, array):

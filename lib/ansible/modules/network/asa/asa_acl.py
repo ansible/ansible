@@ -133,8 +133,11 @@ updates:
   sample: ['access-list ACL-OUTSIDE extended permit tcp any any eq www']
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import get_config, load_config, run_commands
+from ansible.module_utils.asa import (
+    asa_argument_spec,
+    get_config,
+    load_config,
+)
 
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 

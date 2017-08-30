@@ -142,15 +142,20 @@ import traceback
 from functools import partial
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec, boto3_conn,
-                                      camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict)
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    get_aws_connection_info,
+    ec2_argument_spec,
+    boto3_conn,
+    camel_dict_to_snake_dict,
+    AWSRetry,
+    boto3_tag_list_to_ansible_dict,
+)
 
 
 class CloudFormationServiceManager:

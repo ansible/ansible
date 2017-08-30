@@ -132,7 +132,6 @@ zone_id:
 try:
     import boto
     from boto.route53 import Route53Connection
-    from boto.route53.zone import Zone
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False

@@ -370,24 +370,12 @@ deployment:
 import time
 
 try:
-    from azure.common.credentials import ServicePrincipalCredentials
-    import time
-    import yaml
-except ImportError as exc:
-    IMPORT_ERROR = "Error importing module prerequisites: %s" % exc
-
-try:
-    from itertools import chain
     from azure.common.exceptions import CloudError
     from azure.mgmt.resource.resources.models import (DeploymentProperties,
                                                       ParametersLink,
                                                       TemplateLink,
-                                                      Deployment,
                                                       ResourceGroup,
                                                       Dependency)
-    from azure.mgmt.resource.resources import ResourceManagementClient
-    from azure.mgmt.network import NetworkManagementClient
-
 except ImportError:
     # This is handled in azure_rm_common
     pass

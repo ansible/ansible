@@ -119,8 +119,7 @@ changed:
 '''
 
 
-import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig

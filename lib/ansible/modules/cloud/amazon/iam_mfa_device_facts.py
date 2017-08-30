@@ -63,15 +63,18 @@ register: assumed_role
 '''
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec,
-                                      get_aws_connection_info)
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    camel_dict_to_snake_dict,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 
 
 def list_mfa_devices(connection, module):

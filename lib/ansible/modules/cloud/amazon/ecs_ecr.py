@@ -126,19 +126,22 @@ repository:
 '''
 
 import json
-import time
-import inspect
+import traceback
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3,
+    boto3_conn,
+    boto_exception,
+    ec2_argument_spec,
+    get_aws_connection_info,
+    sort_json_policy_dict,
+)
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
 
 def build_kwargs(registry_id):

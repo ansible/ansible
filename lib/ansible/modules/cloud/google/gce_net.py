@@ -262,11 +262,7 @@ target_tags:
     sample: [ 'foo', 'bar' ]
 '''
 try:
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError
-    _ = Provider.GCE
+    from libcloud.common.google import ResourceNotFoundError
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
