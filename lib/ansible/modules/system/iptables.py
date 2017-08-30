@@ -365,7 +365,10 @@ def append_param(rule, param, flag, is_list):
             append_param(rule, item, flag, False)
     else:
         if param is not None:
-            rule.extend([flag, param])
+            if param[0] == '!':
+                rule.extend(['!', flag, param[1:]])
+            else:
+                rule.extend([flag, param])
 
 def append_tcp_flags(rule, param, flag):
     if param:
