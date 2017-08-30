@@ -744,7 +744,7 @@ class AzureRMModuleBase(object):
             )
             self._register('Microsoft.Web')
         return self._web_client
-      
+
     @property
     def containerservice_client(self):
         self.log('Getting container service client')
