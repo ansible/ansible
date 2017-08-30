@@ -627,8 +627,13 @@ def main():
         delete_volume(module, ec2)
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    AnsibleAWSError,
+    connect_to_aws,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 
 if __name__ == '__main__':
     main()

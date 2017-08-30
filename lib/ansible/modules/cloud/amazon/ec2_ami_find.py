@@ -452,8 +452,12 @@ def main():
     module.exit_json(results=results)
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    HAS_BOTO,
+    ec2_argument_spec,
+    ec2_connect,
+)
 
 if __name__ == '__main__':
     main()
