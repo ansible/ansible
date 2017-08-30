@@ -254,13 +254,13 @@ class Interfaces(FactsBase):
             if "ManagementEthernet" in key:
                 temp_parsed = interfaces[key]
                 del interfaces[key]
-                interfaces.update(self.parse_mgmt_interfaces(temp_parsed))
+                interfaces.update(self.parse_mgmt_interfaces(temp_parsed, key))
 
         for key in interfaces.keys():
             if "Vlan" in key:
                 temp_parsed = interfaces[key]
                 del interfaces[key]
-                interfaces.update(self.parse_vlan_interfaces(temp_parsed))
+                interfaces.update(self.parse_vlan_interfaces(temp_parsed, key))
 
         self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
@@ -367,7 +367,7 @@ class Interfaces(FactsBase):
                     parsed[key] += '\n%s' % line
         return parsed
 
-    def parse_mgmt_interfaces(self, data):
+    def parse_mgmt_interfaces(self, data, key):
         parsed = dict()
         interface_start = True
         for line in data.split('\n'):
@@ -384,7 +384,7 @@ class Interfaces(FactsBase):
                 parsed[key] += '\n%s' % line
         return parsed
 
-    def parse_vlan_interfaces(self, data):
+    def parse_vlan_interfaces(self, data, key):
         parsed = dict()
         interface_start = True
         line_before_end = False
