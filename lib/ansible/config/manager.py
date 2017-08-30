@@ -118,6 +118,29 @@ def get_ini_config_value(p, entry):
             pass
     return value
 
+def find_ini_config_file():
+    ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
+    # FIXME: eventually deprecate ini configs
+
+    path0 = os.getenv("ANSIBLE_CONFIG", None)
+    if path0 is not None:
+        path0 = unfrackpath(path0, follow=False)
+        if os.path.isdir(path0):
+            path0 += "/ansible.cfg"
+    try:
+        path1 = os.getcwd() + "/ansible.cfg"
+    except OSError:
+        path1 = None
+    path2 = unfrackpath("~/.ansible.cfg", follow=False)
+    path3 = "/etc/ansible/ansible.cfg"
+
+    for path in [path0, path1, path2, path3]:
+        if path is not None and os.path.exists(path):
+            break
+    else:
+        path = None
+
+    return path
 
 class ConfigManager(object):
 
@@ -145,7 +168,7 @@ class ConfigManager(object):
 
         if self._config_file is None:
             # set config using ini
-            self._config_file = self._find_ini_config_file()
+            self._config_file = find_ini_config_file()
 
         if self._config_file:
             if os.path.exists(self._config_file):
@@ -182,29 +205,6 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
-    def _find_ini_config_file(self):
-        ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
-        # FIXME: eventually deprecate ini configs
-
-        path0 = os.getenv("ANSIBLE_CONFIG", None)
-        if path0 is not None:
-            path0 = unfrackpath(path0, follow=False)
-            if os.path.isdir(path0):
-                path0 += "/ansible.cfg"
-        try:
-            path1 = os.getcwd() + "/ansible.cfg"
-        except OSError:
-            path1 = None
-        path2 = unfrackpath("~/.ansible.cfg", follow=False)
-        path3 = "/etc/ansible/ansible.cfg"
-
-        for path in [path0, path1, path2, path3]:
-            if path is not None and os.path.exists(path):
-                break
-        else:
-            path = None
-
-        return path
 
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
