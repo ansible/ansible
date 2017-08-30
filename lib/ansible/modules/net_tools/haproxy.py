@@ -255,7 +255,7 @@ class HAProxy(object):
         if self.socket.startswith('tcp:'):
             match = re.search('^tcp://(.+):(\d+)$', self.socket)
             if not match:
-                raise Exception('Invalid TCP address: %s' % self.socket)
+                self.module.fail_json(msg="Invalid TCP address: '%s'" % self.socket)
             address = (match.group(1), int(match.group(2)))
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(address)
