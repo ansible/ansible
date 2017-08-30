@@ -215,7 +215,7 @@ def get_host_diff(client, ipa_host, module_host):
 
 
 def ensure(module, client):
-    name = module.params['name']
+    name = module.params['fqdn']
     state = module.params['state']
 
     ipa_host = client.host_find(name=name)

@@ -230,7 +230,7 @@ def get_role_diff(client, ipa_role, module_role):
 
 def ensure(module, client):
     state = module.params['state']
-    name = module.params['name']
+    name = module.params['cn']
     group = module.params['group']
     host = module.params['host']
     hostgroup = module.params['hostgroup']

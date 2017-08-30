@@ -143,7 +143,7 @@ def get_sudocmdgroup_diff(client, ipa_sudocmdgroup, module_sudocmdgroup):
 
 
 def ensure(module, client):
-    name = module.params['name']
+    name = module.params['cn']
     state = module.params['state']
     sudocmd = module.params['sudocmd']
 
