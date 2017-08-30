@@ -216,6 +216,7 @@ class PathMapper(object):
         :type path: str
         :rtype: dict[str, str] | None
         """
+        dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
@@ -398,29 +399,30 @@ class PathMapper(object):
             }
 
         if path.startswith('test/integration/'):
-            if self.prefixes.get(name) == 'network' and ext == '.yaml':
-                return minimal  # network integration test playbooks are not used by ansible-test
+            if dirname == 'test/integration':
+                if self.prefixes.get(name) == 'network' and ext == '.yaml':
+                    return minimal  # network integration test playbooks are not used by ansible-test
 
-            if filename == 'platform_agnostic.yaml':
-                return minimal  # network integration test playbook not used by ansible-test
+                if filename == 'platform_agnostic.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
 
-            for command in (
-                    'integration',
-                    'windows-integration',
-                    'network-integration',
-            ):
-                if name == command:
-                    return {
-                        command: self.integration_all_target,
-                    }
+                for command in (
+                        'integration',
+                        'windows-integration',
+                        'network-integration',
+                ):
+                    if name == command and ext == '.cfg':
+                        return {
+                            command: self.integration_all_target,
+                        }
 
-            if name.startswith('cloud-config-'):
-                cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
+                if name.startswith('cloud-config-'):
+                    cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
 
-                if cloud_target in self.integration_targets_by_alias:
-                    return {
-                        'integration': cloud_target,
-                    }
+                    if cloud_target in self.integration_targets_by_alias:
+                        return {
+                            'integration': cloud_target,
+                        }
 
             return {
                 'integration': self.integration_all_target,
