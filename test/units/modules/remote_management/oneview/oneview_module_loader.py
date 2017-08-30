@@ -23,3 +23,4 @@ from ansible.modules.remote_management.oneview.oneview_fcoe_network import FcoeN
 from ansible.modules.remote_management.oneview.oneview_fcoe_network_facts import FcoeNetworkFactsModule
 from ansible.modules.remote_management.oneview.oneview_network_set import NetworkSetModule
 from ansible.modules.remote_management.oneview.oneview_network_set_facts import NetworkSetFactsModule
+from ansible.modules.remote_management.oneview.oneview_san_manager import SanManagerModule
