@@ -52,17 +52,17 @@ The ultimate goal of any pull request is to reach **shipit** status, where the C
 Workflow
 --------
 
-Ansibullbot runs continuously. You can generally expect to see changes to your issue or pull request within thirty minutes. It examines every open pull request in the repositories, and enforces state roughly according to the following workflow:
+Ansibullbot runs continuously. You can generally expect to see changes to your issue or pull request within thirty minutes. Ansibullbot examines every open pull request in the repositories, and enforces state roughly according to the following workflow:
 
 -  If a pull request has no workflow labels, it’s considered **new**. Files in the pull request are identified, and the maintainers of those files are pinged by the bot, along with instructions on how to review the pull request. (Note: sometimes we strip labels from a pull request to “reboot” this process.)
 -  If the module maintainer is not ``$team_ansible``, the pull request then goes into the **community_review** state.
 -  If the module maintainer is ``$team_ansible``, the pull request then goes into the **core_review** state (and probably sits for a while).
 -  If the pull request is in **community_review** and has received comments from the maintainer:
 
-   -  If the maintainer says ``shipit`` (or ``:shipit:`` if you like squirrels), the pull request is labeled **shipit**, whereupon the Core team assesses it for final merge.
+   -  If the maintainer says ``shipit``, the pull request is labeled **shipit**, whereupon the Core team assesses it for final merge.
    -  If the maintainer says ``needs_info``, the pull request is labeled **needs_info** and the submitter is asked for more info.
    -  If the maintainer says **needs_revision**, the pull request is labeled **needs_revision** and the submitter is asked to fix some things.
-   -  If the pull request is labeled **needs_revision** or **needs_info** and has received comments from the submitter
+   -  If the pull request is labeled **needs_revision** or **needs_info** and has received comments from the submitter...TODO: what happens here?
 
 -  If the submitter says ``ready_for_review``, the pull request is put back into **community_review** or **core_review** and the maintainer is notified that the pull request is ready to be reviewed again.
 -  If the pull request is labeled **needs_revision** or **needs_info** and the submitter has not responded lately:
