@@ -210,6 +210,8 @@ Ansible Changes By Release
   * azure_rm_dnsrecordset_facts
   * azure_rm_dnszone
   * azure_rm_dnszone_facts
+  * azure_rm_functionapp
+  * azure_rm_functionapp_facts
   * azure_rm_loadbalancer
   * azure_rm_loadbalancer_facts
   * azure_rm_managed_disk
