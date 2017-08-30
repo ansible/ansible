@@ -160,22 +160,14 @@ msg:
   sample: "Config file tranferred to Device"
 '''
 
-import sys
 import paramiko
 import time
-import argparse
-import socket
-import array
-import json
-import time
-import re
 try:
     from ansible.module_utils import cnos
     HAS_LIB = True
 except:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
 
 
 def main():
