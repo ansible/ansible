@@ -208,12 +208,14 @@ class DockerNetworkManager(object):
             self.absent()
 
     def get_existing_network(self):
-        networks = self.client.networks()
-        network = None
-        for n in networks:
-            if n['Name'] == self.parameters.network_name:
-                network = n
-        return network
+        networks = self.client.networks(names=[self.parameters.network_name])
+        # check if a user is trying to find network by its Id
+        if not networks:
+            networks = self.client.networks(ids=[self.parameters.network_name])
+        if not networks:
+            return None
+        else:
+            return networks[0]
 
     def has_different_config(self, net):
         '''
