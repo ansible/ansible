@@ -26,13 +26,10 @@ options:
     name:
       description:
         - Ethernet Network name.
-      required: false
     options:
       description:
         - "List with options to gather additional facts about an Ethernet Network and related resources.
           Options allowed: C(associatedProfiles) and C(associatedUplinkGroups)."
-      required: false
-
 extends_documentation_fragment:
     - oneview
     - oneview.factsparams
@@ -101,9 +98,9 @@ from ansible.module_utils.oneview import OneViewModuleBase
 
 class EthernetNetworkFactsModule(OneViewModuleBase):
     argument_spec = dict(
-        name=dict(required=False, type='str'),
-        options=dict(required=False, type='list'),
-        params=dict(required=False, type='dict')
+        name=dict(type='str'),
+        options=dict(type='list'),
+        params=dict(type='dict')
     )
 
     def __init__(self):
