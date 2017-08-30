@@ -33,13 +33,13 @@ options:
         required: true
     profile_status:
         description:
-            - The status of the Traffic Manager profile. 
+            - The status of the Traffic Manager profile.
             choices:
                 - Enabled
                 - Disabled
     traffic_routing_method:
         description:
-            - The traffic routing method of the Traffic Manager profile. Possible 
+            - The traffic routing method of the Traffic Manager profile. Possible
             values include: 'Performance', 'Priority', 'Weighted', 'Geographic'.
     dns_config:
         description:
@@ -49,53 +49,53 @@ options:
         suboptions:
             ttl:
                 description:
-                    - The DNS Time-To-Live (TTL), in seconds. This informs the 
-                    local DNS resolvers and DNS clients how long to cache DNS 
+                    - The DNS Time-To-Live (TTL), in seconds. This informs the
+                    local DNS resolvers and DNS clients how long to cache DNS
                     responses provided by this Traffic Manager profile.
     monitor_config:
         description:
             - The endpoint monitoring settings of the Traffic Manager profile.
         required: true
-	suboptions:
-            status:
-                description:
-                    - The profile-level monitoring status of the Traffic Manager profile. 
-                    choices:
-                        - CheckingEndpoints
-                        - Online
-                        - Degraded
-                        - Disabled
-                        - Inactive
-            protocol:
-                description:
-                    - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health. 
-                    choices:
-                        - HTTP
-                        - HTTPS
-                        - TCP
-            port:
-                description:
-                    - The TCP port used to probe for endpoint health.
-            path:
-                description:
-                    - The path relative to the endpoint domain name used to probe for 
-                    endpoint health.
-            interval_in_seconds:
-                description:
-                    - The monitor interval for endpoints in this profile. This is the interval 
-                    at which Traffic Manager will check the health of each endpoint in this profile.
-            timeout_in_seconds:
-                description:
-                    - The monitor timeout for endpoints in this profile. This is the time that 
-                    Traffic Manager allows endpoints in this profile to response to the health check.
-            tolerated_number_of_failures:
-                description:
-                    - The number of consecutive failed health check that Traffic Manager tolerates 
-                    before declaring an endpoint in this profile Degraded after the next failed health check.
+    suboptions:
+        status:
+            description:
+                - The profile-level monitoring status of the Traffic Manager profile.
+                choices:
+                    - CheckingEndpoints
+                    - Online
+                    - Degraded
+                    - Disabled
+                    - Inactive
+        protocol:
+            description:
+                - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
+                choices:
+                    - HTTP
+                    - HTTPS
+                    - TCP
+        port:
+            description:
+                - The TCP port used to probe for endpoint health.
+        path:
+            description:
+                - The path relative to the endpoint domain name used to probe for
+                endpoint health.
+        interval_in_seconds:
+            description:
+                - The monitor interval for endpoints in this profile. This is the interval
+                at which Traffic Manager will check the health of each endpoint in this profile.
+        timeout_in_seconds:
+            description:
+                - The monitor timeout for endpoints in this profile. This is the time that
+                Traffic Manager allows endpoints in this profile to response to the health check.
+        tolerated_number_of_failures:
+            description:
+                - The number of consecutive failed health check that Traffic Manager tolerates
+                before declaring an endpoint in this profile Degraded after the next failed health check.
     state:
         description:
             - Assert the state of the resource group. Use 'present' to create or update and
-              'absent' to delete. When 'absent' a resource group containing resources 
+              'absent' to delete. When 'absent' a resource group containing resources
               will not be removed unless the force option is used.
         default: present
         choices:
@@ -134,7 +134,7 @@ EXAMPLES = '''
           location: "global"
           tags:
             project: "My Project"
-  
+
     - name: Delete a Traffic Manager Profile
       azure_rm_trafficmanagerprofile:
         name: "contoso.com"
@@ -181,6 +181,7 @@ def trafficmanagerprofile_group_to_dict(tm):
         tags=tm.tags
         )
 
+
 class AzureRMTrafficManager(AzureRMModuleBase):
     # Main Traffic Manager class
 
@@ -205,8 +206,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         self.results = dict(
             changed=False,
             contains_endpoints=False,
-            state=dict(),
-            )
+            state=dict()
+            )                  
 
         super(AzureRMTrafficManager, self).__init__(self.module_arg_spec,
                                                     supports_check_mode=True)
@@ -275,7 +276,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                                 pass
 
                         except CloudError as cloud_error:
-                            self.fail('Error checking the traffic manager DNS: {0}. {1}'\
+                            self.fail('Error checking the traffic manager DNS: {0}. {1}'
                                 .format(self.name, str(cloud_error)))
 
                         traffic_manager = self.create_or_update_traffic_manager_profile(
@@ -283,7 +284,8 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                             self.name,
                             self.location,
                             self.properties
-                            )
+                                                                                        )
+
                     results = self.traffic_manager_to_dict(
                         traffic_manager,
                         self.resource_group,
@@ -300,14 +302,14 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                     self.results['state'] = dict(
                         resouce_group=self.resource_group,
                         name=self.name
-                        )
+                                                )
                     return self.results
                 if bool(current_traffic_manager):
                     # Deletes the traffic manager and set change variable
                     self.remove_traffic_manager_profile(
                         self.resource_group,
                         self.name
-                        )
+                                                        )
                     changed = True
         except CloudError:
             if self.state == 'present':
@@ -342,7 +344,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
         if azure_profile.get('profile_status') != properties.get('profile_status'):
             result['profile_status'] = properties.get('profile_status')
 
-        if azure_profile.get('dns_config', {}).get('ttl') != \
+        if azure_profile.get('dns_config', {}).get('ttl') != 
             properties.get('dns_config', {}).get('ttl'):
             result['dns_config']['ttl'] = properties.get('dns_config', {}).get('ttl')
 
@@ -354,9 +356,9 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             'status',
             'timeout_in_seconds',
             'tolerated_number_of_failures'
-            ]
+                              ]
         for item in monitor_config_list:
-            if azure_profile.get('monitor_config', {}).get(item) != \
+            if azure_profile.get('monitor_config', {}).get(item) != 
                 properties.get('monitor_config', {}).get(item):
                 if bool(properties.get('monitor_config', {}).get(item)):
                     result['monitor_config'][item] = properties.get('monitor_config', {}).get(item)
@@ -385,7 +387,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                     dns_config=dns_config,
                     monitor_config=monitor_config,
                     tags=tags
-                    )
+                                 )
 
             return dict(
                 # id=traffic_manager.profile.id,
@@ -393,7 +395,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 resource_group=resource_group,
                 location=location,
                 properties=properties
-                )
+                       )
                 # provisioning_state=traffic_manager.properties.provisioning_state
 
         elif traffic_manager:  # Create a dictionary from the Azure traffic manager
@@ -405,7 +407,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
                 properties=properties
                 # properties=traffic_manager.properties
                 # provisioning_state=traffic_manager.properties.provisioning_state
-                )
+                       )
 
 
     def get_traffic_manager_profile(self, resource_group, name):
@@ -424,7 +426,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             return None  # if there is no profile returns None
         except CloudError as cloud_error:
             self.fail(
-                "Error getting traffic manager profile with nanme: {0}. {1}" \
+                "Error getting traffic manager profile with nanme: {0}. {1}"
                     .format(name, cloud_error))
         except Exception as exc:
             self.fail("Error retrieving traffic manager {0} - {1}".format(name, str(exc)))
@@ -446,7 +448,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             return False
         except CloudError as cloud_error:
             self.fail(
-                "Error getting traffic manager profile with nanme: {0}. {1}" \
+                "Error getting traffic manager profile with nanme: {0}. {1}"
                  .format(name, cloud_error))
         except Exception as exc:
             self.fail(
@@ -500,10 +502,10 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             dns_config,
             monitor_config,
             endpoints_config
-            )
+                         )
 
         try:
-            return self.trafficmanager_client \
+            return self.trafficmanager_client
                         .profiles.create_or_update(resource_group, name, profile)
         except CloudError as cloud_error:
             self.fail("Error creating or updating traffic manager profile with name {0}. {1}"
