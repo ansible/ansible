@@ -187,8 +187,8 @@ general_log:
     returned: always
     type: complex
     contains:
-        convert_variable:
-            description: Documents whether converting the variables from string to integer was successful or not
+        convert_validate_options:
+            description: Documents whether validating and converting the variables from string to integer was successful or not
             returned: always
             type: int
             sample: "successful"
@@ -339,24 +339,49 @@ change_log:
     returned: always
     type: complex
     contains:
+        convert_options:
+            description:
+              - Detailed information about converting variables of options from string into integer
+              - This change log does not changes anything on the target client only in module and script environment
+              - Convertion will be only take place if one oft the integer options is of type string
+              - The convert of the option variables will also help to identify wrong option values
+              - For instance non numeric string was used for the size option the convertion does fail and end the module
+            returned: always
+            type: complex
+            contains:
+                size:
+                    description: Information whether the size option value was converted or not
+                    returned: always
+                    type: string
+                    sample: "Converted option variable from string to int"
+                allocation_unit_size:
+                    description: Information whether the allocation_unit_size option value was converted or not
+                    returned: success or failed
+                    type: string
+                    sample: "Converted option variable from string to int"
+                number:
+                    description: Information whether the number option value was converted or not
+                    returned: success or failed
+                    type: string
+                    sample: "No convertion of option variable needed"
         operational_status_disk:
             description: Detailed information about setting operational status of the disk
-            returned: success or failed (only displayed if operational status was set)
+            returned: success or failed
             type: string
             sample: "No changes because partition style is RAW and disk will be set to online in intialization part"
         read_only_disk:
             description: Detailed information if disk was set from read-only to writeable and if not why it was not set to it
-            returned: success or failed (only displayed if read-only status was set)
+            returned: success or failed
             type: string
             sample: "Disk set from read-only to writeable state"
         initialize_disk:
             description: Detailed information about initializing the disk
-            returned: success or failed (only displayed if disk was initialized)
+            returned: success or failed
             type: string
             sample: "Disk initialization successful - Partition style raw (partition_style_select) was initalized to gpt (partition_style_set)"
         convert_disk:
             description: Detailed information about converting the partition style of the disk (in case of converting no initalization of disk)
-            returned: success or failed (only displayed if partition style was converted)
+            returned: success or failed
             type: string
             sample: "Partition style gpt (partition_style_select) could not be converted to mbr (partition_style_set)"
         partitioning:
