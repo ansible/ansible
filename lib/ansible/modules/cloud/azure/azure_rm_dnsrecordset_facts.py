@@ -49,21 +49,21 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get facts for one Record Set
-      azure_rm_dnsrecordset_facts:
-        resource_group: Testing
-        zone_name: example.com
-        relative_name: server10
-        record_type: A
-    - name: Get facts for all Type A Record Sets in a Zone
-      azure_rm_dnsrecordset_facts:
-        resource_group: Testing
-        zone_name: example.com
-        record_type: A
-    - name: Get all record sets in one zone
-       azure_rm_dnsrecordset_facts:
-        resource_group: Testing
-        zone_name: example.com
+- name: Get facts for one Record Set
+  azure_rm_dnsrecordset_facts:
+    resource_group: Testing
+    zone_name: example.com
+    relative_name: server10
+    record_type: A
+- name: Get facts for all Type A Record Sets in a Zone
+  azure_rm_dnsrecordset_facts:
+    resource_group: Testing
+    zone_name: example.com
+    record_type: A
+- name: Get all record sets in one zone
+  azure_rm_dnsrecordset_facts:
+    resource_group: Testing
+    zone_name: example.com
 '''
 
 RETURN = '''
