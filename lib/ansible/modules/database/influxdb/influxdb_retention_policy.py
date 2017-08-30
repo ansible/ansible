@@ -68,9 +68,9 @@ options:
             - Use https instead of http to connect to InfluxDB, defaults to False
         required: false
         version_added: 2.4
-    verify_ssl:
+    validate_certs:
         description:
-            - verify SSL certificates for HTTPS requests, defaults to False
+            - verify SSL certificates for HTTPS requests, defaults to True
         required: false
         version_added: 2.4
 '''
@@ -93,7 +93,7 @@ EXAMPLES = '''
       duration: 1h
       replication: 1
       ssl: true
-      verify_ssl: true
+      validate_certs: true
 
 - name: create 1 day retention policy
   influxdb_retention_policy:
@@ -145,7 +145,7 @@ def influxdb_argument_spec():
         password=dict(default='root', type='str', no_log=True),
         database_name=dict(required=True, type='str'),
         ssl=dict(required=False, type="bool", default=False),
-        verify_ssl=dict(required=False, type="bool", default=False)
+        validate_certs=dict(required=False, type="bool", default=True)
     )
 
 
@@ -156,7 +156,7 @@ def connect_to_influxdb(module):
     password = module.params['password']
     database_name = module.params['database_name']
     ssl = module.params['ssl']
-    verify_ssl = module.params['verify_ssl']
+    validate_certs = module.params['validate_certs']
 
     client = InfluxDBClient(
         host=hostname,
@@ -165,7 +165,7 @@ def connect_to_influxdb(module):
         password=password,
         database=database_name,
         ssl=ssl,
-        verify_ssl=verify_ssl
+        validate_certs=validate_certs
     )
     return client
 
