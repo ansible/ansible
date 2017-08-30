@@ -66,23 +66,23 @@ options:
     description:
     - whether or not a database is a read replica
     default: False
-  db_engine:
+  engine:
     description:
       - The type of database. Used only when state=present.
     required: false
     choices: [ 'mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee', 'sqlserver-ee',
                 sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
-  size:
+  allocated_storage:
     description:
-      - Size in gigabytes of the initial storage for the DB instance.
-    required: false
+      - Size in gigabytes of the initial storage for the DB instance.  See [API documentation](https://botocore.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance) for details of limits
+      - Required unless the database type is aurora,
   storage_type:
     description:
       - Specifies the storage type to be associated with the DB instance. C(iops) must
         be specified if C(io1) is chosen.
     choices: ['standard', 'gp2', 'io1' ]
     default: standard unless iops is set
-  instance_type:
+  db_instance_class:
     description:
       - The instance type of the database. If source_instance is specified then the replica inherits
         the same instance type as the source instance.
@@ -111,7 +111,7 @@ options:
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_zone:
     description:
-      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter.
+      - Specifies if this is a Multi-availability-zone deployment. Cazn not be used in conjunction with zone parameter.
     choices: [ "yes", "no" ]
     required: false
   iops:
@@ -222,9 +222,9 @@ EXAMPLES = '''
 # Basic mysql provisioning example
 - rds_instance:
     id: new-database
-    db_engine: MySQL
-    size: 10
-    instance_type: db.m1.small
+    engine: MySQL
+    allocated_storage: 10
+    db_instance_class: db.m1.small
     username: mysql_admin
     password: 1nsecure
     tags:
@@ -359,23 +359,28 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
             resource.get('DBInstanceIdentifier'), resource['DBInstanceStatus'], status))
     return resource
 
+aurora_create_required_vars = ['db_instance_identifier', 'db_instance_class', 'engine']
+aurora_create_valid_vars = ['apply_immediately', 'character_set_name', 'cluster', 'db_name',
+                            'engine_version', 'db_instance_class', 'license_model', 'maint_window',
+                            'option_group', 'parameter_group', 'port', 'publicly_accessible',
+                            'subnet', 'upgrade', 'tags', 'zone']
+db_create_required_vars =  ['db_instance_identifier', 'engine', 'allocated_storage', 'db_instance_class',
+                            'username', 'password']
+db_create_valid_vars = ['backup_retention', 'backup_window',
+                        'character_set_name', 'cluster', 'db_name', 'engine_version',
+                        'license_model', 'maint_window', 'multi_zone',
+                        'option_group', 'parameter_group', 'port', 'publicly_accessible',
+                        'storage_type', 'subnet', 'upgrade', 'tags', 'security_groups',
+                        'vpc_security_groups', 'zone']
+
 
 def create_db_instance(module, conn):
-    if module.params.get('db_engine') in ['aurora']:
-        required_vars = ['db_instance_identifier', 'instance_type', 'db_engine']
-        valid_vars = ['apply_immediately', 'character_set_name', 'cluster', 'db_name',
-                      'engine_version', 'instance_type', 'license_model', 'maint_window',
-                      'option_group', 'parameter_group', 'port', 'publicly_accessible',
-                      'subnet', 'upgrade', 'tags', 'zone']
+    if module.params.get('engine') in ['aurora']:
+        required_vars = aurora_create_required_vars
+        valid_vars = aurora_create_valid_vars
     else:
-        required_vars = ['db_instance_identifier', 'db_engine', 'size', 'instance_type',
-                         'username', 'password']
-        valid_vars = ['backup_retention', 'backup_window',
-                      'character_set_name', 'cluster', 'db_name', 'engine_version',
-                      'instance_type', 'license_model', 'maint_window', 'multi_zone',
-                      'option_group', 'parameter_group', 'port', 'publicly_accessible',
-                      'storage_type', 'subnet', 'upgrade', 'tags', 'security_groups',
-                      'vpc_security_groups', 'zone']
+        required_vars = db_create_required_vars
+        valid_vars = db_create_valid_vars
 
     if module.params.get('subnet'):
         valid_vars.append('vpc_security_groups')
@@ -536,7 +541,7 @@ def update_rds_tags(module, conn, db_instance=None):
 
 
 def abort_on_impossible_changes(module, before_facts):
-    for immutable_key in ['username', 'db_engine', 'db_name']:
+    for immutable_key in ['username', 'engine', 'db_name']:
         if immutable_key in module.params:
             try:
                 keys_different = module.params[immutable_key] != before_facts[immutable_key]
@@ -582,7 +587,7 @@ def prepare_params_for_modify(module, before_facts):
     # valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
     #               'engine_version', 'instance_type', 'iops', 'license_model',
     #               'maint_window', 'multi_zone', 'option_group',
-    #               'parameter_group', 'password', 'port', 'publicly_accessible', 'size',
+    #               'parameter_group', 'password', 'port', 'publicly_accessible', 'allocated_storage',
     #               'storage_type', 'subnet', 'upgrade',
     #               'security_groups', 'vpc_security_groups']
 
@@ -844,10 +849,10 @@ def select_parameters(module, required_vars, valid_vars):
 argument_spec = dict(
     state=dict(choices=['absent', 'present', 'rebooted', 'restarted'], default='present'),
     db_instance_identifier=dict(aliases=["id"], required=True),
+    engine=dict(choices=DB_ENGINES),
+    db_instance_class=dict(),
     source_instance=dict(),
-    db_engine=dict(choices=DB_ENGINES),
-    size=dict(type='int'),
-    instance_type=dict(aliases=['type']),
+    allocated_storage=dict(type='int', aliases=['size']),
     username=dict(),
     password=dict(no_log=True),
     db_name=dict(),
@@ -882,6 +887,7 @@ argument_spec = dict(
 
 required_if = [
     ('storage_type', 'io1', ['iops']),
+    ('state', 'present', ['engine', 'db_instance_class']),
 ]
 
 
@@ -904,11 +910,11 @@ def setup_module_object():
 
 def set_module_defaults(module):
     # set port to per db defaults if not specified
-    if module.params['port'] is None and module.params['db_engine'] is not None:
-        if '-' in module.params['db_engine']:
-            engine = module.params['db_engine'].split('-')[0]
+    if module.params['port'] is None and module.params['engine'] is not None:
+        if '-' in module.params['engine']:
+            engine = module.params['engine'].split('-')[0]
         else:
-            engine = module.params['db_engine']
+            engine = module.params['engine']
         module.params['port'] = DEFAULT_PORTS[engine.lower()]
 
 

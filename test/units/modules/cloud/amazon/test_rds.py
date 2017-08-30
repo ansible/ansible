@@ -36,6 +36,7 @@ from dateutil.tz import tzutc
 import time
 import datetime
 import copy
+import json
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
@@ -166,7 +167,7 @@ modify_rds_return = {
 
 # def test_module_parses_args_right()
 
-basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 242} }')
+basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres", "id":"fred", "port": 242} }')
 ansible_module_template = AnsibleModule(argument_spec=rds_i.argument_spec, required_if=rds_i.required_if)
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "old_id": "fakedb", "old_id":"fred", "port": 342} }')
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 342} }')
@@ -327,6 +328,7 @@ def test_await_should_wait_till_not_pending():
     assert(len(sleeper_double.mock_calls) > 5), "await_pending didn't wait enough"
     assert(len(rds_client_double.describe_db_instances.mock_calls) > 7), "await_pending didn't wait enough"
 
+
 error_response = {'Error': {'Code': 'DBInstanceNotFound', 'Message': 'Fake Testing Error'}}
 operation_name = 'FakeOperation'
 db_instance_gone_error = ClientError(error_response, operation_name)
@@ -441,3 +443,23 @@ def test_update_rds_tags_should_not_act_if_no_tags():
     mk_tag_fn.assert_not_called()
     rm_tag_fn.assert_not_called()
     assert tag_update_return is False
+
+
+def set_module_args(args):
+    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
+    basic._ANSIBLE_ARGS = to_bytes(args)
+
+
+def test_select_params_should_provide_needed_args_to_create_if_module_has_basics():
+    needed_args = ['DBInstanceIdentifier', 'DBInstanceClass', 'Engine']
+    set_module_args({
+        "db_instance_identifier": "fred",
+        "db_instance_class": "t1-pretty-small-really",
+        "engine": "postgres",
+        "allocated_storage": 5
+    })
+    module = rds_i.setup_module_object()
+    params = rds_i.select_parameters(module, rds_i.db_create_required_vars, rds_i.db_create_valid_vars)
+    for i in needed_args:
+        assert i in params, "{0} parameter missing".format(i)
+        assert len(params(i)) > 0, "{0} parameter lacks value".format(i)
