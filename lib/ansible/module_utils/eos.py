@@ -73,7 +73,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in eos_argument_spec:
         if module._name == 'eos_user':
             if (key not in ['username', 'password', 'provider', 'transport', 'authorize'] and
@@ -89,11 +88,6 @@ def check_args(module, warnings):
     for key in ARGS_DEFAULT_VALUE:
         if not module.params.get(key, None):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def load_params(module):

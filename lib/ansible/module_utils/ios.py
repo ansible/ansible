@@ -53,7 +53,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in ios_argument_spec:
         if module._name == 'ios_user':
             if key not in ['password', 'provider', 'authorize'] and module.params[key]:
@@ -61,11 +60,6 @@ def check_args(module, warnings):
         else:
             if key not in ['provider', 'authorize'] and module.params[key]:
                 warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_defaults_flag(module):

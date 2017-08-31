@@ -69,7 +69,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in nxos_argument_spec:
         if module._name == 'nxos_user':
             if key not in ['password', 'provider', 'transport'] and module.params[key]:
@@ -84,11 +83,6 @@ def check_args(module, warnings):
     for key in ARGS_DEFAULT_VALUE:
         if not module.params.get(key, None):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def load_params(module):

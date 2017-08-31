@@ -61,7 +61,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in junos_argument_spec:
         if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
@@ -73,11 +72,6 @@ def check_args(module, warnings):
     for key in ARGS_DEFAULT_VALUE:
         if not module.params.get(key, None):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def _validate_rollback_id(module, value):
