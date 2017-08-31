@@ -21,7 +21,7 @@ When you become a power user, your ability and opportunities to help the Ansible
 Ask and answer questions online
 -------------------------------
 
-There are many forums online where Ansible users ask and answer questions. Reach out and communicate with your fellow Ansible users. Ask good questions, and give good answers.
+There are many forums online where Ansible users ask and answer questions. Reach out and communicate with your fellow Ansible users. 
 
 You can find the official :ref:`Ansible communication channels <communication>`.
 
