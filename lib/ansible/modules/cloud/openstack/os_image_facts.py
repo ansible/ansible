@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 - name: Show openstack facts
   debug:
-    var: openstack
+    var: openstack_image
 '''
 
 RETURN = '''
