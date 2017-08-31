@@ -27,7 +27,7 @@ version_added: "1.3"
 requirements: [ boto3 ]
 short_description: maintain an ec2 VPC security group.
 description:
-    - maintains ec2 security groups. This module has a dependency on python-boto >= 2.5
+    - maintains ec2 security groups. This module has a dependency on boto3. This module has an optional dependency on ipaddress.
 options:
   name:
     description:
@@ -108,6 +108,10 @@ notes:
   - If a rule declares a group_name and that group doesn't exist, it will be
     automatically created. In that case, group_desc should be provided as well.
     The module will refuse to create a depended-on group without a description.
+    If ipaddress is unable to be imported and a cidr_ip has host bits set the
+    task may successfully run once (only the network bits will be set) but
+    subsequent runs of the same task will fail. Installing ipaddress on python 2
+    to maintain consistency recommended.
 '''
 
 EXAMPLES = '''
@@ -265,6 +269,7 @@ owner_id:
 
 import json
 import re
+from ansible.module_utils.six import PY3
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.ec2 import get_aws_connection_info
@@ -279,6 +284,12 @@ try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
+
+try:
+    import ipaddress
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -566,6 +577,34 @@ def fix_port_and_protocol(permission):
     return permission
 
 
+def validate_ipv4(module, ip_list):
+    for addr in ip_list:
+        while True:
+            try:
+                ipaddress.IPv4Network(addr)
+            except ValueError as e:
+                if 'Did you pass in a bytes (str in Python 2) instead of a unicode' in e.message and not PY3:
+                    addr = unicode(addr)
+                else:
+                    module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+            else:
+                break
+
+
+def validate_ipv6(module, ip_list):
+    for addr in ip_list:
+        while True:
+            try:
+                ipaddress.IPv6Network(addr)
+            except ValueError as e:
+                if 'Did you pass in a bytes (str in Python 2) instead of a unicode' in e.message and not PY3:
+                    addr = unicode(addr)
+                else:
+                    module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+            else:
+                break
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -758,12 +797,19 @@ def main():
                     if ip and not isinstance(ip, list):
                         ip = [ip]
 
+                    if HAS_IPADDRESS:
+                        validate_ipv4(module, ip)
+
                     changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ip, ip_permission,
                                                           module, rule, "ipv4")
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
                         ipv6 = [ipv6]
+
+                    if HAS_IPADDRESS:
+                        validate_ipv6(module, ipv6)
+
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ipv6, ip_permission,
                                                           module, rule, "ipv6")
@@ -822,12 +868,20 @@ def main():
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
                         ip = [ip]
+
+                    if HAS_IPADDRESS:
+                        validate_ipv4(module, ip)
+
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ip,
                                                           ip_permission, module, rule, "ipv4")
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
                         ipv6 = [ipv6]
+
+                    if HAS_IPADDRESS:
+                        validate_ipv6(module, ipv6)
+
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
                                                           ip_permission, module, rule, "ipv6")
