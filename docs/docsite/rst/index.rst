@@ -33,8 +33,8 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    modules_by_category
    guides
    dev_guide/index
+   community/index
    tower
-   community
    galaxy
    test_strategies
    faq
