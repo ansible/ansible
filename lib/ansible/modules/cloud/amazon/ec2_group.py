@@ -500,10 +500,10 @@ def authorize_ip(type, changed, client, group, groupRules,
                             client.authorize_security_group_egress(GroupId=group['GroupId'],
                                                                    IpPermissions=[ip_permission])
                     except botocore.exceptions.ClientError as e:
-                        if "(InvalidPermission.Duplicate)" in e.message:
+                        if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
                             # There are host bits but only the network bits get authorized so it appears there is a conflict.
                             # Allow graceful completion with a warning.
-                            actual_ip = re.search(r"(?<!\d\.)(?<!\d)(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}(?!\d|(?:\.\d))", e.message).group()
+                            actual_ip = re.search(r"(?<!\d\.)(?<!\d)(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}(?!\d|(?:\.\d))", e.response['Error']['Message']).group()
                             rule_id = make_rule_key(type, rule, group['GroupId'], actual_ip)
                             if rule_id in groupRules:
                                 del groupRules[rule_id]
