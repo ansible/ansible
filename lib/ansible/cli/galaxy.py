@@ -385,9 +385,8 @@ class GalaxyCLI(CLI):
                                         (role.name, role.install_info['version'], role.version or "unspecified"))
                         continue
                 else:
-                    if not force:
-                        display.display('- %s is already installed, skipping.' % str(role))
-                        continue
+                    display.display('- %s is already installed, skipping.' % str(role))
+                    continue
 
             try:
                 installed = role.install()
