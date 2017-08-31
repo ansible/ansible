@@ -29,7 +29,7 @@ Alternatively, passwords can be specified with a file or a script, the script ve
 The password should be a string stored as a single line in the file.
 
 .. note::
-   You can also set ``ANSIBLE_VAULT_PASSWORD_FILE`` environment variable, e.g. ``ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt`` and Ansible will automatically search for the password in that file.
+   You can also set :envvar:`ANSIBLE_VAULT_PASSWORD_FILE` environment variable, e.g. ``ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt`` and Ansible will automatically search for the password in that file.
 
 If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output.  If your script needs to prompt for data, prompts can be sent to standard error.
 
