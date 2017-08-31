@@ -394,7 +394,9 @@ def main():
                                                'message_digest_password']],
                            supports_check_mode=True)
 
-    if not module.params['interface'].startswith('loopback') and not module.params['interface'].startswith('port-channel'):
+    if re.match(r'(port-channel|loopback)', module.params['interface'], re.I):
+        module.params['interface'] = module.params['interface'].lower()
+    else:
         module.params['interface'] = module.params['interface'].capitalize()
 
     warnings = list()
