@@ -31,6 +31,7 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    playbooks_special_topics
    modules
    modules_by_category
+   vault
    guides
    dev_guide/index
    tower
