@@ -33,15 +33,18 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-iosxr_argument_spec = {
+iosxr_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict')
 }
+iosxr_argument_spec = {
+    'provider': dict(type='dict', options=iosxr_provider_spec)
+}
+iosxr_argument_spec.update(iosxr_provider_spec)
 
 
 def get_argspec():
