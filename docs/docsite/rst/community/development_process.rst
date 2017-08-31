@@ -62,7 +62,6 @@ Ansibullbot runs continuously. You can generally expect to see changes to your i
    -  If the maintainer says ``shipit``, the pull request is labeled **shipit**, whereupon the Core team assesses it for final merge.
    -  If the maintainer says ``needs_info``, the pull request is labeled **needs_info** and the submitter is asked for more info.
    -  If the maintainer says **needs_revision**, the pull request is labeled **needs_revision** and the submitter is asked to fix some things.
-   -  If the pull request is labeled **needs_revision** or **needs_info** and has received comments from the submitter...TODO: what happens here?
 
 -  If the submitter says ``ready_for_review``, the pull request is put back into **community_review** or **core_review** and the maintainer is notified that the pull request is ready to be reviewed again.
 -  If the pull request is labeled **needs_revision** or **needs_info** and the submitter has not responded lately:
