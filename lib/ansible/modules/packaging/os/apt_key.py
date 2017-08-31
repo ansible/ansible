@@ -1,117 +1,104 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-# (c) 2012, Jayson Vantuyl <jayson@aggressive.ly>
-#
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2012, Jayson Vantuyl <jayson@aggressive.ly>
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: apt_key
-author: "Jayson Vantuyl & others (@jvantuyl)"
+author: 
+- Jayson Vantuyl (@jvantuyl)
 version_added: "1.0"
 short_description: Add or remove an apt key
 description:
-    - Add or remove an I(apt) key, optionally downloading it
+    - Add or remove an I(apt) key, optionally downloading it.
 notes:
     - doesn't download the key unless it really needs it
     - as a sanity check, downloaded key id must match the one specified
     - best practice is to specify the key id and the url
 options:
     id:
-        required: false
-        default: none
         description:
-            - identifier of key. Including this allows check mode to correctly report the changed state. Required when C(state) is set to C(absent).
-            - "If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead."
+            - The identifier of the key.
+            - Including this allows check mode to correctly report the changed state.
+            - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
+            - This parameter is required when C(state) is set to C(absent).
     data:
-        required: false
-        default: none
         description:
-            - keyfile contents to add to the keyring
+            - The keyfile contents to add to the keyring.
     file:
-        required: false
-        default: none
         description:
-            - path to a keyfile on the remote server to add to the keyring
+            - The path to a keyfile on the remote server to add to the keyring.
     keyring:
-        required: false
-        default: none
         description:
-            - path to specific keyring file in /etc/apt/trusted.gpg.d
+            -The path to specific keyring file in /etc/apt/trusted.gpg.d/
         version_added: "1.3"
     url:
-        required: false
-        default: none
         description:
-            - url to retrieve key from.
+            - The URL to retrieve key from.
     keyserver:
-        version_added: "1.6"
-        required: false
-        default: none
         description:
-            - keyserver to retrieve key from.
+            - The keyserver to retrieve key from.
+        version_added: "1.6"
     state:
-        required: false
+        description:
+            - Ensures that the key is present (added) or absent (revoked).
         choices: [ absent, present ]
         default: present
-        description:
-            - used to specify if key is being added or revoked
     validate_certs:
         description:
             - If C(no), SSL certificates for the target url will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
-        required: false
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
-
 '''
 
 EXAMPLES = '''
-# Add an apt key by id from a keyserver
-- apt_key:
+- name: Add an apt key by id from a keyserver
+  apt_key:
     keyserver: keyserver.ubuntu.com
     id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
 
-# Add an Apt signing key, uses whichever key is at the URL
-- apt_key:
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+- name: Add an Apt signing key, uses whichever key is at the URL
+  apt_key:
+    url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
-# Add an Apt signing key, will not download if present
-- apt_key:
+- name: Add an Apt signing key, will not download if present
+  apt_key:
     id: 473041FA
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
-# Remove a Apt specific signing key, leading 0x is valid
-- apt_key:
+- name: Remove a Apt specific signing key, leading 0x is valid
+  apt_key:
     id: 0x473041FA
     state: absent
 
-# Add a key from a file on the Ansible server. Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
-- apt_key:
+# Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
+- name: Add a key from a file on the Ansible server.
+  apt_key:
     data: "{{ lookup('file', 'apt.asc') }}"
     state: present
 
-# Add an Apt signing key to a specific keyring file
-- apt_key:
+- name: Add an Apt signing key to a specific keyring file
+  apt_key:
     id: 473041FA
-    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
-# Add Apt signing key on remote server to keyring
-- apt_key:
+- name: Add Apt signing key on remote server to keyring
+  apt_key:
     id: 473041FA
     file: /tmp/apt.gpg
     state: present
