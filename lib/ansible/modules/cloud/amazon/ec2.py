@@ -227,7 +227,8 @@ options:
   instance_initiated_shutdown_behavior:
     version_added: "2.2"
     description:
-    - Set whether AWS will Stop or Terminate an instance on shutdown
+    - Set whether AWS will Stop or Terminate an instance on shutdown. This parameter is ignored when using instance-store
+      images (which require termination on shutdown).
     required: false
     default: 'stop'
     choices: [ "stop", "terminate" ]
@@ -1193,7 +1194,15 @@ def create_instances(module, ec2, vpc, override_count=None):
                 # (the default) or 'terminate' here.
                 params['instance_initiated_shutdown_behavior'] = instance_initiated_shutdown_behavior or 'stop'
 
-                res = ec2.run_instances(**params)
+                try:
+                    res = ec2.run_instances(**params)
+                except boto.exception.EC2ResponseError as e:
+                    if "The attribute instanceInitiatedShutdownBehavior can only be used for EBS-backed images." in e.message:
+                        params['instance_initiated_shutdown_behavior'] = 'terminate'
+                        res = ec2.run_instances(**params)
+                    else:
+                        raise
+
                 instids = [i.id for i in res.instances]
                 while True:
                     try:
