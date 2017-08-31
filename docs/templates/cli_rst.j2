@@ -77,14 +77,14 @@ Environment
 The following environment variables may be specified.
 
 {% if inventory %}
-ANSIBLE_INVENTORY  -- Override the default ansible inventory file
+:envvar:`ANSIBLE_INVENTORY`  -- Override the default ansible inventory file
 
 {% endif %}
 {% if library %}
-ANSIBLE_LIBRARY -- Override the default ansible module library path
+:envvar:`ANSIBLE_LIBRARY` -- Override the default ansible module library path
 
 {% endif %}
-ANSIBLE_CONFIG -- Override the default ansible config file
+:envvar:`ANSIBLE_CONFIG` -- Override the default ansible config file
 
 Many more are available for most options in ansible.cfg
 
@@ -93,17 +93,18 @@ Files
 -----
 
 {% if inventory %}
-/etc/ansible/hosts -- Default inventory file
+:file:`/etc/ansible/hosts` -- Default inventory file
 
 {% endif %}
-/etc/ansible/ansible.cfg -- Config file, used if present
+:file:`/etc/ansible/ansible.cfg` -- Config file, used if present
 
-~/.ansible.cfg -- User config file, overrides the default config if present
+:file:`~/.ansible.cfg` -- User config file, overrides the default config if present
 
 Author
 ------
 
 Ansible was originally written by Michael DeHaan.
+
 See the `AUTHORS` file for a complete list of contributors.
 
 
@@ -111,11 +112,11 @@ Copyright
 ---------
 
 Copyright © 2017 Red Hat, Inc | Ansible.
+
 Ansible is released under the terms of the GPLv3 License.
 
 See also
 ========
 
-{% for other in cli_list|sort %}:manpage:`{{other}}(1)`
-{% endfor %}
+{% for other in cli_bin_name_list|sort %}:manpage:`{{other}}(1)`,  {% endfor %}
 

@@ -225,6 +225,7 @@ if __name__ == '__main__':
     allvars = {}
     output = {}
     cli_list = []
+    cli_bin_name_list = []
 
     # for binary in os.listdir('../../lib/ansible/cli'):
     for cli_module_name in cli_modules:
@@ -241,13 +242,16 @@ if __name__ == '__main__':
             cli_class_name = 'AdHocCLI'
             # myclass = 'AdHocCLI'
             output[cli_name] = 'ansible.1.asciidoc.in'
+            cli_bin_name = 'ansible'
         else:
             # myclass = "%sCLI" % libname.capitalize()
             cli_class_name = "%sCLI" % cli_name.capitalize()
             output[cli_name] = 'ansible-%s.1.asciidoc.in' % cli_name
+            cli_bin_name = 'ansible-%s' % cli_name
 
         # FIXME:
         allvars[cli_name] = opts_docs(cli_class_name, cli_name)
+        cli_bin_name_list.append(cli_bin_name)
 
     cli_list = allvars.keys()
 
@@ -263,6 +267,7 @@ if __name__ == '__main__':
         # add rest to vars
         tvars = allvars[cli_name]
         tvars['cli_list'] = cli_list
+        tvars['cli_bin_name_list'] = cli_bin_name_list
         tvars['cli'] = cli_name
         if '-i' in tvars['options']:
             print('uses inventory')
