@@ -211,7 +211,13 @@ def load_config(module, candidate, warnings, action='merge', format='xml'):
 
 
 def get_param(module, key):
-    return module.params[key] or module.params['provider'].get(key)
+    if module.params.get(key):
+        value = module.params[key]
+    elif module.params.get('provider'):
+        value = module.params['provider'].get(key)
+    else:
+        value = None
+    return value
 
 
 def map_params_to_obj(module, param_to_xpath_map, param=None):
