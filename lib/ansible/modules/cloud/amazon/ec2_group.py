@@ -27,7 +27,7 @@ version_added: "1.3"
 requirements: [ boto3 ]
 short_description: maintain an ec2 VPC security group.
 description:
-    - maintains ec2 security groups. This module has a dependency on python-boto >= 2.5
+    - maintains ec2 security groups. This module has a dependency on boto3. This module has an optional dependency on ipaddress.
 options:
   name:
     description:
@@ -108,6 +108,10 @@ notes:
   - If a rule declares a group_name and that group doesn't exist, it will be
     automatically created. In that case, group_desc should be provided as well.
     The module will refuse to create a depended-on group without a description.
+    If ipaddress is unable to be imported and a cidr_ip has host bits set the
+    task may successfully run once (only the network bits will be set) but
+    subsequent runs of the same task will fail. Installing ipaddress on python 2
+    to maintain consistency recommended.
 '''
 
 EXAMPLES = '''
@@ -265,6 +269,7 @@ owner_id:
 
 import json
 import re
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.ec2 import get_aws_connection_info
@@ -778,7 +783,7 @@ def main():
                 elif ip:
                     # Convert ip to list we can iterate over
                     if ip and not isinstance(ip, list):
-                        ip = [ip]
+                        ip = [to_native(ip)]
 
                     if HAS_IPADDRESS:
                         validate_ipv4(module, ip)
@@ -788,7 +793,7 @@ def main():
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
-                        ipv6 = [ipv6]
+                        ipv6 = [to_native(ipv6)]
 
                     if HAS_IPADDRESS:
                         validate_ipv6(module, ipv6)
@@ -850,7 +855,7 @@ def main():
                 elif ip:
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
-                        ip = [ip]
+                        ip = [to_native(ip)]
 
                     if HAS_IPADDRESS:
                         validate_ipv4(module, ip)
@@ -860,7 +865,7 @@ def main():
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
-                        ipv6 = [ipv6]
+                        ipv6 = [to_native(ipv6)]
 
                     if HAS_IPADDRESS:
                         validate_ipv6(module, ipv6)
