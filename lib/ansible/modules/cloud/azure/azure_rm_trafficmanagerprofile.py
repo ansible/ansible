@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -34,9 +34,9 @@ options:
     profile_status:
         description:
             - The status of the Traffic Manager profile.
-            choices:
-                - Enabled
-                - Disabled
+        choices:
+            - Enabled
+            - Disabled
     traffic_routing_method:
         description:
             - The traffic routing method of the Traffic Manager profile. Possible
