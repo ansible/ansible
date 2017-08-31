@@ -57,7 +57,6 @@ options:
         remote system.  User accounts can have more than one role
         configured.
     required: false
-    default: read-only
     choices: ['operator', 'read-only', 'super-user', 'unauthorized']
   sshkey:
     description:
@@ -113,7 +112,8 @@ EXAMPLES = """
 
 - name: remove all user accounts except ansible
   junos_user:
-    name: ansible
+    aggregate:
+    - name: ansible
     purge: yes
 
 - name: Create list of users
@@ -147,6 +147,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
+from ansible.module_utils.netconf import send_request
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.junos import commit_configuration, discard_changes
 from ansible.module_utils.junos import load_config, locked_config
@@ -161,27 +162,47 @@ ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
 USE_PERSISTENT_CONNECTION = True
 
 
-def map_obj_to_ele(want):
+def handle_purge(module, want):
+    want_users = [item['name'] for item in want]
     element = Element('system')
-    login = SubElement(element, 'login', {'replace': 'replace'})
+    login = SubElement(element, 'login')
+
+    reply = send_request(module, Element('get-configuration'), ignore_warning=False)
+    users = reply.xpath('configuration/system/login/user/name')
+    if users:
+        for item in users:
+            name = item.text
+            if name not in want_users and name != 'root':
+                user = SubElement(login, 'user', {'operation': 'delete'})
+                SubElement(user, 'name').text = name
+    if element.xpath('/system/login/user/name'):
+        return element
+
+
+def map_obj_to_ele(module, want):
+    element = Element('system')
+    login = SubElement(element, 'login')
 
     for item in want:
         if item['state'] != 'present':
+            if item['name'] == 'root':
+                module.fail_json(msg="cannot delete the 'root' account.")
             operation = 'delete'
         else:
-            operation = 'replace'
+            operation = 'merge'
 
         user = SubElement(login, 'user', {'operation': operation})
 
         SubElement(user, 'name').text = item['name']
 
-        if operation == 'replace':
+        if operation == 'merge':
             if item['active']:
                 user.set('active', 'active')
             else:
                 user.set('inactive', 'inactive')
 
-            SubElement(user, 'class').text = item['role']
+            if item['role']:
+                SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
                 SubElement(user, 'full-name').text = item['full_name']
@@ -262,7 +283,7 @@ def main():
     element_spec = dict(
         name=dict(),
         full_name=dict(),
-        role=dict(choices=ROLES, default='unauthorized'),
+        role=dict(choices=ROLES),
         sshkey=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         active=dict(type='bool', default=True)
@@ -294,16 +315,16 @@ def main():
     result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
-    ele = map_obj_to_ele(want)
+    ele = map_obj_to_ele(module, want)
 
-    kwargs = {}
+    purge_request = None
     if module.params['purge']:
-        kwargs['action'] = 'replace'
-    else:
-        kwargs['action'] = 'merge'
+        purge_request = handle_purge(module, want)
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele), warnings, **kwargs)
+        if purge_request:
+            load_config(module, tostring(purge_request), warnings, action='replace')
+        diff = load_config(module, tostring(ele), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:

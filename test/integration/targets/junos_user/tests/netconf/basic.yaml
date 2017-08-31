@@ -168,3 +168,26 @@
       - "result.changed == true"
       - "'<name>test_user1</name>' not in config.xml"
       - "'<name>test_user2</name>' not in config.xml"
+
+- name: Create list of users
+  junos_user:
+    aggregate:
+      - name: ansible
+      - {name: test_user1, full_name: test_user2, role: operator}
+      - {name: test_user2, full_name: test_user2, role: read-only}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Purge users except the users in aggregate
+  junos_user:
+    aggregate:
+      - name: ansible
+    purge: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\- *user test_user1")
+      - result.diff.prepared | search("\- *user test_user2")
