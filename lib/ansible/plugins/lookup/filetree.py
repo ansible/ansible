@@ -30,7 +30,7 @@ except ImportError:
     pass
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 try:
     from __main__ import display
@@ -86,7 +86,7 @@ def file_props(root, path):
     except KeyError:
         ret['owner'] = st.st_uid
     try:
-        ret['group'] = grp.getgrgid(st.st_gid).gr_name
+        ret['group'] = to_text(grp.getgrgid(st.st_gid).gr_name)
     except KeyError:
         ret['group'] = st.st_gid
     ret['mode'] = '0%03o' % (stat.S_IMODE(st.st_mode))
