@@ -449,7 +449,7 @@ been retried for 5 times with a delay of 10 seconds. The default value for "retr
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
 The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
 
-.. note:: If "until" parameter isn't defined, the value for "retries" is forced to 1.
+.. note:: If the "until" parameter isn't defined, the value for the "retries" parameter is forced to 1.
 
 .. _with_first_found:
 
