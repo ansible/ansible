@@ -280,6 +280,12 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+try:
+    import ipaddress
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False
+
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_security_groups_with_backoff(connection, **kwargs):
@@ -566,6 +572,22 @@ def fix_port_and_protocol(permission):
     return permission
 
 
+def validate_ipv4(module, ip_list):
+    for addr in ip_list:
+        try:
+            ipaddress.IPv4Network(addr)
+        except ValueError as e:
+            module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+
+
+def validate_ipv6(module, ip_list):
+    for addr in ip_list:
+        try:
+            ipaddress.IPv6Network(addr)
+        except ValueError as e:
+            module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -758,12 +780,19 @@ def main():
                     if ip and not isinstance(ip, list):
                         ip = [ip]
 
+                    if HAS_IPADDRESS:
+                        validate_ipv4(module, ip)
+
                     changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ip, ip_permission,
                                                           module, rule, "ipv4")
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
                         ipv6 = [ipv6]
+
+                    if HAS_IPADDRESS:
+                        validate_ipv6(module, ipv6)
+
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ipv6, ip_permission,
                                                           module, rule, "ipv6")
@@ -822,12 +851,20 @@ def main():
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
                         ip = [ip]
+
+                    if HAS_IPADDRESS:
+                        validate_ipv4(module, ip)
+
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ip,
                                                           ip_permission, module, rule, "ipv4")
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
                         ipv6 = [ipv6]
+
+                    if HAS_IPADDRESS:
+                        validate_ipv6(module, ipv6)
+
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
                                                           ip_permission, module, rule, "ipv6")
