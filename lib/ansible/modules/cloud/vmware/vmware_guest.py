@@ -65,7 +65,7 @@ options:
     version_added: '2.3'
   folder:
     description:
-    - Destination folder, absolute or relative path to find an existing guest or create the new guest.
+    - Destination folder, absolute path to find an existing guest or create the new guest.
     - The folder should include the datacenter. ESX's datacenter is ha-datacenter
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
@@ -77,8 +77,6 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    - '   folder: vm/folder2'
-    - '   folder: folder2'
     default: /vm
   hardware:
     description:
@@ -107,7 +105,8 @@ options:
     description:
     - A CD-ROM configuration for the VM.
     - 'Valid attributes are:'
-    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso).'
+    - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
+    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is iso.'
     version_added: '2.4'
   resource_pool:
     description:
@@ -216,6 +215,9 @@ EXAMPLES = r'''
       memory_mb: 512
       num_cpus: 1
       scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[datastore1] livecd.iso"
     networks:
     - name: VM Network
       mac: aa:bb:dd:aa:00:14
@@ -376,7 +378,7 @@ class PyVmomiDeviceHelper(object):
         return ide_ctl
 
     @staticmethod
-    def create_cdrom(ide_ctl, iso_path):
+    def create_cdrom(ide_ctl, cdrom_type, iso_path=None):
         cdrom_spec = vim.vm.device.VirtualDeviceSpec()
         cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         cdrom_spec.device = vim.vm.device.VirtualCdrom()
@@ -384,10 +386,32 @@ class PyVmomiDeviceHelper(object):
         cdrom_spec.device.key = -1
         cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         cdrom_spec.device.connectable.allowGuestControl = True
-        cdrom_spec.device.connectable.startConnected = True
-        cdrom_spec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
+        cdrom_spec.device.connectable.startConnected = (cdrom_type != "none")
+        if cdrom_type in ["none", "client"]:
+            cdrom_spec.device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
+        elif cdrom_type == "iso":
+            cdrom_spec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
 
         return cdrom_spec
+
+    @staticmethod
+    def is_equal_cdrom(vm_obj, cdrom_device, cdrom_type, iso_path):
+        if cdrom_type == "none":
+            return (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo) and
+                    cdrom_device.connectable.allowGuestControl and
+                    not cdrom_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or not cdrom_device.connectable.connected))
+        elif cdrom_type == "client":
+            return (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo) and
+                    cdrom_device.connectable.allowGuestControl and
+                    cdrom_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
+        elif cdrom_type == "iso":
+            return (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.IsoBackingInfo) and
+                    cdrom_device.backing.fileName == iso_path and
+                    cdrom_device.connectable.allowGuestControl and
+                    cdrom_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
 
     def create_scsi_disk(self, scsi_ctl, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
@@ -583,9 +607,11 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
-        if 'cdrom' in self.params and self.params['cdrom']:
-            if 'iso_path' not in self.params['cdrom'] or not self.params['cdrom']['iso_path']:
-                self.module.fail_json(msg="cdrom.iso_path is mandatory")
+        if "cdrom" in self.params and self.params["cdrom"]:
+            if "type" not in self.params["cdrom"] or self.params["cdrom"]["type"] not in ["none", "client", "iso"]:
+                self.module.fail_json(msg="cdrom.type is mandatory")
+            if self.params["cdrom"]["type"] == "iso" and ("iso_path" not in self.params["cdrom"] or not self.params["cdrom"]["iso_path"]):
+                self.module.fail_json(msg="cdrom.iso_path is mandatory in case cdrom.type is iso")
 
             if vm_obj and vm_obj.config.template:
                 # Changing CD-ROM settings on a template is not supported
@@ -593,6 +619,7 @@ class PyVmomiHelper(PyVmomi):
 
             cdrom_spec = None
             cdrom_device = self.get_vm_cdrom_device(vm=vm_obj)
+            iso_path = self.params["cdrom"]["iso_path"] if "iso_path" in self.params["cdrom"] else None
             if cdrom_device is None:
                 # Creating new CD-ROM
                 ide_device = self.get_vm_ide_device(vm=vm_obj)
@@ -604,20 +631,21 @@ class PyVmomiHelper(PyVmomi):
                 elif len(ide_device.device) > 3:
                     self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
 
-                cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, iso_path=self.params['cdrom']['iso_path'])
-            elif not (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.IsoBackingInfo) and
-                      cdrom_device.backing.fileName == self.params['cdrom']['iso_path'] and
-                      cdrom_device.connectable.allowGuestControl and
-                      cdrom_device.connectable.startConnected and
-                      (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected)):
+                cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path)
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    cdrom_spec.device.connectable.connected = (self.params["cdrom"]["type"] != "none")
 
+            elif not self.device_helper.is_equal_cdrom(vm_obj=vm_obj, cdrom_device=cdrom_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path):
                 # Updating an existing CD-ROM
-                cdrom_device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=self.params['cdrom']['iso_path'])
+                if self.params["cdrom"]["type"] in ["client", "none"]:
+                    cdrom_device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
+                elif self.params["cdrom"]["type"] == "iso":
+                    cdrom_device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
                 cdrom_device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
                 cdrom_device.connectable.allowGuestControl = True
-                cdrom_device.connectable.startConnected = True
-                if vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
-                    cdrom_device.connectable.connected = True
+                cdrom_device.connectable.startConnected = (self.params["cdrom"]["type"] != "none")
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    cdrom_device.connectable.connected = (self.params["cdrom"]["type"] != "none")
 
                 cdrom_spec = vim.vm.device.VirtualDeviceSpec()
                 cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
