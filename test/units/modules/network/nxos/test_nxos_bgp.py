@@ -42,8 +42,8 @@ class TestNxosBgpModule(TestNxosModule):
         self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
-        self.get_config.return_value = load_fixture('', 'nxos_bgp_config.cfg')
-        self.load_config.return_value = None
+        self.get_config.return_value = load_fixture('nxos_bgp', 'config.cfg')
+        self.load_config.return_value = []
 
     def test_nxos_bgp(self):
         set_module_args(dict(asn=65535, router_id='1.1.1.1'))
