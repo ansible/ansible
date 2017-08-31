@@ -1,0 +1,69 @@
+{% set name = 'Configuration' -%}
+{% set name_slug = 'config' -%}
+
+{% set name_len = name|length + 0-%}
+{{ '=' * name_len }}
+{{name}}
+{{ '=' * name_len }}
+
+Common Options
+==============
+
+{% if config_options %}
+
+
+{% for config_option in config_options|sort %}
+{% set config_len = config_option|length -%}
+{% set config = config_options[config_option] %}
+.. _{{config_option}}:
+
+{{config_option}}
+{{ '-' * config_len }}
+
+{% if config['description'] and config['description'] != [''] %}
+{% if config['description'] != ['TODO: write it'] %}
+:Description: {{' '.join(config['description'])}}
+{% endif %}
+{% endif %}
+{% if config['type'] %}
+:Type: {{config['type']}}
+{% endif %}
+:Default: {{config['default']}}
+{% if config['version_added'] %}
+:Version Added: {{config['version_added']}}
+{% endif %}
+{% for ini_map in config['ini']|sort %}
+:Ini Section: {{ini_map['section']}}
+:Ini Key: {{ini_map['key']}}
+{% endfor %}
+{% for env_var_map in config['env']|sort %}
+:Environment: :envvar:`{{env_var_map['name']}}`
+{% endfor %}
+{% if config['deprecated'] %}
+:Deprecated in: {{config['deprecated']['version']}}
+:Deprecated detail: {{config['deprecated']['why']}}
+:Deprecated alternatives: {{config['deprecated']['alternatives']}}
+{% endif %}
+
+{% endfor %}
+
+Environment Variables
+=====================
+
+{% for config_option in config_options %}
+{% for env_var_map in config_options[config_option]['env'] %}
+.. envvar:: {{env_var_map['name']}}
+
+{% if config_options[config_option]['description']  and config_options[config_option]['description'] != [''] %}
+{% if config_options[config_option]['description'] != ['TODO: write it'] %}
+    {{ ''.join(config_options[config_option]['description']) }}
+{% endif %}
+{% endif %}
+
+    See also :ref:`{{config_option}} <{{config_option}}>`
+
+{% endfor %}
+
+{% endfor %}
+
+{% endif %}

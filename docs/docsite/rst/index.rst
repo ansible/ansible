@@ -38,6 +38,7 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    galaxy
    test_strategies
    faq
+   config
    glossary
    YAMLSyntax
    porting_guides

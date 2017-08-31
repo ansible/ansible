@@ -3,6 +3,7 @@ SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; pri
 FORMATTER=../bin/plugin_formatter.py
 TESTING_FORMATTER=../bin/testing_formatter.sh
 DUMPER=../bin/dump_keywords.py
+CONFIG_DUMPER=../bin/dump_config.py
 ifeq ($(shell echo $(OS) | egrep -ic 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
@@ -18,7 +19,7 @@ all: docs
 
 docs: clean htmldocs
 
-htmldocs: testing keywords modules staticmin
+htmldocs: testing keywords modules staticmin config
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 webdocs: docs
@@ -49,6 +50,9 @@ clean:
 
 keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
 	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/ -d ./keyword_desc.yml
+
+config:
+	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/ -d ../../lib/ansible/config/base.yml
 
 modules: $(FORMATTER) ../templates/plugin.rst.j2
 # Limit building of module documentation if requested.
