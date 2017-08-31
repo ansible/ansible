@@ -21,9 +21,15 @@ __metaclass__ = type
 import os
 import logging
 import socket
-import graypy
 import uuid
 import json
+
+try:
+    import graypy
+    HAS_GRAYPY = True
+except ImportError:
+    HAS_GRAYPY = False
+
 from datetime import datetime
 
 from ansible.plugins.callback import CallbackBase
@@ -52,19 +58,24 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.DEBUG)
+        if not HAS_GRAYPY:
+            self.disabled = True
+            self._display.warning('The `graypy` python module is not installed.')
 
-        self.handler = graypy.GELFHandler(
-            os.getenv('GRAYLOG_SERVER', 'localhost'),
-            int(os.getenv('GRAYLOG_PORT', 12201)),
-            debugging_fields=False,
-        )
-        self.logger.addHandler(self.handler)
-        self.hostname = socket.gethostname()
-        self.session = str(uuid.uuid1())
-        self.errors = 0
-        self.start_time = datetime.utcnow()
+        else:
+            self.logger = logging.getLogger()
+            self.logger.setLevel(logging.DEBUG)
+
+            self.handler = graypy.GELFHandler(
+                os.getenv('GRAYLOG_SERVER', 'localhost'),
+                int(os.getenv('GRAYLOG_PORT', 12201)),
+                debugging_fields=False,
+            )
+            self.logger.addHandler(self.handler)
+            self.hostname = socket.gethostname()
+            self.session = str(uuid.uuid1())
+            self.errors = 0
+            self.start_time = datetime.utcnow()
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
