@@ -122,10 +122,12 @@ The :ref:`ansible-vault encrypt_string` command will encrypt and format a provid
 that can be included in :ref:`ansible-playbook` YAML files.
 
 To encrypt a string provided as a cli arg:
-
-.. code-block::
+.. code-block:: bash
 
     ansible-vault encrypt_string --vault-id a_password_file 'foobar' --name 'the_secret'
+
+Result::
+
     some_foo: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           62313365396662343061393464336163383764373764613633653634306231386433626436623361
@@ -136,10 +138,12 @@ To encrypt a string provided as a cli arg:
 
 To use a vault-id label for 'dev' vault-id:
 
-.. code-block::
-
+.. code-block:: bash
 
     ansible-vault encrypt_string --vault-id dev@password 'foooodev' --name 'the_dev_secret'
+
+Result::
+
     the_dev_secret: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
               30613233633461343837653833666333643061636561303338373661313838333565653635353162
@@ -150,9 +154,12 @@ To use a vault-id label for 'dev' vault-id:
 
 To encrypt a string read from stdin and name it 'db_password':
 
-.. code-block::
+.. code-block:: bash
 
     echo 'letmein' | ansible-vault encrypt_string --vault-id dev@password --stdin-name 'db_password'
+
+Result::
+
     Reading plaintext input from stdin. (ctrl-d to end input)
     db_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -165,14 +172,17 @@ To encrypt a string read from stdin and name it 'db_password':
 To be prompted for a string to encrypt, encrypt it, and give it the name 'new_user_password':
 
 
-.. code-block::
+.. code-block:: bash
 
     ansible-vault encrypt_string --vault-id dev@./password --stdin-name 'new_user_password'
+
+Output::
+
     Reading plaintext input from stdin. (ctrl-d to end input)
 
 User enters 'hunter42' and hits ctrl-d.
 
-.. code-block::
+Result::
 
     new_user_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -341,9 +351,7 @@ A vault encrypted file is a UTF-8 encoded txt file.
 
 The file format includes a new line terminated header.
 
-For example:
-
-.. code-block:: bash
+For example::
 
     $ANSIBLE_VAULT;1.1;AES256
 
