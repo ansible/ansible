@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-ios_argument_spec = {
+ios_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -41,8 +41,11 @@ ios_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+ios_argument_spec = {
+    'provider': dict(type='dict', options=ios_provider_spec),
+}
+ios_argument_spec.update(ios_provider_spec)
 
 
 def get_argspec():
