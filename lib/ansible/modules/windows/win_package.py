@@ -217,7 +217,7 @@ EXAMPLES = r'''
     state: present
     expected_return_code: [0, 666, 3010]
 
-# See http://docs.oracle.com/javase/8/docs/technotes/guides/install/config.html#table_config_file_options 
+# See http://docs.oracle.com/javase/8/docs/technotes/guides/install/config.html#table_config_file_options
 # for further java installation options
 - name: Install Java JDK and turn off auto update feature
   win_package:
