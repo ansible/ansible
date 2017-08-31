@@ -167,7 +167,7 @@ the most popular are
 To be able to view the arguments as passed by Ansible to the module follow
 these steps.
 
-- Prefix the Ansible command with ``ANSIBLE_KEEP_REMOTE_FILES=1`` to get Ansible to keep the exec files on the server
+- Prefix the Ansible command with :envvar:`ANSIBLE_KEEP_REMOTE_FILES=1` to get Ansible to keep the exec files on the server
 - Log onto the Windows server using the same user Ansible executed the module as
 - Navigate to ``%TEMP%\..``, there should be a folder starting with ``ansible-tmp-``
 - Inside this folder open up the powershell script for the module

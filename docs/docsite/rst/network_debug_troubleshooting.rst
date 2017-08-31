@@ -51,7 +51,7 @@ Enabling Networking logging and how to read the logfile
 
 Ansible 2.3 features improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
-Because logging is very verbose it is disabled by default. It can be enabled via the ``ANSIBLE_LOG_PATH`` and ``ANISBLE_DEBUG`` options::
+Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANISBLE_DEBUG` options::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -143,7 +143,7 @@ Category "Unable to open shell"
 
 **Platforms:** Any
 
-The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable ``ANSIBLE_LOG_PATH`` to find the underlying issues.
+The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable :ref:`log_path` to find the underlying issues.
 
 
 
@@ -222,7 +222,7 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
+If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable :envvar:`ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
 .. code-block:: yaml
 
@@ -490,7 +490,7 @@ Add ``authorize: yes`` to the task. For example:
         authorize: yes
     register: result
 
-If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
+If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable :envvar:`ANSIBLE_NET_AUTHORIZE` will be used instead.
 
 
 Add `authorize: yes` to the task. For example:
@@ -527,7 +527,7 @@ Add `authorize: yes` to the task. For example:
    This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
 
 
-   This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
+   This information is available when :ref:`DEFAULT_LOG_PATH` is set see (FIXMELINKTOSECTION):
 
    .. code-block:: yaml
 

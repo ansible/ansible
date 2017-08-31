@@ -62,7 +62,7 @@ If you wish to change the port Ansible will use for the accelerated connection, 
       # default port is 5099
       accelerate_port: 10000
 
-The `accelerate_port` option can also be specified in the environment variable ACCELERATE_PORT, or in your `ansible.cfg` configuration::
+The `accelerate_port` option can also be specified in the environment variable :envvar:`ACCELERATE_PORT`, or in your `ansible.cfg` configuration::
 
     [accelerate]
     accelerate_port = 5099
