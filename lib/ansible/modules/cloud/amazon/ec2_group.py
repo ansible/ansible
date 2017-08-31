@@ -269,7 +269,7 @@ owner_id:
 
 import json
 import re
-from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY3
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.ec2 import get_aws_connection_info
@@ -579,18 +579,30 @@ def fix_port_and_protocol(permission):
 
 def validate_ipv4(module, ip_list):
     for addr in ip_list:
-        try:
-            ipaddress.IPv4Network(addr)
-        except ValueError as e:
-            module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+        while True:
+            try:
+                ipaddress.IPv4Network(addr)
+            except ValueError as e:
+                if 'Did you pass in a bytes (str in Python 2) instead of a unicode' in e.message and not PY3:
+                    addr = unicode(addr)
+                else:
+                    module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+            else:
+                break
 
 
 def validate_ipv6(module, ip_list):
     for addr in ip_list:
-        try:
-            ipaddress.IPv6Network(addr)
-        except ValueError as e:
-            module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+        while True:
+            try:
+                ipaddress.IPv6Network(addr)
+            except ValueError as e:
+                if 'Did you pass in a bytes (str in Python 2) instead of a unicode' in e.message and not PY3:
+                    addr = unicode(addr)
+                else:
+                    module.fail_json(msg="Invalid CIDR IP provided: %s" % e, exception=traceback.format_exc())
+            else:
+                break
 
 
 def main():
@@ -783,7 +795,7 @@ def main():
                 elif ip:
                     # Convert ip to list we can iterate over
                     if ip and not isinstance(ip, list):
-                        ip = [to_native(ip)]
+                        ip = [ip]
 
                     if HAS_IPADDRESS:
                         validate_ipv4(module, ip)
@@ -793,7 +805,7 @@ def main():
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
-                        ipv6 = [to_native(ipv6)]
+                        ipv6 = [ipv6]
 
                     if HAS_IPADDRESS:
                         validate_ipv6(module, ipv6)
@@ -855,7 +867,7 @@ def main():
                 elif ip:
                     # Convert ip to list we can iterate over
                     if not isinstance(ip, list):
-                        ip = [to_native(ip)]
+                        ip = [ip]
 
                     if HAS_IPADDRESS:
                         validate_ipv4(module, ip)
@@ -865,7 +877,7 @@ def main():
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
-                        ipv6 = [to_native(ipv6)]
+                        ipv6 = [ipv6]
 
                     if HAS_IPADDRESS:
                         validate_ipv6(module, ipv6)
