@@ -290,6 +290,8 @@ def compile_ipv6_regexp():
 
 
 def main():
+    command_keys = ['state', 'default', 'rule', 'logging']
+
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', choices=['enabled', 'disabled', 'reloaded', 'reset']),
@@ -313,8 +315,12 @@ def main():
         ),
         supports_check_mode=True,
         mutually_exclusive=[
-            ['app', 'proto', 'logging']
+            ['app', 'proto', 'logging'],
         ],
+        required_one_of=([command_keys]),
+        required_by=dict(
+            interface=('direction', ),
+        ),
     )
 
     cmds = []
@@ -394,16 +400,6 @@ def main():
         return major, minor, rev
 
     params = module.params
-
-    # Ensure at least one of the command arguments are given
-    command_keys = ['state', 'default', 'rule', 'logging']
-    commands = dict((key, params[key]) for key in command_keys if params[key])
-
-    if len(commands) < 1:
-        module.fail_json(msg="Not any of the command arguments %s given" % commands)
-
-    if (params['interface'] is not None and params['direction'] is None):
-        module.fail_json(msg="Direction must be specified when creating a rule on an interface")
 
     # Ensure ufw is available
     ufw_bin = module.get_bin_path('ufw', True)
