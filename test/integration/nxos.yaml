@@ -179,6 +179,24 @@
 
     - block:
       - include_role:
+          name: nxos_vpc_interface
+        when: "limit_to in ['*', 'nxos_vpc_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vpc_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vrf_af
+        when: "limit_to in ['*', 'nxos_vrf_af']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vrf_af' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_vtp_domain
         when: "limit_to in ['*', 'nxos_vtp_domain']"
       rescue:
