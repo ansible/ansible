@@ -59,12 +59,12 @@ class TestEosUserModule(TestEosModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_privilege(self):
-        set_module_args(dict(name='ansible', privilege=15))
-        commands = ['username ansible privilege 15']
-        self.execute_module(changed=True, commands=commands)
+        set_module_args(dict(name='ansible', privilege=15, configured_password='test'))
+        result = self.execute_module(changed=True)
+        self.assertIn('username ansible privilege 15', result['commands'])
 
     def test_eos_user_privilege_invalid(self):
-        set_module_args(dict(name='ansible', privilege=25))
+        set_module_args(dict(name='ansible', privilege=25, configured_password='test'))
         self.execute_module(failed=True)
 
     def test_eos_user_purge(self):
@@ -73,9 +73,9 @@ class TestEosUserModule(TestEosModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_role(self):
-        set_module_args(dict(name='ansible', role='test'))
-        commands = ['username ansible role test']
-        self.execute_module(changed=True, commands=commands)
+        set_module_args(dict(name='ansible', role='test', configured_password='test'))
+        result = self.execute_module(changed=True)
+        self.assertIn('username ansible role test', result['commands'])
 
     def test_eos_user_sshkey(self):
         set_module_args(dict(name='ansible', sshkey='test'))
