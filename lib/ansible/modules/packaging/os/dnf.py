@@ -96,6 +96,14 @@ options:
     choices: [ "yes", "no" ]
     version_added: "2.4"
 
+  allowerasing:
+    description:
+      - If C(yes) it allows  erasing  of  installed  packages to resolve dependencies.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
+
 notes: ["autoremove requires dnf >= 2.0.1"]
 # informational: requirements for nodes
 requirements:
@@ -323,11 +331,10 @@ def _install_remote_rpms(base, filenames):
         base.package_install(pkg)
 
 
-def ensure(module, base, state, names, autoremove):
+def ensure(module, base, state, names, autoremove, allow_erasing=False):
     # Accumulate failures.  Package management modules install what they can
     # and fail with a message about what they can't.
     failures = []
-    allow_erasing = False
 
     # Autoremove is called alone
     # Jump to remove path where base.autoremove() is run
@@ -491,6 +498,7 @@ def main():
             disable_gpg_check=dict(default=False, type='bool'),
             installroot=dict(default='/', type='path'),
             autoremove=dict(type='bool'),
+            allowerasing=dict(default=False, type='bool'),
         ),
         required_one_of=[['name', 'list', 'autoremove']],
         mutually_exclusive=[['name', 'list'], ['autoremove', 'list']],
@@ -526,7 +534,7 @@ def main():
             module, params['conf_file'], params['disable_gpg_check'],
             params['disablerepo'], params['enablerepo'], params['installroot'])
 
-        ensure(module, base, params['state'], params['name'], params['autoremove'])
+        ensure(module, base, params['state'], params['name'], params['autoremove'], params['allowerasing'])
 
 
 if __name__ == '__main__':
