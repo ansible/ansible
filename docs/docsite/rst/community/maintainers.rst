@@ -45,7 +45,7 @@ Issues for modules are routed to their maintainers via an automated process. Thi
 PR Workflow
 -----------
 
-Automated routing of pull requests is handled by a tool called [Ansibot](https://github.com/ansible/ansibullbot). (You could say that he moooo-ves things around.)
+Automated routing of pull requests is handled by a tool called [Ansibot](https://github.com/ansible/ansibullbot). 
 
 Being moderately familiar with how the workflow behind the bot operates can be helpful to you, and -- should things go awry -- your feedback can be helpful to the folks that continually help Ansibullbot to evolve.
 
