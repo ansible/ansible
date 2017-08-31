@@ -39,7 +39,7 @@ options:
             - Disabled
     traffic_routing_method:
         description:
-            - The traffic routing method of the Traffic Manager profile. Possible values include\: \'Performance\', \'Priority\', \'Weighted\', \'Geographic\'.
+            - The traffic routing method of the Traffic Manager profile. Possible values includes (Performance, Priority, Weighted, Geographic).
     dns_config:
         description:
             - The DNS settings of the Traffic Manager profile. This section includes
