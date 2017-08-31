@@ -39,13 +39,12 @@ from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
 
-eos_argument_spec = {
+eos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-
 
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
@@ -54,9 +53,12 @@ eos_argument_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'provider': dict(type='dict'),
     'transport': dict(choices=['cli', 'eapi'])
 }
+eos_argument_spec = {
+    'provider': dict(type='dict', options=eos_provider_spec),
+}
+eos_argument_spec.update(eos_provider_spec)
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {
