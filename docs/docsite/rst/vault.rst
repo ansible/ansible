@@ -1,5 +1,5 @@
 Ansible Vault
-=====
+=============
 
 .. contents:: Topics
 
