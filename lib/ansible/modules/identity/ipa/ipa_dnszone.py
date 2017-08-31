@@ -140,25 +140,22 @@ def main():
             zone_name=dict(type='str', required=True),
             ipa_prot=dict(
                 type='str',
-                required=False,
                 default='https',
                 choices=['http', 'https']
             ),
             ipa_host=dict(
                 type='str',
-                required=False,
                 default='ipa.example.com'
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
+            ipa_port=dict(type='int', default=443),
+            ipa_user=dict(type='str', default='admin'),
             ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
+            validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
