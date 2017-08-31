@@ -200,6 +200,11 @@ def map_obj_to_commands(updates, module):
             else:
                 add('no username %s nopassword' % want['name'])
 
+        if want.get('state') == 'present' and want.get('name'):
+            value = [want.get('configured_password'), want.get('nopassword'), want.get('sshkey')]
+            if all(v is None for v in value) is True:
+                module.fail_json(msg='configured_password, sshkey or nopassword should be provided')
+
     return commands
 
 
