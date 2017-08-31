@@ -39,19 +39,18 @@ options:
             - Disabled
     traffic_routing_method:
         description:
-            - The traffic routing method of the Traffic Manager profile. Possible
-            values include: 'Performance', 'Priority', 'Weighted', 'Geographic'.
+            - The traffic routing method of the Traffic Manager profile. Possible values include\: \'Performance\', \'Priority\', \'Weighted\', \'Geographic\'.
     dns_config:
         description:
             - The DNS settings of the Traffic Manager profile. This section includes
-            relative_name and ttl.
+              relative_name and ttl.
         required: true
         suboptions:
             ttl:
                 description:
                     - The DNS Time-To-Live (TTL), in seconds. This informs the
-                    local DNS resolvers and DNS clients how long to cache DNS
-                    responses provided by this Traffic Manager profile.
+                      local DNS resolvers and DNS clients how long to cache DNS
+                      responses provided by this Traffic Manager profile.
     monitor_config:
         description:
             - The endpoint monitoring settings of the Traffic Manager profile.
@@ -69,29 +68,29 @@ options:
             protocol:
                 description:
                     - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
-                    choices:
-                        - HTTP
-                        - HTTPS
-                        - TCP
+                choices:
+                    - HTTP
+                    - HTTPS
+                    - TCP
             port:
                 description:
                     - The TCP port used to probe for endpoint health.
             path:
                 description:
                     - The path relative to the endpoint domain name used to probe for
-                    endpoint health.
+                      endpoint health.
             interval_in_seconds:
                 description:
                     - The monitor interval for endpoints in this profile. This is the interval
-                    at which Traffic Manager will check the health of each endpoint in this profile.
+                      at which Traffic Manager will check the health of each endpoint in this profile.
             timeout_in_seconds:
                 description:
                     - The monitor timeout for endpoints in this profile. This is the time that
-                    Traffic Manager allows endpoints in this profile to response to the health check.
+                      Traffic Manager allows endpoints in this profile to response to the health check.
             tolerated_number_of_failures:
                 description:
                     - The number of consecutive failed health check that Traffic Manager tolerates
-                    before declaring an endpoint in this profile Degraded after the next failed health check.
+                      before declaring an endpoint in this profile Degraded after the next failed health check.
     state:
         description:
             - Assert the state of the resource group. Use 'present' to create or update and
