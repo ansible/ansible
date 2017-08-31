@@ -123,7 +123,7 @@ that can be included in :ref:`ansible-playbook` YAML files.
 
 To encrypt a string provided as a cli arg:
 
-.. code-block:: bash
+.. code-block::
 
     ansible-vault encrypt_string --vault-id a_password_file 'foobar' --name 'the_secret'
     some_foo: !vault |
@@ -136,7 +136,7 @@ To encrypt a string provided as a cli arg:
 
 To use a vault-id label for 'dev' vault-id:
 
-.. code-block:: bash
+.. code-block::
 
 
     ansible-vault encrypt_string --vault-id dev@password 'foooodev' --name 'the_dev_secret'
@@ -150,7 +150,7 @@ To use a vault-id label for 'dev' vault-id:
 
 To encrypt a string read from stdin and name it 'db_password':
 
-.. code-block:: bash
+.. code-block::
 
     echo 'letmein' | ansible-vault encrypt_string --vault-id dev@password --stdin-name 'db_password'
     Reading plaintext input from stdin. (ctrl-d to end input)
@@ -165,14 +165,14 @@ To encrypt a string read from stdin and name it 'db_password':
 To be prompted for a string to encrypt, encrypt it, and give it the name 'new_user_password':
 
 
-.. code-block:: bash
+.. code-block::
 
     ansible-vault encrypt_string --vault-id dev@./password --stdin-name 'new_user_password'
     Reading plaintext input from stdin. (ctrl-d to end input)
 
 User enters 'hunter42' and hits ctrl-d.
 
-.. code-block:: bash
+.. code-block::
 
     new_user_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
