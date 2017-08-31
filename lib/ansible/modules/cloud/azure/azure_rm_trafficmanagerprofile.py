@@ -137,7 +137,6 @@ EXAMPLES = '''
       azure_rm_trafficmanagerprofile:
         name: "contoso.com"
         state: "absent"
-
 '''
 
 RETURN = '''
