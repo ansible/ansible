@@ -392,8 +392,11 @@ def main():
 
     diff_ignore_lines = module.params['diff_ignore_lines']
 
+    if module.params['save']:
+        module.params['save_when'] = 'always'
+
     if module.params['save_when'] != 'never':
-        output = run_commands(module, ['show running-config', 'startup-config'])
+        output = run_commands(module, ['show running-config', 'show startup-config'])
 
         running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
