@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: apt_key
-author: 
+author:
 - Jayson Vantuyl (@jvantuyl)
 version_added: "1.0"
 short_description: Add or remove an apt key
