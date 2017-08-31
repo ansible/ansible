@@ -306,9 +306,7 @@ class Rhn(redhat.RegistrationBase):
         # Remove systemid file
         os.unlink(self.config['systemIdPath'])
 
-    def subscribe(self, channels=[]):
-        if len(channels) <= 0:
-            return
+    def subscribe(self, channels):
         if self._is_hosted():
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             new_channels = [item['channel_label'] for item in current_channels]
