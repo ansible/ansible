@@ -268,7 +268,7 @@ except:
     transaction_helpers = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
 
 # 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
@@ -329,10 +329,12 @@ def fetch_rpm_from_url(spec, module=None):
             package_file.write(data)
             data = rsp.read(BUFSIZE)
         package_file.close()
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         if module:
-            module.fail_json(msg="Failure downloading %s, %s" % (spec, e))
+            module.fail_json(msg="Failure downloading %s, %s" % (spec, to_native(e)))
+        else:
+            raise e
+
     return package_file.name
 
 def po_to_envra(po):
@@ -372,9 +374,8 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
             pkgs = e + m
             if not pkgs and not is_pkg:
                 pkgs.extend(my.returnInstalledPackagesByDep(pkgspec))
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Failure talking to yum: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="Failure talking to yum: %s" % to_native(e))
 
         return [po_to_envra(p) for p in pkgs]
 
@@ -433,9 +434,8 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
             pkgs = e + m
             if not pkgs:
                 pkgs.extend(my.returnPackagesByDep(pkgspec))
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Failure talking to yum: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="Failure talking to yum: %s" % to_native(e))
 
         return [po_to_envra(p) for p in pkgs]
 
@@ -481,9 +481,8 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
                 e, m, u = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
             updates = my.doPackageLists(pkgnarrow='updates').updates
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Failure talking to yum: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="Failure talking to yum: %s" % to_native(e))
 
         for pkg in pkgs:
             if pkg in updates:
@@ -533,9 +532,8 @@ def what_provides(module, repoq, req_spec, conf_file, qf=def_qf, en_repos=None, 
                 e, m, u = my.rpmdb.matchPackageNames([req_spec])
                 pkgs.extend(e)
                 pkgs.extend(m)
-        except Exception:
-            e = get_exception()
-            module.fail_json(msg="Failure talking to yum: %s" % e)
+        except Exception as e:
+            module.fail_json(msg="Failure talking to yum: %s" % to_native(e))
 
         return set([po_to_envra(p) for p in pkgs])
 
@@ -1209,12 +1207,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
                             rid = my.repos.getRepo(i)
                             a = rid.repoXML.repoid # nopep8 - https://github.com/ansible/ansible/pull/21475#pullrequestreview-22404868
                     current_repos = new_repos
-                except yum.Errors.YumBaseError:
-                    e = get_exception()
-                    module.fail_json(msg="Error setting/accessing repos: %s" % (e))
-        except yum.Errors.YumBaseError:
-            e = get_exception()
-            module.fail_json(msg="Error accessing repos: %s" % e)
+                except yum.Errors.YumBaseError as e:
+                    module.fail_json(msg="Error setting/accessing repos: %s" % to_native(e))
+        except yum.Errors.YumBaseError as e:
+            module.fail_json(msg="Error accessing repos: %s" % to_native(e))
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
