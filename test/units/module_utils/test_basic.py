@@ -738,15 +738,21 @@ class TestModuleUtilsBasic(ModuleTestCase):
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
 
+        sme = basic.AnsibleModule.selinux_mls_enabled
+        basic.AnsibleModule.selinux_mls_enabled = MagicMock()
+        basic.AnsibleModule.selinux_mls_enabled.return_value = False
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )
 
-        am.selinux_mls_enabled = MagicMock()
-        am.selinux_mls_enabled.return_value = False
         self.assertEqual(am.selinux_initial_context(), [None, None, None])
-        am.selinux_mls_enabled.return_value = True
+        basic.AnsibleModule.selinux_mls_enabled = MagicMock()
+        basic.AnsibleModule.selinux_mls_enabled.return_value = True
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
         self.assertEqual(am.selinux_initial_context(), [None, None, None, None])
+        basic.AnsibleModule.selinux_mls_enabled = sme
 
     def test_module_utils_basic_ansible_module_selinux_enabled(self):
         from ansible.module_utils import basic
