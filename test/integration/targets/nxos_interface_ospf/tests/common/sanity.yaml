@@ -46,7 +46,7 @@
 - block:
   - name: configure ospf interface
     nxos_interface_ospf: &configure
-      interface: "{{ testint }}"
+      interface: "{{ nxos_int1|upper }}"
       ospf: 1
       area: 1
       cost: 55
@@ -155,7 +155,7 @@
 
   - name: configure ospf interface loopback55
     nxos_interface_ospf: &configurelb
-      interface: Loopback55
+      interface: LOOPBACK55
       ospf: 1
       area: 1
       cost: 55
