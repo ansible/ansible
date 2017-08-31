@@ -109,7 +109,6 @@ extends_documentation_fragment:
 author:
     - "Julio Colon (@code4clouds)"
     - "Diego Casati (@diegocasati)"
-
 '''
 
 EXAMPLES = '''
@@ -141,6 +140,7 @@ EXAMPLES = '''
         state: "absent"
 
 '''
+
 RETURN = '''
 contains_resources:
     description: Contains associated resources.
