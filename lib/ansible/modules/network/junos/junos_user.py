@@ -70,7 +70,7 @@ options:
       - The C(purge) argument instructs the module to consider the
         users definition absolute.  It will remove any previously configured
         users on the device with the exception of the current defined
-        set of users.
+        set of aggregate.
     required: false
     default: false
   state:
