@@ -500,10 +500,23 @@ def authorize_ip(type, changed, client, group, groupRules,
                             client.authorize_security_group_egress(GroupId=group['GroupId'],
                                                                    IpPermissions=[ip_permission])
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
-                                             (type, thisip, group['GroupName'], e),
-                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-            changed = True
+                        if "(InvalidPermission.Duplicate)" in e.message:
+                            # There are host bits but only the network bits get authorized so it appears there is a conflict.
+                            # Allow graceful completion with a warning.
+                            actual_ip = re.search(r"(?<!\d\.)(?<!\d)(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}(?!\d|(?:\.\d))", e.message).group()
+                            rule_id = make_rule_key(type, rule, group['GroupId'], actual_ip)
+                            if rule_id in groupRules:
+                                del groupRules[rule_id]
+                            module.warn("It appears there are host bits set on the CIDR IP: %s." % e)
+                        else:
+                            module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
+                                                 (type, thisip, group['GroupName'], e),
+                                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                    else:
+                        changed = True
+            else:
+                # FIXME: If there are host bits set this may inaccurately show changed: true
+                changed = True
     return changed, ip_permission
 
 
