@@ -1,4 +1,4 @@
-Vault
+Ansible Vault
 =====
 
 .. contents:: Topics
