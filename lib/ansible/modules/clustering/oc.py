@@ -25,7 +25,7 @@ description:
       account. For example:
 
       $ oc create serviceaccount ansible-sa
-      $ oadm policy add-cluster-role-to-user cluster-admin system:serviceaccounts:ansible-sa"
+      $ oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:default:ansible-sa"
 module: oc
 options:
   host:
@@ -283,7 +283,7 @@ class OC(object):
         changed = True
         return response, changed
 
-    def replace(self, named_resource):
+    def replace(self, named_resource, check_mode):
         changed = False
 
         existing_definition, _ = self.get(named_resource)
@@ -291,7 +291,7 @@ class OC(object):
         new_definition, changed = self.merge(named_resource.definition,
                                              existing_definition,
                                              changed)
-        if changed:
+        if changed and not check_mode:
             named_resource.set_definition(new_definition)
             response, code = self.connect(named_resource.url(),
                                           'put',
@@ -400,7 +400,7 @@ def main():
         required_if=([['state', 'absent', ['kind']]]),
         required_one_of=([['kind', 'definition']]),
         no_log=False,
-        supports_check_mode=False
+        supports_check_mode=True
     )
     kind = None
     definition = None
@@ -439,14 +439,22 @@ def main():
     module.log(msg="URL %s" % resource.url())
 
     if state == 'present' and exists:
-        result, changed = oc.replace(resource)
         method = 'put'
+        result, changed = oc.replace(resource, module.check_mode)
     elif state == 'present' and not exists and definition is not None:
-        result, changed = oc.create(resource)
         method = 'create'
+        if not module.check_mode:
+            result, changed = oc.create(resource)
+        else:
+            changed = True
+            result = definition
     elif state == 'absent' and exists:
-        result, changed = oc.delete(resource)
         method = 'delete'
+        if not module.check_mode:
+            result, changed = oc.delete(resource)
+        else:
+            changed = True
+            result = definition
 
     facts = {}
 
