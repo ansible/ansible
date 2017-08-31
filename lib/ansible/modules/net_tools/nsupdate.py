@@ -321,8 +321,8 @@ class RecordManager(object):
                     self.module.fail_json(msg='value needed when state=present')
                 except dns.exception.SyntaxError:
                     self.module.fail_json(msg='Invalid/malformed value')
-                response = self.__do_update(update)
-                self.dns_rc = dns.message.Message.rcode(response)
+            response = self.__do_update(update)
+            self.dns_rc = dns.message.Message.rcode(response)
             if self.dns_rc == 0:
                 return 1
             else:
