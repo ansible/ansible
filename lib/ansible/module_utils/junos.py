@@ -38,16 +38,19 @@ JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
 FORMATS = frozenset(['xml', 'text', 'json'])
 CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
 
-junos_argument_spec = {
+junos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
     'transport': dict()
 }
+junos_argument_spec = {
+    'provider': dict(type='dict', options=junos_provider_spec),
+}
+junos_argument_spec.update(junos_provider_spec)
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {}
