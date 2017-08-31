@@ -634,6 +634,8 @@ class AzureInventory(object):
                     for ip_config in network_interface.ip_configurations:
                         host_vars['private_ip'] = ip_config.private_ip_address
                         host_vars['private_ip_alloc_method'] = ip_config.private_ip_allocation_method
+                        if self.use_private_ip:
+                            host_vars['ansible_host'] = ip_config.private_ip_address
                         if ip_config.public_ip_address:
                             public_ip_reference = self._parse_ref_id(ip_config.public_ip_address.id)
                             public_ip_address = self._network_client.public_ip_addresses.get(
