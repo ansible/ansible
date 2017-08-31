@@ -385,7 +385,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
             group_id = group['GroupId']
             groups[group_id] = group
             groups[group_name] = group
-        elif group_name in groups and (vpc_id is None or groups[group_name]['VpcId'] == vpc_id):
+        elif group_name in groups:
             group_id = groups[group_name]['GroupId']
         else:
             if not rule.get('group_desc', '').strip():
