@@ -59,7 +59,8 @@ def _maintain_symlinks(symlink_type, base_path):
         # only time we know that we're going to cache correctly
         with open(SYMLINK_CACHE, 'r') as f:
             symlink_data = json.loads(f.read())
-    except IOError as e:
+    except (IOError, OSError) as e:
+        # IOError on py2, OSError on py3.  Both have errno
         if e.errno == 2:
             # SYMLINKS_CACHE doesn't exist.  Fallback to trying to create the
             # cache now.  Will work if we're running directly from a git
