@@ -103,7 +103,7 @@
   assert:
     that:
       - "result.failed == true"
-      - "'Failed to validate the SSL certificate' in result.msg"
+      - "'Failed to validate the SSL certificate' in result.msg or (result.msg | match('hostname .* doesn.t match .*'))"
       - "stat_result.stat.exists == false"
 
 - name: Clean up any cruft from the results directory
