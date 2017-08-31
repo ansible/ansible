@@ -216,6 +216,15 @@ EXAMPLES = r'''
     arguments: '/q /norestart'
     state: present
     expected_return_code: [0, 666, 3010]
+
+# See http://docs.oracle.com/javase/8/docs/technotes/guides/install/config.html#table_config_file_options 
+# for further java installation options
+- name: Install Java JDK and turn off auto update feature
+  win_package:
+    path: "jdk-{{ jdk_major_version }}u{{ jdk_minor_version }}-windows-x64.exe"
+    product_id: "{{jdk_product_id}}"
+    state: present
+    arguments: INSTALL_SILENT=1 AUTO_UPDATE=0 WEB_JAVA=0 WEB_ANALYTICS=0 /s  > /L C:\ansible\log\java-installation.log
 '''
 
 RETURN = r'''
