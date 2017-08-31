@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Julio Colon, <julio.colon@microsoft.com>
+# Copyright (c) 2017 Julio Colon, <julio.colon@microsoft.com>
 #                    Diego Casati, <diego.casati@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_trafficmanager
+module: azure_rm_trafficmanagerprofile
 version_added: "2.4"
 short_description: Manage Azure Traffic Manager (profile).
 description:
@@ -24,12 +24,12 @@ options:
 
     name:
         description:
-             - The name of the Traffic Manager profile.
+            - The name of the Traffic Manager profile.
         default: false
         required: true
     resource_group:
         description:
-             - The name of the resource group containing the Traffic Manager profile.
+            - The name of the resource group containing the Traffic Manager profile.
         required: true
     profile_status:
         description:
@@ -56,42 +56,42 @@ options:
         description:
             - The endpoint monitoring settings of the Traffic Manager profile.
         required: true
-    suboptions:
-        status:
-            description:
-                - The profile-level monitoring status of the Traffic Manager profile.
+        suboptions:
+            status:
+                description:
+                    - The profile-level monitoring status of the Traffic Manager profile.
                 choices:
                     - CheckingEndpoints
                     - Online
                     - Degraded
                     - Disabled
                     - Inactive
-        protocol:
-            description:
-                - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
-                choices:
-                    - HTTP
-                    - HTTPS
-                    - TCP
-        port:
-            description:
-                - The TCP port used to probe for endpoint health.
-        path:
-            description:
-                - The path relative to the endpoint domain name used to probe for
-                endpoint health.
-        interval_in_seconds:
-            description:
-                - The monitor interval for endpoints in this profile. This is the interval
-                at which Traffic Manager will check the health of each endpoint in this profile.
-        timeout_in_seconds:
-            description:
-                - The monitor timeout for endpoints in this profile. This is the time that
-                Traffic Manager allows endpoints in this profile to response to the health check.
-        tolerated_number_of_failures:
-            description:
-                - The number of consecutive failed health check that Traffic Manager tolerates
-                before declaring an endpoint in this profile Degraded after the next failed health check.
+            protocol:
+                description:
+                    - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
+                    choices:
+                        - HTTP
+                        - HTTPS
+                        - TCP
+            port:
+                description:
+                    - The TCP port used to probe for endpoint health.
+            path:
+                description:
+                    - The path relative to the endpoint domain name used to probe for
+                    endpoint health.
+            interval_in_seconds:
+                description:
+                    - The monitor interval for endpoints in this profile. This is the interval
+                    at which Traffic Manager will check the health of each endpoint in this profile.
+            timeout_in_seconds:
+                description:
+                    - The monitor timeout for endpoints in this profile. This is the time that
+                    Traffic Manager allows endpoints in this profile to response to the health check.
+            tolerated_number_of_failures:
+                description:
+                    - The number of consecutive failed health check that Traffic Manager tolerates
+                    before declaring an endpoint in this profile Degraded after the next failed health check.
     state:
         description:
             - Assert the state of the resource group. Use 'present' to create or update and
@@ -105,7 +105,6 @@ options:
 extends_documentation_fragment:
     - azure
     - azure_tags
-
 author:
     - "Julio Colon (@code4clouds)"
     - "Diego Casati (@diegocasati)"
@@ -142,11 +141,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-contains_resources:
-    description: Contains associated resources.
-    returned: always
-    type: bool
-    sample: True
 state:
     description: Current state of the resource group.
     returned: always
@@ -163,13 +157,13 @@ state:
     }
 '''
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.trafficmanager.models import DnsConfig, Profile, MonitorConfig, Endpoint
 except ImportError:
     pass
-
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 
 def trafficmanagerprofile_group_to_dict(tm):
