@@ -1,5 +1,8 @@
+*************************
 Community Code of Conduct
-=========================
+*************************
+
+.. contents:: Topics
 
 Every community can be strengthened by a diverse variety of viewpoints, insights,
 opinions, skillsets, and skill levels. However, with diversity comes the potential for
@@ -80,7 +83,8 @@ documentation thoroughly. We are happy to answer questions, provide strategic gu
 and suggest effective workflows, but we are not here to do your job for you.
 
 Anti-harassment policy
-----------------------
+======================
+
 Harassment includes (but is not limited to) all of the following behaviors:
 
 - Offensive comments related to gender (including gender expression and identity), age, sexual orientation, disability, physical appearance, body size, race, and religion
@@ -106,7 +110,8 @@ something after you have been asked to stop, and all community members are expec
 comply with such requests immediately.
 
 Policy violations
------------------
+=================
+
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by
 contacting `codeofconduct@ansible.com <mailto:codeofconduct@ansible.com>`_, to any channel
 operator in the community IRC channels, or to the local organizers of an event. Meetup

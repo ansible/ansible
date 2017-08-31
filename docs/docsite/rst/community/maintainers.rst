@@ -1,12 +1,16 @@
+****************************
 Module Maintainer Guidelines
-============================
+****************************
+
+.. contents:: Topics
 
 Thank you for being a maintainer of one Ansible's community modules! This guide provides module maintainers an overview of their responsibilities, resources for additional information, and links to helpful tools.
 
 In addition to the information below, module maintainers should be familiar with:
-* General Ansible community development practices (http://docs.ansible.com/ansible/community.html)
-* Documentation on module development (http://docs.ansible.com/ansible/developing_modules.html)
-* Any namespace-specific module guidelines (identified as GUIDELINES.md in the appropriate file tree).
+
+* :ref:`General Ansible community development practices <../community>`
+* Documentation on :ref:`module development <developing_modules.html>`
+
 
 Maintainer Responsibilities
 ===========================
@@ -41,7 +45,7 @@ Issues for modules are routed to their maintainers via an automated process. Thi
 PR Workflow
 -----------
 
-Automated routing of pull requests is handled by a tool called [Ansibot](https://github.com/ansible/ansibullbot). (You could say that he moooo-ves things around.) 
+Automated routing of pull requests is handled by a tool called [Ansibot](https://github.com/ansible/ansibullbot). 
 
 Being moderately familiar with how the workflow behind the bot operates can be helpful to you, and -- should things go awry -- your feedback can be helpful to the folks that continually help Ansibullbot to evolve.
 
