@@ -64,6 +64,11 @@ options:
         set that setting to the given value.
     required: false
     default: null
+  state:
+    description:
+      - Specify if a config should be C(set) or C(unset).
+    required: false
+    default: null
 '''
 
 EXAMPLES = '''
@@ -127,6 +132,18 @@ EXAMPLES = '''
 - git_config:
     list_all: yes
     repo: /path/to/repo.git
+
+# Unset the global color.ui setting
+- git_config:
+    name: color.ui
+    state: unset
+
+# Unset a local setting
+- git_config:
+    name: core.editor
+    state: unset
+    scope: local
+    repo: /path/to/repo
 '''
 
 RETURN = '''
@@ -157,9 +174,10 @@ def main():
             name=dict(type='str'),
             repo=dict(type='path'),
             scope=dict(required=False, type='str', choices=['local', 'global', 'system']),
-            value=dict(required=False)
+            value=dict(required=False),
+            state=dict(required=False, choices=['set', 'unset'])
         ),
-        mutually_exclusive=[['list_all', 'name'], ['list_all', 'value']],
+        mutually_exclusive=[['list_all', 'name'], ['list_all', 'value'], ['list_all', 'state']],
         required_if=[('scope', 'local', ['repo'])],
         required_one_of=[['list_all', 'name']],
         supports_check_mode=True,
@@ -188,6 +206,11 @@ def main():
     else:
         new_value = None
 
+    if params['state'] == "unset":
+        config_state = params['state']
+    else:
+        config_state = None
+
     args = [git_path, "config", "--includes"]
     if params['list_all']:
         args.append('-l')
@@ -209,9 +232,19 @@ def main():
     if params['list_all'] and scope and rc == 128 and 'unable to read config file' in err:
         # This just means nothing has been set at the given scope
         module.exit_json(changed=False, msg='', config_values={})
-    elif rc >= 2:
+    elif rc >= 2 and not config_state:
         # If the return code is 1, it just means the option hasn't been set yet, which is fine.
         module.fail_json(rc=rc, msg=err, cmd=' '.join(args))
+
+    if config_state and out:
+        # if the setting is present, insert --unset in args list and .run_command
+        old_val = out.rstrip()
+        args.insert(-1, "--" + config_state)
+        (rc, out, err) = module.run_command(' '.join(args), cwd=dir)
+        module.exit_json(changed=True, msg="Unsetting %s:%s" % (name, old_val))
+    elif config_state:
+        # if the setting is not present, exit with changed=False
+        module.exit_json(changed=False, msg="")
 
     if params['list_all']:
         values = out.rstrip().splitlines()
