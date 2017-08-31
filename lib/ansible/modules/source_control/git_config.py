@@ -69,6 +69,7 @@ options:
       - Specify if a config should be C(set) or C(unset).
     required: false
     default: null
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
