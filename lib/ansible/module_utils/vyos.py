@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-vyos_argument_spec = {
+vyos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
 
@@ -41,8 +41,11 @@ vyos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+vyos_argument_spec = {
+    'provider': dict(type='dict', options=vyos_provider_spec),
+}
+vyos_argument_spec.update(vyos_provider_spec)
 
 
 def get_argspec():
