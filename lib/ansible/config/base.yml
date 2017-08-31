@@ -1047,32 +1047,29 @@ DEFAULT_VAR_COMPRESSION_LEVEL:
   yaml: {key: defaults.var_compression_level}
 DEFAULT_VAULT_ID_MATCH:
   default: False
-  desc: 'If true, decrypting vaults with a vault id will only try the password from the matching vault-id'
+  description: 'If true, decrypting vaults with a vault id will only try the password from the matching vault-id'
   env: [{name: ANSIBLE_VAULT_ID_MATCH}]
   ini:
   - {key: vault_id_match, section: defaults}
-  vars: []
   yaml: {key: defaults.vault_id_match}
 DEFAULT_VAULT_IDENTITY:
   default: default
-  desc: 'TODO: write it'
+  description: 'The label to use for the default vault id label in cases where a vault id label is not provided'
   env: [{name: ANSIBLE_VAULT_IDENTITY}]
   ini:
   - {key: vault_identity, section: defaults}
-  vars: []
   yaml: {key: defaults.vault_identity}
 DEFAULT_VAULT_IDENTITY_LIST:
   default: []
-  desc: 'A list of vault-ids to use by default. Equivalent to multiple --vault-id args. Vault-ids are tried in order.'
+  description: 'A list of vault-ids to use by default. Equivalent to multiple --vault-id args. Vault-ids are tried in order.'
   env: [{name: ANSIBLE_VAULT_IDENTITY_LIST}]
   ini:
   - {key: vault_identity_list, section: defaults}
   type: list
-  vars: []
   yaml: {key: defaults.vault_identity_list}
 DEFAULT_VAULT_PASSWORD_FILE:
   default: ~
-  description: 'TODO: write it'
+  description: 'The vault password file to use. Equivalent to --vault-password-file or --vault-id'
   env: [{name: ANSIBLE_VAULT_PASSWORD_FILE}]
   ini:
   - {key: vault_password_file, section: defaults}
