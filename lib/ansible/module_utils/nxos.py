@@ -39,7 +39,7 @@ from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
 
-nxos_argument_spec = {
+nxos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
 
@@ -51,9 +51,12 @@ nxos_argument_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'provider': dict(type='dict'),
     'transport': dict(choices=['cli', 'nxapi'])
 }
+nxos_argument_spec = {
+    'provider': dict(type='dict', options=nxos_provider_spec),
+}
+nxos_argument_spec.update(nxos_provider_spec)
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {
