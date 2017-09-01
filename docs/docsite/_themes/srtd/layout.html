@@ -14,6 +14,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <script type="text/javascript" src="//www.redhat.com/dtm.js"></script>
+
   <!-- Google Tag Manager Data Layer -->
   <script>
    dataLayer = [];
@@ -149,18 +151,23 @@
 
   <div class="wy-grid-for-nav">
 
-    {# SIDE NAV, TOGGLES ON MOBILE #}
+    {# SIDE NAV TOGGLES ON MOBILE #}
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
 
       <div style="background-color:#5bbdbf;height=80px;margin:'auto auto auto auto'">
-        <a class="DocSiteProduct-header DocSiteProduct-header--core"
-          href="http://docs.ansible.com/ansible/">
-          <div class="DocSiteProduct-productName">
-            <div class="DocSiteProduct-logoText">
-              ANSIBLE
+        <a class="DocSiteProduct-header DocSiteProduct-header--core" href="http://docs.ansible.com">
+            <div class="DocSiteProduct-productName">
+                <div class="DocSiteProduct-logoText">
+                    Ansible Core   
+                    <div class="DocSiteProduct-CurrentVersion" align="right">
+                      v2.3
+                  </div>
+                </div>
             </div>
-          </div>
         </a>
+        
+
+          <div class="DocSiteProduct-CheckVersionPara">For previous versions, see the  <a class="DocSiteProduct-versionheader" href="http://docs.ansible.com/">documentation archive.</a></div> 
       </div>
 
       <div id="menu-id" class="wy-menu wy-menu-vertical" data-spy="affix">
@@ -246,6 +253,10 @@ _hsq.push(["setContentType", "standard-page"]);
         })(document, "script", "hs-analytics",300000);
 </script>
 <!-- end analytics -->
-
+<script type="text/javascript">
+if (("undefined" !== typeof _satellite) && ("function" === typeof _satellite.pageBottom)) {
+_satellite.pageBottom();
+}
+</script>
 </body>
 </html>
