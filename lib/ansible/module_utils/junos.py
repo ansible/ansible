@@ -38,16 +38,19 @@ JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
 FORMATS = frozenset(['xml', 'text', 'json'])
 CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
 
-junos_argument_spec = {
+junos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
     'transport': dict()
 }
+junos_argument_spec = {
+    'provider': dict(type='dict', options=junos_provider_spec),
+}
+junos_argument_spec.update(junos_provider_spec)
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {}
@@ -58,7 +61,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in junos_argument_spec:
         if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
@@ -70,11 +72,6 @@ def check_args(module, warnings):
     for key in ARGS_DEFAULT_VALUE:
         if not module.params.get(key, None):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def _validate_rollback_id(module, value):

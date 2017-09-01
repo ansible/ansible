@@ -53,7 +53,7 @@ except ImportError:
 _DEVICE_CLI_CONNECTION = None
 _DEVICE_NC_CONNECTION = None
 
-ce_argument_spec = {
+ce_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -61,9 +61,12 @@ ce_argument_spec = {
     'use_ssl': dict(type='bool'),
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True),
-    'transport': dict(choices=['cli'])
+    'transport': dict(choices=['cli']),
 }
+ce_argument_spec = {
+    'provider': dict(type='dict', options=ce_provider_spec),
+}
+ce_argument_spec.update(ce_provider_spec)
 
 
 def check_args(module, warnings):

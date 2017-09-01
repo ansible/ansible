@@ -38,27 +38,24 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-sros_argument_spec = {
+sros_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict')
 }
+sros_argument_spec = {
+    'provider': dict(type='dict', options=sros_provider_spec),
+}
+sros_argument_spec.update(sros_provider_spec)
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in sros_argument_spec:
         if key != 'provider' and module.params[key]:
             warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_config(module, flags=[]):
