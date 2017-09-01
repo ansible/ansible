@@ -50,6 +50,12 @@ Common Options
 Environment Variables
 =====================
 
+.. envvar:: ANSIBLE_CONFIG
+
+
+    Override the default ansible config file
+
+
 {% for config_option in config_options %}
 {% for env_var_map in config_options[config_option]['env'] %}
 .. envvar:: {{env_var_map['name']}}
