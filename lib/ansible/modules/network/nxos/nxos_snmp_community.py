@@ -32,6 +32,8 @@ description:
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
+notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
 options:
     community:
         description:
@@ -78,9 +80,7 @@ commands:
 '''
 
 
-import re
-
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
@@ -91,7 +91,7 @@ def execute_show_command(command, module):
         'output': 'json',
     }
 
-    return run_commands(module, [command])
+    return run_commands(module, command)
 
 
 def apply_key_map(key_map, table):
@@ -117,9 +117,7 @@ def flatten_list(command_lists):
 
 
 def get_snmp_groups(module):
-    command = 'show snmp group'
-    data = execute_show_command(command, module)[0]
-
+    data = execute_show_command('show snmp group', module)[0]
     group_list = []
 
     try:
@@ -127,14 +125,13 @@ def get_snmp_groups(module):
         for group in group_table:
             group_list.append(group['role_name'])
     except (KeyError, AttributeError):
-        return group_list
+        pass
 
     return group_list
 
 
 def get_snmp_community(module, find_filter=None):
-    command = 'show snmp community'
-    data = execute_show_command(command, module)[0]
+    data = execute_show_command('show snmp community', module)[0]
 
     community_dict = {}
 
@@ -225,6 +222,7 @@ def main():
     delta = dict(set(proposed.items()).difference(existing.items()))
 
     commands = []
+
     if state == 'absent':
         if existing:
             command = "no snmp-server community {0}".format(community)
@@ -239,6 +237,7 @@ def main():
         results['changed'] = True
         if not module.check_mode:
             load_config(module, cmds)
+
         if 'configure' in cmds:
             cmds.pop(0)
         results['commands'] = cmds
@@ -248,4 +247,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
