@@ -185,6 +185,7 @@ from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text, to_native
 
 if sys.version_info < (2, 7):
     from xml.parsers.expat import ExpatError
@@ -228,7 +229,7 @@ def filter_delete_statements(module, candidate):
     if match is None:
         # Could not find configuration-set in reply, perhaps device does not support it?
         return candidate
-    config = str(match.text)
+    config = to_native(match.text, encoding='latin1')
 
     modified_candidate = candidate[:]
     for index, line in reversed(list(enumerate(candidate))):
@@ -321,7 +322,7 @@ def main():
         else:
             module.fail_json(msg='unable to retrieve device configuration')
 
-        result['__backup__'] = str(match.text).strip()
+        result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
         if not module.check_mode:
