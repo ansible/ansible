@@ -83,7 +83,7 @@ When used in this manner, the order of execution for your playbook is as follows
 
 - Any ``pre_tasks`` defined in the play.
 - Any handlers triggered so far will be run.
-- Each role listed in ``roles`` will execute in turn. Any role dependencies defined in the roles ``meta/main.yml`` will be run first.
+- Each role listed in ``roles`` will execute in turn. Any role dependencies defined in the roles ``meta/main.yml`` will be run first, subject to tag filtering and conditionals.
 - Any ``tasks`` defined in the play.
 - Any handlers triggered so far will be run.
 - Any ``post_tasks`` defined in the play.
@@ -93,7 +93,7 @@ When used in this manner, the order of execution for your playbook is as follows
     See below for more information regarding role dependencies.
 
 .. note::
-    If using tags with tasks (described later as a means of only running part of a playbook), be sure to also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre and post tasks are used for monitoring outage window control or load balancing.
+    If using tags with tasks (described later as a means of only running part of a playbook), be sure to also tag your pre_tasks, post_tasks, and role dependencies and pass those along as well, especially if the pre/post tasks and role dependencies are used for monitoring outage window control or load balancing.
 
 As of Ansible 2.4, you can now use roles inline with any other tasks using ``import_role`` or ``include_role``::
 
