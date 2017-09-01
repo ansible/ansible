@@ -44,7 +44,7 @@ WARNING_PROMPTS_RE = [
     r"[\r\n]?\[yes/no\]:\s?$"
 ]
 
-dellos6_argument_spec = {
+dellos6_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -53,21 +53,18 @@ dellos6_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+dellos6_argument_spec = {
+    'provider': dict(type='dict', options=dellos6_provider_spec),
+}
+dellos6_argument_spec.update(dellos6_provider_spec)
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in dellos6_argument_spec:
         if key != 'provider' and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                             'removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_config(module, flags=[]):
