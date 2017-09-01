@@ -576,7 +576,7 @@ DEFAULT_FACT_PATH:
   description:
     - This option allows you to globally configure a custom path for 'local_facts' for the implied M(setup) task when using fact gathering.
     - "If not set, it will fallback to the default from the M(setup) module: ``/etc/ansible/facts.d``."
-    -  This does **not ** affect  user defined tasks that use the M(setup) module.
+    - This does **not ** affect  user defined tasks that use the M(setup) module.
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
@@ -1013,7 +1013,6 @@ DEFAULT_STRATEGY_PLUGIN_PATH:
   name: Strategy Plugins Path
   description: Colon separated paths in which Ansible will search for Strategy Plugins.
   default: ~/.ansible/plugins/strategy:/usr/share/ansible/plugins/strategy
-  description: 'TODO: write it'
   env: [{name: ANSIBLE_STRATEGY_PLUGINS}]
   ini:
   - {key: strategy_plugins, section: defaults}
@@ -1120,7 +1119,6 @@ DEFAULT_TEST_PLUGIN_PATH:
   name: Jinja2 Test Plugins Path
   description: Colon separated paths in which Ansible will search for Jinja2 Test Plugins.
   default: ~/.ansible/plugins/test:/usr/share/ansible/plugins/test
-  description: 'TODO: write it'
   env: [{name: ANSIBLE_TEST_PLUGINS}]
   ini:
   - {key: test_plugins, section: defaults}
