@@ -1151,7 +1151,7 @@ DEFAULT_UNDEFINED_VAR_BEHAVIOR:
   - {key: error_on_undefined_vars, section: defaults}
   type: boolean
 DEFAULT_VARS_PLUGIN_PATH:
-  name: Vars plugins path
+  name: Vars Plugins Path
   default: ~/.ansible/plugins/vars:/usr/share/ansible/plugins/vars
   description: Colon separated paths in which Ansible will search for Vars Plugins.
   env: [{name: ANSIBLE_VARS_PLUGINS}]
@@ -1288,7 +1288,7 @@ GALAXY_ROLE_SKELETON:
   - {key: role_skeleton, section: galaxy}
   type: path
 GALAXY_ROLE_SKELETON_IGNORE:
-  name: Galaxy skeleten ignore
+  name: Galaxy skeleton ignore
   default: [^.git$, ^.*/.git_keep$]
   description: patterns of files to ignore inside a galaxy role skeleton directory
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE}]
