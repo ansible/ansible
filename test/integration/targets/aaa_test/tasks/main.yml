@@ -1,0 +1,7 @@
+- include: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}-python{{ ansible_python_version.split(".")[0] }}.yml'
+        - '{{ ansible_distribution }}-python{{ ansible_python_version.split(".")[0] }}.yml'
+        - '{{ ansible_os_family }}-python{{ ansible_python_version.split(".")[0] }}.yml'
+        - 'default-python{{ ansible_python_version.split(".")[0] }}.yml'
