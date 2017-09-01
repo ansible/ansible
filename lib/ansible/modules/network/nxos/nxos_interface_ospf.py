@@ -403,7 +403,6 @@ def main():
     if re.match(r'(port-channel|loopback)', module.params['interface'], re.I):
         module.params['interface'] = module.params['interface'].lower()
     else:
-        module.params['interface'] = module.params['interface'].lower()
         module.params['interface'] = module.params['interface'].capitalize()
 
     warnings = list()
