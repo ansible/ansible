@@ -124,7 +124,7 @@ def main():
         route_profile_l3_out=dict(type='str'),
         scope=dict(type='str', choices=['private', 'public', 'shared']),
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
-        state=dict(type='str', choices=['absent', 'present', 'query']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
