@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+shippable.py
+
 retry.py apt-get update -qq
 retry.py apt-get install -qq \
     shellcheck \
