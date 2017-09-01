@@ -1075,6 +1075,14 @@ files:
   test/sanity/validate-modules:
     keywords:
     - validate-modules
+  test/:
+    labels: test_pull_requests
+  docs/:
+    labels: docs_pull_request
+    notify:
+      - dharmabumstead
+  packaging/:
+    labels: packaging
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
