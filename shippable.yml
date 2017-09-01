@@ -1,5 +1,7 @@
 language: python
 
+# trigger all tests
+
 env:
   matrix:
     - TEST=none
