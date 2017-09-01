@@ -20,7 +20,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 module: sf_facts
@@ -46,7 +46,10 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg: Gathered facts for SolidFire cluster.
+msg: 
+    description: Gathered facts for Solidfire cluster.
+    returned: always
+    type: string
 """
 
 import ansible.module_utils.netapp as netapp_utils
@@ -70,15 +73,13 @@ class SolidFireFacts(object):
     * ListVirtualVolumes
     * ListSnapshots
     * ListClusterFaults
-    * ListEvents
     """
 
     def __init__(self):
         self.state = {}
         self.cluster_config = {}
         self.version_info = {}
-        self.facts = {'cluster_info': self.cluster_config, 'version_info': self.version_info,
-                      'state': self.state}
+        self.facts = {}
 
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.module = AnsibleModule(
@@ -107,7 +108,6 @@ class SolidFireFacts(object):
                          'virtual-volumes': {self.sfe.list_virtual_volumes: {}},
                          'snapshots': {self.sfe.list_snapshots: {}},
                          'cluster-faults': {self.sfe.list_cluster_faults: {}},
-                         'events': {self.sfe.list_events: {}},
                          }
         return fact_metadata
 
@@ -116,7 +116,7 @@ class SolidFireFacts(object):
         try:
             method, args = api.popitem()
             data = method(**args)
-            self.facts[name] = data.to_json()
+            self.facts.update(data.to_json())
         except:
             problem = get_exception()
             if problem.error_name and problem.error_name == 'xFeatureNotEnabled':
