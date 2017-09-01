@@ -56,8 +56,11 @@ matrix:
     - env: TEST=linux/ubuntu1604/3
     - env: TEST=linux/ubuntu1604py3/3
 
-    - env: TEST=cloud/ubuntu1604
-    - env: TEST=cloud/ubuntu1604py3
+    - env: TEST=cloud/ubuntu1604/1
+    - env: TEST=cloud/ubuntu1604py3/1
+
+    - env: TEST=cloud/ubuntu1604/2
+    - env: TEST=cloud/ubuntu1604py3/2
 
 branches:
   except:
