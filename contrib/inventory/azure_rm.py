@@ -412,7 +412,9 @@ class AzureRM(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id, base_url=self._cloud_environment.endpoints.resource_manager)
+            self._network_client = NetworkManagementClient(self.azure_credentials,
+                                                           self.subscription_id,
+                                                           base_url=self._cloud_environment.endpoints.resource_manager)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -429,7 +431,9 @@ class AzureRM(object):
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id, base_url=self._cloud_environment.endpoints.resource_manager)
+            self._compute_client = ComputeManagementClient(self.azure_credentials,
+                                                           self.subscription_id,
+                                                           base_url=self._cloud_environment.endpoints.resource_manager)
             self._register('Microsoft.Compute')
         return self._compute_client
 
