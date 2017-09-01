@@ -187,14 +187,14 @@ Google Cloud Platform
 
 Network Roadmap
 ---------------
-- Removal of ``*_template`` modules
-- Distributed Continuous Integration Infrastructure
-- RPC Connection Plugin
-- Module Work
+- Removal of ``*_template`` modules **(done)**
+- Distributed Continuous Integration Infrastructure **(done)**
+- RPC Connection Plugin **(done)**
+- Module Work 
 
-  - Declarative intent modules
-  - OpenVSwitch
-  - Minimal Viable Platform Agnostic Modules
+  - Declarative intent modules **(done)**
+  - OpenVSwitch **(done)**
+  - Minimal Viable Platform Agnostic Modules **(done)**
 
 Contributor Quality of Life
 ---------------------------
