@@ -503,11 +503,35 @@ def authorize_ip(type, changed, client, group, groupRules,
                         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
                             # There are host bits but only the network bits get authorized so it appears there is a conflict.
                             # Allow graceful completion with a warning.
-                            actual_ip = re.search(r"(?<!\d\.)(?<!\d)(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}(?!\d|(?:\.\d))", e.response['Error']['Message']).group()
+                            found_actual_ip = re.search(r"(?<!\d\.)(?<!\d)(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}(?!\d|(?:\.\d))", e.response['Error']['Message'])
+                            if not found_actual_ip:
+                                # sad
+                                _x = "[0-9A-Fa-f]{1,4}"
+                                _y = "(25[0-5]|2[0-4]d|1dd|[1-9]?d)"
+
+                                ipv6_cidr_re = "(((%s:){7}(%s|:))|(" % (_x, _x) + \
+                                    "(%s:){6}(:%s|(%s(.%s){3})|:))|(" % (_x, _x, _y, _y) + \
+                                    "(%s:){5}(((:%s){1,2})|:(%s(.%s){3})|:))|(" % (_x, _x, _y, _y) + \
+                                    "(%s:){4}(((:%s){1,3})|((:%s)?:(%s(.%s){3}))|:))|(" % (_x, _x, _x, _y, _y) + \
+                                    "(%s:){3}(((:%s){1,4})|((:%s){0,2}:(%s(.%s){3}))|:))|(" % (_x, _x, _x, _y, _y) + \
+                                    "(%s:){2}(((:%s){1,5})|((:%s){0,3}:(%s(.%s){3}))|:))|(" % (_x, _x, _x, _y, _y) + \
+                                    "(%s:){1}(((:%s){1,6})|((:%s){0,4}:(%s(.%s){3}))|:))|" % (_x, _x, _x, _y, _y) + \
+                                    "(:(((:%s){1,7})|((:%s){0,5}:(%s(.%s){3}))|:))" % (_x, _x, _y, _y) + \
+                                    ")(%.+)?s*(\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8]){0,3})"
+
+                                found_actual_ip = re.search(r"%s" % ipv6_cidr_re, e.response['Error']['Message'])
+
+                            if not found_actual_ip:
+                                module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
+                                                     (type, thisip, group['GroupName'], e),
+                                                 exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+                            actual_ip = found_actual_ip.group()
                             rule_id = make_rule_key(type, rule, group['GroupId'], actual_ip)
                             if rule_id in groupRules:
                                 del groupRules[rule_id]
-                            module.warn("It appears there are host bits set on the CIDR IP: %s." % e)
+                            module.warn("One of your CIDR addresses has host bits set. To get rid of this warning, "
+                                        "check the network mask and make sure that only network bits are set. %s." % e)
                         else:
                             module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
                                                  (type, thisip, group['GroupName'], e),
