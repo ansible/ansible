@@ -336,13 +336,8 @@ class VariableManager:
             # finally, the facts caches for this host, if it exists
             try:
                 host_facts = wrap_var(self._fact_cache.get(host.name, {}))
-                if not C.ONLY_NAMESPACE_FACTS:
-                    # allow facts to polute main namespace
-                    all_vars = combine_vars(all_vars, host_facts)
-
-                # always return namespaced facts
-                all_vars = combine_vars(all_vars, {'ansible_facts': host_facts})
-
+                # push facts to main namespace
+                all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
 
