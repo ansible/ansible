@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
@@ -84,7 +83,6 @@ options:
         required: true
         default: present
         choices: ['present','absent']
-
 '''
 
 EXAMPLES = '''
@@ -93,67 +91,29 @@ EXAMPLES = '''
     snmp_host: 3.3.3.3
     community: TESTING
     state: present
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"community": "TESTING", "snmp_host": "3.3.3.3",
-            "snmp_type": "trap", "version": "v2c", "vrf_filter": "one_more_vrf"}
-existing:
-    description: k/v pairs of existing snmp host
-    returned: always
-    type: dict
-    sample: {"community": "TESTING", "snmp_type": "trap",
-            "udp": "162", "v3": "noauth", "version": "v2c",
-            "vrf": "test_vrf", "vrf_filter": ["test_vrf",
-            "another_test_vrf"]}
-end_state:
-    description: k/v pairs of switchport after module execution
-    returned: always
-    type: dict
-    sample: {"community": "TESTING", "snmp_type": "trap",
-            "udp": "162", "v3": "noauth", "version": "v2c",
-            "vrf": "test_vrf", "vrf_filter": ["test_vrf",
-            "another_test_vrf", "one_more_vrf"]}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["snmp-server host 3.3.3.3 filter-vrf another_test_vrf"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
+def execute_show_command(command, module):
+    command = {
+        'command': command,
+        'output': 'json',
+    }
 
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
+    return run_commands(module, command)
 
 
 def apply_key_map(key_map, table):
@@ -169,9 +129,18 @@ def apply_key_map(key_map, table):
     return new_dict
 
 
+def flatten_list(command_lists):
+    flat_command_list = []
+    for command in command_lists:
+        if isinstance(command, list):
+            flat_command_list.extend(command)
+        else:
+            flat_command_list.append(command)
+    return flat_command_list
+
+
 def get_snmp_host(host, module):
-    command = 'show snmp host'
-    body = execute_show_command(command, module)
+    body = execute_show_command('show snmp host', module)
 
     host_map = {
         'port': 'udp',
@@ -192,19 +161,19 @@ def get_snmp_host(host, module):
 
             for each in resource_table:
                 key = str(each['host'])
-                src = each.get('src_intf', None)
+                src = each.get('src_intf')
                 host_resource = apply_key_map(host_map, each)
 
                 if src:
                     host_resource['src_intf'] = src.split(':')[1].strip()
 
-                vrf_filt = each.get('TABLE_vrf_filters', None)
+                vrf_filt = each.get('TABLE_vrf_filters')
                 if vrf_filt:
                     vrf_filter = vrf_filt['ROW_vrf_filters']['vrf_filter'].split(':')[1].split(',')
                     filters = [vrf.strip() for vrf in vrf_filter]
                     host_resource['vrf_filter'] = filters
 
-                vrf = each.get('vrf', None)
+                vrf = each.get('vrf')
                 if vrf:
                     host_resource['vrf'] = vrf.split(':')[1].strip()
                 resource[key] = host_resource
@@ -212,7 +181,7 @@ def get_snmp_host(host, module):
         except (KeyError, AttributeError, TypeError):
             return resource
 
-        find = resource.get(host, None)
+        find = resource.get(host)
 
         if find:
             fix_find = {}
@@ -222,10 +191,8 @@ def get_snmp_host(host, module):
                 else:
                     fix_find[key] = value
             return fix_find
-        else:
-            return {}
-    else:
-        return {}
+
+    return {}
 
 
 def remove_snmp_host(host, existing):
@@ -251,10 +218,10 @@ def config_snmp_host(delta, proposed, existing, module):
     host = proposed['snmp_host']
     cmd = 'snmp-server host {0}'.format(proposed['snmp_host'])
 
-    snmp_type = delta.get('snmp_type', None)
-    version = delta.get('version', None)
-    ver = delta.get('v3', None)
-    community = delta.get('community', None)
+    snmp_type = delta.get('snmp_type')
+    version = delta.get('version')
+    ver = delta.get('v3')
+    community = delta.get('community')
 
     command_builder.append(cmd)
     if any([snmp_type, version, ver, community]):
@@ -291,24 +258,12 @@ def config_snmp_host(delta, proposed, existing, module):
         'src_intf': 'snmp-server host {0} source-interface {src_intf}'
     }
 
-    for key, value in delta.items():
-        if key in ['vrf_filter', 'vrf', 'udp', 'src_intf']:
-            command = CMDS.get(key, None)
-            if command:
-                cmd = command.format(host, **delta)
-                commands.append(cmd)
-            cmd = None
+    for key in delta:
+        command = CMDS.get(key)
+        if command:
+            cmd = command.format(host, **delta)
+            commands.append(cmd)
     return commands
-
-
-def flatten_list(command_lists):
-    flat_command_list = []
-    for command in command_lists:
-        if isinstance(command, list):
-            flat_command_list.extend(command)
-        else:
-            flat_command_list.append(command)
-    return flat_command_list
 
 
 def main():
@@ -327,13 +282,11 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
-
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     snmp_host = module.params['snmp_host']
     community = module.params['community']
@@ -344,7 +297,6 @@ def main():
     vrf_filter = module.params['vrf_filter']
     vrf = module.params['vrf']
     snmp_type = module.params['snmp_type']
-
     state = module.params['state']
 
     if snmp_type == 'inform' and version != 'v3':
@@ -369,66 +321,49 @@ def main():
 
     # existing returns the list of vrfs configured for a given host
     # checking to see if the proposed is in the list
-    store = existing.get('vrf_filter', None)
+    store = existing.get('vrf_filter')
     if existing and store:
         if vrf_filter not in existing['vrf_filter']:
             existing['vrf_filter'] = None
         else:
             existing['vrf_filter'] = vrf_filter
-
-    args = dict(
-        community=community,
-        snmp_host=snmp_host,
-        udp=udp,
-        version=version,
-        src_intf=src_intf,
-        vrf_filter=vrf_filter,
-        v3=v3,
-        vrf=vrf,
-        snmp_type=snmp_type
-        )
-
-    proposed = dict((k, v) for k, v in args.items() if v is not None)
-
-    delta = dict(set(proposed.items()).difference(existing.items()))
-
-    changed = False
     commands = []
-    end_state = existing
 
-    if state == 'absent':
-        if existing:
-            command = remove_snmp_host(snmp_host, existing)
-            commands.append(command)
+    if state == 'absent' and existing:
+        command = remove_snmp_host(snmp_host, existing)
+        commands.append(command)
+
     elif state == 'present':
+        args = dict(
+            community=community,
+            snmp_host=snmp_host,
+            udp=udp,
+            version=version,
+            src_intf=src_intf,
+            vrf_filter=vrf_filter,
+            v3=v3,
+            vrf=vrf,
+            snmp_type=snmp_type
+        )
+        proposed = dict((k, v) for k, v in args.items() if v is not None)
+
+        delta = dict(set(proposed.items()).difference(existing.items()))
         if delta:
             command = config_snmp_host(delta, proposed, existing, module)
             commands.append(command)
 
     cmds = flatten_list(commands)
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
+        results['changed'] = True
+        if not module.check_mode:
             load_config(module, cmds)
-            end_state = get_snmp_host(snmp_host, module)
-            if 'configure' in cmds:
-                cmds.pop(0)
 
-    if store:
-        existing['vrf_filter'] = store
-
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
