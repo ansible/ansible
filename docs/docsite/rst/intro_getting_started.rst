@@ -135,7 +135,7 @@ If you understand the implications and wish to disable this behavior, you can do
     [defaults]
     host_key_checking = False
 
-Alternatively this can be set by an environment variable:
+Alternatively this can be set by the :envvar:`ANSIBLE_HOST_KEY_CHECKING` environment variable:
 
 .. code-block:: bash
 

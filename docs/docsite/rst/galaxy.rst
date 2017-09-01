@@ -41,7 +41,7 @@ Use the ``ansible-galaxy`` command to download roles from the `Galaxy website <h
 roles_path
 ==========
 
-Be aware that by default Ansible downloads roles to the path specified by the environment variable *ANSIBLE_ROLES_PATH*. This can be set to a series of
+Be aware that by default Ansible downloads roles to the path specified by the environment variable :envvar:`ANSIBLE_ROLES_PATH`. This can be set to a series of
 directories (i.e. */etc/ansible/roles:~/.ansible/roles*), in which case the first writable path will be used. When Ansible is first installed it defaults
 to */etc/ansible/roles*, which requires *root* privileges.
 

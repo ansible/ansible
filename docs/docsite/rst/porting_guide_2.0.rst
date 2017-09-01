@@ -95,7 +95,7 @@ uses key=value escaping which has not changed.  The other option is to check for
 * templating (variables in playbooks and template lookups) has improved with regard to keeping the original instead of turning everything into a string.
   If you need the old behavior, quote the value to pass it around as a string.
 * Empty variables and variables set to null in yaml are no longer converted to empty strings. They will retain the value of `None`.
-  You can override the `null_representation` setting to an empty string in your config file by setting the `ANSIBLE_NULL_REPRESENTATION` environment variable.
+  You can override the `null_representation` setting to an empty string in your config file by setting the :envvar:`ANSIBLE_NULL_REPRESENTATION` environment variable.
 * Extras callbacks must be whitelisted in ansible.cfg. Copying is no longer necessary but whitelisting in ansible.cfg must be completed.
 * dnf module has been rewritten. Some minor changes in behavior may be observed.
 * win_updates has been rewritten and works as expected now.
