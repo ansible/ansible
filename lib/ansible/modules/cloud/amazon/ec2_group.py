@@ -633,7 +633,7 @@ def main():
         groupName = sg['GroupName']
         if groupName in groups:
             # Prioritise groups from the current VPC
-            if vpc_id is None or sg['VpcId'] == vpc_id:
+            if sg['VpcId'] == vpc_id:
                 groups[groupName] = sg
         else:
             groups[groupName] = sg
@@ -642,7 +642,7 @@ def main():
             if sg['GroupId'] == group_id:
                 group = sg
         else:
-            if groupName == name and (vpc_id is None or sg['VpcId'] == vpc_id):
+            if groupName == name and sg['VpcId'] == vpc_id:
                 group = sg
 
     # Ensure requested group is absent
@@ -831,8 +831,8 @@ def main():
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
                                                           ip_permission, module, rule, "ipv6")
-        else:
-            # when no egress rules are specified,
+        elif vpc_id is not None:
+            # when no egress rules are specified and we're in a VPC,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-' + group['GroupId'] + '-0.0.0.0/0'
@@ -856,7 +856,7 @@ def main():
                 del groupRules[default_egress_rule]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        if purge_rules_egress:
+        if purge_rules_egress and vpc_id is not None:
             for (rule, grant) in groupRules.values():
                 # we shouldn't be revoking 0.0.0.0 egress
                 if grant != '0.0.0.0/0':
