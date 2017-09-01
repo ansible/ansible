@@ -41,12 +41,12 @@ options:
         description:
             - "Timeout setting: 30s, 1m, 1h..."
         required: False
-        default: 1m
+        default: None
     plugin_bin:
         description:
             - Location of the plugin binary
         required: False
-        default: /usr/share/elasticsearch/bin/plugin
+        default: /usr/share/elasticsearch/bin/elasticsearch-plugin
     plugin_dir:
         description:
             - Your configured plugin directory specified in Elasticsearch
@@ -88,11 +88,17 @@ EXAMPLES = '''
 - elasticsearch_plugin:
     state: absent
     name: mobz/elasticsearch-head
+
+# Install Elasticsearch plugin with another plugin binary
+- elasticsearch_plugin:
+    state: present
+    name: mobz/elasticsearch-head
+    plugin_bin: "/usr/share/elasticsearch/bin/plugin"
 '''
 
-import os
 
 from ansible.module_utils.basic import AnsibleModule
+import os
 
 
 PACKAGE_STATE_MAP = dict(
@@ -119,8 +125,10 @@ def parse_plugin_repo(string):
 
     return repo
 
+
 def is_plugin_present(plugin_dir, working_dir):
     return os.path.isdir(os.path.join(working_dir, plugin_dir))
+
 
 def parse_error(string):
     reason = "reason: "
@@ -128,6 +136,7 @@ def parse_error(string):
         return string[string.index(reason) + len(reason):].strip()
     except ValueError:
         return string
+
 
 def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, proxy_port, timeout):
     cmd_args = [plugin_bin, PACKAGE_STATE_MAP["present"], plugin_name]
@@ -157,6 +166,7 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
 
     return True, cmd, out, err
 
+
 def remove_plugin(module, plugin_bin, plugin_name):
     cmd_args = [plugin_bin, PACKAGE_STATE_MAP["absent"], parse_plugin_repo(plugin_name)]
 
@@ -173,14 +183,15 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
     return True, cmd, out, err
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True),
             state=dict(default="present", choices=PACKAGE_STATE_MAP.keys()),
             url=dict(default=None),
-            timeout=dict(default="1m"),
-            plugin_bin=dict(default="/usr/share/elasticsearch/bin/plugin", type="path"),
+            timeout=dict(default=None),
+            plugin_bin=dict(default="/usr/share/elasticsearch/bin/elasticsearch-plugin", type="path"),
             plugin_dir=dict(default="/usr/share/elasticsearch/plugins/", type="path"),
             proxy_host=dict(default=None),
             proxy_port=dict(default=None),
