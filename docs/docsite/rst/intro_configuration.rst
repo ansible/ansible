@@ -526,7 +526,7 @@ is a directory with multiple sources (static and dynamic)::
 
     inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
 
-This option can be overridden by setting ``ANSIBLE_INVENTORY_IGNORE``
+This option can be overridden by setting :envvar:`ANSIBLE_INVENTORY_IGNORE`
 environment variable.
 
 .. _jinja2_extensions:
@@ -786,7 +786,7 @@ restrict_facts_namespace
 .. versionadded:: 2.4
 
 This allows restricting facts in their own namespace (under ansible_facts) instead of pushing them into the main.
-False by default. Can also be set via the environment variable `ANSIBLE_RESTRICT_FACTS`. Using `ansible_system` as an example:
+False by default. Can also be set via the environment variable :envvar:`ANSIBLE_RESTRICT_FACTS`. Using `ansible_system` as an example:
 
 When False::
 

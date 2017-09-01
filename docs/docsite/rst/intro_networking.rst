@@ -140,11 +140,15 @@ Networking Environment Variables
 
 The following environment variables are available to Ansible networking modules:
 
-username ANSIBLE_NET_USERNAME
-password ANSIBLE_NET_PASSWORD
-ssh_keyfile ANSIBLE_NET_SSH_KEYFILE
-authorize ANSIBLE_NET_AUTHORIZE
-auth_pass ANSIBLE_NET_AUTH_PASS
+username :envvar:`ANSIBLE_NET_USERNAME`
+
+password :envvar:`ANSIBLE_NET_PASSWORD`
+
+ssh_keyfile :envvar:`ANSIBLE_NET_SSH_KEYFILE`
+
+authorize :envvar:`ANSIBLE_NET_AUTHORIZE`
+
+auth_pass :envvar:`ANSIBLE_NET_AUTH_PASS`
 
 Variables are evaulated in the following order, listed from lowest to highest priority:
 
