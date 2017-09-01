@@ -8,3 +8,4 @@ PyYAML
 paramiko
 cryptography
 setuptools
+pyopenssl
