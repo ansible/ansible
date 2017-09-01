@@ -624,7 +624,9 @@ def main():
 
         # deleteOnTermination is not correctly reflected on attachment
         if module.params.get('delete_on_termination'):
-            while volume_info['attachment_set'].get('deleteOnTermination') != 'true':
+            for attempt in range(0, 8):
+                if volume_info['attachment_set'].get('deleteOnTermination') == 'true':
+                    break
                 time.sleep(5)
                 volume = ec2.get_all_volumes(volume_ids=volume.id)[0]
                 volume_info = get_volume_info(volume, state)
