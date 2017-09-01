@@ -225,7 +225,7 @@ BOOL_PARAMS = [
     'dynamic_capability',
     'low_memory_exempt',
     'suppress_4_byte_as',
-    'transport_passive_only'
+    'transport_passive_only',
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -261,8 +261,8 @@ PARAM_TO_DEFAULT_KEYMAP = {
 
 def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP[arg]
-    has_command = re.search(r'\s+{0}\s*$'.format(command), config, re.M)
-    has_command_value = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+    has_command = re.search(r'^\s+{0}$'.format(command), config, re.M)
+    has_command_val = re.search(r'(?:\s+{0}\s*)(?P<value>.*)$'.format(command), config, re.M)
 
     if arg == 'dynamic_capability':
         has_no_command = re.search(r'\s+no\s{0}\s*$'.format(command), config, re.M)
@@ -276,23 +276,21 @@ def get_value(arg, config):
     elif arg == 'log_neighbor_changes':
         value = ''
         if has_command:
-            if has_command_value:
-                value = 'disable'
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = 'disable'
 
     elif arg == 'remove_private_as':
         value = 'disable'
         if has_command:
-            if has_command_value:
-                value = has_command_value.group('value')
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = has_command_val.group('value')
     else:
         value = ''
 
-        if has_command_value:
-            value = has_command_value.group('value')
+        if has_command_val:
+            value = has_command_val.group('value')
 
             if command in ['timers', 'password']:
                 split_value = value.split()
@@ -495,7 +493,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        warnings.extend(load_config(module, candidate))
         result['changed'] = True
         result['commands'] = candidate
     else:
