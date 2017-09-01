@@ -350,6 +350,10 @@ class StorageDomainModule(BaseModule):
             )
 
     def pre_remove(self, storage_domain):
+        # In case the user chose to destroy the storage domain there is no need to
+        # move it to maintenance or detach it, it should simply be removed from the DB.
+        if self._module.params['destroy']:
+            return
         # Before removing storage domain we need to put it into maintenance state:
         self._maintenance(storage_domain)
 
