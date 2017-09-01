@@ -64,7 +64,7 @@ def main():
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
         l3out=dict(type='str'),
-        state=dict(type='str', choices=['absent', 'present', 'query']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6')  # Deprecated starting from v2.6
     )
