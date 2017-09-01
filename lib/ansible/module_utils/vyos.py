@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-vyos_argument_spec = {
+vyos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
 
@@ -41,8 +41,11 @@ vyos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+vyos_argument_spec = {
+    'provider': dict(type='dict', options=vyos_provider_spec),
+}
+vyos_argument_spec.update(vyos_provider_spec)
 
 
 def get_argspec():
@@ -50,7 +53,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in vyos_argument_spec:
         if module._name == 'vyos_user':
             if key not in ['password', 'provider'] and module.params[key]:
@@ -58,11 +60,6 @@ def check_args(module, warnings):
         else:
             if key != 'provider' and module.params[key]:
                 warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_config(module, target='commands'):

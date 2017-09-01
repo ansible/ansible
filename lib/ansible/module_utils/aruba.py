@@ -32,15 +32,18 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-aruba_argument_spec = {
+aruba_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict')
 }
+aruba_argument_spec = {
+    'provider': dict(type='dict', options=aruba_provider_spec)
+}
+aruba_argument_spec.update(aruba_provider_spec)
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {}
@@ -51,7 +54,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in aruba_argument_spec:
         if key not in ['provider', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
@@ -62,11 +64,6 @@ def check_args(module, warnings):
     for key in ARGS_DEFAULT_VALUE:
         if not module.params.get(key, None):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_config(module, flags=[]):

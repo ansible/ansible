@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-ios_argument_spec = {
+ios_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -41,8 +41,11 @@ ios_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+ios_argument_spec = {
+    'provider': dict(type='dict', options=ios_provider_spec),
+}
+ios_argument_spec.update(ios_provider_spec)
 
 
 def get_argspec():
@@ -50,7 +53,6 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in ios_argument_spec:
         if module._name == 'ios_user':
             if key not in ['password', 'provider', 'authorize'] and module.params[key]:
@@ -58,11 +60,6 @@ def check_args(module, warnings):
         else:
             if key not in ['provider', 'authorize'] and module.params[key]:
                 warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_defaults_flag(module):
