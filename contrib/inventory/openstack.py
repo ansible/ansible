@@ -158,20 +158,23 @@ def get_host_groups_from_cloud(inventory):
             continue
         firstpass[server['name']].append(server)
     for name, servers in firstpass.items():
-        if len(servers) == 1 and use_hostnames:
+        if len(servers) == 1 and use_hostnames and \
+                servers[0]['OS-EXT-STS:task_state'] is None:
             append_hostvars(hostvars, groups, name, servers[0])
         else:
             server_ids = set()
             # Trap for duplicate results
             for server in servers:
                 server_ids.add(server['id'])
-            if len(server_ids) == 1 and use_hostnames:
+            if len(server_ids) == 1 and use_hostnames and \
+                    servers[0]['OS-EXT-STS:task_state'] is None:
                 append_hostvars(hostvars, groups, name, servers[0])
             else:
                 for server in servers:
-                    append_hostvars(
-                        hostvars, groups, server['id'], server,
-                        namegroup=True)
+                    if server['OS-EXT-STS:task_state'] is None:
+                        append_hostvars(
+                            hostvars, groups, server['id'], server,
+                            namegroup=True)
     groups['_meta'] = {'hostvars': hostvars}
     return groups
 
