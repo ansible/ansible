@@ -42,10 +42,17 @@ class TestNxosBgpNeighborModule(TestNxosModule):
         self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
-        self.get_config.return_value = load_fixture('', 'nxos_bgp_config.cfg')
-        self.load_config.return_value = None
+        self.get_config.return_value = load_fixture('nxos_bgp', 'config.cfg')
+        self.load_config.return_value = []
 
     def test_nxos_bgp_neighbor(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.3', description='some words'))
-        result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['router bgp 65535', 'neighbor 3.3.3.3', 'description some words'])
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.3', 'description some words'])
+
+    def test_nxos_bgp_neighbor_remove_private_as(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.4', remove_private_as='all'))
+        self.execute_module(changed=False, commands=[])
+
+    def test_nxos_bgp_neighbor_remove_private_as_changed(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.4', remove_private_as='replace-as'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.4', 'remove-private-as replace-as'])
