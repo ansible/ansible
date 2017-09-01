@@ -1,5 +1,5 @@
 ---
-- debug: msg="START nxapi/sublevel_block.yaml"
+- debug: msg='START {{ connection.transport }}/sublevel_block.yaml'
 
 - name: setup
   nxos_config:
@@ -8,12 +8,10 @@
       - 20 permit ip 2.2.2.2/32 any log
       - 30 permit ip 3.3.3.3/32 any log
     parents: ip access-list test
-    before: no ip access-list test
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     match: none
-  ignore_errors: yes
 
-- name: configure sub level command using block resplace
+- name: configure sub level command using block replace
   nxos_config:
     lines:
       - 10 permit ip 1.1.1.1/32 any log
@@ -22,7 +20,7 @@
       - 40 permit ip 4.4.4.4/32 any log
     parents: ip access-list test
     replace: block
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -43,7 +41,7 @@
       - 40 permit ip 4.4.4.4/32 any log
     parents: ip access-list test
     replace: block
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -53,7 +51,7 @@
 - name: teardown
   nxos_config:
     lines: no ip access-list test
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     match: none
 
-- debug: msg="END nxapi/sublevel_block.yaml"
+- debug: msg='END {{ connection.transport }}/sublevel_block.yaml'

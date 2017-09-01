@@ -1,20 +1,23 @@
 ---
 - debug: msg="START {{ connection.transport }}/save.yaml"
 
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
 - name: setup
   nxos_config:
     commands:
       - no description
       - no shutdown
     parents:
-      - interface Ethernet2/5
+      - "interface {{ intname }}"
     match: none
     provider: "{{ connection }}"
 
-
 - name: save config
   nxos_config:
-    save: true
+    save_when: always
+    timeout: 300
     provider: "{{ connection }}"
   register: result
 
@@ -24,7 +27,8 @@
 
 - name: save should always run
   nxos_config:
-    save: true
+    save_when: always
+    timeout: 300
     provider: "{{ connection }}"
   register: result
 
