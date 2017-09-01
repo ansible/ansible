@@ -1,0 +1,61 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_static_route sanity test"
+
+- block:
+  - name: create static route
+    nxos_static_route: &configure
+      prefix: "192.168.20.64/24"
+      next_hop: "3.3.3.3"
+      route_name: testing
+      pref: 100
+      tag: 5500
+      vrf: testing
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_static_route: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: remove static route
+    nxos_static_route: &remove
+      prefix: "192.168.20.64/24"
+      next_hop: "3.3.3.3"
+      route_name: testing
+      pref: 100
+      tag: 5500
+      vrf: testing
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Remove Idempotence"
+    nxos_static_route: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: remove static route
+    nxos_static_route:
+      prefix: "192.168.20.64/24"
+      next_hop: "3.3.3.3"
+      route_name: testing
+      pref: 100
+      tag: 5500
+      vrf: testing
+      state: absent
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_static_route sanity test"

@@ -224,6 +224,24 @@
 
     - block:
       - include_role:
+          name: nxos_hsrp
+        when: "limit_to in ['*', 'nxos_hsrp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_hsrp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_static_route
+        when: "limit_to in ['*', 'nxos_static_route']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_static_route' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_rollback
         when: "limit_to in ['*', 'nxos_rollback']"
       rescue:
