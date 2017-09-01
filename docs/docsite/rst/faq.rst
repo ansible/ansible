@@ -149,7 +149,7 @@ How do I disable cowsay?
 ++++++++++++++++++++++++
 
 If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
-that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable:
+that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set the :envvar:`ANSIBLE_NOCOWS` environment variable:
 
 .. code-block:: shell-session
 
@@ -350,7 +350,7 @@ The no_log attribute can also apply to an entire play::
 Though this will make the play somewhat difficult to debug.  It's recommended that this
 be applied to single tasks only, once a playbook is completed. Note that the use of the
 no_log attribute does not prevent data from being shown when debugging Ansible itself via
-the ANSIBLE_DEBUG environment variable.
+the :envvar:`ANSIBLE_DEBUG` environment variable.
 
 
 .. _when_to_use_brackets:
