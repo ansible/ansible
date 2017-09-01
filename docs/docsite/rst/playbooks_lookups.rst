@@ -120,7 +120,7 @@ Basic lookup. Fails if example/test doesn't exist::
 
     password="{{ lookup('passwordstore', 'example/test')}}"
 
-Return password if it exists, else returns ``False``. Does not fail if password doesn't exist::
+Returns password if it exists, else returns ``False``. Does not fail if password doesn't exist::
 
     password="{{ lookup('passwordstore', 'example/test ok_if_missing=true')}}"
 
