@@ -30,7 +30,7 @@ module: sf_facts
 short_description: Report facts of a NetApp SolidFire cluster.
 extends_documentation_fragment:
     - netapp.solidfire
-version_added: '2.3'
+version_added: '2.4'
 author: Kevin Hulquest (@hulquest)
 description:
 - Report the facts of a SolidFire cluster..
@@ -48,7 +48,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg: 
+msg:
     description: Gathered facts for Solidfire cluster.
     returned: always
     type: string
