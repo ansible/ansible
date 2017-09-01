@@ -412,7 +412,12 @@ class AzureRM(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id, base_url=self._cloud_environment.endpoints.management)
+            self._network_client = NetworkManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self._cloud_environment.endpoints.resource_manager,
+                api_version='2017-06-01'
+            )
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -420,16 +425,24 @@ class AzureRM(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = ResourceManagementClient(self.azure_credentials,
-                                                             self.subscription_id,
-                                                             base_url=self._cloud_environment.endpoints.management)
+            self._resource_client = ResourceManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self._cloud_environment.endpoints.resource_manager,
+                api_version='2017-05-10'
+            )
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id, base_url=self._cloud_environment.endpoints.management)
+            self._compute_client = ComputeManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self._cloud_environment.endpoints.resource_manager,
+                api_version='2017-03-30'
+            )
             self._register('Microsoft.Compute')
         return self._compute_client
 
