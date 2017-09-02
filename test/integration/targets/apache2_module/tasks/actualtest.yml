@@ -89,9 +89,49 @@
     force: True
   when: "ansible_os_family == 'Debian'"
 
-
 - name: enable evasive module, test https://github.com/ansible/ansible/issues/22635
   apache2_module:
     name: evasive
     state: present
   when: "ansible_os_family == 'Debian'"
+
+- name: Create broken webserver configuration
+  lineinfile:
+    dest: /etc/apache2/apache2.conf
+    line: "NonExistingDirective"
+    insertafter: EOF
+  when: "ansible_os_family == 'Debian'"
+
+- name: Create broken webserver configuration
+  lineinfile:
+    dest: /etc/apache2/httpd.conf
+    line: "NonExistingDirective"
+    insertafter: EOF
+  when: "ansible_os_family == 'Suse'"
+
+- name: disable ssl module without ignore_configcheck and broken webserver configuration
+  apache2_module:
+    name: ssl
+    state: absent
+  ignore_errors: yes
+  register: result
+
+- name: ensure apache2_module failed
+  assert:
+    that:
+      - 'result.failed'
+
+- name: disable ssl module with ignore_configcheck and broken webserver configuration
+  apache2_module:
+    name: ssl
+    state: absent
+    ignore_configcheck: true
+  register: result
+
+- name: ensure apache2_module enforced disabling of ssl module
+  assert:
+    that:
+      - 'not result.failed'
+      - 'result.changed'
+      - 'result.warnings'
+      - '{{ result.warnings|length }} > 0'

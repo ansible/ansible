@@ -43,7 +43,7 @@ options:
      default: present
    ignore_configcheck:
      description:
-        - Ignore configuration checks about inconsistent module configuration. Especially for mpm_* modules.
+        - Ignore webserver configuration errors and execute the requested module action.
      choices: ['True', 'False']
      default: False
      version_added: "2.3"
@@ -117,6 +117,27 @@ def _get_ctl_binary(module):
     )
 
 
+def _get_state_string(state):
+    return {'present': 'enabled', 'absent': 'disabled'}[state]
+
+
+def _get_a2mod_binary(state):
+    return {'present': 'a2enmod', 'absent': 'a2dismod'}[state]
+
+
+def _force_module_action(module):
+    name = module.params['name']
+    state_string = _get_state_string(module.params['state'])
+    a2mod_binary = _get_a2mod_binary(module.params['state'])
+    msg = "Enforced: Module %s %s" % (name, state_string)
+    module.warnings.append(msg)
+
+    result, stdout, stderr = module.run_command("%s %s" % (a2mod_binary, name))
+    module.exit_json(changed=True,
+                     result=msg,
+                     warnings=module.warnings)
+
+
 def _module_is_enabled(module):
     control_binary = _get_ctl_binary(module)
     name = module.params['name']
@@ -127,14 +148,16 @@ def _module_is_enabled(module):
     if result != 0:
         error_msg = "Error executing %s: %s" % (control_binary, stderr)
         if ignore_configcheck:
-            if 'AH00534' in stderr and 'mpm_' in name:
-                module.warnings.append(
-                    "No MPM module loaded! apache2 reload AND other module actions"
-                    " will fail if no MPM module is loaded immediately."
-                )
+            module.warnings.append(
+                "Your webserver configuration is broken. The module state could not be"
+                " determined and restart of the webserver will probably fail!")
+            module.warnings.append(error_msg)
+            if module.check_mode:
+                msg = "Checkmode is not working because of webserver configuration errors. Please fix them first."
+                module.warnings.append(msg)
+                module.exit_json(changed=True, result=msg, warnings=module.warnings)
             else:
-                module.warnings.append(error_msg)
-            return False
+                _force_module_action(module)
         else:
             module.fail_json(msg=error_msg)
 
@@ -177,8 +200,8 @@ def _set_state(module, state):
     force = module.params['force']
 
     want_enabled = state == 'present'
-    state_string = {'present': 'enabled', 'absent': 'disabled'}[state]
-    a2mod_binary = {'present': 'a2enmod', 'absent': 'a2dismod'}[state]
+    state_string = _get_state_string(state)
+    a2mod_binary = _get_a2mod_binary(state)
     success_msg = "Module %s %s" % (name, state_string)
 
     if _module_is_enabled(module) != want_enabled:
