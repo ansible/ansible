@@ -5,7 +5,6 @@
 - name: Setup
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 
@@ -14,7 +13,6 @@
   junos_netconf:
     state: present
     netconf_port: 22
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -25,7 +23,6 @@
   junos_netconf:
     state: present
     netconf_port: 22
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -63,7 +60,6 @@
 - name: Set back netconf to default port
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - name: Ensure we can communicate over netconf
