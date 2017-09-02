@@ -811,7 +811,7 @@ class AnsibleModule(object):
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
                               '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
-                              '_ansible_socket']
+                              '_ansible_socket', '_ansible_remote_tmp']
         self._options_context = list()
 
         if add_file_common_args:
@@ -1612,6 +1612,10 @@ class AnsibleModule(object):
 
             elif k == '_ansible_socket':
                 self._socket_path = v
+
+            elif k == '_ansible_remote_tmp':
+                # Private because we're going to implement a better fix by setting the TMPDIR envvar in 2.5
+                self._remote_tmp_path = v
 
             elif check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
