@@ -4,4 +4,3 @@
 - name: Ensure netconf is enabled
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
