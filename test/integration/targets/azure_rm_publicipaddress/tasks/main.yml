@@ -61,7 +61,6 @@
 - name: Gather facts, filtering by tag
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-      append_tags: no
       tags:
           - testing
           - foo:bar
