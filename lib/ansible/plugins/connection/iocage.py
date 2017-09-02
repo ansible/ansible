@@ -1,5 +1,6 @@
-# based on jail.py    (c) 2013, Michael Scherer <misc@zarb.org>
-#                     (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# based on jail.py
+# (c) 2013, Michael Scherer <misc@zarb.org>
+# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 # (c) 2016, Stephan Lohse <dev-github@ploek.org>
 #
 # This file is part of Ansible
