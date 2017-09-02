@@ -13,9 +13,9 @@ Ansible 2.2 features a tech preview of Python 3 support. This topic discusses ho
    intended for production use. To report a Python 3 bug, please see `Community Information & Contributing <http://docs.ansible.com/ansible/community.html#i-d-like-to-report-a-bug>`_.
 
 Testing Python 3 with commands and playbooks
-----------------------------------------------------
+--------------------------------------------
 
-* `Install Ansible 2.2+ <http://docs.ansible.com/ansible/intro_installation.html>`_
+* `Run Ansible 2.2+ :ref:`from_source`
 * To test Python 3 on the controller, run your ansible command via
   ``python3``. For example:
 
@@ -23,6 +23,23 @@ Testing Python 3 with commands and playbooks
 
     python3 /usr/bin/ansible localhost -m ping
     python3 /usr/bin/ansible-playbook sample-playbook.yml
+
+You can also install Ansible using :program:`pip` for Python3 which will make the default
+:command:`/usr/bin/ansible` run with Python3:
+
+.. code-block:: shell
+
+    $ virtualenv py3-ansible
+    $ source ./bin/activate
+    $ pip3 install ansible
+    $ ansible --version|grep python
+    python version = 3.5.3 (default, May 10 2017, 15:05:55) [GCC 6.3.1 20161221 (Red Hat 6.3.1-1)]
+
+.. note:: Individual Linux distribution packages may be packaged for Python2 or Python3.  When running from
+    distro packages you'll only be able to use Ansible with the Python version for which it was
+    installed.  Sometimes distros will provide a means of installing for several Python versions
+    (via a separate package or via some commands that are run after install).  You'll need to check
+    with your distro to see if that applies in your case.
 
 
 Testing Python 3 module support
