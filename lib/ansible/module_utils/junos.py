@@ -121,7 +121,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             if format == 'xml':
                 cfg.append(fromstring(candidate))
             else:
-                cfg.text = to_text(candidate, encoding='latin1')
+                cfg.text = to_text(candidate, encoding='latin-1')
         else:
             cfg.append(candidate)
     return send_request(module, obj)
@@ -187,7 +187,7 @@ def get_diff(module):
 
     output = reply.find('.//configuration-output')
     if output is not None:
-        return to_text(output.text, encoding='latin1').strip()
+        return to_text(output.text, encoding='latin-1').strip()
 
 
 def load_config(module, candidate, warnings, action='merge', format='xml'):

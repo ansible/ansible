@@ -76,7 +76,7 @@ class ActionModule(_ActionModule):
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
         filename = '%s/%s_config.%s' % (backup_path, host, tstamp)
         with open(filename, 'w') as f:
-            f.write(to_bytes(to_text(contents, encoding='latin1'), encoding='utf-8'))
+            f.write(to_bytes(to_text(contents, encoding='latin-1'), encoding='utf-8'))
         return filename
 
     def _handle_template(self):
