@@ -715,7 +715,7 @@ def _load_params():
         params = json_dict_unicode_to_bytes(params)
 
     try:
-        return params['ANSIBLE_MODULE_ARGS']
+        return params['ANSIBLE_MODULE_ARGS'], params.get('ANSIBLE_MODULE_SPEC')
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
@@ -775,7 +775,7 @@ class _SetEncoder(json.JSONEncoder):
 
 
 class AnsibleModule(object):
-    def __init__(self, argument_spec, bypass_checks=False, no_log=False,
+    def __init__(self, argument_spec=None, bypass_checks=False, no_log=False,
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
                  required_if=None):
@@ -814,12 +814,20 @@ class AnsibleModule(object):
                               '_ansible_socket']
         self._options_context = list()
 
+        self._load_params()
+
+        # If we didn't get an argument spec from the module author or over the
+        # wire in ANSIBLE_MODULE_SPEC we really can't do anything else.
+        if self.argument_spec is None:
+            # Use exceptions here because it isn't safe to call fail_json until no_log is processed
+            print('\n{"failed": true, "msg": "Module is missing argument_spec"}')
+            sys.exit(1)
+
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        self._load_params()
         self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
@@ -2049,7 +2057,9 @@ class AnsibleModule(object):
         were moved out in 2.1 so that custom modules could read the parameters.
         '''
         # debug overrides to read args from file or cmdline
-        self.params = _load_params()
+        self.params, param_spec = _load_params()
+        if not self.argument_spec and param_spec is not None:
+            self.argument_spec = param_spec['argument_spec']
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:

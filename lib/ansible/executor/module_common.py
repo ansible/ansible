@@ -36,6 +36,8 @@ from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.parsing.plugin_docs import _read_docstring
 from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
 from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
@@ -598,6 +600,31 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
+def _spec_from_doc(doc):
+    # TODO Add support to doc string for documenting, extracting and setting
+    # * mutually_exclusive
+    # * required_together
+    # * required_one_of
+    # * required_if
+    # * supports_check_mode
+    # add_file_common_args should be handled already by module doc fragments
+    BOOLEAN_OPTIONS = ('required', 'default', 'no_log')
+    DIRECT_OPTIONS = ('aliases', 'choices', 'type', 'removed_in_version')
+    argument_spec = {}
+    for name, option in doc['options'].items():
+        spec = {}
+        for key in BOOLEAN_OPTIONS:
+            if key in option:
+                spec[key] = boolean(option[key])
+        for key in DIRECT_OPTIONS:
+            if key in option:
+                spec[key] = option[key]
+        argument_spec[name] = spec
+    # Wrap argument_spec in a dict so that we can come back and pass the
+    # other values
+    return dict(argument_spec=argument_spec)
+
+
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression, async_timeout, become,
                        become_method, become_user, become_password, environment):
     """
@@ -642,7 +669,15 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     py_module_names = set()
 
     if module_substyle == 'python':
-        params = dict(ANSIBLE_MODULE_ARGS=module_args,)
+        try:
+            module_spec = _spec_from_doc(_read_docstring(b_module_data)['doc'])
+        except Exception:
+            display.warning(u'Unable to parse module spec from documentation for module %s.') % module_name
+            argument_spec = {}
+
+        params = dict(
+            ANSIBLE_MODULE_ARGS=module_args,
+            ANSIBLE_MODULE_SPEC=module_spec)
         python_repred_params = repr(json.dumps(params))
 
         try:
