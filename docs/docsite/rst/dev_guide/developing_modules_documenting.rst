@@ -121,7 +121,7 @@ Fields
 
    * core
    * network
-   * certfied
+   * certified
    * community
    * curated (Deprecated.  Modules in this category should probably be core or
      certified instead)
