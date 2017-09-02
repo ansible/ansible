@@ -65,7 +65,7 @@ import os
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin
 
 
@@ -215,6 +215,6 @@ class InventoryModule(BaseInventoryPlugin):
                 AnsibleParserError(e)
 
             source_data = p.stdout.readlines()
-            inventory.cache[cache_key] = source_data
+            inventory.cache[cache_key] = to_text(source_data)
 
         self._populate_from_source(source_data, config_data)
