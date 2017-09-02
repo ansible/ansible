@@ -762,7 +762,14 @@ def handle_elastigroup(client, module):
             has_changed = True
 
         elif state == 'absent':
-            client.delete_elastigroup(group_id=group_id)
+            try:
+                client.delete_elastigroup(group_id=group_id)
+            except SpotinstClientException as exc:
+                if "GROUP_DOESNT_EXIST" in exc.message:
+                    pass
+                else:
+                    raise exc
+
             message = 'Deleted group successfully.'
             has_changed = True
 
