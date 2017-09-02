@@ -643,6 +643,48 @@ The ``urlsplit`` filter extracts the fragment, hostname, netloc, password, path,
     #   }
 
 
+Regular Expression Filters
+``````````````````````````
+
+To search a string with a regex, use the "regex_search" filter::
+
+    # search for "foo" in "foobar"
+    {{ 'foobar' | regex_search('(foo)') }}
+
+    # will return empty if it cannot find a match
+    {{ 'ansible' | regex_search('(foobar)') }}
+
+
+To search for all occurrences of regex matches, use the "regex_findall" filter::
+
+    # Return a list of all IPv4 addresses in the string
+    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b') }}
+
+
+To replace text in a string with regex, use the "regex_replace" filter::
+
+    # convert "ansible" to "able"
+    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
+
+    # convert "foobar" to "bar"
+    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
+
+    # convert "localhost:80" to "localhost, 80" using named groups
+    {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
+
+    # convert "localhost:80" to "localhost"
+    {{ 'localhost:80' | regex_replace(':80') }}
+
+.. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
+   then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+
+.. versionadded:: 2.0
+
+To escape special characters within a regex, use the "regex_escape" filter::
+
+    # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
+    {{ '^f.*o(.*)$' | regex_escape() }}
+
 
 Other Useful Filters
 ````````````````````
@@ -720,30 +762,6 @@ doesn't know it is a boolean value::
      when: some_string_value | bool
 
 .. versionadded:: 1.6
-
-To replace text in a string with regex, use the "regex_replace" filter::
-
-    # convert "ansible" to "able"
-    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
-
-    # convert "foobar" to "bar"
-    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
-
-    # convert "localhost:80" to "localhost, 80" using named groups
-    {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
-
-    # convert "localhost:80" to "localhost"
-    {{ 'localhost:80' | regex_replace(':80') }}
-
-.. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
-   then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
-
-.. versionadded:: 2.0
-
-To escape special characters within a regex, use the "regex_escape" filter::
-
-    # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
-    {{ '^f.*o(.*)$' | regex_escape() }}
 
 To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
 
