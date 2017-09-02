@@ -575,9 +575,10 @@ class LinuxHardware(Hardware):
             for key in ['vendor', 'model']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
-            for key, test in [('removable', '/removable'),
-                              ('support_discard', '/queue/discard_granularity'),
-                              ]:
+            for key, test in [
+                    ('removable', '/removable'),
+                    ('support_discard', '/queue/discard_granularity'),
+            ]:
                 d[key] = get_file_content(sysdir + test)
 
             if diskname in devs_wwn:
@@ -675,20 +676,25 @@ class LinuxHardware(Hardware):
                 rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
                 for vg_line in vg_lines.splitlines():
                     items = vg_line.strip().split(',')
-                    vgs[items[0]] = {'size_g': items[-2],
-                                     'free_g': items[-1],
-                                     'num_lvs': items[2],
-                                     'num_pvs': items[1]}
+                    vgs[items[0]] = {
+                        'size_g': items[-2],
+                        'free_g': items[-1],
+                        'num_lvs': items[2],
+                        'num_pvs': items[1],
+                    }
 
             lvs_path = self.module.get_bin_path('lvs')
             # lvs fields:
             # LV VG Attr LSize Pool Origin Data% Move Log Copy% Convert
             lvs = {}
+            lvs_full = {}
             if lvs_path:
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
                     items = lv_line.strip().split(',')
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
+                    key = '%s/%s' % (items[1], items[0])  # 'vg/lv'
+                    lvs_full[key] = {'size_g': items[3]}
 
             pvs_path = self.module.get_bin_path('pvs')
             # pvs fields: PV VG #Fmt #Attr PSize PFree
@@ -700,9 +706,10 @@ class LinuxHardware(Hardware):
                     pvs[self._find_mapper_device_name(items[0])] = {
                         'size_g': items[4],
                         'free_g': items[5],
-                        'vg': items[1]}
+                        'vg': items[1] or 'None',
+                    }
 
-            lvm_facts['lvm'] = {'lvs': lvs, 'vgs': vgs, 'pvs': pvs}
+            lvm_facts['lvm'] = {'lvs': lvs, 'lvs_full': lvs_full, 'vgs': vgs, 'pvs': pvs}
 
         return lvm_facts
 
