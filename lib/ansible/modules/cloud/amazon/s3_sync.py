@@ -448,7 +448,7 @@ def upload_files(s3, bucket, filelist, params):
         args = {
             'ContentType': entry['mime_type']
         }
-        if 'encoding' in entry:
+        if 'encoding' in entry and entry['encoding'] is not None:
             args['ContentEncoding'] = entry['encoding']
         if params.get('permission'):
             args['ACL'] = params['permission']
