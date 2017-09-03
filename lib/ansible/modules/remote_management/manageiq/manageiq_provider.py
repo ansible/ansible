@@ -252,8 +252,7 @@ def supported_providers():
 
 def endpoint_list_spec():
     return dict(
-        default=dict(required=True,
-                     type='dict', options=endpoint_argument_spec()),
+        provider=dict(type='dict', options=endpoint_argument_spec()),
         metrics=dict(type='dict', options=endpoint_argument_spec()),
         alerts=dict(type='dict', options=endpoint_argument_spec()),
     )
@@ -350,7 +349,7 @@ class ManageIQProvider(object):
         provider_defaults = supported_providers().get(provider_type, {})
 
         # get endpoint defaults
-        endpoint = endpoints.get('default')
+        endpoint = endpoints.get('provider')
         default_auth_key = endpoint.get('auth_key')
 
         # build a connection_configuration object for each endpoint
@@ -464,26 +463,28 @@ class ManageIQProvider(object):
 def main():
     zone_id = None
     endpoints = []
+    argument_spec = dict(
+        manageiq_connection=dict(required=True, type='dict',
+                                 options=manageiq_argument_spec()),
+        state=dict(choices=['absent', 'present'], default='present'),
+        name=dict(required=True),
+        zone=dict(default='default'),
+        provider_region=dict(),
+        type=dict(choices=supported_providers().keys()),
+    )
+    # add the endpoint arguments to the arguments
+    argument_spec.update(endpoint_list_spec())
 
     module = AnsibleModule(
-        argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict',
-                                     options=manageiq_argument_spec()),
-            state=dict(choices=['absent', 'present'], default='present'),
-            name=dict(required=True),
-            zone=dict(default='default'),
-            provider_region=dict(),
-            type=dict(choices=supported_providers().keys()),
-            endpoints=dict(type='dict', options=endpoint_list_spec()),
-        ),
+        argument_spec=argument_spec,
         required_if=[
-            ('state', 'present', ['endpoints'])],
+            ('state', 'present', ['provider'])],
     )
 
     name = module.params['name']
     zone_name = module.params['zone']
     provider_type = module.params['type']
-    raw_endpoints = module.params['endpoints']
+    raw_endpoints = module.params
     provider_region = module.params['provider_region']
     state = module.params['state']
 
@@ -524,7 +525,8 @@ def main():
                 msg="provider_type %s is not supported" % (provider_type))
 
         # build "connection_configurations" objects from user requsted endpoints
-        if raw_endpoints:
+        # "provider" is a required endpoint, if we have it, we have endpoints
+        if raw_endpoints.get("provider"):
             endpoints = manageiq_provider.build_connection_configurations(provider_type, raw_endpoints)
 
         # if we have a provider, edit it
