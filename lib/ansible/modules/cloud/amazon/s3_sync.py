@@ -448,6 +448,8 @@ def upload_files(s3, bucket, filelist, params):
         args = {
             'ContentType': entry['mime_type']
         }
+        if 'encoding' in entry:
+            args['ContentEncoding'] = entry['encoding']
         if params.get('permission'):
             args['ACL'] = params['permission']
         if params.get('cache_control'):
