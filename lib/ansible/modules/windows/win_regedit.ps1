@@ -289,8 +289,14 @@ if ($state -eq "present") {
             $result.changed = $true
 
             if ($diff_mode) {
-                $result.diff.prepared += @"
-[$path]
+                if ($result.diff.prepared) {
+                    $key_prefix = "+"
+                } else {
+                    $key_prefix = ""
+                }
+                
+                $result.diff.prepared = @"
+$key_prefix[$path]
 -"$name" = "$(Get-DiffValueString -type $existing_type -value $existing_data)"
 +"$name" = "$(Get-DiffValueString -type $type -value $data)"
 "@
@@ -307,8 +313,14 @@ if ($state -eq "present") {
         }
         $result.changed = $true
         if ($diff_mode) {
-            $result.diff.prepared += @"
-[$path]
+            if ($result.diff.prepared) {
+                $key_prefix = "+"
+            } else {
+                $key_prefix = ""
+            }
+            
+            $result.diff.prepared = @"
+$key_prefix[$path]
 +"$name" = "$(Get-DiffValueString -type $type -value $data)"
 "@
         }
