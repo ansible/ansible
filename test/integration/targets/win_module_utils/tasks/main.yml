@@ -48,9 +48,9 @@
     that:
     - sid_test.data == 'success'
 
-- name: create testing folder for argv binary
+- name: create temp testing folder
   win_file:
-    path: C:\ansible testing
+    path: C:\ansible
     state: directory
 
 - name: download binary the outputs argv to stdout
@@ -66,6 +66,15 @@
 - assert:
     that:
     - command_util.data == 'success'
+
+- name: call module with ArgvParser tests
+  argv_parser_test:
+    exe: C:\ansible testing\PrintArgv.exe
+  register: argv_test
+
+- assert:
+    that:
+    - argv_test.data == 'success'
 
 - name: remove testing folder
   win_file:
