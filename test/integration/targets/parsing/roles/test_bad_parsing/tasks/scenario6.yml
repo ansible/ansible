@@ -1,0 +1,32 @@
+---
+#
+# Ref. https://github.com/ansible/ansible/issues/23485 for type-conv tests
+# Ensure that types are NOT converted successfully without --convert-type flag
+#
+- name: test str2bool non-conversion from extra-vars in single-token conditional
+  shell: echo 'single-token success'
+  register: result
+  when: not str2bool_test
+  ignore_errors: yes
+
+- name: assert that single-token conditional was parsed correctly
+  assert:
+    that:
+      - result | skipped
+
+- name: test str2bool non-conversion from extra-vars in multi-token conditional
+  shell: echo 'multi-token success'
+  register: result
+  when: not (str2bool_test and True)
+  ignore_errors: yes
+
+- name: assert that multi-token conditional was parsed correctly
+  assert:
+    that:
+      - result | skipped
+
+- name: test str2int and str2float non-conversion from extra-vars
+  assert:
+    that:
+      - str2int_test != 3
+      - str2float_test != 3.14

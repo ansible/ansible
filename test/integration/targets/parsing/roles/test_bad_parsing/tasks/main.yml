@@ -58,3 +58,7 @@
 - assert:
     that:
      - filter_fail|failed
+
+- name: include test that strs are not type-converted without --convert-type
+  include: scenario6.yml
+  tags: scenario6

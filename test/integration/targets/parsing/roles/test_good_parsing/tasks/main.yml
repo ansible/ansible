@@ -202,3 +202,31 @@
       - should_not_omit_1 is defined
       - should_not_omit_2 is defined
       - should_not_omit_3 == "__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
+
+# Ref. https://github.com/ansible/ansible/issues/23485 for type-conv tests
+# Ensure that types are converted successfully using --convert-type flag
+- name: test str2bool conversion from extra-vars in single-token conditional
+  shell: echo 'single-token success'
+  register: result
+  when: not str2bool_test
+ 
+- name: assert that single-token conditional was parsed correctly
+  assert:
+    that:
+      - result.stdout == 'single-token success'
+
+- name: test str2bool conversion from extra-vars in multi-token conditional
+  shell: echo 'multi-token success'
+  register: result
+  when: not (str2bool_test and True)
+
+- name: assert that multi-token conditional was parsed correctly
+  assert:
+    that:
+      - result.stdout == 'multi-token success'
+
+- name: test str2int and str2float conversion from extra-vars
+  assert:
+    that:
+      - str2int_test == 3
+      - str2float_test == 3.14

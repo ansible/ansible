@@ -430,8 +430,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
                               action="callback", callback=CLI.unfrack_paths, type='str')
         if runtask_opts:
-            parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-                              help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
+            parser.add_option('-e', '--extra-vars', dest='extra_vars', action='append',
+                              help='set additional variables as key=value or YAML/JSON, if filename prepend with @', default=[])
+            parser.add_option('--convert-type', dest='convert_type', action='store_true',
+                              help='convert bool, int, and float value strings to their respective types')
 
         if fork_opts:
             parser.add_option('-f', '--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',

@@ -29,6 +29,7 @@ from json import dumps
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.basic import boolean
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
@@ -139,6 +140,22 @@ def load_extra_vars(loader, options):
                 extra_vars = combine_vars(extra_vars, data)
             else:
                 raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+
+            if hasattr(options, 'convert_type') and options.convert_type:
+                for key, value in extra_vars.items():
+                    for conv in (int, float, boolean):
+                        # Strategy from https://stackoverflow.com/questions/7019283/automatically-type-cast-parameters-in-python
+                        #
+                        # Avoid casting 1 and 0 as booleans this way; still can be
+                        # used in conditionals correctly
+                        try:
+                            # Type-cast string value if appropriate
+                            extra_vars[key] = conv(value)
+                        except (ValueError, TypeError):
+                            pass
+                        else:
+                            # Exit loop on first successful conversion
+                            break
 
     return extra_vars
 
