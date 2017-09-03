@@ -160,6 +160,31 @@ task:
           Service: lambda.amazonaws.com
 
 '''
+RETURN = '''
+role_result:
+    description: the IAM.role dict returned by Boto
+    type: string
+    returned: if iam_type=role and state=present
+    sample: {
+                "arn": "arn:aws:iam::A1B2C3D4E5F6:role/my-new-role",
+                "assume_role_policy_document": "...truncated...",
+                "create_date": "2017-09-02T14:32:23Z",
+                "path": "/",
+                "role_id": "AROAA1B2C3D4E5F6G7H8I",
+                "role_name": "my-new-role"
+            }
+roles:
+    description: a list containing the name of the currently defined roles
+    type: list
+    returned: if iam_type=role and state=present
+    sample: [
+        "my-new-role",
+        "my-existing-role-1",
+        "my-existing-role-2",
+        "my-existing-role-3",
+        "my-existing-role-...",
+    ]
+'''
 
 import json
 import itertools
@@ -536,7 +561,7 @@ def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc)
             changed = True
             iam_role_result = iam.create_role(name,
                 assume_role_policy_document=trust_policy_doc,
-                path=path).create_role_response.create_role_result.role.role_name
+                path=path).create_role_response.create_role_result.role
 
             if name not in prof_list:
                 instance_profile_result = iam.create_instance_profile(name,
@@ -548,6 +573,7 @@ def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc)
         module.fail_json(changed=changed, msg=str(err))
     else:
         updated_role_list = list_all_roles(iam)
+        iam_role_result = iam.get_role(name).get_role_response.get_role_result.role
     return changed, updated_role_list, iam_role_result, instance_profile_result
 
 
