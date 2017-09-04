@@ -366,6 +366,7 @@ def _fallback(fallback):
     except AnsibleFallbackNotFound:
         pass
 
+
 class Template:
 
     def __init__(self):

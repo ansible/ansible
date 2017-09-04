@@ -66,6 +66,10 @@ def get_provider_argspec():
     return junos_provider_spec
 
 
+def check_args(module, warnings):
+    pass
+
+
 def _validate_rollback_id(module, value):
     try:
         if not 0 <= int(value) <= 49:

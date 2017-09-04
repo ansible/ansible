@@ -60,6 +60,10 @@ sros_top_spec = {
 sros_argument_spec.update(sros_top_spec)
 
 
+def check_args(module, warnings):
+    pass
+
+
 def get_config(module, flags=[]):
     cmd = 'admin display-config '
     cmd += ' '.join(flags)

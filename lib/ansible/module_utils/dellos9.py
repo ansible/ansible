@@ -70,6 +70,7 @@ dellos9_top_spec = {
 }
 dellos9_argument_spec.update(dellos9_top_spec)
 
+
 def check_args(module, warnings):
     pass
 
