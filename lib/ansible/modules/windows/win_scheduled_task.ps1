@@ -1,254 +1,1066 @@
 #!powershell
 # This file is part of Ansible
-#
+
 # Copyright 2015, Peter Mounce <public@neverrunwithscissors.com>
 # Michael Perzel <michaelperzel@gmail.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.SID
 
 $ErrorActionPreference = "Stop"
 
-# WANT_JSON
-# POWERSHELL_COMMON
+$params = Parse-Args -arguments $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$path = Get-AnsibleParam -obj $params -name "path" -type "str" -default "\"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent", "present"
+
+# task actions, list of dicts [{path, arguments, working_directory}]
+$actions = Get-AnsibleParam -obj $params -name "actions" -type "list"
+
+# task triggers, list of dicts [{ type, ... }]
+$triggers = Get-AnsibleParam -obj $params -name "triggers" -type "list"
+
+# task Principal properties
+$display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
+$group = Get-AnsibleParam -obj $params -name "group" -type "str"
+$logon_type = Get-AnsibleParam -obj $params -name "logon_type" -type "str" -validateset "none","password","s4u","interactive_token","group","service_account","interactive_token_or_password"
+$run_level = Get-AnsibleParam -obj $params -name "run_level" -type "str" -validateset "limited", "highest" -aliases "runlevel"
+$username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str"
+$update_password = Get-AnsibleParam -obj $params -name "update_password" -type "bool" -default $true
+
+# task RegistrationInfo properties
+$author = Get-AnsibleParam -obj $params -name "author" -type "str"
+$date = Get-AnsibleParam -obj $params -name "date" -type "str"
+$description = Get-AnsibleParam -obj $params -name "description" -type "str"
+$source = Get-AnsibleParam -obj $params -name "source" -type "str"
+$version = Get-AnsibleParam -obj $params -name "version" -type "str"
+
+# task Settings properties
+$allow_demand_start = Get-AnsibleParam -obj $params -name "allow_demand_start" -type "bool"
+$allow_hard_terminate = Get-AnsibleParam -obj $params -name "allow_hard_terminate" -type "bool"
+$compatibility =  Get-AnsibleParam -obj $params -name "compatibility" -type "int" # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383486(v=vs.85).aspx
+$delete_expired_task_after = Get-AnsibleParam -obj $params -name "delete_expired_task_after" -type "str" # time string PT...
+$disallow_start_if_on_batteries = Get-AnsibleParam -obj $params -name "disallow_start_if_on_batteries" -type "bool"
+$enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool"
+$execution_time_limit = Get-AnsibleParam -obj $params -name "execution_time_limit" -type "str" # PT72H
+$hidden = Get-AnsibleParam -obj $params -name "hidden" -type "bool"
+# TODO: support for $idle_settings, needs to be created as a COM object
+$multiple_instances = Get-AnsibleParam -obj $params -name "multiple_instances" -type "int" # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383507(v=vs.85).aspx
+# TODO: support for  $network_settings, needs to be created as a COM object
+$priority = Get-AnsibleParam -obj $params -name "priority" -type "int" # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383512(v=vs.85).aspx
+$restart_count = Get-AnsibleParam -obj $params -name "restart_count" -type "int"
+$restart_interval = Get-AnsibleParam -obj $params -name "time_interval" -type "str" # time string PT..
+$run_only_if_idle = Get-AnsibleParam -obj $params -name "run_only_if_idle" -type "bool"
+$run_only_if_network_available = Get-AnsibleParam -obj $params -name "run_only_if_network_available" -type "bool"
+$start_when_available = Get-AnsibleParam -obj $params -name "start_when_available" -type "bool"
+$stop_if_going_on_batteries = Get-AnsibleParam -obj $params -name "stop_if_going_on_batteries" -type "bool"
+$wake_to_run = Get-AnsibleParam -obj $params -name "wake_to_run" -type "bool"
+
+# deprecated action arguments - use actions instead
+$old_arguments = Get-AnsibleParam -obj $params -name "arguments" -type "str" -aliases "argument"
+$old_executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -failifempty ($old_arguments -ne $null) -aliases "execute"
+
+# deprecated principal arguments - use logon_type instead
+$store_password = Get-AnsibleParam -obj $params -name "store_password" -type "bool"
+
+# deprecated trigger arguments - use triggers instead
+$old_days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "list"
+$old_frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str"
+$old_time = Get-AnsibleParam -obj $params -name "time" -type "str"
 
 $result = @{
     changed = $false
 }
 
-function Invoke-TaskPathCheck {
-    [CmdletBinding(SupportsShouldProcess=$true)]
-    param($Path, [Switch]$Remove)
-
-    $pathResults = @{
-        PathExists = $null
-        RemovedPath = $false
-    }
-
-    if ($path -ne "\") {
-        $trimmedPath = $Path.TrimEnd("\")
-    }
-    else {
-        $trimmedPath = $Path
-    }
-
-    $scheduleObject = New-Object -ComObject Schedule.Service
-    $scheduleObject.Connect()
-
-    try {
-        $targetFolder = $scheduleObject.GetFolder($trimmedPath)
-        $pathResults.PathExists = $true
-    }
-    catch {
-        $pathResults.PathExists = $false
-    }
-
-    if ($Remove -and $pathResults.PathExists) {
-        $childFolders = $targetFolder.GetFolders($null)
-        $childTasks = $targetFolder.GetTasks($null)
-
-        if ($childFolders.Count -eq 0 -and $childTasks.Count -eq 0) {
-            if ($PSCmdlet.ShouldProcess($trimmedPath, "Remove task path")) {
-                $rootFolder = $scheduleObject.GetFolder("\")
-                $rootFolder.DeleteFolder($trimmedPath, $null)
-            }
-            $pathResults.RemovedPath = $true
-        }
-    }
-
-    return $pathResults
+if ($diff) {
+    $result.diff = @{}
 }
 
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-
-$arguments = Get-AnsibleParam -obj $params -name "arguments" -type "str" -aliases "argument"
-$description = Get-AnsibleParam -obj $params -name "description" -type "str" -default "No description."
-$enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
-$path = Get-AnsibleParam -obj $params -name "path" -type "str" -default '\'
-
-# Required vars
-$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
-
-# Vars conditionally required
-$present = $state -eq "present"
-$executable = Get-AnsibleParam -obj $params -name "executable" -type "str" -aliases "execute" -failifempty $present
-$frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str" -validateset "once","daily","weekly" -failifempty $present
-$time = Get-AnsibleParam -obj $params -name "time" -type "str" -failifempty $present
-
-$user = Get-AnsibleParam -obj $params -name "user" -default "$env:USERDOMAIN\$env:USERNAME" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str"
-$runlevel = Get-AnsibleParam -obj $params -name "runlevel" -default "limited" -type "str" -validateset "limited", "highest"
-$store_password = Get-AnsibleParam -obj $params -name "store_password" -default $true -type "bool"
-
-$weekly = $frequency -eq "weekly"
-$days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "str" -failifempty $weekly
-
-
-try {
-    $task = Get-ScheduledTask | Where-Object {$_.TaskName -eq $name -and $_.TaskPath -eq $path}
-
-    # Correlate task state to enable variable, used to calculate if state needs to be changed
-    $taskState = if ($task) { $task.State } else { $null }
-    if ($taskState -eq "Ready"){
-        $taskState = $true
-    }
-    elseif($taskState -eq "Disabled"){
-        $taskState = $false
-    }
-    else
-    {
-        $taskState = $null
-    }
-
-    $measure = $task | measure
-    if ($measure.count -eq 1 ) {
-        $exists = $true
-    }
-    elseif ( ($measure.count -eq 0) -and ($state -eq "absent") ){
-        # Nothing to do
-        $result.exists = $false
-        $result.msg = "Task does not exist"
-
-        Exit-Json $result
-    }
-    elseif ($measure.count -eq 0){
-        $exists = $false
-    }
-    else {
-        # This should never occur
-        Fail-Json $result "$($measure.count) scheduled tasks found"
-    }
-
-    $result.exists = $exists
-
-    if ($frequency){
-        if ($frequency -eq "once") {
-            $trigger = New-ScheduledTaskTrigger -Once -At $time
-        }
-        elseif ($frequency -eq "daily") {
-            $trigger = New-ScheduledTaskTrigger -Daily -At $time
-        }
-        elseif ($frequency -eq "weekly"){
-            $trigger = New-ScheduledTaskTrigger -Weekly -At $time -DaysOfWeek $days_of_week
-        }
-        else {
-            Fail-Json $result "frequency must be daily or weekly"
-        }
-    }
-
-    if ( ($state -eq "absent") -and ($exists) ) {
-        Unregister-ScheduledTask -TaskName $name -Confirm:$false -WhatIf:$check_mode
-        $result.changed = $true
-        $result.msg = "Deleted task $name"
-
-        # Remove task path if it exists
-        $pathResults = Invoke-TaskPathCheck -Path $path -Remove -WhatIf:$check_mode
-
-        if ($pathResults.RemovedPath) {
-            $result.msg += " and task path $path removed"
-        }
-
-        Exit-Json $result
-    }
-    elseif ( ($state -eq "absent") -and (-not $exists) ) {
-        $result.msg = "Task $name does not exist"
-        Exit-Json $result
-    }
-
-    # Handle RunAs/RunLevel options for the task
-
-    if ($store_password) {
-        # Specify direct credential and run-level values to add to Register-ScheduledTask
-        $registerRunOptionParams = @{
-            User = $user
-            RunLevel = $runlevel
-        }
-        if ($password) {
-            $registerRunOptionParams.Password = $password
-        }
-    }
-    else {
-        # Create a ScheduledTaskPrincipal for the task to run under
-        $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel $runlevel -Id Author
-        $registerRunOptionParams = @{Principal = $principal}
-    }
-
-    if ($enabled){
-        $settings = New-ScheduledTaskSettingsSet
-    }
-    else {
-        $settings = New-ScheduledTaskSettingsSet -Disable
-    }
-
-    if ($arguments) {
-        $action = New-ScheduledTaskAction -Execute $executable -Argument $arguments
-    }
-    else {
-        $action = New-ScheduledTaskAction -Execute $executable
-    }
-
-    if ( ($state -eq "present") -and (-not $exists) ){
-        # Check task path prior to registering
-        $pathResults = Invoke-TaskPathCheck -Path $path
-
-        if (-not $check_mode) {
-            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings @registerRunOptionParams
-        }
-
-        $result.changed = $true
-        $result.msg = "Added new task $name"
-
-        if (!$pathResults.PathExists) {
-            $result.msg += " and task path $path created"
-        }
-    }
-    elseif( ($state -eq "present") -and ($exists) ) {
-        # Check task path prior to registering
-        $pathResults = Invoke-TaskPathCheck -Path $path
-
-        if ((!$store_password -and $task.Principal.LogonType -in @("S4U", "ServiceAccount")) -or ($store_password -and $task.Principal.LogonType -notin @("S4U", "Password") -and !$password)) {
-            $passwordStoreConsistent = $true
-        }
-        else {
-            $passwordStoreConsistent = $false
-        }
-
-        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $executable -and
-        $taskState -eq $enabled -and $task.Principal.UserId -eq $user -and $task.Principal.RunLevel -eq $runlevel -and $passwordStoreConsistent) {
-            # No change in the task
-            $result.msg = "No change in task $name"
-        }
-        else {
-            Unregister-ScheduledTask -TaskName $name -Confirm:$false -WhatIf:$check_mode
-
-            if (-not $check_mode) {
-                $oldPathResults = Invoke-TaskPathCheck -Path $task.TaskPath -Remove
-                Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings @registerRunOptionParams
-            }
-            $result.changed = $true
-            $result.msg = "Updated task $name"
-
-            if (!$pathResults.PathExists) {
-                $result.msg += " and task path $path created"
-            }
-        }
-    }
-
-    Exit-Json $result
-}
-catch
+Add-Type -TypeDefinition @"
+public enum TASK_ACTION_TYPE // https://msdn.microsoft.com/en-us/library/windows/desktop/aa383553(v=vs.85).aspx
 {
-  Fail-Json $result $_.Exception.Message
+    TASK_ACTION_EXEC          = 0,
+    // The below are not supported and are only kept for documentation purposes
+    TASK_ACTION_COM_HANDLER   = 5,
+    TASK_ACTION_SEND_EMAIL    = 6,
+    TASK_ACTION_SHOW_MESSAGE  = 7
 }
+
+public enum TASK_CREATION // https://msdn.microsoft.com/en-us/library/windows/desktop/aa382538(v=vs.85).aspx
+{
+    TASK_VALIDATE_ONLY                 = 0x1,
+    TASK_CREATE                        = 0x2,
+    TASK_UPDATE                        = 0x4,
+    TASK_CREATE_OR_UPDATE              = 0x6,
+    TASK_DISABLE                       = 0x8,
+    TASK_DONT_ADD_PRINCIPAL_ACE        = 0x10,
+    TASK_IGNORE_REGISTRATION_TRIGGERS  = 0x20
+}
+
+public enum TASK_LOGON_TYPE // https://msdn.microsoft.com/en-us/library/windows/desktop/aa383566(v=vs.85).aspx
+{
+    TASK_LOGON_NONE                           = 0,
+    TASK_LOGON_PASSWORD                       = 1,
+    TASK_LOGON_S4U                            = 2,
+    TASK_LOGON_INTERACTIVE_TOKEN              = 3,
+    TASK_LOGON_GROUP                          = 4,
+    TASK_LOGON_SERVICE_ACCOUNT                = 5,
+    TASK_LOGON_INTERACTIVE_TOKEN_OR_PASSWORD  = 6
+}
+
+public enum TASK_RUN_LEVEL // https://msdn.microsoft.com/en-us/library/windows/desktop/aa380747(v=vs.85).aspx
+{
+    TASK_RUNLEVEL_LUA      = 0,
+    TASK_RUNLEVEL_HIGHEST  = 1
+}
+
+public enum TASK_TRIGGER_TYPE2 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa383915(v=vs.85).aspx
+{
+    TASK_TRIGGER_EVENT                 = 0,
+    TASK_TRIGGER_TIME                  = 1,
+    TASK_TRIGGER_DAILY                 = 2,
+    TASK_TRIGGER_WEEKLY                = 3,
+    TASK_TRIGGER_MONTHLY               = 4,
+    TASK_TRIGGER_MONTHLYDOW            = 5,
+    TASK_TRIGGER_IDLE                  = 6,
+    TASK_TRIGGER_REGISTRATION          = 7,
+    TASK_TRIGGER_BOOT                  = 8,
+    TASK_TRIGGER_LOGON                 = 9,
+    TASK_TRIGGER_SESSION_STATE_CHANGE  = 11
+}
+"@
+
+######################################
+### VALIDATION/BUILDING OF OPTIONS ###
+######################################
+
+# convert username and group to SID if set
+$username_sid = $null
+if ($username) {
+    $username_sid = Convert-ToSid -account_name $username
+}
+$group_sid = $null
+if ($group) {
+    $group_sid = Convert-ToSid -account_name $group
+}
+
+# Convert the older arguments to the newer format if required
+if ($old_executable -ne $null) {
+    Add-DeprecationWarning -obj $result -message "executable option is deprecated, please use the actions list option instead" -version 2.7
+    $new_action = @{ path = $old_executable }
+    
+    if ($old_arguments -ne $null) {
+        Add-DeprecationWarning -obj $result -message "arguments option is deprecated, please use the actions list option instead" -version 2.7
+        $new_action.arguments = $old_arguments
+    }
+    if ($actions -eq $null) {
+        $actions = @($new_action)
+    } else {
+        Add-Warning -obj $result -message "actions is already specified, ignoring the executable option"
+    }
+}
+
+# validate store_password and logon_type
+if ($logon_type -ne $null) {
+    $full_enum_name = "TASK_LOGON_$($logon_type.ToUpper())"
+    $logon_type = [TASK_LOGON_TYPE]::$full_enum_name
+    if ($store_password -ne $null) {
+        Add-Warning -obj $result -message "both store_password and logon_type have been defined, ignoring store_password"
+    }
+} else {
+    if ($store_password -ne $null) {
+        Add-DeprecationWarning -obj $result -message "store_password option is deprecated, please use logon_type: password instead" -version 2.7
+        if ($store_password -eq $true -and $password -ne $null) {
+            $logon_type = [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD
+        }
+    }
+}
+
+# now validate the logon_type option with the other parameters
+if ($username -ne $null -and $group -ne $null) {
+    Fail-Json -obj $result -message "username and group can not be set at the same time"
+}
+if ($logon_type -ne $null) {
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD -and $password -eq $null) {
+        Fail-Json -obj $result -message "password must be set when logon_type=password"
+    }
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_S4U -and $password -eq $null) {
+        Fail-Json -obj $result -message "password must be set when logon_type=s4u"
+    }
+
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_GROUP -and $group -eq $null) {
+        Fail-Json -obj $result -message "group must be set when logon_type=group"
+    }
+
+    # SIDs == Local System, Local Service and Network Service
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_SERVICE_ACCOUNT -and $username_sid -notin @("S-1-5-18", "S-1-5-19", "S-1-5-20")) {
+        Fail-Json -obj $result -message "username must be SYSTEM, LOCAL SERVICE or NETWORK SERVICE when logon_type=service_account"
+    }
+}
+
+# convert the run_level to enum value
+if ($run_level -ne $null) {
+    if ($run_level -eq "limited") {
+        $run_level = [TASK_RUN_LEVEL]::TASK_RUNLEVEL_LUA
+    } else {
+        $run_level = [TASK_RUN_LEVEL]::TASK_RUNLEVEL_HIGHEST
+    }
+}
+
+# manually add the only support action type for each action
+foreach ($action in $actions) {
+    $action.type = [TASK_ACTION_TYPE]::TASK_ACTION_EXEC
+}
+
+# convert deprecated trigger args to new format
+$deprecated_trigger = $null
+if ($old_frequency -ne $null) {
+    # once, daily, weekly
+    Add-DeprecationWarning -obj $result -message "" -version 2.7
+    if ($triggers.Count -eq 0) {
+        $deprecated_trigger = @{type = $null}
+        switch ($frequency) {
+            once { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME }
+            daily { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY }
+            weekly { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY }
+        }
+    } else {
+        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the frequency option as it is deprecated"
+    }
+}
+if ($old_days_of_week -ne $null) {
+    Add-DeprecationWarning -obj $result -message "days_of_week is deprecated, use the triggers list with 'monthlydow' type" -version 2.7
+    if ($triggers.Count -eq 0) {
+        $deprecated_trigger.days_of_week = $old_days_of_week
+    } else {
+        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the days_of_week option as it is deprecated"
+    }
+}
+if ($old_time -ne $null) {
+    Add-DeprecationWarning -obj $result -message "old_time is deprecated, use the triggers list to specify the 'start_boundary'" -version 2.7
+    if ($triggers.Count -eq 0) {
+        $deprecated_trigger.start_boundary = $old_time
+    } else {
+        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the time option as it is deprecated"
+    }
+}
+if ($deprecated_trigger -ne $null) {
+    $triggers += $deprecated_trgger
+}
+
+# convert and validate the triggers
+foreach ($trigger in $triggers) {
+    $valid_trigger_types = @('event', 'time', 'daily', 'weekly', 'monthly', 'monthlydow', 'idle', 'registration', 'boot', 'logon', 'session_state_change')
+    if (-not $trigger.ContainsKey("type")) {
+        Fail-Json -obj $result -message "a trigger entry must contain a key 'type' with a value of '$($valid_trigger_types -join "', '")'"
+    }
+
+    $trigger_type = $trigger.type
+    if ($trigger_type -notin $valid_trigger_types) {
+        Fail-Json -obj $result -message "the specified trigger type '$trigger_type' is not valid, type must be a value of '$($valid_trigger_types -join "', '")'"
+    }
+
+    $full_enum_name = "TASK_TRIGGER_$($trigger_type.ToUpper())"
+    $trigger_type = [TASK_TRIGGER_TYPE2]::$full_enum_name
+    $trigger.type = $trigger_type
+
+    $date_properties = @('start_boundary', 'end_boundary')
+    foreach ($property_name in $date_properties) {
+        # validate the date is in the DateTime format
+        # yyyy-mm-ddThh:mm:ss
+        if ($trigger.ContainsKey($property_name)) {
+            $date_value = $trigger.$property_name
+            try {
+                $date = Get-Date -Date $date_value -Format s
+                # make sure we convert it to the full string format
+                $trigger.$property_name = $date.ToString()
+            } catch [System.Management.Automation.ParameterBindingException] {
+                Fail-Json -obj $result -message "trigger option '$property_name' must be in the format 'YYYY-MM-DDThh:mm:ss' format but was '$date_value'"
+            }
+        }
+    }
+
+    $time_properties = @('execution_time_limit', 'delay', 'random_delay')
+    foreach ($property_name in $time_properties) {
+        # validate the duration is in the Duration Data Type format
+        # PnYnMnDTnHnMnS
+        if ($trigger.ContainsKey($property_name)) {
+            $time_span = $trigger.$property_name
+            try {
+                [void][System.Xml.XmlConvert]::ToTimeSpan($time_span)
+            } catch [System.FormatException] {
+                Fail-Json -obj $result -message "trigger option '$property_name' must be in the XML duration format but was '$time_span'"
+            }
+        }
+    }
+
+    # convert out human readble text to the hex values for these properties
+    if ($trigger.ContainsKey("days_of_week")) {
+        $days = $trigger.days_of_week
+        if ($days -is [String]) {
+            $days = $days.Split(",").Trim()
+        } elseif ($days -isnot [Array]) {
+            $days = @($days)
+        }
+        
+        $day_value = 0
+        foreach ($day in $days) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382057(v=vs.85).aspx
+            switch ($day) {
+                sunday { $day_value = $day_value -bor 0x01 }
+                monday { $day_value = $day_value -bor 0x02 }
+                tuesday { $day_value = $day_value -bor 0x04 }
+                wednesday { $day_value = $day_value -bor 0x08 }
+                thursday { $day_value = $day_value -bor 0x10 }
+                friday { $day_value = $day_value -bor 0x20 }
+                saturday { $day_value = $day_value -bor 0x40 }
+                default { Fail-Json -obj $result -message "invalid day of week '$day', check the spelling matches the full day name" }
+            }
+        }
+        if ($day_value -eq 0) {
+            $day_value = $null
+        }
+
+        $trigger.days_of_week = $day_value
+    }
+    if ($trigger.ContainsKey("days_of_month")) {
+        $days = $trigger.days_of_month
+        if ($days -is [String]) {
+            $days = $days.Split(",").Trim()
+        } elseif ($days -isnot [Array]) {
+            $days = @($days)
+        }
+
+        $day_value = 0
+        foreach ($day in $days) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382063(v=vs.85).aspx
+            switch ($day) {
+                1 { $day_value = $day_value -bor 0x01 }
+                2 { $day_value = $day_value -bor 0x02 }
+                3 { $day_value = $day_value -bor 0x04 }
+                4 { $day_value = $day_value -bor 0x08 }
+                5 { $day_value = $day_value -bor 0x20 }
+                6 { $day_value = $day_value -bor 0x20 }
+                7 { $day_value = $day_value -bor 0x40 }
+                8 { $day_value = $day_value -bor 0x80 }
+                9 { $day_value = $day_value -bor 0x100 }
+                10 { $day_value = $day_value -bor 0x200 }
+                11 { $day_value = $day_value -bor 0x400 }
+                12 { $day_value = $day_value -bor 0x800 }
+                13 { $day_value = $day_value -bor 0x1000 }
+                14 { $day_value = $day_value -bor 0x2000 }
+                15 { $day_value = $day_value -bor 0x4000 }
+                16 { $day_value = $day_value -bor 0x8000 }
+                17 { $day_value = $day_value -bor 0x10000 }
+                18 { $day_value = $day_value -bor 0x20000 }
+                19 { $day_value = $day_value -bor 0x40000 }
+                20 { $day_value = $day_value -bor 0x80000 }
+                21 { $day_value = $day_value -bor 0x100000 }
+                22 { $day_value = $day_value -bor 0x200000 }
+                23 { $day_value = $day_value -bor 0x400000 }
+                24 { $day_value = $day_value -bor 0x800000 }
+                25 { $day_value = $day_value -bor 0x1000000 }
+                26 { $day_value = $day_value -bor 0x2000000 }
+                27 { $day_value = $day_value -bor 0x4000000 }
+                28 { $day_value = $day_value -bor 0x8000000 }
+                29 { $day_value = $day_value -bor 0x10000000 }
+                30 { $day_value = $day_value -bor 0x20000000 }
+                31 { $day_value = $day_value -bor 0x40000000 }
+                last { $day_value = $day_value -bor 0x80000000 }
+                default { Fail-Json -obj $result -message "invalid day of month '$day', please specify numbers from 1-31 or last" }
+            }
+        }
+        if ($day_value -eq 0) {
+            $day_value = $null
+        }
+        $trigger.days_of_week = $day_value
+    }
+    if ($trigger.ContainsKey("weeks_of_month")) {
+        $weeks = $trigger.weeks_of_month
+        if ($weeks -is [String]) {
+            $weeks = $weeks.Split(",").Trim()
+        } elseif ($weeks -isnot [Array]) {
+            $weeks = @($weeks)
+        }
+
+        $week_value = 0
+        foreach ($week in $weeks) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382061(v=vs.85).aspx
+            switch ($week) {
+                1 { $week_value = $week_value -bor 0x01 }
+                2 { $week_value = $week_value -bor 0x02 }
+                3 { $week_value = $week_value -bor 0x04 }
+                4 { $week_value = $week_value -bor 0x08 }
+                default { Fail-Json -obj $result -message "invalid week of month '$week', please specify weeks from 1-4" }
+            }
+
+        }
+        if ($week_value -eq 0) {
+            $week_value = $null
+        }
+        $trigger.weeks_of_month = $week_value
+    }
+    if ($trigger.ContainsKey("months_of_year")) {
+        $months = $trigger.months_of_year
+        if ($months -is [String]) {
+            $months = $months.Split(",").Trim()
+        } elseif ($months -isnot [Array]) {
+            $months = @($months)
+        }
+
+        $month_value = 0
+        foreach ($month in $months) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382064(v=vs.85).aspx
+            switch ($month) {
+                january { $month_value = $month_value -bor 0x01 }
+                february { $month_value = $month_value -bor 0x02 }
+                march { $month_value = $month_value -bor 0x04 }
+                april { $month_value = $month_value -bor 0x08 }
+                may { $month_value = $month_value -bor 0x10 }
+                june { $month_value = $month_value -bor 0x20 }
+                july { $month_value = $month_value -bor 0x40 }
+                august { $month_value = $month_value -bor 0x80 }
+                september { $month_value = $month_value -bor 0x100 }
+                october { $month_value = $month_value -bor 0x200 }
+                november { $month_value = $month_value -bor 0x400 }
+                december { $month_value = $month_value -bor 0x800 }
+                default { Fail-Json -obj $result -message "invalid month name '$month', please specify full month name" }
+            }
+        }
+        if ($month_value -eq 0) {
+            $month_value = $null
+        }
+        $trigger.months_of_year = $month_value
+    }
+}
+
+# add \ to start of path if it is not already there
+if (-not $path.StartsWith("\")) {
+    $path = "\$path"
+}
+# ensure path does not end with \ if more than 1 char
+if ($path.EndsWith("\") -and $path.Length -ne 1) {
+    $path = $path.Substring(0, $path.Length - 1)
+}
+
+########################
+### HELPER FUNCTIONS ###
+########################
+
+Function Convert-SnakeToPascalCase($snake) {
+    # very basic function to convert snake_case to PascalCase for use in COM
+    # objects
+    [regex]$regex = "_(\w)"
+    $pascal_case = $regex.Replace($snake, { $args[0].Value.Substring(1).ToUpper() })
+    $capitalised = $pascal_case.Substring(0, 1).ToUpper() + $pascal_case.Substring(1)
+
+    return $capitalised
+}
+
+Function Compare-Properties($parent_property, $map) {
+    $changes = [System.Collections.ArrayList]@()
+
+    # loop through the passed in map and compare values
+    # Name = The name of property in the COM object
+    # Value = The new value to compare the existing value with
+    foreach ($entry in $map.GetEnumerator()) {
+        $new_value = $entry.Value
+
+        if ($new_value -ne $null) {
+            $property_name = $entry.Name
+            $existing_value = $parent_property.$property_name
+            if ($existing_value -cne $new_value) {
+                $parent_property.$property_name = $new_value
+                [void]$changes.Add("-$property_name=$existing_value`n+$property_name=$new_value")
+            }
+        }
+    }
+
+    return ,$changes
+}
+
+Function Compare-PropertyList {
+    Param(
+        $collection, # the collection COM object to manipulate, this must contains the Create method
+        [string]$property_name, # human friendly name of the property object, e.g. action/trigger
+        [Array]$new, # a list of new properties, passed in by Ansible
+        [Array]$existing, # a list of existing properties from the COM object collection
+        [Hashtable]$map # metadata for the collection, see below for the structure
+    )
+    <## map metadata structure
+    {
+        collection type [TASK_ACTION_TYPE] for Actions or [TASK_TRIGGER_TYPE2] for Triggers {
+            mandatory = list of mandatory properties for this type, ansible input name not the COM name
+            optional = list of optional properties that could be set for this type
+            # maps the ansible input object name to the COM name, e.g. working_directory = WorkingDirectory
+            map = {
+                ansible input name = COM name
+            }
+        }
+    }##>
+
+    # used by both Actions and Triggers to compare the collections of that property
+    $changes = [System.Collections.ArrayList]@()
+    $new_count = $new.Count
+    $existing_count = $existing.Count
+
+    for ($i = 0; $i -lt $new_count; $i++) {
+        if ($i -lt $existing_count) {
+            $existing_property = $existing[$i]
+        } else {
+            $existing_property = $null
+        }
+        $new_property = $new[$i]
+
+        # get the type of the property, for action this is set automatically
+        if (-not $new_property.ContainsKey("type")) {
+            Fail-Json -obj $result -message "entry for $property_name must contain a type key"
+        }
+        $type = $new_property.type
+        $valid_types = $map.Keys
+        $property_map = $map.$type
+
+        # now let's validate the args for the property
+        $mandatory_args = $property_map.mandatory
+        $optional_args = $property_map.optional
+        $total_args = $mandatory_args + $optional_args
+
+        # validate the mandatory arguments
+        foreach ($mandatory_arg in $mandatory_args) {
+            if (-not $new_property.ContainsKey($mandatory_arg)) {
+                Fail-Json -obj $result -message "mandatory key '$mandatory_arg' for $($property_name) is not set, mandatory keys are '$($mandatory_args -join "', '")'"
+            }
+        }
+        # throw a warning if in invalid key was set
+        foreach ($entry in $new_property.GetEnumerator()) {
+            $key = $entry.Name
+            if ($key -notin $total_args -and $key -ne "type") {
+                Add-Warning -obj $result -message "key '$key' for $($property_name) entry is not valid and will be ignored, valid keys are '$($total_args -join "', '")"
+            }
+        }
+
+        # now we have validated the input and have gotten the metadata, let's
+        # get the diff string
+        if ($existing_property -eq $null) {
+            # we have more properties than before,just add to the new
+            # properties list
+            $diff_list = [System.Collections.ArrayList]@()
+            foreach ($property_arg in $total_args) {
+                if ($new_property.ContainsKey($property_arg)) {
+                    $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                    $property_value = $new_property.$property_arg
+                    [void]$diff_list.Add("+$com_name=$property_value")
+                }
+            }
+
+            [void]$changes.Add("+{`n  $($diff_list -join ",`n  ")`n+}")
+        } elseif ($existing_property.Type -ne $type) {
+            # the types are different so we need to change
+            $diff_list = [System.Collections.ArrayList]@()
+
+            if ($existing_property.Type -notin $valid_types) {
+                [void]$diff_list.Add("-UNKNOWN TYPE $($existing_property.Type)")
+                foreach ($property_args in $total_args) {
+                    if ($new_property.ContainsKey($property_arg)) {
+                        $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                        $property_value = $new_property.$property_arg
+                        [void]$diff_list.Add("+$com_name=$property_value")
+                    }
+                }
+            } else {
+                # we know the types of the existing property
+                $existing_type = [Enum]::ToObject([TASK_TRIGGER_TYPE2], $existing_property.Type)
+                [void]$diff_list.Add("-Type=$existing_type")
+                [void]$diff_list.Add("+Type=$type")
+                foreach ($property_arg in $total_args) {
+                    $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                    $existing_value = $existing_property.$com_name
+                    $new_value = $new_property.$property_arg
+
+                    if ($existing_value -ne $null) {
+                        [void]$diff_list.Add("-$com_name=$existing_value")
+                    }
+                    if ($new_value -ne $null) {
+                        [void]$diff_list.Add("+$com_name=$new_value")
+                    }
+                }
+            }
+
+            [void]$changes.Add("{`n  $($diff_list -join ",`n  ")`n}")
+        } else {
+            # compare the properties of existing and new
+            $diff_list = [System.Collections.ArrayList]@()
+
+            foreach ($property_arg in $total_args) {
+                $new_value = $new_property.$property_arg
+                $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                $existing_value = $existing_property.$com_name
+
+                if ($new_value -ne $null) {
+                    if ($new_value -cne $existing_value) {
+                        [void]$diff_list.Add("-$com_name=$existing_value")
+                        [void]$diff_list.Add("+$com_name=$new_value")
+                    }
+                }
+            }
+
+            if ($diff_list.Count -gt 0) {
+                [void]$changes.Add("{`n  $($diff_list -join ",`n  ")`n}")
+            }
+        }
+
+        # finally rebuild the new property collection
+        $new_object = $collection.Create($type)
+        foreach ($property_arg in $total_args) {
+            $new_value = $new_property.$property_arg
+            if ($new_value -ne $null) {
+                $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                $new_object.$com_name = $new_value
+            }
+        }
+    }
+
+    # if there were any extra properties not in the new list, create diff str
+    if ($existing_count -gt $new_count) {
+        for ($i = $new_count - 1; $i -lt $existing_count; $i++) {
+            $diff_list = [System.Collections.ArrayList]@()
+            $existing_property = $existing[$i]
+            $existing_type = $existing_property.Type
+
+            if ($map.ContainsKey($existing_type)) {
+                $property_map = $map.$existing_type
+                $property_args = $property_map.mandatory + $property_map.optional
+
+                foreach ($property_arg in $property_args) {
+                    $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                    $existing_value = $existing_property.$com_name
+                    if ($existing_value -ne $null) {
+                        [void]$diff_list.Add("-$com_name=$existing_value")
+                    }
+                }
+            } else {
+                [void]$diff_list.Add("-UNKNOWN TYPE $existing_type")
+            }
+
+            [void]$changes.Add("-{`n  $($diff_list -join ",`n  ")`n-}")
+        }
+    }
+
+    return ,$changes
+}
+
+Function Compare-Actions($task_definition) {
+    # compares the Actions property and returns a list of list of changed
+    # actions for use in a diff string
+    # ActionCollection - https://msdn.microsoft.com/en-us/library/windows/desktop/aa446804(v=vs.85).aspx
+    # Action - https://msdn.microsoft.com/en-us/library/windows/desktop/aa446803(v=vs.85).aspx
+    $task_actions = $task_definition.Actions
+    $existing_count = $task_actions.Count
+
+    # because we clear the actions and re-add them to keep the order, we need
+    # to convert the existing actions to a new list.
+    # The Item property in actions starts at 1
+    $existing_actions = [System.Collections.ArrayList]@()
+    for ($i = 1; $i -le $existing_count; $i++) {
+        [void]$existing_actions.Add($task_actions.Item($i))
+    }
+    if ($existing_count -gt 0) {
+        $task_actions.Clear()
+    }
+
+    $map = @{
+        [TASK_ACTION_TYPE]::TASK_ACTION_EXEC = @{
+            mandatory = @('path')
+            optional = @('arguments', 'working_directory')
+        }
+    }
+    $changes = Compare-PropertyList -collection $task_actions -property_name "action" -new $actions -existing $existing_actions -map $map
+
+    return ,$changes
+}
+
+Function Compare-Principal($task_definition, $task_definition_xml) {
+    # compares the Principal property and returns a list of changed objects for
+    # use in a diff string
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382071(v=vs.85).aspx
+    $principal_map = @{
+        DisplayName = $display_name
+        LogonType = $logon_type
+        RunLevel = $run_level
+    }
+    $task_principal = $task_definition.Principal
+    $changes = Compare-Properties -parent_property $task_principal -map $principal_map
+
+    # Principal.UserId and GroupId only returns the username portion of the
+    # username, skipping the domain or server name. This makes the
+    # comparison process useless so we need to parse the task XML to get
+    # the actual sid
+    $principal_username_sid = $task_definition_xml.Task.Principals.Principal.UserId
+    $principal_group_sid = $task_definition_xml.Task.Principals.Principal.GroupId
+    
+    if ($username_sid -ne $null) {
+        $new_user_name = Convert-FromSid -sid $username_sid
+        if ($principal_group_sid -ne $null) {
+            $existing_account_name = Convert-FromSid -sid $principal_group_sid
+            [void]$changes.Add("-GroupId=$existing_account_name`n+UserId=$new_user_name")
+            $task_principal.UserId = $new_user_name
+            $task_principal.GroupId = $null
+        } elseif ($principal_username_sid -eq $null) {
+            [void]$changes.Add("+UserId=$new_user_name")
+            $task_principal.UserId = $new_user_name
+        } elseif ($principal_username_sid -ne $username_sid) {
+            $existing_account_name = Convert-FromSid -sid $principal_username_sid
+            [void]$changes.Add("-UserId=$existing_account_name`n+UserId=$new_user_name")
+            $task_principal.UserId = $new_user_name
+        }
+    }
+    if ($group_sid -ne $null) {
+        $new_group_name = Convert-FromSid -sid $group_sid
+        if ($principal_username_sid -ne $null) {
+            $existing_account_name = Convert-FromSid -sid $principal_username_sid
+            [void]$changes.Add("-UserId=$existing_account_name`n+GroupId=$new_group_name")
+            $task_principal.UserId = $null
+            $task_principal.GroupId = $new_group_name
+        } elseif ($principal_group_sid -eq $null) {
+            [void]$changes.Add("+GroupId=$new_group_name")
+            $task_principal.GroupId = $new_group_name
+        } elseif ($principal_group_sid -ne $group_sid) {
+            $existing_account_name = Convert-FromSid -sid $principal_group_sid
+            [void]$changes.Add("-GroupId=$existing_account_name`n+GroupId=$new_group_name")
+            $task_principal.GroupId = $new_group_name
+        }
+    }
+    
+    return ,$changes
+}
+
+Function Compare-RegistrationInfo($task_definition) {
+    # compares the RegistrationInfo property and returns a list of changed
+    # objects for use in a diff string
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382100(v=vs.85).aspx
+    $reg_info_map = @{
+        Author = $author
+        Date = $date
+        Description = $description
+        Source = $source
+        Version = $version
+    }
+    $changes = Compare-Properties -parent_property $task_definition.RegistrationInfo -map $reg_info_map
+
+    return ,$changes
+}
+
+Function Compare-Settings($task_definition) {
+    # compares the task Settings property and returns a list of changed objects
+    # for use in a diff string
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383480(v=vs.85).aspx
+    $settings_map = @{
+        AllowDemandStart = $allow_demand_start
+        AllowHardTerminate = $allow_hard_terminate
+        Compatibility = $compatibility
+        DeleteExpiredTaskAfter = $delete_expired_task_after
+        DisallowStartIfOnBatteries = $disallow_start_if_on_batteries
+        Enabled = $enabled
+        Hidden = $hidden
+        # IdleSettings = $idle_settings # TODO: this takes in a COM object
+        MultipleInstances = $multiple_instances
+        # NetworkSettings = $network_settings # TODO: this takes in a COM object
+        Priority = $priority
+        RestartCount = $restart_count
+        RestartInterval = $restart_interval
+        RunOnlyIfIdle = $run_only_if_idle
+        RunOnlyIfNetworkAvailable = $run_only_if_network_available
+        StartWhenAvailable = $start_when_available
+        StopIfGoingOnBatteries = $stop_if_going_on_batteries
+        WakeToRun = $wake_to_run
+    }
+    $changes = Compare-Properties -parent_property $task_definition.Settings -map $settings_map
+
+    return ,$changes
+}
+
+Function Compare-Triggers($task_definition) {
+    # compares the task Triggers property and returns a list of changed objects
+    # for use in a diff string
+    # TriggerCollection - https://msdn.microsoft.com/en-us/library/windows/desktop/aa383875(v=vs.85).aspx
+    # Trigger - https://msdn.microsoft.com/en-us/library/windows/desktop/aa383868(v=vs.85).aspx
+    $task_triggers = $task_definition.Triggers
+    $existing_count = $task_triggers.Count
+
+    # because we clear the actions and re-add them to keep the order, we need
+    # to convert the existing actions to a new list.
+    # The Item property in actions starts at 1
+    $existing_triggers = [System.Collections.ArrayList]@()
+    for ($i = 1; $i -le $existing_count; $i++) {
+        [void]$existing_triggers.Add($task_triggers.Item($i))
+    }
+    if ($existing_count -gt 0) {
+        $task_triggers.Clear()
+    }
+
+    # TODO: solve repetition, takes in a COM object
+    $map = @{
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_BOOT = @{
+            mandatory = @()
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY = @{
+            mandatory = @('start_boundary')
+            optional = @('days_interval', 'enabled', 'end_boundary', 'execution_time_limit', 'random_delay')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_EVENT = @{
+            mandatory = @('subscription')
+            # TODO: ValueQueries is a COM object
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_IDLE = @{
+            mandatory = @()
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_LOGON = @{
+            mandatory = @()
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'user_id')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_MONTHLYDOW = @{
+            mandatory = @('start_boundary')
+            optional = @('days_of_week', 'enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_week_of_month', 'weeks_of_month')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_MONTHLY = @{
+            mandatory = @('days_of_month', 'start_boundary')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_day_of_month', 'start_boundary')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_REGISTRATION = @{
+            mandatory = @()
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME = @{
+            mandatory = @('start_boundary')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY = @{
+            mandatory = @('days_of_week', 'start_boundary')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'weeks_interval')
+        }
+        [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_SESSION_STATE_CHANGE = @{
+            mandatory = @('days_of_week', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'state_change', 'user_id')
+        }
+    }
+    $changes = Compare-PropertyList -collection $task_triggers -property_name "trigger" -new $triggers -existing $existing_triggers -map $map
+
+    return ,$changes
+}
+
+########################
+### START CODE BLOCK ###
+########################
+$service = New-Object -ComObject Schedule.Service
+try {
+    $service.Connect()
+} catch {
+    Fail-Json -obj $result -message "failed to connect to the task scheduler service: $($_.Exception.Message)"
+}
+
+# check that the path for the task set exists, create if need be
+try {
+    $task_folder = $service.GetFolder($path)
+} catch {
+    if ($_.Exception.HResult -eq 0x80070002) {
+        # path doesn't exist, we need to create it
+        $task_folder = $service.GetFolder("\")
+        try {
+            $task_folder = $task_folder.CreateFolder($path)
+        } catch {
+            Fail-Json -obj $result -message "failed to create new folder at path '$path': $($_.Exception.Message)"
+        }
+    } else {
+        Fail-Json -obj $result -message "failed to get the task path '$path': $($_.Exception.Message)"
+    }
+}
+
+# try and get the task at the path
+try {
+    $task = $task_folder.GetTask($name)
+} catch {
+    $task = $null
+    # HRESULT 0x80070002 means not found, we don't want to fail on that
+    if ($_.Exception.HResult -ne 0x80070002) {
+        Fail-Json -obj $result -message "failed to get task info for '$name' at path '$path': $($_.Exception.Message)"
+    }
+}
+
+$task_path = $null
+if ($path.EndsWith("`\")) {
+    $task_path = "$path$name"
+} else {
+    $task_path = "$path\$name"
+}
+
+if ($state -eq "absent") {
+    if ($task -ne $null) {
+        if (-not $check_mode) {
+            try {
+                $task_folder.DeleteTask($name, 0)
+            } catch {
+                Fail-Json -obj $result -message "failed to delete task '$name' at path '$path': $($_.Exception.Message)"
+            }
+        }
+        if ($diff) {
+            $result.diff.prepared = "-[Task]`n-$task_path`n"
+        }
+        $result.changed = $true
+
+        # check if current folder has any more tasks
+        $other_tasks = $task_folder.GetTasks(1) # 1 = TASK_ENUM_HIDDEN
+        if ($other_tasks.Count -eq 0) {
+            try {
+                $task_folder.DeleteFolder($null, $null)
+            } catch {
+                Fail-Json -obj $result -message "failed to delete empty task folder '$path' after task deletion: $($_.Exception.Message)"
+            }
+        }
+    }
+} else {
+    if ($task -eq $null) {
+        # to create a bare minimum task we need 1 action
+        if ($actions -eq $null -or $actions.Count -eq 0) {
+            Fail-Json -obj $result -message "cannot create a task with no actions, set at least one action with a path to an executable"
+        }
+
+        # Create a bare minimum task here, further properties will be set later on
+        $task_definition = $service.NewTask(0)
+
+        # Set Actions info
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446803(v=vs.85).aspx
+        $task_actions = $task_definition.Actions
+        foreach ($action in $actions) {
+            $task_action = $task_actions.Create([TASK_ACTION_TYPE]::TASK_ACTION_EXEC)
+            $task_action.Path = $action.path
+            if ($action.arguments -ne $null) {
+                $task_action.Arguments = $action.arguments
+            }
+            if ($action.working_directory -ne $null) {
+                $task_action.WorkingDirectory = $action.working_directory
+            }
+        }
+
+        # Register the new task
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382577(v=vs.85).aspx
+        if ($check_mode) {
+            # Only validate the task in check mode
+            $task_creation_flags = [TASK_CREATION]::TASK_VALIDATE_ONLY
+        } else {
+            # Create the task but do not fire it as we still need to configure it further below
+            $task_creation_flags = [TASK_CREATION]::TASK_CREATE -bor [TASK_CREATION]::TASK_IGNORE_REGISTRATION_TRIGGERS
+        }
+
+        try {
+            $task = $task_folder.RegisterTaskDefinition($name, $task_definition, $task_creation_flags, $null, $null, $null)
+        } catch {
+            Fail-Json -obj $result -message "failed to register new task definition: $($_.Exception.Message)"
+        }
+        if ($diff) {
+            $result.diff.prepared = "+[Task]`n+$task_path`n"
+        }
+
+        $result.changed = $true
+    }
+
+    # we cannot configure a task that was created above in check mode as it
+    # won't actually exist
+    if ($task) {
+        $task_definition = $task.Definition
+        $task_definition_xml = [xml]$task_definition.XmlText
+
+        $action_changes = Compare-Actions -task_definition $task_definition
+        $principal_changed = Compare-Principal -task_definition $task_definition -task_definition_xml $task_definition_xml
+        $reg_info_changed = Compare-RegistrationInfo -task_definition $task_definition
+        $settings_changed = Compare-Settings -task_definition $task_definition
+        $trigger_changes = Compare-Triggers -task_definition $task_definition
+
+        # compile the diffs into one list with headers
+        $task_diff = [System.Collections.ArrayList]@()        
+        if ($action_changes.Count -gt 0) {
+            [void]$task_diff.Add("[Actions]")
+            foreach ($action_change in $action_changes) {
+                [void]$task_diff.Add($action_change)
+            }
+            [void]$task_diff.Add("`n")
+        }
+        if ($principal_changed.Count -gt 0) {
+            [void]$task_diff.Add("[Principal]")
+            foreach ($principal_change in $principal_changed) {
+                [void]$task_diff.Add($principal_change)
+            }
+            [void]$task_diff.Add("`n")
+        }
+        if ($reg_info_changed.Count -gt 0) {
+            [void]$task_diff.Add("[Registration Info]")
+            foreach ($reg_info_change in $reg_info_changed) {
+                [void]$task_diff.Add($reg_info_change)
+            }
+            [void]$task_diff.Add("`n")
+        }
+        if ($settings_changed.Count -gt 0) {
+            [void]$task_diff.Add("[Settings]")
+            foreach ($settings_change in $settings_changed) {
+                [void]$task_diff.add($settings_change)
+            }
+            [void]$task_diff.Add("`n")
+        }
+        if ($trigger_changes.Count -gt 0) {
+            [void]$task_diff.Add("[Triggers]")
+            foreach ($trigger_change in $trigger_changes) {
+                [void]$task_diff.Add("$trigger_change")
+            }
+            [void]$task_diff.Add("`n")
+        }
+
+        if ($password -ne $null -and (($update_password -eq $true) -or ($task_diff.Count -gt 0))) {
+            # because we can't compare the passwords we just need to reset it
+            $register_username = $username
+            $register_password = $password
+            $register_logon_type = $task_principal.LogonType
+        } else {
+            # will inherit from the Principal property values
+            $register_username = $null
+            $register_password = $null
+            $register_logon_type = $null
+        }
+        
+        if ($task_diff.Count -gt 0) {
+            if ($check_mode) {
+                # Only validate the task in check mode
+                $task_creation_flags = [TASK_CREATION]::TASK_VALIDATE_ONLY
+            } else {
+                # Create the task
+                $task_creation_flags = [TASK_CREATION]::TASK_CREATE_OR_UPDATE
+            }
+            try {
+                $task_folder.RegisterTaskDefinition($name, $task_definition, $task_creation_flags, $register_username, $register_password, $register_logon_type) | Out-Null
+            } catch {
+                Fail-Json -obj $result -message "failed to modify scheduled task: $($_.Exception.Message)"
+            }
+            
+            $result.changed = $true
+
+            if ($diff) {
+                $changed_diff_text = $task_diff -join "`n"
+                if ($result.diff.prepared -ne $null) {
+                    $diff_text = "$($result.diff.prepared)$changed_diff_text"
+                } else {
+                    $diff_text = $changed_diff_text
+                }
+                $result.diff.prepared = $diff_text
+            }
+        }
+    }
+}
+
+Exit-Json -obj $result
