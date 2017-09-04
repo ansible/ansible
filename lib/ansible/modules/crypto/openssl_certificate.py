@@ -127,9 +127,10 @@ options:
         description:
             - The certificate must be invalid at this point in time. The timestamp is formatted as an ASN.1 TIME.
 
-    notBefore:
+    not_before:
         description:
             - The certificate must start to become valid at this point in time. The timestamp is formatted as an ASN.1 TIME.
+        aliases: [ notBefore ]
 
     not_after:
         description:
