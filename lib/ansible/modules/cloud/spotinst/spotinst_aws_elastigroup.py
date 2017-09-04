@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'certified'}
@@ -768,7 +769,7 @@ def handle_elastigroup(client, module):
                 if "GROUP_DOESNT_EXIST" in exc.message:
                     pass
                 else:
-                    raise exc
+                    module.fail_json(msg="Error while attempting to delete group : " + exc.message)
 
             message = 'Deleted group successfully.'
             has_changed = True
@@ -1490,9 +1491,6 @@ def expand_scaling_policies(scaling_policies):
 
 
 def main():
-    if not HAS_SPOTINST_SDK:
-        raise Exception("the Spotinst SDK library is required. (pip install spotinst)")
-
     fields = dict(
         account_id=dict(type='str'),
         availability_vs_cost=dict(type='str'),
@@ -1558,6 +1556,9 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=fields)
+
+    if not HAS_SPOTINST_SDK:
+        module.fail_json(msg="the Spotinst SDK library is required. (pip install spotinst)")
 
     token = os.environ.get('SPOTINST_TOKEN')
 
