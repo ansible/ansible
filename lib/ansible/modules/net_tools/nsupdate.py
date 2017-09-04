@@ -33,7 +33,7 @@ options:
     state:
         description:
             - Manage DNS record.
-        choices: ['present', 'absent']
+        choices: ['present', 'absent', 'append']
         default: 'present'
     server:
         description:
@@ -93,6 +93,17 @@ EXAMPLES = '''
     record: "puppet"
     type: "CNAME"
     state: absent
+    
+- name: Append SRV record for a tcp service
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    zone: "example.org"
+    record: "_service._tcp"
+    type: "SRV"
+    value: "0 0 1234 service01.example.org"
+    state: append
 '''
 
 RETURN = '''
@@ -193,7 +204,7 @@ class RecordManager(object):
             self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
         return response
 
-    def create_or_update_record(self):
+    def create_or_update_record(self, state):
         result = {'changed': False, 'failed': False}
 
         exists = self.record_exists()
@@ -201,7 +212,7 @@ class RecordManager(object):
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
 
-            if exists == 0:
+            if exists == 0 or state == 'append':
                 self.dns_rc = self.create_record()
                 if self.dns_rc != 0:
                     result['msg'] = "Failed to create DNS record (rc: %d)" % self.dns_rc
@@ -304,7 +315,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
+            state=dict(required=False, default='present', choices=['present', 'absent', 'append'], type='str'),
             server=dict(required=True, type='str'),
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
@@ -328,8 +339,8 @@ def main():
     result = {}
     if module.params["state"] == 'absent':
         result = record.remove_record()
-    elif module.params["state"] == 'present':
-        result = record.create_or_update_record()
+    else:
+        result = record.create_or_update_record(module.params["state"])
 
     result['dns_rc'] = record.dns_rc
     result['dns_rc_str'] = dns.rcode.to_text(record.dns_rc)
