@@ -273,7 +273,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
     if expires is not None:
         query.append("VALID UNTIL %(expires)s")
     if conn_limit is not None:
-        query.append("CONNECTION LIMIT %(conn_limit)s" % { "conn_limit": conn_limit })
+        query.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
     query.append(role_attr_flags)
     query = ' '.join(query)
     cursor.execute(query, query_password_data)
@@ -375,7 +375,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         if expires is not None:
             alter.append("VALID UNTIL %(expires)s")
         if conn_limit is not None:
-            alter.append("CONNECTION LIMIT %(conn_limit)s" % { "conn_limit": conn_limit })
+            alter.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
 
         query_password_data = dict(password=password, expires=expires)
         try:
@@ -763,7 +763,7 @@ def main():
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
     sslrootcert = module.params["ssl_rootcert"]
-    conn_limit= module.params["conn_limit"]
+    conn_limit = module.params["conn_limit"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
