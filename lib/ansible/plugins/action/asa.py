@@ -27,6 +27,7 @@ from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.aruba import asa_provider_spec
 from ansible.module_utils.network_common import load_provider
+from ansible.module_utils.connection import request_builder
 
 
 try:
