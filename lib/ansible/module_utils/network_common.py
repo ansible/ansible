@@ -335,6 +335,37 @@ def remove_default_spec(spec):
             del spec[item]['default']
 
 
+def load_provider(spec, args):
+    provider = args.get('provider', {})
+    for key, value in iteritems(spec):
+        if key not in provider:
+            if key in args:
+                provider[key] = args[key]
+            elif 'fallback' in value:
+                provider[key] = _fallback(value['fallback'])
+            elif 'default' in value:
+                provider[key] = value['default']
+            else:
+                provider[key] = None
+    args['provider'] = provider
+    return provider
+
+
+def _fallback(fallback):
+    strategy = fallback[0]
+    args = []
+    kwargs = {}
+
+    for item in fallback[1:]:
+        if isinstance(item, dict):
+            kwargs = item
+        else:
+            args = item
+    try:
+        return strategy(*args, **kwargs)
+    except AnsibleFallbackNotFound:
+        pass
+
 class Template:
 
     def __init__(self):

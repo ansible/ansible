@@ -43,27 +43,25 @@ aruba_provider_spec = {
 aruba_argument_spec = {
     'provider': dict(type='dict', options=aruba_provider_spec)
 }
-aruba_argument_spec.update(aruba_provider_spec)
 
-# Add argument's default value here
-ARGS_DEFAULT_VALUE = {}
+aruba_top_spec = {
+    'host': dict(removed_in_version=2.3),
+    'port': dict(removed_in_version=2.3, type='int'),
+    'username': dict(removed_in_version=2.3),
+    'password': dict(removed_in_version=2.3, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.3, type='path'),
+    'timeout': dict(removed_in_version=2.3, type='int'),
+}
+
+aruba_argument_spec.update(aruba_top_spec)
 
 
-def get_argspec():
-    return aruba_argument_spec
+def get_provider_argspec():
+    return aruba_provider_spec
 
 
 def check_args(module, warnings):
-    for key in aruba_argument_spec:
-        if key not in ['provider', 'authorize'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    # set argument's default value if not provided in input
-    # This is done to avoid unwanted argument deprecation warning
-    # in case argument is not given as input (outside provider).
-    for key in ARGS_DEFAULT_VALUE:
-        if not module.params.get(key, None):
-            module.params[key] = ARGS_DEFAULT_VALUE[key]
+    pass
 
 
 def get_config(module, flags=[]):

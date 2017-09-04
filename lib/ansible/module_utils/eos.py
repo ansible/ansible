@@ -49,23 +49,32 @@ eos_provider_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-    'use_ssl': dict(type='bool'),
-    'validate_certs': dict(type='bool'),
+    'use_ssl': dict(default=True, type='bool'),
+    'validate_certs': dict(default=True, type='bool'),
     'timeout': dict(type='int'),
 
-    'transport': dict(choices=['cli', 'eapi'])
+    'transport': dict(default='cli', choices=['cli', 'eapi'])
 }
 eos_argument_spec = {
     'provider': dict(type='dict', options=eos_provider_spec),
 }
-eos_argument_spec.update(eos_provider_spec)
+eos_top_spec = {
+    'host': dict(removed_in_version=2.3),
+    'port': dict(removed_in_version=2.3, type='int'),
+    'username': dict(removed_in_version=2.3),
+    'password': dict(removed_in_version=2.3, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.3, type='path'),
 
-# Add argument's default value here
-ARGS_DEFAULT_VALUE = {
-    'transport': 'cli',
-    'use_ssl': True,
-    'validate_certs': True
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(no_log=True, removed_in_version=2.3),
+
+    'use_ssl': dict(removed_in_version=2.3, type='bool'),
+    'validate_certs': dict(removed_in_version=2.3, type='bool'),
+    'timeout': dict(removed_in_version=2.3, type='int'),
+
+    'transport': dict(removed_in_version=2.3, choices=['cli', 'eapi'])
 }
+eos_argument_spec.update(eos_top_spec)
 
 
 def get_argspec():
@@ -73,21 +82,7 @@ def get_argspec():
 
 
 def check_args(module, warnings):
-    for key in eos_argument_spec:
-        if module._name == 'eos_user':
-            if (key not in ['username', 'password', 'provider', 'transport', 'authorize'] and
-                    module.params[key]):
-                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-        else:
-            if key not in ['provider', 'authorize'] and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    # set argument's default value if not provided in input
-    # This is done to avoid unwanted argument deprecation warning
-    # in case argument is not given as input (outside provider).
-    for key in ARGS_DEFAULT_VALUE:
-        if not module.params.get(key, None):
-            module.params[key] = ARGS_DEFAULT_VALUE[key]
+    pass
 
 
 def load_params(module):

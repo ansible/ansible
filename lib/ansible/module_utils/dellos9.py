@@ -58,14 +58,20 @@ dellos9_provider_spec = {
 dellos9_argument_spec = {
     'provider': dict(type='dict', options=dellos9_provider_spec),
 }
-dellos9_argument_spec.update(dellos9_provider_spec)
-
+dellos9_top_spec = {
+    'host': dict(removed_in_version=2.3),
+    'port': dict(removed_in_version=2.3, type='int'),
+    'username': dict(removed_in_version=2.3),
+    'password': dict(removed_in_version=2.3, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.3, type='path'),
+    'authorize': dict(removed_in_version=2.3, type='bool'),
+    'auth_pass': dict(removed_in_version=2.3, no_log=True),
+    'timeout': dict(removed_in_version=2.3, type='int'),
+}
+dellos9_argument_spec.update(dellos9_top_spec)
 
 def check_args(module, warnings):
-    for key in dellos9_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                            'removed in a future version' % key)
+    pass
 
 
 def get_config(module, flags=[]):
