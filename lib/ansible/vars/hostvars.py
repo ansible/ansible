@@ -106,7 +106,7 @@ class HostVars(collections.Mapping):
 
     def __iter__(self):
         for host in self._inventory.hosts:
-            yield host.name
+            yield host
 
     def __len__(self):
         return len(self._inventory.hosts)
@@ -114,6 +114,5 @@ class HostVars(collections.Mapping):
     def __repr__(self):
         out = {}
         for host in self._inventory.hosts:
-            name = host.name
-            out[name] = self.get(name)
+            out[host] = self.get(host)
         return repr(out)
