@@ -27,7 +27,7 @@ import glob
 from ansible.plugins.action.junos import ActionModule as _ActionModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes
 from ansible.utils.vars import merge_hash
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
@@ -75,7 +75,8 @@ class ActionModule(_ActionModule):
             os.remove(fn)
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
         filename = '%s/%s_config.%s' % (backup_path, host, tstamp)
-        open(filename, 'w').write(to_native(contents, encoding='latin1'))
+        with open(filename, 'wb') as f:
+            f.write(to_bytes(to_text(contents, encoding='latin-1'), encoding='utf-8'))
         return filename
 
     def _handle_template(self):
