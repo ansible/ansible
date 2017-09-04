@@ -5,16 +5,6 @@
 #Requires -Module Ansible.ModuleUtils.Legacy.psm1
 #Requires -Module Ansible.ModuleUtils.SID.psm1
 
-#Functions
-function Get-UserSID {
-    param(
-        [String]$AccountName
-    )
-
-    $userSID = Convert-ToSID -account_name $AccountName
-    return $userSID
-}
-
 $result = @{
     changed = $false
 }
@@ -31,7 +21,7 @@ If (-Not (Test-Path -Path $path)) {
 }
 
 # Test that the user/group is resolvable on the local machine
-$sid = Get-UserSID -AccountName $user
+$sid = Convert-ToSID -account_name $user
 if (!$sid) {
     Fail-Json $result "$user is not a valid user or group on the host machine or domain"
 }

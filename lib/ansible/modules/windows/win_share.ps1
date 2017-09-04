@@ -6,15 +6,6 @@
 #Requires -Module Ansible.ModuleUtils.SID.psm1
 
 #Functions
-function Get-UserSID {
-    param(
-        [String]$AccountName
-    )
-
-    $userSID = Convert-ToSID -account_name $AccountName
-    return $userSID
-}
-
 Function NormalizeAccounts {
     param(
         [parameter(valuefrompipeline=$true)]
@@ -31,7 +22,7 @@ Function NormalizeAccounts {
 
     $normalizedUsers = [Collections.Generic.List[String]] @()
     ForEach($splitUser in $splitUsers) {
-        $sid = Get-UserSID -AccountName $splitUser
+        $sid = Convert-ToSID -account_name $splitUser
         if (!$sid) {
             Fail-Json $result "$splitUser is not a valid user or group on the host machine or domain"
         }
