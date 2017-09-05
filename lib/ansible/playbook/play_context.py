@@ -255,13 +255,13 @@ class PlayContext(Base):
     def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
         super(PlayContext, self).__init__()
-        
+
         if self.only_tags:
-           self.only_tags = set()
+            self.only_tags = set()
 
         if self.skip_tags:
-           self.skip_tags = set()
-        
+            self.skip_tags = set()
+
         if passwords is None:
             passwords = {}
 
