@@ -8,23 +8,30 @@
 {{name}}
 {{ '=' * name_len }}
 
+
+:strong:`{{short_desc|default('')}}`
+
+
 .. contents::
    :local:
    :depth: 2
 
+
 .. program:: {{cli_name}}
+
 Synopsis
 ========
 
 .. code-block:: bash
 
-    {{ usage|replace('%prog', cli_name) }}
+   {{ usage|replace('%prog', cli_name) }}
 
 
 Description
 ===========
 
-*{{cli_name}}* {{ long_desc|default('', True)  }}
+
+{{ long_desc|default('', True)  }}
 
 {% if options %}
 Common Options
