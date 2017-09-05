@@ -65,8 +65,6 @@ class PluginLoader:
 
         # FIXME: remove alias dict in favor of alias by symlink?
         self.aliases = aliases
-        self.aliased = dict(zip(self.aliases.values(), self.aliases))
-
 
         if config and not isinstance(config, list):
             config = [config]
@@ -433,11 +431,6 @@ class PluginLoader:
             if path_only:
                 yield path
                 continue
-
-            # try to get alias
-            name = aliased.get(name, name)
-            if name in aliased:
-                print(name)
 
             if path not in self._module_cache:
                 self._module_cache[path] = self._load_module_source(name, path)
