@@ -256,6 +256,12 @@ class PlayContext(Base):
 
         super(PlayContext, self).__init__()
 
+        if self.only_tags:
+            self.only_tags = set()
+
+        if self.skip_tags:
+            self.skip_tags = set()
+
         if passwords is None:
             passwords = {}
 
