@@ -1075,6 +1075,15 @@ DEFAULT_VAULT_PASSWORD_FILE:
   - {key: vault_password_file, section: defaults}
   type: path
   yaml: {key: defaults.vault_password_file}
+DEFAULT_EXTRA_VARS:
+  default: []
+  description: 'Add extra_vars via environment or ansible.cfg'
+  env: [{name: ANSIBLE_EXTRA_VARS}]
+  ini:
+  - {key: default_extra_vars, section: defaults}
+  type: list
+  vars: []
+  yaml: {key: defaults.default_extra_vars}
 DEFAULT_VERBOSITY:
   default: 0
   description: 'TODO: write it'
