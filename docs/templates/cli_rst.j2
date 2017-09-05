@@ -1,11 +1,18 @@
 {% set name = cli_name -%}
 {% set name_slug = cli_name -%}
 
+.. _{{name}}:
+
 {% set name_len = name|length + 0-%}
 {{ '=' * name_len }}
 {{name}}
 {{ '=' * name_len }}
 
+.. contents::
+   :local:
+   :depth: 2
+
+.. program:: {{cli_name}}
 Synopsis
 ========
 
@@ -23,7 +30,6 @@ Description
 Common Options
 ==============
 
-.. program:: {{cli_name}}
 
 {% for option in options|sort(attribute='options') %}
 
@@ -52,6 +58,10 @@ Actions
 =======
 
 {% for action in actions %}
+
+.. program:: {{cli_name}} {{action}}
+.. _{{cli_name|replace('-','_')}}_{{action}}:
+
 {{ action}}
 {{ '=' * action|length}}
 
@@ -59,7 +69,6 @@ Actions
 
 {% if actions[action]['options'] %}
 
-.. program:: {{cli_name}} {{action}}
 
 {% for option in actions[action]['options']|sort %}
 .. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
@@ -69,6 +78,7 @@ Actions
 {% endif %}
 
 {% endfor %}
+.. program:: {{cli_name}}
 {% endif %}
 
 Environment
