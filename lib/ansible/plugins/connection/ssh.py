@@ -1,22 +1,9 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright 2015 Abhijit Menon-Sen <ams@2ndQuadrant.com>
 # Copyright 2017 Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 '''
 DOCUMENTATION:
     connection: ssh
@@ -33,8 +20,7 @@ DOCUMENTATION:
                - name: ansible_host
                - name: ansible_ssh_host
       host_key_checking:
-          constants:
-              - name: HOST_KEY_CHECKING
+          #constant: HOST_KEY_CHECKING
           description: Determines if ssh should check host keys
           type: boolean
           ini:
@@ -69,8 +55,7 @@ DOCUMENTATION:
           ini:
           - {key: ssh_executable, section: ssh_connection}
           yaml: {key: ssh_connection.ssh_executable}
-          const:
-              - name: ANSIBLE_SSH_EXECUTABLE
+          #const: ANSIBLE_SSH_EXECUTABLE
           version_added: "2.2"
       scp_extra_args:
           description: Extra exclusive to the 'scp' CLI
@@ -133,7 +118,8 @@ DOCUMENTATION:
           - {key: pipelining, section: ssh_connection}
           type: boolean
           vars: [{name: ansible_ssh_pipelining}]
-
+'''
+'''
 # TODO:
 # ANSIBLE_SSH_RETRIES
 
