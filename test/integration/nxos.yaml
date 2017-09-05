@@ -224,6 +224,24 @@
 
     - block:
       - include_role:
+          name: nxos_snmp_user
+        when: "limit_to in ['*', 'nxos_snmp_user']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_snmp_user' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_snapshot
+        when: "limit_to in ['*', 'nxos_snapshot']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_snapshot' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_hsrp
         when: "limit_to in ['*', 'nxos_hsrp']"
       rescue:

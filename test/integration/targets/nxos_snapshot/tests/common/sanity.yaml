@@ -1,0 +1,16 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_snapshot sanity test"
+
+- name: create snapshot
+  nxos_snapshot:
+    action: create
+    snapshot_name: test_snapshot
+    description: Ansible
+    provider: "{{ connection }}"
+
+- name: delete snapshot
+  nxos_snapshot:
+    action: delete_all
+    provider: "{{ connection }}"
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_rollback sanity test"
