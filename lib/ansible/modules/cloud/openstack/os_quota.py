@@ -95,6 +95,11 @@ options:
         required: False
         default: None
         description: Number of key pairs to allow.
+    loadbalancer:
+        required: False
+        default: None
+        description: Number of load balancers to allow.
+        version_added: "2.4"
     network:
         required: False
         default: None
@@ -103,6 +108,11 @@ options:
         required: False
         default: None
         description: Maximum size in GB's of individual volumes.
+    pool:
+        required: False
+        default: None
+        description: Number of load balancer pools to allow.
+        version_added: "2.4"
     port:
         required: False
         default: None
@@ -215,9 +225,11 @@ EXAMPLES = '''
     injected_files: "{{ item.injected_files }}"
     injected_path_size: "{{ item.injected_path_size }}"
     instances: "{{ item.instances }}"
-    port: "{{ item.port }}"
     key_pairs: "{{ item.key_pairs }}"
+    loadbalancer: "{{ item.loadbalancer }}"
     per_volume_gigabytes: "{{ item.per_volume_gigabytes }}"
+    pool: "{{ item.pool }}"
+    port: "{{ item.port }}"
     properties: "{{ item.properties }}"
     ram: "{{ item.ram }}"
     security_group_rule: "{{ item.security_group_rule }}"
@@ -262,7 +274,9 @@ openstack_quotas:
             },
             network: {
                 floatingip: 50,
+                loadbalancer: 10,
                 network: 10,
+                pool: 10,
                 port: 160,
                 rbac_policy: 10,
                 router: 10,
@@ -398,8 +412,10 @@ def main():
         injected_path_size=dict(required=False, type='int', default=None),
         instances=dict(required=False, type='int', default=None),
         key_pairs=dict(required=False, type='int', default=None),
+        loadbalancer=dict(required=False, type='int', default=None),
         network=dict(required=False, type='int', default=None),
         per_volume_gigabytes=dict(required=False, type='int', default=None),
+        pool=dict(required=False, type='int', default=None),
         port=dict(required=False, type='int', default=None),
         project=dict(required=False, type='int', default=None),
         properties=dict(required=False, type='int', default=None),
