@@ -63,7 +63,7 @@ Actions
 .. _{{cli_name|replace('-','_')}}_{{action}}:
 
 {{ action}}
-{{ '=' * action|length}}
+{{ '-' * action|length}}
 
 {{ (actions[action]['desc']|default(' '))}}
 
@@ -82,7 +82,7 @@ Actions
 {% endif %}
 
 Environment
------------
+===========
 
 The following environment variables may be specified.
 
@@ -100,7 +100,7 @@ Many more are available for most options in ansible.cfg
 
 
 Files
------
+=====
 
 {% if inventory %}
 :file:`/etc/ansible/hosts` -- Default inventory file
@@ -111,7 +111,7 @@ Files
 :file:`~/.ansible.cfg` -- User config file, overrides the default config if present
 
 Author
-------
+======
 
 Ansible was originally written by Michael DeHaan.
 
@@ -119,7 +119,7 @@ See the `AUTHORS` file for a complete list of contributors.
 
 
 Copyright
----------
+=========
 
 Copyright © 2017 Red Hat, Inc | Ansible.
 
