@@ -1,8 +1,22 @@
 #!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -13,9 +27,10 @@ description:
     - This module uses the nomad API (https://www.nomadproject.io/api/).
     - Supported nomad versions are 0.5.* and 0.6.* at the moment.
     - This module takes a json input describing a nomad job (https://www.nomadproject.io/api/json-jobs.html) when the desired state is C(present)'.
-    - By default the module will wait for all allocations of a submitted job to be in 'running' state unless specified otherwise (I(wait_for_completion=False)), the count is 0 or the type is 'batch'. 
+    - By default the module will wait for all allocations of a submitted job to be in 'running' state unless specified otherwise (I(wait_for_completion=False)),
+      the count is 0 or the type is 'batch'.
     - The module will fail if a job (all its allocations) does not enter the 'running' state within the specified I(timeout) (default 120 sec).
-version_added: "2.3"
+version_added: "2.4"
 author:
     - Sirk Johannsen (sirkjohannsen)
     - Moeen Mirjalili (momirjalili)
@@ -37,7 +52,6 @@ options:
            - Required if I(state=present)
         required: no
         default: ""
-        type: json
         aliases: ['jobjson', 'desc']
     url:
         description:
@@ -49,7 +63,6 @@ options:
         description:
             - The timeout in seconds for the allocations created by a job to enter the 'running' state.
         required: no
-        type: int
         default: 120
     wait_for_completion:
         description:
@@ -87,11 +100,11 @@ RETURN = '''
 evaluation:
     description: the json object return by the nomad API when evaluating the job.
     returned: success, changed
-    type: json
+    type: dict
 job:
     description: the json object of the previous job (in case it existed)
     returned: success, changed
-    type: json
+    type: dict
 total_jobs:
     description: the total number of jobs that were handled.
     returned: success, changed
@@ -105,7 +118,7 @@ total_allocations:
 allocations:
     description: A json object with all handled allocations
     returned: success, changed
-    type: json
+    type: dict
 info:
     description: the info returned by the fetch_url function when submitting the new job
     returned: success, changed
@@ -119,6 +132,7 @@ from ansible.module_utils.urls import fetch_url
 # Import other modules
 import json
 from time import sleep
+
 
 class ResponseErrors:
     JOB_DESC_ERROR = "A job description in json (jobdesc) needs to be provided for the state 'present'!"
@@ -152,7 +166,7 @@ def check_evaluation(ansible_module, url, job_evaluation, timeout):
             evaluation_done = True
             break
         else:
-           sleep(1)
+            sleep(1)
     return evaluation_done, body
 
 
@@ -163,7 +177,7 @@ def get_evaluation_or_fail(ansible_module, url, job_evaluation, timeout, fail_ms
     return eval_response
 
 
-def delete_job(ansible_module, jobs_url):
+def delete_job(ansible_module, jobs_url, job):
     resp, info = fetch_url(ansible_module, jobs_url, method='DELETE')
     status = info['status']
 
@@ -222,7 +236,7 @@ def main():
 
     # Delete job if requested (TODO: implement purge option)
     if state == 'absent':
-        delete_job(ansible_module, jobsurl)
+        delete_job(ansible_module, jobsurl, job)
 
     # Submit Job:
     status, info, body = get_response_or_fail(ansible_module,
@@ -307,7 +321,7 @@ def main():
     total_allocations = len(allocation_list)
     for allocation in allocation_list:
         allocation_id = allocation['ID']
-        is_running = 0 # needs to get 2 successful "running" states within 2 seconds ! 
+        is_running = 0  # needs to get 2 successful "running" states within 2 seconds !
         for i in range(timeout):
             status, info, body = get_response_or_fail(
                 ansible_module,
@@ -333,7 +347,7 @@ def main():
         if is_running < 2:
             ansible_module.fail_json(msg=ResponseErrors.ALLOCATION_TIMEOUT_ERROR,
                                      meta=allocation_info)
-    
+
     # Get new allocations
     status, info, body = get_response_or_fail(ansible_module,
                                               jobsurl + '/allocations')
