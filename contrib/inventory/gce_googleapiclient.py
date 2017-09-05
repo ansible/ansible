@@ -130,7 +130,9 @@ def get_all_billing_projects(billing_account_name, api_version=DEFAULT_API_VERSI
     return project_ids
 
 
-def get_all_zones_in_project(projects_queue_in, projects_zones_queue_out, api_version=DEFAULT_API_VERSION):
+def get_all_zones_in_project(projects_queue_in,
+                             projects_zones_queue_out,
+                             api_version=DEFAULT_API_VERSION):
 
     try:
         while not projects_queue_in.empty():
@@ -153,7 +155,7 @@ def get_all_zones_in_project(projects_queue_in, projects_zones_queue_out, api_ve
                                                         previous_response=response)
 
             except HttpError as exception:
-                log.warn('Could not retrieve list of zones of project: %s', project)
+                log.warn('Could not retrieve list of zones on project: %s', project)
                 log.warn(exception)
 
     except queue.Empty:
@@ -169,6 +171,7 @@ def get_instances(projects_zones_queue_in, instances_queue_out, api_version=DEFA
 
                 credentials = GoogleCredentials.get_application_default()
                 service = discovery.build('compute', api_version, credentials=credentials)
+
                 # pylint: disable=no-member
                 request = service.instances().list(project=project, zone=zone)
 
@@ -179,14 +182,15 @@ def get_instances(projects_zones_queue_in, instances_queue_out, api_version=DEFA
                         for instance in response['items']:
                             instances_queue_out.put(instance)
 
+                    # pylint: disable=no-member
                     request = service.instances().list_next(previous_request=request,
                                                             previous_response=response)
 
             except HttpError as exception:
-                log.warn('Could not retrieve list of instances of project/zone: %s/%s', project, zone)
+                log.warn('Could not retrieve list of instances of project/zone: %s/%s',
+                         project,
+                         zone)
                 log.warn(str(exception))
-
-        # pylint: disable=no-member
 
     except queue.Empty:
         pass
@@ -207,7 +211,7 @@ def get_hostvars(instance):
 
     hostvars['gce_metadata'] = {}
     for md in instance['metadata'].get('items', []):
-        hostvars['gce_metadata'][md['key']] = md['value']
+        hostvars['gce_metadata'][md['key']] = md['value'].replace('{', '\{').replace('}', '\}')
 
     if 'items' in instance['tags']:
         hostvars['gce_tags'] = instance['tags']['items']
@@ -288,9 +292,10 @@ def main(args):
     num_threads = int(args['--num-threads'])
 
     if not project_list and not billing_account_name:
-        print("ERROR: You didn't specified any project (parameter: --project) which means you want all projects."
-              " However, to get the list of all projects, we need the billing account name (parameter: "
-              " --billing-account, format: billingAccounts/XXXXXX-XXXXXX-XXXXXX)", file=stderr)
+        print("ERROR: You didn't specified any project (parameter: --project) which means you want"
+              "all projects. However, to get the list of all projects, we need the billing account"
+              "name (parameter: --billing-account, format: billingAccounts/XXXXXX-XXXXXX-XXXXXX)",
+              file=stderr)
         exit(1)
 
     if num_threads < 1:
