@@ -170,15 +170,90 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
-batch_compute_environment_action:
-    description: describes what action was taken
-    returned: success
-    type: string
+output:
+    description: returns what action was taken, whether something was changed,
+     invocation and response
+    type: dict
+    returned: always
+    sample:
+    {
+        "batch_compute_environment_action": "none",
+        "changed": false,
+        "invocation": {
+            "module_args": {
+                "aws_access_key": null,
+                "aws_secret_key": null,
+                "bid_percentage": null,
+                "compute_environment_name": "<name>",
+                "compute_environment_state": "ENABLED",
+                "compute_resource_type": "EC2",
+                "desiredv_cpus": 0,
+                "ec2_key_pair": null,
+                "ec2_url": null,
+                "image_id": null,
+                "instance_role": "arn:aws:iam::...",
+                "instance_types": [
+                    "optimal"
+                ],
+                "maxv_cpus": 8,
+                "minv_cpus": 0,
+                "profile": null,
+                "region": "us-east-1",
+                "security_group_ids": [
+                    "*******"
+                ],
+                "security_token": null,
+                "service_role": "arn:aws:iam::....",
+                "spot_iam_fleet_role": null,
+                "state": "present",
+                "subnets": [
+                    "******"
+                ],
+                "tags": {
+                    "Environment": "<name>",
+                    "Name": "<name>",
+                },
+                "type": "MANAGED",
+                "validate_certs": true
+            }
+        },
+        "response": {
+            "computeEnvironmentArn": "arn:aws:batch:....",
+            "computeEnvironmentName": "<name>",
+            "computeResources": {
+                "desiredvCpus": 0,
+                "instanceRole": "arn:aws:iam::...",
+                "instanceTypes": [
+                    "optimal"
+                ],
+                "maxvCpus": 8,
+                "minvCpus": 0,
+                "securityGroupIds": [
+                    "******"
+                ],
+                "subnets": [
+                    "*******"
+                ],
+                "tags": {
+                    "Environment": "<name>",
+                    "Name": "<name>",
+                },
+                "type": "EC2"
+            },
+            "ecsClusterArn": "arn:aws:ecs:.....",
+            "serviceRole": "arn:aws:iam::...",
+            "state": "ENABLED",
+            "status": "VALID",
+            "statusReason": "ComputeEnvironment Healthy",
+            "type": "MANAGED"
+        }
+    }
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 import re
 
 
@@ -229,18 +304,6 @@ class AWSConnection:
         return self.resource_client[resource]
 
 
-def cc(key):
-    """
-    Changes python key into Camel case equivalent. For example, 'compute_environment_name' becomes
-    'computeEnvironmentName'.
-
-    :param key:
-    :return:
-    """
-    components = key.split('_')
-    return components[0] + "".join([token.capitalize() for token in components[1:]])
-
-
 def set_api_params(module, module_params):
     """
     Sets module parameters to those expected by the boto3 API.
@@ -249,14 +312,8 @@ def set_api_params(module, module_params):
     :param module_params:
     :return:
     """
-
-    api_params = dict()
-
-    for param in module_params:
-        module_param = module.params.get(param, None)
-        if module_param is not None:
-            api_params[cc(param)] = module_param
-    return api_params
+    api_params = {k: v for k, v in dict(module.params).items() if k in module_params and v is not None}
+    return snake_dict_to_camel_dict(api_params)
 
 
 def validate_params(module, aws):
@@ -295,7 +352,10 @@ def get_current_compute_environment(module, connection):
         environments = connection.client().describe_compute_environments(
             computeEnvironments=[module.params['compute_environment_name']]
         )
-        return environments['computeEnvironments'][0] if len(environments['computeEnvironments']) > 0 else None
+        if len(environments['computeEnvironments']) > 0:
+            return environments['computeEnvironments'][0]
+        else:
+            return None
     except ClientError:
         return None
 
@@ -378,6 +438,7 @@ def manage_state(module, aws):
     maxv_cpus = module.params['maxv_cpus']
     desiredv_cpus = module.params['desiredv_cpus']
     action_taken = 'none'
+    update_env_response = ''
 
     check_mode = module.check_mode
 
@@ -414,7 +475,9 @@ def manage_state(module, aws):
             if updates:
                 try:
                     if not check_mode:
-                        response = aws.client().update_compute_environment(**compute_kwargs)
+                        update_env_response = aws.client().update_compute_environment(**compute_kwargs)
+                    if not update_env_response:
+                        module.fail_json(msg='Unable to get compute environment information after creating')
                     changed = True
                     action_taken = "updated"
                 except (ParamValidationError, ClientError) as e:
@@ -424,16 +487,16 @@ def manage_state(module, aws):
             # Create Batch Compute Environment
             changed = create_compute_environment(module, aws)
             # Describe compute environment
-            response = get_current_compute_environment(module, aws)
-            if not response:
-                module.fail_json(msg='Unable to get compute environment information after creating')
             action_taken = 'added'
+        response = get_current_compute_environment(module, aws)
+        if not response:
+            module.fail_json(msg='Unable to get compute environment information after creating')
     else:
         if current_state == 'present':
             # remove the compute environment
             changed = remove_compute_environment(module, aws)
             action_taken = 'deleted'
-    return dict(changed=changed, ansible_facts=dict(batch_compute_environment_action=action_taken), response=response)
+    return dict(changed=changed, batch_compute_environment_action=action_taken, response=response)
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -446,37 +509,36 @@ def main():
     """
     Main entry point.
 
-    :return dict: ansible facts
+    :return dict: changed, batch_compute_environment_action, response
     """
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(required=False, default='present', choices=['present', 'absent']),
-            compute_environment_name=dict(required=True, default=None),
-            type=dict(required=True, default=None, choices=['MANAGED', 'UNMANAGED']),
+            state=dict(default='present', choices=['present', 'absent']),
+            compute_environment_name=dict(required=True),
+            type=dict(required=True, choices=['MANAGED', 'UNMANAGED']),
             compute_environment_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
-            service_role=dict(required=True, default=None),
-            compute_resource_type=dict(required=True, default=None, choices=['EC2', 'SPOT']),
-            minv_cpus=dict(type='int', required=True, default=None),
-            maxv_cpus=dict(type='int', required=True, default=None),
-            desiredv_cpus=dict(type='int', default=None),
-            instance_types=dict(type='list', required=True, default=None),
-            image_id=dict(default=None),
-            subnets=dict(type='list', required=True, default=None),
-            security_group_ids=dict(type='list', required=True, default=None),
-            ec2_key_pair=dict(default=None),
-            instance_role=dict(required=True, default=None),
-            tags=dict(type='dict', default=None),
-            bid_percentage=dict(type='int', default=None),
-            spot_iam_fleet_role=dict(default=None)
+            service_role=dict(required=True),
+            compute_resource_type=dict(required=True, choices=['EC2', 'SPOT']),
+            minv_cpus=dict(type='int', required=True),
+            maxv_cpus=dict(type='int', required=True),
+            desiredv_cpus=dict(type='int'),
+            instance_types=dict(type='list', required=True),
+            image_id=dict(),
+            subnets=dict(type='list', required=True),
+            security_group_ids=dict(type='list', required=True),
+            ec2_key_pair=dict(),
+            instance_role=dict(required=True),
+            tags=dict(type='dict'),
+            bid_percentage=dict(type='int'),
+            spot_iam_fleet_role=dict(),
+            region=dict(required=True)
         )
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
-        required_together=[]
+        argument_spec=argument_spec
     )
 
     # validate dependencies
