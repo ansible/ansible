@@ -62,7 +62,11 @@ class PluginLoader:
         self.base_class = required_base_class
         self.package = package
         self.subdir = subdir
+
+        # FIXME: remove alias dict in favor of alias by symlink?
         self.aliases = aliases
+        self.aliased = dict(zip(self.aliases.values(), self.aliases))
+
 
         if config and not isinstance(config, list):
             config = [config]
@@ -239,7 +243,7 @@ class PluginLoader:
                 self._extra_dirs.append(directory)
                 self._paths = None
 
-    def find_plugin(self, name, mod_type='', ignore_deprecated=False):
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''
 
         if mod_type:
@@ -251,6 +255,9 @@ class PluginLoader:
             # Only Ansible Modules.  Ansible modules can be any executable so
             # they can have any suffix
             suffix = ''
+
+        if check_aliases:
+            name = self.aliases.get(name, name)
 
         # The particular cache to look for modules within.  This matches the
         # requested mod_type
@@ -426,6 +433,11 @@ class PluginLoader:
             if path_only:
                 yield path
                 continue
+
+            # try to get alias
+            name = aliased.get(name, name)
+            if name in aliased:
+                print(name)
 
             if path not in self._module_cache:
                 self._module_cache[path] = self._load_module_source(name, path)
