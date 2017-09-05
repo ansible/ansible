@@ -118,6 +118,7 @@ class DocCLI(CLI):
             paths = loader._get_paths()
             for path in paths:
                 self.find_plugins(path, plugin_type)
+                raise AnsibleError("Need to reimplement, its all bcoca's fault!!!")
                 #TODO: call self to display all plugins
         elif len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
