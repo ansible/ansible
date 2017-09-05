@@ -321,7 +321,7 @@ use. For example, instead of requiring the cli option on every use, the (:ref:`D
 The :option:`--vault-id <ansible-playbook --vault-id>` can be used in lieu of the :option:`--vault-password-file <ansible-playbook --vault-password-file>` or :option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` options,
 or it can be used in combination with them.
 
-When using :ref:`ansible-vault` command that encrypt content (:ref:`ansible-vault encrypt <ansible_vault_encrypt>`, :ref:`ansible-vault encrypt_string <ansible_vault_encrypt_string>`, etc)
+When using :ref:`ansible-vault` commands that encrypt content (:ref:`ansible-vault encrypt <ansible_vault_encrypt>`, :ref:`ansible-vault encrypt_string <ansible_vault_encrypt_string>`, etc)
 only one vault-id can be used.
 
 
