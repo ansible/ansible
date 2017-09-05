@@ -261,7 +261,7 @@ class PlayContext(Base):
 
         if self.skip_tags:
             self.skip_tags = set()
-
+ 
         if passwords is None:
             passwords = {}
 
