@@ -9,7 +9,8 @@ DOCUMENTATION:
     short_description: Use network_cli to run command on network appliances
     description:
         - This plugin actually forces use of 'local' execution but using paramiko to establish a remote ssh shell on the appliance.
-        - Also this plugin ignores the become_method but still uses the becoe_user and become_pass to do privilege escalation, method depending on network_os used.
+        - Also this plugin ignores the become_method but still uses the becoe_user and become_pass to
+          do privilege escalation, method depending on network_os used.
     version_added: "2.3"
     options:
       network_os:

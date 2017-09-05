@@ -41,4 +41,3 @@ options:
     type: list
     default: []
 """
-
