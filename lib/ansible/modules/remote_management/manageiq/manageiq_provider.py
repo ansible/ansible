@@ -47,114 +47,113 @@ options:
     required: false
     default: null
 
-  endpoints:
-    description: The provider's endpoints in manageiq.
+  provider:
     required: false
+    description: Default endpoint connection information, required if state is true.
     default: null
     suboptions:
-      default:
-        required: true
-        description: Default endpoint connection information.
-      default['hostname']:
+      hostname:
         description: The provider's api hostname.
         required: true
-      default['port']:
+      port:
         description: The provider's api port.
         required: false
-      default['userid']:
+      userid:
         required: false
         default: null
         description: Provider's api endpoint authentication userid. defaults to None.
-      default['password']:
+      password:
         required: false
         default: null
         description: Provider's api endpoint authentication password. defaults to None.
-      default['auth_key']:
+      auth_key:
         required: false
         default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      default['verify_ssl']:
+      verify_ssl:
         required: false
         default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      default['security_protocol']:
+      security_protocol:
         required: false
         default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
-      default['certificate_authority']:
+      certificate_authority:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
-      metrics:
-        required: false
-        default: null
-        description: Metrics endpoint connection information.
-      metrics['hostname']:
+  metrics:
+    required: false
+    description: Metrics endpoint connection information.
+    default: null
+    suboptions:
+      hostname:
         description: The provider's api hostname.
         required: true
-      metrics['port']:
+      port:
         description: The provider's api port.
         required: false
-      metrics['userid']:
+      userid:
         required: false
         default: null
         description: Provider's api endpoint authentication userid. defaults to None.
-      metrics['password']:
+      password:
         required: false
         default: null
         description: Provider's api endpoint authentication password. defaults to None.
-      metrics['auth_key']:
+      auth_key:
         required: false
         default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      metrics['verify_ssl']:
+      verify_ssl:
         required: false
         default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      metrics['security_protocol']:
+      security_protocol:
         required: false
         default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
-      metrics['certificate_authority']:
+      certificate_authority:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
-      alerts:
-        required: False
-        default: null
-        description: Alerts endpoint connection information.
-      alerts['hostname']:
+  alerts:
+    required: false
+    description: Alerts endpoint connection information.
+    default: null
+    suboptions:
+      hostname:
         description: The provider's api hostname.
         required: true
-      alerts['port']:
+      port:
         description: The provider's api port.
         required: false
-      alerts['userid']:
+      userid:
         required: false
         default: null
         description: Provider's api endpoint authentication userid. defaults to None.
-      alerts['password']:
+      password:
         required: false
         default: null
         description: Provider's api endpoint authentication password. defaults to None.
-      alerts['auth_key']:
+      auth_key:
         required: false
         default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      alerts['verify_ssl']:
+      verify_ssl:
         required: false
         default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      alerts['security_protocol']:
+      security_protocol:
         required: false
         default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
-      alerts['certificate_authority']:
+      certificate_authority:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
@@ -165,17 +164,16 @@ EXAMPLES = '''
     manageiq_provider:
       name: 'EngLab'
       type: 'OpenShift'
-      endpoints:
-        default:
-          auth_key: 'topSecret'
-          hostname: 'example.com'
-          port: 8443
-          verify_ssl: False
-        metrics:
-          role: 'hawkular'
-          hostname: 'example.com'
-          port: 443
-          verify_ssl: False
+      provider:
+        auth_key: 'topSecret'
+        hostname: 'example.com'
+        port: 8443
+        verify_ssl: False
+      metrics:
+        role: 'hawkular'
+        hostname: 'example.com'
+        port: 443
+        verify_ssl: False
       manageiq_connection:
         url: 'http://127.0.0.1:3000'
         username: 'admin'
@@ -186,16 +184,15 @@ EXAMPLES = '''
     manageiq_provider:
       name: 'EngLab'
       type: 'Openshift'
-      endpoints:
-        default:
-          auth_key: 'verySecret'
-          hostname: 'next.example.com'
-          port: 8443
-          verify_ssl: False
-        metrics:
-          hostname: 'next.example.com'
-          port: 443
-          verify_ssl: False
+      provider:
+        auth_key: 'verySecret'
+        hostname: 'next.example.com'
+        port: 8443
+        verify_ssl: False
+      metrics:
+        hostname: 'next.example.com'
+        port: 443
+        verify_ssl: False
       manageiq_connection:
         url: 'http://127.0.0.1:3000'
         username: 'admin'
@@ -217,11 +214,10 @@ EXAMPLES = '''
       name: 'EngAmazon'
       type: 'Amazon'
       provider_region: 'us-east-1'
-      endpoints:
-        default:
-          hostname: 'amazon.example.com'
-          userid: 'hello'
-          password: 'world'
+      provider:
+        hostname: 'amazon.example.com'
+        userid: 'hello'
+        password: 'world'
       manageiq_connection:
         url: 'http://127.0.0.1:3000'
         token: 'VeryLongToken'
@@ -252,8 +248,7 @@ def supported_providers():
 
 def endpoint_list_spec():
     return dict(
-        default=dict(required=True,
-                     type='dict', options=endpoint_argument_spec()),
+        provider=dict(type='dict', options=endpoint_argument_spec()),
         metrics=dict(type='dict', options=endpoint_argument_spec()),
         alerts=dict(type='dict', options=endpoint_argument_spec()),
     )
@@ -350,7 +345,7 @@ class ManageIQProvider(object):
         provider_defaults = supported_providers().get(provider_type, {})
 
         # get endpoint defaults
-        endpoint = endpoints.get('default')
+        endpoint = endpoints.get('provider')
         default_auth_key = endpoint.get('auth_key')
 
         # build a connection_configuration object for each endpoint
@@ -464,26 +459,28 @@ class ManageIQProvider(object):
 def main():
     zone_id = None
     endpoints = []
+    argument_spec = dict(
+        manageiq_connection=dict(required=True, type='dict',
+                                 options=manageiq_argument_spec()),
+        state=dict(choices=['absent', 'present'], default='present'),
+        name=dict(required=True),
+        zone=dict(default='default'),
+        provider_region=dict(),
+        type=dict(choices=supported_providers().keys()),
+    )
+    # add the endpoint arguments to the arguments
+    argument_spec.update(endpoint_list_spec())
 
     module = AnsibleModule(
-        argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict',
-                                     options=manageiq_argument_spec()),
-            state=dict(choices=['absent', 'present'], default='present'),
-            name=dict(required=True),
-            zone=dict(default='default'),
-            provider_region=dict(),
-            type=dict(choices=supported_providers().keys()),
-            endpoints=dict(type='dict', options=endpoint_list_spec()),
-        ),
+        argument_spec=argument_spec,
         required_if=[
-            ('state', 'present', ['endpoints'])],
+            ('state', 'present', ['provider'])],
     )
 
     name = module.params['name']
     zone_name = module.params['zone']
     provider_type = module.params['type']
-    raw_endpoints = module.params['endpoints']
+    raw_endpoints = module.params
     provider_region = module.params['provider_region']
     state = module.params['state']
 
@@ -524,7 +521,8 @@ def main():
                 msg="provider_type %s is not supported" % (provider_type))
 
         # build "connection_configurations" objects from user requsted endpoints
-        if raw_endpoints:
+        # "provider" is a required endpoint, if we have it, we have endpoints
+        if raw_endpoints.get("provider"):
             endpoints = manageiq_provider.build_connection_configurations(provider_type, raw_endpoints)
 
         # if we have a provider, edit it
