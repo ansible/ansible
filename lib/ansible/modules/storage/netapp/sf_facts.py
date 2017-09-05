@@ -42,8 +42,8 @@ msg:
 
 import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from solidfire.common import ApiServerError
-from module_utils._text import to_native
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 
