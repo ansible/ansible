@@ -199,13 +199,14 @@ def remove_plugin(module, plugin_bin, plugin_name):
 def get_plugin_bin(module, plugin_bin):
     # Add the plugin_bin passed into the module to the top of the list of paths to test,
     # testing for that binary name first before falling back to the default paths.
-    if plugin_bin and plugin_bin not in PLUGIN_BIN_PATHS:
-        PLUGIN_BIN_PATHS.insert(0, plugin_bin)
+    bin_paths = list(PLUGIN_BIN_PATHS)
+    if plugin_bin and plugin_bin not in bin_paths:
+        bin_paths.insert(0, plugin_bin)
 
     # Get separate lists of dirs and binary names from the full paths to the
     # plugin binaries.
-    plugin_dirs = list(set([os.path.dirname(x) for x in PLUGIN_BIN_PATHS]))
-    plugin_bins = list(set([os.path.basename(x) for x in PLUGIN_BIN_PATHS]))
+    plugin_dirs = list(set([os.path.dirname(x) for x in bin_paths]))
+    plugin_bins = list(set([os.path.basename(x) for x in bin_paths]))
 
     # Check for the binary names in the default system paths as well as the path
     # specified in the module arguments.
