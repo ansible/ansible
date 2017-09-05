@@ -73,4 +73,4 @@ epub:
 
 htmlsingle: assertrst
 	sphinx-build -j $(CPUS) -b html -d _build/doctrees ./rst _build/html rst/$(rst)
-	@echo "Output is in _build/html/$(rst)"
+	@echo "Output is in _build/html/$(rst:.rst=.html)"
