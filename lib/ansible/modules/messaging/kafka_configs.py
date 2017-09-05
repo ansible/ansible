@@ -4,14 +4,19 @@
 #
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
+---
 module: kafka_configs
 author: "Guillaume Delpierre (@gdelpierre)"
 version_added: "2.5"
+
 short_description: Add/Remove entity config.
 description:
     - 'Add/Remove entity config for a topic, client, user or broker'
@@ -108,11 +113,13 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 class KafkaError(Exception):
     ''' '''
     pass
- 
+
+
 class KafkaConfigs(object):
 
     def __init__(self, module):
@@ -135,17 +142,17 @@ class KafkaConfigs(object):
         if self.module.params['jaas_auth_file']:
             kafka_env_opts = '-Djava.security.auth.login.config=' + \
                 self.module.params['jaas_auth_file']
-   
+
         entity = {
                 '--entity-default': self.ent_def,
                 '--entity-name': self.ent_name,
                 '--entity-type': self.ent_type,
         }
-        entity_join = ''.join(" %s %r" % (k, v) for k,v in entity.iteritems() if v)
+        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.iteritems() if v)
 
         if self.add_configs:
             configs = ''
-            for k,v in self.add_configs.iteritems():
+            for k, v in self.add_configs.iteritems():
                 if v:
                     if isinstance(v, list):
                         if configs:
@@ -157,13 +164,13 @@ class KafkaConfigs(object):
                         configs += ''.join("%s=%r" % (k, v))
 
             cmd = ('%s --alter --zookeeper %s %s '
-                    '--add-config %s') % (self.executable,
-                                            self.zookeeper,
-                                            entity_join,
-                                            configs)
+                   '--add-config %s') % (self.executable,
+                                         self.zookeeper,
+                                         entity_join,
+                                         configs)
         elif self.del_configs:
             cmd = ('%s --alter --zookeeper %s %s '
-                    '--delete-config %s') % (self.executable,
+                   '--delete-config %s') % (self.executable,
                                             self.zookeeper,
                                             entity_join,
                                             ','.join(self.del_configs))
@@ -174,7 +181,7 @@ class KafkaConfigs(object):
         try:
             env = ''
             if self.module.params['jaas_auth_file']:
-                env = { 'KAFKA_OPTS': kafka_env_opts }
+                env = {'KAFKA_OPTS': kafka_env_opts}
 
             return self.module.run_command(cmd, environ_update=env)
 
@@ -185,11 +192,11 @@ class KafkaConfigs(object):
         ''' List configs for the given entity. '''
 
         entity = {
-                '--entity-default': self.ent_def,
-                '--entity-name': self.ent_name,
-                '--entity-type': self.ent_type,
+            '--entity-default': self.ent_def,
+            '--entity-name': self.ent_name,
+            '--entity-type': self.ent_type,
         }
-        entity_join = ''.join(" %s %r" % (k, v) for k,v in entity.iteritems() if v)
+        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.iteritems() if v)
 
         try:
             cmd = '%s --describe --zookeeper %s %s' % (self.executable,
@@ -214,11 +221,12 @@ class KafkaConfigs(object):
             return self.module.run_command(cmd)
 
         except KafkaError as exc:
-            module.fail_json(msg=to_native(exc))
+            self.module.fail_json(msg=to_native(exc))
+
 
 def main():
     argument_spec = dict(
-        describe=dict(type='bool'),
+        describe=dict(default=False, type='bool'),
         add_configs=dict(type='dict'),
         del_configs=dict(type='list'),
         entity_default=dict(type='str'),
@@ -226,13 +234,12 @@ def main():
         entity_type=dict(required=True, type='str'),
         zookeeper=dict(required=True, type='list'),
 
-        jaas_auth_file = dict(type='path'),
-        kafka_path = dict(default='/opt/kafka',
-                          type='path'),
+        jaas_auth_file=dict(type='path'),
+        kafka_path=dict(default='/opt/kafka',
+                        type='path'),
 
-        pretty = dict(type='bool'),
+        pretty=dict(default=False, type='bool'),
     )
-
 
     required_if = [
         ['add_configs', True, ['entity_name', 'entity_type']],
@@ -249,15 +256,15 @@ def main():
     ]
 
     module = AnsibleModule(
-        argument_spec = argument_spec,
-        required_if = required_if,
-        required_one_of = required_one_of,
-        mutually_exclusive = mutually_exclusive,
-        supports_check_mode = True,
+        argument_spec=argument_spec,
+        required_if=required_if,
+        required_one_of=required_one_of,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True,
     )
 
-    kafka_bin = os.path.isfile(module.params['kafka_path'] + \
-                    '/bin/kafka-configs.sh')
+    kafka_bin = os.path.isfile(module.params['kafka_path'] +
+                               '/bin/kafka-configs.sh')
     jaas_auth_file = module.params['jaas_auth_file']
 
     changed = False
