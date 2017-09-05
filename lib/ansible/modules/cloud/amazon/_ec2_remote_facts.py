@@ -119,6 +119,7 @@ def get_instance_info(instance):
                     'key_name': instance.key_name,
                     'source_destination_check': source_dest_check,
                     'image_id': instance.image_id,
+                    'instance_type': instance.instance_type,
                     'groups': groups,
                     'interfaces': interfaces,
                     'spot_instance_request_id': instance.spot_instance_request_id,
