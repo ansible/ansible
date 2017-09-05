@@ -508,7 +508,7 @@ class ACIModule(object):
     def delete_config(self):
         """
         This method is used to handle the logic when the modules state is equal to absent. The method only pushes a change if
-        the object exists, and if check_mode is Fasle. A successful change will mark the module as changed.
+        the object exists, and if check_mode is False. A successful change will mark the module as changed.
         """
         self.result['proposed'] = {}
 
