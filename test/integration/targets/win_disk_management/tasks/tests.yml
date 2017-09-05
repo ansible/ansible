@@ -24,27 +24,20 @@
     read_only: true
   register: setup_specified_disk
   failed_when: setup_specified_disk.msg != 'No disk could be found and selected with the specified parameter options'
-  
-- name: get result of disk setup
-  win_command: powershell.exe get-disk -number 0
-  register: get_disk_actual
 
 - name: assert setup disk
   assert:
     that:
     - not setup_specified_disk|changed
-    - get_disk_actual.rc == 0
 
 - name: assert setup disk (normal mode)
   assert:
     that:
     - not setup_specified_disk|changed
-    - get_disk_actual.rc == 0
   when: not in_check_mode
   
 - name: assert setup disk (check mode)
   assert:
     that:
     - not setup_specified_disk|changed
-    - get_disk_actual.rc == 0
   when: in_check_mode
