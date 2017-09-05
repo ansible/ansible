@@ -43,7 +43,6 @@ msg:
 import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from solidfire.common import ApiServerError
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 
@@ -106,6 +105,7 @@ class SolidFireFacts(object):
 
     def fetch_fact(self, name, api):
         """Uniform way to add facts to our return structure."""
+        from solidfire.common import ApiServerError
         try:
             method, args = api.popitem()
             data = method(**args)
