@@ -17,7 +17,7 @@ DOCUMENTATION:
       remote_addr:
         description:
             - Path to the jail
-        default: The set user as per docker's configuration
+        default: inventory_hostname
         vars:
             - name: ansible_host
             - name: ansible_jail_host
