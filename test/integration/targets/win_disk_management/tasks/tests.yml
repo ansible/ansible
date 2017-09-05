@@ -33,3 +33,4 @@
   assert:
     that:
     - not setup_specified_disk|changed
+  when: not in_check_mode
