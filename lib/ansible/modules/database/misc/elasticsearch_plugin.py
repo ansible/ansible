@@ -197,15 +197,25 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
 
 def get_plugin_bin(module, plugin_bin):
-    # Add the plugin_bin passed into the module to the list of paths to test, testing for that first before
-    # falling back to the default paths.
+    # Add the plugin_bin passed into the module to the top of the list of paths to test,
+    # testing for that binary name first before falling back to the default paths.
     if plugin_bin and plugin_bin not in PLUGIN_BIN_PATHS:
         PLUGIN_BIN_PATHS.insert(0, plugin_bin)
 
-    try:
-        valid_plugin_bin = next(x for x in PLUGIN_BIN_PATHS if os.path.isfile(x))
-    except Exception:
-        module.fail_json(msg='%s does not exist and no other valid plugin installers were found.' % plugin_bin)
+    # Get separate lists of dirs and binary names from the full paths to the
+    # plugin binaries.
+    plugin_dirs = list(set([os.path.dirname(x) for x in PLUGIN_BIN_PATHS]))
+    plugin_bins = list(set([os.path.basename(x) for x in PLUGIN_BIN_PATHS]))
+
+    # Check for the binary names in the default system paths as well as the path
+    # specified in the module arguments.
+    for bin_file in plugin_bins:
+        valid_plugin_bin = module.get_bin_path(bin_file, opt_dirs=plugin_dirs)
+        if valid_plugin_bin:
+            break
+
+    if not valid_plugin_bin:
+        module.fail_json(msg='%s does not exist and no other valid plugin installers were found. Make sure Elasticsearch is installed.' % plugin_bin)
 
     return valid_plugin_bin
 
@@ -236,7 +246,7 @@ def main():
     proxy_port = module.params["proxy_port"]
     version = module.params["version"]
 
-    # Validate the plugin bin path and fall back to the default paths if a valid one isn't supplied.
+    # Search provided path and system paths for valid binary
     plugin_bin = get_plugin_bin(module, plugin_bin)
 
     present = is_plugin_present(parse_plugin_repo(name), plugin_dir)
