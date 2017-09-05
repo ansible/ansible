@@ -42,7 +42,7 @@ Common Options
 
 .. option:: {% for switch in option['options'] %}{{switch}}{% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
-  {{ option['desc'] }}
+   {{ option['desc'] }}
 {% endfor %}
 {% endif %}
 
@@ -80,7 +80,7 @@ Actions
 {% for option in actions[action]['options']|sort %}
 .. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
-{{ (option['desc']) }}
+   {{ (option['desc']) }}
 {% endfor %}
 {% endif %}
 
