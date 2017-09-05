@@ -70,6 +70,25 @@ EXAMPLES = r'''
     src: /home/cisco/ansible/aci/configs/aci_config.xml
   delegate_to: localhost
 
+- name: Add a tenant
+  aci_rest:
+    hostname: '{{ inventory_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: no
+    path: /api/mo/uni/tn-[Sales].json
+    method: post
+    content: |
+      {
+        "fvTenant": {
+          "attributes": {
+            "name": "Sales",
+            "descr": "Sales departement"
+          }
+        }
+      }
+  delegate_to: localhost
+
 - name: Get tenants
   aci_rest:
     hostname: '{{ inventory_hostname }}'
@@ -161,9 +180,20 @@ totalCount:
   returned: always
   type: string
   sample: '0'
+url:
+  description: URL used for APIC REST call
+  returned: success
+  type: string
+  sample: https://1.2.3.4/api/mo/uni/tn-[Dag].json?rsp-subtree=modified
 '''
 
 import os
+
+try:
+    from ansible.module_utils.six.moves.urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+    HAS_URLPARSE = True
+except:
+    HAS_URLPARSE = False
 
 # Optional, only used for XML payload
 try:
@@ -186,14 +216,49 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
+def update_qsl(url, params):
+    ''' Add or update a URL query string '''
+
+    if HAS_URLPARSE:
+        url_parts = list(urlparse(url))
+        query = dict(parse_qsl(url_parts[4]))
+        query.update(params)
+        url_parts[4] = urlencode(query)
+        return urlunparse(url_parts)
+    elif '?' in url:
+        return url + '&' + '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
+    else:
+        return url + '?' + '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
+
+
+def aci_changed(d):
+    ''' Check ACI response for changes '''
+
+    if isinstance(d, dict):
+        for k, v in d.items():
+            if k == 'status' and v in ('created', 'modified', 'deleted'):
+                return True
+            elif aci_changed(v) is True:
+                return True
+    elif isinstance(d, list):
+        for i in d:
+            if aci_changed(i) is True:
+                return True
+
+    return False
+
+
 def aci_response(result, rawoutput, rest_type='xml'):
     ''' Handle APIC response output '''
 
     if rest_type == 'json':
         aci_response_json(result, rawoutput)
-
     else:
         aci_response_xml(result, rawoutput)
+
+    # Use APICs built-in idempotency
+    if HAS_URLPARSE:
+        result['changed'] = aci_changed(result)
 
 
 def main():
@@ -208,7 +273,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['content', 'src']],
-        supports_check_mode=True,
     )
 
     path = module.params['path']
@@ -240,26 +304,18 @@ def main():
 
     aci = ACIModule(module)
 
-    if method == 'get':
-        aci.request(path)
-        module.exit_json(**aci.result)
-    elif module.check_mode:
-        # In check_mode we assume it works, but we don't actually perform the requested change
-        # TODO: Could we turn this request in a GET instead ?
-        aci.result['changed'] = True
-        module.exit_json(response='OK (Check mode)', status=200, **aci.result)
-
-    # Prepare request data
-    if content:
-        # We include the payload as it may be templated
-        payload = content
-    elif file_exists:
+    # We include the payload as it may be templated
+    payload = content
+    if file_exists:
         with open(src, 'r') as config_object:
             # TODO: Would be nice to template this, requires action-plugin
             payload = config_object.read()
 
     # Perform actual request using auth cookie (Same as aci_request,but also supports XML)
     url = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
+    if method != 'get':
+        url = update_qsl(url, {'rsp-subtree': 'modified'})
+    aci.result['url'] = url
 
     resp, info = fetch_url(module, url, data=payload, method=method.upper(), timeout=timeout, headers=aci.headers)
     aci.result['response'] = info['msg']
