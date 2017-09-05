@@ -1,21 +1,7 @@
 #!/usr/bin/python
-
 # (c) 2017, NetApp, Inc
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -56,7 +42,8 @@ msg:
 
 import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from solidfire.common import ApiServerError
+from module_utils._text import to_native
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 
@@ -78,6 +65,10 @@ class SolidFireFacts(object):
     """
 
     def __init__(self):
+        import ansible.module_utils.basic
+        ansible.module_utils.basic._ANSIBLE_ARGS = \
+            '{"ANSIBLE_MODULE_ARGS": {"hostname": "10.117.145.219", "username": "netapp", "password": "NetApp123!"}}'.encode(
+                'utf-8')
         self.state = {}
         self.cluster_config = {}
         self.version_info = {}
@@ -119,13 +110,15 @@ class SolidFireFacts(object):
             method, args = api.popitem()
             data = method(**args)
             self.facts.update(data.to_json())
-        except:
-            problem = get_exception()
-            if problem.error_name and problem.error_name == 'xFeatureNotEnabled':
+        except ApiServerError as sf_problem:
+            if sf_problem.error_name and sf_problem.error_name == 'xFeatureNotEnabled':
                 self.facts[name] = {}
                 return
             self.module.fail_json(
-                msg="Failed to obtain cluster fact [%s] from [%s]. Error [%s]" % (name, self.module.params['hostname'], str(problem)))
+                msg="Failed to obtain cluster fact [%s] from [%s]. Error [%s]" % (name, self.module.params['hostname'],
+                                                                                  to_native(sf_problem)))
+        except ApiServerError as problem:
+            self.module.fail_json(msg=to_native(problem))
 
     def gather_facts(self):
         """Gather information from the cluster and return it to Ansible."""
