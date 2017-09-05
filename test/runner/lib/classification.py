@@ -98,6 +98,8 @@ def categorize_changes(args, paths, verbose_command=None):
             commands[command].add(target)
 
     for command in commands:
+        commands[command].discard('none')
+
         if any(t == 'all' for t in commands[command]):
             commands[command] = set(['all'])
 

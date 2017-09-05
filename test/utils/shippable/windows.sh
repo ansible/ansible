@@ -2,6 +2,11 @@
 
 set -o pipefail
 
+declare -a args
+IFS='/:' read -ra args <<< "${TEST}"
+
+target="windows/ci/group${args[1]}/"
+
 # python versions to test in order
 # python 2.7 runs full tests while other versions run minimal tests
 python_versions=(
@@ -12,7 +17,7 @@ python_versions=(
 )
 
 # shellcheck disable=SC2086
-ansible-test windows-integration --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
+ansible-test windows-integration "${target}" --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
 if [ -s /tmp/windows.txt ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
@@ -48,13 +53,23 @@ for version in "${python_versions[@]}"; do
         if [ "${CHANGED}" ]; then
             # with change detection enabled run tests for anything changed
             # use the smoketest tests for any change that triggers all tests
-            ci="windows/ci/"
-            changed_all_target="windows/ci/smoketest/"
+            ci="${target}"
+            if [ "${target}" == "windows/ci/group1/" ]; then
+                # only run smoketest tests for group1
+                changed_all_target="windows/ci/smoketest/"
+            else
+                # smoketest tests already covered by group1
+                changed_all_target="none"
+            fi
         else
+            # only run smoketest tests for group1
+            if [ "${target}" != "windows/ci/group1/" ]; then continue; fi
             # without change detection enabled run only smoketest tests
             ci="windows/ci/smoketest/"
         fi
     else
+        # only run minimal tests for group1
+        if [ "${target}" != "windows/ci/group1/" ]; then continue; fi
         # minimal tests for other python versions
         ci="windows/ci/minimal/"
     fi
