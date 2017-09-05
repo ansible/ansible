@@ -254,6 +254,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 import re
 
 
@@ -551,7 +552,7 @@ def main():
 
     results = manage_state(module, aws)
 
-    module.exit_json(**results)
+    module.exit_json(**camel_dict_to_snake_dict(results))
 
 
 if __name__ == '__main__':
