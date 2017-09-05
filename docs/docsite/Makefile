@@ -53,7 +53,7 @@ clean:
 
 # TODO: make generate_man output dir cli option
 cli: $(GENERATE_CLI)
-	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst ../../lib/ansible/cli/*.py
+	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/ --output-format rst ../../lib/ansible/cli/*.py
 
 keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
 	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/ -d ./keyword_desc.yml
