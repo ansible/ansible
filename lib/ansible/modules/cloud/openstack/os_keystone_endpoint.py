@@ -1,18 +1,111 @@
 #!/usr/bin/python
-# Copyright 2017 VEXXHOST, Inc.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2017, VEXXHOST, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = '''
+---
+module: os_keystone_endpoint
+short_description: Manage OpenStack Identity service endpoints
+extends_documentation_fragment: openstack
+author:
+    - Mohammed Naser (@mnaser)
+    - Alberto Murillo (@albertomurillo)
+version_added: "2.5"
+description:
+    - Create, update, or delete OpenStack Identity service endpoints. If a
+      service with the same combination of I(service), I(interface) and I(region)
+      exist, the I(url) and I(state) (C(present) or C(absent)) will be updated.
+options:
+   service:
+     description:
+        - Name of the service.
+     required: true
+   interface:
+     description:
+        - Interface of the service.
+     choices: [admin, public, internal]
+     required: true
+   url:
+     description:
+        - URL of the service.
+     required: true
+   region:
+     description:
+        - Region that the service belongs to. Note that I(region_name) is used for authentication.
+     required: true
+   enabled:
+     description:
+        - Is the service enabled.
+     default: True
+   state:
+     description:
+       - Should the resource be C(present) or C(absent).
+     choices: [present, absent]
+     default: present
+requirements:
+    - "shade"
+'''
+
+EXAMPLES = '''
+- name: Create a service for glance
+  os_keystone_endpoint:
+     cloud: mycloud
+     service: glance
+     interface: public
+     url: http://controller:9292
+     region: RegionOne
+     state: present
+
+- name: Delete a service for nova
+  os_keystone_endpoint:
+     cloud: mycloud
+     service: nova
+     interface: public
+     region: RegionOne
+     state: absent
+'''
+
+RETURN = '''
+endpoint:
+    description: Dictionary describing the endpoint.
+    returned: On success when I(state) is C(present)
+    type: dictionary
+    contains:
+        id:
+            description: Endpoint ID.
+            type: string
+            sample: 3292f020780b4d5baf27ff7e1d224c44
+        region:
+            description: Region Name.
+            type: string
+            sample: RegionOne
+        service:
+            description: Service ID.
+            type: string
+            sample: b91f1318f735494a825a55388ee118f3
+        interface:
+            description: Endpoint Interface.
+            type: string
+            sample: public
+        url:
+            description: Service URL.
+            type: string
+            sample: http://controller:9292
+        enabled:
+            description: Service status.
+            type: boolean
+            sample: True
+id:
+    description: The endpoint ID.
+    returned: On success when I(state) is C(present)
+    type: string
+    sample: "3292f020780b4d5baf27ff7e1d224c44"
+'''
 
 try:
     import shade
@@ -21,109 +114,9 @@ except ImportError:
     HAS_SHADE = False
 
 from distutils.version import StrictVersion
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
-
-DOCUMENTATION = '''
----
-module: os_keystone_endpoint
-short_description: Manage OpenStack Identity service endpoints
-extends_documentation_fragment: openstack
-author: "Mohammed Naser (@mnaser)"
-version_added: "2.3"
-description:
-    - Create, update, or delete OpenStack Identity service endpoints.  If a
-      service with the same combination of service and interface and region
-      exist, the URL and state (enabled or disabled) will be updated.
-options:
-   service:
-     description:
-        - Name of the service
-     required: true
-   interface:
-     description:
-        - Interface of the service
-     choices: [admin, public, internal]
-     required: true
-   url:
-     description:
-        - URL of the service
-     required: true
-   region:
-     description:
-        - Region that the service belongs to (`region_name` is used for auth.)
-     required: true
-   enabled:
-     description:
-        - Is the service enabled
-     required: false
-     default: True
-   state:
-     description:
-       - Should the resource be present or absent.
-     choices: [present, absent]
-     default: present
-requirements:
-    - "python >= 2.6"
-    - "shade"
-'''
-
-EXAMPLES = '''
-# Create a service for glance
-- os_keystone_endpoint:
-     cloud: mycloud
-     state: present
-     service: glance
-     interface: public
-     url: http://controller:9292
-     region: RegionOne
-# Delete a service
-- os_keystone_endpoint:
-     cloud: mycloud
-     state: absent
-     name: image
-     interface: public
-     region: RegionOne
-'''
-
-RETURN = '''
-endpoint:
-    description: Dictionary describing the endpoint.
-    returned: On success when I(state) is 'present'
-    type: dictionary
-    contains:
-        id:
-            description: Endpoint ID.
-            type: string
-            sample: "3292f020780b4d5baf27ff7e1d224c44"
-        region:
-            description: Region Name
-            type: string
-            sample: "RegionOne"
-        service:
-            description: Service ID
-            type: string
-            sample: "b91f1318f735494a825a55388ee118f3"
-        interface:
-            description: Endpoint Interface
-            type: string
-            sample: "public"
-        url:
-            description: Service URL
-            type: string
-            sample: "http://controller:9292"
-        enabled:
-            description: Service status.
-            type: boolean
-            sample: True
-id:
-    description: The endpoint ID.
-    returned: On success when I(state) is 'present'
-    type: string
-    sample: "3292f020780b4d5baf27ff7e1d224c44"
-'''
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec
+from ansible.module_utils.openstack import openstack_module_kwargs
 
 
 def _needs_update(module, endpoint):
@@ -184,8 +177,8 @@ def main():
                                                         interface=interface))
 
         if len(endpoints) > 1:
-            module.fail_json(msg='Service %s, interface %s and region %s are ' \
-                                 'not unique' % \
+            module.fail_json(msg='Service %s, interface %s and region %s are '
+                                 'not unique' %
                                  (service_name, interface, region))
         elif len(endpoints) == 1:
             endpoint = endpoints[0]
@@ -198,7 +191,8 @@ def main():
         if state == 'present':
             if endpoint is None:
                 result = cloud.create_endpoint(service_name_or_id=service.id,
-                    url=url, interface=interface, region=region, enabled=True)
+                                               url=url, interface=interface,
+                                               region=region, enabled=enabled)
                 endpoint = result[0]
                 changed = True
             else:
@@ -212,17 +206,15 @@ def main():
 
         elif state == 'absent':
             if endpoint is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_endpoint(endpoint.id)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()
