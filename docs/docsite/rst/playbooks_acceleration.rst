@@ -3,30 +3,30 @@ Accelerated Mode
 
 .. versionadded:: 1.3
 
-.. note::  
+.. note::
 
      Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead. This feature will be removed in a future release. Deprecation warnings can be disabled by setting :code:`deprecation_warnings=False` in :code:`ansible.cfg`.
 
 You Might Not Need This!
 ````````````````````````
 
-Are you running Ansible 1.5 or later?  If so, you may not need accelerated mode due to a new feature called "SSH pipelining" and should read the :ref:`pipelining` section of the documentation.
+Are you running Ansible 1.5 or later? If so, you may not need accelerated mode due to a new feature called "SSH pipelining" and should read the :ref:`pipelining` section of the documentation.
 
 For users on 1.5 and later, accelerated mode only makes sense if you (A) are managing from an Enterprise Linux 6 or earlier host and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining docs.
 
 If you can use pipelining, Ansible will reduce the amount of files transferred over the wire, 
-making everything much more efficient, and performance will be on par with accelerated mode in nearly all cases, possibly excluding very large file transfer.   Because less moving parts are involved, pipelining is better than accelerated mode for nearly all use cases.
+making everything much more efficient, and performance will be on par with accelerated mode in nearly all cases, possibly excluding very large file transfer. Because less moving parts are involved, pipelining is better than accelerated mode for nearly all use cases.
 
-Accelerated moded remains around in support of EL6
+Accelerated mode remains around in support of EL6
 control machines and other constrained environments.
 
 Accelerated Mode Details
 ````````````````````````
 
 While OpenSSH using the ControlPersist feature is quite fast and scalable, there is a certain small amount of overhead involved in
-using SSH connections.  While many people will not encounter a need, if you are running on a platform that doesn't have ControlPersist support (such as an EL6 control machine), you'll probably be even more interested in tuning options.
+using SSH connections. While many people will not encounter a need, if you are running on a platform that doesn't have ControlPersist support (such as an EL6 control machine), you'll probably be even more interested in tuning options.
 
-Accelerated mode is there to help connections work faster, but still uses SSH for initial secure key exchange.  There is no
+Accelerated mode is there to help connections work faster, but still uses SSH for initial secure key exchange. There is no
 additional public key infrastructure to manage, and this does not require things like NTP or even DNS. 
 
 Accelerated mode can be anywhere from 2-6x faster than SSH with ControlPersist enabled, and 10x faster than paramiko.
