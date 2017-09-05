@@ -8,7 +8,7 @@
 DOCUMENTATION:
     author: Michael Scherer (@msherer) <misc@zarb.org>
     connection: funcd
-    short_description: Connection plugin using funcd
+    short_description: Use funcd to connect to target
     description:
         - This transport permits you to use Ansible over Func.
         - For people who have already setup func and that wish to play with ansible,

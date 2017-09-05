@@ -10,7 +10,7 @@
 """
 DOCUMENTATION:
     connection: buildah
-    short_description: interact with an existing buildah container
+    short_description: Interact with an existing buildah container
     description:
         - Run commands or put/fetch files to an existing container using buildah tool.
     author: Tomas Tomecek (ttomecek@redhat.com)

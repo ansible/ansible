@@ -12,7 +12,7 @@ DOCUMENTATION:
         - Lorin Hochestein
         - Leendert Brouwer
     connection: docker
-    short_description: connection plugin for docker containers
+    short_description: Run tasks in docker containers
     description:
         - Run commands or put/fetch files to an existing docker container.
     version_added: "2.0"

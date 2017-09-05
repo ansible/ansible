@@ -9,7 +9,7 @@
 DOCUMENTATION:
     author: Ansible Core Team
     connection: jail
-    short_description: connection plugin for jails
+    short_description: Run tasks in jails
     description:
         - Run commands or put/fetch files to an existing jail
     version_added: "2.0"
@@ -19,8 +19,14 @@ DOCUMENTATION:
             - Path to the jail
         default: The set user as per docker's configuration
         vars:
+            - name: ansible_host
+            - name: ansible_jail_host
+      remote_user:
+        description:
+            - User to execute as inside the jail
+        vars:
             - name: ansible_user
-            - name: ansible_docker4_user
+            - name: ansible_jail_user
 """
 
 from __future__ import (absolute_import, division, print_function)
