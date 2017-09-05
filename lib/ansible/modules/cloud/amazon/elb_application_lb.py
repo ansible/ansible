@@ -755,6 +755,14 @@ def create_or_update_elb_listeners(connection, module, elb):
             # Get listener based on port so we can use ARN
             looked_up_listener = get_listener(connection, module, elb['LoadBalancerArn'], listener['Port'])
 
+            # Delete rules
+            for rule in rules_to_delete:
+                try:
+                    connection.delete_rule(RuleArn=rule)
+                    listener_changed = True
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
             # Add rules
             for rule in rules_to_add:
                 try:
@@ -770,14 +778,6 @@ def create_or_update_elb_listeners(connection, module, elb):
                 try:
                     del rule['Priority']
                     connection.modify_rule(**rule)
-                    listener_changed = True
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
-            # Delete rules
-            for rule in rules_to_delete:
-                try:
-                    connection.delete_rule(RuleArn=rule)
                     listener_changed = True
                 except ClientError as e:
                     module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
