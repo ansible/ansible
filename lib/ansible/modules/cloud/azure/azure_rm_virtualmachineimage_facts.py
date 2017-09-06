@@ -110,7 +110,7 @@ except:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 
-AZURE_ENUM_MODULES = ['azure.mgmt.compute.models.compute_management_client_enums']
+AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
 class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
