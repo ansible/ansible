@@ -695,6 +695,35 @@ To escape special characters within a regex, use the "regex_escape" filter::
     {{ '^f.*o(.*)$' | regex_escape() }}
 
 
+Wrapping filter
+````````````````
+
+Wraps filter input around your variable, especially useful for quotes::
+
+    # given:
+    myvar: hello
+
+    # apply filter:
+    myvar | wrap('"')
+
+    # will return:
+    "hello"
+
+Also works with lists::
+
+    # given:
+    mylist:
+      - hello
+      - world
+
+    # apply filter:
+    mylist | wrap_list('"') | join(', ')
+
+    # will return:
+    "hello", "world"
+
+.. versionadded:: 2.5
+
 Other Useful Filters
 ````````````````````
 

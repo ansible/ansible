@@ -169,3 +169,14 @@
     that:
       - _bad_urlsplit_filter | failed
       - "'unknown URL component' in _bad_urlsplit_filter.msg"
+
+
+# Test for lib/ansible/plugins/filter/wrap.py
+- name: Test quote wrappers
+  assert:
+    that:
+      - some_var | wrap(item) == item ~ 'hello' ~ item
+      - some_list | wrap_list(item) == [ item ~ 'hello' ~ item, item ~ 'world' ~ item ]
+  with_items:
+    - \'
+    - \"
