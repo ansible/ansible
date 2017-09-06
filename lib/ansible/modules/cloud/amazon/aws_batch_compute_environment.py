@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: batch_compute_environment
+module: aws_batch_compute_environment
 short_description: Manage AWS Batch Compute Environments
 description:
     - This module allows the management of AWS Batch Compute Environments.
@@ -169,85 +169,71 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
----
-output:
-    description: returns what action was taken, whether something was changed,
-     invocation and response
-    type: dict
-    returned: always
-    sample:
-    {
-        "batch_compute_environment_action": "none",
-        "changed": false,
-        "invocation": {
-            "module_args": {
-                "aws_access_key": null,
-                "aws_secret_key": null,
-                "bid_percentage": null,
-                "compute_environment_name": "<name>",
-                "compute_environment_state": "ENABLED",
-                "compute_resource_type": "EC2",
-                "desiredv_cpus": 0,
-                "ec2_key_pair": null,
-                "ec2_url": null,
-                "image_id": null,
-                "instance_role": "arn:aws:iam::...",
-                "instance_types": [
-                    "optimal"
-                ],
-                "maxv_cpus": 8,
-                "minv_cpus": 0,
-                "profile": null,
-                "region": "us-east-1",
-                "security_group_ids": [
-                    "*******"
-                ],
-                "security_token": null,
-                "service_role": "arn:aws:iam::....",
-                "spot_iam_fleet_role": null,
-                "state": "present",
-                "subnets": [
-                    "******"
-                ],
-                "tags": {
-                    "Environment": "<name>",
-                    "Name": "<name>",
-                },
-                "type": "MANAGED",
-                "validate_certs": true
-            }
-        },
-        "response": {
-            "computeEnvironmentArn": "arn:aws:batch:....",
-            "computeEnvironmentName": "<name>",
-            "computeResources": {
-                "desiredvCpus": 0,
-                "instanceRole": "arn:aws:iam::...",
-                "instanceTypes": [
-                    "optimal"
-                ],
-                "maxvCpus": 8,
-                "minvCpus": 0,
-                "securityGroupIds": [
-                    "******"
-                ],
-                "subnets": [
-                    "*******"
-                ],
-                "tags": {
-                    "Environment": "<name>",
-                    "Name": "<name>",
-                },
-                "type": "EC2"
-            },
-            "ecsClusterArn": "arn:aws:ecs:.....",
-            "serviceRole": "arn:aws:iam::...",
-            "state": "ENABLED",
-            "status": "VALID",
-            "statusReason": "ComputeEnvironment Healthy",
-            "type": "MANAGED"
-        }
-    }
+--- 
+output: 
+  description: "returns what action was taken, whether something was changed, invocation and response"
+  returned: always
+  sample: 
+    batch_compute_environment_action: none
+    changed: false
+    invocation: 
+      module_args: 
+        aws_access_key: ~
+        aws_secret_key: ~
+        bid_percentage: ~
+        compute_environment_name: <name>
+        compute_environment_state: ENABLED
+        compute_resource_type: EC2
+        desiredv_cpus: 0
+        ec2_key_pair: ~
+        ec2_url: ~
+        image_id: ~
+        instance_role: "arn:aws:iam::..."
+        instance_types: 
+          - optimal
+        maxv_cpus: 8
+        minv_cpus: 0
+        profile: ~
+        region: us-east-1
+        security_group_ids: 
+          - "*******"
+        security_token: ~
+        service_role: "arn:aws:iam::...."
+        spot_iam_fleet_role: ~
+        state: present
+        subnets: 
+          - "******"
+        tags: 
+          Environment: <name>
+          Name: <name>
+        type: MANAGED
+        validate_certs: true
+    response: 
+      computeEnvironmentArn: "arn:aws:batch:...."
+      computeEnvironmentName: <name>
+      computeResources: 
+        desiredvCpus: 0
+        instanceRole: "arn:aws:iam::..."
+        instanceTypes: 
+          - optimal
+        maxvCpus: 8
+        minvCpus: 0
+        securityGroupIds: 
+          - "******"
+        subnets: 
+          - "*******"
+        tags: 
+          Environment: <name>
+          Name: <name>
+        type: EC2
+      ecsClusterArn: "arn:aws:ecs:....."
+      serviceRole: "arn:aws:iam::..."
+      state: ENABLED
+      status: VALID
+      statusReason: "ComputeEnvironment Healthy"
+      type: MANAGED
+  type: dict
+
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -313,7 +299,7 @@ def set_api_params(module, module_params):
     :param module_params:
     :return:
     """
-    api_params = {k: v for k, v in dict(module.params).items() if k in module_params and v is not None}
+    api_params = dict((k, v) for k, v in dict(module.params).items() if k in module_params and v is not None)
     return snake_dict_to_camel_dict(api_params)
 
 
