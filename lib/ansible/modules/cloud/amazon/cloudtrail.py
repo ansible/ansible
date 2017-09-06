@@ -245,7 +245,11 @@ trail:
 
 import traceback
 
-from botocore.exceptions import ClientError
+try:
+    from botocore.exceptions import ClientError
+except ImportError:
+    # Handled in main() by imported HAS_BOTO3
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info,
