@@ -30,7 +30,8 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader, PluginLoader
+from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
+   vars_loader, connection_loader, strategy_loader, PluginLoader
 from ansible.utils import plugin_docs
 try:
     from __main__ import display
@@ -67,7 +68,7 @@ class DocCLI(CLI):
                                help='Show documentation for all plugins')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
                                help='Choose which plugin type (defaults to "module")',
-                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy'])
+                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy', 'vars'])
 
         super(DocCLI, self).parse()
 
@@ -90,6 +91,8 @@ class DocCLI(CLI):
             loader = lookup_loader
         elif plugin_type == 'strategy':
             loader = strategy_loader
+        elif plugin_type == 'vars':
+            loader = vars_loader
         elif plugin_type == 'inventory':
             loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
         else:
