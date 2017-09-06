@@ -234,6 +234,8 @@ def compile_folder_path_for_object(vobj):
     thisobj = vobj
     while hasattr(thisobj, 'parent'):
         thisobj = thisobj.parent
+        if not hasattr(thisobj, 'name'):
+            break
         if thisobj.name == 'Datacenters':
             break
         if isinstance(thisobj, vim.Folder):
