@@ -51,6 +51,7 @@ options:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
     - This is required if name is not supplied.
+    - This is required if you want to destroy VM (from state 'present' to 'absent')
   template:
     description:
     - Template used to create VM.
