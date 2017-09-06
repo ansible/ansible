@@ -1120,6 +1120,9 @@ def detect_changes(args):
     else:
         return None  # change detection not enabled
 
+    if paths is None:
+        return None  # act as though change detection not enabled, do not filter targets
+
     display.info('Detected changes in %d file(s).' % len(paths))
 
     for path in paths:
@@ -1131,7 +1134,7 @@ def detect_changes(args):
 def detect_changes_shippable(args):
     """Initialize change detection on Shippable.
     :type args: TestConfig
-    :rtype: list[str]
+    :rtype: list[str] | None
     """
     git = Git(args)
     result = ShippableChanges(args, git)
