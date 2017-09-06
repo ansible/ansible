@@ -364,11 +364,11 @@ def main():
                 have_host = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-system-name')]
                 have_port = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-port-id')]
 
-                for neighbor in want_neighbors:
-                    if neighbor['host'] not in have_host:
-                        failed_conditions.append('host ' + neighbor['host'])
-                    if neighbor['port'] not in have_port:
-                        failed_conditions.append('port ' + neighbor['port'])
+            for neighbor in want_neighbors:
+                if neighbor['host'] not in have_host:
+                    failed_conditions.append('host ' + neighbor['host'])
+                if neighbor['port'] not in have_port:
+                    failed_conditions.append('port ' + neighbor['port'])
     if failed_conditions:
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
