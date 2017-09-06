@@ -24,7 +24,7 @@ DOCUMENTATION:
     deprecated:
         why: paramiko and ssh + controlpersist perform the same or better without the problems of having an agent.
         version: 2.5
-        alternatives: paramiko and ssh with conrol persistence.
+        alternative: paramiko and ssh with conrol persistence.
 """
 
 from __future__ import (absolute_import, division, print_function)
