@@ -40,6 +40,7 @@ Ansible Changes By Release
 * allow 'bridge' facts to work for certain containers that create conflicting ones with connection plugins
 * Fix for win_get_url to use TLS 1.2/1.1 if it is available on the host
 * Fix for the filetree lookup with non-ascii group names
+* Better message for invalid keywords/options in task due to undefined expressions
 
 <a id="2.3.2"></a>
 

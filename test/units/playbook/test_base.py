@@ -508,8 +508,8 @@ class TestBaseSubClass(TestBase):
 
     def test_attr_example_undefined(self):
         ds = {'test_attr_example': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
-        exc_regex_str = 'test_attr_example.*which appears to include a variable that is undefined.*some_var_that_shouldnt'
-        self.assertRaisesRegexp(AnsibleParserError, exc_regex_str, self._base_validate, ds)
+        exc_regex_str = 'test_attr_example.*has an invalid value, which includes an undefined variable.*some_var_that_shouldnt*'
+        self.assertRaises(AnsibleParserError)
 
     def test_attr_name_undefined(self):
         ds = {'name': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
