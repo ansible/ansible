@@ -1,6 +1,6 @@
 - name: Create random dns label
   set_fact:
-    dns_label: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+    dns_label: "test{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
 
 - name: Create Azure Deploy
   azure_rm_deployment:
