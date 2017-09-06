@@ -48,7 +48,7 @@ options:
      choices: [present, absent]
      default: present
 requirements:
-    - "shade"
+    - shade >= 1.11.0
 '''
 
 EXAMPLES = '''
@@ -152,9 +152,9 @@ def main():
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.1.0'):
+    if StrictVersion(shade.__version__) < StrictVersion('1.11.0'):
         module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.1.0")
+                             "the shade library MUST be >=1.11.0")
 
     service_name = module.params['service']
     interface = module.params['interface']
