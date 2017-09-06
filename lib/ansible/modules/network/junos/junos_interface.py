@@ -50,6 +50,17 @@ options:
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+  neighbors:
+    description:
+      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which given interface C(name) is connected."
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -142,6 +153,13 @@ EXAMPLES = """
     tx_rate: ge(0)
     rx_rate: le(0)
 
+- name: Check neighbor intent
+  junos_interface:
+    name: xe-0/1/1
+    neighbors:
+    - port: Ethernet1/0/1
+      host: netdev
+
 - name: Config + intent
   junos_interface:
     name: "{{ name }}"
@@ -199,6 +217,11 @@ def validate_param_values(module, obj, param=None):
 def main():
     """ main entry point for module execution
     """
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
     element_spec = dict(
         name=dict(),
         description=dict(),
@@ -208,6 +231,7 @@ def main():
         duplex=dict(choices=['full', 'half', 'auto']),
         tx_rate=dict(),
         rx_rate=dict(),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
         delay=dict(default=10, type='int'),
         state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
@@ -296,12 +320,14 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     failed_conditions = []
+    neighbors = None
     for item in params:
         state = item.get('state')
         tx_rate = item.get('tx_rate')
         rx_rate = item.get('rx_rate')
+        want_neighbors = item.get('neighbors')
 
-        if state not in ('up', 'down') and tx_rate is None and rx_rate is None:
+        if state not in ('up', 'down') and tx_rate is None and rx_rate is None and want_neighbors is None:
             continue
 
         element = Element('get-interface-information')
@@ -328,6 +354,21 @@ def main():
             if not input_bps or not conditional(rx_rate, input_bps[0].text.strip(), cast=int):
                 failed_conditions.append('rx_rate ' + rx_rate)
 
+        if want_neighbors:
+            if neighbors is None:
+                element = Element('get-lldp-interface-neighbors')
+                intf_name = SubElement(element, 'interface-device')
+                intf_name.text = item.get('name')
+
+                reply = send_request(module, element, ignore_warning=False)
+                have_host = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-system-name')]
+                have_port = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-port-id')]
+
+                for neighbor in want_neighbors:
+                    if neighbor['host'] not in have_host:
+                        failed_conditions.append('host ' + neighbor['host'])
+                    if neighbor['port'] not in have_port:
+                        failed_conditions.append('port ' + neighbor['port'])
     if failed_conditions:
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
