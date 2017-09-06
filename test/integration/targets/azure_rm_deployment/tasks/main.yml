@@ -7,6 +7,7 @@
     resource_group: "{{ resource_group }}"
     location: "eastus"
     template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json'
+    deployment_name: "{{ dns_label }}"
     parameters:
       adminUsername:
         value: chouseknecht
