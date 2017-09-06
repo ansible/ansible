@@ -69,8 +69,6 @@ branches:
     - "revert-*-*"
 
 build:
-  pre_ci:
-    - docker images drydock/u16pytall
   pre_ci_boot:
     image_name: drydock/u16pytall
     image_tag: master
