@@ -31,7 +31,7 @@ from ansible import constants as C
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -446,8 +446,11 @@ class Base(with_metaclass(BaseMeta, object)):
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
-                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
-                                             "The error was: %s" % (name, e), obj=self.get_ds(), orig_exc=e)
+                    if name == 'args':
+                        msg= "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                    else:
+                        msg= "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+                    raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
         self._finalized = True
 
