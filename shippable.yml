@@ -22,8 +22,8 @@ matrix:
 
     - env: TEST=rhel/7.4
 
-    - env: TEST=windows/1
-    - env: TEST=windows/2
+    #- env: TEST=windows/1
+    #- env: TEST=windows/2
 
     - env: TEST=network
 
