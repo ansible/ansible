@@ -16,3 +16,5 @@ of some of the most popular of these tools.
 - `Ansigenome <https://github.com/nickjj/ansigenome>`_ is a command line tool designed to help you manage your Ansible roles.
 
 - `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ is a collaboratively curated list of awesome Ansible resources.
+
+- `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>`_ can be used to visually display inventory inheritance hierarchies and at what level a variable is defined in inventory
