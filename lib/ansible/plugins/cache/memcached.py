@@ -160,7 +160,7 @@ class CacheModule(BaseCacheModule):
             self._keys.remove_by_timerange(0, expiry_age)
 
     def get(self, key):
-        if not key in self._cache:
+        if key not in self._cache:
             value = self._db.get(self._make_key(key))
             # guard against the key not being removed from the keyset;
             # this could happen in cases where the timeout value is changed

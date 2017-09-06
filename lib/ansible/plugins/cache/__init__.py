@@ -105,7 +105,7 @@ class BaseFileCacheModule(BaseCacheModule):
         and it would be problematic if the key did expire after some long running tasks and
         user gets 'undefined' error in the same play """
 
-        if not key in self._cache:
+        if key not in self._cache:
 
             if self.has_expired(key) or key == "":
                 raise KeyError

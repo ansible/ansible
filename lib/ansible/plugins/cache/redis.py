@@ -48,7 +48,7 @@ class CacheModule(BaseCacheModule):
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._prefix = C.CACHE_PLUGIN_PREFIX
         self._cache = {}
-        self._db= StrictRedis(*connection)
+        self._db = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'
 
     def _make_key(self, key):
@@ -56,7 +56,7 @@ class CacheModule(BaseCacheModule):
 
     def get(self, key):
 
-        if not key in self._cache:
+        if key not in self._cache:
             value = self._db.get(self._make_key(key))
             # guard against the key not being removed from the zset;
             # this could happen in cases where the timeout value is changed
