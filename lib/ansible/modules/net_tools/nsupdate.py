@@ -93,7 +93,7 @@ EXAMPLES = '''
     record: "puppet"
     type: "CNAME"
     state: absent
-    
+
 - name: Append SRV record for a tcp service
   nsupdate:
     key_name: "nsupdate"
