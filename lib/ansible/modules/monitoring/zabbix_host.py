@@ -429,7 +429,7 @@ def main():
             host_name=dict(type='str', required=True),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
-            validate_certs=dict(type='book', required=False, default=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             host_groups=dict(type='list', required=False),
             link_templates=dict(type='list', required=False),
             status=dict(default="enabled", choices=['enabled', 'disabled']),
