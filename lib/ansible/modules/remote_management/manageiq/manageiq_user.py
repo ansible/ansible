@@ -185,7 +185,7 @@ class ManageIQUser(object):
             (name and user['name'] != name) or
             (password is not None) or
             (email and user['email'] != email) or
-            (group_id and user['group']['id'] != group_id)
+            (group_id and user['current_group_id'] != group_id)
         )
 
         return not found_difference
