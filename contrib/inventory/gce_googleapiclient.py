@@ -31,12 +31,11 @@ precedence, least to higher):
 
 Usage:
     gce_googleapiclient.py [--project=PROJECT]... [--zone=ZONE]...
-        [--api-version=API_VERSION] [--billing-account=ACCOUNT_NAME]
-        [--config=CONFIG_FILE] [--num-threads=NUM_THREADS] [--timeout=TIMEOUT]
+        [--billing-account=ACCOUNT_NAME] [--config=CONFIG_FILE]
+        [--num-threads=NUM_THREADS] [--timeout=TIMEOUT]
         [options]
 
 Arguments:
-    -a API_VERSION --api-version=API_VERSION    The API version used to connect to GCE [default: v1]
     -b ACCOUNT_NAME --billing-account=ACCOUNT_NAME  The billing account associated with the projects you want to get
                                                 information. It is only needed to get the list of the projects
                                                 (when --project parameter isn' set)
@@ -103,19 +102,19 @@ from oauth2client.client import GoogleCredentials
 
 
 ENV_PREFIX = 'GCE_'
-DEFAULT_API_VERSION = 'v1'
+API_VERSION = 'v1'
 
 
 class GCloudAPI(object):
     """
     Class for handling the access to Google Cloud API.
     """
-    def __init__(self, api_version='v1'):
-        # type: (str, bool, Any) -> None
+    def __init__(self, api_version=API_VERSION):
+        # type: (str) -> None
         """
         Initialize Google Cloud API wrapper.
 
-        :param str api_version: api version
+        :param str api_version: api version used to connect
         """
 
         self.credentials = GoogleCredentials.get_application_default()
@@ -160,15 +159,14 @@ def get_all_billing_projects(billing_account_name):
     # pylint: disable=no-member
     service = GCAPI.get_service('cloudbilling')
 
-    request = service.billingAccounts().projects(). \
-        list(name=billing_account_name)
+    request = service.billingAccounts().projects().list(name=billing_account_name)
 
     while request is not None:
         response = request.execute()
 
         # pylint: disable=no-member
-        request = service.billingAccounts().projects(). \
-            list_next(previous_request=request, previous_response=response)
+        request = service.billingAccounts().projects().list_next(previous_request=request,
+                                                                 previous_response=response)
 
         for project_billing_info in response['projectBillingInfo']:
             if project_billing_info['billingEnabled']:
@@ -326,7 +324,6 @@ def main(args):
     project_list = args['--project']
     zone_list = args['--zone']
     billing_account_name = args['--billing-account']
-    api_version = args['--api-version']
     num_threads = int(args['--num-threads'])
     timeout = int(args['--timeout'])
 
