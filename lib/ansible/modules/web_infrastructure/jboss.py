@@ -141,10 +141,6 @@ import os
 import shutil
 import time
 import json
-<<<<<<< HEAD
-import requests
-=======
->>>>>>> Added version_added for new options, moved imports back
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
