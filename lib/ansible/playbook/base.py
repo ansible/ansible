@@ -446,8 +446,11 @@ class Base(with_metaclass(BaseMeta, object)):
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
-                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
-                                             "The error was: %s" % (name, e), obj=self.get_ds(), orig_exc=e)
+                    if name == 'args':
+                        msg= "The task includes an option with an undefined variable. The error was: %s" % (name, e)
+                    else:
+                        msg= "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, e)
+                    raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
         self._finalized = True
 
