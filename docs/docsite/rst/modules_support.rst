@@ -3,7 +3,7 @@ Module Maintenance & Support
 
 .. toctree:: :maxdepth: 1
 
-To help in identifying maintainers and understanding how each of the included modules are officially supported, each module now has associated metadata that provides additional clarity for maintenance and support.
+To help identify maintainers and understand how the included modules are officially supported, each module now has associated metadata that provides additional clarity for maintenance and support.
 
 Core
 ````
@@ -14,7 +14,7 @@ These modules are integral to the basic foundations of the Ansible distribution.
 Network
 ```````
 
-:doc:`Network modules are maintained by the Ansible Network Team<network_maintained>`. Please note, there are `additional networking modules <list_of_network_modules>` that are categorized as Certified or Community not maintained by Ansible.
+:doc:`Network modules are maintained by the Ansible Network Team<network_maintained>`. Please note there are `additional networking modules <list_of_network_modules>` that are categorized as Certified or Community not maintained by Ansible.
 
 
 Certified
