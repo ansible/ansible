@@ -1,10 +1,14 @@
+- name: set location
+  set_fact:
+    location: eastus
+
 - name: Get facts for a specific image
   azure_rm_virtualmachineimage_facts:
     location: "{{ location }}"
     publisher: OpenLogic
     offer: CentOS
-    sku: '7.1'
-    version: '7.1.20150731'
+    sku: '7.3'
+    version: '7.3.20170707'
   register: output
 
 - assert:
@@ -15,7 +19,7 @@
     location: "{{ location }}"
     publisher: OpenLogic
     offer: CentOS
-    sku: '7.1'
+    sku: '7.3'
   register: output
 
 - assert:
