@@ -17,4 +17,4 @@ of some of the most popular of these tools.
 
 - `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ is a collaboratively curated list of awesome Ansible resources.
 
-- `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>` can be used to visually display inventory inheritance hierarchies and at what level a variable is defined in inventory
+- `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>`_ can be used to visually display inventory inheritance hierarchies and at what level a variable is defined in inventory
