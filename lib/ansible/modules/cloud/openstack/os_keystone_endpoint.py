@@ -74,7 +74,7 @@ RETURN = '''
 endpoint:
     description: Dictionary describing the endpoint.
     returned: On success when I(state) is C(present)
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Endpoint ID.
@@ -84,7 +84,7 @@ endpoint:
             description: Region Name.
             type: string
             sample: RegionOne
-        service:
+        service_id:
             description: Service ID.
             type: string
             sample: b91f1318f735494a825a55388ee118f3
@@ -100,11 +100,6 @@ endpoint:
             description: Service status.
             type: boolean
             sample: True
-id:
-    description: The endpoint ID.
-    returned: On success when I(state) is C(present)
-    type: string
-    sample: "3292f020780b4d5baf27ff7e1d224c44"
 '''
 
 try:
@@ -202,7 +197,7 @@ def main():
                     changed = True
                 else:
                     changed = False
-            module.exit_json(changed=changed, endpoint=endpoint, id=endpoint.id)
+            module.exit_json(changed=changed, endpoint=endpoint)
 
         elif state == 'absent':
             if endpoint is None:
