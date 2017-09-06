@@ -86,7 +86,6 @@ import multiprocessing as mp
 import signal
 
 from Crypto import Random
-from functools import partial
 
 if version_info < (3, 0):
     import Queue as queue
@@ -98,7 +97,6 @@ from docoptcfg import DocoptcfgFileError
 from docoptcfg import docoptcfg
 
 from googleapiclient import discovery
-
 from googleapiclient.errors import HttpError
 
 from oauth2client.client import GoogleCredentials
@@ -106,6 +104,45 @@ from oauth2client.client import GoogleCredentials
 
 ENV_PREFIX = 'GCE_'
 DEFAULT_API_VERSION = 'v1'
+
+
+class GCloudAPI(object):
+    """
+    Class for handling the access to Google Cloud API.
+    """
+    def __init__(self, api_version='v1'):
+        # type: (str, bool, Any) -> None
+        """
+        Initialize Google Cloud API wrapper.
+
+        :param str api_version: api version
+        """
+
+        self.credentials = GoogleCredentials.get_application_default()
+        self.api_version = api_version
+        self.services = {}  # type: Dict[str, Any]
+
+        for service_type in ['compute', 'cloudbilling']:
+            self.get_service(service_type)
+
+    def get_service(self, service_name):
+        # type: (str) -> Any
+        """
+        Get service object; initialize if not initialized yet.
+
+        :param str service_name: name of the service object to get
+        """
+
+        if service_name not in self.services:
+            self.services[service_name] = discovery.build(serviceName=service_name,
+                                                          version=self.api_version,
+                                                          credentials=self.credentials)
+
+        return self.services[service_name]
+
+
+GCAPI = GCloudAPI()
+
 
 def signal_handler():  # pragma: no cover
     # type: () -> None
@@ -117,10 +154,12 @@ def signal_handler():  # pragma: no cover
     Random.atfork()  # type: ignore
 
 
-def get_all_billing_projects(billing_account_name, service):
+def get_all_billing_projects(billing_account_name):
     project_ids = []
 
     # pylint: disable=no-member
+    service = GCAPI.get_service('cloudbilling')
+
     request = service.billingAccounts().projects(). \
         list(name=billing_account_name)
 
@@ -220,13 +259,15 @@ def get_inventory(instances):
     return inventory
 
 
-def get_project_zone_list(project_service):
+def get_project_zone_list(project):
     # type: (str) -> Tuple[str, List[str]]
     """Get list of all zones for particular project (Worker process)"""
 
-    project, service = project_service
+    project = project
     zones = []
     log.info('Retrieving list of zones of project: %s', project)
+
+    service = GCAPI.get_service('compute')
 
     try:
         request = service.zones().list(project=project)
@@ -247,12 +288,14 @@ def get_project_zone_list(project_service):
     return project, zones
 
 
-def get_project_zone_instances(project_zone_service):
+def get_project_zone_instances(project_zone):
     # type: (Tuple[str, str]) -> List[str]
     """Get list of all instances for particular project/zone (Worker process)"""
 
-    project, zone, service = project_zone_service
+    project, zone = project_zone
     instance_list = []
+
+    service = GCAPI.get_service('compute')
 
     try:
         # pylint: disable=no-member
@@ -294,48 +337,32 @@ def main(args):
               file=stderr)
         exit(1)
 
-    credentials = GoogleCredentials.get_application_default()
-
-    compute_service = discovery.build(serviceName='compute',
-                                      version=api_version,
-                                      credentials=credentials,
-                                      cache_discovery=False)
-
     if num_threads < 2:
         num_threads = 1
 
     pool_workers = mp.Pool(num_threads, signal_handler)
 
     if not project_list:
-        billing_service = discovery.build(serviceName='cloudbilling',
-                                          version=api_version,
-                                          credentials=credentials,
-                                          cache_discovery=False)
-        project_list = get_all_billing_projects(billing_account_name, billing_service)
+        project_list = get_all_billing_projects(billing_account_name)
 
     if zone_list:
-        project_zone_service_list = [
-            (project, zone, compute_service)
+        project_zone_list = [
+            (project, zone)
             for project in project_list
             for zone in zone_list
         ]
     else:
-        project_service_list = [
-            (project, compute_service)
-            for project in project_list
-        ]
-
-        project_zone_service_list = [
-            (project_name, zone, compute_service)
+        project_zone_list = [
+            (project_name, zone)
             for project_name, zone_list in pool_workers.map_async(get_project_zone_list,
-                                                                  project_service_list).get(timeout)
+                                                                  project_list).get(timeout)
             for zone in zone_list
         ]
 
     instance_list = []
 
     for zone_instances in pool_workers.map_async(get_project_zone_instances,
-                                                 project_zone_service_list).get(timeout):
+                                                 project_zone_list).get(timeout):
         instance_list.extend(zone_instances)
 
     inventory_json = get_inventory(instance_list)
