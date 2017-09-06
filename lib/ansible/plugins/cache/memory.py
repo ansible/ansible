@@ -20,6 +20,8 @@ DOCUMENTATION:
     short_description: RAM backed, non persistent
     description:
         - RAM backed cache that is not persistent.
+        - This is the default used if no other plugin is specified.
+        - There are no options to configure.
     version_added: historical
     author: core team (@ansible-core)
 '''
