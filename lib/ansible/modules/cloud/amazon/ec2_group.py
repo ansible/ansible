@@ -503,9 +503,14 @@ def authorize_ip(type, changed, client, group, groupRules,
                         if e.response['Error']['Code'] == "InvalidPermission.Duplicate":
                             # There are host bits but only the network bits get authorized so it appears there is a conflict.
                             # Allow graceful completion with a warning.
+
+                            # We can use a regex to find the actual CIDR that has been authorized since it is returned in the error message.
+                            # See if an IPv4 CIDR is found in the error message.
                             found_actual_ip = re.search(r"(?<!\d\.)(?<!\d)(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}(?!\d|(?:\.\d))", e.response['Error']['Message'])
                             if not found_actual_ip:
-                                # sad
+
+                                # If an IPv4 CIDR isn't found so check for IPv6; This is an unfortunate regex, so I factored out the common variables because
+                                # this pattern was easier for me to read.
                                 _x = "[0-9A-Fa-f]{1,4}"
                                 _y = "(25[0-5]|2[0-4]d|1dd|[1-9]?d)"
 
@@ -521,15 +526,18 @@ def authorize_ip(type, changed, client, group, groupRules,
 
                                 found_actual_ip = re.search(r"%s" % ipv6_cidr_re, e.response['Error']['Message'])
 
+                            # Neither an IPv4 or IPv6 CIDR was found, something is wrong.
                             if not found_actual_ip:
                                 module.fail_json(msg="Unable to authorize %s for ip %s security group '%s' - %s" %
                                                      (type, thisip, group['GroupName'], e),
                                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
+                            # A CIDR was found. Since it already exists we need to delete it from groupRules so it isn't purged later.
                             actual_ip = found_actual_ip.group()
                             rule_id = make_rule_key(type, rule, group['GroupId'], actual_ip)
                             if rule_id in groupRules:
                                 del groupRules[rule_id]
+
                             module.warn("One of your CIDR addresses has host bits set. To get rid of this warning, "
                                         "check the network mask and make sure that only network bits are set. %s." % e)
                         else:
@@ -537,9 +545,11 @@ def authorize_ip(type, changed, client, group, groupRules,
                                                  (type, thisip, group['GroupName'], e),
                                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                     else:
+                        # A rule was successfully authorized.
                         changed = True
             else:
-                # FIXME: If there are host bits set this may inaccurately show changed: true
+                # FIXME: If there are host bits set this may inaccurately show changed: true.
+                # Prior to 2.4 check mode was also broken here, always showing changed=True for CIDRs with host bits.
                 changed = True
     return changed, ip_permission
 
