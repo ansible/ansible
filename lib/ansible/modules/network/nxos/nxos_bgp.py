@@ -412,7 +412,6 @@ def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP.get(arg)
 
     if command.split()[0] == 'event-history':
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
         has_size = re.search(r'^\s+{0} size\s(?P<value>.*)$'.format(command), config, re.M)
 
         if command == 'event-history detail':
@@ -420,11 +419,8 @@ def get_value(arg, config):
         else:
             value = 'size_small'
 
-        if command_re.search(config):
-            if has_size:
-                value = 'size_%s' % has_size.group('value')
-            else:
-                value = True
+        if has_size:
+            value = 'size_%s' % has_size.group('value')
 
     elif arg in ['enforce_first_as', 'fast_external_fallover']:
         no_command_re = re.compile(r'no\s+{0}\s*'.format(command), re.M)
@@ -687,7 +683,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        warnings.extend(load_config(module, candidate))
         result['changed'] = True
         result['commands'] = candidate
     else:
