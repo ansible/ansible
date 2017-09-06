@@ -3,9 +3,7 @@
 
 - name: "Apply default ntp config" 
   nxos_ntp_options: &default
-    logging: false
-    master: false
-    state: present
+    state: absent
     provider: "{{ connection }}"
   ignore_errors: yes
 
