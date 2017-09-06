@@ -23,14 +23,10 @@ description:
 requirements:
     - 'kafka-configs.sh'
 options:
-    add_configs:
+    configs:
         type: dict
         description:
-            - Key Value pairs of configs to add.
-    del_configs:
-        type: list
-        description:
-            - Configs key to remove.
+            - Key / Value (str) pairs of configs.
     describe:
         type: bool
         default: False
@@ -58,8 +54,8 @@ options:
         description:
             - Kafka path.
     pretty:
-        required:
-        type:
+        type: bool
+        default: False
         description:
             - Print a dict of the output.
     zookeeper:
@@ -80,26 +76,15 @@ kafka_configs:
     - foo.baz.org:2181
     - bar.baz.org:2181
 
-name: 'Add config'
+name: 'Manage config'
 kafka_configs:
   jaas_auth_file: 'jaas-kafka.conf'
   entity_name: 'chocolatine'
   entity_type: 'topics'
-  add_configs:
+  configs:
     cleanup.policy: 'delete'
     compression.type: 'gzip'
-  zookeeper:
-    - foo.baz.org:2181
-    - bar.baz.org:2181
-
-name: 'Remove config'
-kafka_configs:
-  jaas_auth_file: 'jaas-kafka.conf'
-  entity_name: 'chocolatine'
-  entity_type: 'topics'
-  del_configs:
-    - cleanup.policy
-    - compression.type
+    flush.ms: '234928'
   zookeeper:
     - foo.baz.org:2181
     - bar.baz.org:2181
@@ -113,10 +98,8 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
 
 class KafkaError(Exception):
-    ''' '''
     pass
 
 
@@ -124,13 +107,12 @@ class KafkaConfigs(object):
 
     def __init__(self, module):
 
-        self.add_configs = module.params['add_configs']
-        self.del_configs = module.params['del_configs']
+        self.configs = module.params['configs']
         self.ent_def = module.params['entity_default']
         self.ent_name = module.params['entity_name']
         self.ent_type = module.params['entity_type']
         self.pretty = module.params['pretty']
-        self.zookeeper  = ','.join(module.params['zookeeper'])
+        self.zookeeper = ','.join(module.params['zookeeper'])
 
         self.executable = module.params['kafka_path'] + '/bin/kafka-configs.sh'
 
@@ -144,46 +126,101 @@ class KafkaConfigs(object):
                 self.module.params['jaas_auth_file']
 
         entity = {
-                '--entity-default': self.ent_def,
-                '--entity-name': self.ent_name,
-                '--entity-type': self.ent_type,
+            '--entity-default': self.ent_def,
+            '--entity-name': self.ent_name,
+            '--entity-type': self.ent_type,
         }
-        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.iteritems() if v)
+        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.items() if v)
 
-        if self.add_configs:
-            configs = ''
-            for k, v in self.add_configs.iteritems():
-                if v:
-                    if isinstance(v, list):
-                        if configs:
-                            configs += ','
-                        configs += ''.join("%s=%r" % (k, ','.join(v)))
-                    else:
-                        if configs:
-                            configs += ','
-                        configs += ''.join("%s=%r" % (k, v))
-
-            cmd = ('%s --alter --zookeeper %s %s '
-                   '--add-config %s') % (self.executable,
-                                         self.zookeeper,
-                                         entity_join,
-                                         configs)
-        elif self.del_configs:
-            cmd = ('%s --alter --zookeeper %s %s '
-                   '--delete-config %s') % (self.executable,
-                                            self.zookeeper,
-                                            entity_join,
-                                            ','.join(self.del_configs))
-        else:
-            msg = 'add/del action required at least one config to add/del'
-            return self.module.fail_json(msg=msg)
+        changed = False
+        rc = 0
+        msg = "Nothing to do for config entity: %s '%s'" % (self.ent_type,
+                                                            self.ent_name)
 
         try:
+
+            # we get the configs.
+            cmd_desc = '%s --describe --zookeeper %s %s' % (self.executable,
+                                                            self.zookeeper,
+                                                            entity_join)
+
+            (_, out, _) = self.module.run_command(cmd_desc)
+
+            # we build a dict of in place configs.
+            configs_present = {}
+
+            for line in out.splitlines():
+                if 'are' not in line.split()[-1]:
+                    configs_present = dict(
+                        elmt.split('=') for elmt in line.split()[-1].split(',')
+                    )
+
+            # key/value for adding
+            # only key to delete
+            configs_to_add = {}
+            configs_to_del = []
+
+            # key to add and/or
+            # key's value to update
+            if self.configs.keys():
+                for key in self.configs.keys():
+                    if (not configs_present.has_key(key) or
+                            (configs_present.has_key(key) and
+                             configs_present[key] != self.configs[key])):
+
+                        configs_to_add[key] = self.configs[key]
+
+            # key to delete
+            if configs_present.keys():
+                for key in configs_present.keys():
+                    if not self.configs.has_key(key):
+
+                        configs_to_del.append(key)
+
+            if configs_to_add:
+                configs = ''
+                for key, value in configs_to_add.items():
+                    if configs:
+                        configs += ','
+                    configs += ''.join("%s=%r" % (key, value))
+
+                cmd_add = ('%s --alter --zookeeper %s %s '
+                       '--add-config %s') % (self.executable,
+                                             self.zookeeper,
+                                             entity_join,
+                                             configs)
+            if configs_to_del:
+                cmd_del = ('%s --alter --zookeeper %s %s '
+                       '--delete-config %s') % (self.executable,
+                                                self.zookeeper,
+                                                entity_join,
+                                                ','.join(configs_to_del))
             env = ''
+            output = ()
+
             if self.module.params['jaas_auth_file']:
                 env = {'KAFKA_OPTS': kafka_env_opts}
 
-            return self.module.run_command(cmd, environ_update=env)
+            if configs_to_add:
+                (_, out_add, _) = self.module.run_command(cmd_add,
+                                                          environ_update=env)
+                if re.search('^Error while executing', out_add):
+                    self.module.fail_json(msg=out_add, rc=1)
+
+                changed = True
+                msg = "Updated config for entity: %s '%s'" % (self.ent_type,
+                                                              self.ent_name)
+
+            if configs_to_del:
+                (_, out_del, _) = self.module.run_command(cmd_del,
+                                                          environ_update=env)
+
+                changed = True
+                msg = "Updated config for entity: %s '%s'" % (self.ent_type,
+                                                              self.ent_name)
+
+
+            return (rc, msg, changed)
 
         except KafkaError as exc:
             self.module.fail_json(msg=to_native(exc))
@@ -196,7 +233,7 @@ class KafkaConfigs(object):
             '--entity-name': self.ent_name,
             '--entity-type': self.ent_type,
         }
-        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.iteritems() if v)
+        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.items() if v)
 
         try:
             cmd = '%s --describe --zookeeper %s %s' % (self.executable,
@@ -208,7 +245,7 @@ class KafkaConfigs(object):
                 formatted = {}
 
                 for line in out.splitlines():
-                    if not 'are' in line.split()[-1]:
+                    if 'are' not in line.split()[-1]:
                         if len(line.split()[-1].split(',')) > 1:
                             formatted[line.split()[3].strip('\'')] = line.split()[-1].split(',')
                         else:
@@ -227,8 +264,7 @@ class KafkaConfigs(object):
 def main():
     argument_spec = dict(
         describe=dict(default=False, type='bool'),
-        add_configs=dict(type='dict'),
-        del_configs=dict(type='list'),
+        configs=dict(type='dict'),
         entity_default=dict(type='str'),
         entity_name=dict(type='str'),
         entity_type=dict(required=True, type='str'),
@@ -242,17 +278,15 @@ def main():
     )
 
     required_if = [
-        ['add_configs', True, ['entity_name', 'entity_type']],
-        ['add_configs', True, ['jaas_auth_file']],
-        ['del_configs', True, ['jaas_auth_file']],
+        ['configs', True, ['entity_name', 'entity_type']],
     ]
 
     required_one_of = [
-        ['describe', 'add_configs', 'del_configs'],
+        ['describe', 'configs'],
     ]
 
     mutually_exclusive = [
-        ['add_configs', 'del_configs', 'describe'],
+        ['describe', 'configs'],
     ]
 
     module = AnsibleModule(
@@ -290,19 +324,16 @@ def main():
                     'changed': changed,
                 }
             else:
-                (rc, out, err) = kc.manage_configs()
-                if re.search('^Updated config for entity:', out):
-                    changed = True
+                (rc, out, changed) = kc.manage_configs()
                 result = {
                     'stdout': out,
                     'stdout_lines': out.splitlines(),
-                    'stderr_lines': err.splitlines(),
                     'rc': rc,
                     'changed': changed,
                 }
 
-    except KafkaError as e:
-        module.fail_json(msg=to_native(e))
+    except KafkaError as exc:
+        module.fail_json(msg=to_native(exc))
 
     module.exit_json(**result)
 
