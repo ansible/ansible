@@ -147,8 +147,9 @@ class CacheModule(BaseCacheModule):
 
         self._timeout = C.CACHE_PLUGIN_TIMEOUT
         self._prefix = C.CACHE_PLUGIN_PREFIX
-        self._cache = ProxyClientPool(connection, debug=0)
-        self._keys = CacheModuleKeys(self._cache, self._cache.get(CacheModuleKeys.PREFIX) or [])
+        self._cache = {}
+        self._db = ProxyClientPool(connection, debug=0)
+        self._keys = CacheModuleKeys(self._db, self._db.get(CacheModuleKeys.PREFIX) or [])
 
     def _make_key(self, key):
         return "{0}{1}".format(self._prefix, key)
@@ -159,17 +160,21 @@ class CacheModule(BaseCacheModule):
             self._keys.remove_by_timerange(0, expiry_age)
 
     def get(self, key):
-        value = self._cache.get(self._make_key(key))
-        # guard against the key not being removed from the keyset;
-        # this could happen in cases where the timeout value is changed
-        # between invocations
-        if value is None:
-            self.delete(key)
-            raise KeyError
-        return value
+        if not key in self._cache:
+            value = self._db.get(self._make_key(key))
+            # guard against the key not being removed from the keyset;
+            # this could happen in cases where the timeout value is changed
+            # between invocations
+            if value is None:
+                self.delete(key)
+                raise KeyError
+            self._cache[key] = value
+
+        return self._cache.get(key)
 
     def set(self, key, value):
-        self._cache.set(self._make_key(key), value, time=self._timeout, min_compress_len=1)
+        self._db.set(self._make_key(key), value, time=self._timeout, min_compress_len=1)
+        self._cache[key] = value
         self._keys.add(key)
 
     def keys(self):
@@ -181,7 +186,8 @@ class CacheModule(BaseCacheModule):
         return key in self._keys
 
     def delete(self, key):
-        self._cache.delete(self._make_key(key))
+        del self._cache[key]
+        self._db.delete(self._make_key(key))
         self._keys.discard(key)
 
     def flush(self):
