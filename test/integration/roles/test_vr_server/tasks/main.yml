@@ -1,0 +1,482 @@
+---
+- name: setup
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result|success
+
+- name: test fail if missing name
+  local_action:
+    module: vr_server
+  register: result
+  ignore_errors: true
+- name: verify test fail if missing name
+  assert:
+    that:
+    - result|failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test fail if missing params for state=present
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+  register: result
+  ignore_errors: true
+- name: verify fail if missing params for state=present
+  assert:
+    that:
+    - result|failed
+    - 'result.msg == "missing required arguments: os,plan,region"'
+
+- name: test create server in check mode
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    region: Amsterdam
+    state: started
+  register: result
+  check_mode: true
+- name: verify test create server in check mode
+  assert:
+    that:
+    - result|changed
+
+- name: test create server
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    region: Amsterdam
+    state: started
+  register: result
+- name: verify test create server
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '1024 MB RAM,25 GB SSD,1.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.power_status == 'running'
+
+- name: test create server idempotence
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    region: Amsterdam
+    state: started
+  register: result
+- name: verify test create server idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '1024 MB RAM,25 GB SSD,1.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test stop an existing server in check mode
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: stopped
+  register: result
+  check_mode: true
+- name: verify test stop server in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test stop an existing server
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: stopped
+  register: result
+- name: verify test stop an existing server
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'stopped'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test stop an existing server idempotence
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: stopped
+  register: result
+- name: verify test stop an existing server idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'stopped'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test start an existing server in check mode
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: started
+  register: result
+  check_mode: true
+- name: verify test start an existing server in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'stopped'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test start an existing server
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: started
+  register: result
+- name: verify test start an existing server
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test start an existing server idempotence
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: started
+  register: result
+- name: verify test start an existing server idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test update plan for server in check mode without force
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    region: Amsterdam
+  register: result
+  check_mode: true
+- name: verify test update plan for server in check mode without force
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '1024 MB RAM,25 GB SSD,1.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test update plan for server without force
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    region: Amsterdam
+  register: result
+- name: verify test update plan for server without force
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '1024 MB RAM,25 GB SSD,1.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test update tag, firewall group for server in check mode without force
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    region: Amsterdam
+    firewall_group: test_firewall_group
+    tag: test_tag
+  register: result
+  check_mode: true
+- name: verify test update tag, firewall group for server in check mode without force
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '1024 MB RAM,25 GB SSD,1.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.tag == ''
+    - result.vultr_server.firewall_group != 'test_firewall_group'
+
+- name: test update tag, firewall group for server without force
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    region: Amsterdam
+    firewall_group: test_firewall_group
+    tag: test_tag
+  register: result
+- name: verify test update tag, firewall group for server without force
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.tag == 'test_tag'
+    - result.vultr_server.firewall_group == 'test_firewall_group'
+
+- name: test update tag, firewall group for server without force idempotence
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    region: Amsterdam
+    firewall_group: test_firewall_group
+    tag: test_tag
+  register: result
+- name: verify test update tag, firewall group for server without force idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.tag == 'test_tag'
+    - result.vultr_server.firewall_group == 'test_firewall_group'
+
+- name: test update server in check mode with force
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    auto_backup_enabled: true
+    region: Amsterdam
+    force: true
+  register: result
+  check_mode: true
+- name: verify test update server in check mode with force
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '1024 MB RAM,25 GB SSD,1.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.auto_backup_enabled == false
+
+- name: test update server with force
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    auto_backup_enabled: true
+    region: Amsterdam
+    force: true
+  register: result
+- name: verify test update server with force
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '2048 MB RAM,40 GB SSD,2.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.auto_backup_enabled == true
+
+- name: test update server idempotence with force
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    auto_backup_enabled: true
+    region: Amsterdam
+    force: true
+  register: result
+- name: verify test update server idempotence with force
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '2048 MB RAM,40 GB SSD,2.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.auto_backup_enabled == true
+
+- name: test update server to stopped in check mode
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    ipv6_enabled: true
+    region: Amsterdam
+    state: stopped
+  register: result
+  check_mode: true
+- name: verify test update server to stopped in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '2048 MB RAM,40 GB SSD,2.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.v6_main_ip == ''
+
+- name: test update server to stopped
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    ipv6_enabled: true
+    region: Amsterdam
+    state: stopped
+  register: result
+- name: verify test update server to stopped
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'stopped'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '2048 MB RAM,40 GB SSD,2.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.v6_main_ip != ''
+
+- name: test update server to stopped idempotence
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    os: CentOS 6 x64
+    plan: 2048 MB RAM,40 GB SSD,2.00 TB BW
+    region: Amsterdam
+    state: stopped
+  register: result
+- name: verify test update server to stopped idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_server.power_status == 'stopped'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.plan == '2048 MB RAM,40 GB SSD,2.00 TB BW'
+    - result.vultr_server.region == 'Amsterdam'
+    - result.vultr_server.v6_main_ip != ''
+
+- name: test restart an existing server in check mode
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: restarted
+  register: result
+  check_mode: true
+- name: verify test restart an existing server in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'stopped'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test restart an existing server
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: restarted
+  register: result
+- name: verify test restart an existing server
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test absent server in check mode
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: absent
+  register: result
+  check_mode: true
+- name: verify test absent server in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+# Servers can only be destroyed 5 min after creation
+- name: wait for 5 min
+  local_action: wait_for
+
+- name: test absent server
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: absent
+  register: result
+- name: verify test absent server
+  assert:
+    that:
+    - result|changed
+    - result.vultr_server.power_status == 'running'
+    - result.vultr_server.name == '{{ vr_server_name }}'
+    - result.vultr_server.os == 'CentOS 6 x64'
+    - result.vultr_server.region == 'Amsterdam'
+
+- name: test absent server idempotence
+  local_action:
+    module: vr_server
+    name: "{{ vr_server_name }}"
+    state: absent
+  register: result
+- name: verify test absent server idempotence
+  assert:
+    that:
+    - not result|changed
