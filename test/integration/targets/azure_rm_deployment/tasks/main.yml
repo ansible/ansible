@@ -1,16 +1,22 @@
+- name: Create random dns label
+  set_fact:
+    dns_label: "test{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+
 - name: Create Azure Deploy
   azure_rm_deployment:
-    resource_group: Test_Deployment 
+    resource_group: "{{ resource_group }}"
+    location: "eastus"
     template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json'
+    deployment_name: "{{ dns_label }}"
     parameters:
       adminUsername:
-        value: chouseknecht 
+        value: chouseknecht
       adminPassword:
         value: password123!
       dnsLabelPrefix:
-        value: testvm9910001
+        value: "{{ dns_label }}"
       ubuntuOSVersion:
-        value: "14.04.2-LTS"
+        value: "16.04.0-LTS"
   register: output
 
 - name: Add new instance to host group
