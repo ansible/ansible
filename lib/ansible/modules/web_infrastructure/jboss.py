@@ -8,13 +8,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import os
-import shutil
-import time
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
