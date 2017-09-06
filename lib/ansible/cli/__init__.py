@@ -596,9 +596,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 self.options.inventory = [unfrackpath(opt) if ',' not in opt else opt for opt in self.options.inventory]
 
             else:
-                # set default if it exists
-                if os.path.exists(C.DEFAULT_HOST_LIST):
-                    self.options.inventory = [C.DEFAULT_HOST_LIST]
+                self.options.inventory = C.DEFAULT_HOST_LIST
 
     @staticmethod
     def version(prog):
