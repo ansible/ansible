@@ -131,7 +131,7 @@ class Connection(Rpc, ConnectionBase):
 
         if not network_os:
             for cls in netconf_loader.all(class_only=True):
-                Network_os = cls.guess_network_os(self)
+                network_os = cls.guess_network_os(self)
                 if network_os:
                     display.display('discovered network_os %s' % network_os, log_only=True)
 
