@@ -71,6 +71,19 @@ class LookupBase(with_metaclass(ABCMeta, object)):
             ret.append({'key': key, 'value': terms[key]})
         return ret
 
+    @staticmethod
+    def _update_options(options, item):
+        """
+        examines item and determines if it is an option
+        it also updates option dictionary with the value
+        """
+        if '=' in item:
+            k,v = item.split('=')
+            if k in options:
+                options[k] = v
+                return True
+        return False
+
     @abstractmethod
     def run(self, terms, variables=None, **kwargs):
         """
