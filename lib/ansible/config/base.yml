@@ -400,7 +400,7 @@ DEFAULT_ACTION_PLUGIN_PATH:
   env: [{name: ANSIBLE_ACTION_PLUGINS}]
   ini:
   - {key: action_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
   yaml: {key: plugins.action.path}
 DEFAULT_ALLOW_UNSAFE_LOOKUPS:
   name: Allow unsafe lookups
@@ -515,7 +515,7 @@ DEFAULT_CACHE_PLUGIN_PATH:
   env: [{name: ANSIBLE_CACHE_PLUGINS}]
   ini:
   - {key: cache_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
 DEFAULT_CALLABLE_WHITELIST:
   name: Template 'callable' whitelist
   default: []
@@ -531,7 +531,7 @@ DEFAULT_CALLBACK_PLUGIN_PATH:
   env: [{name: ANSIBLE_CALLBACK_PLUGINS}]
   ini:
   - {key: callback_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
   yaml: {key: plugins.callback.path}
 DEFAULT_CALLBACK_WHITELIST:
   name: Callback Whitelist
@@ -551,7 +551,7 @@ DEFAULT_CONNECTION_PLUGIN_PATH:
   env: [{name: ANSIBLE_CONNECTION_PLUGINS}]
   ini:
   - {key: connection_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
   yaml: {key: plugins.connection.path}
 DEFAULT_DEBUG:
   name: Debug mode
@@ -589,7 +589,7 @@ DEFAULT_FILTER_PLUGIN_PATH:
   env: [{name: ANSIBLE_FILTER_PLUGINS}]
   ini:
   - {key: filter_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
 DEFAULT_FORCE_HANDLERS:
   name: Force handlers to run after failure
   default: False
@@ -690,6 +690,7 @@ DEFAULT_HOST_LIST:
   type: pathlist
   yaml: {key: defaults.inventory}
 DEFAULT_INTERNAL_POLL_INTERVAL:
+  name: Internal poll interval
   default: 0.001
   env: []
   ini:
@@ -709,7 +710,7 @@ DEFAULT_INVENTORY_PLUGIN_PATH:
   env: [{name: ANSIBLE_INVENTORY_PLUGINS}]
   ini:
   - {key: inventory_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
 DEFAULT_JINJA2_EXTENSIONS:
   name: Enabled Jinja2 extensions
   default: []
@@ -774,7 +775,7 @@ DEFAULT_LOOKUP_PLUGIN_PATH:
   env: [{name: ANSIBLE_LOOKUP_PLUGINS}]
   ini:
   - {key: lookup_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
   yaml: {key: defaults.lookup_plugins}
 DEFAULT_MANAGED_STR:
   name: Ansible managed
@@ -824,7 +825,7 @@ DEFAULT_MODULE_PATH:
   env: [{name: ANSIBLE_LIBRARY}]
   ini:
   - {key: library, section: defaults}
-  type: pathlist
+  type: pathspec
 DEFAULT_MODULE_SET_LOCALE:
   name: Target locale
   default: False
@@ -842,7 +843,7 @@ DEFAULT_MODULE_UTILS_PATH:
   env: [{name: ANSIBLE_MODULE_UTILS}]
   ini:
   - {key: module_utils, section: defaults}
-  type: pathlist
+  type: pathspec
 DEFAULT_NO_LOG:
   name: No log
   default: False
@@ -936,7 +937,7 @@ DEFAULT_ROLES_PATH:
   expand_relative_paths: True
   ini:
   - {key: roles_path, section: defaults}
-  type: pathlist
+  type: pathspec
   yaml: {key: defaults.roles_path}
 DEFAULT_SCP_IF_SSH:
   # TODO: move to ssh plugin
@@ -1015,7 +1016,7 @@ DEFAULT_STRATEGY_PLUGIN_PATH:
   env: [{name: ANSIBLE_STRATEGY_PLUGINS}]
   ini:
   - {key: strategy_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
 DEFAULT_SU:
   default: False
   description: 'Toggle the use of "su" for tasks.'
@@ -1036,6 +1037,7 @@ DEFAULT_SUDO:
   - {key: sudo, section: defaults}
   type: boolean
 DEFAULT_SUDO_EXE:
+  name: sudo executable
   default: sudo
   deprecated:
     why: In favor of become which is a generic framework
@@ -1046,6 +1048,7 @@ DEFAULT_SUDO_EXE:
   ini:
   - {key: sudo_exe, section: defaults}
 DEFAULT_SUDO_FLAGS:
+  name: sudo flags
   default: '-H -S -n'
   deprecated:
     why: In favor of become which is a generic framework
@@ -1056,6 +1059,7 @@ DEFAULT_SUDO_FLAGS:
   ini:
   - {key: sudo_flags, section: defaults}
 DEFAULT_SUDO_USER:
+  name: sudo user
   default:
   deprecated:
     why: In favor of become which is a generic framework
@@ -1066,6 +1070,7 @@ DEFAULT_SUDO_USER:
   ini:
   - {key: sudo_user, section: defaults}
 DEFAULT_SU_EXE:
+  name: su executable
   default: su
   deprecated:
     why: In favor of become which is a generic framework
@@ -1076,6 +1081,7 @@ DEFAULT_SU_EXE:
   ini:
   - {key: su_exe, section: defaults}
 DEFAULT_SU_FLAGS:
+  name: su flags
   default: ~
   deprecated:
     why: In favor of become which is a generic framework
@@ -1086,6 +1092,7 @@ DEFAULT_SU_FLAGS:
   ini:
   - {key: su_flags, section: defaults}
 DEFAULT_SU_USER:
+  name: su user
   default:
   description: 'User you become when using "su", leaving it blank will use the default configured on the target (normally root)'
   env: [{name: ANSIBLE_SU_USER}]
@@ -1096,20 +1103,22 @@ DEFAULT_SU_USER:
     version: "2.8"
     alternatives: become
 DEFAULT_SYSLOG_FACILITY:
+  name: syslog facility
   default: LOG_USER
-  description: 'TODO: write it'
+  description: Syslog facility to use when Ansible logs to the remote target
   env: [{name: ANSIBLE_SYSLOG_FACILITY}]
   ini:
   - {key: syslog_facility, section: defaults}
-  yaml: {key: defaults.syslog_facility}
 DEFAULT_TASK_INCLUDES_STATIC:
+  name: Task include static
   default: False
-  description: 'TODO: write it'
+  description:
+    - The `include` tasks can be static or dynamic, this toggles the default expected behaviour if autodetection fails and it is not explicitly set in task.
   env: [{name: ANSIBLE_TASK_INCLUDES_STATIC}]
   ini:
   - {key: task_includes_static, section: defaults}
   type: boolean
-  yaml: {key: defaults.task_includes_static}
+  version_added: "2.1"
   deprecated:
     why: include itself is deprecated and this setting will not matter in the future
     version: "2.8"
@@ -1121,8 +1130,7 @@ DEFAULT_TEST_PLUGIN_PATH:
   env: [{name: ANSIBLE_TEST_PLUGINS}]
   ini:
   - {key: test_plugins, section: defaults}
-  type: pathlist
-  yaml: {key: defaults.test_plugins}
+  type: pathspec
 DEFAULT_TIMEOUT:
   name: Connection timeout
   default: 10
@@ -1156,7 +1164,7 @@ DEFAULT_VARS_PLUGIN_PATH:
   env: [{name: ANSIBLE_VARS_PLUGINS}]
   ini:
   - {key: vars_plugins, section: defaults}
-  type: pathlist
+  type: pathspec
 # TODO: unused?
 #DEFAULT_VAR_COMPRESSION_LEVEL:
 #  default: 0
@@ -1351,7 +1359,7 @@ INVENTORY_UNPARSED_IS_FAILED:
   env: [{name: ANSIBLE_INVENTORY_UNPARSED_FAILED}]
   ini:
   - {key: unparsed_is_failed, section: inventory}
-  type: boolean
+  type: bool
 MAX_FILE_SIZE_FOR_DIFF:
   name: Diff maxiumum file size
   default: 104448
@@ -1359,7 +1367,7 @@ MAX_FILE_SIZE_FOR_DIFF:
   env: [{name: ANSIBLE_MAX_DIFF_SIZE}]
   ini:
   - {key: max_diff_size, section: defaults}
-  type: integer
+  type: int
 MERGE_MULTIPLE_CLI_TAGS:
   name: Merge 'tags' options
   default: True
@@ -1370,9 +1378,10 @@ MERGE_MULTIPLE_CLI_TAGS:
   env: [{name: ANSIBLE_MERGE_MULTIPLE_CLI_TAGS}]
   ini:
     - {key: merge_multiple_cli_tags, section: defaults}
-  type: boolean
+  type: bool
   version_added: "2.3"
 NETWORK_GROUP_MODULES:
+  name: Network module families
   default: [eos, nxos, ios, iosxr, junos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
@@ -1400,7 +1409,6 @@ PARAMIKO_HOST_KEY_AUTO_ADD:
   ini:
   - {key: host_key_auto_add, section: paramiko_connection}
   type: boolean
-  yaml: {key: paramiko_connection.host_key_auto_add}
 PARAMIKO_LOOK_FOR_KEYS:
   # TODO: move to plugin
   default: True
@@ -1409,7 +1417,6 @@ PARAMIKO_LOOK_FOR_KEYS:
   ini:
   - {key: look_for_keys, section: paramiko_connection}
   type: boolean
-  yaml: {key: paramiko_connection.look_for_keys}
 PARAMIKO_PROXY_COMMAND:
   # TODO: move to plugin
   default:
@@ -1417,7 +1424,6 @@ PARAMIKO_PROXY_COMMAND:
   env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
   ini:
   - {key: proxy_command, section: paramiko_connection}
-  yaml: {key: paramiko_connection.proxy_command}
 PARAMIKO_PTY:
   # TODO: move to plugin
   default: True
@@ -1426,7 +1432,6 @@ PARAMIKO_PTY:
   ini:
   - {key: pty, section: paramiko_connection}
   type: boolean
-  yaml: {key: paramiko_connection.pty}
 PARAMIKO_RECORD_HOST_KEYS:
   # TODO: move to plugin
   default: True
@@ -1435,7 +1440,6 @@ PARAMIKO_RECORD_HOST_KEYS:
   ini:
   - {key: record_host_keys, section: paramiko_connection}
   type: boolean
-  yaml: {key: paramiko_connection.record_host_keys}
 PERSISTENT_CONTROL_PATH_DIR:
   name: Persistence socket path
   default: ~/.ansible/pc
@@ -1443,6 +1447,7 @@ PERSISTENT_CONTROL_PATH_DIR:
   env: [{name: ANSIBLE_PERSISTENT_CONTROL_PATH_DIR}]
   ini:
   - {key: control_path_dir, section: persistent_connection}
+  type: path
 PERSISTENT_CONNECT_TIMEOUT:
   name: Persistence timeout
   default: 30
@@ -1466,7 +1471,7 @@ PERSISTENT_COMMAND_TIMEOUT:
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}
-  type: integer
+  type: int
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True
@@ -1474,7 +1479,7 @@ RETRY_FILES_ENABLED:
   env: [{name: ANSIBLE_RETRY_FILES_ENABLED}]
   ini:
   - {key: retry_files_enabled, section: defaults}
-  type: boolean
+  type: bool
 RETRY_FILES_SAVE_PATH:
   name: Retry files path
   default: ~
@@ -1490,7 +1495,7 @@ SHOW_CUSTOM_STATS:
   env: [{name: ANSIBLE_SHOW_CUSTOM_STATS}]
   ini:
   - {key: show_custom_stats, section: defaults}
-  type: boolean
+  type: bool
 STRING_TYPE_FILTERS:
   name: Filters to preserve strings
   default: [string, to_json, to_nice_json, to_yaml, ppretty, json]
@@ -1519,16 +1524,15 @@ USE_PERSISTENT_CONNECTIONS:
   ini:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
-  yaml: {key: defaults.use_persistent_connections}
 VARIABLE_PRECEDENCE:
   name: Group variable precedence
-  default: [all_inventory, groups_inventory, all_plugins_inventory, all_plugins_play, groups_plugins_inventory, groups_plugins_play]
+  default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']
   description: Allows to change the group variable precedence merge order.
   env: [{name: ANSIBLE_PRECEDENCE}]
   ini:
   - {key: precedence, section: defaults}
   type: list
-  yaml: {key: defaults.precedence}
+  version_added: "2.4"
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]

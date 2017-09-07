@@ -74,9 +74,15 @@ def ensure_type(value, value_type):
             prefix = 'ansible-local-%s' % os.getpid()
             value = tempfile.mkdtemp(prefix=prefix, dir=value)
 
+        elif value_type == 'pathspec':
+            if isinstance(value, string_types):
+                value = value.split(os.pathsep)
+            value = [resolve_path(x) for x in value]
+
         elif value_type == 'pathlist':
             if isinstance(value, string_types):
-                value = [resolve_path(x) for x in value.split(os.pathsep)]
+                value = value.split(',')
+            value = [resolve_path(x) for x in value]
 
         # defaults to string types
         elif isinstance(value, string_types):
