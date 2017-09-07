@@ -733,10 +733,10 @@ class TaskExecutor:
             conn_type = self._play_context.connection
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
-        self._play_context.set_options_from_plugin(connection)
-
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
+
+        self._play_context.set_options_from_plugin(connection)
 
         if self._play_context.accelerate:
             # accelerate is deprecated as of 2.1...
