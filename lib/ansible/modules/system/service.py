@@ -1392,20 +1392,21 @@ class SunOSService(Service):
         elif (not self.enable) and (not startup_enabled):
             return
 
-        # Mark service as started or stopped (this will have the side effect of
-        # actually stopping or starting the service)
-        if self.enable:
-            subcmd = "enable -rs"
-        else:
-            subcmd = "disable -s"
-
-        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
-
-        if rc != 0:
-            if stderr:
-                self.module.fail_json(msg=stderr)
+        if not self.module.check_mode:
+            # Mark service as started or stopped (this will have the side effect of
+            # actually stopping or starting the service)
+            if self.enable:
+                subcmd = "enable -rs"
             else:
-                self.module.fail_json(msg=stdout)
+                subcmd = "disable -s"
+
+            rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
+
+            if rc != 0:
+                if stderr:
+                    self.module.fail_json(msg=stderr)
+                else:
+                    self.module.fail_json(msg=stdout)
 
         self.changed = True
 
