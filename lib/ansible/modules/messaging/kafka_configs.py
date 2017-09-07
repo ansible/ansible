@@ -91,12 +91,12 @@ stdout:
   description: Output from stdout after execution
   returned: success or changed
   type: string
-  sample: "Configs for topic 'wassingue' are cleanup.policy=delete,compression.type=gzip\n"
+  sample: "Configs for topic 'wassingue' are cleanup.policy=delete,compression.type=gzip\\\n"
 msg:
   description: Output from stderr
   returned: failed
   type: string
-  sample: "Error while executing config command Unknown Log configuration producer_byte_rate.\n"
+  sample: "Error while executing config command Unknown Log configuration producer_byte_rate.\\\n"
 '''
 
 import re
