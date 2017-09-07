@@ -20,8 +20,17 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*{{name}}* {{ long_desc|default('', True)|wordwrap }}
+{{ long_desc|default('', True)|wordwrap }}
 
+{% if options %}
+COMMON OPTIONS
+--------------
+{% for option in options|sort(attribute='options') %}
+{% for switch in option['options'] %}*{{switch}}*{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}::
+
+{{ option['desc'] }}
+{% endfor %}
+{% endif %}
 
 {% if arguments %}
 ARGUMENTS
@@ -38,22 +47,19 @@ ARGUMENTS
 {% if actions %}
 ACTIONS
 -------
-
 {% for action in actions %}
-{{ action }}
+    *{{ action }}*::: {{ (actions[action]['desc']|default(' '))|wordwrap}}
 
-{{ (actions[action]|default(' '))|wordwrap}}
+{% if actions[action]['options'] %}
+{% for option in actions[action]['options']|sort %}
+{% for switch in option['options'] if switch in actions[action]['option_names'] %}*{{switch}}*{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}::
 
+        {{ (option['desc']) }}
 {% endfor %}
 {% endif %}
-OPTIONS
--------
-
-{% for option in options|sort(attribute='options') %}
-{% for switch in option['options'] %}*{{switch}}* {% if option['arg'] %}'{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}::
-
-{{ option['desc'] }}
 {% endfor %}
+{% endif %}
+
 
 {% if inventory %}
 INVENTORY
@@ -111,7 +117,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
- {% for other in cli_list|sort %}{% if other != cli %}*ansible{% if other != 'adhoc' %}-{{other}}{% endif %}*(1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+{% for other in cli_list|sort %}{% if other != cli %}*ansible{% if other != 'adhoc' %}-{{other}}{% endif %}*(1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
 
 Extensive documentation is available in the documentation site:
 <http://docs.ansible.com>.

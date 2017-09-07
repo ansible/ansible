@@ -4,6 +4,7 @@ FORMATTER=../bin/plugin_formatter.py
 TESTING_FORMATTER=../bin/testing_formatter.sh
 DUMPER=../bin/dump_keywords.py
 CONFIG_DUMPER=../bin/dump_config.py
+GENERATE_CLI=../bin/generate_man.py
 ifeq ($(shell echo $(OS) | egrep -ic 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
@@ -19,7 +20,8 @@ all: docs
 
 docs: clean htmldocs
 
-htmldocs: testing keywords modules staticmin config
+htmldocs: testing keywords modules staticmin cli config
+
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 webdocs: docs
@@ -45,8 +47,13 @@ clean:
 	-rm rst/*_maintained.rst
 	-rm rst/playbooks_directives.rst
 	-rm rst/playbooks_keywords.rst
+#	-rm rst/cli/ansible*.rst
 
 .PHONEY: docs clean
+
+# TODO: make generate_man output dir cli option
+cli: $(GENERATE_CLI)
+	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/ --output-format rst ../../lib/ansible/cli/*.py
 
 keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
 	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/ -d ./keyword_desc.yml
@@ -57,7 +64,7 @@ config:
 modules: $(FORMATTER) ../templates/plugin.rst.j2
 # Limit building of module documentation if requested.
 ifdef MODULES
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ -l $(MODULES)	
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ -l $(MODULES)
 else
 	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/
 endif
