@@ -94,6 +94,7 @@ stderr:
     type: string
 '''
 
+import os
 import re
 
 
@@ -118,11 +119,16 @@ def _get_ctl_binary(module):
 
 
 def _module_is_enabled(module):
-    control_binary = _get_ctl_binary(module)
     name = module.params['name']
     ignore_configcheck = module.params['ignore_configcheck']
 
-    result, stdout, stderr = module.run_command("%s -M" % control_binary)
+    if os.path.exists('/etc/SuSE-release'):
+        result, stdout, stderr = module.run_command(["a2enmod", "-l"])
+        if stdout is not None:
+            stdout = "\n".join([" %s_module" % l for l in stdout.rstrip().split(' ')])
+    else:
+        control_binary = _get_ctl_binary(module)
+        result, stdout, stderr = module.run_command("%s -M" % control_binary)
 
     if result != 0:
         error_msg = "Error executing %s: %s" % (control_binary, stderr)
