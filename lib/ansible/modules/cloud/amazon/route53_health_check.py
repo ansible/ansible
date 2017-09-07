@@ -185,8 +185,16 @@ def health_check_diff(a, b):
         return {}
     diff = {}
     for key in set(a.keys()) | set(b.keys()):
-        if a.get(key) != b.get(key):
-            diff[key] = b.get(key)
+        a_val = a.get(key)
+        b_val = b.get(key)
+        a_type = type(a_val)
+        b_type = type(b_val)
+        if (a_type is int and b_type is not int):
+            b_val = int(b_val)
+        elif (a_type is not int and b_type is int):
+            a_val = int(a_val)
+        if a_val != b_val:
+            diff[key] = b_val
     return diff
 
 def to_template_params(health_check):
