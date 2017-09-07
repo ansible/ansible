@@ -64,10 +64,6 @@ class SolidFireFacts(object):
     """
 
     def __init__(self):
-        import ansible.module_utils.basic
-        ansible.module_utils.basic._ANSIBLE_ARGS = \
-            '{"ANSIBLE_MODULE_ARGS": {"hostname": "10.117.145.219", "username": "netapp", "password": "NetApp123!"}}'.encode(
-                'utf-8')
         self.state = {}
         self.cluster_config = {}
         self.version_info = {}
