@@ -29,83 +29,48 @@ options:
     description:
     - Command category the rule applies to.
     choices: ['all']
-    required: false
   cmd:
     description:
     - List of commands assigned to the rule.
     - If an empty list is passed all commands will be removed from the rule.
     - If option is omitted commands will not be checked or changed.
-    required: false
   host:
     description:
     - List of hosts assigned to the rule.
     - If an empty list is passed all hosts will be removed from the rule.
     - If option is omitted hosts will not be checked or changed.
     - Option C(hostcategory) must be omitted to assign hosts.
-    required: false
   hostcategory:
     description:
     - Host category the rule applies to.
     - If 'all' is passed one must omit C(host) and C(hostgroup).
     - Option C(host) and C(hostgroup) must be omitted to assign 'all'.
     choices: ['all']
-    required: false
   hostgroup:
     description:
     - List of host groups assigned to the rule.
     - If an empty list is passed all host groups will be removed from the rule.
     - If option is omitted host groups will not be checked or changed.
     - Option C(hostcategory) must be omitted to assign host groups.
-    required: false
   user:
     description:
     - List of users assigned to the rule.
     - If an empty list is passed all users will be removed from the rule.
     - If option is omitted users will not be checked or changed.
-    required: false
   usercategory:
     description:
     - User category the rule applies to.
     choices: ['all']
-    required: false
   usergroup:
     description:
     - List of user groups assigned to the rule.
     - If an empty list is passed all user groups will be removed from the rule.
     - If option is omitted user groups will not be checked or changed.
-    required: false
   state:
     description: State to ensure
-    required: false
     default: present
     choices: ['present', 'absent', 'enabled', 'disabled']
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: "ipa.example.com"
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: "admin"
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: "https"
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
+extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
@@ -150,7 +115,7 @@ sudorule:
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
 from ansible.module_utils._text import to_native
 
 
@@ -335,35 +300,27 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            cmd=dict(type='list', required=False),
-            cmdcategory=dict(type='str', required=False, choices=['all']),
-            cn=dict(type='str', required=True, aliases=['name']),
-            description=dict(type='str', required=False),
-            host=dict(type='list', required=False),
-            hostcategory=dict(type='str', required=False, choices=['all']),
-            hostgroup=dict(type='list', required=False),
-            sudoopt=dict(type='list', required=False),
-            state=dict(type='str', required=False, default='present',
-                       choices=['present', 'absent', 'enabled', 'disabled']),
-            user=dict(type='list', required=False),
-            usercategory=dict(type='str', required=False, choices=['all']),
-            usergroup=dict(type='list', required=False),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        mutually_exclusive=[['cmdcategory', 'cmd'],
-                            ['hostcategory', 'host'],
-                            ['hostcategory', 'hostgroup'],
-                            ['usercategory', 'user'],
-                            ['usercategory', 'usergroup']],
-        supports_check_mode=True,
-    )
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(cmd=dict(type='list', required=False),
+                         cmdcategory=dict(type='str', required=False, choices=['all']),
+                         cn=dict(type='str', required=True, aliases=['name']),
+                         description=dict(type='str', required=False),
+                         host=dict(type='list', required=False),
+                         hostcategory=dict(type='str', required=False, choices=['all']),
+                         hostgroup=dict(type='list', required=False),
+                         sudoopt=dict(type='list', required=False),
+                         state=dict(type='str', required=False, default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+                         user=dict(type='list', required=False),
+                         usercategory=dict(type='str', required=False, choices=['all']),
+                         usergroup=dict(type='list', required=False))
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=[['cmdcategory', 'cmd'],
+                                               ['hostcategory', 'host'],
+                                               ['hostcategory', 'hostgroup'],
+                                               ['usercategory', 'user'],
+                                               ['usercategory', 'usergroup']],
+                           supports_check_mode=True)
 
     client = SudoRuleIPAClient(module=module,
                                host=module.params['ipa_host'],
