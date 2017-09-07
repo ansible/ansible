@@ -21,7 +21,7 @@ short_description: Manage entity configs.
 description:
     - 'Add/Remove entity config for a topic, client, user or broker'
 requirements:
-    - 'kafka-configs.sh'
+    - 'kafka-configs'
 options:
     configs:
         description:
@@ -43,9 +43,10 @@ options:
     jaas_auth_file:
         description:
             - JAAS authentification path file.
-    kafka_path:
+    executable:
+        default: '/usr/bin/kafka-configs'
         description:
-            - Kafka path.
+            - Kafka executable path.
     pretty:
         default: False
         description:
@@ -59,7 +60,7 @@ options:
 EXAMPLES = '''
 name: 'list config'
 kafka_configs:
-  kafka_path: '/opt/foobar/kafka'
+  executable: '/opt/foobar/bin/kafka-configs.sh'
   entity_type: 'topics'
   describe: True
   pretty: True
@@ -91,12 +92,12 @@ stdout:
   description: Output from stdout after execution
   returned: success or changed
   type: string
-  sample: "Configs for topic 'wassingue' are cleanup.policy=delete,compression.type=gzip\\\n"
+  sample: "Configs for topic 'wassingue' are cleanup.policy=delete,compression.type=gzip\\\\n"
 msg:
   description: Output from stderr
   returned: failed
   type: string
-  sample: "Error while executing config command Unknown Log configuration producer_byte_rate.\\\n"
+  sample: "Error while executing config command Unknown Log configuration producer_byte_rate.\\\\n"
 '''
 
 import re
@@ -121,7 +122,7 @@ class KafkaConfigs(object):
         self.pretty = module.params['pretty']
         self.zookeeper = ','.join(module.params['zookeeper'])
 
-        self.executable = module.params['kafka_path'] + '/bin/kafka-configs.sh'
+        self.executable = module.params['executable']
 
         self.module = module
 
@@ -279,7 +280,7 @@ def main():
         zookeeper=dict(required=True, type='list'),
 
         jaas_auth_file=dict(type='path'),
-        kafka_path=dict(default='/opt/kafka',
+        executable=dict(default='/usr/bin/kafka-configs',
                         type='path'),
 
         pretty=dict(default=False, type='bool'),
@@ -305,14 +306,12 @@ def main():
         supports_check_mode=True,
     )
 
-    kafka_bin = os.path.isfile(module.params['kafka_path'] +
-                               '/bin/kafka-configs.sh')
     jaas_auth_file = module.params['jaas_auth_file']
 
     changed = False
 
-    if not kafka_bin:
-        module.fail_json(msg='%s not found.' % (kafka_bin))
+    if not os.path.isfile(module.params['executable']):
+        module.fail_json(msg='%s not found.' % (module.params['executable']))
 
     if module.params['jaas_auth_file']:
         is_jaas_auth_file = os.path.isfile(jaas_auth_file)
