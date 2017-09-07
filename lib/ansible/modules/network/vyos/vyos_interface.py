@@ -68,6 +68,7 @@ options:
         port:
           description:
             - "LLDP neighbor port to which given interface C(name) is connected."
+    version_added: 2.4
   aggregate:
     description: List of Interfaces definitions.
   state:
