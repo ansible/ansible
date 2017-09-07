@@ -169,15 +169,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
---- 
-output: 
+---
+output:
   description: "returns what action was taken, whether something was changed, invocation and response"
   returned: always
-  sample: 
+  sample:
     batch_compute_environment_action: none
     changed: false
-    invocation: 
-      module_args: 
+    invocation:
+      module_args:
         aws_access_key: ~
         aws_secret_key: ~
         bid_percentage: ~
@@ -189,40 +189,40 @@ output:
         ec2_url: ~
         image_id: ~
         instance_role: "arn:aws:iam::..."
-        instance_types: 
+        instance_types:
           - optimal
         maxv_cpus: 8
         minv_cpus: 0
         profile: ~
         region: us-east-1
-        security_group_ids: 
+        security_group_ids:
           - "*******"
         security_token: ~
         service_role: "arn:aws:iam::...."
         spot_iam_fleet_role: ~
         state: present
-        subnets: 
+        subnets:
           - "******"
-        tags: 
+        tags:
           Environment: <name>
           Name: <name>
         type: MANAGED
         validate_certs: true
-    response: 
+    response:
       computeEnvironmentArn: "arn:aws:batch:...."
       computeEnvironmentName: <name>
-      computeResources: 
+      computeResources:
         desiredvCpus: 0
         instanceRole: "arn:aws:iam::..."
-        instanceTypes: 
+        instanceTypes:
           - optimal
         maxvCpus: 8
         minvCpus: 0
-        securityGroupIds: 
+        securityGroupIds:
           - "******"
-        subnets: 
+        subnets:
           - "*******"
-        tags: 
+        tags:
           Environment: <name>
           Name: <name>
         type: EC2
@@ -233,7 +233,6 @@ output:
       statusReason: "ComputeEnvironment Healthy"
       type: MANAGED
   type: dict
-
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -454,7 +453,7 @@ def manage_state(module, aws):
             if maxv_cpus is not None and current_compute_environment['computeResources']['maxvCpus'] != maxv_cpus:
                 compute_resources['maxvCpus'] = maxv_cpus
             if desiredv_cpus is not None and current_compute_environment['computeResources'][
-                    'desiredvCpus'] != desiredv_cpus:
+                'desiredvCpus'] != desiredv_cpus:
                 compute_resources['desiredvCpus'] = desiredv_cpus
             if len(compute_resources) > 0:
                 compute_kwargs['computeResources'] = compute_resources
