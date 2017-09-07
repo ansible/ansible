@@ -89,14 +89,14 @@ rc:
   sample: 0
 stdout:
   description: Output from stdout after execution
-  returned: success
+  returned: success or changed
   type: string
   sample: "Configs for topic 'wassingue' are cleanup.policy=delete,compression.type=gzip\n"
 msg:
   description: Output from stderr
   returned: failed
   type: string
-  sample: ""Error while executing config command Unknown Log configuration producer_byte_rate.\norg.apache.kafka.common.errors.InvalidConfigurationException: Unknown Log configuration producer_byte_rate.\n\n"
+  sample: "Error while executing config command Unknown Log configuration producer_byte_rate.\n"
 '''
 
 import re
