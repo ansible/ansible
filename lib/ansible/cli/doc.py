@@ -54,7 +54,7 @@ class DocCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [options] [plugin]',
+            usage='usage: %prog [-l|-s|-a] [options] [-t <plugin type] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
