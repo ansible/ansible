@@ -155,3 +155,14 @@ class IPAClient(object):
                     add_method(name=name, item=diff)
 
         return changed
+
+
+def ipa_argument_spec():
+    return dict(
+        ipa_prot=dict(type='str', default='https', choices=['http', 'https']),
+        ipa_host=dict(type='str', default='ipa.example.com'),
+        ipa_port=dict(type='int', default=443),
+        ipa_user=dict(type='str', default='admin'),
+        ipa_pass=dict(type='str', required=True, no_log=True),
+        validate_certs=dict(type='bool', default=True),
+    )

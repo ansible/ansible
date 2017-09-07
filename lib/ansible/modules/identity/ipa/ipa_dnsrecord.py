@@ -46,33 +46,7 @@ options:
     required: false
     default: present
     choices: ["present", "absent"]
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: ipa.example.com
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: admin
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: https
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
+extends_documentation_fragment: ipa.documentation
 version_added: "2.4"
 '''
 
@@ -119,7 +93,7 @@ dnsrecord:
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
 from ansible.module_utils._text import to_native
 
 
@@ -206,22 +180,17 @@ def ensure(module, client):
 
 def main():
     record_types = ['A', 'AAAA', 'PTR']
-    module = AnsibleModule(
-        argument_spec=dict(
-            zone_name=dict(type='str', required=True),
-            record_name=dict(type='str', required=True, aliases=['name']),
-            record_type=dict(type='str', required=False, default='A', choices=record_types),
-            record_value=dict(type='str', required=True),
-            state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        supports_check_mode=True,
-    )
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(zone_name=dict(type='str', required=True),
+                         record_name=dict(type='str', aliases=['name'], required=True),
+                         record_type=dict(type='str', default='A', choices=record_types),
+                         record_value=dict(type='str', required=True),
+                         state=dict(type='str', default='present', choices=['present', 'absent']),
+                         )
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True
+                           )
 
     client = DNSRecordIPAClient(module=module,
                                 host=module.params['ipa_host'],
