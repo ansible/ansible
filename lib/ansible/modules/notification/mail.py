@@ -201,7 +201,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 def main():
@@ -310,7 +310,7 @@ def main():
             module.fail_json(rc=1, msg="No Authentication on the server at %s:%s" % (host, port))
 
     msg = MIMEMultipart()
-    msg['Subject'] = subject
+    msg['Subject'] = to_text(subject, charset)
     msg['From'] = formataddr((sender_phrase, sender_addr))
     msg.preamble = "Multipart message"
 
