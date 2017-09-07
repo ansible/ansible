@@ -15,8 +15,12 @@ Be aware that this reflects the 'current development branch' and that the keywor
 
 {{ name }}
 {{ '-' * name|length }}
+.. glossary::
+
 {% for attribute in oblist[name]|sort %}
-  - **{{ attribute }}:** {{ oblist[name][attribute] }}
+    {{ attribute }}
+        {{ oblist[name][attribute] }}
+
 {% endfor %}
 
 {% endfor %}

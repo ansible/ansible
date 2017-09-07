@@ -436,13 +436,16 @@ when a term comes up on the mailing list.
         labeled ``ntp``, and then run just the ``ntp`` steps to reconfigure
         the time server information on a remote host.
 
-    Tasks
+    Task
         :term:`Playbooks` exist to run tasks.  Tasks combine an :term:`action`
         (a module and its arguments) with a name and optionally some other
         keywords (like :term:`looping directives <loops>`).   :term:`Handlers`
         are also tasks, but they are a special kind of task that do not run
         unless they are notified by name when a task reports an underlying
         change on a remote system.
+
+    Tasks
+        A list of :term:`Task`.
 
     Templates
         Ansible can easily transfer files to remote systems but often it is
