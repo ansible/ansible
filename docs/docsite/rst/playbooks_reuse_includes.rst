@@ -13,17 +13,25 @@ As noted in :doc:`playbooks_reuse`, include and import statements are very simil
 
 Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
 
+Also be aware that this behaviour changed in 2.4; prior to that Ansible version only ``include`` was available, and it behaved differently depending on context.
+
+.. versionadded:: 2.4
+
 Importing Playbooks
 ```````````````````
 
 It is possible to include playbooks inside a master playbook. For example::
 
     ---
-    import_playbook: webservers.yml
-    import_playbook: databases.yml
+    - import_playbook: webservers.yml
+    - import_playbook: databases.yml
 
-Each playbook listed will be run in the order they are listed.
+The plays and tasks in each playbook listed will be run in the order they are listed, just as if they had been defined here directly.
 
+Prior to 2.4 only ``include`` was available and worked for both playbooks and tasks as both import and include.
+
+
+.. versionadded:: 2.4
 
 Including and Importing Task Files
 ``````````````````````````````````
