@@ -65,6 +65,7 @@ options:
               resource group argument.
         required: false
         default: resource_group
+        version_added: "2.5"
     subnet_name:
         description:
             - Name of an existing subnet within the specified virtual network. Required when creating a network
@@ -141,6 +142,7 @@ options:
             - Name of an existing load-balancer backend address pool to associate with the network interface.
         required: false
         default: null
+        version_added: "2.5"
 extends_documentation_fragment:
     - azure
     - azure_tags
