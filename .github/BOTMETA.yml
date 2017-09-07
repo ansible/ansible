@@ -174,7 +174,7 @@ files:
   $modules/cloud/centurylink/: clc-runner
   $modules/cloud/cloudscale/cloudscale_server.py: gaudenz
   $modules/cloud/cloudstack/: resmo
-  $modules/cloud/digital_ocean/: bondanthony
+  $modules/cloud/digital_ocean/: BondAnthony
   $modules/cloud/digital_ocean/digital_ocean.py: alukovenko zbal
   $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko mgregson
   $modules/cloud/digital_ocean/digital_ocean_sshkey.py: alukovenko mgregson
