@@ -245,7 +245,7 @@ def get_acl(module, acl_name, seq_number):
         # no access-lists configured on the device
         return {}, []
 
-    if type(all_acl_body) == type({}):
+    if isinstance(all_acl_body, dict):
         # Only 1 ACL configured.
         if all_acl_body.get('acl_name') == acl_name:
             acl_body = all_acl_body
