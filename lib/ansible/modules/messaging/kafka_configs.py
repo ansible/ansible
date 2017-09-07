@@ -17,50 +17,41 @@ module: kafka_configs
 author: "Guillaume Delpierre (@gdelpierre)"
 version_added: "2.5"
 
-short_description: Add/Remove entity config.
+short_description: Manage entity configs.
 description:
     - 'Add/Remove entity config for a topic, client, user or broker'
 requirements:
     - 'kafka-configs.sh'
 options:
     configs:
-        type: dict
         description:
             - Key / Value (str) pairs of configs.
     describe:
-        type: bool
         default: False
         description:
             - List configs for the given entity.
     entity_default:
-        type: str
         description:
             - Default entity name for clients/users.
     entity_name:
-        type: str
         description:
             - Name of entity.
     entity_type:
         required: True
-        type: str
         description:
             - Type of entity.
     jaas_auth_file:
-        type: path
         description:
             - JAAS authentification path file.
     kafka_path:
-        type: path
         description:
             - Kafka path.
     pretty:
-        type: bool
         default: False
         description:
             - Print a dict of the output.
     zookeeper:
         required: True
-        type: list
         description:
             - The connection string for the zookeeper connection.
 '''
@@ -91,6 +82,21 @@ kafka_configs:
 '''
 
 RETURN = '''
+rc:
+  description: Command execution return value
+  returned: success
+  type: int
+  sample: 0
+stdout:
+  description: Output from stdout after execution
+  returned: success
+  type: string
+  sample: "Configs for topic 'wassingue' are cleanup.policy=delete,compression.type=gzip\n"
+msg:
+  description: Output from stderr
+  returned: failed
+  type: string
+  sample: ""Error while executing config command Unknown Log configuration producer_byte_rate.\norg.apache.kafka.common.errors.InvalidConfigurationException: Unknown Log configuration producer_byte_rate.\n\n"
 '''
 
 import re
@@ -98,6 +104,7 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+
 
 class KafkaError(Exception):
     pass
@@ -164,8 +171,8 @@ class KafkaConfigs(object):
             # key's value to update
             if self.configs.keys():
                 for key in self.configs.keys():
-                    if (not configs_present.has_key(key) or
-                            (configs_present.has_key(key) and
+                    if (key not in configs_present or
+                            (key in configs_present and
                              configs_present[key] != self.configs[key])):
 
                         configs_to_add[key] = self.configs[key]
@@ -173,7 +180,7 @@ class KafkaConfigs(object):
             # key to delete
             if configs_present.keys():
                 for key in configs_present.keys():
-                    if not self.configs.has_key(key):
+                    if key not in self.configs:
 
                         configs_to_del.append(key)
 
@@ -185,16 +192,18 @@ class KafkaConfigs(object):
                     configs += ''.join("%s=%r" % (key, value))
 
                 cmd_add = ('%s --alter --zookeeper %s %s '
-                       '--add-config %s') % (self.executable,
-                                             self.zookeeper,
-                                             entity_join,
-                                             configs)
+                           '--add-config %s') % (self.executable,
+                                                 self.zookeeper,
+                                                 entity_join,
+                                                 configs)
+
             if configs_to_del:
                 cmd_del = ('%s --alter --zookeeper %s %s '
-                       '--delete-config %s') % (self.executable,
-                                                self.zookeeper,
-                                                entity_join,
-                                                ','.join(configs_to_del))
+                           '--delete-config %s') % (self.executable,
+                                                    self.zookeeper,
+                                                    entity_join,
+                                                    ','.join(configs_to_del))
+
             env = ''
             output = ()
 
@@ -218,7 +227,6 @@ class KafkaConfigs(object):
                 changed = True
                 msg = "Updated config for entity: %s '%s'" % (self.ent_type,
                                                               self.ent_name)
-
 
             return (rc, msg, changed)
 
