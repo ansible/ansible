@@ -137,45 +137,7 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
-    tower_host:
-      description:
-        - URL to your Tower instance.
-      required: False
-      default: null
-    tower_username:
-        description:
-          - Username for your Tower instance.
-        required: False
-        default: null
-    tower_password:
-        description:
-          - Password for your Tower instance.
-        required: False
-        default: null
-    tower_verify_ssl:
-        description:
-          - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
-            This should only be used on personally controlled sites using self-signed certificates.
-        required: False
-        default: True
-    tower_config_file:
-      description:
-        - Path to the Tower config file. See notes.
-      required: False
-      default: null
-
-
-requirements:
-  - "python >= 2.6"
-  - "ansible-tower-cli >= 3.0.3"
-
-notes:
-  - If no I(config_file) is provided we will attempt to use the tower-cli library
-    defaults to find your Tower host information.
-  - I(config_file) should contain Tower configuration in the following format
-      host=hostname
-      username=username
-      password=password
+extends_documentation_fragment: tower
 '''
 
 
@@ -192,7 +154,7 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
-from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
 
 try:
     import tower_cli
@@ -251,40 +213,35 @@ def update_resources(module, p):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True),
-            description=dict(),
-            job_type=dict(choices=['run', 'check', 'scan'], required=True),
-            inventory=dict(),
-            project=dict(required=True),
-            playbook=dict(required=True),
-            machine_credential=dict(),
-            cloud_credential=dict(),
-            network_credential=dict(),
-            forks=dict(type='int'),
-            limit=dict(),
-            verbosity=dict(choices=['verbose', 'debug']),
-            job_tags=dict(),
-            skip_tags=dict(),
-            host_config_key=dict(),
-            extra_vars_path=dict(type='path', required=False),
-            ask_extra_vars=dict(type='bool', default=False),
-            ask_limit=dict(type='bool', default=False),
-            ask_tags=dict(type='bool', default=False),
-            ask_job_type=dict(type='bool', default=False),
-            ask_inventory=dict(type='bool', default=False),
-            ask_credential=dict(type='bool', default=False),
-            become_enabled=dict(type='bool', default=False),
-            tower_host=dict(),
-            tower_username=dict(),
-            tower_password=dict(no_log=True),
-            tower_verify_ssl=dict(type='bool', default=True),
-            tower_config_file=dict(type='path'),
-            state=dict(choices=['present', 'absent'], default='present'),
-        ),
-        supports_check_mode=True
-    )
+    argument_spec = tower_argument_spec()
+    argument_spec.update(dict(
+        name=dict(required=True),
+        description=dict(),
+        job_type=dict(choices=['run', 'check', 'scan'], required=True),
+        inventory=dict(),
+        project=dict(required=True),
+        playbook=dict(required=True),
+        machine_credential=dict(),
+        cloud_credential=dict(),
+        network_credential=dict(),
+        forks=dict(type='int'),
+        limit=dict(),
+        verbosity=dict(choices=['verbose', 'debug']),
+        job_tags=dict(),
+        skip_tags=dict(),
+        host_config_key=dict(),
+        extra_vars_path=dict(type='path', required=False),
+        ask_extra_vars=dict(type='bool', default=False),
+        ask_limit=dict(type='bool', default=False),
+        ask_tags=dict(type='bool', default=False),
+        ask_job_type=dict(type='bool', default=False),
+        ask_inventory=dict(type='bool', default=False),
+        ask_credential=dict(type='bool', default=False),
+        become_enabled=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent'], default='present'),
+    ))
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_TOWER_CLI:
         module.fail_json(msg='ansible-tower-cli required for this module')
