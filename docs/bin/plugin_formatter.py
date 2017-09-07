@@ -307,6 +307,7 @@ def process_modules(module_map, templates, outputname,
         pprint.pprint(module)
         fname = module_map[module]['path']
 
+        # pprint.pprint(module_map[module])
         # crash if module is missing documentation and not explicitly hidden from docs index
         if module_map[module]['doc'] is None:
             print("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
@@ -320,7 +321,7 @@ def process_modules(module_map, templates, outputname,
         doc = module_map[module]['doc']
 
         import pprint
-        # pprint.pprint(doc)
+        pprint.pprint(doc)
 
         # add some defaults for plugins that dont have most of the info
         doc['module'] = doc.get('module', module)
@@ -391,7 +392,7 @@ def process_modules(module_map, templates, outputname,
             doc['plainexamples'] = ''
         doc['metadata'] = module_map[module]['metadata']
 
-        pprint.pprint(module_map[module])
+        # pprint.pprint(module_map[module])
         if module_map[module]['returndocs']:
             try:
                 doc['returndocs'] = yaml.safe_load(module_map[module]['returndocs'])
@@ -401,6 +402,12 @@ def process_modules(module_map, templates, outputname,
         else:
             doc['returndocs'] = None
 
+        doc['author'] = doc.get('author', ['UNKNOWN'])
+        if isinstance(doc['author'], (str, unicode)):
+            doc['author'] = [doc['author']]
+
+        print('about to template')
+        pprint.pprint(doc)
         text = templates['plugin'].render(doc)
 
         write_data(text, output_dir, outputname, module)
@@ -534,13 +541,14 @@ def main():
     categories['all'] = {'_modules': mod_info.keys()}
 
     import pprint
-    pprint.pprint(categories)
+    #pprint.pprint(categories)
+    # pprint.pprint(mod_info)
     # pprint.pprint(dict(mod_info))
     # Transform the data
     if options.type == 'rst':
         for record in mod_info.values():
-            print('record\n')
-            pprint.pprint(record)
+            # print('record\n')
+            # pprint.pprint(record)
             if record.get('doc', None):
                 record['doc']['short_description'] = rst_ify(record['doc']['short_description'])
 

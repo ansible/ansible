@@ -25,36 +25,46 @@
  # but it isn't one.
  #
  --------------------------------------------#}
-
 {% if deprecated is defined -%}
+
+
 DEPRECATED
 ----------
 
-@{ deprecated | convert_symbols_to_format }@
+:In: version: @{ deprecated['version'] | string | convert_symbols_to_format }@
+:Why: @{ deprecated['why'] | convert_symbols_to_format }@
+:Alternative: @{ deprecated['alternative'] | convert_symbols_to_format }@
 {% endif %}
 
 Synopsis
 --------
 
+{% if description %}
+
 {% for desc in description -%}
- * @{ desc | convert_symbols_to_format }@
+* @{ desc | convert_symbols_to_format }@
 {% endfor %}
 
+{% endif %}
 {% if aliases is defined -%}
+
 Aliases: @{ ','.join(aliases) }@
 {% endif %}
-
 {% if requirements %}
+
 Requirements (on host that executes module)
 -------------------------------------------
 
+{% if requirements %}
 {% for req in requirements %}
   * @{ req | convert_symbols_to_format }@
 {% endfor %}
+
 {% endif %}
-
-
+{% endif %}
 {% if options -%}
+
+
 Options
 -------
 
@@ -161,9 +171,9 @@ Options
     </br>
 
 {% endif %}
-
-
 {% if examples or plainexamples -%}
+
+
 Examples
 --------
 
@@ -175,9 +185,9 @@ Examples
 {% endfor %}
 {% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
 {% endif %}
-
-
 {% if returndocs -%}
+
+
 Return Values
 -------------
 
@@ -254,8 +264,9 @@ Common return values are documented here :doc:`common_return_values`, the follow
     </br>
     </br>
 {% endif %}
-
 {% if notes -%}
+
+
 Notes
 -----
 
@@ -268,9 +279,20 @@ Notes
 {% if not deprecated %}
 {% set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
 {% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+{% if author is defined -%}
 
+
+Author
+~~~~~~
+
+{% for author_name in author %}
+    * @{ author_name }@
+{% endfor %}
+
+{% endif %}
 {% if metadata %}
 {% if metadata.status %}
+
 
 Status
 ~~~~~~
@@ -280,6 +302,7 @@ This module is flagged as **@{cur_state}@** which means that @{module_states[cur
 {% endfor %}
 {% endif %}
 {% if metadata.supported_by in ('core', 'network') %}
+
 
 Maintenance Info
 ~~~~~~~~~~~~~~~~
