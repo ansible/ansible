@@ -227,14 +227,12 @@ def get_inventory(instances):
 
     for instance in instances:
         if instance['status'] in ['RUNNING', 'STAGING']:
-            inventory['_meta']['hostvars'][instance['name']] \
-                = get_hostvars(instance)
+            inventory['_meta']['hostvars'][instance['name']] = get_hostvars(instance)
 
             # populate the 'all' group with all hosts found
             inventory['all'].append(instance['name'])
 
-            # create a group for every tag prefixed by 'tag_' and populate
-            # accordingly
+            # create a group for every tag prefixed by 'tag_' and populate accordingly
             for tag in instance['tags'].get('items', []):
                 inventory['tag_{}'.format(tag)].append(instance['name'])
 
