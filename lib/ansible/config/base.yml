@@ -683,7 +683,7 @@ DEFAULT_HASH_BEHAVIOUR:
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
-  description: Location of the Ansible inventory source.
+  description: Colon separated list of Ansible inventory sources
   env: [{name: ANSIBLE_INVENTORY}]
   expand_relative_paths: True
   ini:
