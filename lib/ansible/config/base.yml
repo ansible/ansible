@@ -615,7 +615,7 @@ DEFAULT_GATHERING:
   default: 'implicit'
   description:
     - This setting controls the default policy of fact gathering (facts discovered about remote systems).
-    - When ‘implicit’ (the default), the cache plugin will be ignored and facts will be gathered per play unless ‘gather_facts: False’ is set.
+    - "When ‘implicit’ (the default), the cache plugin will be ignored and facts will be gathered per play unless ‘gather_facts: False’ is set."
     - When ‘explicit’ the inverse is true, facts will not be gathered unless directly requested in the play.
     - The ‘smart’ value means each new host that has no facts discovered will be scanned,
       but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
@@ -625,8 +625,7 @@ DEFAULT_GATHERING:
     - key: gathering
       section: defaults
   version_added: "1.6"
-  type: list
-  choices: ['all', 'network', 'hardware', 'virtual', 'ohai', 'facter']
+  choices: ['smart', 'explicit', 'implicit']
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
   default: 'all'
