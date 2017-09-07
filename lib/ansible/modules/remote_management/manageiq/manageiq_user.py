@@ -96,6 +96,14 @@ EXAMPLES = '''
       token: 'sometoken'
       verify_ssl: False
 
+- name: Create a new user in ManageIQ from within a native Service
+  manageiq_user:
+    userid: 'jdoe'
+    name: 'Jane Doe'
+    password: 'VerySecret'
+    group: 'EvmGroup-user'
+    email: 'jdoe@example.com'
+
 - name: Delete a user in ManageIQ
   manageiq_user:
     state: 'absent'
@@ -105,6 +113,11 @@ EXAMPLES = '''
       username: 'admin'
       password: 'smartvm'
       verify_ssl: False
+
+- name: Delete a user in ManageIQ from within a native Service
+  manageiq_user:
+    state: 'absent'
+    userid: 'jdoe'
 
 - name: Delete a user in ManageIQ using a token
   manageiq_user:
@@ -124,6 +137,11 @@ EXAMPLES = '''
       username: 'admin'
       password: 'smartvm'
       verify_ssl: False
+
+- name: Update email of user in ManageIQ from within a native Service
+  manageiq_user:
+    userid: 'jdoe'
+    email: 'jaustine@example.com'
 
 - name: Update email of user in ManageIQ using a token
   manageiq_user:
