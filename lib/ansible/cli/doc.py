@@ -72,6 +72,9 @@ class DocCLI(CLI):
 
         super(DocCLI, self).parse()
 
+        if [self.options.all_plugins, self.options.list_dir, self.options.show_snippet].count(True) > 1:
+            raise AnsibleOptionsError("Only one of -l, -a or -s can be used at the same time.")
+
         display.verbosity = self.options.verbosity
 
     def run(self):
