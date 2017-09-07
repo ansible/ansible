@@ -112,15 +112,14 @@ class BaseFileCacheModule(BaseCacheModule):
 
             cachefile = "%s/%s" % (self._cache_dir, key)
             try:
-                try:
-                    value = self._load(cachefile)
-                    self._cache[key] = value
-                except ValueError as e:
-                    display.warning("error in '%s' cache plugin while trying to read %s : %s. "
-                                    "Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
-                    self.delete(key)
-                    raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
-                                       "It has been removed, so you can re-run your command now." % cachefile)
+                value = self._load(cachefile)
+                self._cache[key] = value
+            except ValueError as e:
+                display.warning("error in '%s' cache plugin while trying to read %s : %s. "
+                                "Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
+                self.delete(key)
+                raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
+                                   "It has been removed, so you can re-run your command now." % cachefile)
             except (OSError, IOError) as e:
                 display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
                 raise KeyError
