@@ -38,7 +38,7 @@ options:
     zookeeper:
         required: True
         description:
-            - The connection string for the zookeeper connection. 
+            - The connection string for the zookeeper connection.
     replication_factor:
         description:
             -  The replication factor for each partition in the topic being created.
@@ -142,6 +142,7 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+
 
 class KafkaError(Exception):
     pass
@@ -305,7 +306,7 @@ class KafkaTopics(object):
 
 
 def main():
-    argument_spec=dict(
+    argument_spec = dict(
         action=dict(default='list',
                     choices=['list', 'describe', 'alter',
                              'create', 'delete'],
@@ -321,11 +322,11 @@ def main():
     )
 
     required_if = [
-        ['action', 'alter', ['topic', 'partitions',]],
+        ['action', 'alter', ['topic', 'partitions']],
         ['action', 'create',
-         ['topic', 'replication_factor', 'partitions',]
+         ['topic', 'replication_factor', 'partitions']
          ],
-        ['action', 'delete', ['topic',]],
+        ['action', 'delete', ['topic']],
     ]
 
     module = AnsibleModule(
