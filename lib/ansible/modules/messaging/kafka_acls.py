@@ -4,96 +4,86 @@
 #
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
+---
 module: kafka_acls
 author: "Guillaume Delpierre (@gdelpierre)"
 version_added: "2.5"
+
 short_description: Add/Remove ACLs config.
 description:
     - 'Add/Remove ACLs config for a topic, producer, consummer or cluster'
 requirements:
-    - 'kafka-acls.sh'
+    - 'kafka-acls'
 options:
     action:
         required: True
-        type: str
         choices: ['add', 'list', 'remove']
         description:
             - Add, list or remove ACLs.
               For list, use topic, or group or cluster to specify a resource.
     allow_host:
-        type: list
         description:
             - Host from which principals listed in allow-principal will have access.
     allow_principal:
-        type: list
         description:
             - Principal is in principalType:name format.
               Note that principalType must be supported by the Authorizer being used.
     authorizer:
-        type: str
         description:
             - Fully qualified class name of the authorizer.
               Defaults to kafka.security.auth.SimpleAclAuthorizer.
     authorizer_properties:
         required: True
-        type: str
         description:
             - Properties required to configure an instance of Authorizer.
               These are key=val pairs.
     cluster:
-        type: str
         description:
             - Add/Remove cluster ACLs.
     consumer:
-        type: bool
         description:
             - Convenience option to add/remove ACLs for consumer role.
     deny_host:
-        type: list
         description:
             - Host from which principals listed in deny-principal will be denied access.
     deny_principal:
-        type: list
         description:
             - By default anyone not added through allow-principal is denied access.
               You only need to use this option as negation to already allowed set.
     group:
-        type: list
         description:
             - Consumer Group to which the ACLs should be added or removed.
     operation:
-        type: list
         description:
             - Operation that is being allowed or denied.
     producer:
-        type: bool
         description:
             - Convenience option to add/remove ACLs for producer role.
     topic:
-        type: str
         description:
             - Topic to which ACLs should be added or removed.
     jaas_auth_file:
-        type: path
         description:
             - JAAS authentification path file.
-    kafka_path:
-        type: path
-        default: '/opt/kafka'
+    executable:
+        default: '/usr/bin/kafka-acls'
         description:
-            - Kafka path.
+            - Kafka executable path.
 '''
 
 EXAMPLES = '''
 name: 'add ACLs'
 kafka_acls:
   action: 'add'
-  kafka_path: '/home/foobar/kafka/'
+  executable: '/home/foobar/kafka/bin/kafka-acls'
   authorizer_properties: 'zookeeper.connect=localhost:2181'
   jaas_auth_file: 'jaas-kafka.conf'
   topic: 'croziflette'
@@ -150,9 +140,11 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+
 class KafkaError(Exception):
     pass
- 
+
+
 class KafkaAcls(object):
 
     def __init__(self, module):
@@ -170,7 +162,7 @@ class KafkaAcls(object):
         self.producer = module.params['producer']
         self.topic = module.params['topic']
 
-        self.executable = module.params['kafka_path'] + '/bin/kafka-acls.sh'
+        self.executable = module.params['executable']
         if module.params['jaas_auth_file']:
             self.jaas_auth_file = module.params['jaas_auth_file']
             self.kafka_env_opts = '-Djava.security.auth.login.config=' + \
@@ -180,25 +172,28 @@ class KafkaAcls(object):
 
     def get(self):
         ''' List kafka ACLs. '''
-        
+
         mod_args = {
-                '--authorizer': self.authorizer,
-                '--authorizer-properties': self.authorizer_properties,
-                '--topic': self.topic,
+            '--authorizer': self.authorizer,
+            '--authorizer-properties': self.authorizer_properties,
+            '--topic': self.topic,
         }
 
-        mod_args_join = ''.join(" %s %r" % (k, v) for k,v in mod_args.iteritems() if v)
+        mod_args_join = ''.join(
+            " %s %r" % (key, value) for key, value
+            in mod_args.items() if value)
 
         cmd = '%s --list %s' % (self.executable, mod_args_join)
 
         try:
             env = ''
             if self.jaas_auth_file:
-                env = { 'KAFKA_OPTS': self.kafka_env_opts }
+                env = {'KAFKA_OPTS': self.kafka_env_opts}
+
             return self.module.run_command(cmd, environ_update=env)
 
         except KafkaError as exc:
-            module.fail_json(msg=to_native(exc))
+            self.module.fail_json(msg=to_native(exc))
 
     def addrem(self):
         ''' Add or Remove ACLs. '''
@@ -219,15 +214,17 @@ class KafkaAcls(object):
         }
 
         mod_args_join = ''
-        for k,v in mod_args.iteritems():
-            if v:
-                if isinstance(v, list):
-                    for item in v:
-                        mod_args_join += ''.join(" %s %r" % (k, item))
+        for key, value in mod_args.items():
+            if value:
+                if isinstance(value, list):
+                    for item in value:
+                        mod_args_join += ''.join(" %s %r" % (key, item))
                 else:
-                    mod_args_join += ''.join(" %s %r" % (k, v))
+                    mod_args_join += ''.join(" %s %r" % (key, value))
 
-        mod_auth_join = ''.join(" %s %r" % (k, v) for k,v in auth_args.iteritems() if v)
+        mod_auth_join = ''.join(
+            " %s %r" % (key, value) for key, value
+            in auth_args.items() if value)
 
         if self.producer:
             cmd = '%s %s --%s --producer %s' % (self.executable, mod_auth_join,
@@ -243,12 +240,14 @@ class KafkaAcls(object):
                                      self.action, mod_args_join)
 
         try:
+            env = ''
             if self.jaas_auth_file:
-                env = { 'KAFKA_OPTS': self.kafka_env_opts }
+                env = {'KAFKA_OPTS': self.kafka_env_opts}
+
             return self.module.run_command(cmd, environ_update=env)
 
         except KafkaError as exc:
-            module.fail_json(msg=to_native(exc))
+            self.module.fail_json(msg=to_native(exc))
 
 
 def main():
@@ -267,8 +266,8 @@ def main():
         operation=dict(type='list'),
         producer=dict(default=False, type='bool'),
         topic=dict(type='str'),
-        jaas_auth_file = dict(type='path'),
-        kafka_path = dict(default='/opt/kafka', type='path'),
+        jaas_auth_file=dict(type='path'),
+        executable=dict(default='/usr/bin/kafka-acls', type='path'),
     )
 
     required_one_of = [
@@ -280,26 +279,20 @@ def main():
     ]
 
     module = AnsibleModule(
-        argument_spec = argument_spec,
-        required_one_of = required_one_of,
-        mutually_exclusive = mutually_exclusive,
-        supports_check_mode = True,
+        argument_spec=argument_spec,
+        required_one_of=required_one_of,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True,
     )
-
-    kafka_bin = module.params['kafka_path'] + '/bin/kafka-topics.sh'
-    jaas_auth_file = module.params['jaas_auth_file']
-
-    is_kafka_bin = os.path.isfile(kafka_bin)
 
     changed = False
 
-    if not is_kafka_bin:
-        module.fail_json(msg='%s not found.' % (kafka_bin))
+    if not os.path.isfile(module.params['executable']):
+        module.fail_json(msg='%s not found.' % (module.params['executable']))
 
     if module.params['jaas_auth_file']:
-        is_jaas_auth_file = os.path.isfile(jaas_auth_file)
-        if not is_jaas_auth_file:
-            module.fail_json(msg='%s not found.' % (jaas_auth_file))
+        if not os.path.isfile(module.params['jaas_auth_file']):
+            module.fail_json(msg='%s not found.' % (module.params['jaas_auth_file']))
 
     try:
         ka = KafkaAcls(module)
@@ -317,7 +310,7 @@ def main():
                 (_, out_list_after, _) = ka.get()
                 if out_list_before != out_list_after:
                     changed = True
-                
+
             result = {
                 'stdout': out,
                 'stdout_lines': out.splitlines(),
