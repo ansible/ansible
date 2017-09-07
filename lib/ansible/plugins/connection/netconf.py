@@ -62,11 +62,10 @@ DOCUMENTATION:
         description:
           - Flag to control wether we check for validity of the host key of the remote
         default: True
+# TODO:
+#look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+#allow_agent=self.allow_agent,
 """
-'''
-look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-allow_agent=self.allow_agent,
-'''
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

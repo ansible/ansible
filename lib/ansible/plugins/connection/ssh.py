@@ -118,8 +118,6 @@ DOCUMENTATION:
           - {key: pipelining, section: ssh_connection}
           type: boolean
           vars: [{name: ansible_ssh_pipelining}]
-'''
-'''
 # TODO:
 # ANSIBLE_SSH_RETRIES
 
@@ -138,7 +136,6 @@ import fcntl
 import hashlib
 import os
 import pty
-import socket
 import subprocess
 import time
 
@@ -836,7 +833,6 @@ class Connection(ConnectionBase):
             else:
                 methods = ['sftp']
 
-        success = False
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':

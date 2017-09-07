@@ -30,23 +30,22 @@ DOCUMENTATION:
             - name: ansible_user
             - name: ansible_ssh_user
             - name: ansible_paramiko_user
-"""
-"""
-getattr(self._play_context, 'ssh_extra_args', '') or '',
-getattr(self._play_context, 'ssh_common_args', '') or '',
-getattr(self._play_context, 'ssh_args', '') or '',
-C.HOST_KEY_CHECKING
-C.PARAMIKO_HOST_KEY_AUTO_ADD
-C.USE_PERSISTENT_CONNECTIONS:
-            ssh.connect(
-                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-                key_filename,
-                password=self._play_context.password,
-                timeout=self._play_context.timeout,
-                port=port,
-proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
-C.PARAMIKO_PTY
-C.PARAMIKO_RECORD_HOST_KEYS
+# TODO:
+#getattr(self._play_context, 'ssh_extra_args', '') or '',
+#getattr(self._play_context, 'ssh_common_args', '') or '',
+#getattr(self._play_context, 'ssh_args', '') or '',
+#C.HOST_KEY_CHECKING
+#C.PARAMIKO_HOST_KEY_AUTO_ADD
+#C.USE_PERSISTENT_CONNECTIONS:
+#            ssh.connect(
+#                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+#                key_filename,
+#                password=self._play_context.password,
+#                timeout=self._play_context.timeout,
+#                port=port,
+#proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
+#C.PARAMIKO_PTY
+#C.PARAMIKO_RECORD_HOST_KEYS
 """
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
