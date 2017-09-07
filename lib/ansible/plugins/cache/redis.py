@@ -17,7 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import time
 import json
 
@@ -48,47 +47,55 @@ class CacheModule(BaseCacheModule):
 
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._prefix = C.CACHE_PLUGIN_PREFIX
-        self._cache = StrictRedis(*connection)
+        self._cache = {}
+        self._db = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'
 
     def _make_key(self, key):
         return self._prefix + key
 
     def get(self, key):
-        value = self._cache.get(self._make_key(key))
-        # guard against the key not being removed from the zset;
-        # this could happen in cases where the timeout value is changed
-        # between invocations
-        if value is None:
-            self.delete(key)
-            raise KeyError
-        return json.loads(value)
+
+        if key not in self._cache:
+            value = self._db.get(self._make_key(key))
+            # guard against the key not being removed from the zset;
+            # this could happen in cases where the timeout value is changed
+            # between invocations
+            if value is None:
+                self.delete(key)
+                raise KeyError
+            self._cache[key] = json.loads(value)
+
+        return self._cache.get(key)
 
     def set(self, key, value):
+
         value2 = json.dumps(value)
         if self._timeout > 0:  # a timeout of 0 is handled as meaning 'never expire'
-            self._cache.setex(self._make_key(key), int(self._timeout), value2)
+            self._db.setex(self._make_key(key), int(self._timeout), value2)
         else:
-            self._cache.set(self._make_key(key), value2)
+            self._db.set(self._make_key(key), value2)
 
-        self._cache.zadd(self._keys_set, time.time(), key)
+        self._db.zadd(self._keys_set, time.time(), key)
+        self._cache[key] = value
 
     def _expire_keys(self):
         if self._timeout > 0:
             expiry_age = time.time() - self._timeout
-            self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
+            self._db.zremrangebyscore(self._keys_set, 0, expiry_age)
 
     def keys(self):
         self._expire_keys()
-        return self._cache.zrange(self._keys_set, 0, -1)
+        return self._db.zrange(self._keys_set, 0, -1)
 
     def contains(self, key):
         self._expire_keys()
-        return (self._cache.zrank(self._keys_set, key) is not None)
+        return (self._db.zrank(self._keys_set, key) is not None)
 
     def delete(self, key):
-        self._cache.delete(self._make_key(key))
-        self._cache.zrem(self._keys_set, key)
+        del self.cache[key]
+        self._db.delete(self._make_key(key))
+        self._db.zrem(self._keys_set, key)
 
     def flush(self):
         for key in self.keys():
