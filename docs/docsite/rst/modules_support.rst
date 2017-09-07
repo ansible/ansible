@@ -1,5 +1,5 @@
 Module Maintenance & Support
---------------
+----------------------------
 
 .. toctree:: :maxdepth: 1
 
