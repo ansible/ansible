@@ -9,9 +9,6 @@
   - '{{test_win_regedit_classes_key}}'
 
 - block:
-  - name: run old tests for PR only
-    include_tasks: old_tests.yml
-
   - name: run tests for each property type
     include_tasks: create_tests.yml
     vars:
