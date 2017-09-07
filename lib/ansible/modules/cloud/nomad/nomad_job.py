@@ -332,7 +332,7 @@ def main():
                 fail_msg=ResponseErrors.ALLOCATION_STATUS_ERROR
             )
             allocation_info = body
-            if 'TaskStates' in allocation_info:
+            if 'TaskStates' in allocation_info and allocation_info['TaskStates']:
                 num_tasks = len(allocation_info['TaskStates'])
                 for task in allocation_info['TaskStates']:
                     task_state = allocation_info['TaskStates'][task]['State']
