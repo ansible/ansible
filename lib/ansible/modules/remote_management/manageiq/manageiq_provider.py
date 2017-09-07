@@ -239,6 +239,7 @@ def supported_providers():
             authtype='bearer',
             default_role='default',
             metrics_role='prometheus',
+            alerts_role='prometheus_alerts',
         ),
         Amazon=dict(
             class_name='ManageIQ::Providers::Amazon::CloudManager',
