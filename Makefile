@@ -29,6 +29,7 @@ ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
 else
 ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
+GENERATE_CLI = docs/bin/generate_man.py
 
 PYTHON=python
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
@@ -343,8 +344,9 @@ webdocs:
 
 .PHONY: generate_asciidoc
 generate_asciidoc: lib/ansible/cli/*.py
-	mkdir -p ./docs/man/man1/
-	PYTHONPATH=./lib ./docs/bin/generate_man.py
+	mkdir -p ./docs/man/man1/ ; \
+	PYTHONPATH=./lib $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
+
 
 docs: generate_asciidoc
 	make $(MANPAGES)
