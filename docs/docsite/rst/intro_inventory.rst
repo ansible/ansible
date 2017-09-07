@@ -89,14 +89,13 @@ In YAML:
 
 In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.0.2.50 on port 5555.
 Note that this is using a feature of the inventory file to define some special variables.
-Generally speaking this is not the best way to define variables that describe your system policy, but we'll share suggestions on doing this later.
-We're just getting started.
+Generally speaking, this is not the best way to define variables that describe your system policy, but we'll share suggestions on doing this later.
 
 .. note:: Values passed in the INI format using the ``key=value`` syntax are not interpreted as Python literal structure
           (strings, numbers, tuples, lists, dicts, booleans, None), but as a string. For example ``var=FALSE`` would create a string equal to 'FALSE'.
           Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
 
-Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname:
+If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
 
 .. code-block:: ini
 
@@ -130,7 +129,7 @@ As mentioned above, setting these in the inventory file is only a shorthand, and
 Host Variables
 ++++++++++++++
 
-As alluded to above, it is easy to assign variables to hosts that will be used later in playbooks:
+As described above, it is easy to assign variables to hosts that will be used later in playbooks:
 
 .. code-block:: ini
 
@@ -177,7 +176,7 @@ Groups of Groups, and Group Variables
 +++++++++++++++++++++++++++++++++++++
 
 It is also possible to make groups of groups using the ``:children`` suffix in INI or the ``children:`` entry in YAML.
-Just like above, you can apply variables using ``:vars`` or ``vars:``:
+You can apply variables using ``:vars`` or ``vars:``:
 
 
 .. code-block:: ini
@@ -254,10 +253,9 @@ Though ``all`` and ``ungrouped`` are always present, they can be implicit and no
 Splitting Out Host and Group Specific Data
 ++++++++++++++++++++++++++++++++++++++++++
 
-The preferred practice in Ansible is actually not to store variables in the main inventory file.
+The preferred practice in Ansible is to not store variables in the main inventory file.
 
-In addition to storing variables directly in the inventory file, host and group variables can be stored in individual files relative to the
-inventory file (not directory, it is always the file).
+In addition to storing variables directly in the inventory file, host and group variables can be stored in individual files relative to the inventory file (not directory, it is always the file).
 
 These variable files are in YAML format. Valid file extensions include '.yml', '.yaml', '.json', or no file extension.
 See :doc:`YAMLSyntax` if you are new to YAML.
@@ -281,9 +279,9 @@ the 'raleigh' group might look like::
     ntp_server: acme.example.org
     database_server: storage.example.org
 
-It is ok if these files do not exist, as this is an optional feature.
+It is okay if these files do not exist, as this is an optional feature.
 
-As an advanced use-case, you can create *directories* named after your groups or hosts, and
+As an advanced use case, you can create *directories* named after your groups or hosts, and
 Ansible will read all the files in these directories. An example with the 'raleigh' group::
 
     /etc/ansible/group_vars/raleigh/db_settings
