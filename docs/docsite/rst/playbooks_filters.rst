@@ -286,6 +286,15 @@ This example shows ports from cluster1::
 
 .. note:: You can use a variable to make the query more readable.
 
+Or, alternatively::
+
+    - name: "Display all server names from cluster1"
+      debug:
+        var: item
+      with_items: "{{domain_definition|json_query('domain.server[?cluster=`cluster`].port')}}"
+
+.. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
+
 In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
