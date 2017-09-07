@@ -125,7 +125,7 @@ def main():
         epg=dict(type='str', aliases=['name', 'epg_name']),
         netflow=dict(type='str', choices=['disabled', 'enabled']),
         primary_encap=dict(type='int'),
-        resolution_immediacy=dict(type='str', choices=['immdediate', 'lazy', 'pre-provision']),
+        resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         vm_provider=dict(type='str', choices=[ 'microsoft', 'openstack', 'vmware']),
