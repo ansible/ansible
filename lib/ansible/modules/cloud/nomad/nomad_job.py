@@ -140,7 +140,7 @@ from time import sleep
 
 class ResponseErrors:
     JOB_DESC_ERROR = "A job description in json (jobdesc) needs to be provided for the state 'present'!"
-    EVALUATION_ERROR = "evaluation failure!"
+    EVALUATION_ERROR = "Evaluation failure!"
     CONNECTION_ERROR = "Cannot connect to Nomad Server!"
     JOB_LIST_ERROR = "Error on getting the current job-list from Nomad"
     DELETE_ERROR = "Deleting job failed!"
@@ -162,10 +162,10 @@ def get_response_or_fail(ansible_module, url, fail_msg=None, **kwargs):
 
 
 def check_evaluation(ansible_module, url, job_evaluation, timeout):
-    evaluationurl = url + '/v1/evaluation/' + job_evaluation
+    evaluation_url = url + '/v1/evaluation/' + job_evaluation
     evaluation_done = False
     for i in range(timeout):
-        status, info, body = get_response_or_fail(ansible_module, evaluationurl, ResponseErrors.EVALUATION_ERROR)
+        status, info, body = get_response_or_fail(ansible_module, evaluation_url, ResponseErrors.EVALUATION_ERROR)
         if body['Status'] == 'complete':
             evaluation_done = True
             break
@@ -219,8 +219,8 @@ def main():
         ansible_module.fail_json(msg=ResponseErrors.JOB_DESC_ERROR)
 
     # get possible running job
-    jobsurl = url + '/v1/job/' + name
-    resp, info = fetch_url(ansible_module, jobsurl)
+    jobs_url = url + '/v1/job/' + name
+    resp, info = fetch_url(ansible_module, jobs_url)
     status = info['status']
 
     # couldn't connect to server
@@ -240,11 +240,11 @@ def main():
 
     # Delete job if requested (TODO: implement purge option)
     if state == 'absent':
-        delete_job(ansible_module, jobsurl, job)
+        delete_job(ansible_module, jobs_url, job)
 
     # Submit Job:
     status, info, body = get_response_or_fail(ansible_module,
-                                              jobsurl,
+                                              jobs_url,
                                               fail_msg=ResponseErrors.SUBMISSION_ERROR,
                                               method='POST',
                                               data=newjob,
@@ -337,7 +337,7 @@ def main():
                 num_tasks = len(allocation_info['TaskStates'])
                 for task in allocation_info['TaskStates']:
                     task_state = allocation_info['TaskStates'][task]['State']
-                    if (task_state == 'failed') | (task_state == 'dead'):
+                    if (task_state == 'failed') or (task_state == 'dead'):
                         ansible_module.fail_json(msg=ResponseErrors.ALLOCATION_FAILURE_ERROR,
                                                  meta=allocation_info)
                     if task_state == 'running':
@@ -354,7 +354,7 @@ def main():
 
     # Get new allocations
     status, info, body = get_response_or_fail(ansible_module,
-                                              jobsurl + '/allocations')
+                                              jobs_url + '/allocations')
     new_job_allocations = body
 
     ansible_module.exit_json(
