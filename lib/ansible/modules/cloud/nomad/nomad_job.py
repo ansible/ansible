@@ -25,13 +25,13 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nomad_job
-short_description: submit (start) or delete (stop) a job to Hashicorps nomad
+short_description: submit or delete a job to Hashicorps nomad
 description:
     - The M(nomad_job) module manages submitting and deleting of jobs in the Hashicorp nomad scheduler and cluster manager.
     - This module uses the nomad API (https://www.nomadproject.io/api/).
-    - Supported nomad versions are 0.5.* and 0.6.* at the moment.
+    - Supported nomad versions are 0.5.* and 0.6.* .
     - This module takes a json input describing a nomad job (https://www.nomadproject.io/api/json-jobs.html) when the desired state is C(present)'.
-    - By default the module will wait for all allocations of a submitted job to be in 'running' state unless specified otherwise (I(wait_for_completion=False)),
+    - By default the module will wait for all allocations of a submited job to be in 'running' state unless specified otherwise (I(wait_for_completion=False)),
       the count is 0 or the type is 'batch'.
     - The module will fail if a job (all its allocations) does not enter the 'running' state within the specified I(timeout) (default 120 sec).
 version_added: "2.4"
@@ -120,7 +120,7 @@ total_allocations:
     type: int
     sample: 2
 allocations:
-    description: A json object with all handled allocations
+    description: a json object with all handled allocations
     returned: success, changed
     type: dict
 info:
@@ -150,7 +150,7 @@ class ResponseErrors:
     INCOMPLETE_EVALUATION_ERROR = 'Evaluation did not complete!'
     ALLOCATION_STATUS_ERROR = "Failed to get allocation status!"
     ALLOCATION_FAILURE_ERROR = "Allocation failed!"
-    ALLOCATION_TIMEOUT_ERROR = "Timeout waiting for allocations to be running. Please check the jobs logs!"
+    ALLOCATION_TIMEOUT_ERROR = "Timeout while waiting for allocations to be running. Please check the jobs logs!"
 
 
 def get_response_or_fail(ansible_module, url, fail_msg=None, **kwargs):
@@ -279,8 +279,7 @@ def main():
             changed=job_changed,
             status=status,
             job=job,
-            info=new_job_info
-        )
+            info=new_job_info)
 
     # Set Deployment-ID if it exists (nomad >= 0.6.0)
     if 'DeploymentID' in eval_response:
