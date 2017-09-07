@@ -26,9 +26,9 @@ import time
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
-from enum import Enum
 
 try:
+    from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
     HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.0.0')
