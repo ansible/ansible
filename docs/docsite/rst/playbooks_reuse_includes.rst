@@ -13,7 +13,7 @@ As noted in :doc:`playbooks_reuse`, include and import statements are very simil
 
 Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
 
-Also be aware that this behaviour changed in 2.4, prior to that Ansible version only ``include`` was available and behaved differently depending on context.
+Also be aware that this behaviour changed in 2.4; prior to that Ansible version only ``include`` was available, and it behaved differently depending on context.
 
 .. versionadded:: 2.4
 
@@ -28,7 +28,7 @@ It is possible to include playbooks inside a master playbook. For example::
 
 The plays and tasks in each playbook listed will be run in the order they are listed, just as if they had been defined here directly.
 
-Prior to 2.4 only ``include`` was available and worked for both playbooks and tasks as both import and include ... leading to much confusion.
+Prior to 2.4 only ``include`` was available and worked for both playbooks and tasks as both import and include.
 
 
 .. versionadded:: 2.4
