@@ -14,7 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ipa_host
-author: Thomas Krahn (@Nosmoht)
+author:
+    - Thomas Krahn (@Nosmoht)
+    - Steve Jacobs (@stevejacobs) <sjacobs@brokencrew.com>
 short_description: Manage FreeIPA host
 description:
 - Add, modify and delete an IPA host using IPA API
@@ -37,6 +39,12 @@ options:
     description:
     - Add the host to DNS with this IP address.
     required: false
+  host_otp:
+    description:
+    - OTP Password to add this host to IPA
+    required: false
+    version_added: "2.4"
+    aliases: ["userpassword"]
   mac_address:
     description:
     - List of Hardware MAC address(es) off this host.
@@ -184,7 +192,7 @@ class HostIPAClient(IPAClient):
 
 
 def get_host_dict(description=None, force=None, ip_address=None, ns_host_location=None, ns_hardware_platform=None,
-                  ns_os_version=None, user_certificate=None, mac_address=None):
+                  ns_os_version=None, user_certificate=None, mac_address=None, userpassword=None):
     data = {}
     if description is not None:
         data['description'] = description
@@ -202,6 +210,8 @@ def get_host_dict(description=None, force=None, ip_address=None, ns_host_locatio
         data['usercertificate'] = [{"__base64__": item} for item in user_certificate]
     if mac_address is not None:
         data['macaddress'] = mac_address
+    if userpassword is not None:
+        data['userpassword'] = userpassword
     return data
 
 
@@ -225,7 +235,8 @@ def ensure(module, client):
                                 ns_hardware_platform=module.params['ns_hardware_platform'],
                                 ns_os_version=module.params['ns_os_version'],
                                 user_certificate=module.params['user_certificate'],
-                                mac_address=module.params['mac_address'])
+                                mac_address=module.params['mac_address'],
+                                userpassword=module.params['userpassword'])
     changed = False
     if state in ['present', 'enabled', 'disabled']:
         if not ipa_host:
@@ -271,6 +282,7 @@ def main():
             ipa_user=dict(type='str', required=False, default='admin'),
             ipa_pass=dict(type='str', required=True, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
+            userpassword=dict(type='str', required=False, no_log=True, aliases=['host_otp']),
         ),
         supports_check_mode=True,
     )
