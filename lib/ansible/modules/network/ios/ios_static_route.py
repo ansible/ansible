@@ -137,6 +137,11 @@ def map_config_to_obj(module):
         for r in match.group(1).splitlines():
             splitted_line = r.split()
 
+            code = splitted_line[0]
+
+            if code != 'M':
+                continue
+
             cidr = ip_network(to_text(splitted_line[1]))
             prefix = str(cidr.network_address)
             mask = str(cidr.netmask)
