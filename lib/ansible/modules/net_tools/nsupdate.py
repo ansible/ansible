@@ -33,7 +33,7 @@ options:
     state:
         description:
             - Manage DNS record.
-        choices: ['present', 'absent', 'append']
+        choices: ['present', 'absent']
         default: 'present'
     server:
         description:
@@ -71,6 +71,11 @@ options:
         description:
             - Sets the record value.
         default: None
+    allow_duplicates:
+        description:
+            - Allow duplicate entries with same record name (eg. SRV records)
+        choices: [yes, no]
+        default: no
 
 '''
 
@@ -103,7 +108,7 @@ EXAMPLES = '''
     record: "_service._tcp"
     type: "SRV"
     value: "0 0 1234 service01.example.org"
-    state: append
+    allow_duplicates: yes
 '''
 
 RETURN = '''
@@ -204,7 +209,7 @@ class RecordManager(object):
             self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
         return response
 
-    def create_or_update_record(self, state):
+    def create_or_update_record(self, state, allow_duplicates):
         result = {'changed': False, 'failed': False}
 
         exists = self.record_exists()
@@ -212,7 +217,7 @@ class RecordManager(object):
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
 
-            if exists == 0 or state == 'append':
+            if exists == 0 or allow_duplicates:
                 self.dns_rc = self.create_record()
                 if self.dns_rc != 0:
                     result['msg'] = "Failed to create DNS record (rc: %d)" % self.dns_rc
@@ -315,7 +320,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=False, default='present', choices=['present', 'absent', 'append'], type='str'),
+            state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             server=dict(required=True, type='str'),
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
@@ -324,7 +329,8 @@ def main():
             record=dict(required=True, type='str'),
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False, default=None, type='str')
+            value=dict(required=False, default=None, type='str'),
+            allow_duplicates=dict(Required=False, default=False, type='bool')
         ),
         supports_check_mode=True
     )
@@ -340,7 +346,7 @@ def main():
     if module.params["state"] == 'absent':
         result = record.remove_record()
     else:
-        result = record.create_or_update_record(module.params["state"])
+        result = record.create_or_update_record(module.params["state"], module.params["allow_duplicates"])
 
     result['dns_rc'] = record.dns_rc
     result['dns_rc_str'] = dns.rcode.to_text(record.dns_rc)
