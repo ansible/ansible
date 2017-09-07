@@ -34,7 +34,7 @@ description:
     - By default the module will wait for all allocations of a submited job to be in 'running' state unless specified otherwise (I(wait_for_completion=False)),
       the count is 0 or the type is 'batch'.
     - The module will fail if a job (all its allocations) does not enter the 'running' state within the specified I(timeout) (default 120 sec).
-version_added: "2.4"
+version_added: "2.5"
 author:
     - Sirk Johannsen (sirkjohannsen)
     - Moeen Mirjalili (momirjalili)
