@@ -20,7 +20,7 @@ all: docs
 
 docs: clean htmldocs
 
-generate_rst: testing keywords modules staticmin cli config
+generate_rst: testing keywords modules plugins staticmin cli config
 
 htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
@@ -73,6 +73,9 @@ ifdef MODULES
 else
 	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/
 endif
+
+plugins: $(FORMATTER) ../templates/plugin.rst.j2
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type plugins --template-dir=../templates --module-dir=../../lib/ansible/plugins -o rst/
 
 testing:
 	$(TESTING_FORMATTER)

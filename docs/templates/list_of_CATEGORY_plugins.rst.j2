@@ -9,7 +9,7 @@
 {% if category['_modules'] %}
 
 {% for module in category['_modules'] | sort %}
-  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} - @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%}{% if module_info[module]['doc']['short_description'] %} - @{ module_info[module]['doc']['short_description'] }@{% endif %} <@{ module }@_plugin>
 {% endfor %}
 {% endif %}
 

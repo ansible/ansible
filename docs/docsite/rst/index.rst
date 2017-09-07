@@ -33,6 +33,8 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    modules_by_category
    vault
    command_line_tools
+   plugins
+   plugins_by_category
    guides
    dev_guide/index
    tower

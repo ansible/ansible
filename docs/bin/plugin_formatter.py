@@ -247,6 +247,7 @@ def generate_parser():
 
     p.add_option("-A", "--ansible-version", action="store", dest="ansible_version", default="unknown", help="Ansible version number")
     p.add_option("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
+    p.add_option("-P", "--plugin-type", action="store", dest="plugin_type", default='modules', help="The type of plugin (plugins, modules)")
     p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
     p.add_option("-t", "--type", action='store', dest='type', choices=['rst'], default='rst', help="Document type")
     p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose")
@@ -258,7 +259,7 @@ def generate_parser():
     return p
 
 
-def jinja2_environment(template_dir, typ):
+def jinja2_environment(template_dir, typ, plugin_type):
 
     env = Environment(loader=FileSystemLoader(template_dir),
                       variable_start_string="@{",
@@ -273,10 +274,11 @@ def jinja2_environment(template_dir, typ):
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
         templates['plugin'] = env.get_template('plugin.rst.j2')
-        templates['category_list'] = env.get_template('modules_by_category.rst.j2')
-        templates['support_list'] = env.get_template('modules_by_support.rst.j2')
-        templates['list_of_CATEGORY_modules'] = env.get_template('list_of_CATEGORY_modules.rst.j2')
-        outputname = "%s_module.rst"
+        templates['category_list'] = env.get_template('%s_by_category.rst.j2' % plugin_type)
+        templates['support_list'] = env.get_template('%s_by_support.rst.j2' % plugin_type)
+        templates['list_of_CATEGORY_modules'] = env.get_template('list_of_CATEGORY_%s.rst.j2' % plugin_type)
+        # trim trailing s off of plugin_type
+        outputname = '%s_' + '%s.rst' % plugin_type[:-1]
     else:
         raise Exception("unknown module format type: %s" % typ)
 
@@ -296,23 +298,40 @@ def too_old(added):
     return added_float < TO_OLD_TO_BE_NOTABLE
 
 
-def process_modules(module_map, templates, outputname, output_dir, ansible_version):
+def process_modules(module_map, templates, outputname,
+                    output_dir, ansible_version, plugin_type):
     for module in module_map:
         print("rendering: %s" % module)
 
+        import pprint
+        pprint.pprint(module)
         fname = module_map[module]['path']
 
         # crash if module is missing documentation and not explicitly hidden from docs index
         if module_map[module]['doc'] is None:
-            sys.exit("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            print("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            _doc = {'module': module,
+                    'version_added': '2.4',
+                    'filename': fname}
+            module_map[module]['doc'] = _doc
+            # continue
 
         # Going to reference this heavily so make a short name to reference it by
         doc = module_map[module]['doc']
 
+        import pprint
+        # pprint.pprint(doc)
+
+        # add some defaults for plugins that dont have most of the info
+        doc['module'] = doc.get('module', module)
+        doc['version_added'] = doc.get('version_added', '')
+
+        doc['plugin_type'] = plugin_type
         if module_map[module]['deprecated'] and 'deprecated' not in doc:
-            sys.exit("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            print("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
 
         if 'version_added' not in doc:
+            pprint.pprint(doc)
             sys.exit("*** ERROR: missing version_added in: %s ***\n" % module)
 
         #
@@ -366,15 +385,19 @@ def process_modules(module_map, templates, outputname, output_dir, ansible_versi
         doc['docuri'] = doc['module'].replace('_', '-')
         doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
         doc['ansible_version'] = ansible_version
-        doc['plainexamples'] = module_map[module]['examples']  # plain text
+        if isinstance(module_map[module]['examples'], (str, unicode)):
+            doc['plainexamples'] = module_map[module]['examples']  # plain text
+        else:
+            doc['plainexamples'] = ''
         doc['metadata'] = module_map[module]['metadata']
 
+        pprint.pprint(module_map[module])
         if module_map[module]['returndocs']:
             try:
                 doc['returndocs'] = yaml.safe_load(module_map[module]['returndocs'])
             except:
                 print("could not load yaml: %s" % module_map[module]['returndocs'])
-                raise
+                doc['returndocs'] = None
         else:
             doc['returndocs'] = None
 
@@ -383,7 +406,8 @@ def process_modules(module_map, templates, outputname, output_dir, ansible_versi
         write_data(text, output_dir, outputname, module)
 
 
-def process_categories(mod_info, categories, templates, output_dir, output_name):
+def process_categories(mod_info, categories, templates,
+                       output_dir, output_name, plugin_type):
     for category in sorted(categories.keys()):
         module_map = categories[category]
         category_filename = output_name % category
@@ -400,6 +424,7 @@ def process_categories(mod_info, categories, templates, output_dir, output_name)
                          'category': module_map,
                          'subcategories': subcategories,
                          'module_info': mod_info,
+                         'plugin_type': plugin_type
                          }
 
         text = templates['list_of_CATEGORY_modules'].render(template_data)
@@ -452,6 +477,9 @@ These modules are currently shipped with Ansible, but will most likely be shippe
 
     # Separate the modules by support_level
     for module, info in mod_info.items():
+        if not info.get('metadata', None):
+            print('no metadata for %s' % module)
+            continue
         if info['metadata']['supported_by'] == 'core':
             supported_by['Ansible Core Team']['modules'].append(module)
         elif info['metadata']['supported_by'] == 'network':
@@ -492,7 +520,9 @@ def main():
     (options, args) = p.parse_args()
     validate_options(options)
 
-    templates, outputname = jinja2_environment(options.template_dir, options.type)
+    plugin_type = options.plugin_type
+    templates, outputname = jinja2_environment(options.template_dir, options.type,
+                                               plugin_type)
 
     # Convert passed-in limit_to_modules to None or list of modules.
     if options.limit_to_modules is not None:
@@ -503,20 +533,32 @@ def main():
 
     categories['all'] = {'_modules': mod_info.keys()}
 
+    import pprint
+    pprint.pprint(categories)
+    # pprint.pprint(dict(mod_info))
     # Transform the data
     if options.type == 'rst':
         for record in mod_info.values():
-            record['doc']['short_description'] = rst_ify(record['doc']['short_description'])
+            print('record\n')
+            pprint.pprint(record)
+            if record.get('doc', None):
+                record['doc']['short_description'] = rst_ify(record['doc']['short_description'])
 
     # Write master category list
     category_list_text = templates['category_list'].render(categories=sorted(categories.keys()))
-    write_data(category_list_text, options.output_dir, 'modules_by_category.rst')
+    category_index_name = '%s_by_category.rst' % plugin_type
+    write_data(category_list_text, options.output_dir, category_index_name)
 
     # Render all the individual module pages
-    process_modules(mod_info, templates, outputname, options.output_dir, options.ansible_version)
+    process_modules(mod_info, templates, outputname,
+                    options.output_dir, options.ansible_version, plugin_type)
 
     # Render all the categories for modules
-    process_categories(mod_info, categories, templates, options.output_dir, "list_of_%s_modules.rst")
+    category_list_name_template = 'list_of_%s_' + '%s.rst' % plugin_type
+                       # "list_of_%s_modules.rst")
+    print('ctlp: %s' % category_list_name_template)
+    process_categories(mod_info, categories, templates, options.output_dir,
+                       category_list_name_template, plugin_type)
 
     # Render all the categories for modules
     process_support_levels(mod_info, templates, options.output_dir)
