@@ -5,7 +5,7 @@ Ansible Vault
 
 New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
 
-To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
+To enable this feature, a command line tool - :ref:`ansible-vault` - is used to edit files, and a command line flag (:option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` or :option:`--vault-password-file <ansible-playbook --vault-password-file>`) is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
@@ -48,7 +48,7 @@ The default cipher is AES (which is shared-secret based).
 Editing Encrypted Files
 ```````````````````````
 
-To edit an encrypted file in place, use the :ref:`ansible-vault edit` command.
+To edit an encrypted file in place, use the :ref:`ansible-vault edit <ansible_vault_edit>` command.
 This command will decrypt the file to a temporary file and allow you to edit
 the file, saving it back when done and removing the temporary file:
 
@@ -78,7 +78,7 @@ Encrypting Unencrypted Files
 ````````````````````````````
 
 If you have existing files that you wish to encrypt, use
-the :ref:`ansible-vault encrypt` command.  This command can operate on multiple files at once:
+the :ref:`ansible-vault encrypt <ansible_vault_encrypt>` command.  This command can operate on multiple files at once:
 
 .. code-block:: bash
 
@@ -91,8 +91,8 @@ Decrypting Encrypted Files
 ``````````````````````````
 
 If you have existing files that you no longer want to keep encrypted, you can permanently decrypt
-them by running the :ref:`ansible-vault decrypt` command.  This command will save them unencrypted
-to the disk, so be sure you do not want :ref:`ansible-vault edit` instead:
+them by running the :ref:`ansible-vault decrypt <ansible_vault_decrypt>` command.  This command will save them unencrypted
+to the disk, so be sure you do not want :ref:`ansible-vault edit <ansible_vault_edit>` instead:
 
 .. code-block:: bash
 
@@ -106,7 +106,7 @@ Viewing Encrypted Files
 
 *Available since Ansible 1.8*
 
-If you want to view the contents of an encrypted file without editing it, you can use the :ref:`ansible-vault view` command:
+If you want to view the contents of an encrypted file without editing it, you can use the :ref:`ansible-vault view <ansible_vault_view>` command:
 
 .. code-block:: bash
 
@@ -118,10 +118,11 @@ If you want to view the contents of an encrypted file without editing it, you ca
 Use encrypt_string to create encrypted variables to embed in yaml
 `````````````````````````````````````````````````````````````````
 
-The :ref:`ansible-vault encrypt_string` command will encrypt and format a provided string into a format
+The :ref:`ansible-vault encrypt_string <ansible_vault_encrypt_string>` command will encrypt and format a provided string into a format
 that can be included in :ref:`ansible-playbook` YAML files.
 
 To encrypt a string provided as a cli arg:
+
 .. code-block:: bash
 
     ansible-vault encrypt_string --vault-id a_password_file 'foobar' --name 'the_secret'
@@ -224,7 +225,7 @@ Providing Vault Passwords
 `````````````````````````
 
 Since Ansible 2.4, the recommended way to provide a vault password from the cli is
-to use the :option:`--vault-id` cli option.
+to use the :option:`--vault-id <ansible-playbook --vault-id>` cli option.
 
 For example, to use a password store in the text file :file:`/path/to/my/vault-password-file`:
 
@@ -244,7 +245,7 @@ To get the password from a vault password executable script :file:`my-vault-pass
 
     ansible-playbook --vault-id my-vault-password.py
 
-The value for :option:`--vault-id` can specify the type of vault id (prompt, a file path, etc)
+The value for :option:`--vault-id <ansible-playbook --vault-id>` can specify the type of vault id (prompt, a file path, etc)
 and a label for the vault id ('dev', 'prod', 'cloud', etc)
 
 For example, to use a password file :file:`dev-password` for the vault-id 'dev':
@@ -261,20 +262,20 @@ To prompt for the 'dev' vault id:
 
 *Prior to Ansible 2.4*
 
-To be prompted for a vault password, use the :option:`--ask-vault-pass` cli option:
+To be prompted for a vault password, use the :option:`--ask-vault-pass <ansible-playbook --vault-id>` cli option:
 
 .. code-block:: bash
 
     ansible-playbook --ask-vault-pass site.yml
 
-To specify a vault password in a text file 'dev-password', use the :option:`--vault-password-file` option:
+To specify a vault password in a text file 'dev-password', use the :option:`--vault-password-file <ansible-playbook --vault-password-file>` option:
 
 .. code-block:: bash
 
     ansible-playbook --vault-password-file dev-password site.yml
 
 There is a config option (:ref:`DEFAULT_VAULT_PASSWORD_FILE`) to specify a vault password file to use
-without requiring the :option:`--vault-password-file` cli option.
+without requiring the :option:`--vault-password-file <ansible-playbook --vault-password-file>` cli option.
 
 via config
   :ref:`ANSIBLE_VAULT_PASSWORD_FILE`
@@ -287,7 +288,7 @@ via env
 Multiple vault passwords
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since Ansible 2.4 and later support using multiple vault passwords, :option:`--vault-id` can
+Since Ansible 2.4 and later support using multiple vault passwords, :option:`--vault-id <ansible-playbook --vault-id>` can
 be provided multiple times.
 
 If multiple vault passwords are provided, by default Ansible will attempt to decrypt vault content
@@ -302,7 +303,7 @@ For example, to use a 'dev' password read from a file and to be prompted for the
 In the above case, the 'dev' password will be tried first, then the 'prod' password for cases
 where Ansible doesn't know which vault id is used to encrypt something.
 
-If the vault content was encrypted using a :option:`--vault-id` option, then the label of the
+If the vault content was encrypted using a :option:`--vault-id <ansible-vault --vault-id>` option, then the label of the
 vault id is stored with the vault content. When Ansible knows the right vault-id, it will try
 the matching vault id's secret first before trying the rest of the vault-ids.
 
@@ -317,17 +318,17 @@ use. For example, instead of requiring the cli option on every use, the (:ref:`D
 
     ansible-playbook --vault-id dev@dev-password --vault-id prod@prompt site.yml
 
-The :option:`--vault-id` can be used in lieu of the :option:`--vault-password-file` or :option:`--ask-vault-pass` options,
+The :option:`--vault-id <ansible-playbook --vault-id>` can be used in lieu of the :option:`--vault-password-file <ansible-playbook --vault-password-file>` or :option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` options,
 or it can be used in combination with them.
 
-When using :ref:`ansible-vault` command that encrypt content (:ref:`ansible-vault encrypt`, :ref:`ansible-vault encrypt_string`, etc)
+When using :ref:`ansible-vault` commands that encrypt content (:ref:`ansible-vault encrypt <ansible_vault_encrypt>`, :ref:`ansible-vault encrypt_string <ansible_vault_encrypt_string>`, etc)
 only one vault-id can be used.
 
 
 
 .. note::
     Prior to Ansible 2.4, only one vault password could be used in each Ansible run. The
-    :option:`--vault-id` option is not support prior to Ansible 2.4.
+    :option:`--vault-id <ansible-playbook --vault-id>` option is not support prior to Ansible 2.4.
 
 
 .. _speeding_up_vault:
