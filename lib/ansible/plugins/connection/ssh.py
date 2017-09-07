@@ -199,6 +199,12 @@ def _ssh_retry(func):
         remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
         cmd_summary = "%s..." % args[0]
         for attempt in range(remaining_tries):
+            cmd = args[0]
+            if attempt != 0 and self._play_context.password and isinstance(cmd, list):
+                # If this is a retry, the fd/pipe for sshpass is closed, and we need a new one
+                self.sshpass_pipe = os.pipe()
+                cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
+
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
