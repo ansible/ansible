@@ -33,7 +33,7 @@ from ansible.plugins.connection import ConnectionBase
 # from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
 from ansible.plugins.connection.lxc import Connection as LxcConnection
 from ansible.plugins.connection.local import Connection as LocalConnection
-from ansible.plugins.connection.paramiko import Connection as ParamikoConnection
+from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnection
 from ansible.plugins.connection.ssh import Connection as SSHConnection
 from ansible.plugins.connection.docker import Connection as DockerConnection
 # from ansible.plugins.connection.winrm import Connection as WinRmConnection
