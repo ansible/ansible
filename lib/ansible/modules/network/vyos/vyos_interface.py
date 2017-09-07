@@ -57,6 +57,17 @@ options:
       - Interface link status.
     default: auto
     choices: ['full', 'half', 'auto']
+  neighbors:
+    description:
+      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which given interface C(name) is connected."
   aggregate:
     description: List of Interfaces definitions.
   state:
@@ -115,6 +126,19 @@ EXAMPLES = """
       - name: eth1
       - name: eth2
     state: absent
+
+- name: Check lldp neighbors intent arguments
+  vyos_interface:
+    name: eth0
+    neighbors:
+    - port: eth0
+      host: netdev
+
+- name: Config + intent
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: down
 """
 
 RETURN = """
@@ -256,7 +280,8 @@ def map_params_to_obj(module):
             'mtu': module.params['mtu'],
             'duplex': module.params['duplex'],
             'delay': module.params['delay'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'neighbors': module.params['neighbors']
         }
 
         if module.params['enabled']:
@@ -270,12 +295,14 @@ def map_params_to_obj(module):
 
 def check_declarative_intent_params(module, want, result):
     failed_conditions = []
-
+    have_neighbors = None
     for w in want:
         want_state = w.get('state')
         want_tx_rate = w.get('tx_rate')
         want_rx_rate = w.get('rx_rate')
-        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+        want_neighbors = w.get('neighbors')
+
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate and not want_neighbors:
             continue
 
         if result['changed']:
@@ -294,12 +321,43 @@ def check_declarative_intent_params(module, want, result):
             if have_state is None or not conditional(want_state, have_state.strip().lower()):
                 failed_conditions.append('state ' + 'eq(%s)' % want_state)
 
+        if want_neighbors:
+            have_host = []
+            have_port = []
+            if have_neighbors is None:
+                rc, have_neighbors, err = exec_command(module, 'show lldp neighbors detail')
+                if rc != 0:
+                    module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+            if have_neighbors:
+                lines = have_neighbors.strip().split('Interface: ')
+                for line in lines:
+                    field = line.split('\n')
+                    if field[0].split(',')[0].strip() == w['name']:
+                        for item in field:
+                            if item.strip().startswith('SysName:'):
+                                have_host.append(item.split(':')[1].strip())
+                            if item.strip().startswith('PortDescr:'):
+                                have_port.append(item.split(':')[1].strip())
+            for item in want_neighbors:
+                host = item.get('host')
+                port = item.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
+
     return failed_conditions
 
 
 def main():
     """ main entry point for module execution
     """
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
     element_spec = dict(
         name=dict(),
         description=dict(),
@@ -307,6 +365,7 @@ def main():
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
         enabled=dict(default=True, type='bool'),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
