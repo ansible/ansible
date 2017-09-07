@@ -199,9 +199,10 @@ from email.utils import parseaddr, formataddr
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.header import Header
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -310,14 +311,16 @@ def main():
             module.fail_json(rc=1, msg="No Authentication on the server at %s:%s" % (host, port))
 
     msg = MIMEMultipart()
-    msg['Subject'] = to_text(subject, charset)
-    msg['From'] = formataddr((sender_phrase, sender_addr))
+    msg['Subject'] = Header(subject, charset)
+    msg['From'] = Header(formataddr((sender_phrase, sender_addr)), charset)
     msg.preamble = "Multipart message"
+    msg.set_charset(charset)
 
     if headers is not None:
         for hdr in [x.strip() for x in headers.split('|')]:
             try:
                 h_key, h_val = hdr.split('=')
+                h_val = to_native(Header(h_val, charset))
                 msg.add_header(h_key, h_val)
             except:
                 pass
