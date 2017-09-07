@@ -199,7 +199,7 @@ EXAMPLES = '''
 
 RETURN = """
 instance:
-    description: metadata about the new virtualmachine
+    description: metadata about the new virtual machine
     returned: always
     type: dict
     sample: None
@@ -215,7 +215,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, HAS_PYVMOMI, list_snapshots, vmware_argument_spec
+from ansible.module_utils.vmware import (connect_to_api, find_vm_by_id, get_snapshots_by_name_recursively,
+                                         HAS_PYVMOMI, list_snapshots, vmware_argument_spec)
 
 
 class PyVmomiHelper(object):
@@ -245,15 +246,6 @@ class PyVmomiHelper(object):
         # https://github.com/virtdevninja/pyvmomi-community-samples/blob/master/samples/tools/tasks.py
         while task.info.state not in ['success', 'error']:
             time.sleep(1)
-
-    def get_snapshots_by_name_recursively(self, snapshots, snapname):
-        snap_obj = []
-        for snapshot in snapshots:
-            if snapshot.name == snapname:
-                snap_obj.append(snapshot)
-            else:
-                snap_obj = snap_obj + self.get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapname)
-        return snap_obj
 
     def snapshot_vm(self, vm):
         memory_dump = False
@@ -308,8 +300,9 @@ class PyVmomiHelper(object):
             self.module.exit_json(msg="VM - %s doesn't have any snapshots" %
                                   self.module.params.get('uuid') or self.module.params.get('name'))
 
-        snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
-                                                          self.module.params["snapshot_name"])
+        snap_obj = get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
+                                                     self.module.params["snapshot_name"])
+
         task = None
         if len(snap_obj) == 1:
             snap_obj = snap_obj[0].snapshot
