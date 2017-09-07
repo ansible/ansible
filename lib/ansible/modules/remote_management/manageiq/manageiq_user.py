@@ -68,6 +68,13 @@ options:
       - The users' E-mail address.
     required: false
     default: null
+  update_password:
+    required: false
+    default: always
+    choices: ['always', 'on_create']
+    description:
+      - C(always) will update passwords unconditionally.  C(on_create) will only set the password for a newly created user.
+    version_added: '2.5'
 '''
 
 EXAMPLES = '''
@@ -183,7 +190,7 @@ class ManageIQUser(object):
         """
         found_difference = (
             (name and user['name'] != name) or
-            (password is not None) or
+            (password is not None and self.module.params['update_password'] == 'always') or
             (email and user['email'] != email) or
             (group_id and user['group']['id'] != group_id)
         )
@@ -280,7 +287,9 @@ def main():
             password=dict(no_log=True),
             group=dict(),
             email=dict(),
-            state=dict(choices=['absent', 'present'], default='present')
+            state=dict(choices=['absent', 'present'], default='present'),
+            update_password=dict(choices=['always', 'on_create'],
+                                 default='always')
         ),
     )
 
