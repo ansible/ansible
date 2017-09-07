@@ -31,7 +31,7 @@
 #           labels - list of GitHub labels to apply
 #
 
-automerge: False
+automerge: True
 files:
   .github/BOTMETA.yml:
     labels:
