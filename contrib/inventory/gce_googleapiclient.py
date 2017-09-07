@@ -332,7 +332,7 @@ def main(args):
               file=stderr)
         exit(1)
 
-    if num_threads < 2:
+    if num_threads < 1:
         num_threads = 1
 
     pool_workers = mp.Pool(num_threads, signal_handler)
