@@ -291,7 +291,7 @@ Or, alternatively::
     - name: "Display all server names from cluster1"
       debug:
         var: item
-      with_items: "{{domain_definition|json_query('domain.server[?cluster=`cluster`].port')}}"
+      with_items: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
 
