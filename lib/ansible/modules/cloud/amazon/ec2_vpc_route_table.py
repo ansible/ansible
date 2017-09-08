@@ -334,6 +334,11 @@ def route_spec_matches_route(route_spec, route):
     return True
 
 
+def route_spec_matches_route_cidr(route_spec, route):
+    cidr_attr = 'destination_cidr_block'
+    return route_spec[cidr_attr] == getattr(route, cidr_attr)
+
+
 def rename_key(d, old_key, new_key):
     d[new_key] = d[old_key]
     del d[old_key]
@@ -343,16 +348,21 @@ def index_of_matching_route(route_spec, routes_to_match):
     for i, route in enumerate(routes_to_match):
         if route_spec_matches_route(route_spec, route):
             return i
+        elif route_spec_matches_route_cidr(route_spec, route):
+            return "replace"
 
 
 def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
                   check_mode, purge_routes):
     routes_to_match = list(route_table.routes)
     route_specs_to_create = []
+    route_specs_to_recreate = []
     for route_spec in route_specs:
         i = index_of_matching_route(route_spec, routes_to_match)
         if i is None:
             route_specs_to_create.append(route_spec)
+        elif i == "replace":
+            route_specs_to_recreate.append(route_spec)
         else:
             del routes_to_match[i]
 
@@ -372,7 +382,7 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
             else:
                 routes_to_delete.append(r)
 
-    changed = bool(routes_to_delete or route_specs_to_create)
+    changed = bool(routes_to_delete or route_specs_to_create or route_specs_to_recreate)
     if changed:
         for route in routes_to_delete:
             try:
@@ -391,6 +401,11 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
             except EC2ResponseError as e:
                 if e.error_code == 'DryRunOperation':
                     pass
+
+        for route_spec in route_specs_to_recreate:
+            if not check_mode:
+                vpc_conn.replace_route(route_table.id,
+                                       **route_spec)
 
     return {'changed': bool(changed)}
 
