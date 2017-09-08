@@ -31,19 +31,19 @@ precedence, least to higher):
 
 Usage:
     gce_googleapiclient.py [--project=PROJECT]... [--zone=ZONE]...
-        [--api-version=API_VERSION] [--billing-account=ACCOUNT_NAME]
-        [--config=CONFIG_FILE] [--num-threads=NUM_THREADS]
+        [--billing-account=ACCOUNT_NAME] [--config=CONFIG_FILE]
+        [--num-threads=NUM_THREADS] [--timeout=TIMEOUT]
         [options]
 
 Arguments:
-    -a API_VERSION --api-version=API_VERSION    The API version used to connect to GCE [default: v1]
-    -b ACCOUNT_NAME --billing-account=ACCOUNT_NAME The billing account associated with the projects you want to get
+    -b ACCOUNT_NAME --billing-account=ACCOUNT_NAME  The billing account associated with the projects you want to get
                                                 information. It is only needed to get the list of the projects
                                                 (when --project parameter isn' set)
     -c CONFIG_FILE --config=CONFIG_FILE         Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
     -p PROJECT --project PROJECT                Google Cloud projects to search for instances
     -t NUM_THREADS --num-threads=NUM_THREADS    Enable multi-threading, set it to NUM_THREADS [default: 4]
     -z ZONE --zone ZONE                         Google Cloud zones to search for instances
+    --timeout TIMEOUT                           Length of timeout in seconds for worker threads [default: 3600]
 
 Options:
     -d --debug                                  Set debugging level to DEBUG on log file
@@ -81,8 +81,10 @@ from sys import version_info, stderr
 import collections
 import json
 import logging as log
+import multiprocessing as mp
+import signal
 
-import threading
+from Crypto import Random
 
 if version_info < (3, 0):
     import Queue as queue
@@ -94,106 +96,83 @@ from docoptcfg import DocoptcfgFileError
 from docoptcfg import docoptcfg
 
 from googleapiclient import discovery
-
 from googleapiclient.errors import HttpError
 
 from oauth2client.client import GoogleCredentials
 
 
 ENV_PREFIX = 'GCE_'
-DEFAULT_API_VERSION = 'v1'
+API_VERSION = 'v1'
 
 
-def get_all_billing_projects(billing_account_name, api_version=DEFAULT_API_VERSION):
+class GCloudAPI(object):
+    """
+    Class for handling the access to Google Cloud API.
+    """
+    def __init__(self, api_version=API_VERSION):
+        # type: (str) -> None
+        """
+        Initialize Google Cloud API wrapper.
+
+        :param str api_version: api version used to connect
+        """
+
+        self.credentials = GoogleCredentials.get_application_default()
+        self.api_version = api_version
+        self.services = {}  # type: Dict[str, Any]
+
+        for service_type in ['compute', 'cloudbilling']:
+            self.get_service(service_type)
+
+    def get_service(self, service_name):
+        # type: (str) -> Any
+        """
+        Get service object; initialize if not initialized yet.
+
+        :param str service_name: name of the service object to get
+        """
+
+        if service_name not in self.services:
+            self.services[service_name] = discovery.build(serviceName=service_name,
+                                                          version=self.api_version,
+                                                          credentials=self.credentials)
+
+        return self.services[service_name]
+
+
+GCAPI = GCloudAPI()
+
+
+def signal_handler():  # pragma: no cover
+    # type: () -> None
+    """Signal handler for all worker processes, allowing clean CTRL-C"""
+
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGHUP, signal.SIG_IGN)
+    # when forking using multiprocessing, this is required to re-init random seed
+    Random.atfork()  # type: ignore
+
+
+def get_all_billing_projects(billing_account_name):
     project_ids = []
 
-    credentials = GoogleCredentials.get_application_default()
-
-    service = discovery.build('cloudbilling',
-                              version=api_version,
-                              credentials=credentials)
     # pylint: disable=no-member
-    request = service.billingAccounts().projects(). \
-        list(name=billing_account_name)
+    service = GCAPI.get_service('cloudbilling')
+
+    request = service.billingAccounts().projects().list(name=billing_account_name)
 
     while request is not None:
         response = request.execute()
 
         # pylint: disable=no-member
-        request = service.billingAccounts().projects(). \
-            list_next(previous_request=request, previous_response=response)
+        request = service.billingAccounts().projects().list_next(previous_request=request,
+                                                                 previous_response=response)
 
         for project_billing_info in response['projectBillingInfo']:
             if project_billing_info['billingEnabled']:
                 project_ids.append(project_billing_info['projectId'])
 
     return project_ids
-
-
-def get_all_zones_in_project(projects_queue_in,
-                             projects_zones_queue_out,
-                             api_version=DEFAULT_API_VERSION):
-
-    try:
-        while not projects_queue_in.empty():
-            project = projects_queue_in.get(block=False)
-            log.info('Retrieving list of zones of project: %s', project)
-
-            try:
-                credentials = GoogleCredentials.get_application_default()
-                service = discovery.build('compute', api_version, credentials=credentials)
-
-                request = service.zones().list(project=project)
-
-                while request is not None:
-                    response = request.execute()
-
-                    for zone in response['items']:
-                        projects_zones_queue_out.put((project, zone['name']))
-
-                    request = service.zones().list_next(previous_request=request,
-                                                        previous_response=response)
-
-            except HttpError as exception:
-                log.warn('Could not retrieve list of zones on project: %s', project)
-                log.warn(exception)
-
-    except queue.Empty:
-        pass
-
-
-def get_instances(projects_zones_queue_in, instances_queue_out, api_version=DEFAULT_API_VERSION):
-    try:
-        while not projects_zones_queue_in.empty():
-            project, zone = projects_zones_queue_in.get(block=False)
-            log.info('Retrieving list of instances from project/zone: %s/%s', project, zone)
-            try:
-
-                credentials = GoogleCredentials.get_application_default()
-                service = discovery.build('compute', api_version, credentials=credentials)
-
-                # pylint: disable=no-member
-                request = service.instances().list(project=project, zone=zone)
-
-                while request is not None:
-                    response = request.execute()
-
-                    if 'items' in response:
-                        for instance in response['items']:
-                            instances_queue_out.put(instance)
-
-                    # pylint: disable=no-member
-                    request = service.instances().list_next(previous_request=request,
-                                                            previous_response=response)
-
-            except HttpError as exception:
-                log.warn('Could not retrieve list of instances of project/zone: %s/%s',
-                         project,
-                         zone)
-                log.warn(str(exception))
-
-    except queue.Empty:
-        pass
 
 
 def get_hostvars(instance):
@@ -248,14 +227,12 @@ def get_inventory(instances):
 
     for instance in instances:
         if instance['status'] in ['RUNNING', 'STAGING']:
-            inventory['_meta']['hostvars'][instance['name']] \
-                = get_hostvars(instance)
+            inventory['_meta']['hostvars'][instance['name']] = get_hostvars(instance)
 
             # populate the 'all' group with all hosts found
             inventory['all'].append(instance['name'])
 
-            # create a group for every tag prefixed by 'tag_' and populate
-            # accordingly
+            # create a group for every tag prefixed by 'tag_' and populate accordingly
             for tag in instance['tags'].get('items', []):
                 inventory['tag_{}'.format(tag)].append(instance['name'])
 
@@ -278,18 +255,75 @@ def get_inventory(instances):
     return inventory
 
 
+def get_project_zone_list(project):
+    # type: (str) -> Tuple[str, List[str]]
+    """Get list of all zones for particular project (Worker process)"""
+
+    project = project
+    zones = []
+    log.info('Retrieving list of zones of project: %s', project)
+
+    service = GCAPI.get_service('compute')
+
+    try:
+        request = service.zones().list(project=project)
+
+        while request is not None:
+            response = request.execute()
+
+            for zone in response['items']:
+                zones.append(zone['name'])
+
+            request = service.zones().list_next(previous_request=request,
+                                                previous_response=response)
+
+    except HttpError as exception:
+        log.warn('Could not retrieve list of zones on project: %s', project)
+        log.warn(exception)
+
+    return project, zones
+
+
+def get_project_zone_instances(project_zone):
+    # type: (Tuple[str, str]) -> List[str]
+    """Get list of all instances for particular project/zone (Worker process)"""
+
+    project, zone = project_zone
+    instance_list = []
+
+    service = GCAPI.get_service('compute')
+
+    try:
+        # pylint: disable=no-member
+        request = service.instances().list(project=project, zone=zone)
+
+        while request is not None:
+            response = request.execute()
+            instance_list.extend(response.get('items', []))
+
+            # pylint: disable=no-member
+            request = service.instances().list_next(previous_request=request,
+                                                    previous_response=response)
+
+    except HttpError as exception:
+        log.warn('Could not retrieve list of instances of project/zone: %s/%s',
+                 project,
+                 zone)
+        log.warn(str(exception))
+
+    return instance_list
+
+
 def main(args):
 
-    if args['--debug']:
-        log.basicConfig(filename='gce_googleapiclient.log', level=log.DEBUG)
-    else:
+    if not args['--debug']:
         log.basicConfig(level=log.ERROR)
 
     project_list = args['--project']
     zone_list = args['--zone']
-    api_version = args['--api-version']
     billing_account_name = args['--billing-account']
     num_threads = int(args['--num-threads'])
+    timeout = int(args['--timeout'])
 
     if not project_list and not billing_account_name:
         print("ERROR: You didn't specified any project (parameter: --project) which means you want"
@@ -301,56 +335,32 @@ def main(args):
     if num_threads < 1:
         num_threads = 1
 
+    pool_workers = mp.Pool(num_threads, signal_handler)
+
     if not project_list:
         project_list = get_all_billing_projects(billing_account_name)
 
-    instances = []
-    projects_queue = queue.Queue()
-    projects_zones_queue = queue.Queue()
-    instances_queue = queue.Queue()
+    if zone_list:
+        project_zone_list = [
+            (project, zone)
+            for project in project_list
+            for zone in zone_list
+        ]
+    else:
+        project_zone_list = [
+            (project_name, zone)
+            for project_name, zone_list in pool_workers.map_async(get_project_zone_list,
+                                                                  project_list).get(timeout)
+            for zone in zone_list
+        ]
 
-    for project in project_list:
-        projects_queue.put(project)
+    instance_list = []
 
-    if not projects_queue.empty():
-        log.info('Spawning {} threads to get zone list on each project'.format(num_threads))
-        threads = []
+    for zone_instances in pool_workers.map_async(get_project_zone_instances,
+                                                 project_zone_list).get(timeout):
+        instance_list.extend(zone_instances)
 
-        if not zone_list:
-            for _ in range(0, num_threads):
-                project_thread = threading.Thread(target=get_all_zones_in_project,
-                                                  args=(projects_queue,
-                                                        projects_zones_queue,
-                                                        api_version))
-
-                threads.append(project_thread)
-                project_thread.start()
-
-            for project_thread in threads:
-                project_thread.join()
-        else:
-            while not projects_queue.empty():
-                project = projects_queue.get()
-                for zone in zone_list:
-                    projects_zones_queue.put((project, zone))
-
-    if not projects_zones_queue.empty():
-        threads = []
-        for _ in range(0, num_threads):
-            zone_thread = threading.Thread(target=get_instances,
-                                           args=(projects_zones_queue,
-                                                 instances_queue,
-                                                 api_version))
-            threads.append(zone_thread)
-            zone_thread.start()
-
-        for zone_thread in threads:
-            zone_thread.join()
-
-        while not instances_queue.empty():
-            instances.append(instances_queue.get())
-
-    inventory_json = get_inventory(instances)
+    inventory_json = get_inventory(instance_list)
     print(json.dumps(inventory_json,
                      sort_keys=True,
                      indent=2))
