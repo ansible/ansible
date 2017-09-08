@@ -509,7 +509,7 @@ def authorize_ip(type, changed, client, group, groupRules,
                             found_actual_ip = re.search(r"(?<!\d\.)(?<!\d)(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}(?!\d|(?:\.\d))", e.response['Error']['Message'])
                             if not found_actual_ip:
 
-                                # If an IPv4 CIDR isn't found so check for IPv6; This is an unfortunate regex, so I factored out the common variables because
+                                # If an IPv4 CIDR isn't found check for IPv6. This is an unfortunate regex, so I factored out the common variables because
                                 # this pattern was easier for me to read.
                                 _x = "[0-9A-Fa-f]{1,4}"
                                 _y = "(25[0-5]|2[0-4]d|1dd|[1-9]?d)"
