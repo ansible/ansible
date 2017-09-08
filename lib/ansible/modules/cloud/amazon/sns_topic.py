@@ -280,7 +280,7 @@ class SnsTopicManager(object):
         for (protocol, endpoint) in desired_subscriptions:
             if (protocol, endpoint) not in subscriptions_existing_list:
                 self.changed = True
-                self.subscriptions_added.append(sub)
+                self.subscriptions_added.append((protocol, endpoint))
                 if not self.check_mode:
                     self.connection.subscribe(self.arn_topic, protocol, endpoint)
 
