@@ -290,6 +290,7 @@ def create_instance_template(module, gce):
     external_ip = module.params.get('external_ip')
     service_account_permissions = module.params.get(
         'service_account_permissions')
+    service_account_email = module.params.get('service_account_email')
     on_host_maintenance = module.params.get('on_host_maintenance')
     automatic_restart = module.params.get('automatic_restart')
     preemptible = module.params.get('preemptible')
