@@ -33,7 +33,7 @@ options:
         choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              Launchd does not support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
+              Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
     enabled:
         required: false
         type: boolean
@@ -102,18 +102,19 @@ from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_is_enabled, get_sysv_script, sysv_exists, fail_if_missing, get_ps, daemonize
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, type='str', aliases=['service']),
-            state = dict(choices=[ 'started', 'stopped', 'restarted', 'reloaded'], type='str'),
-            enabled = dict(type='bool'),
-            sleep = dict(type='int', default=1),
-            pattern = dict(type='str' ),
-            arguments = dict(type='str' ),
-            runlevels = dict(type='list' ),
-            daemonize = dict(type='bool', default=False ),
+        argument_spec=dict(
+            name=dict(required=True, type='str', aliases=['service']),
+            state=dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
+            enabled=dict(type='bool'),
+            sleep=dict(type='int', default=1),
+            pattern=dict(type='str'),
+            arguments=dict(type='str'),
+            runlevels=dict(type='list'),
+            daemonize=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
@@ -136,9 +137,9 @@ def main():
     script = get_sysv_script(service)
 
     # locate binaries for service management
-    paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-    binaries = [ 'chkconfig', ' update-rc.d', 'insserv', 'service' ]
-    initpaths = [ '/etc/init.d' ]
+    paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
+    binaries = ['chkconfig', ' update-rc.d', 'insserv', 'service']
+    initpaths = ['/etc/init.d']
 
     for binary in binaries:
         location[binary] = module.get_bin_path(binary, opt_dirs=paths)
@@ -148,11 +149,11 @@ def main():
     if location.get('chkconfig'):
         (rc, out, err) = module.run_command("%s --list %s" % (location['chkconfig'], name))
         is_enabled = 'chkconfig --add %s' % name not in err
-    #elif enable_cmd.endswith('update-rc.d'):
+    # elif enable_cmd.endswith('update-rc.d'):
     #    (rc, out, err) = module.run_command("%s -n %s disable" % (enable_cmd, name))
-    #elif enable_cmd.endswith('insserv'):
+    # elif enable_cmd.endswith('insserv'):
     #    (rc, out, err) = module.run_command("%s -rn %s" % (enable_cmd, name))
-    #elif enable_cmd.endswith('service'):
+    # elif enable_cmd.endswith('service'):
     #    pass
     else:
         # just check links ourselves
@@ -187,7 +188,7 @@ def main():
 
                 cleanout = out.lower().replace(name.lower(), '')
 
-                for stopped in [ 'stop', 'is dead ', 'dead but ', 'could not access pid file', 'inactive']:
+                for stopped in ['stop', 'is dead ', 'dead but ', 'could not access pid file', 'inactive']:
                     if stopped in cleanout:
                         worked = True
                         break
@@ -218,7 +219,6 @@ def main():
     if not worked:
         module.warn("Unable to determine if service is up, assuming it is down")
 
-
     # Enable/Disable
     if enabled != is_enabled:
         result['changed'] = True
@@ -227,7 +227,7 @@ def main():
 
     # Process action if needed
     if action:
-        action = action.lower().replace('p?ed$','')
+        action = action.lower().replace('p?ed$', '')
 
         def runme(doit):
 
@@ -237,7 +237,7 @@ def main():
                 rc, out, err = daemonize(cmd)
             else:
                 rc, out, err = self.run_command(cmd)
-            #FIXME: ERRORS
+            # FIXME: ERRORS
 
         if action == 'restart':
             result['changed'] = True
@@ -254,7 +254,8 @@ def main():
             if not module.check_mode:
                 rc, out, err = runme(action)
 
-
     module.exit_json(result)
+
+
 if __name__ == 'main':
     main()

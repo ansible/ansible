@@ -78,7 +78,22 @@ def get_ps(module, pattern):
     '''
     Last resort to find a service by trying to match pattern to programs in memory
     '''
-    return None
+    found = False
+    if platform.system() == 'SunOS':
+        flags = '-ef'
+    else:
+        flags = 'auxww'
+    psbin = module.get_bin_path('ps', True)
+
+    (rc, psout, pserr) = module.run_command([psbin, flags])
+    if rc == 0:
+        for line in psout.splitlines():
+            if pattern in line:
+                # FIXME: should add logic to prevent matching 'self', though that should be extreemly rare
+                found = True
+                break
+    return found
+
 
 def fail_if_missing(module, found, service, msg=''):
     '''
