@@ -188,13 +188,24 @@ class Npm(object):
         installed = list()
         missing = list()
         data = json.loads(self._exec(cmd, True, False))
+        # "problems" syntax lifted from here:
+        # https://github.com/npm/npm/blob/b7bccb5086f7393ae23d4ab228a77634d09da3a9/lib/ls.js
+        # package name regex lifted from here:
+        # https://github.com/npm/normalize-package-data/blob/6ba494919aa5f8aa7bb2881a136eefbd04b9d141/lib/fixer.js#L325-L328
+        # (+ whitespace to emulate the URI encoding part, poorly)
+        if 'problems' in data:
+            prob_re = re.compile(r'^((peer dep )?missing|invalid): (?P<dep>[^\/@\s\+%: ]+)')
+            for prob in data['problems']:
+                match = prob_re.match(prob)
+                if match is not None:
+                    missing.append(match.group('dep'))
         if 'dependencies' in data:
             for dep in data['dependencies']:
                 if 'missing' in data['dependencies'][dep] and data['dependencies'][dep]['missing']:
                     missing.append(dep)
                 elif 'invalid' in data['dependencies'][dep] and data['dependencies'][dep]['invalid']:
                     missing.append(dep)
-                else:
+                elif dep not in missing:
                     installed.append(dep)
             if self.name and self.name not in installed:
                 missing.append(self.name)
