@@ -374,7 +374,7 @@ def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
     # git_ssh_command will override git_ssh, so only older git needs it
     os.environ["GIT_SSH"] = ssh_wrapper
     # using shell to avoid 'noexec' issues if module temp dir is located in such a mount
-    os.environ["GIT_SSH_COMMAND"] = ' '.join([os.environ.get('SHELL', '/bin/sh'), ssh_wrapper])
+    os.environ["GIT_SSH_COMMAND"] = '%s %s' % (os.environ.get('SHELL', '/bin/sh'), ssh_wrapper)
 
     if os.environ.get("GIT_KEY"):
         del os.environ["GIT_KEY"]
