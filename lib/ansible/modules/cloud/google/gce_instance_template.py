@@ -369,7 +369,10 @@ def create_instance_template(module, gce):
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))
-        ex_sa_perms.append({'email': "default"})
+        if service_account_email is not None:
+            ex_sa_perms.append({'email': str(service_account_email)})
+        else:
+            ex_sa_perms.append({'email': "default"})
         ex_sa_perms[0]['scopes'] = service_account_permissions
     gce_args['service_accounts'] = ex_sa_perms
 
