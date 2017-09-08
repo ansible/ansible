@@ -183,7 +183,7 @@ options:
       - "This specifies a source address to use with SNAT: without
         this, the source address is never altered."
   syn:
-    version_added: "2.4"
+    version_added: "2.5"
     description:
       - "This allows matching packets that have the SYN bit set and the ACK
         and RST bits unset. When negated, this matches all packets with
