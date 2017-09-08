@@ -43,10 +43,6 @@ DOCUMENTATION:
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import constants as C
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 import os
 import time
 import re
