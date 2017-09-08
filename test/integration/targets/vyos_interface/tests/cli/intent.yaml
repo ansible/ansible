@@ -1,6 +1,12 @@
 ---
 - debug: msg="START vyos_interface cli/intent.yaml"
 
+- name: Run vyos lsmod command
+  vyos_command:
+    commands:
+      - lsmod
+  register: lsmod_out
+
 - name: Setup (interface is up)
   vyos_interface:
     name: eth1
@@ -20,6 +26,20 @@
     that:
       - "result.failed == false"
 
+- name: Check lldp neighbors intent arguments
+  vyos_interface:
+    name: eth0
+    neighbors:
+    - port: eth0
+    provider: "{{ cli }}"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+
 - name: Check intent arguments (failed condition)
   vyos_interface:
     name: eth1
@@ -32,6 +52,24 @@
     that:
       - "result.failed == true"
       - "'state eq(down)' in result.failed_conditions"
+
+- name: Check lldp neighbors intent arguments (failed)
+  vyos_interface:
+    name: eth0
+    neighbors:
+    - port: dummy_port
+      host: dummy_host
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'host dummy_host' in result.failed_conditions"
+      - "'port dummy_port' in result.failed_conditions"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
 
 - name: Config + intent
   vyos_interface:
@@ -72,3 +110,38 @@
 - assert:
     that:
       - "result.failed == false"
+
+- name: Check lldp neighbors intent aggregate arguments
+  vyos_interface:
+    aggregate:
+    - name: eth0
+      neighbors:
+      - port: eth0
+    provider: "{{ cli }}"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+
+- name: Check lldp neighbors intent aggregate arguments (failed)
+  vyos_interface:
+    aggregate:
+    - name: eth0
+      neighbors:
+      - port: eth0
+      - port: dummy_port
+        host: dummy_host
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'host dummy_host' in result.failed_conditions"
+      - "'port dummy_port' in result.failed_conditions"
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
