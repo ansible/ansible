@@ -24,7 +24,7 @@ DEFAULT_PORTS = {
 
 DB_ENGINES = [
     'MySQL',
-    'aurora'
+    'aurora',
     'mariadb',
     'oracle-ee',
     'oracle-se',
