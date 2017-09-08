@@ -1,8 +1,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-'''
-DOCUMENTATION:
+DOCUMENTATION = '''
     inventory: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
@@ -19,8 +20,9 @@ DOCUMENTATION:
     notes:
         - It takes the place of the previously hardcoded INI inventory.
         - To function it requires being whitelisted in configuration.
+'''
 
-EXAMPLES:
+EXAMPLES = '''
   example1: |
       # example cfg file
       [web]
@@ -63,8 +65,6 @@ EXAMPLES:
       host4 # same host as above, but member of 2 groups, will inherit vars from both
             # inventory hostnames are unique
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import ast
 import re

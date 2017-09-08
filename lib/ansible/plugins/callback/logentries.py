@@ -1,9 +1,10 @@
 # (c) 2015, Logentries.com, Jimmy Tang <jimmy.tang@logentries.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-'''
-DOCUMENTATION:
+DOCUMENTATION = '''
     callback: logentries
     type: notification
     short_description: Sends events to Logentries
@@ -68,7 +69,10 @@ DOCUMENTATION:
         ini:
           - section: callback_logentries
             key: flatten
-EXAMPLES: >
+'''
+
+EXAMPLES = '''
+examples: >
   To enable, add this to your ansible.cfg file in the defaults block
 
     [defaults]
@@ -88,8 +92,6 @@ EXAMPLES: >
     token = dd21fc88-f00a-43ff-b977-e3a4233c53af
     flatten = False
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import socket
@@ -112,10 +114,9 @@ except ImportError:
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.callback import CallbackBase
-"""
-Todo:
-  * Better formatting of output before sending out to logentries data/api nodes.
-"""
+
+# Todo:
+#  * Better formatting of output before sending out to logentries data/api nodes.
 
 
 class PlainTextSocketAppender(object):

@@ -2,8 +2,11 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     cache: yaml
     short_description: YAML formatted files.
     description:
@@ -38,10 +41,6 @@ DOCUMENTATION:
             section: defaults
         type: integer
 '''
-
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 
 import codecs
