@@ -74,6 +74,12 @@ def sysv_exists(name):
     return os.path.exists(get_sysv_script(name))
 
 
+def get_ps(module, pattern):
+    '''
+    Last resort to find a service by trying to match pattern to programs in memory
+    '''
+    return None
+
 def fail_if_missing(module, found, service, msg=''):
     '''
     This function will return an error or exit gracefully depending on check mode status

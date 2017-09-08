@@ -1,33 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2017, Brian Coca <bcoca@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ANSIBLE_METADATA = '''
 metadata_version: '1.0'
 status:
     - preview
-supported_by': 'core'
+supported_by': 'community'
 '''
 
 DOCUMENTATION = '''
 module: sysvinit
 author:
     - "Ansible Core Team"
-version_added: "2.2"
+version_added: "2.5"
 short_description:  Manage SysV services.
 description:
     - Controls services on target hosts that use the SysV init system.
@@ -105,6 +93,9 @@ EXAMPLES = '''
 RETURN = '''
 # defaults
 '''
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 from time import sleep
