@@ -53,7 +53,7 @@ working on a whole new file. Here is an example:
 -  Create your new module file: ``$ touch my_new_test_module.py``
 -  Paste this example code into the new module file: (explanation in comments)
 
-.. code:: python
+.. code-block:: python
 
     #!/usr/bin/python
 
