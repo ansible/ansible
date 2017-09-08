@@ -7,8 +7,9 @@
 #
 # Written by: Tomas Tomecek (https://github.com/TomasTomecek)
 
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+
+DOCUMENTATION = """
     connection: buildah
     short_description: Interact with an existing buildah container
     description:
@@ -37,8 +38,6 @@ DOCUMENTATION:
 #        keyword:
 #            - name: remote_user
 """
-
-from __future__ import (absolute_import, division, print_function)
 
 import shlex
 import shutil

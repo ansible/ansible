@@ -15,8 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+from __future__ import unicode_literals
+
+DOCUMENTATION = '''
     author: 'Marcos Diez <marcos (at) unitron.com.br>'
     lookup: mongodb
     version_added: "2.3"
@@ -65,7 +67,9 @@ DOCUMENTATION:
         - "Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more detais."
     requirements:
         - pymongo >= 2.4
-EXAMPLES:
+'''
+
+EXAMPLES = '''
 - hosts: all
   gather_facts: false
   vars:
@@ -87,8 +91,6 @@ EXAMPLES:
       with_mongodb: "{{mongodb_parameters}}"
 '''
 
-from __future__ import (absolute_import, division, print_function)
-from __future__ import unicode_literals
 from ansible.module_utils.six import string_types, integer_types
 import datetime
 

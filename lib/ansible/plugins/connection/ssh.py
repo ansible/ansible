@@ -4,8 +4,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     connection: ssh
     short_description: connect via ssh client binary
     description:
@@ -127,9 +129,6 @@ DOCUMENTATION:
 # DEFAULT_SFTP_BATCH_MODE
 # DEFAULT_SCP_IF_SSH
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import errno
 import fcntl

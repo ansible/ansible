@@ -4,8 +4,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     author: Michael Scherer (@msherer) <misc@zarb.org>
     connection: funcd
     short_description: Use funcd to connect to target
@@ -23,8 +25,6 @@ DOCUMENTATION:
             - name: ansible_host
             - name: ansible_func_host
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 HAVE_FUNC = False
 try:

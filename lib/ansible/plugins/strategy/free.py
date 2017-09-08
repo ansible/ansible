@@ -14,8 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     strategy: free
     short_description: Executes tasks on each host independently
     description:
@@ -25,9 +28,6 @@ DOCUMENTATION:
     version_added: "2.0"
     author: Ansible Core Team
 '''
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import time
 
