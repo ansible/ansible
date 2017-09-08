@@ -15,8 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     author:
         - Jan-Piet Mens (@jpmens)
     lookup: etcd
@@ -47,21 +49,23 @@ DOCUMENTATION:
               - name: ANSIBLE_ETCD_VERSION
             yaml:
               - key: etcd.version
-EXAMPLES:
+'''
+
+EXAMPLES = '''
     - name: "a value from a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo/bar') }}
 
     - name: "a values from a folder on a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo') }}
-RETURN:
+'''
+
+RETURN = '''
     _raw:
         description:
             - list of values associated with input keys
         type: list
         elements: strings
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 

@@ -2,8 +2,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: log_plays
     type: notification
     short_description: write playbook output to log file
@@ -15,9 +17,6 @@ DOCUMENTATION:
      - Whitelist in configuration
      - A writeable /var/log/ansible/hosts directory by the user executing Ansbile on the controller
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import time

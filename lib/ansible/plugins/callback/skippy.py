@@ -2,8 +2,11 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: skippy
     callback_type: stdout
     requirements:
@@ -13,10 +16,6 @@ DOCUMENTATION:
     description:
         - This callback does the same as the default except it does not output skipped host/task/item status
 '''
-
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
