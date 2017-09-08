@@ -65,9 +65,9 @@ function Parse-Profiles
 
 function Parse-InterfaceTypes
 {
-    param($interfaceTypesStr)
+    param($interfaceTypes)
 
-    return ($interfaceTypesStr.Split(',') | Select -uniq | ForEach {
+    return ($interfaceTypes | Select -uniq | ForEach {
         switch ($_) {
             "wireless" { return "Wireless" }
             "lan" { return "Lan" }
@@ -118,7 +118,7 @@ function New-FWRule
         [string]$action,
         [bool]$enabled,
         [string[]]$profiles,
-        [string]$interfaceTypes,
+        [string[]]$interfaceTypes,
         [string]$edgeTraversalOptions,
         [string]$secureFlags
     )
@@ -138,7 +138,7 @@ function New-FWRule
     if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
     if ($action) { $rule.Action = Parse-Action -actionStr $action }
     if ($profiles) { $rule.Profiles = Parse-Profiles -profilesList $profiles }
-    if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
+    if ($interfaceTypes -and @(Compare-Object $interfaceTypes @("any")).Count -ne 0) { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypes $interfaceTypes }
     if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
         # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
         if ($rule | Get-Member -Name 'EdgeTraversalOptions') {
@@ -178,7 +178,7 @@ $remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str" -default 
 $localport = Get-AnsibleParam -obj $params -name "localport" -type "str"
 $remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str"
 $protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
-$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "str" -default "any"
+$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "list" -default @("any")
 $edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
 $security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
 

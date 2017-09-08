@@ -251,7 +251,7 @@
     that:
     - add_firewall_rule_with_multiple_ports.changed == true
 
-- name: Add firewall rule with interface types
+- name: Add firewall rule with interface types in string format
   win_firewall_rule:
     name: http
     enabled: yes
@@ -261,12 +261,29 @@
     direction: in
     protocol: tcp
     interfacetypes: 'ras,lan,wireless'
-  register: add_firewall_rule_with_interface_types
+  register: add_firewall_rule_with_string_interface_types
 
-- name: Check that creating firewall rule with interface types succeeds with a change
+- name: Check that creating firewall rule with interface types in string format succeeds with a change
   assert:
     that:
-    - add_firewall_rule_with_interface_types.changed == true
+    - add_firewall_rule_with_string_interface_types.changed == true
+
+- name: Add firewall rule with interface types in list format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    interfacetypes: [ras, lan]
+  register: add_firewall_rule_with_list_interface_types
+
+- name: Check that creating firewall rule with interface types in list format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_list_interface_types.changed == true
 
 - name: Add firewall rule with interface type 'any'
   win_firewall_rule:
