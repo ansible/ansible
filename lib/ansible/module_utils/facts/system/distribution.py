@@ -456,8 +456,9 @@ class Distribution(object):
         aix_facts = {}
         rc, out, err = self.module.run_command("/usr/bin/oslevel")
         data = out.split('.')
-        aix_facts['distribution_version'] = data[0]
-        aix_facts['distribution_release'] = data[1]
+        aix_facts['distribution_version'] = out.strip()
+        aix_facts['distribution_major_version'] = data[0]
+        aix_facts['distribution_minor_version'] = data[1]
         return aix_facts
 
     def get_distribution_HPUX(self):
