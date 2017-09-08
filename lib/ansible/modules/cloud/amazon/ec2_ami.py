@@ -401,7 +401,9 @@ def get_ami_info(image):
         root_device_name=image.root_device_name,
         root_device_type=image.root_device_type,
         tags=image.tags,
-        virtualization_type=image.virtualization_type
+        virtualization_type=image.virtualization_type,
+        name=image.name,
+        platform=image.platform
     )
 
 
