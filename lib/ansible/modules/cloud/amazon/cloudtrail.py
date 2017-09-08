@@ -119,7 +119,7 @@ except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_ec2_creds
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 
 class CloudTrailManager:
@@ -186,9 +186,7 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto is required.')
 
-    ec2_url, access_key, secret_key, region = get_ec2_creds(module)
-    aws_connect_params = dict(aws_access_key_id=access_key,
-                              aws_secret_access_key=secret_key)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
     if not region:
         module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
