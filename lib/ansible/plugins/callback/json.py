@@ -2,8 +2,11 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: json
     short_description: Ansbile screen output as JSON
     version_added: "2.2"
@@ -13,10 +16,6 @@ DOCUMENTATION:
     requirements:
       - Set as stdout in config
 '''
-
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import json
 

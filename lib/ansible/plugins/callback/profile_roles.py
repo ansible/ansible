@@ -2,8 +2,11 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: profile_roles
     type: aggregate
     short_description: adds timing information to roles
@@ -13,12 +16,6 @@ DOCUMENTATION:
     requirements:
       - whitelisting in configuration
 '''
-
-# Make coding more python3-ish
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-
-__metaclass__ = type
 
 import collections
 import time

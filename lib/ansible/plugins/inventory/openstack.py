@@ -5,8 +5,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
     short_description: OpenStack inventory source
@@ -84,7 +86,9 @@ DOCUMENTATION:
             description: Add hosts to group based on Jinja2 conditionals.
             type: dictionary
             default: {}
-EXAMPLES:
+'''
+
+EXAMPLES = '''
 # file must be named openstack.yaml or openstack.yml
 # Make the plugin behave like the default behavior of the old script
 simple_config_file:
@@ -93,8 +97,6 @@ simple_config_file:
     expand_hostvars: true
     fail_on_errors: true
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import collections
 

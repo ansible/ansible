@@ -2,8 +2,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     author: Ansible Networking Team
     connection: netconf
     short_description: Use netconf to run command on network appliances
@@ -66,8 +68,6 @@ DOCUMENTATION:
 #look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
 #allow_agent=self.allow_agent,
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import logging

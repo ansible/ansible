@@ -2,8 +2,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: dense
     type: stdout
     short_description: minimal stdout output
@@ -13,8 +15,6 @@ DOCUMENTATION:
     requirements:
       - set as stdout in configuation
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 from collections import MutableMapping, MutableSequence
 

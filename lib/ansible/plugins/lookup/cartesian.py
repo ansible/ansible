@@ -14,8 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     lookup: cartesian
     version_added: "2.1"
     short_description: returns the cartesian product of lists
@@ -26,7 +28,9 @@ DOCUMENTATION:
             description:
                 - a set of lists
             required: True
-EXAMPLES:
+"""
+
+EXAMPLES = """
 
   - name: outputs the cartesian product of the supplied lists
     debug: msg="{{item}}"
@@ -35,15 +39,14 @@ EXAMPLES:
          - "{{list2}}"
   - name: used as lookup changes [1, 2, 3], [a, b] into [1, a], [1, b], [2, a], [2, b], [3, a], [3, b]
     debug: msg="{{ [1,2,3]|lookup('cartesian', [a, b])}}"
+"""
 
-RETURN:
+RETURN = """
   _list:
     description:
       - list of lists composed of elements of the input lists
     type: lists
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 from itertools import product
 

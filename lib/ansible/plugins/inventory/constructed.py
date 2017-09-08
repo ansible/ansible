@@ -1,8 +1,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     name: constructed
     plugin_type: inventory
     version_added: "2.4"
@@ -15,7 +17,10 @@ DOCUMENTATION:
         - Failed expressions will be ignored (assumes vars were missing).
     extends_documentation_fragment:
       - constructed
-EXAMPLES: | # inventory.config file in YAML format
+'''
+
+EXAMPLES = '''
+    # inventory.config file in YAML format
     plugin: comstructed
     compose:
         var_sum: var1 + var2
@@ -41,9 +46,6 @@ EXAMPLES: | # inventory.config file in YAML format
         - prefix: arch
           key: ec2_architecture
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 

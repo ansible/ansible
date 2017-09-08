@@ -5,8 +5,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     author: Michael Scherer <misc@zarb.org>
     connection: saltstack
     short_description: Allow ansible to piggyback on salt minions
@@ -14,9 +16,6 @@ DOCUMENTATION:
         - This allows you to use existing Saltstack infrastructure to connect to targets.
     version_added: "2.2"
 """
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import re
 import os

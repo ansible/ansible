@@ -2,8 +2,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     inventory: script
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
@@ -15,8 +17,6 @@ DOCUMENTATION:
         - It takes the place of the previously hardcoded script inventory.
         - To function it requires being whitelisted in configuration, which is true by default.
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import subprocess

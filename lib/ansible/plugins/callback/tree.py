@@ -1,8 +1,11 @@
 # (c) 2012-2014, Ansible, Inc
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-'''
-DOCUMENTATION:
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: tree
     callback_type: notification
     requirements:
@@ -13,8 +16,6 @@ DOCUMENTATION:
         - "This callback is used by the Ansible (adhoc) command line option `-t|--tree`"
         - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a commadn line option.
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 

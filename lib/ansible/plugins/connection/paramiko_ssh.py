@@ -1,8 +1,10 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     author: Ansible Core Team
     connection: paramiko
     short_description: Run tasks via python ssh (paramiko)
@@ -47,8 +49,6 @@ DOCUMENTATION:
 #C.PARAMIKO_PTY
 #C.PARAMIKO_RECORD_HOST_KEYS
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import warnings
 import os
