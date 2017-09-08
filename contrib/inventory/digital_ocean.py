@@ -150,10 +150,11 @@ try:
 except ImportError:
     import simplejson as json
 
-try:
-    from dopy.manager import DoManager
-except ImportError as e:
-    sys.exit("failed=True msg={}".format(e.message))
+
+class DoManager():
+    def __init__(self, api_token, api_version=2):
+        self.api_token = api_token
+        self.api_token_version = api_version
 
 
 class DigitalOceanInventory(object):
@@ -203,7 +204,7 @@ or environment variables (DO_API_TOKEN)\n''')
                     sys.stderr.write('''Cache is empty and --force-cache was specified\n''')
                     sys.exit(-1)
 
-        self.manager = DoManager(None, self.api_token, api_version=2)
+        self.manager = DoManager(self.api_token, api_version=2)
 
         # Pick the json_data to print based on the CLI command
         if self.args.droplets:
