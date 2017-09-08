@@ -1,5 +1,4 @@
 lib/ansible/module_utils/ansible_tower.py
-lib/ansible/module_utils/avi.py
 lib/ansible/modules/cloud/amazon/cloudtrail.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table.py
