@@ -607,6 +607,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # give the module the socket for persistent connections
         module_args['_ansible_socket'] = task_vars.get('ansible_socket')
 
+        # Let the module easily make use of the remote_tmp directory
+        module_args['_ansible_remote_tmp'] = self._play_context.remote_tmp_dir
+
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
         '''
         Transfer and run a module along with its arguments.

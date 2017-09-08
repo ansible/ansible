@@ -334,13 +334,12 @@ def get_submodule_update_params(module, git_path, cwd):
     return params
 
 
-def write_ssh_wrapper():
-    module_dir = get_module_path()
+def write_ssh_wrapper(tmp_path):
     try:
         # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
-        if os.access(module_dir, os.W_OK | os.R_OK | os.X_OK):
-            fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+        if os.access(tmp_path, os.W_OK | os.R_OK | os.X_OK):
+            fd, wrapper_path = tempfile.mkstemp(prefix=tmp_path + '/')
         else:
             raise OSError
     except (IOError, OSError):
@@ -1051,7 +1050,7 @@ def main():
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
-    ssh_wrapper = write_ssh_wrapper()
+    ssh_wrapper = write_ssh_wrapper(module._remote_tmp_path)
     set_git_ssh(ssh_wrapper, key_file, ssh_opts)
     module.add_cleanup_file(path=ssh_wrapper)
 
