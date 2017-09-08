@@ -2,8 +2,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     author: Joerg Thalheim <joerg@higgsboson.tk>
     connection: lxc
     short_description: Run tasks in lxc containers via lxc python library
@@ -26,9 +28,6 @@ DOCUMENTATION:
             - name: ansible_executable
             - name: ansible_lxc_executable
 """
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import shutil

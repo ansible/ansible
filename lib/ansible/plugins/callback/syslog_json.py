@@ -1,8 +1,11 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: syslog_json
     callback_type: notification
     requirements:
@@ -38,10 +41,6 @@ DOCUMENTATION:
           - section: callback_syslog_json
             key: syslog_facility
 '''
-
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import json

@@ -2,8 +2,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     callback: selective
     callback_type: stdout
     requirements:
@@ -26,13 +28,13 @@ DOCUMENTATION:
           - section: defaults
           - key: nocolor
         type: boolean
-EXAMPLES:
+"""
+
+EXAMPLES = """
   - debug: msg="This will not be printed"
   - debug: msg="But this will"
     tags: [print_action]
 """
-
-from __future__ import (absolute_import, division, print_function)
 
 import difflib
 
@@ -40,7 +42,6 @@ from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 from ansible.module_utils._text import to_text
 
-__metaclass__ = type
 
 DONT_COLORIZE = False
 COLORS = {

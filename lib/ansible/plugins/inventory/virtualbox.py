@@ -1,8 +1,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     name: virtualbox
     plugin_type: inventory
     short_description: virtualbox inventory source
@@ -32,7 +34,9 @@ DOCUMENTATION:
             description: add hosts to group based on Jinja2 conditionals, these also run after query block
             type: dictionary
             default: {}
-EXAMPLES:
+'''
+
+EXAMPLES = '''
 # file must be named vbox.yaml or vbox.yml
 simple_config_file:
     plugin: virtualbox
@@ -42,8 +46,6 @@ simple_config_file:
     compose:
       ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 

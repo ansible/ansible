@@ -1,8 +1,10 @@
 # (c) 2014, Brian Coca, Josh Drake, et al
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     cache: redis
     short_description: Use Redis DB for cache
     description:
@@ -37,8 +39,6 @@ DOCUMENTATION:
             section: defaults
         type: integer
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import time
 import json
