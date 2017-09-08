@@ -1,16 +1,16 @@
 ---
 - name: Setup
   nxos_banner:
-    banner: exec
+    banner: motd
     text: |
-      Junk exec banner
+      Junk motd banner
       over multiple lines
     state: present
     provider: "{{ connection }}"
 
-- name: remove exec
-  nxos_banner: &rm-exec
-    banner: exec
+- name: remove motd
+  nxos_banner: &rm-motd
+    banner: motd
     state: absent
     provider: "{{ connection }}"
   register: result
@@ -18,10 +18,10 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'no banner exec' in result.commands"
+      - "'no banner motd' in result.commands"
 
-- name: remove exec (idempotent)
-  nxos_banner: *rm-exec
+- name: remove motd (idempotent)
+  nxos_banner: *rm-motd
   register: result
 
 - assert:
