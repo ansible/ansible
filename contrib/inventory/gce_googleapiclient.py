@@ -42,7 +42,7 @@ Arguments:
     -c, --config CONFIG_FILE            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
     -p PROJECT --project PROJECT        Google Cloud projects to search for instances
     -t, --num-threads NUM_THREADS       Enable multi-threading, set it to NUM_THREADS [default: 4]
-    -z ZONE --zone ZONE                 Google Cloud zones to search for instances
+    -z, ZONE --zone ZONE                Google Cloud zones to search for instances
     --timeout TIMEOUT                   Length of timeout in seconds for worker threads [default: 3600]
 
 Options:
@@ -84,6 +84,8 @@ import multiprocessing as mp
 import signal
 import os
 import sys
+import time
+import shutil
 
 from Crypto import Random
 
@@ -106,7 +108,8 @@ ENV_PREFIX = 'GCE_'
 API_VERSION = 'v1'
 
 CACHE_DIR = ".gce_cache/"
-CACHE_EXPIRATION = "3600"
+CACHE_EXPIRATION = 3600
+
 
 class GCloudAPI(object):
     """
@@ -327,38 +330,55 @@ def get_project_zone_instances(project_zone):
     return instance_list
 
 
+def is_cache_expired(element):
+    if CACHE_EXPIRATION > time.time() - os.stat(element).st_mtime:
+        return False
+    else:
+        return True
+
 def get_cached_projects():
     project_list = []
 
     if os.path.isdir(CACHE_DIR):
-        for _, dirs, _ in os.walk(CACHE_DIR):
-            project_list.extend(dirs)
+
+        dir_content = os.listdir(CACHE_DIR)
+
+        for element in dir_content:
+            if is_cache_expired(CACHE_DIR):
+                shutil.rmtree(element)
+            elif os.path.isdir(element):
+                project_list.extend(element)
 
     return project_list
 
 
 def get_cached_zones(project):
     zone_list = []
-    project_dir = sys.path.join(CACHE_DIR, project)
+    project_dir = os.path.join(CACHE_DIR, project)
 
-    for _, _, files in os.walk(project_dir):
-        for zone_file in files:
-            if zone_file.lower().endswith('.json'):
-                file_name, _ = os.path.splitext(zone_file)
-                zone_list.append(file_name)
+    if is_cache_expired(project_dir):
+        shutil.rmtree(project_dir)
+        return zone_list
+
+    dir_content = os.listdir(project_dir)
+
+    for element in dir_content:
+        if os.path.isfile(element) and element.endswith('.json'):
+            file_name, _ = os.path.splitext(element)
+            zone_list.append(file_name)
 
     return zone_list
 
 
 def cache_projects(projects):
     for project in projects:
-        project_dir = sys.path.join(CACHE_DIR, project)
+        project_dir = os.path.join(CACHE_DIR, project)
         os.mkdir(project_dir)
 
 
 def cache_zones(project, zones):
     for zone in zones:
-        zone_file = sys.path.join(CACHE_DIR, project, zone + '.json')
+        zone_file = os.path.join(CACHE_DIR, project, zone + '.json')
         try:
             os.utime(zone_file, None)
         except OSError as oserror:
@@ -367,26 +387,21 @@ def cache_zones(project, zones):
 
 
 def cache_instances(project, zone, instances):
-    zone_file = sys.path.join(CACHE_DIR, project, zone + '.json')
+    zone_file = os.path.join(CACHE_DIR, project, zone + '.json')
 
     with open(zone_file, 'w'):
         json.dump(instances, zone_file)
 
 
 def get_cached_instances(project, zone):
-
     instances_path = sys.path.join(CACHE_DIR, project, zone + '.json')
     instances = json.load(open(instances_path).read())
 
     return instances
 
 
-def is_cache_expired(element):
-    if os.stat(element).st_mtime() > CACHE_EXPIRATION:
-        return True
-    else:
-        return False
-
+def purge_cache(element):
+    shutil.rmtree(element)
 
 def main(args):
 
