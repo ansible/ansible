@@ -26,6 +26,8 @@ from ansible.compat.tests import unittest
 from ansible.module_utils.network.common.utils import to_list, sort_list
 from ansible.module_utils.network.common.utils import dict_diff, dict_merge
 from ansible.module_utils.network.common.utils import conditional, Template
+from ansible.module_utils.network.common.utils import to_masklen, to_netmask, to_subnet
+from ansible.module_utils.network.common.utils import is_masklen, is_netmask
 
 
 class TestModuleUtilsNetworkCommon(unittest.TestCase):
@@ -149,3 +151,41 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
     def test_template(self):
         tmpl = Template()
         self.assertEqual('foo', tmpl('{{ test }}', {'test': 'foo'}))
+
+    def test_to_masklen(self):
+        self.assertEqual(24, to_masklen('255.255.255.0'))
+
+    def test_to_masklen_invalid(self):
+        with self.assertRaises(ValueError):
+            to_masklen('255')
+
+    def test_to_netmask(self):
+        self.assertEqual('255.0.0.0', to_netmask(8))
+        self.assertEqual('255.0.0.0', to_netmask('8'))
+
+    def test_to_netmask_invalid(self):
+        with self.assertRaises(ValueError):
+            to_netmask(128)
+
+    def test_to_subnet(self):
+        result = to_subnet('192.168.1.1', 24)
+        self.assertEqual('192.168.1.0/24', result)
+
+        result = to_subnet('192.168.1.1', 24, dotted_notation=True)
+        self.assertEqual('192.168.1.0 255.255.255.0', result)
+
+    def test_to_subnet_invalid(self):
+        with self.assertRaises(ValueError):
+            to_subnet('foo', 'bar')
+
+    def test_is_masklen(self):
+        self.assertTrue(is_masklen(32))
+        self.assertFalse(is_masklen(33))
+        self.assertFalse(is_masklen('foo'))
+
+    def test_is_netmask(self):
+        self.assertTrue(is_netmask('255.255.255.255'))
+        self.assertFalse(is_netmask(24))
+        self.assertFalse(is_netmask('foo'))
+
+
