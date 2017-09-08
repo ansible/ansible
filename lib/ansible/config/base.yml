@@ -598,7 +598,7 @@ DEFAULT_HASH_BEHAVIOUR:
   - {key: hash_behaviour, section: defaults}
   yaml: {key: defaults.hash_behaviour}
 DEFAULT_HOST_LIST:
-  default: /etc/ansible/hosts
+  default: eval(DEPRECATED_HOST_LIST)
   description: Location of the Ansible inventory source.
   env: [{name: ANSIBLE_INVENTORY}]
   expand_relative_paths: True
@@ -1083,6 +1083,19 @@ DEFAULT_VERBOSITY:
   - {key: verbosity, section: defaults}
   type: integer
   yaml: {key: defaults.verbosity}
+DEPRECATED_HOST_LIST:
+  default: /etc/ansible/hosts
+  description: Location of the Ansible inventory source.
+  env: [{name: ANSIBLE_HOSTS}]
+  expand_relative_paths: True
+  ini:
+  - {key: hostfile, section: defaults}
+  type: path
+  yaml: {key: defaults.hostfile}
+  deprecated:
+    why: Use inventory instead of hostfile in ansible.cfg, and ANSIBLE_INVENTORY instead of ANSIBLE_HOSTS
+    version: "2.6"
+    alternatives: inventory in defaults section
 DEPRECATION_WARNINGS:
   default: True
   description: "Toggle to control the showing of deprecation warnings"
