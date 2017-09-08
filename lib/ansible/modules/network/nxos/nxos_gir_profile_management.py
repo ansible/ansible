@@ -69,7 +69,7 @@ options:
 
 EXAMPLES = '''
 # Create a maintenance-mode profile
-- nxos_gir_profile:
+- nxos_gir_profile_management:
     mode: maintenance
     commands:
       - router eigrp 11
@@ -78,7 +78,7 @@ EXAMPLES = '''
     username: "{{ un }}"
     password: "{{ pwd }}"
 # Remove the maintenance-mode profile
-- nxos_gir_profile:
+- nxos_gir_profile_management:
     mode: maintenance
     state: absent
     host: "{{ inventory_hostname }}"
