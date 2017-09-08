@@ -94,8 +94,12 @@ You can specify which authentication option you wish to use by setting it to the
 Certificate
 +++++++++++
 
-Certificate authentication is similar to SSH where a certificate is assigned to a local user and instead of using a password to authenticate a certificate is used instead.
+Certificate authentication is similar to SSH because it uses both a public and private key to access a local Windows user account. This removes the need for using a password.
 
+This requires two variables that specify the path to both the PEM file containing the certificate (cert_pem) and the related private key file (cert_key_pem).
+
+    ansible_winrm_cert_pem:
+    ansible_winrm_cert_key_pem:
 
 Kerberos
 ++++++++
