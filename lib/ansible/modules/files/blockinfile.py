@@ -253,9 +253,9 @@ def main():
         insertafter = 'EOF'
 
     if insertafter not in (None, 'EOF'):
-        insertre = re.compile(insertafter)
+        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
     elif insertbefore not in (None, 'BOF'):
-        insertre = re.compile(insertbefore)
+        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
     else:
         insertre = None
 
