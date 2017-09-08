@@ -36,19 +36,20 @@ Usage:
         [options]
 
 Arguments:
-    -b ACCOUNT_NAME --billing-account=ACCOUNT_NAME  The billing account associated with the projects you want to get
-                                                information. It is only needed to get the list of the projects
-                                                (when --project parameter isn' set)
-    -c CONFIG_FILE --config=CONFIG_FILE         Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
-    -p PROJECT --project PROJECT                Google Cloud projects to search for instances
-    -t NUM_THREADS --num-threads=NUM_THREADS    Enable multi-threading, set it to NUM_THREADS [default: 4]
-    -z ZONE --zone ZONE                         Google Cloud zones to search for instances
-    --timeout TIMEOUT                           Length of timeout in seconds for worker threads [default: 3600]
+    -b, --billing-account ACCOUNT_NAME  The billing account associated with the projects you want to
+                                        get information. It is only needed to get the list of the
+                                        projects (when --project parameter isn't set)
+    -c, --config CONFIG_FILE            Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
+    -p PROJECT --project PROJECT        Google Cloud projects to search for instances
+    -t, --num-threads NUM_THREADS       Enable multi-threading, set it to NUM_THREADS [default: 4]
+    -z ZONE --zone ZONE                 Google Cloud zones to search for instances
+    --timeout TIMEOUT                   Length of timeout in seconds for worker threads [default: 3600]
 
 Options:
-    -d --debug                                  Set debugging level to DEBUG on log file
-    -h --help                                   Prints the application help
-    -l --list                                   Needed by Ansible, but actually doesn't change anything
+    -d, --debug                         Set debugging level to DEBUG on log file
+    -h, --help                          Prints the application help
+    -l, --list                          Needed by Ansible, but actually doesn't change anything
+    --refresh-cache                     Force refresh of cache by making API requests
 
 Setting multiple values parameters:
     Some parameters can have multiple values (ZONE and PROJECT) and to set them
@@ -76,20 +77,20 @@ Setting multiple values parameters:
 
 from __future__ import print_function
 
-from sys import version_info, stderr
-
 import collections
 import json
 import logging as log
 import multiprocessing as mp
 import signal
+import os
+import sys
 
 from Crypto import Random
 
-if version_info < (3, 0):
-    import Queue as queue
+if sys.version_info < (3, 0):
+    pass
 else:
-    import queue
+    pass
 
 
 from docoptcfg import DocoptcfgFileError
@@ -104,6 +105,8 @@ from oauth2client.client import GoogleCredentials
 ENV_PREFIX = 'GCE_'
 API_VERSION = 'v1'
 
+CACHE_DIR = ".gce_cache/"
+CACHE_EXPIRATION = "3600"
 
 class GCloudAPI(object):
     """
@@ -153,24 +156,30 @@ def signal_handler():  # pragma: no cover
     Random.atfork()  # type: ignore
 
 
-def get_all_billing_projects(billing_account_name):
+def get_all_billing_projects(billing_account_name, refresh_cache=True):
     project_ids = []
 
     # pylint: disable=no-member
     service = GCAPI.get_service('cloudbilling')
 
-    request = service.billingAccounts().projects().list(name=billing_account_name)
+    if not refresh_cache:
+        project_ids = get_cached_projects()
 
-    while request is not None:
-        response = request.execute()
+    if not project_ids:
+        request = service.billingAccounts().projects().list(name=billing_account_name)
 
-        # pylint: disable=no-member
-        request = service.billingAccounts().projects().list_next(previous_request=request,
-                                                                 previous_response=response)
+        while request is not None:
+            response = request.execute()
 
-        for project_billing_info in response['projectBillingInfo']:
-            if project_billing_info['billingEnabled']:
-                project_ids.append(project_billing_info['projectId'])
+            # pylint: disable=no-member
+            request = service.billingAccounts().projects().list_next(previous_request=request,
+                                                                     previous_response=response)
+
+            for project_billing_info in response['projectBillingInfo']:
+                if project_billing_info['billingEnabled']:
+                    project_ids.append(project_billing_info['projectId'])
+
+        cache_projects(project_ids)
 
     return project_ids
 
@@ -255,40 +264,44 @@ def get_inventory(instances):
     return inventory
 
 
-def get_project_zone_list(project):
-    # type: (str) -> Tuple[str, List[str]]
+def get_project_zone_list(params):
+    # type: (Tuple[str, bool]) -> Tuple[str, List[str]]
     """Get list of all zones for particular project (Worker process)"""
 
-    project = project
+    project, refresh_cache = params
     zones = []
     log.info('Retrieving list of zones of project: %s', project)
 
     service = GCAPI.get_service('compute')
 
-    try:
-        request = service.zones().list(project=project)
+    if not refresh_cache:
+        zones = get_cached_zones(project)
 
-        while request is not None:
-            response = request.execute()
+    if not zones:
+        try:
+            request = service.zones().list(project=project)
 
-            for zone in response['items']:
-                zones.append(zone['name'])
+            while request is not None:
+                response = request.execute()
 
-            request = service.zones().list_next(previous_request=request,
-                                                previous_response=response)
+                for zone in response['items']:
+                    zones.append(zone['name'])
 
-    except HttpError as exception:
-        log.warn('Could not retrieve list of zones on project: %s', project)
-        log.warn(exception)
+                request = service.zones().list_next(previous_request=request,
+                                                    previous_response=response)
+
+        except HttpError as exception:
+            log.warn('Could not retrieve list of zones on project: %s', project)
+            log.warn(exception)
 
     return project, zones
 
 
 def get_project_zone_instances(project_zone):
-    # type: (Tuple[str, str]) -> List[str]
+    # type: (Tuple[str, str, bool]) -> List[str]
     """Get list of all instances for particular project/zone (Worker process)"""
 
-    project, zone = project_zone
+    project, zone,  refresh_cache = project_zone
     instance_list = []
 
     service = GCAPI.get_service('compute')
@@ -314,6 +327,67 @@ def get_project_zone_instances(project_zone):
     return instance_list
 
 
+def get_cached_projects():
+    project_list = []
+
+    if os.path.isdir(CACHE_DIR):
+        for _, dirs, _ in os.walk(CACHE_DIR):
+            project_list.extend(dirs)
+
+    return project_list
+
+
+def get_cached_zones(project):
+    zone_list = []
+    project_dir = sys.path.join(CACHE_DIR, project)
+
+    for _, _, files in os.walk(project_dir):
+        for zone_file in files:
+            if zone_file.lower().endswith('.json'):
+                file_name, _ = os.path.splitext(zone_file)
+                zone_list.append(file_name)
+
+    return zone_list
+
+
+def cache_projects(projects):
+    for project in projects:
+        project_dir = sys.path.join(CACHE_DIR, project)
+        os.mkdir(project_dir)
+
+
+def cache_zones(project, zones):
+    for zone in zones:
+        zone_file = sys.path.join(CACHE_DIR, project, zone + '.json')
+        try:
+            os.utime(zone_file, None)
+        except OSError as oserror:
+            if oserror.errno is 2:
+                open(zone_file, 'a').close()
+
+
+def cache_instances(project, zone, instances):
+    zone_file = sys.path.join(CACHE_DIR, project, zone + '.json')
+
+    with open(zone_file, 'w'):
+        json.dump(instances, zone_file)
+
+
+def get_cached_instances(project, zone):
+
+    instances_path = sys.path.join(CACHE_DIR, project, zone + '.json')
+    instances = json.load(open(instances_path).read())
+
+    return instances
+
+
+def is_cache_expired(element):
+    if os.stat(element).st_mtime() > CACHE_EXPIRATION:
+        return True
+    else:
+        return False
+
+
 def main(args):
 
     if not args['--debug']:
@@ -324,12 +398,13 @@ def main(args):
     billing_account_name = args['--billing-account']
     num_threads = int(args['--num-threads'])
     timeout = int(args['--timeout'])
+    refresh_cache = bool(args['--refresh-cache'])
 
     if not project_list and not billing_account_name:
         print("ERROR: You didn't specified any project (parameter: --project) which means you want"
               "all projects. However, to get the list of all projects, we need the billing account"
               "name (parameter: --billing-account, format: billingAccounts/XXXXXX-XXXXXX-XXXXXX)",
-              file=stderr)
+              file=sys.stderr)
         exit(1)
 
     if num_threads < 1:
@@ -338,32 +413,39 @@ def main(args):
     pool_workers = mp.Pool(num_threads, signal_handler)
 
     if not project_list:
-        project_list = get_all_billing_projects(billing_account_name)
+        project_list = get_all_billing_projects(billing_account_name, refresh_cache)
 
     if zone_list:
         project_zone_list = [
-            (project, zone)
+            (project, zone, refresh_cache)
             for project in project_list
             for zone in zone_list
         ]
     else:
+        param_list = [
+            (project, refresh_cache)
+            for project in project_list
+        ]
+
         project_zone_list = [
-            (project_name, zone)
+            (project_name, zone, refresh_cache)
             for project_name, zone_list in pool_workers.map_async(get_project_zone_list,
-                                                                  project_list).get(timeout)
+                                                                  param_list).get(timeout)
             for zone in zone_list
         ]
 
     instance_list = []
 
-    for zone_instances in pool_workers.map_async(get_project_zone_instances,
-                                                 project_zone_list).get(timeout):
-        instance_list.extend(zone_instances)
+    for project_zone_instances in pool_workers.map_async(get_project_zone_instances,
+                                                         project_zone_list).get(timeout):
+
+        instance_list.extend(project_zone_instances)
 
     inventory_json = get_inventory(instance_list)
     print(json.dumps(inventory_json,
                      sort_keys=True,
                      indent=2))
+
 
 if __name__ == "__main__":
     log.basicConfig(filename='gce_googleapiclient.log', level=log.DEBUG)
