@@ -82,14 +82,10 @@ status:
 '''
 
 
-from ansible.module_utils.basic import AnsibleModule
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
-
 from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import cStringIO as StringIO
+
 
 try:
     import tower_cli
