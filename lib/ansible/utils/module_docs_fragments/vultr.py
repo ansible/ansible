@@ -11,21 +11,21 @@ options:
   api_key:
     description:
       - API key of the Vultr API.
-      - The ENV variable C(VULTR_KEY) is used as default, when defined.
+      - The ENV variable C(VULTR_API_KEY) is used as default, when defined.
   api_timeout:
     description:
       - HTTP timeout to Vultr API.
-      - The ENV variable C(VULTR_TIMEOUT) is used as default, when defined.
+      - The ENV variable C(VULTR_API_TIMEOUT) is used as default, when defined.
     default: 10
   api_retries:
     description:
       - Amount of retries in case of the Vultr API retuns an HTTP 503 code.
-      - The ENV variable C(VULTR_RETRIES) is used as default, when defined.
+      - The ENV variable C(VULTR_API_RETRIES) is used as default, when defined.
     default: 10
   api_account:
     description:
       - Name of the ini section in the C(vultr.ini) file.
-      - The ENV variable C(VULTR_ACCOUNT) is used as default, when defined.
+      - The ENV variable C(VULTR_API_ACCOUNT) is used as default, when defined.
     default: default
   validate_certs:
     description:

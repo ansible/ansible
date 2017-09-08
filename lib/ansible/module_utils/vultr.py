@@ -40,10 +40,10 @@ VULTR_API_ENDPOINT = "https://api.vultr.com"
 
 def vultr_argument_spec():
     return dict(
-        api_key=dict(default=os.environ.get('VULTR_KEY'), no_log=True),
-        api_timeout=dict(type='int', default=os.environ.get('VULTR_TIMEOUT') or 60),
-        api_retries=dict(type='int', default=os.environ.get('VULTR_RETRIES') or 5),
-        api_account=dict(default=os.environ.get('VULTR_ACCOUNT') or 'default'),
+        api_key=dict(default=os.environ.get('VULTR_API_KEY'), no_log=True),
+        api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT') or 60),
+        api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES') or 5),
+        api_account=dict(default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
         validate_certs=dict(default=True, type='bool'),
     )
 
@@ -95,10 +95,10 @@ class Vultr(object):
         keys = ['key', 'timeout', 'retries']
         env_conf = {}
         for key in keys:
-            if 'VULTR_%s' % key.upper() not in os.environ:
+            if 'VULTR_API_%s' % key.upper() not in os.environ:
                 break
             else:
-                env_conf[key] = os.environ['VULTR_%s' % key.upper()]
+                env_conf[key] = os.environ['VULTR_API_%s' % key.upper()]
         else:
             return env_conf
 
@@ -106,8 +106,8 @@ class Vultr(object):
             os.path.join(os.path.expanduser('~'), '.vultr.ini'),
             os.path.join(os.getcwd(), 'vultr.ini'),
         )
-        if 'VULTR_CONFIG' in os.environ:
-            paths += (os.path.expanduser(os.environ['VULTR_CONFIG']),)
+        if 'VULTR_API_CONFIG' in os.environ:
+            paths += (os.path.expanduser(os.environ['VULTR_API_CONFIG']),)
         if not any([os.path.exists(c) for c in paths]):
             self.module.fail_json(msg="Config file not found. Tried : %s" % ", ".join(paths))
 
