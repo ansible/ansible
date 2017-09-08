@@ -74,10 +74,10 @@
       description: "{{ item.os_svi_desc }}"
       provider: "{{ connection }}"
     with_items: &vlanitems
-      - {os_svi_int: vlan2 , os_svi_desc: SVI_VLAN2}
-      - {os_svi_int: vlan710 , os_svi_desc: SVI_VLAN710}
-      - {os_svi_int: vlan711 , os_svi_desc: SVI_VLAN711}
-      - {os_svi_int: vlan712 , os_svi_desc: SVI_VLAN712}
+      - {os_svi_int: vlan2, os_svi_desc: SVI_VLAN2}
+      - {os_svi_int: vlan710, os_svi_desc: SVI_VLAN710}
+      - {os_svi_int: vlan711, os_svi_desc: SVI_VLAN711}
+      - {os_svi_int: vlan712, os_svi_desc: SVI_VLAN712}
     register: result
 
   - assert: *true
@@ -90,10 +90,10 @@
       version: "{{ item.ipv4_ver }}"
       provider: "{{ connection }}"
     with_items: &vlanips
-      - {os_svi_int: vlan2 , ipv4_addr: 192.168.2.1 , ipv4_mask: 24 , ipv4_ver: v4}
-      - {os_svi_int: vlan710 , ipv4_addr: 192.168.3.1 , ipv4_mask: 24 , ipv4_ver: v4}
-      - {os_svi_int: vlan711 , ipv4_addr: 192.168.4.1 , ipv4_mask: 24 , ipv4_ver: v4}
-      - {os_svi_int: vlan712 , ipv4_addr: 192.168.5.1 , ipv4_mask: 24 , ipv4_ver: v4}
+      - {os_svi_int: vlan2, ipv4_addr: 192.168.2.1, ipv4_mask: 24, ipv4_ver: v4}
+      - {os_svi_int: vlan710, ipv4_addr: 192.168.3.1, ipv4_mask: 24, ipv4_ver: v4}
+      - {os_svi_int: vlan711, ipv4_addr: 192.168.4.1, ipv4_mask: 24, ipv4_ver: v4}
+      - {os_svi_int: vlan712, ipv4_addr: 192.168.5.1, ipv4_mask: 24, ipv4_ver: v4}
     register: result
 
   - assert: *true
