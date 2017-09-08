@@ -48,9 +48,9 @@ function Parse-Action {
 # Profile enum values: https://msdn.microsoft.com/en-us/library/windows/desktop/aa366303(v=vs.85).aspx
 function Parse-Profiles
 {
-    param($profilesStr)
+    param($profilesList)
 
-    $profiles = ($profilesStr.Split(',') | Select -uniq | ForEach {
+    $profiles = ($profilesList | Select -uniq | ForEach {
         switch ($_) {
             "domain" { return 1 }
             "private" { return 2 }
@@ -117,7 +117,7 @@ function New-FWRule
         [string]$direction,
         [string]$action,
         [bool]$enabled,
-        [string]$profiles,
+        [string[]]$profiles,
         [string]$interfaceTypes,
         [string]$edgeTraversalOptions,
         [string]$secureFlags
@@ -137,7 +137,7 @@ function New-FWRule
     if ($remoteAddresses -and $remoteAddresses -ne "any") { $rule.RemoteAddresses = $remoteAddresses }
     if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
     if ($action) { $rule.Action = Parse-Action -actionStr $action }
-    if ($profiles) { $rule.Profiles = Parse-Profiles -profilesStr $profiles }
+    if ($profiles) { $rule.Profiles = Parse-Profiles -profilesList $profiles }
     if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
     if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
         # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
@@ -172,7 +172,7 @@ $action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty 
 $program = Get-AnsibleParam -obj $params -name "program" -type "str"
 $service = Get-AnsibleParam -obj $params -name "service" -type "str"
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true -aliases "enable"
-$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "str" -default "domain,private,public" -aliases "profile"
+$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "list" -default @("domain", "private", "public") -aliases "profile"
 $localip = Get-AnsibleParam -obj $params -name "localip" -type "str" -default "any"
 $remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str" -default "any"
 $localport = Get-AnsibleParam -obj $params -name "localport" -type "str"
