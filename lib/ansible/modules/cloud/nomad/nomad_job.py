@@ -65,9 +65,14 @@ options:
         aliases: ['server']
     timeout:
         description:
-            - The timeout in seconds for the allocations created by a job to enter the 'running' state.
+            - The timeout in I(retry_delay) for the allocations created by a job to enter the 'running' state.
         required: no
         default: 120
+    retry_delay:
+        description:
+            - The time in seconds to wait between api requests. This times I(timeout) equals the total number of seconds.
+        required: no
+        default: 1
     wait_for_completion:
         description:
             - If set to C(False) (default C(True)) this module will not wait for the allocations of a job to enter the 'running' state.
@@ -161,7 +166,7 @@ def get_response_or_fail(ansible_module, url, fail_msg=None, **kwargs):
     return status, info, json.loads(resp.read())
 
 
-def check_evaluation(ansible_module, url, job_evaluation, timeout):
+def check_evaluation(ansible_module, url, job_evaluation, timeout, retry_delay):
     evaluation_url = url + '/v1/evaluation/' + job_evaluation
     evaluation_done = False
     for i in range(timeout):
@@ -170,12 +175,12 @@ def check_evaluation(ansible_module, url, job_evaluation, timeout):
             evaluation_done = True
             break
         else:
-            sleep(1)
+            sleep(retry_delay)
     return evaluation_done, body
 
 
-def get_evaluation_or_fail(ansible_module, url, job_evaluation, timeout, fail_msg):
-    evaluation_done, eval_response = check_evaluation(ansible_module, url, job_evaluation, timeout)
+def get_evaluation_or_fail(ansible_module, url, job_evaluation, timeout, retry_delay, fail_msg):
+    evaluation_done, eval_response = check_evaluation(ansible_module, url, job_evaluation, timeout, retry_delay)
     if not evaluation_done:
         ansible_module.fail_json(msg=fail_msg, meta=eval_response)
     return eval_response
@@ -202,6 +207,7 @@ def main():
             "url": {"default": 'http://localhost:4646'},
             "server": {"aliases": ['url']},
             "timeout": {"default": 120, "type": 'int'},
+            "retry_delay": {"default": 1, "type": 'int'},
             "wait_for_completion": {"default": True, "type": 'bool'}
         }
     )
@@ -211,6 +217,7 @@ def main():
     name = ansible_module.params['name']
     state = ansible_module.params['state']
     timeout = ansible_module.params['timeout']
+    retry_delay = ansible_module.params['retry_delay']
     wait_for_completion = ansible_module.params['wait_for_completion']
     wait_for_allocations_timeout = 10
 
@@ -261,6 +268,7 @@ def main():
                                            url,
                                            job_evaluation,
                                            timeout,
+                                           retry_delay,
                                            fail_msg=ResponseErrors.INCOMPLETE_EVALUATION_ERROR)
 
     # Read possible deferred evaluation and check for completion
@@ -271,6 +279,7 @@ def main():
                                            url,
                                            job_evaluation,
                                            timeout,
+                                           retry_delay,
                                            fail_msg=ResponseErrors.DEFERRED_EVALUATION_ERROR)
 
     # If we don't want to wait for the completion of the job, exit here.
@@ -305,7 +314,7 @@ def main():
         allocation_list = body
         if len(allocation_list) > 0:
             break
-        sleep(1)
+        sleep(retry_delay)
 
     # We might not find any (count = 0)
     if len(allocation_list) <= 0:
@@ -346,7 +355,7 @@ def main():
             if is_running > 1:
                 total_jobs += num_tasks
                 break
-            sleep(1)
+            sleep(retry_delay)
         if is_running < 2:
             ansible_module.fail_json(msg=ResponseErrors.ALLOCATION_TIMEOUT_ERROR,
                                      meta=allocation_info)
