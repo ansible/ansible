@@ -385,12 +385,10 @@ def check_declarative_intent_params(module, want, result):
                             if item.startswith('Port Description:'):
                                 have_port.append(item.split(':')[1].strip())
             for item in want_neighbors:
-                host = item.get('host')
-                port = item.get('port')
-                if host and host not in have_host:
-                    failed_conditions.append('host ' + host)
-                if port and port not in have_port:
-                    failed_conditions.append('port ' + port)
+                if item['host'] not in have_host:
+                    failed_conditions.append('host ' + item['host'])
+                if item['port'] not in have_port:
+                    failed_conditions.append('port ' + item['port'])
     return failed_conditions
 
 
