@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #############################################
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     vars: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
@@ -40,9 +42,6 @@ DOCUMENTATION:
             key: defaults
         type: list
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 from ansible import constants as C

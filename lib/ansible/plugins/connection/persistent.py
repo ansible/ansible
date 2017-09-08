@@ -2,8 +2,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = """
     author: Ansible Core Team
     connection: persistent
     short_description: Use a persistent unix socket for connection
@@ -11,9 +13,6 @@ DOCUMENTATION:
         - This is a helper plugin to allow making other connections persistent.
     version_added: "2.3"
 """
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import re
 import os
