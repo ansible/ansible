@@ -133,7 +133,7 @@ EXAMPLES = '''
 import re
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info, compare_aws_tags
 
 try:
     import boto.ec2
@@ -259,25 +259,36 @@ def tags_match(match_tags, candidate_tags):
 
 
 def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
+    changed = False
+
+    # The resource may have yet to be created if running in check mode
+    if not resource_id and check_mode:
+        return {'changed': True, 'tags': tags}
+
+    cur_tags = get_resource_tags(vpc_conn, resource_id)
+    tags_to_add, tags_to_remove = compare_aws_tags(cur_tags, tags, purge_tags=not(add_only))
+
+    if check_mode:
+        latest_tags = dict((key, value) for key, value in cur_tags if key not in tags_to_remove)
+        latest_tags.update(tags_to_add)
+        if latest_tags != cur_tags:
+            changed = True
+        return {'changed': changed, 'tags': latest_tags}
+
     try:
-        cur_tags = get_resource_tags(vpc_conn, resource_id)
-        if tags == cur_tags:
-            return {'changed': False, 'tags': cur_tags}
-
-        to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
-        if to_delete and not add_only:
-            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
-
-        to_add = dict((k, tags[k]) for k in tags if k not in cur_tags)
-        if to_add:
-            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
-
-        latest_tags = get_resource_tags(vpc_conn, resource_id)
-        return {'changed': True, 'tags': latest_tags}
+        if tags_to_add:
+            changed = True
+            vpc_conn.create_tags(resource_id, tags_to_add)
+        if tags_to_remove:
+            to_delete = dict((key, value) for key, value in cur_tags if key in tags_to_remove)
+            changed = True
+            vpc_conn.delete_tags(resource_id, to_delete)
     except EC2ResponseError as e:
-        raise AnsibleTagCreationException(
-            message='Unable to update tags for {0}, error: {1}'.format(resource_id, e),
-            error_traceback=traceback.format_exc())
+        raise AnsibleTagCreationException(message='Unable to update tags for {0}, error: {1}'.format(resource_id, e),
+                                          error_traceback=traceback.format_exc())
+
+    latest_tags = get_resource_tags(vpc_conn, resource_id)
+    return {'changed': changed, 'tags': latest_tags}
 
 
 def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
@@ -347,6 +358,8 @@ def index_of_matching_route(route_spec, routes_to_match):
 
 def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
                   check_mode, purge_routes):
+    if check_mode and not route_table:
+            return {'changed': True, 'routes': route_specs}
     routes_to_match = list(route_table.routes)
     route_specs_to_create = []
     for route_spec in route_specs:
@@ -373,26 +386,21 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
                 routes_to_delete.append(r)
 
     changed = bool(routes_to_delete or route_specs_to_create)
-    if changed:
+    if changed and not check_mode:
         for route in routes_to_delete:
-            try:
-                vpc_conn.delete_route(route_table.id,
-                                      route.destination_cidr_block,
-                                      dry_run=check_mode)
-            except EC2ResponseError as e:
-                if e.error_code == 'DryRunOperation':
-                    pass
-
+            vpc_conn.delete_route(route_table.id,
+                                  route.destination_cidr_block)
         for route_spec in route_specs_to_create:
-            try:
-                vpc_conn.create_route(route_table.id,
-                                      dry_run=check_mode,
-                                      **route_spec)
-            except EC2ResponseError as e:
-                if e.error_code == 'DryRunOperation':
-                    pass
+            vpc_conn.create_route(route_table.id,
+                                  **route_spec)
 
-    return {'changed': bool(changed)}
+    # calculate current routes for check mode
+    if purge_routes:
+        current_routes = set(route_table.routes) - set(routes_to_delete)
+    else:
+        current_routes = set(route_table.routes)
+    current_routes.update(['Route:%s' % route['destination_cidr_block'] for route in route_specs_to_create])
+    return {'changed': bool(changed), 'routes': list(current_routes)}
 
 
 def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
@@ -435,9 +443,11 @@ def ensure_subnet_associations(vpc_conn, vpc_id, route_table, subnets,
         to_delete = [a_id for a_id in current_association_ids
                      if a_id not in new_association_ids]
 
-        for a_id in to_delete:
+        if to_delete:
             changed = True
-            vpc_conn.disassociate_route_table(a_id, dry_run=check_mode)
+            if not check_mode:
+                for a_id in to_delete:
+                    vpc_conn.disassociate_route_table(a_id)
 
     return {'changed': changed}
 
@@ -457,9 +467,9 @@ def ensure_propagation(vpc_conn, route_table, propagating_vgw_ids,
                 return {'changed': False}
 
         changed = True
-        vpc_conn.enable_vgw_route_propagation(route_table.id,
-                                              vgw_id,
-                                              dry_run=check_mode)
+        if not check_mode:
+            vpc_conn.enable_vgw_route_propagation(route_table.id,
+                                                  vgw_id)
 
     return {'changed': changed}
 
@@ -496,13 +506,11 @@ def ensure_route_table_absent(connection, module):
     # disassociate subnets before deleting route table
     ensure_subnet_associations(connection, vpc_id, route_table, [], module.check_mode, purge_subnets)
     try:
-        connection.delete_route_table(route_table.id, dry_run=module.check_mode)
+        if not module.check_mode:
+            connection.delete_route_table(route_table.id)
     except EC2ResponseError as e:
-        if e.error_code == 'DryRunOperation':
-            pass
-        else:
-            module.fail_json(msg="Error deleting route table: {0}".format(e.message),
-                             exception=traceback.format_exc())
+        module.fail_json(msg="Error deleting route table: {0}".format(e.message),
+                         exception=traceback.format_exc())
 
     return {'changed': True}
 
@@ -545,6 +553,11 @@ def ensure_route_table_present(connection, module):
     subnets = module.params.get('subnets')
     tags = module.params.get('tags')
     vpc_id = module.params.get('vpc_id')
+
+    # This holds the result of running in check mode if the route table does not yet exist.
+    # If the route table does exist the exit_json data is determined from its attributes.
+    end_state_of_route_table = {}
+
     try:
         routes = create_route_spec(connection, module, vpc_id)
     except AnsibleIgwSearchException as e:
@@ -575,13 +588,20 @@ def ensure_route_table_present(connection, module):
     # If no route table returned then create new route table
     if route_table is None:
         try:
-            route_table = connection.create_route_table(vpc_id, module.check_mode)
+            if not module.check_mode:
+                route_table = connection.create_route_table(vpc_id)
             changed = True
         except EC2ResponseError as e:
-            if e.error_code == 'DryRunOperation':
-                module.exit_json(changed=True)
             module.fail_json(msg="Failed to create route table: {0}".format(e.message),
                              exception=traceback.format_exc())
+
+    # If running in check mode and the route table has yet to be created
+    if not route_table and module.check_mode:
+        end_state_of_route_table['id'] = 'rtb-XXXXXXXX'
+        end_state_of_route_table['vpc_id'] = vpc_id
+    # This should never happen
+    elif not route_table:
+        module.fail_json(msg="Error creating route table.")
 
     if routes is not None:
         try:
@@ -589,6 +609,9 @@ def ensure_route_table_present(connection, module):
                                    propagating_vgw_ids, module.check_mode,
                                    purge_routes)
             changed = changed or result['changed']
+            if route_table:
+                route_table.routes = result['routes']
+            end_state_of_route_table['routes'] = result['routes']
         except EC2ResponseError as e:
             module.fail_json(msg="Error while updating routes: {0}".format(e.message),
                              exception=traceback.format_exc())
@@ -600,9 +623,15 @@ def ensure_route_table_present(connection, module):
         changed = changed or result['changed']
 
     if not tags_valid and tags is not None:
-        result = ensure_tags(connection, route_table.id, tags,
+        if module.check_mode and not route_table:
+            identifier = None
+        else:
+            identifier = route_table.id
+        result = ensure_tags(connection, identifier, tags,
                              add_only=True, check_mode=module.check_mode)
-        route_table.tags = result['tags']
+        if route_table:
+            route_table.tags = result['tags']
+        end_state_of_route_table['tags'] = result['tags']
         changed = changed or result['changed']
 
     if subnets:
@@ -629,7 +658,10 @@ def ensure_route_table_present(connection, module):
                 error_traceback=traceback.format_exc()
             )
 
-    module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
+    if route_table:
+        module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
+    else:
+        module.exit_json(changed=changed, route_table=end_state_of_route_table)
 
 
 def main():
