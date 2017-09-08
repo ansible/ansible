@@ -714,13 +714,13 @@ def main():
         module.fail_json(msg="Unsupported state requested: %s" % state)
 
     # create a lookup for all existing rules on the group
+    ip_permission = []
     if group:
         # Manage ingress rules
         groupRules = {}
         add_rules_to_lookup(group['IpPermissions'], group['GroupId'], 'in', groupRules)
         # Now, go through all provided rules and ensure they are there.
         if rules is not None:
-            ip_permission = []
             for rule in rules:
                 validate_rule(module, rule)
                 group_id, ip, ipv6, target_group_created = get_target_from_rule(module, client, rule, name,
