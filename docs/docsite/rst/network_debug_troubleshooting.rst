@@ -51,7 +51,7 @@ Enabling Networking logging and how to read the logfile
 
 Ansible 2.3 features improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
-Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANISBLE_DEBUG` options::
+Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
