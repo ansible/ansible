@@ -116,6 +116,7 @@ options:
             - The tls_connect parameter accepts values of 1 to 7
             - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
             - Values can be combined.
+            - Works only with >= Zabbix 3.0
         default: 1
         version_added: "2.4"
     tls_accept:
@@ -124,6 +125,7 @@ options:
             - The tls_accept parameter accepts values of 1 to 7
             - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
             - Values can be combined.
+            - Works only with >= Zabbix 3.0
         default: 1
         version_added: "2.4"
     tls_psk_identity:
@@ -131,21 +133,25 @@ options:
             - PSK value is a hard to guess string of hexadecimal digits.
             - It is a unique name by which this specific PSK is referred to by Zabbix components
             - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
+            - Works only with >= Zabbix 3.0
         required: false
         version_added: "2.4"
     tls_psk:
         description:
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
+            - Works only with >= Zabbix 3.0
         required: false
         version_added: "2.4"
     tls_issuer:
         description:
             - Required certificate issuer.
+            - Works only with >= Zabbix 3.0
         required: false
         version_added: "2.4"
     tls_subject:
         description:
             - Required certificate subject.
+            - Works only with >= Zabbix 3.0 
         required: false
         version_added: "2.4"
     force:
@@ -623,7 +629,8 @@ def main():
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
                                              exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
-                    host.link_or_clear_template(host_id, template_ids)
+                    host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                                                tls_psk, tls_issuer, tls_subject)
                     host.update_host(host_name, group_ids, status, host_id,
                                      interfaces, exist_interfaces, proxy_id, visible_name, tls_connect, tls_accept,
                                      tls_psk_identity, tls_psk, tls_issuer, tls_subject)
