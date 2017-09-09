@@ -118,7 +118,7 @@ options:
             - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
-        version_added: "2.4"
+        version_added: "2.5"
     tls_accept:
         description:
             - Specifies what types of connections are allowed for incoming connections.
@@ -127,7 +127,7 @@ options:
             - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
-        version_added: "2.4"
+        version_added: "2.5"
     tls_psk_identity:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
@@ -135,25 +135,25 @@ options:
             - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
         required: false
-        version_added: "2.4"
+        version_added: "2.5"
     tls_psk:
         description:
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
         required: false
-        version_added: "2.4"
+        version_added: "2.5"
     tls_issuer:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
         required: false
-        version_added: "2.4"
+        version_added: "2.5"
     tls_subject:
         description:
             - Required certificate subject.
-            - Works only with >= Zabbix 3.0 
+            - Works only with >= Zabbix 3.0
         required: false
-        version_added: "2.4"
+        version_added: "2.5"
     force:
         description:
             - Overwrite the host configuration, even if already present
