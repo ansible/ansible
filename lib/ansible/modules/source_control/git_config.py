@@ -70,7 +70,7 @@ options:
     required: false
     choices: ["present", "absent"]
     default: null
-    version_added: "2.4"
+    version_added: "2.5"
 '''
 
 EXAMPLES = '''
