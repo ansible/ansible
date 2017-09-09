@@ -15,7 +15,7 @@ Ansible 2.2 features a tech preview of Python 3 support. This topic discusses ho
 Testing Python 3 with commands and playbooks
 --------------------------------------------
 
-* `Run Ansible 2.2+ :ref:`from_source`
+* Run Ansible 2.2+ :ref:`from source <from_source>`
 * To test Python 3 on the controller, run your ansible command via
   ``python3``. For example:
 
