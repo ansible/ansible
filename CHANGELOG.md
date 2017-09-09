@@ -42,6 +42,7 @@ Ansible Changes By Release
 * Fix for the filetree lookup with non-ascii group names
 * Better message for invalid keywords/options in task due to undefined expressions
 * Fixed check mode for enable on Solaris for service module
+* Fix cloudtrail module to allow AWS profiles other than the default
 
 <a id="2.3.2"></a>
 
