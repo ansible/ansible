@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: pagerduty_alert
+module: pagerduty_incident
 short_description: Trigger, acknowledge or resolve PagerDuty incidents
 description:
     - This module will let you trigger, acknowledge or resolve a PagerDuty incident by sending events
