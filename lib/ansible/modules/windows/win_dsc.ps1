@@ -1,10 +1,11 @@
 #!powershell
 # This file is part of Ansible
 
-# (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#Requires -Module Ansible.ModuleUtils.Facts
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Version 5
 
@@ -158,7 +159,7 @@ if ($Attributes.Count -eq 0)
 }
 
 #Always return some basic info
-$result["reboot_required"] = $false
+$result.reboot_required = $false
 
 $Config = @{
    Name = ($resourcename)
@@ -248,7 +249,7 @@ foreach ($attribute in $Attributes.GetEnumerator())
         {
             $keyValue = Parse-DscProperty -name $key -value $value -resourceProp $prop
         }
-        
+
         $config.Property.Add($key, $keyValue)
     }
 }
@@ -272,7 +273,8 @@ try
                 #If SetError was filled, throw to exit out of the try/catch loop
                 throw $SetError
             }
-            $result["reboot_required"] = $SetResult.RebootRequired
+            $result.reboot_required = $SetResult.RebootRequired
+            Set-AnsibleFact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
         }
         $result["changed"] = $true
         if ($SetError)

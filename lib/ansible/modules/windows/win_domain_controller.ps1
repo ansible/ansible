@@ -4,6 +4,7 @@
 # Copyright: (c) 2017, Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#Requires -Module Ansible.ModuleUtils.Facts
 #Requires -Module Ansible.ModuleUtils.Legacy
 
 Set-StrictMode -Version 2
@@ -42,7 +43,7 @@ Function Get-MissingFeatures {
     }
 
     $missing_features = @($features | Where-Object InstallState -ne Installed)
-    
+
     return ,$missing_features # no, the comma's not a typo- allows us to return an empty array
 }
 
@@ -190,6 +191,7 @@ Try {
                 }
 
                 $result.reboot_required = $true
+                Set-AnsibleFact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
 
                 $safe_mode_secure = $safe_mode_password | ConvertTo-SecureString -AsPlainText -Force
                 Write-DebugLog "Installing domain controller..."
@@ -235,6 +237,7 @@ Try {
             }
 
             $result.reboot_required = $true
+            Set-AnsibleFact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
 
             $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
 

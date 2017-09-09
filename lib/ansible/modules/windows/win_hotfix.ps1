@@ -1,9 +1,9 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#Requires -Module Ansible.ModuleUtils.Facts
 #Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
@@ -50,7 +50,7 @@ Function Extract-MSU($msu) {
     if ($LASTEXITCODE -ne 0) {
         Fail-Json $result "failed to run expand.exe $($expand_args): RC = $LASTEXITCODE"
     }
-    
+
     return $output_path
 }
 
@@ -88,7 +88,7 @@ Function Get-HotfixMetadataFromFile($extract_path) {
         Fail-Json $result "failed to get metadata xml inside MSU file, cannot get hotfix metadata required for this task"
     }
     [xml]$xml = Get-Content -Path $metadata_path.FullName
-    
+
     $cab_source_filename = $xml.unattend.servicing.package.source.GetAttribute("location")
     $cab_source_filename = Split-Path -Path $cab_source_filename -Leaf
     $cab_file = Join-Path -Path $extract_path -ChildPath $cab_source_filename
@@ -174,6 +174,7 @@ if ($state -eq "absent") {
         $result.identifier = $hotfix_metadata.name
         $result.kb = $hotfix_metadata.kb
         $result.reboot_required = $true
+        Set-AnsibleFact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
     } elseif ($hotfix_metadata.state -eq "Installed") {
         $result.identifier = $hotfix_metadata.name
         $result.kb = $hotfix_metadata.kb
@@ -185,10 +186,11 @@ if ($state -eq "absent") {
                 Fail-Json $result "failed to remove package $($hotfix_metadata.name): $($_.Exception.Message)"
             }
             $result.reboot_required = $remove_Result.RestartNeeded
+            Set-AnsibleFact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
         }
-        
+
         $result.changed = $true
-    }    
+    }
 } else {
     if ($source -eq $null) {
         Fail-Json $result "source must be set when state=present"
@@ -221,6 +223,7 @@ if ($state -eq "absent") {
         if ($hotfix_metadata.state -eq "InstallPending") {
             # return the reboot required flag, should we fail here instead
             $result.reboot_required = $true
+            Set-AnsibleFact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
         } elseif ($hotfix_metadata.state -ne "Installed") {
             if (-not $check_mode) {
                 try {
@@ -228,7 +231,8 @@ if ($state -eq "absent") {
                 } catch {
                     Fail-Json $result "failed to add windows package from path $($hotfix_metadata.path): $($_.Exception.Message)"
                 }
-                $result.reboot_required = $install_result.RestartNeeded
+                $result.Ansiblereboot_required = $install_result.RestartNeeded
+                Set-Fact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
             }
             $result.changed = $true
         }

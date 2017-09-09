@@ -2,10 +2,10 @@
 # This file is part of Ansible
 
 # Copyright 2015, Matt Davis <mdavis@rolpdog.com>
-# Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Facts
 
 <# Most of the Windows Update API will not run under a remote token, which a
 remote WinRM session always has. We set the below AnsibleRequires flag to
@@ -101,13 +101,6 @@ try {
 }
 Write-DebugLog -msg "Found $($search_result.Updates.Count) updates"
 
-Write-DebugLog -msg "Creating update collection..."
-try {
-    $updates_to_install = New-Object -ComObject Microsoft.Update.UpdateColl
-} catch {
-    Fail-Json -obj $result -message "Failed to create update collection object: $($_.Exception.Message)"
-}
-
 foreach ($update in $search_result.Updates) {
     $update_info = @{
         title = $update.Title
@@ -175,6 +168,7 @@ Write-DebugLog -msg "Calculating pre-install reboot requirement..."
 
 # calculate this early for check mode, and to see if we should allow updates to continue
 $result.reboot_required = Get-RebootStatus
+Set-AnsibleFact -obj $update_status -name "ansible_reboot_pending" -value $result.reboot_required
 $result.found_update_count = $updates_to_install.Count
 $result.installed_update_count = 0
 
@@ -316,4 +310,3 @@ if ($update_fail_count -gt 0) {
 Write-DebugLog -msg "Return value:`r`n$(ConvertTo-Json -InputObject $result -Depth 99)"
 
 Exit-Json $result
-

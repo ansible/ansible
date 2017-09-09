@@ -1,13 +1,13 @@
 #!powershell
-# This file is part of Ansible
 
-# (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
-#Requires -Module Ansible.ModuleUtils.CommandUtil
 #Requires -Module Ansible.ModuleUtils.ArgvParser
+#Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.Facts
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
 
@@ -111,7 +111,7 @@ namespace Ansible {
                 uint res = MsiOpenPackageW(msi, out MsiHandle);
                 if (res != 0)
                     return null;
-                
+
                 int length = 256;
                 var buffer = new StringBuilder(length);
                 res = MsiGetPropertyW(MsiHandle, property, buffer, ref length);
@@ -202,7 +202,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
                 # Someone is using an auth that supports credential delegation, at least it will fail otherwise
                 $test_path = $path
             }
-            
+
             $valid_path = Test-Path -Path $test_path -PathType Leaf
             if ($valid_path -ne $true) {
                 $metadata.path_error = "the file at the UNC path $path cannot be reached, ensure the user_name account has access to this path or use an auth transport with credential delegation"
@@ -262,7 +262,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
     if ($creates_path -ne $null) {
         $path_exists = Test-Path -Path $creates_path
         $metadata.installed = $path_exists
-        
+
         if ($creates_version -ne $null -and $path_exists -eq $true) {
             if (Test-Path -Path $creates_path -PathType Leaf) {
                 $existing_version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($creates_path).FileVersion
@@ -359,7 +359,7 @@ if ($state -eq "absent") {
                 if ($arguments -ne $null) {
                     $uninstall_command += " $arguments"
                 }
-                
+
                 try {
                     $process_result = Run-Command -command $uninstall_command
                 } catch {
@@ -387,9 +387,10 @@ if ($state -eq "absent") {
 
                 if ($process_result.rc -eq 3010) {
                     $result.reboot_required = $true
+                    Set-Fact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
                     $result.restart_required = $true
                 }
-            }            
+            }
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {
@@ -429,7 +430,7 @@ if ($state -eq "absent") {
                 $temp_path = [System.IO.Path]::GetTempPath()
                 $log_file = [System.IO.Path]::GetRandomFileName()
                 $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                
+
                 $cleanup_artifacts += $log_path
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
             } else {
@@ -442,13 +443,13 @@ if ($state -eq "absent") {
                 if ($arguments -ne $null) {
                     $install_command += " $arguments"
                 }
-                
+
                 try {
                     $process_result = Run-Command -command $install_command
                 } catch {
                     Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
                 }
-                
+
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
@@ -470,9 +471,10 @@ if ($state -eq "absent") {
 
                 if ($process_result.rc -eq 3010) {
                     $result.reboot_required = $true
+                    Set-AnsibleFact -obj $result -name "ansible_reboot_pending" -value $result.reboot_required
                     $result.restart_required = $true
                 }
-            }            
+            }
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {
