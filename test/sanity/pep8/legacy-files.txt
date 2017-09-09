@@ -218,7 +218,6 @@ lib/ansible/modules/monitoring/logentries.py
 lib/ansible/modules/monitoring/logicmonitor.py
 lib/ansible/modules/monitoring/nagios.py
 lib/ansible/modules/monitoring/newrelic_deployment.py
-lib/ansible/modules/monitoring/pagerduty.py
 lib/ansible/modules/monitoring/pingdom.py
 lib/ansible/modules/monitoring/sensu_check.py
 lib/ansible/modules/monitoring/sensu_subscription.py
