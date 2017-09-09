@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: pagerduty_maintenance
+module: pagerduty_maintenance_window
 short_description: Create PagerDuty maintenance windows
 description:
     - This module will let you create PagerDuty maintenance windows
@@ -114,20 +114,20 @@ options:
 
 EXAMPLES = '''
 # List ongoing maintenance windows using a user/passwd
-- pagerduty_maintenance:
+- pagerduty_maintenance_window:
     name: companyabc
     user: example@example.com
     passwd: password123
     state: ongoing
 
 # List ongoing maintenance windows using a token
-- pagerduty_maintenance:
+- pagerduty_maintenance_window:
     name: companyabc
     token: xxxxxxxxxxxxxx
     state: ongoing
 
 # Create a 1 hour maintenance window for service FOO123, using a user/passwd
-- pagerduty_maintenance:
+- pagerduty_maintenance_window:
     name: companyabc
     user: example@example.com
     passwd: password123
@@ -135,7 +135,7 @@ EXAMPLES = '''
     service: FOO123
 
 # Create a 5 minute maintenance window for service FOO123, using a token
-- pagerduty_maintenance:
+- pagerduty_maintenance_window:
     name: companyabc
     token: xxxxxxxxxxxxxx
     hours: 0
@@ -145,7 +145,7 @@ EXAMPLES = '''
 
 
 # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
-- pagerduty_maintenance:
+- pagerduty_maintenance_window:
     name: companyabc
     user: example@example.com
     passwd: password123
@@ -156,7 +156,7 @@ EXAMPLES = '''
   register: pd_window
 
 # Delete the previous maintenance window
-- pagerduty_maintenance:
+- pagerduty_maintenance_window:
     name: companyabc
     user: example@example.com
     passwd: password123
