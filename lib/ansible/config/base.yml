@@ -1328,6 +1328,14 @@ RETRY_FILES_SAVE_PATH:
   - {key: retry_files_save_path, section: defaults}
   type: path
   yaml: {key: errors.retry.path}
+ROLE_NAME_AS_TAG:
+  default: False
+  description: Automatically tag tasks with the corresponding role name.
+  env: [{name: ANSIBLE_ROLE_NAME_AS_TAG}]
+  ini:
+  - {key: role_name_as_tag, section: defaults}
+  type: boolean
+  yaml: {key: defaults.role_name_as_tag}
 SHOW_CUSTOM_STATS:
   default: False
   description: 'This adds the custom stats set via the set_stats plugin to the default output'

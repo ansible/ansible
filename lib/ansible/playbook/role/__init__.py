@@ -33,6 +33,7 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.utils.vars import combine_vars
+from ansible import constants as C
 
 
 __all__ = ['Role', 'hash_params']
@@ -188,6 +189,8 @@ class Role(Base, Become, Conditional, Taggable):
 
         current_tags = getattr(self, 'tags')[:]
         current_tags.extend(role_include.tags)
+        if C.ROLE_NAME_AS_TAG:
+            current_tags.append(self._role_name)
         setattr(self, 'tags', current_tags)
 
         # dynamically load any plugins from the role directory
