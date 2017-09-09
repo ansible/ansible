@@ -150,12 +150,11 @@ def create_blueprint(module, aos, name):
 
     except:
         exc = get_exception()
+        msg = "Unable to create blueprint: %s" % exc.message
         if 'UNPROCESSABLE ENTITY' in exc.message:
-            msg = 'likely missing dependencies'
-        else:
-            msg = exc.message
+            msg+= ' (likely missing dependencies)'
 
-        module.fail_json(msg="Unable to create blueprint: %s" % exc.message)
+        module.fail_json(msg=msg)
 
     return blueprint
 
