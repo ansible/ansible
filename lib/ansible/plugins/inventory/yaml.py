@@ -1,22 +1,10 @@
-# Copyright 2017 RedHat, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#############################################
-'''
-DOCUMENTATION:
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     inventory: yaml
     version_added: "2.4"
     short_description: Uses a specifically YAML file as inventory source.
@@ -34,7 +22,8 @@ DOCUMENTATION:
             description: list of 'valid' extensions for files containing YAML
             type: list
             default: ['.yaml', '.yml', '.json']
-EXAMPLES:
+'''
+EXAMPLES = '''
 all: # keys must be unique, i.e. only one 'hosts' per group
     hosts:
         test1:
@@ -59,9 +48,6 @@ all: # keys must be unique, i.e. only one 'hosts' per group
             vars:
                 last_var: MYVALUE
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import re
 import os

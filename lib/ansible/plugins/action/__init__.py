@@ -385,7 +385,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if remote_user is None:
-            remote_user = self._play_context.remote_user
+            remote_user = self._play_context.remote_user or os.environ('USER')
 
         if self._connection._shell.SHELL_FAMILY == 'powershell':
             # This won't work on Powershell as-is, so we'll just completely skip until

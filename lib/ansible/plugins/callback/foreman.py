@@ -1,24 +1,44 @@
 # -*- coding: utf-8 -*-
-# (C) 2015, 2016 Daniel Lobato <elobatocs@gmail.com>
-#     2016 Guido Günther <agx@sigxcpu.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2015, 2016 Daniel Lobato <elobatocs@gmail.com>
+# (c) 2016 Guido Günther <agx@sigxcpu.org>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: foreman
+    type: notification
+    short_description: Sends events to Foreman
+    description:
+      - This callback will report facts and task events to Foreman https://theforeman.org/
+    version_added: "2.2"
+    requirements:
+      - whitelisting in configuration
+      - requests (python library)
+    options:
+      url:
+        description: URL to the Foreman server
+        env:
+          - name: FOREMAN_URL
+        required: True
+      ssl_cert:
+        description: X509 certificate to authenticate to Foreman if https is used
+        env:
+            - name: FOREMAN_SSL_CERT
+      ssl_key:
+        description: the corresponding private key
+        env:
+          - name: FOREMAN_SSL_KEY
+      verify_certs:
+        description:
+          - Toggle to decidewhether to verify the Foreman certificate.
+          - It can be set to '1' to verify SSL certificates using the installed CAs or to a path pointing to a CA bundle.
+          - Set to '0' to disable certificate checking.
+        env:
+          - name: FOREMAN_SSL_VERIFY
+'''
 
 import os
 from datetime import datetime

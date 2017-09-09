@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #############################################
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     vars: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
@@ -27,10 +29,19 @@ DOCUMENTATION:
         - Only applies to inventory sources that are existing paths.
     notes:
         - It takes the place of the previously hardcoded group_vars/host_vars loading.
+    options:
+      _valid_extensions:
+        default: [".yml", ".yaml", ".json"]
+        description:
+          - "Check all of these extensions when looking for 'variable' files which should be YAML or JSON or vaulted versions of these."
+          - 'This affects vars_files, include_vars, inventory and vars plugins among others.'
+        env:
+          - name: ANSIBLE_YAML_FILENAME_EXT
+        ini:
+          - section: yaml_valid_extensions
+            key: defaults
+        type: list
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 from ansible import constants as C

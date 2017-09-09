@@ -1,22 +1,32 @@
 # (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Ansible Core Team
+    connection: winrm
+    short_description: Run tasks over Microsoft's WinRM
+    description:
+        - Run commands or put/fetch on a target via WinRM
+    version_added: "2.0"
+    options:
+      remote_addr:
+        description:
+            - Address of the windows machine
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_winrm_host
+      remote_user:
+        description:
+            - The user to log in as to the Windows machine
+        vars:
+            - name: ansible_user
+            - name: ansible_winrm_user
+"""
 
 import base64
 import inspect

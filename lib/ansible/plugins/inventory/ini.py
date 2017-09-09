@@ -1,22 +1,9 @@
-# Copyright 2015 Abhijit Menon-Sen <ams@2ndQuadrant.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-'''
-DOCUMENTATION:
+DOCUMENTATION = '''
     inventory: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
@@ -33,8 +20,9 @@ DOCUMENTATION:
     notes:
         - It takes the place of the previously hardcoded INI inventory.
         - To function it requires being whitelisted in configuration.
+'''
 
-EXAMPLES:
+EXAMPLES = '''
   example1: |
       # example cfg file
       [web]
@@ -77,8 +65,6 @@ EXAMPLES:
       host4 # same host as above, but member of 2 groups, will inherit vars from both
             # inventory hostnames are unique
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import ast
 import re

@@ -1,28 +1,54 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# ---
-# The paramiko transport is provided because many distributions, in particular EL6 and before
-# do not support ControlPersist in their SSH implementations.  This is needed on the Ansible
-# control machine to be reasonably efficient with connections.  Thus paramiko is faster
-# for most users on these platforms.  Users with ControlPersist capability can consider
-# using -c ssh or configuring the transport in ansible.cfg.
+DOCUMENTATION = """
+    author: Ansible Core Team
+    connection: paramiko
+    short_description: Run tasks via python ssh (paramiko)
+    description:
+        - Use the python ssh implementation (Paramiko) to connect to targets
+        - The paramiko transport is provided because many distributions, in particular EL6 and before do not support ControlPersist
+          in their SSH implementations.
+        - This is needed on the Ansible control machine to be reasonably efficient with connections.
+          Thus paramiko is faster for most users on these platforms.
+          Users with ControlPersist capability can consider using -c ssh or configuring the transport in the configuration file.
+    version_added: "0.1"
+    options:
+      remote_addr:
+        description:
+            - Address of the remote target
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_ssh_host
+            - name: ansible_paramiko_host
+      remote_user:
+        description:
+            - User to login/authenticate as
+        vars:
+            - name: ansible_user
+            - name: ansible_ssh_user
+            - name: ansible_paramiko_user
+# TODO:
+#getattr(self._play_context, 'ssh_extra_args', '') or '',
+#getattr(self._play_context, 'ssh_common_args', '') or '',
+#getattr(self._play_context, 'ssh_args', '') or '',
+#C.HOST_KEY_CHECKING
+#C.PARAMIKO_HOST_KEY_AUTO_ADD
+#C.USE_PERSISTENT_CONNECTIONS:
+#            ssh.connect(
+#                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+#                key_filename,
+#                password=self._play_context.password,
+#                timeout=self._play_context.timeout,
+#                port=port,
+#proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
+#C.PARAMIKO_PTY
+#C.PARAMIKO_RECORD_HOST_KEYS
+"""
 
 import warnings
 import os

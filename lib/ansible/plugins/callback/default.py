@@ -1,30 +1,41 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     callback: default
+    type: stdout
     short_description: default Ansible screen output
     version_added: historical
     description:
         - This is the default output callback for ansible-playbook.
+    options:
+      show_skipped_hosts:
+        name: Show skipped hosts
+        description: "Toggle to control displaying skipped task/host results in a task"
+        env:
+          - name: DISPLAY_SKIPPED_HOSTS
+        ini:
+          - key: display_skipped_hosts
+            section: defaults
+        type: boolean
+        default: True
+      show_custom_stats:
+        name: Show custom stats
+        default: False
+        description: 'This adds the custom stats set via the set_stats plugin to the play recap'
+        env:
+          - name: ANSIBLE_SHOW_CUSTOM_STATS
+        ini:
+          - key: show_custom_stats
+            section: defaults
+        type: bool
+    requirements:
+      - set as stdout in configuration
 '''
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 from ansible import constants as C
 from ansible.playbook.task_include import TaskInclude

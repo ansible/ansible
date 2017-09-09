@@ -373,7 +373,7 @@ def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
 
     if os.environ.get("GIT_SSH"):
         del os.environ["GIT_SSH"]
-    os.environ["GIT_SSH"] = ssh_wrapper
+    os.environ["GIT_SSH_COMMAND"] = "'/bin/sh %s'" % ssh_wrapper
 
     if os.environ.get("GIT_KEY"):
         del os.environ["GIT_KEY"]

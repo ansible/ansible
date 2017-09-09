@@ -1,22 +1,43 @@
-#
 # (c) 2016 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Ansible Networking Team
+    connection: network_cli
+    short_description: Use network_cli to run command on network appliances
+    description:
+        - This plugin actually forces use of 'local' execution but using paramiko to establish a remote ssh shell on the appliance.
+        - Also this plugin ignores the become_method but still uses the becoe_user and become_pass to
+          do privilege escalation, method depending on network_os used.
+    version_added: "2.3"
+    options:
+      network_os:
+        description:
+            - Appliance specific OS
+        default: 'default'
+        vars:
+            - name: ansible_netconf_network_os
+      password:
+        description:
+            - Secret used to authenticate
+        vars:
+            - name: ansible_pass
+            - name: ansible_netconf_pass
+      private_key_file:
+        description:
+            - Key or certificate file used for authentication
+        vars:
+            - name: ansible_private_key_file
+      timeout:
+        type: int
+        description:
+          - Connection timeout in seconds
+        default: 120
+"""
 
 import json
 import logging
