@@ -257,7 +257,7 @@ def create_trail(module, client, ct_params):
     """
     Creates a CloudTrail
 
-    module : AnisbleModule object
+    module : AnsibleModule object
     client : boto3 client connection object
     ct_params : The parameters for the Trail to create
     """
@@ -274,7 +274,7 @@ def tag_trail(module, client, tags, trail_arn, curr_tags=None, dry_run=False):
     """
     Creates, updates, removes tags on a CloudTrail resource
 
-    module : AnisbleModule object
+    module : AnsibleModule object
     client : boto3 client connection object
     tags : Dict of tags converted from ansible_dict to boto3 list of dicts
     trail_arn : The ARN of the CloudTrail to operate on
@@ -400,7 +400,7 @@ def delete_trail(module, client, trail_arn):
     """
     Delete a CloudTrail
 
-    module : AnisbleModule object
+    module : AnsibleModule object
     client : boto3 client connection object
     trail_arn : Full CloudTrail ARN
     """
@@ -414,7 +414,7 @@ def update_trail(module, client, ct_params):
     """
     Delete a CloudTrail
 
-    module : AnisbleModule object
+    module : AnsibleModule object
     client : boto3 client connection object
     ct_params : The parameters for the Trail to update
     """

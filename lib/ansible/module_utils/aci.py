@@ -733,7 +733,7 @@ class ACIModule(object):
     def post_config(self):
         """
         This method is used to handle the logic when the modules state is equal to present. The method only pushes a change if
-        the object has differences than what exists on the APIC, and if check_mode is Fasle. A successful change will mark the
+        the object has differences than what exists on the APIC, and if check_mode is False. A successful change will mark the
         module as changed.
         """
         if not self.result['config']:
