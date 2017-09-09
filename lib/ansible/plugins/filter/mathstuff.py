@@ -44,7 +44,7 @@ def intersect(a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) & set(b)
     else:
-        c = unique(filter(lambda x: x in b, a))
+        c = unique([x for x in a if x in b])
     return c
 
 
@@ -52,7 +52,7 @@ def difference(a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) - set(b)
     else:
-        c = unique(filter(lambda x: x not in b, a))
+        c = unique([x for x in a if x not in b])
     return c
 
 
@@ -60,7 +60,7 @@ def symmetric_difference(a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) ^ set(b)
     else:
-        c = unique(filter(lambda x: x not in intersect(a, b), union(a, b)))
+        c = unique([x for x in union(a, b) if x not in intersect(a, b)])
     return c
 
 
@@ -105,7 +105,7 @@ def inversepower(x, base=2):
             return math.sqrt(x)
         else:
             return math.pow(x, 1.0 / float(base))
-    except TypeError as e:
+    except (ValueError, TypeError) as e:
         raise errors.AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
 
 
