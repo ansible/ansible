@@ -72,7 +72,7 @@ Ansible Changes By Release
 
 
 ### Minor Changes
-* Removed previously deprecated config option `hostfile` and env var `ANSIBLE_HOSTS`
+* Ensure deprecated config option `hostfile` and env var `ANSIBLE_HOSTS` print deprecation warnings for removal in 2.6
 * Removed unused and deprecated config option `pattern`
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
 * The `include_dir` var is not a global anymore, as we now allow multiple inventory sources, it is now host dependant.
