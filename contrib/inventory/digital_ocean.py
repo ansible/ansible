@@ -139,6 +139,7 @@ import re
 import argparse
 from time import time
 import ast
+import requests
 
 try:
     import ConfigParser
@@ -151,10 +152,38 @@ except ImportError:
     import simplejson as json
 
 
-class DoManager():
-    def __init__(self, api_token, api_version=2):
+class DoManager:
+    def __init__(self, api_token):
         self.api_token = api_token
-        self.api_token_version = api_version
+        self.api_endpoint = 'https://api.digitalocean.com/v2'
+        self.headers = {'Authorization': 'Bearer {0}'.format(self.api_token),
+                        'Content-type': 'application/json'}
+        self.timeout = 60
+
+    def _url_builder(self, path):
+        if path[0] == '/':
+            path = path[1:]
+        return '%s/%s' % (self.api_endpoint, path)
+
+    def send(self, url, method='GET', data=None):
+        url = self._url_builder(url)
+        data = json.dumps(data)
+        try:
+            if method == 'GET':
+                resp = requests.get(url, data=data, headers=self.headers, timeout=self.timeout)
+                json_resp = resp.json()
+        except ValueError as e:
+            sys.exit("Unable to parse result from %s: %s" % (url, e))
+
+        return json_resp
+
+    def all_active_droplets(self):
+        resp = self.send('droplets/')
+        return resp['droplets']
+
+    def all_regions(self):
+        resp = self.send('regions/')
+        return resp['regions']
 
 
 class DigitalOceanInventory(object):
@@ -164,7 +193,7 @@ class DigitalOceanInventory(object):
     ###########################################################################
 
     def __init__(self):
-        ''' Main execution path '''
+        """Main execution path """
 
         # DigitalOceanInventory data
         self.data = {}  # All DigitalOcean data
@@ -183,9 +212,9 @@ class DigitalOceanInventory(object):
 
         # Verify credentials were set
         if not hasattr(self, 'api_token'):
-            sys.stderr.write('''Could not find values for DigitalOcean api_token.
-They must be specified via either ini file, command line argument (--api-token),
-or environment variables (DO_API_TOKEN)\n''')
+            msg = 'Could not find values for DigitalOcean api_token. They must be specified via either ini file, ' \
+                  'command line argument (--api-token), or environment variables (DO_API_TOKEN)\n'
+            sys.stderr.write(msg)
             sys.exit(-1)
 
         # env command, show DigitalOcean credentials
@@ -201,10 +230,10 @@ or environment variables (DO_API_TOKEN)\n''')
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
-                    sys.stderr.write('''Cache is empty and --force-cache was specified\n''')
+                    sys.stderr.write('Cache is empty and --force-cache was specified\n')
                     sys.exit(-1)
 
-        self.manager = DoManager(self.api_token, api_version=2)
+        self.manager = DoManager(self.api_token)
 
         # Pick the json_data to print based on the CLI command
         if self.args.droplets:
