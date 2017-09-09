@@ -66,8 +66,9 @@ options:
     default: null
   state:
     description:
-      - Specify if a config should be C(set) or C(unset).
+      - Specify if a config should be C(present) or C(absent).
     required: false
+    choices: ["present", "absent"]
     default: null
     version_added: "2.4"
 '''
@@ -137,12 +138,12 @@ EXAMPLES = '''
 # Unset the global color.ui setting
 - git_config:
     name: color.ui
-    state: unset
+    state: absent
 
 # Unset a local setting
 - git_config:
     name: core.editor
-    state: unset
+    state: absent
     scope: local
     repo: /path/to/repo
 '''
@@ -176,7 +177,7 @@ def main():
             repo=dict(type='path'),
             scope=dict(required=False, type='str', choices=['local', 'global', 'system']),
             value=dict(required=False),
-            state=dict(required=False, choices=['set', 'unset'])
+            state=dict(required=False, choices=['present', 'absent'])
         ),
         mutually_exclusive=[['list_all', 'name'], ['list_all', 'value'], ['list_all', 'state']],
         required_if=[('scope', 'local', ['repo'])],
@@ -207,7 +208,7 @@ def main():
     else:
         new_value = None
 
-    if params['state'] == "unset":
+    if params['state'] == "absent":
         config_state = params['state']
     else:
         config_state = None
@@ -240,7 +241,7 @@ def main():
     if config_state and out:
         # if the setting is present, insert --unset in args list and .run_command
         old_val = out.rstrip()
-        args.insert(-1, "--" + config_state)
+        args.insert(-1, "--unset")
         (rc, out, err) = module.run_command(' '.join(args), cwd=dir)
         module.exit_json(changed=True, msg="Unsetting %s:%s" % (name, old_val))
     elif config_state:
