@@ -19,7 +19,7 @@ module: pagerduty_maintenance
 short_description: Create PagerDuty maintenance windows
 description:
     - This module will let you create PagerDuty maintenance windows
-version_added: "1.2"
+version_added: "2.5"
 author:
     - "Andrew Newdigate (@suprememoocow)"
     - "Dylan Silva (@thaumos)"
