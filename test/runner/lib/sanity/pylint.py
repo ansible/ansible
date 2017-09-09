@@ -89,7 +89,7 @@ class PylintTest(SanitySingleVersion):
             messages = []
 
         errors = [SanityMessage(
-            message=m['message'],
+            message=m['message'].replace('\n', ' '),
             path=m['path'],
             line=int(m['line']),
             column=int(m['column']),
