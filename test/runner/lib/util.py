@@ -374,6 +374,9 @@ class Display(object):
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
 
+        if sys.version_info[0] == 2 and isinstance(message, type(u'')):
+            message = message.encode('utf-8')
+
         print(message, file=fd)
         fd.flush()
 

@@ -359,7 +359,7 @@ class TestFailure(TestResult):
         if self.summary:
             block = self.summary
         else:
-            block = '\n'.join(str(m) for m in self.messages)
+            block = '\n'.join(m.format() for m in self.messages)
 
         message = block.strip()
 
