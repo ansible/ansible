@@ -1,31 +1,30 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
+# Copyright: (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = '''
 ---
 module: iptables
 short_description: Modify the systems iptables
-requirements: []
 version_added: "2.0"
-author: Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
+author:
+- Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 description:
   - Iptables is used to set up, maintain, and inspect the tables of IP packet
-    filter rules in the Linux kernel. This module does not handle the saving
-    and/or loading of rules, but rather only manipulates the current rules
-    that are present in memory. This is the same as the behaviour of the
-    "iptables" and "ip6tables" command which this module uses internally.
+    filter rules in the Linux kernel.
+  - This module does not handle the saving and/or loading of rules, but rather
+    only manipulates the current rules that are present in memory. This is the
+    same as the behaviour of the C(iptables) and C(ip6tables) command which
+    this module uses internally.
 notes:
   - This module just deals with individual rules. If you need advanced
     chaining of rules the recommended way is to template the iptables restore
@@ -37,71 +36,74 @@ options:
         should operate on. If the kernel is configured with automatic module
         loading, an attempt will be made to load the appropriate module for
         that table if it is not already there.
+    choices: [ filter, nat, mangle, raw, security ]
     default: filter
-    choices: [ "filter", "nat", "mangle", "raw", "security" ]
   state:
     description:
       - Whether the rule should be absent or present.
+    choices: [ absent, present ]
     default: present
-    choices: [ "present", "absent" ]
   action:
-    version_added: "2.2"
     description:
-      - Whether the rule should be appended at the bottom or inserted at the
-        top. If the rule already exists the chain won't be modified.
+      - Whether the rule should be appended at the bottom or inserted at the top.
+      - If the rule already exists the chain won't be modified.
+    choices: [ append, insert ]
     default: append
-    choices: [ "append", "insert" ]
+    version_added: "2.2"
   ip_version:
     description:
       - Which version of the IP protocol this rule should apply to.
+    choices: [ ipv4, ipv6 ]
     default: ipv4
-    choices: [ "ipv4", "ipv6" ]
   chain:
     description:
-      - "Chain to operate on. This option can either be the name of a user
-        defined chain or any of the builtin chains: 'INPUT', 'FORWARD',
-        'OUTPUT', 'PREROUTING', 'POSTROUTING', 'SECMARK', 'CONNSECMARK'."
+      - Chain to operate on.
+      - "This option can either be the name of a user defined chain or any of
+        the builtin chains: 'INPUT', 'FORWARD', 'OUTPUT', 'PREROUTING',
+        'POSTROUTING', 'SECMARK', 'CONNSECMARK'."
   protocol:
     description:
-      - The protocol of the rule or of the packet to check. The specified
-        protocol can be one of tcp, udp, udplite, icmp, esp, ah, sctp or the
-        special keyword "all", or it can be a numeric value, representing one
-        of these protocols or a different one. A protocol name from
-        /etc/protocols is also allowed. A "!" argument before the protocol
-        inverts the test.  The number zero is equivalent to all. "all" will
-        match with all protocols and is taken as default when this option is
-        omitted.
+      - The protocol of the rule or of the packet to check.
+      - The specified protocol can be one of tcp, udp, udplite, icmp, esp,
+        ah, sctp or the special keyword "all", or it can be a numeric value,
+        representing one of these protocols or a different one. A protocol
+        name from /etc/protocols is also allowed. A "!" argument before the
+        protocol inverts the test.  The number zero is equivalent to all.
+        "all" will match with all protocols and is taken as default when this
+        option is omitted.
   source:
     description:
-      - Source specification. Address can be either a network name,
-        a hostname, a network IP address (with /mask), or a plain IP address.
-        Hostnames will be resolved once only, before the rule is submitted to
+      - Source specification.
+      - Address can be either a network name, a hostname, a network IP address
+        (with /mask), or a plain IP address.
+      - Hostnames will be resolved once only, before the rule is submitted to
         the kernel. Please note that specifying any name to be resolved with
-        a remote query such as DNS is a really bad idea. The mask can be
-        either a network mask or a plain number, specifying the number of 1's
-        at the left side of the network mask. Thus, a mask of 24 is equivalent
-        to 255.255.255.0. A "!" argument before the address specification
-        inverts the sense of the address.
+        a remote query such as DNS is a really bad idea.
+      - The mask can be either a network mask or a plain number, specifying
+        the number of 1's at the left side of the network mask. Thus, a mask
+        of 24 is equivalent to 255.255.255.0. A "!" argument before the
+        address specification inverts the sense of the address.
   destination:
     description:
-      - Destination specification. Address can be either a network name,
-        a hostname, a network IP address (with /mask), or a plain IP address.
-        Hostnames will be resolved once only, before the rule is submitted to
+      - Destination specification.
+      - Address can be either a network name, a hostname, a network IP address
+        (with /mask), or a plain IP address.
+      - Hostnames will be resolved once only, before the rule is submitted to
         the kernel. Please note that specifying any name to be resolved with
-        a remote query such as DNS is a really bad idea. The mask can be
-        either a network mask or a plain number, specifying the number of 1's
-        at the left side of the network mask. Thus, a mask of 24 is equivalent
-        to 255.255.255.0. A "!" argument before the address specification
-        inverts the sense of the address.
+        a remote query such as DNS is a really bad idea.
+      - The mask can be either a network mask or a plain number, specifying
+        the number of 1's at the left side of the network mask. Thus, a mask
+        of 24 is equivalent to 255.255.255.0. A "!" argument before the
+        address specification inverts the sense of the address.
   tcp_flags:
-    version_added: "2.4"
     description:
-      - TCP flags specification. tcp_flags expects a dict with the two keys
-        "flags" and "flags_set". The "flags" list is the mask, a list of
-        flags you want to examine. The "flags_set" list tells which one(s)
-        should be set. If one of the two values is missing, the --tcp-flags option
-        will be ignored.
+      - TCP flags specification.
+      - C(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
+        - The C(flags) list is the mask, a list of flags you want to examine.
+        - The C(flags_set) list tells which one(s) should be set.
+        If one of the two values is missing, the --tcp-flags option will be ignored.
     default: {}
+    version_added: "2.4"
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -154,18 +156,18 @@ options:
         counters of a rule (during INSERT, APPEND, REPLACE operations).
   source_port:
     description:
-      - "Source port or port range specification. This can either be a service
+      - Source port or port range specification. This can either be a service
         name or a port number. An inclusive range can also be specified, using
         the format first:last. If the first port is omitted, '0' is assumed;
         if the last is omitted, '65535' is assumed. If the first port is
-        greater than the second one they will be swapped."
+        greater than the second one they will be swapped.
   destination_port:
     description:
-      - "Destination port or port range specification. This can either be
+      - Destination port or port range specification. This can either be
         a service name or a port number. An inclusive range can also be
         specified, using the format first:last. If the first port is omitted,
         '0' is assumed; if the last is omitted, '65535' is assumed. If the
-        first port is greater than the second one they will be swapped."
+        first port is greater than the second one they will be swapped.
   to_ports:
     description:
       - "This specifies a destination port or range of ports to use: without
@@ -173,81 +175,84 @@ options:
         rule also specifies one of the following protocols: tcp, udp, dccp or
         sctp."
   to_destination:
-    version_added: "2.1"
     description:
-      - "This specifies a destination address to use with DNAT: without
-        this, the destination address is never altered."
+      - This specifies a destination address to use with DNAT.
+      - Without this, the destination address is never altered.
+    version_added: "2.1"
   to_source:
+    description:
+      - This specifies a source address to use with SNAT.
+      - Without this, the source address is never altered.
     version_added: "2.2"
-    description:
-      - "This specifies a source address to use with SNAT: without
-        this, the source address is never altered."
   syn:
-    version_added: "2.5"
     description:
-      - "This allows matching packets that have the SYN bit set and the ACK
-        and RST bits unset. When negated, this matches all packets with
-        the RST or the ACK bits set."
+      - This allows matching packets that have the SYN bit set and the ACK
+        and RST bits unset.
+      - When negated, this matches all packets with the RST or the ACK bits set.
+    choices: [ ignore, match, negate ]
     default: ignore
+    version_added: "2.5"
   set_dscp_mark:
-    version_added: "2.1"
     description:
-      - "This allows specifying a DSCP mark to be added to packets.
-        It takes either an integer or hex value. Mutually exclusive with
-        C(set_dscp_mark_class)."
+      - This allows specifying a DSCP mark to be added to packets.
+        It takes either an integer or hex value.
+      - Mutually exclusive with C(set_dscp_mark_class).
+    version_added: "2.1"
   set_dscp_mark_class:
-    version_added: "2.1"
     description:
-      - "This allows specifying a predefined DiffServ class which will be
-        translated to the corresponding DSCP mark. Mutually exclusive with
-        C(set_dscp_mark)."
+      - This allows specifying a predefined DiffServ class which will be
+        translated to the corresponding DSCP mark.
+      - Mutually exclusive with C(set_dscp_mark).
+    version_added: "2.1"
   comment:
     description:
-      - "This specifies a comment that will be added to the rule"
+      - This specifies a comment that will be added to the rule.
   ctstate:
     description:
-      - "ctstate is a list of the connection states to match in the conntrack
+      - "C(ctstate) is a list of the connection states to match in the conntrack
         module.
         Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED',
         'UNTRACKED', 'SNAT', 'DNAT'"
+    choices: [ DNAT, ESTABLISHED, INVALID, NEW, RELATED, SNAT, UNTRACKED ]
     default: []
   limit:
     description:
-      - "Specifies the maximum average number of matches to allow per second.
-        The number can specify units explicitly, using `/second', `/minute',
+      - Specifies the maximum average number of matches to allow per second.
+      - The number can specify units explicitly, using `/second', `/minute',
         `/hour' or `/day', or parts of them (so `5/second' is the same as
-        `5/s')."
+        `5/s').
   limit_burst:
-    version_added: "2.1"
     description:
-      - "Specifies the maximum burst before the above limit kicks in."
+      - Specifies the maximum burst before the above limit kicks in.
+    version_added: "2.1"
   uid_owner:
-    version_added: "2.1"
     description:
-      - "Specifies the UID or username to use in match by owner rule."
+      - Specifies the UID or username to use in match by owner rule.
+    version_added: "2.1"
   reject_with:
+    description:
+      - Specifies the error packet type to return while rejecting.
     version_added: "2.1"
-    description:
-      - "Specifies the error packet type to return while rejecting."
   icmp_type:
-    version_added: "2.2"
     description:
-      - "This allows specification of the ICMP type, which can be a numeric
+      - This allows specification of the ICMP type, which can be a numeric
         ICMP type, type/code pair, or one of the ICMP type names shown by the
-        command 'iptables -p icmp -h'"
+        command 'iptables -p icmp -h'
+    version_added: "2.2"
   flush:
-    version_added: "2.2"
     description:
-      - "Flushes the specified table and chain of all rules. If no chain is
-        specified then the entire table is purged. Ignores all other
-        parameters."
+      - Flushes the specified table and chain of all rules.
+      - If no chain is specified then the entire table is purged.
+      - Ignores all other parameters.
+    version_added: "2.2"
   policy:
-    version_added: "2.2"
     description:
-      - "Set the policy for the chain to the given target. Valid targets are
-        ACCEPT, DROP, QUEUE, RETURN. Only built in chains can have policies.
-        This parameter requires the chain parameter. Ignores all other
-        parameters."
+      - Set the policy for the chain to the given target.
+      - Only built-in chains can have policies.
+      - This parameter requires the C(chain) parameter.
+      - Ignores all other parameters.
+    choices: [ ACCEPT, DROP, QUEUE, RETURN ]
+    version_added: "2.2"
 '''
 
 EXAMPLES = '''
@@ -468,53 +473,39 @@ def main():
     module = AnsibleModule(
         supports_check_mode=True,
         argument_spec=dict(
-            table=dict(
-                default='filter',
-                choices=['filter', 'nat', 'mangle', 'raw', 'security']),
-            state=dict(
-                default='present',
-                choices=['present', 'absent']),
-            action=dict(
-                default='append',
-                type='str',
-                choices=['append', 'insert']),
-            ip_version=dict(
-                default='ipv4',
-                choices=['ipv4', 'ipv6']),
-            chain=dict(default=None, type='str'),
-            protocol=dict(default=None, type='str'),
-            source=dict(default=None, type='str'),
-            to_source=dict(default=None, type='str'),
-            destination=dict(default=None, type='str'),
-            to_destination=dict(default=None, type='str'),
-            match=dict(default=[], type='list'),
-            tcp_flags=dict(default={}, type='dict'),
-            jump=dict(default=None, type='str'),
-            goto=dict(default=None, type='str'),
-            in_interface=dict(default=None, type='str'),
-            out_interface=dict(default=None, type='str'),
-            fragment=dict(default=None, type='str'),
-            set_counters=dict(default=None, type='str'),
-            source_port=dict(default=None, type='str'),
-            destination_port=dict(default=None, type='str'),
-            to_ports=dict(default=None, type='str'),
-            set_dscp_mark=dict(default=None, type='str'),
-            set_dscp_mark_class=dict(default=None, type='str'),
-            comment=dict(default=None, type='str'),
-            ctstate=dict(default=[], type='list'),
-            limit=dict(default=None, type='str'),
-            limit_burst=dict(default=None, type='str'),
-            uid_owner=dict(default=None, type='str'),
-            reject_with=dict(default=None, type='str'),
-            icmp_type=dict(default=None, type='str'),
-            syn=dict(
-                default='ignore',
-                choices=['ignore', 'match', 'negate']),
-            flush=dict(default=False, type='bool'),
-            policy=dict(
-                default=None,
-                type='str',
-                choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+            table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            action=dict(type='str', default='append', choices=['append', 'insert']),
+            ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
+            chain=dict(type='str'),
+            protocol=dict(type='str'),
+            source=dict(type='str'),
+            to_source=dict(type='str'),
+            destination=dict(type='str'),
+            to_destination=dict(type='str'),
+            match=dict(type='list', default=[]),
+            tcp_flags=dict(type='dict', default={}),
+            jump=dict(type='str'),
+            goto=dict(type='str'),
+            in_interface=dict(type='str'),
+            out_interface=dict(type='str'),
+            fragment=dict(type='str'),
+            set_counters=dict(type='str'),
+            source_port=dict(type='str'),
+            destination_port=dict(type='str'),
+            to_ports=dict(type='str'),
+            set_dscp_mark=dict(type='str'),
+            set_dscp_mark_class=dict(type='str'),
+            comment=dict(type='str'),
+            ctstate=dict(type='list', default=[]),
+            limit=dict(type='str'),
+            limit_burst=dict(type='str'),
+            uid_owner=dict(type='str'),
+            reject_with=dict(type='str'),
+            icmp_type=dict(type='str'),
+            syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
+            flush=dict(type='bool', default=False),
+            policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
