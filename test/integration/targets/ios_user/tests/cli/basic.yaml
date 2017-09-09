@@ -59,7 +59,7 @@
 - name: Add collection of users again (Idempotent)
   ios_user:
     aggregate:
-      - name: anisbletest2
+      - name: ansibletest2
       - name: ansibletest3
     authorize: yes
     state: present
