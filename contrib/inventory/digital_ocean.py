@@ -224,6 +224,9 @@ or environment variables (DO_API_TOKEN)\n''')
         elif self.args.domains:
             self.load_from_digital_ocean('domains')
             json_data = {'domains': self.data['domains']}
+        elif self.args.tags:
+            self.load_from_digital_ocean('tags')
+            json_data = {'tags': self.data['tags']}
         elif self.args.all:
             self.load_from_digital_ocean()
             json_data = self.data
@@ -292,6 +295,7 @@ or environment variables (DO_API_TOKEN)\n''')
         parser.add_argument('--sizes', action='store_true', help='List Sizes as JSON')
         parser.add_argument('--ssh-keys', action='store_true', help='List SSH keys as JSON')
         parser.add_argument('--domains', action='store_true', help='List Domains as JSON')
+        parser.add_argument('--tags', action='store_true', help='List Tags as JSON')
 
         parser.add_argument('--pretty', '-p', action='store_true', help='Pretty-print results')
 
@@ -313,7 +317,7 @@ or environment variables (DO_API_TOKEN)\n''')
         if (not self.args.droplets and not self.args.regions and
                 not self.args.images and not self.args.sizes and
                 not self.args.ssh_keys and not self.args.domains and
-                not self.args.all and not self.args.host):
+                not self.args.tags and not self.args.all and not self.args.host):
             self.args.list = True
 
     ###########################################################################
@@ -347,6 +351,9 @@ or environment variables (DO_API_TOKEN)\n''')
             self.cache_refreshed = True
         if resource == 'domains' or resource is None:
             self.data['domains'] = self.manager.all_domains()
+            self.cache_refreshed = True
+        if resource == 'tags' or resource is None:
+            self.data['tags'] = self.manager.all_tags()
             self.cache_refreshed = True
 
     def build_inventory(self):
