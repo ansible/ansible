@@ -1431,7 +1431,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             try:
                 self.network_client.virtual_networks.list(virtual_network_resource_group, self.virtual_network_name)
                 virtual_network_name = self.virtual_network_name
-            except CloudError:
+            except CloudError as exc:
                 self.fail("Error: fetching virtual network {0} - {1}".format(self.virtual_network_name, str(exc)))
 
         else:
