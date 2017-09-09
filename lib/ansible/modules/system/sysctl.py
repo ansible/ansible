@@ -118,7 +118,10 @@ EXAMPLES = '''
 
 import os
 import tempfile
+
 from ansible.module_utils.basic import get_platform, get_exception, AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils._text import to_native
 
 
 class SysctlModule(object):
@@ -211,20 +214,16 @@ class SysctlModule(object):
     def _parse_value(self, value):
         if value is None:
             return ''
-        if isinstance(value, bool):
+        elif isinstance(value, bool):
             if value:
                 return '1'
             else:
                 return '0'
-        # Check for python 2.x basestring which unifies (unicode, str) support
-        try:
-            basestring
-        except NameError:
-            basestring = str
-        if isinstance(value, basestring):
-            if value.lower() in BOOLEANS_TRUE:
+        elif isinstance(value, (binary_type, text_type)):
+            canonicalized_value = to_native(value).lower()
+            if canonicalized_value in BOOLEANS_TRUE:
                 return '1'
-            elif value.lower() in BOOLEANS_FALSE:
+            elif canonicalized_value in BOOLEANS_FALSE:
                 return '0'
             else:
                 return value.strip()
