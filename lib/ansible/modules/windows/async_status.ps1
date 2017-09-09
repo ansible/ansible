@@ -21,14 +21,19 @@ $results = @{changed=$false}
 
 $parsed_args = Parse-Args $args
 $jid = Get-AnsibleParam $parsed_args "jid" -failifempty $true -resultobj $results
+# $job_dir currently only for compatibility with non-Windows async. Unused.
+$job_dir = Get-AnsibleParam $parsed_args "job_dir" -Default [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async")
 $mode = Get-AnsibleParam $parsed_args "mode" -Default "status" -ValidateSet "status","cleanup"
 
 # setup logging directory
-$log_path = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async", $jid)
+# FUTURE: Add job_dir override functionality here; set to default for now
+#$job_dir = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async")
+$logdir = $job_dir
+$log_path = [System.IO.Path]::Combine($job_dir, $jid)
 
 If(-not $(Test-Path $log_path))
 {
-    Fail-Json @{ansible_job_id=$jid; started=1; finished=1} "could not find job"
+    Fail-Json @{ansible_job_id=$jid; ansible_job_dir=$job_dir; ansible_log_path=$log_path; started=1; finished=1} "could not find job"
 }
 
 If($mode -eq "cleanup") {
@@ -61,6 +66,7 @@ Catch {
 If (-not $data.ContainsKey("started")) {
     $data['finished'] = 1
     $data['ansible_job_id'] = $jid
+    $data['ansible_job_dir'] = $job_dir
 }
 ElseIf (-not $data.ContainsKey("finished")) {
     $data['finished'] = 0

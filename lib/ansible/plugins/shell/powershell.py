@@ -19,9 +19,12 @@ __metaclass__ = type
 
 import base64
 import os
+import random
 import re
 import shlex
+import time
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -1105,7 +1108,17 @@ Function Run($payload) {
     $jid = $payload.async_jid
     $local_jid = $jid + "." + $pid
 
-    $results_path = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async", $local_jid)
+    # Is this the correct name for the variable at this particular time?
+    $tmpdir = $payload.async_tmpdir
+
+    If($tmpdir -and $tmpdir -ne '_') {
+        $job_dir = [System.IO.Path]::Combine($tmpdir, ".ansible_async")
+    }
+    Else {
+        $job_dir = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async")
+    }
+
+    $results_path = [System.IO.Path]::Combine($job_dir, $local_jid)
 
     $payload.async_results_path = $results_path
 
@@ -1212,6 +1225,7 @@ Function Run($payload) {
         finished=0;
         results_file=$results_path;
         ansible_job_id=$local_jid;
+        ansible_job_dir=$job_dir;
         _ansible_suppress_tmpdir_delete=$true;
         ansible_async_watchdog_pid=$watchdog_pid
     }
@@ -1397,6 +1411,10 @@ class ShellModule(object):
             return path
         return '\'%s\'' % path
 
+    def split_path(self, path):
+        path = self._unquote(path).replace('/', '\\')
+        return path.split('\\', 1)
+
     def get_remote_filename(self, pathname):
         # powershell requires that script files end with .ps1
         base_name = os.path.basename(pathname.strip())
@@ -1427,10 +1445,23 @@ class ShellModule(object):
         else:
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
+    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
+        if not basefile:
+            basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basefile = self._escape(self._unquote(basefile))
+
         # FIXME: Support system temp path and passed in tmpdir!
-        return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        if system:
+            # FIXME: create 'system tmp dirs' config/var and check tmpdir is in those values to allow for /opt/tmp, etc
+            basetmpdir = self._escape(self._unquote('$env:tmp'))
+        else:
+            if tmpdir is None:
+                basetmpdir = self._escape(self._unquote(C.DEFAULT_REMOTE_TMP))
+            else:
+                basetmpdir = self._escape(self._unquote(tmpdir))
+
+        # return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        return self._encode_script('''(New-Item -Type Directory -Path "%s" -Name "%s").FullName | Write-Host -Separator '';''' % (basetmpdir, basefile))
 
     def expand_user(self, user_home_path):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
