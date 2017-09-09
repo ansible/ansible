@@ -164,6 +164,10 @@ EXAMPLES = '''
     service: '{{ pd_window.result.maintenance_window.id }}'
 '''
 
+RETURN = '''
+
+'''
+
 import base64
 import datetime
 import json

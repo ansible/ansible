@@ -107,6 +107,11 @@ EXAMPLES = '''
     incident_key: somekey
     desc: "some text for incident's log"
 '''
+
+RETURN = '''
+
+'''
+
 import json
 
 from ansible.module_utils.basic import AnsibleModule
