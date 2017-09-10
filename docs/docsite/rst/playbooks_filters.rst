@@ -802,6 +802,10 @@ Combinations always require a set size::
     - name: give me combinations for sets of two
       debug: msg="{{ [1,2,3,4,5]|combinations(2)|list }}"
 
+To get the product of multiple lists::
+    
+    - name: give me a list of every allowed combination
+      debug: msg="{{ [["www", ""],["ticket","zammad"],["test.com.", "test.de."]]|product|list }}
 
 To get a list combining the elements of other lists use ``zip``::
 

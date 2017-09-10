@@ -149,6 +149,7 @@ class FilterModule(object):
             # combinatorial
             'permutations': itertools.permutations,
             'combinations': itertools.combinations,
+            'product':  itertools.product,
 
             # computer theory
             'human_readable': human_readable,
