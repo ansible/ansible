@@ -187,11 +187,15 @@ class LinuxNetwork(Network):
                         # NOTE: interfaces is also ref to outside scope
                         if iface != device:
                             interfaces[iface] = {}
-                        if not secondary and "ipv4" not in interfaces[iface]:
-                            interfaces[iface]['ipv4'] = {'address': address,
-                                                         'broadcast': broadcast,
-                                                         'netmask': netmask,
-                                                         'network': network}
+                        if not secondary:
+                            if "ipv4" not in interfaces[iface]:
+                                interfaces[iface]['ipv4'] = []
+                            interfaces[iface]['ipv4'].append({
+                                'address': address,
+                                'broadcast': broadcast,
+                                'netmask': netmask,
+                                'network': network,
+                            })
                         else:
                             if "ipv4_secondaries" not in interfaces[iface]:
                                 interfaces[iface]["ipv4_secondaries"] = []
