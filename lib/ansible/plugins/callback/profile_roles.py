@@ -1,23 +1,20 @@
-# (C) 2017, Tennis Smith, http://github.com/gamename
-#
-# This file is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# File is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# See <http://www.gnu.org/licenses/> for a copy of the
-# GNU General Public License
+# (c) 2017, Tennis Smith, http://github.com/gamename
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#
-# This will track the use of each role during the life of a playbook's
-# execution.  The total time spent in each role will be printed at the
-# end.
-#
+'''
+DOCUMENTATION:
+    callback: profile_roles
+    type: aggregate
+    short_description: adds timing information to roles
+    version_added: "2.4"
+    description:
+        - This callback module provides profiling for ansible roles.
+    requirements:
+      - whitelisting in configuration
+'''
+
+# Make coding more python3-ish
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
@@ -117,11 +114,9 @@ class CallbackModule(CallbackBase):
 
         # Print the timings starting with the largest one
         for result in self.totals.most_common():
-            msg = u"{0:-<70}{1:->9}".format(result[0] + u' ',
-                                            u' {0:.02f}s'.format(result[1]))
+            msg = u"{0:-<70}{1:->9}".format(result[0] + u' ', u' {0:.02f}s'.format(result[1]))
             self._display.display(msg)
 
-        msg_total = u"{0:-<70}{1:->9}".format(u'total ',
-                                              u' {0:.02f}s'.format(total_time))
+        msg_total = u"{0:-<70}{1:->9}".format(u'total ', u' {0:.02f}s'.format(total_time))
         self._display.display(filled("", fchar="~"))
         self._display.display(msg_total)

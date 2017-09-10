@@ -24,7 +24,7 @@ __metaclass__ = type
 from abc import ABCMeta
 
 from ansible import constants as C
-from ansible.module_utils.six import with_metaclass
+from ansible.module_utils.six import with_metaclass, string_types
 
 try:
     from __main__ import display
@@ -39,22 +39,29 @@ PLUGIN_PATH_CACHE = {}
 
 
 def get_plugin_class(obj):
-    return obj.__class__.__name__.lower().replace('module', '')
+    if isinstance(obj, string_types):
+        return obj.lower().replace('module', '')
+    else:
+        return obj.__class__.__name__.lower().replace('module', '')
 
 
 class AnsiblePlugin(with_metaclass(ABCMeta, object)):
 
     def __init__(self):
-        self.options = {}
+        self._options = {}
 
     def get_option(self, option, hostvars=None):
-        if option not in self.options:
+        if option not in self._options:
             option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self.name, variables=hostvars)
             self.set_option(option, option_value)
-        return self.options.get(option)
+        return self._options.get(option)
 
     def set_option(self, option, value):
-        self.options[option] = value
+        self._options[option] = value
 
     def set_options(self, options):
-        self.options = options
+        self._options = options
+
+    def _check_required(self):
+        # FIXME: standarize required check based on config
+        pass
