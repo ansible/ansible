@@ -51,7 +51,7 @@ from distutils.version import LooseVersion
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 
@@ -89,7 +89,7 @@ class Connection(ConnectionBase):
                 raise AnsibleError("docker command not found in PATH")
 
         docker_version = self._get_docker_version()
-        if LooseVersion(docker_version) < LooseVersion('1.3'):
+        if LooseVersion(docker_version) < LooseVersion(u'1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
 
         # The remote user we will request from docker (if supported)
@@ -98,7 +98,7 @@ class Connection(ConnectionBase):
         self.actual_user = None
 
         if self._play_context.remote_user is not None:
-            if LooseVersion(docker_version) >= LooseVersion('1.7'):
+            if LooseVersion(docker_version) >= LooseVersion(u'1.7'):
                 # Support for specifying the exec user was added in docker 1.7
                 self.remote_user = self._play_context.remote_user
                 self.actual_user = self.remote_user
@@ -106,8 +106,8 @@ class Connection(ConnectionBase):
                 self.actual_user = self._get_docker_remote_user()
 
                 if self.actual_user != self._play_context.remote_user:
-                    display.warning('docker {0} does not support remote_user, using container default: {1}'
-                                    .format(docker_version, self.actual_user or '?'))
+                    display.warning(u'docker {0} does not support remote_user, using container default: {1}'
+                                    .format(docker_version, self.actual_user or u'?'))
         elif self._display.verbosity > 2:
             # Since we're not setting the actual_user, look it up so we have it for logging later
             # Only do this if display verbosity is high enough that we'll need the value
@@ -116,7 +116,7 @@ class Connection(ConnectionBase):
 
     @staticmethod
     def _sanitize_version(version):
-        return re.sub('[^0-9a-zA-Z\.]', '', version)
+        return re.sub(u'[^0-9a-zA-Z\.]', u'', version)
 
     def _old_docker_version(self):
         cmd_args = []
@@ -148,15 +148,15 @@ class Connection(ConnectionBase):
 
         cmd, cmd_output, err, returncode = self._old_docker_version()
         if returncode == 0:
-            for line in cmd_output.split('\n'):
-                if line.startswith('Server version:'):  # old docker versions
+            for line in to_text(cmd_output, errors='surrogate_or_strict').split(u'\n'):
+                if line.startswith(u'Server version:'):  # old docker versions
                     return self._sanitize_version(line.split()[2])
 
         cmd, cmd_output, err, returncode = self._new_docker_version()
         if returncode:
-            raise AnsibleError('Docker version check (%s) failed: %s' % (cmd, err))
+            raise AnsibleError('Docker version check (%s) failed: %s' % (to_native(cmd), to_native(err)))
 
-        return self._sanitize_version(cmd_output)
+        return self._sanitize_version(to_text(cmd_output, errors='surrogate_or_strict'))
 
     def _get_docker_remote_user(self):
         """ Get the default user configured in the docker container """
@@ -164,13 +164,14 @@ class Connection(ConnectionBase):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = p.communicate()
+        out = to_text(out, errors='surrogate_or_strict')
 
         if p.returncode != 0:
-            display.warning('unable to retrieve default user from docker container: %s' % out + err)
+            display.warning(u'unable to retrieve default user from docker container: %s %s' % (out, to_text(err)))
             return None
 
         # The default exec user is root, unless it was changed in the Dockerfile with USER
-        return out.strip() or 'root'
+        return out.strip() or u'root'
 
     def _build_exec_cmd(self, cmd):
         """ Build the local docker exec command to run cmd on remote_host
@@ -184,13 +185,13 @@ class Connection(ConnectionBase):
         if self._play_context.docker_extra_args:
             local_cmd += self._play_context.docker_extra_args.split(' ')
 
-        local_cmd += ['exec']
+        local_cmd += [b'exec']
 
         if self.remote_user is not None:
-            local_cmd += ['-u', self.remote_user]
+            local_cmd += [b'-u', self.remote_user]
 
         # -i is needed to keep stdin open which allows pipelining to work
-        local_cmd += ['-i', self._play_context.remote_addr] + cmd
+        local_cmd += [b'-i', self._play_context.remote_addr] + cmd
 
         return local_cmd
 
@@ -199,7 +200,7 @@ class Connection(ConnectionBase):
         super(Connection, self)._connect()
         if not self._connected:
             display.vvv(u"ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
-                self.actual_user or '?'), host=self._play_context.remote_addr
+                self.actual_user or u'?'), host=self._play_context.remote_addr
             )
             self._connected = True
 
@@ -239,7 +240,7 @@ class Connection(ConnectionBase):
         out_path = self._prefix_login_path(out_path)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound(
-                "file or module does not exist: %s" % in_path)
+                "file or module does not exist: %s" % to_native(in_path))
 
         out_path = shlex_quote(out_path)
         # Older docker doesn't have native support for copying files into
@@ -257,7 +258,8 @@ class Connection(ConnectionBase):
             stdout, stderr = p.communicate()
 
             if p.returncode != 0:
-                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" %
+                                   (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
     def fetch_file(self, in_path, out_path):
         """ Fetch a file from container to local. """
