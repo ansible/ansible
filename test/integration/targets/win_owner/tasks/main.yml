@@ -45,7 +45,7 @@
     path: "{{test_win_owner_path}}"
     user: invalid-user
   register: invalid_user
-  failed_when: invalid_user.msg != 'invalid-user is not a valid user or group on the host machine or domain'
+  failed_when: invalid_user.msg is not search("account_name invalid-user is not a valid account, cannot get SID.*")
 
 - name: set owner defaults check
   win_owner:
