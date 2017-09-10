@@ -1,20 +1,19 @@
 # (c) 2017, Frederic Van Espen <github@freh.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+'''
+DOCUMENTATION:
+    callback: stderr
+    callback_type: stdout
+    requirements:
+      - set as main display callback
+    short_description: Splits output, sending failed tasks to stderr
+    version_added: "2.4"
+    description:
+        - This is the stderr callback plugin, it behaves like the default callback plugin but sends error output to stderr.
+        - Also it does not output skipped host/task/item status
+'''
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
