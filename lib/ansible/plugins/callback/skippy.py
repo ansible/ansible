@@ -6,7 +6,8 @@
 DOCUMENTATION:
     callback: skippy
     callback_type: stdout
-    requires: set as display
+    requirements:
+      - set as main display callback
     short_description: Ansible screen output that ignores skipped status
     version_added: "2.0"
     description:

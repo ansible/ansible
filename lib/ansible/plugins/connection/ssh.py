@@ -69,10 +69,11 @@ DOCUMENTATION:
           description: Extra exclusive to the 'ssh' CLI
           vars:
               - name: ansible_ssh_extra_args
-      ssh_retries:
+      retries:
           # constant: ANSIBLE_SSH_RETRIES
           description: Number of attempts to connect.
           default: 3
+          type: integer
           env:
             - name: ANSIBLE_SSH_RETRIES
           ini:
@@ -118,14 +119,54 @@ DOCUMENTATION:
           - {key: pipelining, section: ssh_connection}
           type: boolean
           vars: [{name: ansible_ssh_pipelining}]
-# TODO:
-# ANSIBLE_SSH_RETRIES
+      private_key_file:
+          description:
+              - Path to private key file to use for authentication
+          ini:
+            - section: defaults
+              key: private_key_file
+          env:
+            - name: ANSIBLE_PRIVATE_KEY_FILE
+          vars:
+            - name: ansible_private_key_file
+            - name: ansible_ssh_private_key_file
 
-# self._play_context.private_key_file
-# ANSIBLE_SSH_CONTROL_PATH
-# ANSIBLE_SSH_CONTROL_PATH_DIR
-# DEFAULT_SFTP_BATCH_MODE
-# DEFAULT_SCP_IF_SSH
+      control_path:
+        default: null
+        description:
+          - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
+          - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
+        env:
+          - name: ANSIBLE_SSH_CONTROL_PATH
+        ini:
+          - key: control_path
+            section: ssh_connection
+      control_path_dir:
+        default: ~/.ansible/cp
+        description:
+          - This sets the directory to use for ssh control path if the control path setting is null.
+          - Also, provides the `%(directory)s` variable for the control path setting.
+        env:
+          - name: ANSIBLE_SSH_CONTROL_PATH_DIR
+        ini:
+          - section: ssh_connection
+            key: control_path_dir
+      sftp_batch_mode:
+        default: True
+        description: 'TODO: write it'
+        env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
+        ini:
+        - {key: sftp_batch_mode, section: ssh_connection}
+        type: boolean
+      scp_if_ssh:
+        default: smart
+        description:
+          - "Prefered method to use when transfering files over ssh"
+          - When set to smart, Ansible will try them until one succeeds or they all fail
+          - If set to True, it will force 'scp', if False it will use 'sftp'
+        env: [{name: ANSIBLE_SCP_IF_SSH}]
+        ini:
+        - {key: scp_if_ssh, section: ssh_connection}
 '''
 
 from __future__ import (absolute_import, division, print_function)
