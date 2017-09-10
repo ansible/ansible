@@ -49,7 +49,7 @@ import shutil
 import subprocess
 
 import ansible.constants as C
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, ensure_connect
 
 
@@ -127,7 +127,8 @@ class Connection(ConnectionBase):
         """ run specified command in a running OCI container using buildah """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        cmd_args_list = shlex.split(cmd)
+        # shlex.split has a bug with text strings on Python-2.6 and can only handle text strings on Python-3
+        cmd_args_list = shlex.split(to_native(cmd, errors='surrogate_or_strict'))
 
         rc, stdout, stderr = self._buildah("run", cmd_args_list)
 
