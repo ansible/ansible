@@ -1,39 +1,27 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import copy
-import os
 import json
+import os
+import os.path
 import re
 import tempfile
+
 from yaml import YAMLError
 
-from ansible.module_utils.six import text_type, string_types
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
-from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
 from ansible.parsing.quoting import unquote
+from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.utils.path import unfrackpath
@@ -43,6 +31,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 # Tries to determine if a path is inside a role, last dir must be 'tasks'
 # this is not perfect but people should really avoid 'tasks' dirs outside roles when using Ansible.
@@ -270,10 +259,10 @@ class DataLoader:
         b_path = to_bytes(path, errors='surrogate_or_strict')
         b_upath = to_bytes(unfrackpath(path, follow=False), errors='surrogate_or_strict')
 
-        for finddir in (b'meta', b'tasks'):
-            for suffix in (b'.yml', b'.yaml', b''):
-                b_main = b'main%s' % (suffix)
-                b_tasked = b'%s/%s' % (finddir, b_main)
+        for b_finddir in (b'meta', b'tasks'):
+            for b_suffix in (b'.yml', b'.yaml', b''):
+                b_main = b'main%s' % (b_suffix)
+                b_tasked = os.path.join(b_finddir, b_main)
 
                 if (
                     RE_TASKS.search(path) and
