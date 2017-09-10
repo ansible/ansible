@@ -121,14 +121,14 @@ options:
       - The Amazon Resource Name (ARN) of the KMS key used to encrypt your function's environment variables.
     required: false
     default: None
-    version_added: "2.4"
+    version_added: "2.5"
   tracing_config:
     description:
       - A dictionary defining tracing mode. Currently available are Active and PassThrough
     required: false
     default: PassThrough
     choices: [ 'Active', 'PassThrough' ]
-    version_added: "2.4"
+    version_added: "2.5"
 
 author:
     - 'Steyn Huizinga (@steynovich)'
@@ -389,7 +389,6 @@ def main():
             func_kwargs.update({'KMSKeyArn': kms_key_arn})
         if current_config.get('TracingConfig', {}).get('Mode', {}) != tracing_config:
             func_kwargs.update({'TracingConfig': {'Mode': tracing_config}})
-
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
