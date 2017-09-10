@@ -46,6 +46,58 @@ $result = @{
     src = $src -replace '\$',''
 }
 
+Function Extract-Zip($src, $dest) {
+    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
+    foreach ($entry in $archive.Entries) {
+        $archive_name = $entry.FullName
+
+        $entry_target_path = [System.IO.Path]::Combine($dest, $archive_name)
+        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
+
+        if (-not (Test-Path -Path $entry_dir)) {
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            $result.changed = $true
+        }
+
+        if ((-not $entry_target_path.EndsWith("\") -or -not $entry_target_path.EndsWith("/")) -and (-not $check_mode)) {
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
+        }
+        $result.changed = $true
+    }
+    $archive.Dispose()
+}
+
+Function Extract-ZipLegacy($src, $dest) {
+    # [System.IO.Compression.ZipFile] was only added in .net 4.5, this is used
+    # when .net is older than that.
+    $shell = New-Object -ComObject Shell.Application
+    $zip = $shell.NameSpace($src)
+    $dest_path = $shell.NameSpace($dest)
+
+    foreach ($entry in $zip.Items()) {
+        $is_dir = $entry.IsFolder
+        $archive_entry_name = $entry.Name
+
+        $entry_target_path = [System.IO.Path]::Combine($dest, $archive_entry_name)
+        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
+
+        if (-not (Test-Path -Path $entry_dir)) {
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            $result.changed = $true
+        }
+
+        if ($is_dir -eq $false -and (-not $check_mode)) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx
+            # From Folder.CopyHere documentation, 1044 means:
+            #  - 1024: do not display a user interface if an error occurs
+            #  -   16: respond with "yes to all" for any dialog box that is displayed
+            #  -    4: do not display a progress dialog box
+            $dest_path.CopyHere($entry, 1044)
+        }
+        $result.changed = $true
+    }
+}
+
 If ($creates -and (Test-Path -LiteralPath $creates)) {
     $result.skipped = $true
     $result.msg = "The file or directory '$creates' already exists."
@@ -67,22 +119,29 @@ If (-Not (Test-Path -LiteralPath $dest -PathType Container)){
 }
 
 If ($ext -eq ".zip" -And $recurse -eq $false) {
-    Try {
-        $shell = New-Object -ComObject Shell.Application
-        $zipPkg = $shell.NameSpace([IO.Path]::GetFullPath($src))
-        $destPath = $shell.NameSpace([IO.Path]::GetFullPath($dest))
+    # TODO: PS v5 supports zip extraction, use that if available
+    $use_legacy = $false
+    try {
+        # determines if .net 4.5 is available, if this fails we need to fall
+        # back to the legacy COM Shell.Application to extract the zip
+        Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+        Add-Type -AssemblyName System.IO.Compression | Out-Null
+    } catch {
+        $use_legacy = $true
+    }
 
-        if (-not $check_mode) {
-            # https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx
-            # From Folder.CopyHere documentation, 1044 means:
-            #  - 1024: do not display a user interface if an error occurs
-            #  -   16: respond with "yes to all" for any dialog box that is displayed
-            #  -    4: do not display a progress dialog box
-            $destPath.CopyHere($zipPkg.Items(), 1044)
+    if ($use_legacy) {
+        try {
+            Extract-ZipLegacy -src $src -dest $dest
+        } catch {
+            Fail-Json -obj $result -message "Error unzipping '$src' to '$dest'!. Method: COM Shell.Application, Exception: $($_.Exception.Message)"
         }
-        $result.changed = $true
-    } Catch {
-        Fail-Json -obj $result -message "Error unzipping '$src' to $dest! Msg: $($_.Exception.Message)"
+    } else {
+        try {
+            Extract-Zip -src $src -dest $dest
+        } catch {
+            Fail-Json -obj $result -message "Error unzipping '$src' to '$dest'!. Method: System.IO.Compression.ZipFile, Exception: $($_.Exception.Message)"
+        }
     }
 } Else {
     # Check if PSCX is installed
@@ -125,7 +184,11 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
 }
 
 If ($delete_archive){
-    Remove-Item $src -Recurse -Force -WhatIf:$check_mode
+    try {
+        Remove-Item $src -Recurse -Force -WhatIf:$check_mode
+    } catch {
+        Fail-Json -obj $result -message "failed to delete archive at '$src': $($_.Exception.Message)"
+    }
     $result.removed = $true
 }
 
