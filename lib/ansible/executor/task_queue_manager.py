@@ -176,6 +176,7 @@ class TaskQueueManager:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
             else:
                 self._stdout_callback = callback_loader.get(self._stdout_callback)
+                self._stdout_callback.set_options(C.config.get_plugin_options('callback', self._stdout_callback._load_name))
                 stdout_callback_loaded = True
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
@@ -198,7 +199,9 @@ class TaskQueueManager:
                         C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
-            self._callback_plugins.append(callback_plugin())
+            callback_obj = callback_plugin()
+            callback_obj .set_options(C.config.get_plugin_options('callback', callback_plugin._load_name))
+            self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True
 
@@ -366,4 +369,4 @@ class TaskQueueManager:
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
                     from traceback import format_tb
                     from sys import exc_info
-                    display.debug('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+                    display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))

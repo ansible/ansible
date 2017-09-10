@@ -2,29 +2,60 @@
 # (C) 2015, Tom Paine, <github@aioue.net>
 # (C) 2014, Jharrod LaFon, @JharrodLaFon
 # (C) 2012-2013, Michael DeHaan, <michael.dehaan@gmail.com>
-#
-# This file is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# File is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# See <http://www.gnu.org/licenses/> for a copy of the
-# GNU General Public License
+# (C) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Provides per-task timing, ongoing playbook elapsed time and
-# ordered list of top 20 longest running tasks at end
+'''
+DOCUMENTATION:
+    callback: profile_tasks
+    type: aggregate
+    short_description: adds time information to tasks
+    version_added: "2.0"
+    description:
+      - Ansible callback plugin for timing individual tasks and overall execution time.
+      - "Mashup of 2 excellent original works: https://github.com/jlafon/ansible-profile,
+         https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old"
+      - "Format: ``<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>``"
+      - It also lists the top/bottom time consuming tasks in the summary (configurable)
+      - Before 2.4 only the environment variables were available for configuration.
+    requirements:
+      - whitelisting in configuration
+    options:
+      output_limit:
+        description: Number of tasks to display in the summary
+        default: 20
+        env:
+          - name: PROFILE_TASKS_TASK_OUTPUT_LIMIT
+        ini:
+          - section: callback_profile_tasks
+            key: task_output_limit
+      sort_order:
+        description: Adjust the sorting output of summary tasks
+        choices: ['descending', 'ascending', 'none']
+        default: 'descending'
+        env:
+          - name: PROFILE_TASKS_SORT_ORDER
+        ini:
+          - section: callback_profile_tasks
+            key: sort_order
+#EXAMPLES: > '
+#
+#    TASK: [ensure messaging security group exists] ********************************
+#    Thursday 11 June 2017  22:50:53 +0100 (0:00:00.721)       0:00:05.322 *********
+#    ok: [localhost]
+#
+#    TASK: [ensure db security group exists] ***************************************
+#    Thursday 11 June 2017  22:50:54 +0100 (0:00:00.558)       0:00:05.880 *********
+#    changed: [localhost]
+#  '
+'''
 
+# Make coding more python3-ish
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections
-import os
 import time
 
 from ansible.module_utils.six.moves import reduce
@@ -82,18 +113,31 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         self.stats = collections.OrderedDict()
         self.current = None
-        self.sort_order = os.getenv('PROFILE_TASKS_SORT_ORDER', True)
-        self.task_output_limit = os.getenv('PROFILE_TASKS_TASK_OUTPUT_LIMIT', 20)
 
-        if self.sort_order == 'ascending':
-            self.sort_order = False
-
-        if self.task_output_limit == 'all':
-            self.task_output_limit = None
-        else:
-            self.task_output_limit = int(self.task_output_limit)
+        self.sort_order = None
+        self.task_output_limit = None
 
         super(CallbackModule, self).__init__()
+
+    def set_options(self, options):
+
+        super(CallbackModule, self).set_options(options)
+
+        self.sort_order = self._plugin_options['sort_order']
+        if self.sort_order is not None:
+            if self.sort_order == 'ascending':
+                self.sort_order = False
+            elif self.sort_order == 'descending':
+                self.sort_order = True
+            elif self.sort_order == 'none':
+                self.sort_order = None
+
+        self.task_output_limit = self._plugin_options['output_limit']
+        if self.task_output_limit is not None:
+            if self.task_output_limit == 'all':
+                self.task_output_limit = None
+            else:
+                self.task_output_limit = int(self.task_output_limit)
 
     def _record_task(self, task):
         """
@@ -126,7 +170,7 @@ class CallbackModule(CallbackBase):
         results = self.stats.items()
 
         # Sort the tasks by the specified sort
-        if self.sort_order != 'none':
+        if self.sort_order is not None:
             results = sorted(
                 self.stats.items(),
                 key=lambda x: x[1]['time'],

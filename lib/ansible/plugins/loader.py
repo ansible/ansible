@@ -205,14 +205,17 @@ class PluginLoader:
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
 
         # plugins w/o class name don't support config
-        if self.class_name and self.class_name in ('Connection'):
-            # FIXME: expand from just connection
-            type_name = get_plugin_class(self)
-            dstring = read_docstring(path, verbose=False, ignore_errors=False)
-            if dstring.get('doc', False):
-                if 'options' in dstring['doc'] and isinstance(dstring['doc']['options'], dict):
-                    C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['doc']['options'])
-                    display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
+        if self.class_name:
+            type_name = get_plugin_class(self.class_name)
+
+            # FIXME: expand from just connection and callback
+            if type_name in ('connection', 'callback'):
+                dstring = read_docstring(path, verbose=False, ignore_errors=False)
+
+                if dstring.get('doc', False):
+                    if 'options' in dstring['doc'] and isinstance(dstring['doc']['options'], dict):
+                        C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['doc']['options'])
+                        display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
 
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''

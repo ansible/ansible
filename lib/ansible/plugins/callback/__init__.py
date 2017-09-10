@@ -26,6 +26,7 @@ import warnings
 from copy import deepcopy
 
 from ansible import constants as C
+from ansible.plugins import AnsiblePlugin
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 from ansible.vars.manager import strip_internal_keys
@@ -45,7 +46,7 @@ except ImportError:
 __all__ = ["CallbackBase"]
 
 
-class CallbackBase:
+class CallbackBase(AnsiblePlugin):
 
     '''
     This is a base ansible callback class that does nothing. New callbacks should
@@ -53,7 +54,8 @@ class CallbackBase:
     custom actions.
     '''
 
-    def __init__(self, display=None):
+    def __init__(self, display=None, options=None):
+
         if display:
             self._display = display
         else:
@@ -70,8 +72,17 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, __file__))
 
+        self.disabled = False
+
+        self._plugin_options = {}
+        if options is not None:
+            self.set_options(options)
+
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
+
+    def set_options(self, options):
+        self._plugin_options = options
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):

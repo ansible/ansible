@@ -28,6 +28,11 @@ DOCUMENTATION:
       private_key_file:
         description:
             - Key or certificate file used for authentication
+        ini:
+            - section: defaults
+              key: private_key_file
+        env:
+            - name: ANSIBLE_PRIVATE_KEY_FILE
         vars:
             - name: ansible_private_key_file
       timeout:

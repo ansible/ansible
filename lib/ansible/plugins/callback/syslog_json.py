@@ -1,3 +1,44 @@
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+'''
+DOCUMENTATION:
+    callback: syslog_json
+    callback_type: notification
+    requirements:
+      - whietlist in configuration
+    short_description: sends JSON events to syslog
+    version_added: "1.9"
+    description:
+      - This plugin logs ansible-playbook and ansible runs to a syslog server in JSON format
+      - Before 2.4 only environment variables were available for configuration
+    options:
+      server:
+        description: syslog server that will recieve the event
+        env:
+        - name: SYSLOG_SERVER
+        default: localhost
+        ini:
+          - section: callback_syslog_json
+            key: syslog_server
+      port:
+        description: prot on which the syslog server is listening
+        env:
+          - name: SYSLOG_PORT
+        default: 514
+        ini:
+          - section: callback_syslog_json
+            key: syslog_port
+      facility:
+        description: syslog facitliy to log as
+        env:
+          - name: SYSLOG_FACILITY
+        default: user
+        ini:
+          - section: callback_syslog_json
+            key: syslog_facility
+'''
+
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -16,15 +57,8 @@ from ansible.plugins.callback import CallbackBase
 class CallbackModule(CallbackBase):
     """
     logs ansible-playbook and ansible runs to a syslog server in json format
-    make sure you have in ansible.cfg:
-        callback_plugins   = <path_to_callback_plugins_folder>
-    and put the plugin in <path_to_callback_plugins_folder>
-
-    This plugin makes use of the following environment variables:
-        SYSLOG_SERVER   (optional): defaults to localhost
-        SYSLOG_PORT     (optional): defaults to 514
-        SYSLOG_FACILITY (optional): defaults to user
     """
+
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'syslog_json'

@@ -215,6 +215,15 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
+    def get_plugin_options(self, plugin_type, name, variables=None):
+
+        options = {}
+        defs = self.get_configuration_definitions(plugin_type, name)
+        for option in defs:
+            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, variables=variables)
+
+        return options
+
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
@@ -224,7 +233,7 @@ class ConfigManager(object):
         elif name is None:
             ret = self._plugins.get(plugin_type, {})
         else:
-            ret = {name: self._plugins.get(plugin_type, {}).get(name, {})}
+            ret = self._plugins.get(plugin_type, {}).get(name, {})
 
         return ret
 
@@ -287,7 +296,7 @@ class ConfigManager(object):
                         for ini_entry in defs[config]['ini']:
                             value = get_ini_config_value(self._parser, ini_entry)
                             origin = cfile
-                            if 'deprecated' in ini_entry:
+                            if value is not None and 'deprecated' in ini_entry:
                                 self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                     except Exception as e:
                         sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
