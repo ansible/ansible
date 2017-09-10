@@ -300,7 +300,7 @@ import os
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 
 try:
     import OpenSSL
@@ -466,6 +466,22 @@ class AssertOnlyCertificate(Certificate):
         self.invalid_at = module.params['invalid_at']
         self.valid_in = module.params['valid_in']
         self.message = []
+        self._sanitize_inputs()
+
+    def _sanitize_inputs(self):
+        """Ensure inputs are properly sanitized before comparison."""
+
+        for param in ['signature_algorithms', 'keyUsage', 'extendedKeyUsage',
+                      'subjectAltName', 'subject', 'issuer', 'notBefore',
+                      'notAfter', 'valid_at', 'invalid_at']:
+
+            attr = getattr(self, param)
+            if isinstance(attr, list):
+                setattr(self, param, [to_bytes(item) for item in attr])
+            elif isinstance(attr, tuple):
+                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
+            elif isinstance(attr, str):
+                setattr(self, param, to_bytes(attr))
 
     def assertonly(self):
 
@@ -605,7 +621,8 @@ class AssertOnlyCertificate(Certificate):
 
         self.assertonly()
 
-        if self.privatekey_path and not self.check(self.module, perms_required=False):
+        if self.privatekey_path and \
+           not super(AssertOnlyCertificate, self).check(module, perms_required=False):
             self.message.append(
                 'Certificate %s and private key %s does not match' % (self.path, self.privatekey_path)
             )
