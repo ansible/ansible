@@ -136,6 +136,10 @@ class Domain(JsonfyMixIn):
         json = cls.manager.new_domain(name, ip)
         return cls(json)
 
+    def add_record(self, record_type, data, name):
+        json = self.manager.new_domain_record(domain_id, record_type, data, name=name)
+        return DomainRecord(json)
+    
     @classmethod
     def setup(cls, api_token):
         cls.manager = DoManager(None, api_token, api_version=2)
@@ -167,57 +171,84 @@ class Domain(JsonfyMixIn):
 
 
 def core(module):
-    def getkeyordie(k):
-        v = module.params[k]
-        if v is None:
-            module.fail_json(msg='Unable to load %s' % k)
-        return v
-
     try:
         api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
     except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
+    type_ = module.params['type']
     state = module.params['state']
 
     Domain.setup(api_token)
-    if state in ('present'):
+    if type_ in 'domain':
+        if state in 'present':
+            domain_present(module)
+        elif state in 'absent':
+            domain_absent(module)
+    else:
+        if state in 'present':
+            record_present(module)
+        elif state in 'absent':
+            record_absent(module)
+
+def get_key_or_die(module, k):
+    v = module.params[k]
+    if v is None:
+        module.fail_json(msg='Unable to load %s' % k)
+    return v
+
+def domain_absent(module):
+    domain = None
+    if "id" in module.params:
         domain = Domain.find(id=module.params["id"])
 
-        if not domain:
-            domain = Domain.find(name=getkeyordie("name"))
+    if not domain and "name" in module.params:
+        domain = Domain.find(name=module.params["name"])
 
-        if not domain:
-            domain = Domain.add(getkeyordie("name"),
-                                getkeyordie("ip"))
-            module.exit_json(changed=True, domain=domain.to_json())
-        else:
-            records = domain.records()
-            at_record = None
-            for record in records:
-                if record.name == "@" and record.type == 'A':
-                    at_record = record
+    if not domain:
+        module.exit_json(changed=False, msg="Domain not found.")
 
-            if not at_record.data == getkeyordie("ip"):
-                record.update(data=getkeyordie("ip"), record_type='A')
-                module.exit_json(changed=True, domain=Domain.find(id=record.id).to_json())
+    event_json = domain.destroy()
+    module.exit_json(changed=True, event=event_json)
 
-        module.exit_json(changed=False, domain=domain.to_json())
+def domain_present(module):
+    domain = Domain.find(id=module.params["id"])
 
-    elif state in ('absent'):
-        domain = None
-        if "id" in module.params:
-            domain = Domain.find(id=module.params["id"])
+    if not domain:
+        domain = Domain.find(name=get_key_or_die(module, "name"))
 
-        if not domain and "name" in module.params:
-            domain = Domain.find(name=module.params["name"])
+    if not domain:
+        domain = Domain.add(get_key_or_die(module, "name"),
+                            get_key_or_die(module, "ip"))
+        module.exit_json(changed=True, domain=domain.to_json())
 
-        if not domain:
-            module.exit_json(changed=False, msg="Domain not found.")
+    records = domain.records()
+    at_record = None
+    for record in records:
+        if record.name == "@" and record.type == 'A':
+            at_record = record
 
-        event_json = domain.destroy()
-        module.exit_json(changed=True, event=event_json)
+    if not at_record.data == get_key_or_die(module, "ip"):
+        record.update(data=get_key_or_die(module, "ip"), record_type='A')
+        module.exit_json(changed=True, domain=Domain.find(id=record.id).to_json())
 
+    module.exit_json(changed=False, domain=domain.to_json())
+
+def record_present(module):
+    record_name = get_key_or_die(module, "name")
+    _, record_domain = record_name.split('.', 1)
+    domain = Domain.find(name=record_domain)
+    if not domain:
+        module.fail_json(msg='Unable to find domain ' + record_domain)
+    
+    record_type = module.params["type"]
+    records = domain.records()
+    for record in records:
+        if record.name == record_name, and record.type == record_type:
+            module.exit_json(changed=False, domain=domain.to_json(), record=record.to_json())
+    
+    
+    
 
 def main():
     module = AnsibleModule(
@@ -227,9 +258,12 @@ def main():
             name=dict(type='str'),
             id=dict(aliases=['droplet_id'], type='int'),
             ip=dict(type='str'),
+            type=dict(choices=['a', 'aaaa', 'caa', 'cname', 'domain', 'mx', 'ns', 'srv', 'txt'], default='domain'),
+            data=dict(type='str'),
         ),
         required_one_of=(
             ['id', 'name'],
+            ['ip', 'data'],
         ),
     )
     if not HAS_DOPY:
