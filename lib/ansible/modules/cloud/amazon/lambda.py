@@ -516,7 +516,7 @@ def main():
             func_kwargs.update({'KMSKeyArn': kms_key_arn})
 
         if tracing_config:
-            func_kwargs.update({'TraceConfig': {'Mode': tracing_config}})
+            func_kwargs.update({'TracingConfig': {'Mode': tracing_config}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
