@@ -116,6 +116,20 @@ options:
     required: false
     default: None
     version_added: "2.3"
+  kms_key_arn:
+    description:
+      - The Amazon Resource Name (ARN) of the KMS key used to encrypt your function's environment variables.
+    required: false
+    default: None
+    version_added: "2.4"
+  tracing_config:
+    description:
+      - A dictionary defining tracing mode. Currently available are Active and PassThrough
+    required: false
+    default: PassThrough
+    choices: [ 'Active', 'PassThrough' ]
+    version_added: "2.4"
+
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -135,11 +149,12 @@ tasks:
     role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
     handler: 'hello_python.my_handler'
     vpc_subnet_ids:
-    - subnet-123abcde
-    - subnet-edcba321
+      - subnet-123abcde
+      - subnet-edcba321
     vpc_security_group_ids:
-    - sg-123abcde
-    - sg-edcba321
+      - sg-123abcde
+      - sg-edcba321
+    tracing_config: Active
     environment_variables: '{{ item.env_vars }}'
   with_items:
     - name: HelloWorld
@@ -277,6 +292,8 @@ def main():
         vpc_security_group_ids=dict(type='list'),
         environment_variables=dict(type='dict'),
         dead_letter_arn=dict(),
+        kms_key_arn=dict(),
+        tracing_config=dict(default='PassThrough', choices=['Active', 'PassThrough']),
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -310,6 +327,8 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    kms_key_arn = module.params.get('kms_key_arn')
+    tracing_config = module.params.get('tracing_config')
 
     check_mode = module.check_mode
     changed = False
@@ -366,6 +385,11 @@ def main():
             else:
                 if dead_letter_arn != "":
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+        if kms_key_arn and current_config['KMSKeyArn'] != kms_key_arn:
+            func_kwargs.update({'KMSKeyArn': kms_key_arn})
+        if current_config.get('TracingConfig', {}).get('Mode', {}) != tracing_config:
+            func_kwargs.update({'TracingConfig': {'Mode': tracing_config}})
+
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
@@ -488,6 +512,12 @@ def main():
 
         if dead_letter_arn:
             func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+
+        if kms_key_arn is not None:
+            func_kwargs.update({'KMSKeyArn': kms_key_arn})
+
+        if tracing_config:
+            func_kwargs.update({'TraceConfig': {'Mode': tracing_config}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
