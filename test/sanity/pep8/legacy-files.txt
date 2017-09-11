@@ -425,7 +425,6 @@ lib/ansible/modules/system/crypttab.py
 lib/ansible/modules/system/debconf.py
 lib/ansible/modules/system/facter.py
 lib/ansible/modules/system/filesystem.py
-lib/ansible/modules/system/firewalld.py
 lib/ansible/modules/system/gconftool2.py
 lib/ansible/modules/system/getent.py
 lib/ansible/modules/system/gluster_volume.py
