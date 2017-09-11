@@ -64,8 +64,8 @@ class DistributionFiles:
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
-        {'path': '/etc/os-release', 'name': 'SuSE'},
-        {'path': '/etc/SuSE-release', 'name': 'SuSE'},
+        {'path': '/etc/os-release', 'name': 'SUSE'},
+        {'path': '/etc/SuSE-release', 'name': 'SUSE'},
         {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
@@ -228,7 +228,7 @@ class DistributionFiles:
         alpine_facts['distribution_version'] = data
         return True, alpine_facts
 
-    def parse_distribution_file_SuSE(self, name, data, path, collected_facts):
+    def parse_distribution_file_SUSE(self, name, data, path, collected_facts):
         suse_facts = {}
         if 'suse' not in data.lower():
             return False, suse_facts  # TODO: remove if tested without this
@@ -370,8 +370,8 @@ class Distribution(object):
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
-        {'path': '/etc/os-release', 'name': 'SuSE'},
-        {'path': '/etc/SuSE-release', 'name': 'SuSE'},
+        {'path': '/etc/os-release', 'name': 'SUSE'},
+        {'path': '/etc/SuSE-release', 'name': 'SUSE'},
         {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
