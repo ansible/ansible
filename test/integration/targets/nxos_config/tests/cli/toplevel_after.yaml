@@ -5,7 +5,7 @@
   nxos_config:
     lines:
       - "snmp-server contact ansible"
-      - "hostname {{ inventory_hostname_short }}"
+      - "hostname switch"
     provider: "{{ cli }}"
     match: none
 
@@ -37,7 +37,7 @@
   nxos_config:
     lines:
       - "no snmp-server contact"
-      - "hostname {{ inventory_hostname_short }}"
+      - "hostname switch"
     provider: "{{ cli }}"
     match: none
 
