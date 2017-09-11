@@ -301,10 +301,10 @@ def too_old(added):
 def process_modules(module_map, templates, outputname,
                     output_dir, ansible_version, plugin_type):
     for module in module_map:
-        print("rendering: %s" % module)
+        # print("rendering: %s" % module)
 
         import pprint
-        pprint.pprint(('process_modules module:', module))
+        # pprint.pprint(('process_modules module:', module))
         fname = module_map[module]['path']
 
         pprint.pprint(('process_modules module_info: ', module_map[module]))
@@ -321,7 +321,7 @@ def process_modules(module_map, templates, outputname,
         doc = module_map[module]['doc']
 
         import pprint
-        pprint.pprint(('process_modules doc: ', doc))
+        # pprint.pprint(('process_modules doc: ', doc))
 
         # add some defaults for plugins that dont have most of the info
         doc['module'] = doc.get('module', module)
@@ -386,18 +386,25 @@ def process_modules(module_map, templates, outputname,
         doc['docuri'] = doc['module'].replace('_', '-')
         doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
         doc['ansible_version'] = ansible_version
+
+        examples = module_map[module]['examples']
+        # print('\n\n%s: type of examples: %s\n' % (module, type(examples)))
+        if examples and not isinstance(examples, (str, unicode, list)):
+            raise TypeError('module %s examples is wrong type (%s): %s' % (module, type(examples), examples))
+
         if isinstance(module_map[module]['examples'], (str, unicode)):
             doc['plainexamples'] = module_map[module]['examples']  # plain text
         else:
             doc['plainexamples'] = ''
+
         doc['metadata'] = module_map[module]['metadata']
 
-        # pprint.pprint(module_map[module])
+        # pprint.pprint(module_map[module]
         if module_map[module]['returndocs']:
             try:
                 doc['returndocs'] = yaml.safe_load(module_map[module]['returndocs'])
-            except:
-                print("could not load yaml: %s" % module_map[module]['returndocs'])
+            except Exception as e:
+                print("%s:%s:yaml error:%s:returndocs=%s" % (fname, module, e, module_map[module]['returndocs']))
                 doc['returndocs'] = None
         else:
             doc['returndocs'] = None
