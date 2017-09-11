@@ -16,7 +16,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -170,6 +169,12 @@ EXAMPLES = '''
   state:  installed
   disable_gpg_check: yes
   extra_args_precommand: --root  /tmp/install_folder
+# Perform a dist-upgrade with additional arguments
+- zypper:
+    name: '*'
+    state: dist-upgrade
+    extra_args: '--no-allow-vendor-change --allow-arch-change'
+
 # Perform a dist-upgrade with additional arguments
 - zypper:
     name: '*'
@@ -339,6 +344,7 @@ def get_cmd(m, subcommand):
     if m.params['extra_args']:
         args_list = m.params['extra_args'].split(' ')
         cmd.extend(args_list)
+
     return cmd
 
 
@@ -385,7 +391,6 @@ def package_present(m, name, want_latest):
 
         prerun_state = get_installed_state(m, packageswithoutversion)
         # generate lists of packages to install or remove
-
         packages = [p for p in packages if p.shouldinstall != (p.name in prerun_state)]
 
     if not packages and not urls:
@@ -402,6 +407,7 @@ def package_present(m, name, want_latest):
     # do this in one zypper run to allow for dependency-resolution
     # for example "-exim postfix" runs without removing packages depending on mailserver
     cmd.extend([str(p) for p in packages])
+
     retvals['cmd'] = cmd
     result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
 
