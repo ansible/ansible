@@ -304,10 +304,10 @@ def process_modules(module_map, templates, outputname,
         print("rendering: %s" % module)
 
         import pprint
-        pprint.pprint(module)
+        pprint.pprint(('process_modules module:', module))
         fname = module_map[module]['path']
 
-        # pprint.pprint(module_map[module])
+        pprint.pprint(('process_modules module_info: ', module_map[module]))
         # crash if module is missing documentation and not explicitly hidden from docs index
         if module_map[module]['doc'] is None:
             print("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
@@ -321,7 +321,7 @@ def process_modules(module_map, templates, outputname,
         doc = module_map[module]['doc']
 
         import pprint
-        pprint.pprint(doc)
+        pprint.pprint(('process_modules doc: ', doc))
 
         # add some defaults for plugins that dont have most of the info
         doc['module'] = doc.get('module', module)
@@ -564,7 +564,7 @@ def main():
     # Render all the categories for modules
     category_list_name_template = 'list_of_%s_' + '%s.rst' % plugin_type
                        # "list_of_%s_modules.rst")
-    print('ctlp: %s' % category_list_name_template)
+    # print('ctlp: %s' % category_list_name_template)
     process_categories(mod_info, categories, templates, options.output_dir,
                        category_list_name_template, plugin_type)
 
