@@ -104,7 +104,7 @@ vpc.id:
     type: string
     sample: vpc-b883b2c4
 vpc.cidr_block:
-    descrption: The CIDR of the VPC
+    description: The CIDR of the VPC
     returned: success
     type: string
     sample: "10.0.0.0/16"
@@ -125,7 +125,7 @@ vpc.classic_link_enabled:
     sample: false
 vpc.dhcp_options_id:
     description: the id of the DHCP options assocaited with this VPC
-    return: success
+    returned: success
     type: string
     sample: dopt-67236184
 vpc.instance_tenancy:
