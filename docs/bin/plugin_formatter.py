@@ -222,6 +222,10 @@ def get_module_info(module_dir, limit_to_modules=None, verbose=False):
 
         category['_modules'].append(module)
 
+        # the category we will use in links (so list_of_all_plugins can point to plugins/action_plugins/*'
+        if module_categories:
+            primary_category = module_categories[0]
+
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, verbose=verbose)
 
@@ -234,6 +238,7 @@ def get_module_info(module_dir, limit_to_modules=None, verbose=False):
                                'examples': examples,
                                'returndocs': returndocs,
                                'categories': module_categories,
+                               'primary_category': primary_category,
                                }
 
     # keep module tests out of becoming module docs
@@ -430,7 +435,7 @@ def process_modules(module_map, templates, outputname,
         # plugins get namespace dirs but modules do not
         if plugin_type == 'plugins':
             for module_category in module_categories:
-                category_output_dir = os.path.join(output_dir, '%s_plugins' % module_category)
+                category_output_dir = os.path.join(output_dir, 'plugins', '%s_plugins' % module_category)
                 write_data(text, category_output_dir, outputname, module)
         else:
                 write_data(text, output_dir, outputname, module)
