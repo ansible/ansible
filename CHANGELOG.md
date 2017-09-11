@@ -27,7 +27,7 @@ Ansible Changes By Release
   - Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
   - Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
   - Improved warnings and error messages across the board
-* Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
+* Configuration has been changed from a hardcoded listing in the constants module to dynamically loaded from yaml definitions
   - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
@@ -128,6 +128,7 @@ Ansible Changes By Release
     - extensions of files to ignore when using inventory directory
 	- patterns of flies to ignore when using inventory directory
 	- option to toggle failed inventory source parsing between an error or a warning
+* More fixes for Python 3 across the code base.
 
 #### New Callbacks:
 - full_skip
