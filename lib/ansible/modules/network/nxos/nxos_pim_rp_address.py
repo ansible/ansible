@@ -99,15 +99,15 @@ def get_existing(module, args):
         values = line.split()
         if values[0] != address:
             continue
-
         existing['bidir'] = existing.get('bidir') or 'bidir' in line
+
         if len(values) > 2:
-            value = values[1]
-            if values[2] == 'route-map':
+            value = values[2]
+            if values[1] == 'route-map':
                 existing['route_map'] = value
-            elif values[2] == 'prefix-list':
+            elif values[1] == 'prefix-list':
                 existing['prefix_list'] = value
-            elif values[2] == 'group-list':
+            elif values[1] == 'group-list':
                 existing['group_list'] = value
 
     return existing
@@ -159,7 +159,6 @@ def main():
                                                ['group_list', 'prefix_list'],
                                                ['route_map', 'prefix_list']],
                            supports_check_mode=True)
-
     warnings = list()
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
