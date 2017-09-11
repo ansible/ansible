@@ -25,6 +25,7 @@ options:
       - name of the database to add or remove
     required: true
     default: null
+    aliases: [ db ]
   owner:
     description:
       - Name of the role to set as owner of the database
