@@ -435,7 +435,7 @@ def process_modules(module_map, templates, outputname,
         # plugins get namespace dirs but modules do not
         if plugin_type == 'plugins':
             for module_category in module_categories:
-                category_output_dir = os.path.join(output_dir, 'plugins', '%s_plugins' % module_category)
+                category_output_dir = os.path.join(output_dir, 'plugins', '%s' % module_category)
                 write_data(text, category_output_dir, outputname, module)
         else:
                 write_data(text, output_dir, outputname, module)
