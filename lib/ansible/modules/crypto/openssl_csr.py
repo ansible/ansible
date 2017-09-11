@@ -26,7 +26,7 @@ description:
        Note: At least one of commonName or subjectAltName must be specified.
        This module uses file common arguments to specify generated file permissions."
 requirements:
-    - "python-pyOpenSSL"
+    - "python-pyOpenSSL >= 0.15"
 options:
     state:
         required: false
@@ -426,6 +426,11 @@ def main():
 
     if not pyopenssl_found:
         module.fail_json(msg='the python pyOpenSSL module is required')
+
+    try:
+        getattr(crypto.X509Req, 'get_extensions')
+    except AttributeError:
+        module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
 
     base_dir = os.path.dirname(module.params['path'])
     if not os.path.isdir(base_dir):

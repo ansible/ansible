@@ -32,8 +32,8 @@ description:
        want to receive a certificate with these properties is a CSR (Certificate Signing Request).
        It uses the pyOpenSSL python library to interact with OpenSSL."
 requirements:
-    - python-pyOpenSSL >= 0.15 (if using C(selfsigned) provider)
-    - acme-tiny (if using the acme provider)
+    - python-pyOpenSSL >= 0.15 (if using C(selfsigned) or C(assertonly) provider)
+    - acme-tiny (if using the C(acme) provider)
 options:
     state:
         default: "present"
@@ -407,12 +407,7 @@ class SelfSignedCertificate(Certificate):
             cert.set_subject(self.csr.get_subject())
             cert.set_version(self.csr.get_version() - 1)
             cert.set_pubkey(self.csr.get_pubkey())
-
-            try:
-                # NOTE: This is only available starting from pyOpenSSL >= 0.15
-                cert.add_extensions(self.csr.get_extensions())
-            except NameError as exc:
-                raise CertificateError('You need to have PyOpenSSL>= 0.15 to generate public keys')
+            cert.add_extensions(self.csr.get_extensions())
 
             cert.sign(self.privatekey, self.digest)
             self.certificate = cert
@@ -758,6 +753,11 @@ def main():
 
     if not pyopenssl_found:
         module.fail_json(msg='The python pyOpenSSL library is required')
+    if module.params['provider'] in ['selfsigned', 'assertonly']:
+        try:
+            getattr(crypto.X509Req, 'get_extensions')
+        except AttributeError:
+            module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
     base_dir = os.path.dirname(module.params['path'])
     if not os.path.isdir(base_dir):
