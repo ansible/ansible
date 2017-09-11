@@ -26,6 +26,7 @@ import datetime
 import glob
 import optparse
 import os
+import pprint
 import re
 import sys
 import warnings
@@ -303,11 +304,12 @@ def process_modules(module_map, templates, outputname,
     for module in module_map:
         # print("rendering: %s" % module)
 
-        import pprint
         # pprint.pprint(('process_modules module:', module))
+
         fname = module_map[module]['path']
 
-        pprint.pprint(('process_modules module_info: ', module_map[module]))
+        # pprint.pprint(('process_modules module_info: ', module_map[module]))
+
         # crash if module is missing documentation and not explicitly hidden from docs index
         if module_map[module]['doc'] is None:
             print("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
@@ -320,7 +322,6 @@ def process_modules(module_map, templates, outputname,
         # Going to reference this heavily so make a short name to reference it by
         doc = module_map[module]['doc']
 
-        import pprint
         # pprint.pprint(('process_modules doc: ', doc))
 
         # add some defaults for plugins that dont have most of the info
@@ -387,10 +388,10 @@ def process_modules(module_map, templates, outputname,
         doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
         doc['ansible_version'] = ansible_version
 
-        examples = module_map[module]['examples']
+        # examples = module_map[module]['examples']
         # print('\n\n%s: type of examples: %s\n' % (module, type(examples)))
-        if examples and not isinstance(examples, (str, unicode, list)):
-            raise TypeError('module %s examples is wrong type (%s): %s' % (module, type(examples), examples))
+        # if examples and not isinstance(examples, (str, unicode, list)):
+        #    raise TypeError('module %s examples is wrong type (%s): %s' % (module, type(examples), examples))
 
         if isinstance(module_map[module]['examples'], (str, unicode)):
             doc['plainexamples'] = module_map[module]['examples']  # plain text
@@ -413,8 +414,8 @@ def process_modules(module_map, templates, outputname,
         if isinstance(doc['author'], (str, unicode)):
             doc['author'] = [doc['author']]
 
-        print('about to template')
-        pprint.pprint(doc)
+        # print('about to template')
+        # pprint.pprint(doc)
         text = templates['plugin'].render(doc)
 
         write_data(text, output_dir, outputname, module)
@@ -547,8 +548,7 @@ def main():
 
     categories['all'] = {'_modules': mod_info.keys()}
 
-    import pprint
-    #pprint.pprint(categories)
+    # pprint.pprint(categories)
     # pprint.pprint(mod_info)
     # pprint.pprint(dict(mod_info))
     # Transform the data
@@ -570,7 +570,6 @@ def main():
 
     # Render all the categories for modules
     category_list_name_template = 'list_of_%s_' + '%s.rst' % plugin_type
-                       # "list_of_%s_modules.rst")
     # print('ctlp: %s' % category_list_name_template)
     process_categories(mod_info, categories, templates, options.output_dir,
                        category_list_name_template, plugin_type)
