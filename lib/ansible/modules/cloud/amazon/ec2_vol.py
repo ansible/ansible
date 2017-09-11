@@ -621,6 +621,15 @@ def main():
 
         # Add device, volume_id and volume_type parameters separately to maintain backward compatibility
         volume_info = get_volume_info(volume, state)
+
+        # deleteOnTermination is not correctly reflected on attachment
+        if module.params.get('delete_on_termination'):
+            for attempt in range(0, 8):
+                if volume_info['attachment_set'].get('deleteOnTermination') == 'true':
+                    break
+                time.sleep(5)
+                volume = ec2.get_all_volumes(volume_ids=volume.id)[0]
+                volume_info = get_volume_info(volume, state)
         module.exit_json(changed=changed, volume=volume_info, device=volume_info['attachment_set']['device'],
                          volume_id=volume_info['id'], volume_type=volume_info['type'])
     elif state == 'absent':
