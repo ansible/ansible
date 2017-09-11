@@ -532,6 +532,9 @@ def authorize_ip(type, changed, client, group, groupRules,
                 thisip = to_subnet(split_addr[0], split_addr[1])
             except ValueError:
                 thisip = to_ipv6_network(split_addr[0]) + "/" + split_addr[1]
+            if thisip != this_ip:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(this_ip, thisip))
         else:
             thisip = this_ip
 
