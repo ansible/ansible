@@ -287,7 +287,7 @@ class ConfigManager(object):
                         for ini_entry in defs[config]['ini']:
                             value = get_ini_config_value(self._parser, ini_entry)
                             origin = cfile
-                            if 'deprecated' in ini_entry:
+                            if 'deprecated' in ini_entry and value:
                                 self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                     except Exception as e:
                         sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
