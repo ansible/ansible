@@ -41,8 +41,9 @@
 
   - name: "Run show running-config bgp - should pass"
     nxos_command:
-      commands:
-        - sh running-config bgp
+      commands: 
+        - command: sh running-config bgp
+          output: text
       provider: "{{ nxapi }}"
     register: result
 
