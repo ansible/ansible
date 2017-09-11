@@ -1,24 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Evan Kaufman <evan@digitalflophouse.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Evan Kaufman <evan@digitalflophouse.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,9 +15,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = """
 ---
 module: blockfromfile
-author: "Evan Kaufman (@EvanK)"
+author:
+  - Evan Kaufman (@EvanK)
 version_added: "2.4"
-short_description: Search file from remote node using a provided regular expression.
+short_description: Search file from remote node using a provided regular expression
 description:
   - This module will search a remote file for all instances of a pattern.
     Effectively the inverse of M(replace).
@@ -47,7 +37,6 @@ options:
         Uses multiline mode, which means C(^) and C($) match the beginning
         and end respectively of I(each line) of the file.
   fail_on_missing:
-    required: false
     default: false
     description:
       - Makes it fails when the source file is missing.
@@ -106,7 +95,7 @@ def main():
         argument_spec=dict(
             src=dict(required=True, aliases=['name', 'srcfile', 'path'], type='path'),
             regexp=dict(required=True),
-            fail_on_missing=dict(required=False, default=False, type='bool'),
+            fail_on_missing=dict(default=False, type='bool'),
             encoding=dict(default='utf-8', type='str'),
         ),
         supports_check_mode=True
