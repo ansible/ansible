@@ -226,6 +226,7 @@ class PluginLoader:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
                 self._paths = None
+                display.debug('Added %s to loader search path' % (directory))
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''

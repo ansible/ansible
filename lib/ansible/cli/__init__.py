@@ -385,13 +385,15 @@ class CLI(with_metaclass(ABCMeta, object)):
     @staticmethod
     def unfrack_paths(option, opt, value, parser):
         paths = getattr(parser.values, option.dest)
-        if isinstance(value, string_types):
-            paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep)]
-        elif isinstance(value, list):
-            paths[:0] = [unfrackpath(x) for x in value]
-        else:
-            pass  # FIXME: should we raise options error?
-        setattr(parser.values, option.dest, paths)
+        if paths is None and value:
+            paths = []
+            if isinstance(value, string_types):
+                paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep) if x]
+            elif isinstance(value, list):
+                paths[:0] = [unfrackpath(x) for x in value if x]
+            else:
+                pass  # FIXME: should we raise options error?
+            setattr(parser.values, option.dest, paths)
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
@@ -419,8 +421,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,
-                              help="prepend path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-                              action="callback", callback=CLI.unfrack_path, type='str')
+                              help="prepend coloon separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                              action="callback", callback=CLI.unfrack_paths, type='str')
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                               help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
@@ -436,9 +438,6 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help="vault password file", action="callback", callback=CLI.unfrack_paths, type='string')
             parser.add_option('--new-vault-password-file', default=[], dest='new_vault_password_files',
                               help="new vault password file for rekey", action="callback", callback=CLI.unfrack_paths, type='string')
-            parser.add_option('--output', default=None, dest='output_file',
-                              help='output file name for encrypt or decrypt; use - for stdout',
-                              action="callback", callback=CLI.unfrack_path, type='string'),
             parser.add_option('--vault-id', default=[], dest='vault_ids', action='append', type='string',
                               help='the vault identity to use')
             parser.add_option('--new-vault-id', default=None, dest='new_vault_id', type='string',
