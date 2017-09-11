@@ -12,10 +12,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: oneview_san_manager_facts
-short_description: Retrieve facts about one or more of the OneView SAN Managers.
+short_description: Retrieve facts about one or more of the OneView SAN Managers
 description:
     - Retrieve facts about one or more of the SAN Managers from OneView
-version_added: "2.4"
+version_added: "2.5"
 requirements:
     - hpOneView >= 2.0.1
 author:
