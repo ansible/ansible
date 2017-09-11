@@ -480,6 +480,8 @@ class AssertOnlyCertificate(Certificate):
                 setattr(self, param, [to_bytes(item) for item in attr])
             elif isinstance(attr, tuple):
                 setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
+            elif isinstance(attr, dict):
+                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
             elif isinstance(attr, str):
                 setattr(self, param, to_bytes(attr))
 
