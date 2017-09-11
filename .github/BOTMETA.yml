@@ -28,7 +28,8 @@
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
 #           support - used for files without internal metadata
-#           labels - list of GitHub labels to apply
+#           labels - list of GitHub labels to apply. Path components of 'file' parent key
+#                    which are valid GitHub labels are automatically added.
 #
 
 automerge: True
@@ -1076,13 +1077,13 @@ files:
     keywords:
     - validate-modules
   test/:
-    labels: test_pull_requests
+    # 'test' automatically added to labels
   docs/:
     labels: docs_pull_request
     notify:
       - dharmabumstead
   packaging/:
-    labels: packaging
+    # 'packaging' automatically added to labels
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
