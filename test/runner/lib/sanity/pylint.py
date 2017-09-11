@@ -9,11 +9,13 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SanitySkipped,
 )
 
 from lib.util import (
     SubprocessError,
     run_command,
+    display,
 )
 
 from lib.ansible_util import (
@@ -30,6 +32,10 @@ from lib.test import (
 
 PYLINT_SKIP_PATH = 'test/sanity/pylint/skip.txt'
 
+UNSUPPORTED_PYTHON_VERSIONS = (
+    '2.6',
+)
+
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
@@ -39,6 +45,10 @@ class PylintTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: SanityResult
         """
+        if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
+            display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
+            return SanitySkipped(self.name)
+
         with open(PYLINT_SKIP_PATH, 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()
 

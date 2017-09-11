@@ -169,7 +169,7 @@ class SanityFailure(TestFailure):
         :type test: str
         :type python_version: str
         :type messages: list[SanityMessage]
-        :type summary: str
+        :type summary: unicode
         """
         super(SanityFailure, self).__init__(COMMAND, test, python_version, messages, summary)
 
@@ -227,7 +227,7 @@ class SanityCodeSmellTest(SanityTest):
             status = ex.status
 
         if stderr or status:
-            summary = str(SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout))
+            summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
             return SanityFailure(self.name, summary=summary)
 
         return SanitySuccess(self.name)

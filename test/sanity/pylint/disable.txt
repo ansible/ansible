@@ -18,6 +18,7 @@ cell-var-from-loop
 consider-iterating-dictionary
 consider-using-enumerate
 dangerous-default-value
+deprecated-lambda
 deprecated-method
 deprecated-module
 duplicate-key
@@ -32,6 +33,7 @@ global-variable-not-assigned
 global-variable-undefined
 import-error
 import-self
+invalid-encoded-data
 invalid-name
 line-too-long
 locally-disabled
@@ -41,6 +43,7 @@ lost-exception
 method-hidden
 misplaced-comparison-constant
 missing-docstring
+no-init
 no-member
 no-name-in-module
 no-self-use
@@ -49,6 +52,7 @@ non-iterator-returned
 not-a-mapping
 not-an-iterable
 not-callable
+old-style-class
 pointless-statement
 pointless-string-statement
 protected-access
@@ -58,6 +62,7 @@ redefined-outer-name
 redefined-variable-type
 redundant-unittest-assert
 reimported
+relative-import
 signature-differs
 simplifiable-if-statement
 super-init-not-called
