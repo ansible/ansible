@@ -108,6 +108,6 @@ for setting in config.data.get_settings():
         except:
             value = setting.value
 
-    set_constant(setting.name, setting.value)
+    set_constant(setting.name, value or setting.value)
 
 
