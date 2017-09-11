@@ -59,7 +59,7 @@ Function Extract-Zip($src, $dest) {
             $result.changed = $true
         }
 
-        if ((-not $entry_target_path.EndsWith("\") -or -not $entry_target_path.EndsWith("/")) -and (-not $check_mode)) {
+        if ((-not ($entry_target_path.EndsWith("\") -or $entry_target_path.EndsWith("/"))) -and (-not $check_mode)) {
             [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
         }
         $result.changed = $true
@@ -71,31 +71,20 @@ Function Extract-ZipLegacy($src, $dest) {
     # [System.IO.Compression.ZipFile] was only added in .net 4.5, this is used
     # when .net is older than that.
     $shell = New-Object -ComObject Shell.Application
-    $zip = $shell.NameSpace($src)
-    $dest_path = $shell.NameSpace($dest)
+    $zip = $shell.NameSpace([IO.Path]::GetFullPath($src))
+    $dest_path = $shell.NameSpace([IO.Path]::GetFullPath($dest))
 
-    foreach ($entry in $zip.Items()) {
-        $is_dir = $entry.IsFolder
-        $archive_entry_name = $entry.Name
+    $shell = New-Object -ComObject Shell.Application
 
-        $entry_target_path = [System.IO.Path]::Combine($dest, $archive_entry_name)
-        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
-
-        if (-not (Test-Path -Path $entry_dir)) {
-            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
-            $result.changed = $true
-        }
-
-        if ($is_dir -eq $false -and (-not $check_mode)) {
-            # https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx
-            # From Folder.CopyHere documentation, 1044 means:
-            #  - 1024: do not display a user interface if an error occurs
-            #  -   16: respond with "yes to all" for any dialog box that is displayed
-            #  -    4: do not display a progress dialog box
-            $dest_path.CopyHere($entry, 1044)
-        }
-        $result.changed = $true
+    if (-not $check_mode) {
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx
+        # From Folder.CopyHere documentation, 1044 means:
+        #  - 1024: do not display a user interface if an error occurs
+        #  -   16: respond with "yes to all" for any dialog box that is displayed
+        #  -    4: do not display a progress dialog box
+        $dest_path.CopyHere($zip.Items(), 1044)
     }
+    $result.changed = $true
 }
 
 If ($creates -and (Test-Path -LiteralPath $creates)) {
