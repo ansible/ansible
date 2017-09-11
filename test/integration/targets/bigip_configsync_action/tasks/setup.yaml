@@ -1,0 +1,13 @@
+---
+
+- name: Create pool
+  bigip_pool:
+      lb_method: "round-robin"
+      name: "cs1.pool"
+      state: "present"
+  register: result
+
+- name: Assert Create pool
+  assert:
+      that:
+          - result|changed
