@@ -47,7 +47,6 @@ options:
         required: false
         description:
             - The passphrase for the privatekey.
-        version_added: "2.4"
     version:
         required: false
         default: 3
