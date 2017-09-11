@@ -289,6 +289,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import HAS_BOTO3
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.network_common import to_ipv6_network, to_subnet
 import traceback
 
 try:
@@ -521,7 +522,19 @@ def update_rules_description(module, client, rule_type, group_id, ip_permissions
 def authorize_ip(type, changed, client, group, groupRules,
                  ip, ip_permission, module, rule, ethertype):
     # If rule already exists, don't later delete it
-    for thisip in ip:
+    for this_ip in ip:
+
+        split_addr = this_ip.split('/')
+        if len(split_addr) == 2:
+            # this_ip is a IPv4 or IPv6 CIDR that may or may not have host bits set
+            # Get the network bits.
+            try:
+                thisip = to_subnet(split_addr[0], split_addr[1])
+            except ValueError:
+                thisip = to_ipv6_network(split_addr[0]) + "/" + split_addr[1]
+        else:
+            thisip = this_ip
+
         rule_id = make_rule_key(type, rule, group['GroupId'], thisip)
         if rule_id in groupRules:
 

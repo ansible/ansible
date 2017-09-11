@@ -501,3 +501,29 @@ def to_subnet(addr, mask, dotted_notation=False):
     return '%s/%s' % ('.'.join(network), cidr)
 
 
+def to_ipv6_network(addr):
+    """ IPv6 addresses are eight groupings. The first three (48 bits) is the network address. """
+
+    # Split by :: to identify omitted zeros
+    ipv6_prefix = addr.split('::')[0]
+
+    # Get the first three groups, or as many as are found + ::
+    found_groups = []
+    for group in ipv6_prefix.split(':'):
+        found_groups.append(group)
+        if len(found_groups) == 3:
+            break
+    if len(found_groups) < 3:
+        found_groups.append('::')
+
+    # Concatenate network address parts
+    network_addr = ''
+    for group in found_groups:
+        if group != '::':
+            network_addr += str(group)
+        network_addr += str(':')
+
+    # Ensure network address ends with ::
+    if not network_addr.endswith('::'):
+        network_addr += str(':')
+    return network_addr
