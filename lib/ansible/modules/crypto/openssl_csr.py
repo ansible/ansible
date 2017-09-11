@@ -20,10 +20,10 @@ author: "Yanis Guenane (@Spredzy)"
 version_added: "2.4"
 short_description: Generate OpenSSL Certificate Signing Request (CSR)
 description:
-    - "This module allows one to (re)generates OpenSSL certificate signing requests.
+    - "This module allows one to (re)generate OpenSSL certificate signing requests.
        It uses the pyOpenSSL python library to interact with openssl. This module supports
        the subjectAltName as well as the keyUsage and extendedKeyUsage extensions.
-       Note: At least one of commonName or subjectAltName must be specified.
+       Note: At least one of common_name or subject_alt_name must be specified.
        This module uses file common arguments to specify generated file permissions."
 requirements:
     - "python-pyOpenSSL"
@@ -47,7 +47,6 @@ options:
         required: false
         description:
             - The passphrase for the privatekey.
-        version_added: "2.4"
     version:
         required: false
         default: 3
@@ -63,70 +62,74 @@ options:
         required: true
         description:
             - Name of the folder in which the generated OpenSSL certificate signing request will be written
-    countryName:
+    country_name:
         required: false
-        aliases: [ 'C' ]
+        aliases: [ 'C', 'countryName' ]
         description:
             - countryName field of the certificate signing request subject
-    stateOrProvinceName:
+    state_or_province_name:
         required: false
-        aliases: [ 'ST' ]
+        aliases: [ 'ST', 'stateOrProvinceName' ]
         description:
             - stateOrProvinceName field of the certificate signing request subject
-    localityName:
+    locality_name:
         required: false
-        aliases: [ 'L' ]
+        aliases: [ 'L', 'localityName' ]
         description:
             - localityName field of the certificate signing request subject
-    organizationName:
+    organization_name:
         required: false
-        aliases: [ 'O' ]
+        aliases: [ 'O', 'organizationName' ]
         description:
             - organizationName field of the certificate signing request subject
-    organizationalUnitName:
+    organizational_unit_name:
         required: false
-        aliases: [ 'OU' ]
+        aliases: [ 'OU', 'organizationalUnitName' ]
         description:
             - organizationalUnitName field of the certificate signing request subject
-    commonName:
+    common_name:
         required: false
-        aliases: [ 'CN' ]
+        aliases: [ 'CN', 'commonName' ]
         description:
             - commonName field of the certificate signing request subject
-    emailAddress:
+    email_address:
         required: false
-        aliases: [ 'E' ]
+        aliases: [ 'E', 'emailAddress' ]
         description:
             - emailAddress field of the certificate signing request subject
-    subjectAltName:
+    subject_alt_name:
         required: false
+        aliases: [ 'subjectAltName' ]
         description:
             - SAN extension to attach to the certificate signing request
             - This can either be a 'comma separated string' or a YAML list.
-    subjectAltName_critical:
+    subject_alt_name_critical:
         required: false
+        aliases: [ 'subjectAltName_critical' ]
         description:
             - Should the subjectAltName extension be considered as critical
-    keyUsage:
+    key_usage:
         required: false
+        aliases: [ 'keyUsage' ]
         description:
             - This defines the purpose (e.g. encipherment, signature, certificate signing)
               of the key contained in the certificate.
             - This can either be a 'comma separated string' or a YAML list.
-    keyUsage_critical:
+    key_usage_critical:
         required: false
+        aliases: [ 'keyUsage_critical' ]
         description:
             - Should the keyUsage extension be considered as critical
-    extendedKeyUsage:
+    extended_key_usage:
         required: false
-        aliases: [ 'extKeyUsage' ]
+        aliases: [ 'extKeyUsage', 'extendedKeyUsage' ]
         description:
             - Additional restrictions (e.g. client authentication, server authentication)
               on the allowed purposes for which the public key may be used.
             - This can either be a 'comma separated string' or a YAML list.
-    extendedKeyUsage_critical:
+    extended_key_usage_critical:
         required: false
-        aliases: [ 'extKeyUsage_critical' ]
+        aliases: [ 'extKeyUsage_critical', 'extendedKeyUsage_critical' ]
         description:
             - Should the extkeyUsage extension be considered as critical
 
@@ -142,7 +145,7 @@ EXAMPLES = '''
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
-    commonName: www.ansible.com
+    common_name: www.ansible.com
 
 # Generate an OpenSSL Certificate Signing Request with a
 # passphrase protected private key
@@ -150,39 +153,39 @@ EXAMPLES = '''
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
     privatekey_passphrase: ansible
-    commonName: www.ansible.com
+    common_name: www.ansible.com
 
 # Generate an OpenSSL Certificate Signing Request with Subject information
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
-    countryName: FR
-    organizationName: Ansible
-    emailAddress: jdoe@ansible.com
-    commonName: www.ansible.com
+    country_name: FR
+    organization_name: Ansible
+    email_address: jdoe@ansible.com
+    common_name: www.ansible.com
 
 # Generate an OpenSSL Certificate Signing Request with subjectAltName extension
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
-    subjectAltName: 'DNS:www.ansible.com,DNS:m.ansible.com'
+    subject_alt_name: 'DNS:www.ansible.com,DNS:m.ansible.com'
 
 # Force re-generate an OpenSSL Certificate Signing Request
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
     force: True
-    commonName: www.ansible.com
+    common_name: www.ansible.com
 
 # Generate an OpenSSL Certificate Signing Request with special key usages
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
-    commonName: www.ansible.com
-    keyUsage:
+    common_name: www.ansible.com
+    key_usage:
       - digitlaSignature
       - keyAgreement
-    extKeyUsage:
+    extended_key_usage:
       - clientAuth
 '''
 
@@ -405,19 +408,19 @@ def main():
             version=dict(default='3', type='int'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
-            countryName=dict(aliases=['C'], type='str'),
-            stateOrProvinceName=dict(aliases=['ST'], type='str'),
-            localityName=dict(aliases=['L'], type='str'),
-            organizationName=dict(aliases=['O'], type='str'),
-            organizationalUnitName=dict(aliases=['OU'], type='str'),
-            commonName=dict(aliases=['CN'], type='str'),
-            emailAddress=dict(aliases=['E'], type='str'),
-            subjectAltName=dict(type='list'),
-            subjectAltName_critical=dict(default=False, type='bool'),
-            keyUsage=dict(type='list'),
-            keyUsage_critical=dict(default=False, type='bool'),
-            extendedKeyUsage=dict(aliases=['extKeyUsage'], type='list'),
-            extendedKeyUsage_critical=dict(default=False, aliases=['extKeyUsage_critical'], type='bool'),
+            countryName=dict(aliases=['C', 'country_name'], type='str'),
+            stateOrProvinceName=dict(aliases=['ST', 'state_or_province_name'], type='str'),
+            localityName=dict(aliases=['L', 'locality_name'], type='str'),
+            organizationName=dict(aliases=['O', 'organization_name'], type='str'),
+            organizationalUnitName=dict(aliases=['OU', 'organizational_unit_name'], type='str'),
+            commonName=dict(aliases=['CN', 'common_name'], type='str'),
+            emailAddress=dict(aliases=['E', 'email_address'], type='str'),
+            subjectAltName=dict(aliases=['subject_alt_name'], type='list'),
+            subjectAltName_critical=dict(aliases=['subject_alt_name_critical'], default=False, type='bool'),
+            keyUsage=dict(aliases=['key_usage'], type='list'),
+            keyUsage_critical=dict(aliases=['key_usage_critical'], default=False, type='bool'),
+            extendedKeyUsage=dict(aliases=['extKeyUsage', 'extended_key_usage'], type='list'),
+            extendedKeyUsage_critical=dict(aliases=['extKeyUsage_critical', 'extended_key_usage_critical'], default=False, type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
