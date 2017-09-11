@@ -1076,8 +1076,6 @@ files:
   test/sanity/validate-modules:
     keywords:
     - validate-modules
-  test/:
-    # 'test' automatically added to labels
   docs/:
     labels: docs_pull_request
     notify:
