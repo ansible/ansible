@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'metadata_version': '1.1'
+}
 
 DOCUMENTATION = '''
 ---
@@ -71,6 +73,11 @@ options:
     choices:
       - present
       - absent
+  partition:
+    description:
+      - Device partition to manage resources on.
+    required: False
+    default: 'Common'
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -116,15 +123,6 @@ RETURN = '''
 import re
 import uuid
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
-from f5.utils.iapp_parser import (
-    NonextantTemplateNameException
-)
-
 from ansible.module_utils.f5_utils import (
     AnsibleF5Client,
     AnsibleF5Parameters,
@@ -134,6 +132,14 @@ from ansible.module_utils.f5_utils import (
     defaultdict,
     iControlUnexpectedHTTPError
 )
+from f5.utils.iapp_parser import (
+    NonextantTemplateNameException
+)
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 
 class Parameters(AnsibleF5Parameters):
@@ -456,9 +462,6 @@ class ArgumentSpec(object):
             content=dict()
         )
         self.f5_product_name = 'bigip'
-        self.mutually_exclusive = [
-            ['sync_device_to_group', 'sync_group_to_device']
-        ]
 
 
 def main():
@@ -470,8 +473,7 @@ def main():
     client = AnsibleF5Client(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
-        mutually_exclusive=spec.mutually_exclusive
+        f5_product_name=spec.f5_product_name
     )
 
     try:
