@@ -1,25 +1,3 @@
-# https://github.com/ansible/ansible/issues/27988
-- name: download apache-rpm-macros-control
-  shell: zypper --non-interactive install -d apache-rpm-macros-control
-- name: move rpm package  to /tmp and rename to /tmp/apache-rpm-macros-control.rpm
-  shell: find  /var/cache/zypp/packages  -name "apache-rpm-macros-control*rpm" -exec cp {} /tmp/apache-rpm-macros-control.rpm \;
-- name: check tmp folder
-  shell: ls /tmp/
-- name: install rpm with installroot option
-  zypper: name=/tmp/apache-rpm-macros-control.rpm state=present disable_gpg_check=yes installroot=/tmp/apache_local_install
-
-- name: check that package is installed to /tmp/apache_local_install
-  shell: ls  /tmp/apache_local_install
-  register: ls_result
-
-- name: verify that installed folder contains subdiricories usr\nvar 
-  assert:
-    that:
-      - "ls_result.stdout=='usr\nvar'"
-
-- name: cleanup after test
-  shell: rm -rf /tmp/apache_local_install /tmp/apache*
-
 # UNINSTALL
 - name: uninstall hello
   zypper: name=hello state=removed
@@ -230,13 +208,33 @@
     name: empty
     state: removed
 
+- name: extract from rpm 
+  zypper:
+    name: "{{ output_dir | expanduser }}/zypper2/rpm-build/noarch/empty-1-0.noarch.rpm" 
+    state: installed 
+    disable_gpg_check: yes 
+    extra_args_precommand: --root  {{ output_dir | expanduser }}/testdir/
+ 
+- name: capture result
+  shell: ls  {{ output_dir | expanduser }}/testdir
+  register: folder_list
+- name: check that we extract rpm package
+  assert:
+    that:
+     - "folder_list.stdout == 'var'" 
+       
+
 # test simultaneous remove and install using +- prefixes
 
 - name: install hello to prep next task
-  zypper: name=hello, state=present
+  zypper:
+    name: hello
+    state: present
 
 - name: remove metamail to prep next task
-  zypper: name=hello, state=absent
+  zypper:
+    name: metamail
+    state: absent
 
 - name: install and remove in the same run, with +- prefix
   zypper: 
