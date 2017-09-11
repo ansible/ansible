@@ -1197,7 +1197,8 @@ def create_instances(module, ec2, vpc, override_count=None):
                 try:
                     res = ec2.run_instances(**params)
                 except boto.exception.EC2ResponseError as e:
-                    if "InvalidParameterCombination" == e.error_code:
+                    if (params['instance_initiated_shutdown_behavior'] != 'terminate'
+                            and "InvalidParameterCombination" == e.error_code):
                         params['instance_initiated_shutdown_behavior'] = 'terminate'
                         res = ec2.run_instances(**params)
                     else:
