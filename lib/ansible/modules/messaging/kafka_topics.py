@@ -160,6 +160,7 @@ class KafkaTopics(object):
 
         self.executable = module.params['executable']
 
+        self.jaas_auth_file = None
         if module.params['jaas_auth_file']:
             self.jaas_auth_file = module.params['jaas_auth_file']
             self.kafka_env_opts = '-Djava.security.auth.login.config=' + \
