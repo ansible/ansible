@@ -22,6 +22,7 @@ version_added: "2.1"
 author:
     - "Mark Chance (@java1guy)"
     - "Darek Kaczynski (@kaczynskid)"
+    - "Sven Ehlert (@sveneh)"
 requirements: [ json, boto, botocore, boto3 ]
 options:
     details:
@@ -32,7 +33,7 @@ options:
         choices: ['true', 'false']
     cluster:
         description:
-            - The cluster ARNS in which to list the services.
+            - The cluster ARNs in which to list the services.
         required: false
         default: 'default'
     service:
@@ -169,9 +170,18 @@ class EcsServiceManager:
         fn_args = dict()
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
-        response = self.ecs.list_services(**fn_args)
-        relevant_response = dict(services = response['serviceArns'])
-        return relevant_response
+
+        # boto3 gives paginated reponse of 10 entries each
+        # http://boto3.readthedocs.io/en/latest/reference/services/ecs.html#ECS.Client.list_services
+        service_list = []
+        while True:
+            response = self.ecs.list_services(**fn_args)
+            service_list.extend(response['serviceArns'])
+            next_token = response.get('nextToken')
+            if (next_token):
+                fn_args['nextToken'] = next_token
+            else:
+                break
 
     def describe_services(self, cluster, services):
         fn_args = dict()
