@@ -244,6 +244,7 @@ def rax_argument_spec():
     return dict(
         api_key=dict(type='str', aliases=['password'], no_log=True),
         auth_endpoint=dict(type='str'),
+        auth_token=dict(type='str', no_log=True),
         credentials=dict(type='path', aliases=['creds_file']),
         env=dict(type='str'),
         identity_type=dict(type='str', default='rackspace'),
@@ -276,6 +277,7 @@ def setup_rax_module(module, rax_module, region_required=True):
     tenant_name = module.params.get('tenant_name')
     username = module.params.get('username')
     verify_ssl = module.params.get('verify_ssl')
+    auth_token = module.params.get('auth_token')
 
     if env is not None:
         rax_module.set_environment(env)
@@ -305,6 +307,8 @@ def setup_rax_module(module, rax_module, region_required=True):
     except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
+    auth_token = auth_token or os.environ.get('RAX_TOKEN')
+    tenant_name = tenant_name or os.environ.get('RAX_TENANT_NAME')
     try:
         if api_key and username:
             if api_key == 'USE_KEYRING':
@@ -315,6 +319,8 @@ def setup_rax_module(module, rax_module, region_required=True):
         elif credentials:
             credentials = os.path.expanduser(credentials)
             rax_module.set_credential_file(credentials, region=region)
+        elif auth_token and tenant_name:
+            rax_module.auth_with_token(auth_token, tenant_name=tenant_name)
         else:
             raise Exception('No credentials supplied!')
     except Exception as e:

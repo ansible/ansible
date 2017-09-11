@@ -65,6 +65,11 @@ options:
       - The URI of the authentication service.
     default: https://identity.api.rackspacecloud.com/v2.0/
     version_added: '1.5'
+  auth_token:
+    description:
+      - A pre-generated authentication token (requires I(tenant_name) or C(OS_PROJECT_NAME))
+        see U(https://developer.rackspace.com/docs/cloud-identity/v2/api-reference/token-operations/).
+    version_added: '2.8.0'
   credentials:
     description:
       - File to find the Rackspace credentials in. Ignored if I(api_key) and
@@ -110,4 +115,7 @@ notes:
     appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
   - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
   - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+  - C(RAX_TOKEN) contains a pre-generated Rackspace authentication token.
+    See U(https://developer.rackspace.com/docs/cloud-identity/v2/api-reference/token-operations/)
+  - C(RAX_TENANT_NAME) defines the default value for I(tenant_name).
 '''
