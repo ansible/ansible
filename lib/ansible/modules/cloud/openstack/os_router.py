@@ -258,6 +258,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
             if 'fixed_ips' in port:
                 for fixed_ip in port['fixed_ips']:
                     existing_subnet_ids.append(fixed_ip['subnet_id'])
+                    existing_port_ips.append(fixed_ip['ip_address'])
 
         for iface in module.params['interfaces']:
          if  type(iface)==dict:
@@ -269,6 +270,9 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
 
         if set(internal_subnet_ids) != set(existing_subnet_ids):
             internal_subnet_ids = []
+            return True
+        
+        if set(internal_port_ips) != set(existing_port_ips):
             return True
 
     return False
