@@ -617,7 +617,26 @@ def main():
                 module.fail_json(msg="Specify at least one group for updating host '%s'." % host_name)
 
             if not force:
-                module.fail_json(changed=False, result="Host present, Can't update configuration without force")
+                # get existing groups, interfaces and templates and merge them with ones provided as an argument
+                # we do not want to overwrite anything if force: no is explicitly used, we just want to add new ones
+                for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
+                    if group_id not in group_ids:
+                        group_ids.append(group_id)
+
+                for interface in host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id}):
+                    # remove values not used during hostinterface.add/update calls
+                    for key in interface.keys():
+                        if key in ['interfaceid', 'hostid', 'bulk']:
+                            interface.pop(key, None)
+
+                    for index in interface.keys():
+                        if index in ['useip', 'main', 'type', 'port']:
+                            interface[index] = int(interface[index])
+
+                    if interface not in interfaces:
+                        interfaces.append(interface)
+
+                template_ids = list(set(template_ids + host.get_host_templates_by_host_id(host_id)))
 
             # get exist host's interfaces
             exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
