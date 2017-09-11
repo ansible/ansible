@@ -190,7 +190,7 @@ class ManageIQUser(object):
         """
         found_difference = (
             (name and user['name'] != name) or
-            (password is not None and self.module.params['update_password'] == 'always') or
+            (password is not None) or
             (email and user['email'] != email) or
             (group_id and user['group']['id'] != group_id)
         )
@@ -226,10 +226,15 @@ class ManageIQUser(object):
             resource['group'] = dict(id=group_id)
         if name is not None:
             resource['name'] = name
-        if password is not None:
-            resource['password'] = password
         if email is not None:
             resource['email'] = email
+
+        # if there is a password param, but 'update_password' is 'on_create'
+        # then discard the password (since we're editing an existing user)
+        if self.module.params['update_password'] == 'on_create':
+            password = None
+        if password is not None:
+            resource['password'] = password
 
         # check if we need to update ( compare_user is true is no difference found )
         if self.compare_user(user, name, group_id, password, email):
@@ -289,7 +294,7 @@ def main():
             email=dict(),
             state=dict(choices=['absent', 'present'], default='present'),
             update_password=dict(choices=['always', 'on_create'],
-                                 default='always')
+                                 default='always'),
         ),
     )
 
