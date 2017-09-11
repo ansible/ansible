@@ -4,12 +4,26 @@
     dest: C:\Program Files\sysinternals
   register: unzip_archive
 
-- name: Test unzip_archive
+- name: get stat of an extracted file
+  win_stat:
+    path: C:\Program Files\sysinternals\procexp.exe
+  register: unzip_archive_file
+
+- name: Test unzip_archive (check-mode)
   assert:
     that:
     - unzip_archive|changed == true
     - unzip_archive.removed == false
+    - unzip_archive_file.stat.exists == false
+  when: in_check_mode
 
+- name: Test unzip_archive (normal mode)
+  assert:
+    that:
+    - unzip_archive|changed == true
+    - unzip_archive.removed == false
+    - unzip_archive_file.stat.exists == true
+  when: not in_check_mode
 
 - name: Unarchive sysinternals archive again, use creates
   win_unzip:
