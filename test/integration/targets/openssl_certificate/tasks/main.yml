@@ -1,30 +1,33 @@
-- name: Generate privatekey
-  openssl_privatekey:
-    path: '{{ output_dir }}/privatekey.pem'
+- block:
+  - name: Generate privatekey
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey.pem'
 
-- name: Generate CSR
-  openssl_csr:
-    path: '{{ output_dir }}/csr.csr'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    commonName: 'www.ansible.com'
+  - name: Generate CSR
+    openssl_csr:
+      path: '{{ output_dir }}/csr.csr'
+      privatekey_path: '{{ output_dir }}/privatekey.pem'
+      commonName: 'www.ansible.com'
 
-- name: Generate selfsigned certificate
-  openssl_certificate:
-    path: '{{ output_dir }}/cert.pem'
-    csr_path: '{{ output_dir }}/csr.csr'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    provider: selfsigned
-    selfsigned_digest: sha256
+  - name: Generate selfsigned certificate
+    openssl_certificate:
+      path: '{{ output_dir }}/cert.pem'
+      csr_path: '{{ output_dir }}/csr.csr'
+      privatekey_path: '{{ output_dir }}/privatekey.pem'
+      provider: selfsigned
+      selfsigned_digest: sha256
 
-- name: Check selfsigned certificate
-  openssl_certificate:
-    path: '{{ output_dir }}/cert.pem'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    provider: assertonly
-    has_expired: False
-    version: 3
-    signature_algorithms:
-      - sha256WithRSAEncryption
-      - sha256WithECDSAEncryption
+  - name: Check selfsigned certificate
+    openssl_certificate:
+      path: '{{ output_dir }}/cert.pem'
+      privatekey_path: '{{ output_dir }}/privatekey.pem'
+      provider: assertonly
+      has_expired: False
+      version: 3
+      signature_algorithms:
+        - sha256WithRSAEncryption
+        - sha256WithECDSAEncryption
 
-- import_tasks: ../tests/validate.yml
+  - import_tasks: ../tests/validate.yml
+
+when: pyopenssl_version.stdout|version_compare('16.0.0', '>=')
