@@ -184,6 +184,7 @@ Examples
 @{ example['code'] | escape | indent(4, True) }@
 {% endfor %}
 {% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
+
 {% endif %}
 {% if returndocs -%}
 
@@ -274,11 +275,8 @@ Notes
 {% for note in notes %}
     - @{ note | convert_symbols_to_format }@
 {% endfor %}
-{% endif %}
 
-{% if not deprecated %}
-{% set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
-{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+{% endif %}
 {% if author is defined -%}
 
 
@@ -290,6 +288,9 @@ Author
 {% endfor %}
 
 {% endif %}
+{% if not deprecated %}
+{% set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
+{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
 {% if metadata %}
 {% if metadata.status %}
 
