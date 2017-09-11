@@ -6,18 +6,7 @@
   shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert.pem | openssl md5'
   register: cert_modulus
 
-- name: Validate certificate (test - subject)
-  shell: "openssl x509 -noout -subject -in {{ output_dir }}/cert.pem -nameopt oneline,-space_eq"
-  register: cert_subject
-
-- name: Validate certificate (test - issuer)
-  shell: "openssl x509 -noout -issuer -in {{ output_dir }}/cert.pem -nameopt oneline,-space_eq"
-  register: cert_issuer
-
-
 - name: Validate certificate (assert)
   assert:
     that:
-      # Certificate is selfsigned: subject == issuer)
-      - cert_subject.stdout == cert_issuer.stdout
       - cert_modulus.stdout == privatekey_modulus.stdout
