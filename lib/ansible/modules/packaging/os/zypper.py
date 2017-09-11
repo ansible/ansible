@@ -16,6 +16,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -65,8 +66,8 @@ options:
         version_added: "2.4"
         required: false
         description:
-          - Add additional options to C(zypper) command before install/search.
-          - Options should be supplied in a single line as if given in the command line. 
+          - Add additional  global target options to C(zypper)  .
+          - Options should be supplied in a single line as if given in the command line.
     disable_gpg_check:
         description:
           - Whether to disable to GPG signature checking of the package
@@ -163,18 +164,11 @@ EXAMPLES = '''
     name: '*'
     state: latest
     type: patch
-# Perform install into root directory
 - zypper:
-  name: /vagrant/hello-2.9-6.2.x86_64.rpm
-  state:  installed
-  disable_gpg_check: yes
-  extra_args_precommand: --root  /tmp/install_folder
-# Perform a dist-upgrade with additional arguments
-- zypper:
-    name: '*'
-    state: dist-upgrade
-    extra_args: '--no-allow-vendor-change --allow-arch-change'
-
+    name: /tmp/nginx-1.8.0-1.sles12.ngx.x86_64.rpm
+    state: installed
+    disable_gpg_check: yes
+    extra_args_precommand: --root  /tmp/hello 
 # Perform a dist-upgrade with additional arguments
 - zypper:
     name: '*'
@@ -216,6 +210,7 @@ class Package:
 
     def __str__(self):
         return self.prefix + self.name + self.version
+
 
 
 def split_name_version(name):
@@ -268,6 +263,7 @@ def get_want_state(names, remove=False):
 
 def get_installed_state(m, packages):
     "get installed state of packages"
+
     cmd = get_cmd(m, 'search')
     cmd.extend(['--match-exact', '--details', '--installed-only'])
     cmd.extend([p.name for p in packages])
@@ -321,13 +317,13 @@ def get_cmd(m, subcommand):
     is_install = subcommand in ['install', 'update', 'patch', 'dist-upgrade']
     is_refresh = subcommand == 'refresh'
     cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive', '--xmlout']
-
+    if m.params['extra_args_precommand']:
+        args_list = m.params['extra_args_precommand'].split()
+        cmd.extend(args_list)
     # add global options before zypper command
     if (is_install or is_refresh) and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
-        if m.params['extra_args_precommand']:
-            args_list = m.params['extra_args_precommand'].split()
-            cmd.extend(args_list)
+
     cmd.append(subcommand)
     if subcommand not in ['patch', 'dist-upgrade'] and not is_refresh:
         cmd.extend(['--type', m.params['type']])
@@ -388,7 +384,6 @@ def package_present(m, name, want_latest):
         # if a version is given leave the package in to let zypper handle the version
         # resolution
         packageswithoutversion = [p for p in packages if not p.version]
-
         prerun_state = get_installed_state(m, packageswithoutversion)
         # generate lists of packages to install or remove
         packages = [p for p in packages if p.shouldinstall != (p.name in prerun_state)]
@@ -469,7 +464,6 @@ def repo_refresh(m):
 
 # ===========================================
 # Main control flow
-
 
 def main():
     module = AnsibleModule(
