@@ -120,7 +120,7 @@ class SolidFireFacts(object):
         """Gather information from the cluster and return it to Ansible."""
 
         self.facts['mvip'] = self.module.params['hostname']
-        """This is the cluster identifyer."""
+        """This is the cluster identifier."""
 
         for key in self.fact_metadata.keys():
             self.fetch_fact(name=key, api=self.fact_metadata[key])
