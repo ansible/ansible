@@ -390,3 +390,23 @@
     that:
         - "'changed' in dnf_result"
         - "'msg' in dnf_result"
+
+# ENVIRONMENT UPGRADE
+# see commit de299ef77c03a64a8f515033a79ac6b7db1bc710
+- name: install Web Server environment
+  dnf:
+    name: "@Web Server"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of the environment
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
