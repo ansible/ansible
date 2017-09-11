@@ -96,7 +96,7 @@ options:
         - The trigger type, this value controls what below options are
           required.
         required: true
-        options: [ boot, daily, event, idle, logon, monthlydow, monthly, registration, time, weekly, session_state_change ]
+        choices: [ boot, daily, event, idle, logon, monthlydow, monthly, registration, time, weekly, session_state_change ]
       enabled:
         description:
         - Whether to set the trigger to enabled or disabled
@@ -196,7 +196,7 @@ options:
     - DEPRECATED since 2.5, use the C(triggers) option list and specify the
       type based on the frequency required.
     - Will be removed in 2.7.
-    options: [ daily, once, weekly ]
+    choices: [ daily, once, weekly ]
   time:
     description:
     - The start time to execute the scheduled task.

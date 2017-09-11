@@ -700,9 +700,16 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
     # Principal.UserId and GroupId only returns the username portion of the
     # username, skipping the domain or server name. This makes the
     # comparison process useless so we need to parse the task XML to get
-    # the actual sid
+    # the actual sid/username. Depending on OS version this could be the SID
+    # or it could be the username, we need to handle that accordingly
     $principal_username_sid = $task_definition_xml.Task.Principals.Principal.UserId
+    if ($principal_username_sid -ne $null -and $principal_username_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
+        $principal_username_sid = Convert-ToSID -account_name $principal_username_sid
+    }
     $principal_group_sid = $task_definition_xml.Task.Principals.Principal.GroupId
+    if ($principal_group_sid -ne $null -and $principal_group_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
+        $principal_group_sid = Convert-ToSID -sid $principal_group_sid
+    }
     
     if ($username_sid -ne $null) {
         $new_user_name = Convert-FromSid -sid $username_sid
@@ -857,6 +864,24 @@ Function Compare-Triggers($task_definition) {
     return ,$changes
 }
 
+Function Test-TaskExists($task_folder, $name) {
+    # checks if a task exists in the TaskFolder COM object, returns null if the
+    # task does not exist, otherwise returns the RegisteredTask object
+    $task = $null
+    if ($task_folder) {
+        $raw_tasks = $task_folder.GetTasks(1) # 1 = TASK_ENUM_HIDDEN
+        
+        for ($i = 1; $i -le $raw_tasks.Count; $i++) {
+            if ($raw_tasks.Item($i).Name -eq $name) {
+                $task = $raw_tasks.Item($i)
+                break
+            }
+        }
+    }
+
+    return $task
+}
+
 ########################
 ### START CODE BLOCK ###
 ########################
@@ -871,29 +896,11 @@ try {
 try {
     $task_folder = $service.GetFolder($path)
 } catch {
-    if ($_.Exception.HResult -eq 0x80070002) {
-        # path doesn't exist, we need to create it
-        $task_folder = $service.GetFolder("\")
-        try {
-            $task_folder = $task_folder.CreateFolder($path)
-        } catch {
-            Fail-Json -obj $result -message "failed to create new folder at path '$path': $($_.Exception.Message)"
-        }
-    } else {
-        Fail-Json -obj $result -message "failed to get the task path '$path': $($_.Exception.Message)"
-    }
+    $task_folder = $null
 }
 
 # try and get the task at the path
-try {
-    $task = $task_folder.GetTask($name)
-} catch {
-    $task = $null
-    # HRESULT 0x80070002 means not found, we don't want to fail on that
-    if ($_.Exception.HResult -ne 0x80070002) {
-        Fail-Json -obj $result -message "failed to get task info for '$name' at path '$path': $($_.Exception.Message)"
-    }
-}
+$task = Test-TaskExists -task_folder $task_folder -name $name
 
 $task_path = $null
 if ($path.EndsWith("`\")) {
@@ -918,7 +925,7 @@ if ($state -eq "absent") {
 
         # check if current folder has any more tasks
         $other_tasks = $task_folder.GetTasks(1) # 1 = TASK_ENUM_HIDDEN
-        if ($other_tasks.Count -eq 0) {
+        if ($other_tasks.Count -eq 0 -and $task_folder.Name -ne "\") {
             try {
                 $task_folder.DeleteFolder($null, $null)
             } catch {
@@ -958,6 +965,18 @@ if ($state -eq "absent") {
         } else {
             # Create the task but do not fire it as we still need to configure it further below
             $task_creation_flags = [TASK_CREATION]::TASK_CREATE -bor [TASK_CREATION]::TASK_IGNORE_REGISTRATION_TRIGGERS
+        }
+
+        # folder doesn't exist, need to create
+        if ($task_folder -eq $null) {
+            $task_folder = $service.GetFolder("\")
+            try {
+                if (-not $check_mode) {
+                    $task_folder = $task_folder.CreateFolder($path)
+                }                
+            } catch {
+                Fail-Json -obj $result -message "failed to create new folder at path '$path': $($_.Exception.Message)"
+            }
         }
 
         try {
