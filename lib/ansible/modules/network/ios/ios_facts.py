@@ -184,7 +184,7 @@ class Default(FactsBase):
             self.facts['hostname'] = self.parse_hostname(data)
 
     def parse_version(self, data):
-        match = re.search(r'Version (\S+)(?:,|\S)', data)
+        match = re.search(r'Version (\S+?)(?:,\s|\s)', data)
         if match:
             return match.group(1)
 
