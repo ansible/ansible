@@ -21,11 +21,9 @@ import os
 import re
 import sys
 import copy
-import importlib
 import inspect
 import traceback
 
-from packaging.version import Version
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
@@ -80,6 +78,22 @@ HAS_AZURE_CLI_CORE = True
 
 HAS_MSRESTAZURE = True
 HAS_MSRESTAZURE_EXC = None
+
+try:
+    import importlib
+except ImportError:
+    # This passes the sanity import test, but does not provide a user friendly error message.
+    # Doing so would require catching Exception for all imports of Azure dependencies in modules and module_utils.
+    importlib = None
+
+try:
+    from packaging.version import Version
+    HAS_PACKAGING_VERSION = True
+    HAS_PACKAGING_VERSION_EXC = None
+except ImportError as exc:
+    Version = None
+    HAS_PACKAGING_VERSION = False
+    HAS_PACKAGING_VERSION_EXC = exc
 
 # NB: packaging issue sometimes cause msrestazure not to be installed, check it separately
 try:
@@ -173,6 +187,10 @@ class AzureRMModuleBase(object):
                                     add_file_common_args=add_file_common_args,
                                     supports_check_mode=supports_check_mode,
                                     required_if=merged_required_if)
+
+        if not HAS_PACKAGING_VERSION:
+            self.fail("Do you have packaging installed? Try `pip install packaging`"
+                      "- {0}".format(HAS_PACKAGING_VERSION_EXC))
 
         if not HAS_MSRESTAZURE:
             self.fail("Do you have msrestazure installed? Try `pip install msrestazure`"
