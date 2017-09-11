@@ -1,0 +1,10 @@
+# cleans up each test to ensure a blank slate
+---
+- win_scheduled_task:
+    name: '{{item.name}}'
+    path: '{{item.path|default(omit)}}'
+    state: absent
+  with_items:
+  - name: Ansible Test
+  - name: Task
+    path: \Path

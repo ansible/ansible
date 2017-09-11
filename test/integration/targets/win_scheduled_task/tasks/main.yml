@@ -1,10 +1,19 @@
-- name: Test in normal mode
-  include: tests.yml
-  vars:
-    in_check_mode: no
+---
+- name: remove test tasks before test
+  include_tasks: clean.yml
 
-- name: Test in check-mode
-  include: tests.yml
-  vars:
-    in_check_mode: yes
-  check_mode: yes
+- block:
+  - name: Test in normal mode
+    include: tests.yml
+    vars:
+      in_check_mode: no
+
+  - name: Test in check-mode
+    include: tests.yml
+    vars:
+      in_check_mode: yes
+    check_mode: yes
+  
+  always:
+  - name: remove test tasks after test
+    include_tasks: clean.yml
