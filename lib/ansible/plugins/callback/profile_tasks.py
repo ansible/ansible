@@ -174,7 +174,7 @@ class CallbackModule(CallbackBase):
             results = sorted(
                 self.stats.items(),
                 key=lambda x: x[1]['time'],
- #               reverse=self.sort_order,
+                reverse=self.sort_order,
             )
 
         # Display the number of tasks specified or the default of 20

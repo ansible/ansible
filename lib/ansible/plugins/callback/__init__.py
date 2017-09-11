@@ -61,7 +61,6 @@ class CallbackBase(AnsiblePlugin):
         else:
             self._display = global_display
 
-
         if cli:
             self._options = cli.options
         else:
