@@ -48,7 +48,7 @@ except ImportError:
 
 OPERATORS = frozenset(['ge', 'gt', 'eq', 'neq', 'lt', 'le'])
 ALIASES = frozenset([('min', 'ge'), ('max', 'le'), ('exactly', 'eq'), ('neq', 'ne')])
-VALID_MASKS = [2**8-2**i for i in range(0, 9)]
+VALID_MASKS = [2**8 - 2**i for i in range(0, 9)]
 
 
 def to_list(val):
@@ -431,6 +431,7 @@ class Template:
                     return True
         return False
 
+
 def is_netmask(val):
     parts = str(val).split('.')
     if not len(parts) == 4:
@@ -443,11 +444,13 @@ def is_netmask(val):
             return False
     return True
 
+
 def is_masklen(val):
     try:
         return 0 <= int(val) <= 32
     except ValueError:
         return False
+
 
 def to_bits(val):
     """ converts a netmask to bits """
@@ -455,6 +458,7 @@ def to_bits(val):
     for octet in val.split('.'):
         bits += bin(int(octet))[2:].zfill(8)
     return str
+
 
 def to_netmask(val):
     """ converts a masklen to a netmask """
@@ -467,6 +471,7 @@ def to_netmask(val):
 
     return inet_ntoa(pack('>I', bits))
 
+
 def to_masklen(val):
     """ converts a netmask to a masklen """
     if not is_netmask(val):
@@ -478,6 +483,7 @@ def to_masklen(val):
         bits.append(octet)
 
     return sum(bits)
+
 
 def to_subnet(addr, mask, dotted_notation=False):
     """ coverts an addr / mask pair to a subnet in cidr notation """

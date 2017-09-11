@@ -187,5 +187,3 @@ class TestModuleUtilsNetworkCommon(unittest.TestCase):
         self.assertTrue(is_netmask('255.255.255.255'))
         self.assertFalse(is_netmask(24))
         self.assertFalse(is_netmask('foo'))
-
-
