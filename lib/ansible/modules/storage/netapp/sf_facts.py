@@ -113,7 +113,7 @@ class SolidFireFacts(object):
             self.module.fail_json(
                 msg="Failed to obtain cluster fact [%s] from [%s]. Error [%s]" % (name, self.module.params['hostname'],
                                                                                   to_native(sf_problem)))
-        except ApiServerError as problem:
+        except Exception as problem:
             self.module.fail_json(msg=to_native(problem))
 
     def gather_facts(self):
