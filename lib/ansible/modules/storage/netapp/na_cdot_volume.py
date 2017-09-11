@@ -230,7 +230,8 @@ class NetAppCDOTVolume(object):
         volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'volume-create', **{'volume': self.name,
                                 'containing-aggr-name': self.aggregate_name,
-                                'size': str(self.size)})
+                                'size': str(self.size),
+                                'junction-path': '/%s' % (self.name)})
 
         try:
             self.server.invoke_successfully(volume_create,
