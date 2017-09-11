@@ -36,9 +36,17 @@ requirements:
 
 
 EXAMPLES = '''
-- name: "List all sshkeys"
-  digital_ocean_sshkey_facts:
-    register: result
+- digital_ocean_sshkey_facts:
+    oauth_token: "{{ my_do_key }}"
+
+- set_fact:
+    pubkey: "{{ item.public_key }}"
+  with_items: "{{ ssh_keys|json_query(ssh_pubkey) }}"
+  vars:
+    ssh_pubkey: "[?name=='ansible_crtl']"
+
+- debug:
+    msg: "{{ pubkey }}"
 '''
 
 
