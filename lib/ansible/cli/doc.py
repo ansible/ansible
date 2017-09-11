@@ -54,7 +54,7 @@ class DocCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [-l|-s|-a] [options] [-t <plugin type] [plugin]',
+            usage='usage: %prog [-l|-s] [options] [-t <plugin type] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
@@ -65,7 +65,7 @@ class DocCLI(CLI):
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                                help='Show playbook snippet for specified plugin(s)')
         self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
-                               help='Show documentation for all plugins')
+                               help='**For internal testing only** Show documentation for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
                                help='Choose which plugin type (defaults to "module")',
                                choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy', 'vars'])
@@ -73,7 +73,7 @@ class DocCLI(CLI):
         super(DocCLI, self).parse()
 
         if [self.options.all_plugins, self.options.list_dir, self.options.show_snippet].count(True) > 1:
-            raise AnsibleOptionsError("Only one of -l, -a or -s can be used at the same time.")
+            raise AnsibleOptionsError("Only one of -l, -s or -a can be used at the same time.")
 
         display.verbosity = self.options.verbosity
 
