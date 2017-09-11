@@ -385,15 +385,17 @@ class CLI(with_metaclass(ABCMeta, object)):
     @staticmethod
     def unfrack_paths(option, opt, value, parser):
         paths = getattr(parser.values, option.dest)
-        if paths is None and value:
+        if paths is None:
             paths = []
-            if isinstance(value, string_types):
-                paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep) if x]
-            elif isinstance(value, list):
-                paths[:0] = [unfrackpath(x) for x in value if x]
-            else:
-                pass  # FIXME: should we raise options error?
-            setattr(parser.values, option.dest, paths)
+
+        if isinstance(value, string_types):
+            paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep) if x]
+        elif isinstance(value, list):
+            paths[:0] = [unfrackpath(x) for x in value if x]
+        else:
+            pass  # FIXME: should we raise options error?
+
+        setattr(parser.values, option.dest, paths)
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
