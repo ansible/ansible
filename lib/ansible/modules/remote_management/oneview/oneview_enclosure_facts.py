@@ -15,7 +15,7 @@ module: oneview_enclosure_facts
 short_description: Retrieve facts about one or more Enclosures
 description:
     - Retrieve facts about one or more of the Enclosures from OneView.
-version_added: "2.4"
+version_added: "2.5"
 requirements:
     - hpOneView >= 2.0.1
 author:
