@@ -102,12 +102,12 @@ def get_existing(module, args):
 
         existing['bidir'] = existing.get('bidir') or 'bidir' in line
         if len(values) > 2:
-            value = values[1]
-            if values[2] == 'route-map':
+            value = values[2]
+            if values[1] == 'route-map':
                 existing['route_map'] = value
-            elif values[2] == 'prefix-list':
+            elif values[1] == 'prefix-list':
                 existing['prefix_list'] = value
-            elif values[2] == 'group-list':
+            elif values[1] == 'group-list':
                 existing['group_list'] = value
 
     return existing
