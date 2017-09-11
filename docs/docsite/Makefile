@@ -11,6 +11,16 @@ else
 CPUS ?= $(shell nproc)
 endif
 
+MODULE_ARGS=
+ifdef MODULES
+	MODULE_ARGS = -l $(MODULES)
+endif
+
+PLUGIN_ARGS=
+ifdef PLUGINS
+	PLUGIN_ARGS = -l $(PLUGINS)
+endif
+
 assertrst:
 ifndef rst
 	$(error specify document or pattern with rst=somefile.rst)
@@ -67,15 +77,10 @@ config:
 	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/ -d ../../lib/ansible/config/base.yml
 
 modules: $(FORMATTER) ../templates/plugin.rst.j2
-# Limit building of module documentation if requested.
-ifdef MODULES
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ -l $(MODULES)
-else
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/
-endif
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ $(MODULE_ARGS)
 
 plugins: $(FORMATTER) ../templates/plugin.rst.j2
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type plugins --template-dir=../templates --module-dir=../../lib/ansible/plugins -o rst/
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type plugins --template-dir=../templates --module-dir=../../lib/ansible/plugins -o rst/ $(PLUGIN_ARGS)
 
 testing:
 	$(TESTING_FORMATTER)
