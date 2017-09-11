@@ -14,7 +14,7 @@ These modules are integral to the basic foundations of the Ansible distribution.
 Network
 ```````
 
-:doc:`Network modules are maintained by the Ansible Network Team<network_maintained>`. Please note there are `additional networking modules <list_of_network_modules>` that are categorized as Certified or Community not maintained by Ansible.
+:doc:`Network modules are maintained by the Ansible Network Team<network_maintained>`. Please note there are :doc:`additional networking modules<list_of_network_modules>` that are categorized as Certified or Community not maintained by Ansible.
 
 
 Certified
@@ -30,13 +30,13 @@ Community
 Issue Reporting
 ```````````````
 
-If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>` to see if an issue has already been filed. If not, please file one.
+If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed. If not, please file one.
 
-Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>` or on Ansible’s “#ansible” channel, located on irc.freenode.net.
+Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible’s “#ansible” channel, located on irc.freenode.net.
 
-For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>` or Ansible’s #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read `Community Information & Contributing <community>`, `Testing Ansible <testing>`, and `Developing Modules <developing_modules>`.
+For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible’s #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <community>`, :doc:`Testing Ansible <testing>`, and :doc:`Developing Modules <developing_modules>`.
 
-The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>` repo.
+The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
 NOTE: If you have a Red Hat Ansible Engine product subscription, please follow the standard issue reporting process via the Red Hat Customer Portal.
 
@@ -44,7 +44,7 @@ Support
 ```````
 
 For more information on how included Ansible modules are supported by Red Hat,
-please refer to the following `knowledgebase article <https://access.redhat.com/articles/3166901>` as well as other resources on the `Red Hat Customer Portal <https://access.redhat.com/>`.
+please refer to the following `knowledgebase article <https://access.redhat.com/articles/3166901>`_ as well as other resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
 
 .. seealso::
 
