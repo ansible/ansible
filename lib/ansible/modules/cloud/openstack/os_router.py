@@ -346,10 +346,10 @@ def _validate_subnets(module, cloud):
     if module.params['interfaces']:
         for iface in module.params['interfaces']:
           if  type(iface)==str:
-             subnet = cloud.get_subnet(iface)
-             if not subnet:
+            subnet = cloud.get_subnet(iface)
+            if not subnet:
                 module.fail_json(msg='subnet %s not found' % iface)
-             internal_subnet_ids.append(subnet['id'])
+            internal_subnet_ids.append(subnet['id'])
           elif type(iface)==dict:
              subnet = cloud.get_subnet(iface['subnet']) 
              if not subnet:
@@ -375,6 +375,22 @@ def _validate_subnets(module, cloud):
 
     return external_subnet_ids, internal_subnet_ids, internal_port_ids
 
+def _validate_internal_ip_ports(module,cloud):
+    internal_port_ips = []    
+    if module.params['interfaces']:
+        for iface in module.params['interfaces']:
+          ports_in_net = cloud.list_ports(filters={'network_id': iface['net']})
+          for port in  ports_in_net:
+            if 'fixed_ips' in port:
+                for fixed_ip in port['fixed_ips']:
+                    if (fixed_ip['ip_address']) == iface['ip']:
+                        module.fail_json(msg='ip  %s is already used by port %s' % iface['ip']  % port['id'])
+                    internal_port_ips.append(iface['ip'])
+                    
+    return  internal_port_ips             
+                    
+   
+    
 
 def main():
     argument_spec = openstack_full_argument_spec(
