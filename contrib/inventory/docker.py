@@ -371,13 +371,25 @@ HAS_DOCKER_PY = True
 HAS_DOCKER_ERROR = False
 
 try:
-    from docker import Client
     from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
+
+# Client has recently been split into DockerClient and APIClient
+try:
+    from docker import Client
+except ImportError as exc:
+    try:
+        from docker import APIClient as Client
+    except ImportError as exc:
+        HAS_DOCKER_ERROR = str(exc)
+        HAS_DOCKER_PY = False
+
+        class Client:
+            pass
 
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
@@ -779,6 +791,10 @@ class DockerInventory(object):
         if config_path:
             try:
                 config_file = os.path.abspath(config_path)
+                # default config path is docker.yml in same directory as this script
+                # old behaviour is docker.yml in current directory. Handle both.
+                if not os.path.exists(config_file):
+                    config_file = os.path.abspath(os.path.basename(config_path))
             except:
                 config_file = None
 
@@ -813,7 +829,7 @@ class DockerInventory(object):
         # Parse command line arguments
 
         basename = os.path.splitext(os.path.basename(__file__))[0]
-        default_config = basename + '.yml'
+        default_config = os.path.join(os.path.dirname(__file__), basename + '.yml')
 
         parser = argparse.ArgumentParser(
             description='Return Ansible inventory for one or more Docker hosts.')

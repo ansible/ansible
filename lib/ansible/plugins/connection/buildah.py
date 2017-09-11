@@ -1,52 +1,41 @@
 # Based on the docker connection plugin
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # Connection plugin for building container images using buildah tool
 #   https://github.com/projectatomic/buildah
 #
 # Written by: Tomas Tomecek (https://github.com/TomasTomecek)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 DOCUMENTATION:
     connection: buildah
-    short_description: interact with an existing buildah container
+    short_description: Interact with an existing buildah container
     description:
         - Run commands or put/fetch files to an existing container using buildah tool.
     author: Tomas Tomecek (ttomecek@redhat.com)
     version_added: 2.4
     options:
-        remote_addr:
-            description:
-                - The ID of the container you want to access.
-            default: inventory_hostname
-            config:
-              vars:
-                - name: ansible_host
-        remote_user:
-            description:
-                - User specified via name or ID which is used to execute commands inside the container.
-            config:
-              ini:
-                - section: defaults
-                  key: remote_user
-              env:
-                - name: ANSIBLE_REMOTE_USER
-              vars:
-                - name: ansible_user
+      remote_addr:
+        description:
+            - The ID of the container you want to access.
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+#        keyword:
+#            - name: hosts
+      remote_user:
+        description:
+            - User specified via name or ID which is used to execute commands inside the container.
+        ini:
+          - section: defaults
+            key: remote_user
+        env:
+          - name: ANSIBLE_REMOTE_USER
+        vars:
+          - name: ansible_user
+#        keyword:
+#            - name: remote_user
 """
 
 from __future__ import (absolute_import, division, print_function)
@@ -57,7 +46,7 @@ import shutil
 import subprocess
 
 import ansible.constants as C
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, ensure_connect
 
 
@@ -135,8 +124,8 @@ class Connection(ConnectionBase):
         """ run specified command in a running OCI container using buildah """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        cmd_bytes = to_bytes(cmd, errors='surrogate_or_strict')
-        cmd_args_list = shlex.split(cmd_bytes)
+        # shlex.split has a bug with text strings on Python-2.6 and can only handle text strings on Python-3
+        cmd_args_list = shlex.split(to_native(cmd, errors='surrogate_or_strict'))
 
         rc, stdout, stderr = self._buildah("run", cmd_args_list)
 

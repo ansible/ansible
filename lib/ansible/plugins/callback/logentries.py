@@ -1,46 +1,84 @@
-""" (c) 2015, Logentries.com, Jimmy Tang <jimmy.tang@logentries.com>
+# (c) 2015, Logentries.com, Jimmy Tang <jimmy.tang@logentries.com>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-This callback plugin will generate json objects to be sent to logentries
-for auditing/debugging purposes.
-
-Todo:
-
-* Better formatting of output before sending out to logentries data/api nodes.
-
-To use:
-
-Add this to your ansible.cfg file in the defaults block
+'''
+DOCUMENTATION:
+    callback: logentries
+    type: notification
+    short_description: Sends events to Logentries
+    description:
+      - This callback plugin will generate JSON objects and send them to Logentries for auditing/debugging purposes.
+      - If you want to use an ini configuration, the file must be placed in the same directory as this plugin and named logentries.ini
+    version_added: "2.0"
+    requirements:
+      - whitelisting in configuration
+      - certifi (python library)
+      - flatdict (pytnon library)
+    options:
+      api:
+        description: URI to the Logentries API
+        env:
+          - name: LOGENTRIES_API
+        default: data.logentries.com
+        ini:
+          - section: defaults
+            key: api
+      port:
+        description: Http port to use when connecting to the API
+        env:
+            - name: LOGENTRIES_PORT
+        default: 80
+        ini:
+          - section: defaults
+            key: port
+      tls_port:
+        description: Port to use when connecting to the API when TLS is enabled
+        env:
+            - name: LOGENTRIES_TLS_PORT
+        default: 443
+        ini:
+          - section: defaults
+            key: tls_port
+      token:
+        description: the authentication token
+        env:
+          - name: LOGENTRIES_ANSIBLE_TOKEN
+        required: True
+        ini:
+          - section: defaults
+            key: token
+      use_tls:
+        description:
+          - Toggle to decidewhether to use TLS to encrypt the communications with the API server
+        env:
+          - name: LOGENTRIES_USE_TLS
+        default: False
+        type: boolean
+        ini:
+          - section: defaults
+            key: use_tls
+      flatten:
+        description: flatten complex data structures into a single dictionary with complex keys
+        type: boolean
+        default: False
+        env:
+          - name: LOGENTRIES_FLATTEN
+        ini:
+          - section: defaults
+            key: flatten
+EXAMPLES: >
+  To enable, add this to your ansible.cfg file in the defaults block
 
     [defaults]
-    callback_plugins = ./callback_plugins
-    callback_stdout = logentries
     callback_whitelist = logentries
 
-Copy the callback plugin into the callback_plugins directory
-
-Either set the environment variables
-
+  Either set the environment variables
     export LOGENTRIES_API=data.logentries.com
     export LOGENTRIES_PORT=10000
     export LOGENTRIES_ANSIBLE_TOKEN=dd21fc88-f00a-43ff-b977-e3a4233c53af
 
-Or create a logentries.ini config file that sites next to the plugin with the following contents
-
+  Or create a logentries.ini config file that sites next to the plugin with the following contents
     [logentries]
     api = data.logentries.com
     port = 10000
@@ -48,10 +86,7 @@ Or create a logentries.ini config file that sites next to the plugin with the fo
     use_tls = no
     token = dd21fc88-f00a-43ff-b977-e3a4233c53af
     flatten = False
-
-
-"""
-
+'''
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -59,7 +94,6 @@ import os
 import socket
 import random
 import time
-import codecs
 import uuid
 
 try:
@@ -77,6 +111,10 @@ except ImportError:
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
+"""
+Todo:
+  * Better formatting of output before sending out to logentries data/api nodes.
+"""
 
 
 class PlainTextSocketAppender(object):
@@ -92,8 +130,7 @@ class PlainTextSocketAppender(object):
         self.MIN_DELAY = 0.1
         self.MAX_DELAY = 10
         # Error message displayed when an incorrect Token has been detected
-        self.INVALID_TOKEN = ("\n\nIt appears the LOGENTRIES_TOKEN "
-                              "parameter you entered is incorrect!\n\n")
+        self.INVALID_TOKEN = ("\n\nIt appears the LOGENTRIES_TOKEN parameter you entered is incorrect!\n\n")
         # Unicode Line separator character   \u2028
         self.LINE_SEP = u'\u2028'
 
@@ -189,15 +226,17 @@ class CallbackModule(CallbackBase):
         if not HAS_SSL:
             self._display.warning("Unable to import ssl module. Will send over port 80.")
 
+        warn = ''
         if not HAS_CERTIFI:
             self.disabled = True
-            self._display.warning('The `certifi` python module is not installed. '
-                                  'Disabling the Logentries callback plugin.')
+            warn += 'The `certifi` python module is not installed.'
 
         if not HAS_FLATDICT:
             self.disabled = True
-            self._display.warning('The `flatdict` python module is not installed. '
-                                  'Disabling the Logentries callback plugin.')
+            warn += 'The `flatdict` python module is not installed.'
+
+        if warn:
+            self._display.warning('%s\nDisabling the Logentries callback plugin.' % warn)
 
         config_path = os.path.abspath(os.path.dirname(__file__))
         config = configparser.ConfigParser()

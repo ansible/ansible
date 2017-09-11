@@ -41,6 +41,12 @@ class TestDataLoader(unittest.TestCase):
     def tearDown(self):
         pass
 
+    @patch('os.path.exists')
+    def test__is_role(self, p_exists):
+        p_exists.side_effect = lambda p: p == b'test_path/tasks/main.yml'
+        self.assertTrue(self._loader._is_role('test_path/tasks'))
+        self.assertTrue(self._loader._is_role('test_path/'))
+
     @patch.object(DataLoader, '_get_file_contents')
     def test_parse_json_from_file(self, mock_def):
         mock_def.return_value = (b"""{"a": 1, "b": 2, "c": 3}""", True)
