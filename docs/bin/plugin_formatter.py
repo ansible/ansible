@@ -121,6 +121,9 @@ def write_data(text, output_dir, outputname, module=None):
     if output_dir is not None:
         if module:
             outputname = outputname % module
+
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
         with open(fname, 'wb') as f:
@@ -208,11 +211,13 @@ def get_module_info(module_dir, limit_to_modules=None, verbose=False):
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
 
+        module_categories = []
         # build up the categories that this module belongs to
         for new_cat in mod_path_only.split('/')[1:]:
             if new_cat not in category:
                 category[new_cat] = dict()
                 category[new_cat]['_modules'] = []
+            module_categories.append(new_cat)
             category = category[new_cat]
 
         category['_modules'].append(module)
@@ -228,6 +233,7 @@ def get_module_info(module_dir, limit_to_modules=None, verbose=False):
                                'doc': doc,
                                'examples': examples,
                                'returndocs': returndocs,
+                               'categories': module_categories,
                                }
 
     # keep module tests out of becoming module docs
@@ -308,7 +314,9 @@ def process_modules(module_map, templates, outputname,
 
         fname = module_map[module]['path']
 
-        # pprint.pprint(('process_modules module_info: ', module_map[module]))
+        pprint.pprint(('process_modules module_info: ', module_map[module]))
+
+        module_categories = module_map[module].get('categories', [])
 
         # crash if module is missing documentation and not explicitly hidden from docs index
         if module_map[module]['doc'] is None:
@@ -418,7 +426,14 @@ def process_modules(module_map, templates, outputname,
         # pprint.pprint(doc)
         text = templates['plugin'].render(doc)
 
-        write_data(text, output_dir, outputname, module)
+        print('\n\nplugin_type=%s' % plugin_type)
+        # plugins get namespace dirs but modules do not
+        if plugin_type == 'plugins':
+            for module_category in module_categories:
+                category_output_dir = os.path.join(output_dir, '%s_plugins' % module_category)
+                write_data(text, category_output_dir, outputname, module)
+        else:
+                write_data(text, output_dir, outputname, module)
 
 
 def process_categories(mod_info, categories, templates,
@@ -431,11 +446,12 @@ def process_categories(mod_info, categories, templates,
 
         # start a new category file
 
-        category = category.replace("_", " ")
-        category = category.title()
+        category_name = category.replace("_", " ")
+        category_title = category_name.title()
 
         subcategories = dict((k, v) for k, v in module_map.items() if k != '_modules')
-        template_data = {'title': category,
+        template_data = {'title': category_title,
+                         'category_name': category_name,
                          'category': module_map,
                          'subcategories': subcategories,
                          'module_info': mod_info,
