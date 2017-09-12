@@ -2178,7 +2178,8 @@ def checkVlanNameNotAssigned(
     retVal = waitForDeviceResponse(command, prompt, timeout, obj)
     if(retVal.find(vlanName) != -1):
         return "Nok"
-    return retVal
+    else:
+        return "ok"
 # EOM
 
 
@@ -3175,7 +3176,7 @@ def checkOutputForError(output):
         index = output.lower().find("invalid")
         startIndex = index + 8
         if(index == -1):
-            index = output.lower().find("Cannot be enabled in L2 Interface")
+            index = output.lower().find("cannot be enabled in l2 interface")
             startIndex = index + 34
             if(index == -1):
                 index = output.lower().find("incorrect")
