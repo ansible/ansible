@@ -417,7 +417,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
+                      callback=None):
             group_by = [] if group_by is None else group_by
 
             return [vsdk.NUUser(id='user-id'), vsdk.NUUser(id='user-id-2')]
@@ -439,7 +440,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
+                      callback=None):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -498,7 +500,8 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
+                      callback=None):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -535,7 +538,8 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
+                      callback=None):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -574,7 +578,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
+                      callback=None):
             group_by = [] if group_by is None else group_by
 
             return [vsdk.NUUser(id='user-id')]
@@ -734,7 +739,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
+                      callback=None):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -761,7 +767,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
+                      callback=None):
             group_by = [] if group_by is None else group_by
 
             return [vsdk.NUUser(id='user-id'), vsdk.NUUser(id='user-id-2')]
