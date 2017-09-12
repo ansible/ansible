@@ -84,9 +84,9 @@ class TaskQueueManager:
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
-        if isinstance(options.module_path, list):
+        if options.module_path:
             for path in options.module_path:
-                if path is not None:
+                if path:
                     module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly

@@ -66,11 +66,19 @@ class VaultCLI(CLI):
         self.new_encrypt_secret = None
         self.new_encrypt_vault_id = None
 
+        self.can_output = ['encrypt', 'decrypt', 'encrypt_string']
+
         super(VaultCLI, self).__init__(args)
 
     def set_action(self):
 
         super(VaultCLI, self).set_action()
+
+        # add output if needed
+        if self.action in self.can_output:
+            self.parser.add_option('--output', default=None, dest='output_file',
+                                   help='output file name for encrypt or decrypt; use - for stdout',
+                                   action="callback", callback=CLI.unfrack_path, type='string')
 
         # options specific to self.actions
         if self.action == "create":
@@ -113,16 +121,12 @@ class VaultCLI(CLI):
 
         display.verbosity = self.options.verbosity
 
-        can_output = ['encrypt', 'decrypt', 'encrypt_string']
-
         if self.options.vault_ids:
             for vault_id in self.options.vault_ids:
                 if u';' in vault_id:
                     raise AnsibleOptionsError("'%s' is not a valid vault id. The character ';' is not allowed in vault ids" % vault_id)
 
-        if self.action not in can_output:
-            if self.options.output_file:
-                raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
+        if self.action not in self.can_output:
             if len(self.args) == 0:
                 raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
         else:
@@ -138,8 +142,7 @@ class VaultCLI(CLI):
             if '-' in self.args or len(self.args) == 0 or self.options.encrypt_string_stdin_name:
                 self.encrypt_string_read_stdin = True
 
-            # TODO: prompting from stdin and reading from stdin seem
-            #       mutually exclusive, but verify that.
+            # TODO: prompting from stdin and reading from stdin seem mutually exclusive, but verify that.
             if self.options.encrypt_string_prompt and self.encrypt_string_read_stdin:
                 raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
 
