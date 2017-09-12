@@ -236,18 +236,17 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids,internal_p
             if 'fixed_ips' in port:
                 for fixed_ip in port['fixed_ips']:
                     existing_subnet_ids.append(fixed_ip['subnet_id'])
-                    existing_port_ips.append(fixed_ip['ip_address'])
+                    existing_internal_port_ips.append(fixed_ip['ip_address'])
 
         if set(internal_subnet_ids) != set(existing_subnet_ids):
             return True
-        
-        if set(internal_port_ips) != set(existing_port_ips):
+        if set(internal_port_ips) != set(existing_internal_port_ips):
             return True
 
     return False
 
 
-def _system_state_change(cloud, module, router, network, internal_ids, internal_ports):
+def _system_state_change(cloud, module, router, network, internal_ids, internal_portips):
     """Check if the system state would be changed."""
     state = module.params['state']
     if state == 'absent' and router:
@@ -255,7 +254,7 @@ def _system_state_change(cloud, module, router, network, internal_ids, internal_
     if state == 'present':
         if not router:
             return True
-        return _needs_update(cloud, module, router, network, internal_ids,internal_ports)
+        return _needs_update(cloud, module, router, network, internal_ids, internal_portips)
     return False
 
 
@@ -289,6 +288,7 @@ def _build_kwargs(cloud, module, router, network):
 def _validate_subnets(module, cloud):
     external_subnet_ids = []
     internal_subnet_ids = []
+    internal_port_ips = []
     if module.params['external_fixed_ips']:
         for iface in module.params['external_fixed_ips']:
             subnet = cloud.get_subnet(iface['subnet'])
@@ -299,28 +299,22 @@ def _validate_subnets(module, cloud):
     if module.params['interfaces']:
         for iface in module.params['interfaces']:
             subnet = cloud.get_subnet(iface['subnet'])
+            net = cloud.get_net(iface['net'])
+            if not net:
+                module.fail_json(msg='net %s not found' % iface['net'])
             if not subnet:
-                module.fail_json(msg='subnet %s not found' % iface)
+                module.fail_json(msg='bhujay here subnet %s not found' % iface['subnet'])
             internal_subnet_ids.append(subnet['id'])
+            if iface['portip']:
+                 for existing_port in cloud.list_ports(filters=net.id):
+                    for fixed_ip in existing_port['fixed_ips']:
+                        if iface['portip'] == fixed_ip['ip_address']:
+                            module.fail_json(msg='port with ip  %s not found' % iface['portip'])
+                        internal_port_ips.append(iface['portip'])
+                           
 
-    return external_subnet_ids, internal_subnet_ids
+    return external_subnet_ids, internal_subnet_ids , internal_port_ips
 
-def _validate_internal_ip_ports(module,cloud):
-    internal_port_ips = []    
-    if module.params['interfaces']:
-        for iface in module.params['interfaces']:
-          ports_in_net = cloud.list_ports(filters={'network_id': iface['net']})
-          for port in  ports_in_net:
-            if 'fixed_ips' in port:
-                for fixed_ip in port['fixed_ips']:
-                    if (fixed_ip['ip_address']) == iface['ip']:
-                        module.fail_json(msg='ip  %s is already used by port %s' % iface['ip']  % port['id'])
-                    internal_port_ips.append(iface['ip'])
-                    
-    return  internal_port_ips             
-                    
-   
-    
 
 def main():
     argument_spec = openstack_full_argument_spec(
@@ -338,6 +332,7 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
+    module.fail_json(msg='Bhujay ....here')
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -376,11 +371,11 @@ def main():
 
         # Validate and cache the subnet IDs so we can avoid duplicate checks
         # and expensive API calls.
-        external_ids, internal_ids = _validate_subnets(module, cloud)
+        external_ids, internal_ids, internal_portips = _validate_subnets(module, cloud)
 
         if module.check_mode:
             module.exit_json(
-                changed=_system_state_change(cloud, module, router, net, internal_ids)
+                changed=_system_state_change(cloud, module, router, net, internal_ids, internal_portips)
             )
 
         if state == 'present':
@@ -395,7 +390,7 @@ def main():
                     cloud.add_router_interface(router, subnet_id=internal_subnet_id)
                 changed = True
             else:
-                if _needs_update(cloud, module, router, net, internal_ids):
+                if _needs_update(cloud, module, router, net, internal_ids, internal_portips):
                     kwargs = _build_kwargs(cloud, module, router, net)
                     updated_router = cloud.update_router(**kwargs)
 
@@ -434,6 +429,7 @@ def main():
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
+        #module.fail_json(msg='are we here bhujay ..')
 
 
 if __name__ == '__main__':
