@@ -109,8 +109,8 @@ options:
       - Matches on the bridge port input and output devices enslaved to a bridge
         device.
       - C(physdev) expects a dict with a key C(filter), which specifies the
-        filter option for the bridge interface. The value can be one of:
-        'in', 'out', 'is-in', 'is-out', 'is-bridged'
+        filter option for the bridge interface. The value can be one of: 'in',
+        'out', 'is-in', 'is-out', 'is-bridged'
       - If the filter type is 'in' or 'out', an interface name C(device) is
         required.
     default: {}
