@@ -47,12 +47,6 @@
 
   - assert: *true
 
-  - name: "Check Idempotence - Remove text ntp authentication"
-    nxos_ntp_auth: *remove_text
-    register: result
-
-  - assert: *false
-
   - name: Configure encrypt ntp authentication
     nxos_ntp_auth: &configure_encrypt
       key_id: 32
@@ -85,15 +79,9 @@
 
   - assert: *true
 
-  - name: "Check Idempotence - Remove encrypt ntp authentication"
-    nxos_ntp_auth: *remove_encrypt
-    register: result
-
-  - assert: *false
-
   always:
   - name: Cleanup ntp auth config
     nxos_ntp_auth: *setup
-    register: result
+    ignore_errors: yes
 
   - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_ntp_auth sanity test"
