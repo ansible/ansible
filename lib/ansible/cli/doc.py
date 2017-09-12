@@ -319,12 +319,21 @@ class DocCLI(CLI):
 
             text.append("%s %s" % (opt_leadin, o))
 
+            if 'removed_in_version' in opt:
+                text.append(textwrap.fill(CLI.tty_ify('DEPRECATED. Scheduled for removal in %s' % opt['removed_in_version']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                del opt['removed_in_version']
+
             if isinstance(opt['description'], list):
                 for entry in opt['description']:
                     text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
                 text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             del opt['description']
+
+            no_log = opt.pop('no_log', False)
+            if not isinstance(required, bool):
+                raise AnsibleError("Incorrect value for 'no_log', a boolean is needed.: %s" % no_log)
+            text.append(textwrap.fill(CLI.tty_ify('* Will not be included in logs'), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
             aliases = ''
             if 'aliases' in opt:

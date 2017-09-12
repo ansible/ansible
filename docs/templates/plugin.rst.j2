@@ -83,6 +83,9 @@ Options
     <td>{% if v['choices'] -%}<ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif -%}</td>
 {% endif %}
     <td>
+{% if v.get('removed_in_version') %}
+        <div>DEPRECATED. Scheduled for removal in @{ v.removed_in_version }@</div>
+{% endif %}
 {% if v.description is string %}
         <div>@{ v.description | replace('\n', '\n    ') | html_ify }@</div>
 {% else %}
@@ -92,6 +95,9 @@ Options
 {% endif %}
 {% if 'aliases' in v and v.aliases %}
         </br><div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@</div>
+{% endif %}
+{% if v.get('no_log', False) %}
+        </br><div>Contents will not be logged</div>
 {% endif %}
 {% else %}
 

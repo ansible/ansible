@@ -234,6 +234,11 @@ The following fields can be used and are all required unless specified otherwise
     This is a string, and not a float, i.e. ``version_added: "2.3"``.
   :suboptions:
     If this option takes a dict, you can define it here. See `azure_rm_securitygroup`, `os_ironic_node` for examples.
+  :no_log:
+    If this option is unsafe to be included in logs, this field should be set to true.
+  :removed_in_version:
+    If an option is deprecated, this can be provided to indicated the version in which it is expected to be removed.
+    This is a string, and not a float, i.e. ``removed_in_version: "2.7"``.
 :requirements:
   List of requirements, and minimum versions (if applicable)
 :notes:
