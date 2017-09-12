@@ -90,6 +90,14 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+changed:
+    description: Return changed for installp actions as true or false
+    returned: always
+    type: boolean
+    version_added: 2.5
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 
 package_actions_param = {
