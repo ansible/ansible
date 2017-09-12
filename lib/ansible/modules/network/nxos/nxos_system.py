@@ -238,12 +238,14 @@ def parse_domain_search(config, vrf_config):
 
     return objects
 
-def parse_name_servers(config, vrf_config):
+def parse_name_servers(config, vrf_config, vrfs):
     objects = list()
 
     match = re.search('^ip name-server (.+)$', config, re.M)
     if match:
         for addr in match.group(1).split(' '):
+            if addr == 'use-vrf' or addr in vrfs:
+                continue
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
@@ -275,7 +277,7 @@ def map_config_to_obj(module):
         'domain_lookup': 'no ip domain-lookup' not in config,
         'domain_name': parse_domain_name(config, vrf_config),
         'domain_search': parse_domain_search(config, vrf_config),
-        'name_servers': parse_name_servers(config, vrf_config),
+        'name_servers': parse_name_servers(config, vrf_config, vrfs),
         'system_mtu': parse_system_mtu(config)
     }
 
