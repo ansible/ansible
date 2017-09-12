@@ -105,6 +105,8 @@
 
   - assert: *false
 
+  when: (platform | search('N9K'))
+
   always:
   - name: remove vxlan_vtep
     nxos_vxlan_vtep:
