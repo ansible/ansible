@@ -51,38 +51,34 @@ nxos_provider_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'transport': dict(choices=['cli', 'nxapi'])
+    'transport': dict(default='cli', choices=['cli', 'nxapi'])
 }
 nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
 }
-nxos_argument_spec.update(nxos_provider_spec)
+nxos_top_spec = {
+    'host': dict(removed_in_version=2.3),
+    'port': dict(removed_in_version=2.3, type='int'),
 
-# Add argument's default value here
-ARGS_DEFAULT_VALUE = {
-    'transport': 'cli'
+    'username': dict(removed_in_version=2.3),
+    'password': dict(removed_in_version=2.3, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.3),
+
+    'use_ssl': dict(removed_in_version=2.3, type='bool'),
+    'validate_certs': dict(removed_in_version=2.3, type='bool'),
+    'timeout': dict(removed_in_version=2.3, type='int'),
+
+    'transport': dict(default='cli', choices=['cli', 'nxapi'])
 }
+nxos_argument_spec.update(nxos_top_spec)
 
 
-def get_argspec():
-    return nxos_argument_spec
+def get_provider_argspec():
+    return nxos_provider_spec
 
 
 def check_args(module, warnings):
-    for key in nxos_argument_spec:
-        if module._name == 'nxos_user':
-            if key not in ['password', 'provider', 'transport'] and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be in a future version' % key)
-        else:
-            if key not in ['provider', 'transport'] and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    # set argument's default value if not provided in input
-    # This is done to avoid unwanted argument deprecation warning
-    # in case argument is not given as input (outside provider).
-    for key in ARGS_DEFAULT_VALUE:
-        if not module.params.get(key, None):
-            module.params[key] = ARGS_DEFAULT_VALUE[key]
+    pass
 
 
 def load_params(module):

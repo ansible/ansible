@@ -33,7 +33,7 @@ from ansible.module_utils.connection import Connection, exec_command
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
 
-asa_argument_spec = {
+asa_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -42,10 +42,27 @@ asa_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
     'context': dict(),
     'passwords': dict()
 }
+
+asa_argument_spec = {
+    'provider': dict(type='dict', options=asa_provider_spec),
+}
+
+asa_top_spec = {
+    'host': dict(removed_in_version=2.3),
+    'port': dict(removed_in_version=2.3, type='int'),
+    'username': dict(removed_in_version=2.3),
+    'password': dict(removed_in_version=2.3, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.3, type='path'),
+    'authorize': dict(type='bool'),
+    'auth_pass': dict(removed_in_version=2.3, no_log=True),
+    'timeout': dict(removed_in_version=2.3, type='int'),
+    'context': dict(),
+    'passwords': dict()
+}
+asa_argument_spec.update(asa_top_spec)
 
 command_spec = {
     'command': dict(key=True),
@@ -54,21 +71,12 @@ command_spec = {
 }
 
 
-def get_argspec():
-    return asa_argument_spec
+def get_provider_argspec():
+    return asa_provider_spec
 
 
 def check_args(module):
-    provider = module.params['provider'] or {}
-
-    for key in asa_argument_spec:
-        if key not in ['provider', 'authorize'] and module.params[key]:
-            module.warn('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
 def get_connection(module):

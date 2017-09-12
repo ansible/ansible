@@ -23,10 +23,9 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.eos import ARGS_DEFAULT_VALUE, eos_argument_spec
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.eos import eos_provider_spec
 from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.module_utils.network_common import load_provider
 
 try:
     from __main__ import display
@@ -45,7 +44,7 @@ class ActionModule(_ActionModule):
                     'got %s' % self._play_context.connection
             )
 
-        provider = self.load_provider()
+        provider = load_provider(eos_provider_spec, self._task.args)
         transport = provider['transport'] or 'cli'
 
         display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
@@ -89,9 +88,6 @@ class ActionModule(_ActionModule):
             if provider.get('host') is None:
                 provider['host'] = self._play_context.remote_addr
 
-            if provider.get('use_ssl') is None:
-                provider['use_ssl'] = ARGS_DEFAULT_VALUE['use_ssl']
-
             if provider.get('port') is None:
                 default_port = 443 if provider['use_ssl'] else 80
                 provider['port'] = int(self._play_context.port or default_port)
@@ -108,37 +104,7 @@ class ActionModule(_ActionModule):
             if provider.get('authorize') is None:
                 provider['authorize'] = False
 
-            if provider.get('validate_certs') is None:
-                provider['validate_certs'] = ARGS_DEFAULT_VALUE['validate_certs']
-
             self._task.args['provider'] = provider
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(eos_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
-
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
-            else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass

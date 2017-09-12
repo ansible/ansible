@@ -66,14 +66,21 @@ ce_provider_spec = {
 ce_argument_spec = {
     'provider': dict(type='dict', options=ce_provider_spec),
 }
-ce_argument_spec.update(ce_provider_spec)
+ce_top_spec = {
+    'host': dict(removed_in_version=2.3),
+    'port': dict(removed_in_version=2.3, type='int'),
+    'username': dict(removed_in_version=2.3),
+    'password': dict(removed_in_version=2.3, no_log=True),
+    'use_ssl': dict(removed_in_version=2.3, type='bool'),
+    'validate_certs': dict(removed_in_version=2.3, type='bool'),
+    'timeout': dict(removed_in_version=2.3, type='int'),
+    'transport': dict(choices=['cli']),
+}
+ce_argument_spec.update(ce_top_spec)
 
 
 def check_args(module, warnings):
-    for key in ce_argument_spec:
-        if key not in ['provider', 'transport'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                            'removed in a future version' % key)
+    pass
 
 
 def load_params(module):
