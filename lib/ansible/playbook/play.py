@@ -55,18 +55,13 @@ class Play(Base, Taggable, Become):
 
     # =================================================================================
     _name = FieldAttribute(isa='string', default='', always_post_validate=True)
+    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
-    # TODO: generalize connection
-    _accelerate = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_ipv6 = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_port = FieldAttribute(isa='int', default=5099, always_post_validate=True)
-
-    # Connection
+    # Facts
     _fact_path = FieldAttribute(isa='string', default=None)
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
-    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
     # Variable Attributes
     _vars_files = FieldAttribute(isa='list', default=[], priority=99)

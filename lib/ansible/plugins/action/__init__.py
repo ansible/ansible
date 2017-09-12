@@ -722,11 +722,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp).strip()
 
-            if module_name == "accelerate":
-                # always run the accelerate module as the user
-                # specified in the play, not the sudo_user
-                sudoable = False
-
         # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
         if remote_files:
             # remove none/empty
