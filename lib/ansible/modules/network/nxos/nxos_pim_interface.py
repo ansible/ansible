@@ -245,6 +245,7 @@ def get_interface_mode(interface, intf_type, module):
         mode = 'layer3'
     return mode
 
+
 def get_jp_policy_out(module, interface):
     '''
     This is a workaround for an nxos structured output problem.
@@ -266,6 +267,7 @@ def get_jp_policy_out(module, interface):
             name = mo.group(1)
 
     return name
+
 
 def get_pim_interface(module, interface):
     pim_interface = {}
