@@ -434,7 +434,7 @@ files:
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
-  $modules/network/lenovo/: dkasberg
+  $modules/network/lenovo/: dkasberg amuraleedhar
   $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
@@ -892,13 +892,13 @@ files:
     maintainers: QijunPan
     labels: networking
   $module_utils/cnos_devicerules.py:
-    maintainers: dkasberg
+    maintainers: dkasberg amuraleedhar
     labels: networking
   $module_utils/cnos_errorcodes.py:
-    maintainers: dkasberg
+    maintainers: dkasberg amuraleedhar
     labels: networking
   $module_utils/cnos.py:
-    maintainers: dkasberg
+    maintainers: dkasberg amuraleedhar
     labels: networking
   $module_utils/crypto.py:
     maintainers: Spredzy
