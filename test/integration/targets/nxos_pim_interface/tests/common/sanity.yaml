@@ -43,6 +43,9 @@
       interface: "{{ testint }}"
       dr_prio: 10
       hello_interval: 40
+      border: 'false'
+      neighbor_policy: 'ansible_policy'
+      neighbor_type: 'prefix'
       state: present
       provider: "{{ connection }}"
     register: result
