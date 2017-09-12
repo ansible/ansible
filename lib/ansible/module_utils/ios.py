@@ -40,26 +40,31 @@ ios_provider_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int'),
+    'timeout': dict(type='int')
 }
 ios_argument_spec = {
     'provider': dict(type='dict', options=ios_provider_spec),
 }
-ios_argument_spec.update(ios_provider_spec)
+
+ios_top_spec = {
+    'host': dict(removed_in_version=2.3),
+    'port': dict(removed_in_version=2.3, type='int'),
+    'username': dict(removed_in_version=2.3),
+    'password': dict(removed_in_version=2.3, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.3, type='path'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(removed_in_version=2.3, no_log=True),
+    'timeout': dict(removed_in_version=2.3, type='int')
+}
+ios_argument_spec.update(ios_top_spec)
 
 
-def get_argspec():
-    return ios_argument_spec
+def get_provider_argspec():
+    return ios_provider_spec
 
 
 def check_args(module, warnings):
-    for key in ios_argument_spec:
-        if module._name == 'ios_user':
-            if key not in ['password', 'provider', 'authorize'] and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be in a future version' % key)
-        else:
-            if key not in ['provider', 'authorize'] and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+    pass
 
 
 def get_defaults_flag(module):
