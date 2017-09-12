@@ -1014,7 +1014,9 @@ class ElbManager(object):
         self._delete_policy(self.elb.name, policy)
         self._create_policy(policy_param, policy_meth, policy)
 
-    def _set_listener_policy(self, listeners_dict, policy=[]):
+    def _set_listener_policy(self, listeners_dict, policy=None):
+        policy = [] if policy is None else policy
+
         for listener_port in listeners_dict:
             if listeners_dict[listener_port].startswith('HTTP'):
                 self.elb_conn.set_lb_policies_of_listener(self.elb.name, listener_port, policy)

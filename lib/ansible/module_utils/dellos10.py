@@ -68,7 +68,9 @@ def check_args(module, warnings):
                             'removed in a future version' % key)
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     cmd = 'show running-config '
     cmd += ' '.join(flags)
     cmd = cmd.strip()

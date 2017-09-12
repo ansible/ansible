@@ -322,7 +322,9 @@ class Connection(ConnectionBase):
         self.shell_id = None
         self._connect()
 
-    def _create_raw_wrapper_payload(self, cmd, environment=dict()):
+    def _create_raw_wrapper_payload(self, cmd, environment=None):
+        environment = {} if environment is None else environment
+
         payload = {
             'module_entry': to_text(base64.b64encode(to_bytes(cmd))),
             'powershell_modules': {},

@@ -208,7 +208,9 @@ class NamedResource(object):
 
 class OC(object):
     def __init__(self, module, token, host, port,
-                 apis=['api', 'oapi']):
+                 apis=None):
+        apis = ['api', 'oapi'] if apis is None else apis
+
         self.apis = apis
         self.version = 'v1'
         self.token = token

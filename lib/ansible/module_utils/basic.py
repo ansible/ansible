@@ -2156,7 +2156,7 @@ class AnsibleModule(object):
         # and we don't want to break modules unnecessarily
         return None
 
-    def get_bin_path(self, arg, required=False, opt_dirs=[]):
+    def get_bin_path(self, arg, required=False, opt_dirs=None):
         '''
         find system executable in PATH.
         Optional arguments:
@@ -2164,6 +2164,8 @@ class AnsibleModule(object):
            - opt_dirs:  optional list of directories to search in addition to PATH
         if found return full path; otherwise return None
         '''
+        opt_dirs = [] if opt_dirs is None else opt_dirs
+
         sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
         paths = []
         for d in opt_dirs:

@@ -91,7 +91,9 @@ class Entity(object):
         * default - default value
     """
 
-    def __init__(self, module, attrs=None, args=[], keys=None, from_argspec=False):
+    def __init__(self, module, attrs=None, args=None, keys=None, from_argspec=False):
+        args = [] if args is None else args
+
         self._attributes = attrs or {}
         self._module = module
 

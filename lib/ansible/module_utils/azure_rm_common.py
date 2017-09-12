@@ -473,7 +473,7 @@ class AzureRMModuleBase(object):
 
         return None
 
-    def serialize_obj(self, obj, class_name, enum_modules=[]):
+    def serialize_obj(self, obj, class_name, enum_modules=None):
         '''
         Return a JSON representation of an Azure object.
 
@@ -482,6 +482,8 @@ class AzureRMModuleBase(object):
         :param enum_modules: List of module names to build enum dependencies from.
         :return: serialized result
         '''
+        enum_modules = [] if enum_modules is None else enum_modules
+
         dependencies = dict()
         if enum_modules:
             for module_name in enum_modules:
