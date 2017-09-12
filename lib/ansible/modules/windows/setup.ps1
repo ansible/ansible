@@ -130,6 +130,13 @@ foreach ($item in Get-ChildItem Env:) {
     $value = ($item | select -ExpandProperty Value).TrimEnd("\")
     $env_vars.Add($name, $value)
 }
+ 
+Try {
+    $machine_id = $user.User.AccountDomainSid.Value
+}
+Catch {
+    $machine_id = ""
+}
 
 $ansible_facts = @{
     ansible_architecture = $win32_os.OSArchitecture
@@ -147,7 +154,7 @@ $ansible_facts = @{
     ansible_ip_addresses = $ips
     ansible_kernel = $osversion.Version.ToString()
     ansible_lastboot = $win32_os.lastbootuptime.ToString("u")
-    ansible_machine_id = $user.User.AccountDomainSid.Value
+    ansible_machine_id = $machine_id
     ansible_nodename = ($ip_props.HostName + "." + $ip_props.DomainName)
     ansible_os_family = "Windows"
     ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
