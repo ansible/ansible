@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -19,6 +19,7 @@ short_description: create or terminate a virtual machine in azure
 description:
      - Creates or terminates azure instances. When created optionally waits for it to be 'running'.
 version_added: "1.7"
+deprecated: "Use M(azure_rm_virtualmachine) instead."
 options:
   name:
     description:
@@ -187,7 +188,7 @@ import datetime
 import os
 import signal
 import time
-from urlparse import urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.timeout import TimeoutError
 
