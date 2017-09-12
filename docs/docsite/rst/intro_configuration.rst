@@ -3,7 +3,6 @@ Configuration file
 
 .. contents:: Topics
 
-.. highlight:: bash
 
 Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
 for most users, but there may be reasons you would want to change them.

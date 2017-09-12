@@ -12,6 +12,8 @@
 
 {% if version_added is defined -%}
 .. versionadded:: @{ version_added }@
+
+
 {% endif %}
 
 
@@ -35,6 +37,8 @@ DEPRECATED
 :In: version: @{ deprecated['version'] | default('') | string | convert_symbols_to_format }@
 :Why: @{ deprecated['why'] | default('') | convert_symbols_to_format }@
 :Alternative: @{ deprecated['alternative'] | default('')|  convert_symbols_to_format }@
+
+
 {% endif %}
 
 Synopsis
@@ -46,10 +50,13 @@ Synopsis
 * @{ desc | convert_symbols_to_format }@
 {% endfor %}
 
+
 {% endif %}
 {% if aliases is defined -%}
 
 Aliases: @{ ','.join(aliases) }@
+
+
 {% endif %}
 {% if requirements %}
 
@@ -62,6 +69,8 @@ Requirements (on host that executes module)
 {% endfor %}
 
 {% endif %}
+
+
 {% endif %}
 {% if options -%}
 
@@ -185,8 +194,9 @@ Examples
 @{ example['code'] | escape | indent(4, True) }@
 {% endfor %}
 {% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
-
 {% endif %}
+
+
 {% if returndocs -%}
 
 
@@ -266,6 +276,8 @@ Common return values are documented here :doc:`common_return_values`, the follow
     </br>
     </br>
 {% endif %}
+
+
 {% if notes -%}
 
 
@@ -277,6 +289,7 @@ Notes
     - @{ note | convert_symbols_to_format }@
 {% endfor %}
 
+
 {% endif %}
 {% if author is defined -%}
 
@@ -287,6 +300,7 @@ Author
 {% for author_name in author %}
     * @{ author_name }@
 {% endfor %}
+
 
 {% endif %}
 {% if not deprecated %}
@@ -302,6 +316,8 @@ Status
 {% for cur_state in  metadata.status %}
 This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
 {% endfor %}
+
+
 {% endif %}
 {% if metadata.supported_by in ('core', 'network') %}
 
