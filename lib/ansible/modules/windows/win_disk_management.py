@@ -141,34 +141,30 @@ options:
 EXAMPLES = r'''
 - name: Select a defined disk and manage it as specified
   win_disk_management:
-    select_disk_by:
-      size: 100
-      partition_style_select: raw
-      operational_status: offline
-      read_only: true
-      number: 1
-    set_disk_by:
-      partition_style_set: mbr
-      drive_letter: e
-      file_system: ntfs
-      label: database_disk
-      allocation_unit_size: 4
-      large_frs: true
-      short_names: true
+    size: 100
+    partition_style_select: raw
+    operational_status: offline
+    read_only: true
+    number: 1
+    partition_style_set: mbr
+    drive_letter: e
+    file_system: ntfs
+    label: database_disk
+    allocation_unit_size: 4
+    large_frs: true
+    short_names: true
 - name: Select a defined disk and manage it as specified
   win_disk_management:
-    select_disk_by:
-      size: 50
-      partition_style_select: mbr
-      operational_status: online
-      read_only: false
-    set_disk_by:
-      partition_style_set: gpt
-      drive_letter: f
-      file_system: refs
-      label: application_disk
-      allocation_unit_size: 64
-      integrity_streams: true
+    size: 50
+    partition_style_select: mbr
+    operational_status: online
+    read_only: false
+    partition_style_set: gpt
+    drive_letter: f
+    file_system: refs
+    label: application_disk
+    allocation_unit_size: 64
+    integrity_streams: true
 '''
 
 RETURN = r'''
