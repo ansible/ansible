@@ -37,15 +37,15 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        if self._play_context.connection != 'local':
+        provider = load_provider(eos_provider_spec, self._task.args)
+        transport = provider['transport'] or 'cli'
+
+        if self._play_context.connection != 'local' and transport == 'cli':
             return dict(
                 failed=True,
                 msg='invalid connection specified, expected connection=local, '
                     'got %s' % self._play_context.connection
             )
-
-        provider = load_provider(eos_provider_spec, self._task.args)
-        transport = provider['transport'] or 'cli'
 
         display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
 

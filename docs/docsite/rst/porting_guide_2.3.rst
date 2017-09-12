@@ -213,10 +213,10 @@ Will result in:
 delegate_to vs ProxyCommand
 ---------------------------
 
-The new connection framework for Network Modules in Ansible 2.3 no longer supports the use of the
-``delegate_to`` directive.  In order to use a bastion or intermediate jump host
-to connect to network devices, network modules now support the use of
-``ProxyCommand``.
+The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
+no longer supports the use of the ``delegate_to`` directive.
+In order to use a bastion or intermediate jump host to connect to network devices over ``cli``
+transport, network modules now support the use of ``ProxyCommand``.
 
 To use ``ProxyCommand`` configure the proxy settings in the Ansible inventory
 file to specify the proxy host.
