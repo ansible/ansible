@@ -168,7 +168,7 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'support-assist.*$'),
         re.compile(r'template.*$'),
         re.compile(r'address-family.*$'),
-        re.compile(r'spanning-tree mst.*$'),
+        re.compile(r'spanning-tree mst configuration.*$'),
         re.compile(r'logging.*$'),
         re.compile(r'(radius-server|tacacs-server) host.*$')]
 
@@ -214,7 +214,7 @@ def os6_parse(lines, indent=None, comment_tokens=None):
                     if parent:
                         cfg._parents.extend(parent)
                     parent = list()
-                    config.append(cfg)
+                config.append(cfg)
             # handle sublevel children
             elif parent_match is False and len(parent) > 0:
                 if not children:
@@ -240,7 +240,11 @@ class Dellos6NetworkConfig(NetworkConfig):
         for item in self.items:
             if str(item) == "exit":
                 for diff_item in diff:
-                    if item._parents == diff_item._parents:
+                    if diff_item._parents:
+                        if item._parents == diff_item._parents:
+                            diff.append(item)
+                            break
+                    else:
                         diff.append(item)
                         break
             elif item not in other:
