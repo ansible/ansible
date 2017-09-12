@@ -242,6 +242,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
         if set(internal_subnet_ids) != set(existing_subnet_ids):
             return True
         if set(internal_port_ips) != set(existing_internal_port_ips):
+           # module.fail_json(msg='port ip is present  there hence no update is required ')
             return True
 
     return False
@@ -290,6 +291,7 @@ def _validate_subnets(module, cloud):
     external_subnet_ids = []
     internal_subnet_ids = []
     internal_port_ips = []
+    existing_port_ips = []
     if module.params['external_fixed_ips']:
         for iface in module.params['external_fixed_ips']:
             subnet = cloud.get_subnet(iface['subnet'])
@@ -304,17 +306,23 @@ def _validate_subnets(module, cloud):
             if not net:
                 module.fail_json(msg='net %s not found' % iface['net'])
             if not subnet:
-                module.fail_json(msg='bhujay here subnet %s not found' % iface['subnet'])
+                module.fail_json(msg='subnet %s not found' % iface['subnet'])
             internal_subnet_ids.append(subnet['id'])
             if iface['portip']:
-                 for existing_port in cloud.list_ports(filters=net.id):
+                 #for existing_port in cloud.list_ports():
+                 for existing_port in cloud.list_ports(filters={'network_id':net.id}):
                     for fixed_ip in existing_port['fixed_ips']:
-                        if iface['portip'] == fixed_ip['ip_address']:
-                            internal_port_ips.append(iface['portip'])
-                        module.fail_json(msg='port with ip  %s not found' % iface['portip'])
+                        existing_port_ips.append(fixed_ip['ip_address'])
+                 if iface['portip'] in   existing_port_ips:
+                    internal_port_ips.append(iface['portip'])
+                 else:
+                    module.fail_json(msg='port with ip  %s not found' % iface['portip'])
+                           # module.fail_json(msg='port with ip  %s not found' %  fixed_ip['ip_address'])
+                           # module.fail_json(msg= existing_port_ips)
+
+    #module.fail_json(msg= existing_port_ips)
+    #module.fail_json(msg=internal_port_ips)
                            
-    module.fail_json(msg=internal_port_ips)
-    #module.fail_json(msg=internal_subnet_ids)
     return external_subnet_ids, internal_subnet_ids , internal_port_ips
 
 
