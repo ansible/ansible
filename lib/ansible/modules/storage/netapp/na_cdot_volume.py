@@ -64,6 +64,12 @@ options:
     choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
     default: 'gb'
 
+  export_policy:
+    description:
+    - Name of the export policy to use.
+    required: false
+    default: None
+
   vserver:
     description:
     - Name of the vserver to use.
@@ -142,6 +148,7 @@ class NetAppCDOTVolume(object):
                            choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
                                     'pb', 'eb', 'zb', 'yb'], type='str'),
             aggregate_name=dict(type='str'),
+            export_policy=dict(required=False, type='str'),
             vserver=dict(required=True, type='str', default=None),
         ))
 
@@ -168,6 +175,11 @@ class NetAppCDOTVolume(object):
         else:
             self.size = None
         self.aggregate_name = p['aggregate_name']
+
+        if p['export_policy'] is not None:
+            self.export_policy = p['export_policy']
+        else:
+            self.export_policy = 'default'
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -209,6 +221,11 @@ class NetAppCDOTVolume(object):
                 'volume-space-attributes')
             current_size = volume_space_attributes.get_child_content('size')
 
+            # Get volume's current export-policy
+            volume_export_attributes = volume_attributes.get_child_by_name(
+                'volume-export-attributes')
+            current_export_policy = volume_export_attributes.get_child_content('policy')
+
             # Get volume's state (online/offline)
             volume_state_attributes = volume_attributes.get_child_by_name(
                 'volume-state-attributes')
@@ -222,6 +239,7 @@ class NetAppCDOTVolume(object):
                 'name': self.name,
                 'size': current_size,
                 'is_online': is_online,
+                'export_policy': current_export_policy,
             }
 
         return return_value
@@ -231,7 +249,8 @@ class NetAppCDOTVolume(object):
             'volume-create', **{'volume': self.name,
                                 'containing-aggr-name': self.aggregate_name,
                                 'size': str(self.size),
-                                'junction-path': '/%s' % (self.name)})
+                                'junction-path': '/%s' % (self.name),
+                                'export-policy': self.export_policy})
 
         try:
             self.server.invoke_successfully(volume_create,
@@ -301,6 +320,39 @@ class NetAppCDOTVolume(object):
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg='Error re-sizing volume %s: %s' % (self.name, to_native(e)),
                                   exception=traceback.format_exc())
+    def change_export(self):
+        """
+        Change export policy of Volume.
+
+       
+        """
+
+        volume_change = netapp_utils.zapi.NaElement('volume-modify-iter')
+        volume_attributes = netapp_utils.zapi.NaElement('volume-attributes')
+        volume_id_attributes = netapp_utils.zapi.NaElement('volume-id-attributes')
+        volume_id_attributes.add_new_child('name', self.name)
+        volume_attributes.add_child_elem(volume_id_attributes)
+
+        change_attributes = netapp_utils.zapi.NaElement('volume-attributes')
+        change_export_attributes = netapp_utils.zapi.NaElement('volume-export-attributes')
+        change_export_attributes.add_new_child('policy', self.export_policy)
+        change_attributes.add_child_elem(change_export_attributes)
+
+        query = netapp_utils.zapi.NaElement('query')
+        query.add_child_elem(volume_attributes)
+
+        attributes = netapp_utils.zapi.NaElement('attributes')
+        attributes.add_child_elem(change_attributes) 
+
+        volume_change.add_child_elem(query)
+        volume_change.add_child_elem(attributes)
+
+        try:
+            self.server.invoke_successfully(volume_change,
+                                            enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error changing volume %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def change_volume_state(self):
         """
@@ -345,6 +397,7 @@ class NetAppCDOTVolume(object):
         volume_exists = False
         rename_volume = False
         resize_volume = False
+        change_export = False
         volume_detail = self.get_volume()
 
         if volume_detail:
@@ -356,6 +409,9 @@ class NetAppCDOTVolume(object):
             elif self.state == 'present':
                 if str(volume_detail['size']) != str(self.size):
                     resize_volume = True
+                    changed = True
+                if volume_detail['export_policy'] != self.export_policy:
+                    change_export = True
                     changed = True
                 if (volume_detail['is_online'] is not None) and (volume_detail['is_online'] != self.is_online):
                     changed = True
@@ -381,6 +437,8 @@ class NetAppCDOTVolume(object):
                     else:
                         if resize_volume:
                             self.resize_volume()
+                        if change_export:
+                            self.change_export()
                         if volume_detail['is_online'] is not \
                                 None and volume_detail['is_online'] != \
                                 self.is_online:
