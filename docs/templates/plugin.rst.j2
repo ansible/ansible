@@ -31,9 +31,10 @@
 DEPRECATED
 ----------
 
-:In: version: @{ deprecated['version'] | string | convert_symbols_to_format }@
-:Why: @{ deprecated['why'] | convert_symbols_to_format }@
-:Alternative: @{ deprecated['alternative'] | convert_symbols_to_format }@
+{# use unknown here? skip the fields? #}
+:In: version: @{ deprecated['version'] | default('') | string | convert_symbols_to_format }@
+:Why: @{ deprecated['why'] | default('') | convert_symbols_to_format }@
+:Alternative: @{ deprecated['alternative'] | default('')|  convert_symbols_to_format }@
 {% endif %}
 
 Synopsis
