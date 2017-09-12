@@ -65,6 +65,13 @@ options:
       - A dict of key-value pairs used in formatting the script using string.Template (see https://docs.python.org/2/library/string.html#template-strings).
     required: false
     default: null
+  params:
+    required: false
+    default: null
+    description:
+      - Option used to allow the user to overwrite any of the other options. To
+        remove an option, set the value of the option to C(null).
+    version_added: 2.4
 
 notes:
     - Since the script can do anything this does not report on changes.
@@ -101,6 +108,22 @@ EXAMPLES = '''
     password: admin
     url: https://localhost
     validate_certs: no
+#
+# Example of how to use the params
+#
+# Define a variable and specify all default parameters you want to use across
+# all jenkins_plugin calls:
+#
+# my_jenkins_params:
+#   url_username: admin
+#   url_password: p4ssw0rd
+#   url: https://localhost:8433
+#   validate_certs: no
+#
+- name: Say Hello!
+  jenkins_script:
+    script: "println('Hello, Jenkins!')"
+    params: "{{ my_jenkins_params }}"
 '''
 
 RETURN = '''
@@ -115,7 +138,7 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 
 def is_csrf_protection_enabled(module):
@@ -142,24 +165,35 @@ def get_crumb(module):
 
 def main():
 
-    module = AnsibleModule(
-        argument_spec=dict(
-            script=dict(required=True, type="str"),
-            url=dict(required=False, type="str", default="http://localhost:8080"),
-            validate_certs=dict(required=False, type="bool", default=True),
-            user=dict(required=False, no_log=True, type="str", default=None),
-            password=dict(required=False, no_log=True, type="str", default=None),
-            timeout=dict(required=False, type="int", default=10),
-            args=dict(required=False, type="dict", default=None)
-        )
+    argument_spec = url_argument_spec()
+    argument_spec.update(
+        script=dict(required=True, type="str"),
+        url=dict(required=False, type="str", default="http://localhost:8080"),
+        validate_certs=dict(required=False, type="bool", default=True),
+        user=dict(required=False, no_log=True, type="str", default=None),
+        password=dict(required=False, no_log=True, type="str", default=None),
+        timeout=dict(required=False, type="int", default=10),
+        params=dict(type='dict'),
+        args=dict(required=False, type="dict", default=None)
     )
+    module = AnsibleModule(
+        argument_spec=argument_spec
+    )
+
+    # Update module parameters by user's parameters if defined
+    if 'params' in module.params and isinstance(module.params['params'], dict):
+        module.params.update(module.params['params'])
+        # Remove the params
+        module.params.pop('params', None)
 
     if module.params['user'] is not None:
         if module.params['password'] is None:
             module.fail_json(msg="password required when user provided")
         module.params['url_username'] = module.params['user']
         module.params['url_password'] = module.params['password']
-        module.params['force_basic_auth'] = True
+
+    # Force basic authentication
+    module.params['force_basic_auth'] = True
 
     if module.params['args'] is not None:
         from string import Template

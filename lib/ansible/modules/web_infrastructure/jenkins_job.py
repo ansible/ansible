@@ -64,6 +64,13 @@ options:
     description:
        - User to authenticate with the Jenkins server.
     required: false
+  params:
+    required: false
+    default: null
+    description:
+      - Option used to allow the user to overwrite any of the other options. To
+        remove an option, set the value of the option to C(null).
+    version_added: 2.4
 '''
 
 EXAMPLES = '''
@@ -114,6 +121,22 @@ EXAMPLES = '''
     enabled: False
     url: http://localhost:8080
     user: admin
+#
+# Example of how to use the params
+#
+# Define a variable and specify all default parameters you want to use across
+# all jenkins_plugin calls:
+#
+# my_jenkins_params:
+#   url_username: admin
+#   url_password: p4ssw0rd
+#   url: https://localhost:8433
+#   validate_certs: no
+#
+- jenkins_job:
+    name: test
+    enabled: False
+    params: "{{ my_jenkins_params }}"
 '''
 
 RETURN = '''
@@ -337,23 +360,35 @@ def job_config_to_string(xml_str):
 
 
 def main():
+    argument_spec = url_argument_spec()
+    argument_spec.update(
+        config=dict(required=False),
+        name=dict(required=True),
+        password=dict(required=False, no_log=True),
+        state=dict(required=False, choices=['present', 'absent'], default="present"),
+        enabled=dict(required=False, type='bool'),
+        token=dict(required=False, no_log=True),
+        url=dict(required=False, default="http://localhost:8080"),
+        params=dict(type='dict'),
+        user=dict(required=False)
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            config=dict(required=False),
-            name=dict(required=True),
-            password=dict(required=False, no_log=True),
-            state=dict(required=False, choices=['present', 'absent'], default="present"),
-            enabled=dict(required=False, type='bool'),
-            token=dict(required=False, no_log=True),
-            url=dict(required=False, default="http://localhost:8080"),
-            user=dict(required=False)
-        ),
+        argument_spec=argument_spec,
         mutually_exclusive=[
             ['password', 'token'],
             ['config', 'enabled'],
         ],
         supports_check_mode=True,
     )
+
+    # Update module parameters by user's parameters if defined
+    if 'params' in module.params and isinstance(module.params['params'], dict):
+        module.params.update(module.params['params'])
+        # Remove the params
+        module.params.pop('params', None)
+
+    # Force basic authentication
+    module.params['force_basic_auth'] = True
 
     test_dependencies(module)
     jenkins_job = JenkinsJob(module)

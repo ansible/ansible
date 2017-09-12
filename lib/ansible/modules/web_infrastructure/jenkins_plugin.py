@@ -174,7 +174,8 @@ EXAMPLES = '''
 # my_jenkins_params:
 #   url_username: admin
 #   url_password: p4ssw0rd
-#   url: http://localhost:8888
+#   url: https://localhost:8433
+#   validate_certs: no
 #
 - name: Install plugin
   jenkins_plugin:
