@@ -207,7 +207,17 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             $value = Expand-Environment($value)
             # Test if a valid path is provided
             if (-not (Test-Path -IsValid $value)) {
-                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
+                $path_invalid = $true
+                # could still be a valid-shaped path with a nonexistent drive letter
+                if ($value -match "^\w:") {
+                    # rewrite path with a valid drive letter and recheck the shape- this might still fail, eg, a nonexistent non-filesystem PS path
+                    if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $value.Substring(1))) {
+                        $path_invalid = $false
+                    }
+                }
+                if ($path_invalid) {
+                    Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
+                }
             }
         } elseif ($type -eq "str") {
             # Convert str types to real Powershell strings
