@@ -136,7 +136,8 @@ def get_ssid(module, name, api_url, user, pwd):
     count = 0
     all_systems = 'storage-systems'
     systems_url = api_url + all_systems
-    rc, data = request(systems_url, headers=HEADERS, url_username=user, url_password=pwd)
+    rc, data = request(systems_url, headers=HEADERS, url_username=user, url_password=pwd,
+                       validate_certs=module.validate_certs)
     for system in data:
         if system['name'] == name:
             count += 1
@@ -160,7 +161,8 @@ def get_pwd_status(module, ssid, api_url, user, pwd):
     pwd_status = "storage-systems/%s/passwords" % ssid
     url = api_url + pwd_status
     try:
-        rc, data = request(url, headers=HEADERS, url_username=user, url_password=pwd)
+        rc, data = request(url, headers=HEADERS, url_username=user, url_password=pwd,
+                           validate_certs=module.validate_certs)
         return data['readOnlyPasswordSet'], data['adminPasswordSet']
     except HTTPError as e:
         module.fail_json(msg="There was an issue with connecting, please check that your "
@@ -168,18 +170,20 @@ def get_pwd_status(module, ssid, api_url, user, pwd):
 
 
 def update_storage_system_pwd(module, ssid, pwd, api_url, api_usr, api_pwd):
+    """Update the stored storage-system password"""
     update_pwd = 'storage-systems/%s' % ssid
     url = api_url + update_pwd
     post_body = json.dumps(dict(storedPassword=pwd))
     try:
         rc, data = request(url, data=post_body, method='POST', headers=HEADERS, url_username=api_usr,
-                           url_password=api_pwd)
+                           url_password=api_pwd, validate_certs=module.validate_certs)
+        return rc, data
     except Exception as e:
         module.fail_json(msg="Failed to update system password. Id [%s].  Error [%s]" % (ssid, to_native(e)))
-    return data
 
 
 def set_password(module, ssid, api_url, user, pwd, current_password=None, new_password=None, set_admin=False):
+    """Set the storage-system password"""
     set_pass = "storage-systems/%s/passwords" % ssid
     url = api_url + set_pass
 
@@ -191,7 +195,7 @@ def set_password(module, ssid, api_url, user, pwd, current_password=None, new_pa
 
     try:
         rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd,
-                           ignore_errors=True)
+                           ignore_errors=True, validate_certs=module.validate_certs)
     except Exception as e:
         module.fail_json(msg="Failed to set system password. Id [%s].  Error [%s]" % (ssid, to_native(e)),
                          exception=traceback.format_exc())
@@ -199,7 +203,8 @@ def set_password(module, ssid, api_url, user, pwd, current_password=None, new_pa
     if rc == 422:
         post_body = json.dumps(dict(currentAdminPassword='', adminPassword=set_admin, newPassword=new_password))
         try:
-            rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd)
+            rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd,
+                               validate_certs=module.validate_certs)
         except:
             # TODO(lorenp): Resolve ignored rc, data
             module.fail_json(msg="Wrong or no admin password supplied. Please update your playbook and try again")
@@ -239,6 +244,7 @@ def main():
     user = module.params['api_username']
     pwd = module.params['api_password']
     api_url = module.params['api_url']
+    module.validate_certs = module.params['validate_certs']
 
     if not api_url.endswith('/'):
         api_url += '/'
