@@ -1,0 +1,21 @@
+---
+
+- name: Delete pool - First device
+  bigip_pool:
+      name: "{{ item }}"
+      state: "absent"
+  with_items:
+      - "cs1.pool"
+      - "cs2.pool"
+  register: result
+
+- name: Assert Delete pool
+  assert:
+      that:
+          - result|changed
+
+- name: Sync configuration from device to group
+  bigip_configsync_actions:
+      device_group: "{{ device_group }}"
+      sync_device_to_group: yes
+  register: result
