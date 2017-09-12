@@ -208,6 +208,8 @@
     name: empty
     state: removed
 
+# test extra_args_precommand  in currrent case we install rpm package in local folder using root option 
+
 - name: extract from rpm 
   zypper:
     name: "{{ output_dir | expanduser }}/zypper2/rpm-build/noarch/empty-1-0.noarch.rpm" 
@@ -218,6 +220,7 @@
 - name: capture result
   shell: ls  {{ output_dir | expanduser }}/testdir
   register: folder_list
+
 - name: check that we extract rpm package
   assert:
     that:
