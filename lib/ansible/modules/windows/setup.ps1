@@ -49,8 +49,7 @@ Function Get-MachineSid {
     
     $machine_sid = $null
     if ($users -ne $null) {
-        $administrator_sid = $users.Sid.Value
-        $machine_sid = $administrator_sid.Substring(0, $administrator_sid.Length - 4)
+        $machine_sid = $users.Sid.AccountDomainSid.Value
     }
     return $machine_sid
 }
