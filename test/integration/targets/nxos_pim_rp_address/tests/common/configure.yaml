@@ -1,0 +1,99 @@
+---
+- debug: msg="START {{ connection.transport }} nxos_pim_rp_address sanity"
+
+- block:
+  - name: "Disable feature PIM"
+    nxos_feature: &disable_feature
+      feature: pim
+      state: disabled
+      provider: "{{ connection }}"
+
+  - name: "Enable feature PIM"
+    nxos_feature: &enable_feature
+      feature: pim
+      state: enabled
+      provider: "{{ connection }}"
+
+  - name: Configure rp_address + group_list 
+    nxos_pim_rp_address: &configgl
+      rp_address: "10.1.1.20"
+      group_list: "224.0.0.0/8"
+      bidir: true 
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: Check idempotence rp_address + group_list
+    nxos_pim_rp_address: *configgl
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: "Disable feature PIM"
+    nxos_feature: *disable_feature
+
+  - name: "Enable feature PIM"
+    nxos_feature: *enable_feature
+
+  - name: Configure rp_address + prefix_list 
+    nxos_pim_rp_address: &configpl
+      rp_address: "10.1.1.20"
+      prefix_list: "pim_prefix_list"
+      bidir: true 
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: Check idempotence rp_address + prefix_list
+    nxos_pim_rp_address: *configpl
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: "Disable feature PIM"
+    nxos_feature: *disable_feature
+
+  - name: "Enable feature PIM"
+    nxos_feature: *enable_feature
+
+  - name: Configure rp_address + route_map 
+    nxos_pim_rp_address: &configrm
+      rp_address: "10.1.1.20"
+      route_map: "pim_routemap"
+      bidir: true 
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: Check idempotence rp_address + route_map
+    nxos_pim_rp_address: *configrm
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+  always:
+    - name: "Disable feature PIM"
+      nxos_feature:
+        feature: pim
+        state: disabled
+        provider: "{{ connection }}"
+
+
+- debug: msg="END {{ connection.transport }} nxos_pim_rp_address sanity"
